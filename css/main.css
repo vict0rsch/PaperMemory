@@ -1,0 +1,74 @@
+@import url("https://fonts.googleapis.com/css?family=Mukta:700");
+
+html {
+    min-width: 300px;
+    min-height: 200px;
+    border-radius: 20px;
+    font-family: "Mukta";
+    font-size: 14px;
+}
+
+body {
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+.h1 {
+    font-size: 1.8rem;
+    background-color: #b31b1b;
+    padding: 16px;
+    color: white;
+}
+
+p {
+    font-size: 1rem;
+}
+
+h3 {
+    font-size: 1.2rem;
+}
+
+
+#container {
+    padding: 32px;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#helpDiv {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.95);
+    z-index: 2;
+    padding: 32px;
+}
+
+#helpButton {
+    font-size: 0.8rem;
+    position: absolute;
+    bottom: 16px;
+    right: 16px;
+    border: 1px solid #b31b1b;
+    background: white;
+    padding: 2px 6px;
+    border-radius: 100px;
+    transition: all .1s ease-in-out;
+}
+
+#helpButton:hover {
+    transform: scale(1.5);
+}
+
+
+#isArxiv {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+}
