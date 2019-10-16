@@ -1,13 +1,11 @@
 {
-  "name": "CHANGE THIS : Extension boilerplate",
+  "name": "Arxiv: pdf to abs",
   "version": "0.0.1",
   "manifest_version": 2,
-  "description": "This extension was created with the awesome extensionizr.com",
-  "homepage_url": "http://extensionizr.com",
+  "description": "Instantly go from an Arxiv pdf's webpage to its abstract page",
+  "homepage_url": "https://github.com/vict0rsch/arxiv-pdf-abs",
   "icons": {
-    "16": "icons/icon16.png",
-    "48": "icons/icon48.png",
-    "128": "icons/icon128.png"
+    "64": "icons/1571249796.ico"
   },
   "default_locale": "en",
   "background": {
@@ -16,8 +14,8 @@
     ]
   },
   "browser_action": {
-    "default_icon": "icons/icon19.png",
-    "default_title": "page action demo",
+    "default_icon": "icons/1571249796.ico",
+    "default_title": "Arxiv: pdf to abs",
     "default_popup": "src/page_action/page_action.html"
   },
   "permissions": [
