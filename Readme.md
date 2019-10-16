@@ -8,3 +8,12 @@ For intance: from https://arxiv.org/pdf/1703.06907.pdf to https://arxiv.org/abs/
 
 Share ideas 💡 in [issues](https://github.com/vict0rsch/arxiv-pdf-abs/issues) and love with [stars](https://github.com/vict0rsch/arxiv-pdf-abs/stargazers) ⭐️:)
 
+## Installation
+
+* download the repo
+* go to Chrome/Brave's extension manager
+* enable developper mode
+* load unpackaged extension
+* chose downloaded repo :)
+
+Chrome webstore maybe someday
