@@ -1,0 +1,283 @@
+<!doctype html>
+<html>
+
+<head>
+	<style type="text/css">
+		@import url("https://fonts.googleapis.com/css?family=Mukta:700");
+
+		.h1 {
+			font-size: 2em;
+			background-color: #b31b1b;
+			padding: 16px;
+			color: white;
+		}
+
+		html {
+			min-width: 300px;
+			min-height: 200px;
+			border-radius: 20px;
+			font-family: "Mukta";
+		}
+
+		body {
+			margin: 0;
+			min-height: 100vh;
+		}
+
+		#container {
+			padding: 32px;
+		}
+
+		#helpDiv {
+			position: absolute;
+			top: 0;
+			left: 0;
+			height: 100%;
+			background: rgba(255, 255, 255, 0.95);
+			z-index: 2;
+			padding: 32px;
+		}
+
+		#helpButton {
+			font-size: 0.8rem;
+			position: absolute;
+			bottom: 16px;
+			right: 16px;
+			border: 1px solid #b31b1b;
+			background: white;
+			padding: 2px 6px;
+			border-radius: 100px;
+			transition: all .1s ease-in-out;
+		}
+
+		#helpButton:hover {
+			transform: scale(1.5);
+		}
+
+		/* Go To Button */
+
+		button.learn-more {
+			position: relative;
+			display: inline-block;
+			cursor: pointer;
+			outline: none;
+			border: 0;
+			vertical-align: middle;
+			text-decoration: none;
+			background: transparent;
+			padding: 0;
+			font-size: inherit;
+			font-family: inherit;
+		}
+
+		button.learn-more {
+			width: 12rem;
+			height: auto;
+		}
+
+		button.learn-more .circle {
+			transition: all 0.45s cubic-bezier(0.65, 0, 0.076, 1);
+			position: relative;
+			margin: 0;
+			width: 3rem;
+			height: 3rem;
+			background: gray;
+			border-radius: 1.625rem;
+		}
+
+		button.learn-more .circle .icon {
+			transition: all 0.45s cubic-bezier(0.65, 0, 0.076, 1);
+			position: absolute;
+			top: 0;
+			bottom: 0;
+			margin: auto;
+			background: #fff;
+		}
+
+		button.learn-more .circle .icon.arrow {
+			transition: all 0.45s cubic-bezier(0.65, 0, 0.076, 1);
+			left: 0.625rem;
+			width: 1.125rem;
+			height: 0.125rem;
+			background: none;
+		}
+
+		button.learn-more .circle .icon.arrow::before {
+			position: absolute;
+			content: '';
+			top: -0.25rem;
+			right: 0.0625rem;
+			width: 0.625rem;
+			height: 0.625rem;
+			border-top: 0.125rem solid #fff;
+			border-right: 0.125rem solid #fff;
+			-webkit-transform: rotate(45deg);
+			transform: rotate(45deg);
+		}
+
+		button.learn-more .button-text {
+			transition: all 0.45s cubic-bezier(0.65, 0, 0.076, 1);
+			position: absolute;
+			top: 0;
+			left: 0;
+			right: 0;
+			bottom: 0;
+			padding: 0.75rem 0;
+			margin: 0 0 0 1.85rem;
+			color: gray;
+			font-weight: 700;
+			line-height: 1.6;
+			text-align: center;
+		}
+
+		button:hover .circle {
+			width: 100%;
+		}
+
+		button:hover .circle .icon.arrow {
+			background: #fff;
+			-webkit-transform: translate(1rem, 0);
+			transform: translate(1rem, 0);
+		}
+
+		button:hover .button-text {
+			color: #fff;
+		}
+
+		/* Menu */
+
+		button.dots {
+			width: 20px;
+			height: 10px;
+			border: none;
+			background: transparent;
+			position: absolute;
+			bottom: 16px;
+			right: 16px;
+			cursor: pointer;
+			transition: all .2s ease-in-out;
+			z-index: 100;
+		}
+
+		button.dots:focus {
+			outline: none;
+		}
+
+		button.dots:hover {
+			transform: scale(1.5);
+		}
+
+		button.dots.dots:after,
+		button.dots.dots:before,
+		button.dots.dots span {
+			width: 10%;
+			height: 20%;
+			border-radius: 100px;
+			position: absolute;
+			left: 0px;
+			background: black;
+			transform: rotate(0deg);
+			transition: all 0.4s;
+			left: 1%;
+			right: 1%;
+			margin: 0 auto;
+		}
+
+		button.dots.dots:after,
+		button.dots.dots:before {
+			content: "";
+		}
+
+		button.dots.dots:after {
+			top: -10%;
+			margin-top: 0px;
+		}
+
+		button.dots.dots:before {
+			bottom: -10%;
+			margin-bottom: 0px;
+		}
+
+		button.dots.dots span {
+			top: 50%;
+			margin-top: -1px;
+		}
+
+		button.dots.dots.on:after {
+			transform: rotate(135deg) translate(3px, -3px);
+			width: 100%;
+		}
+
+		button.dots.dots.on:before {
+			transform: rotate(225deg);
+			bottom: 50%;
+			margin-bottom: -1px;
+			width: 100%;
+		}
+
+		button.dots.dots.on span {
+			transform: rotate(135deg);
+		}
+	</style>
+</head>
+
+<body>
+
+	<div class="h1">Arxiv: pdf to abstract</div>
+
+	<div id="container">
+		<div id="notArxiv">
+			<h3>You're not on Arxiv!</h3>
+
+			<p>This extension can bring you from an Arxiv-hosted pdf webpage to its Arxiv Abstract page.</p>
+			<p>For instance from https://arxiv.org/pdf/1703.06907.pdf to https://arxiv.org/abs/1703.06907</p>
+		</div>
+
+		<div id="notPdf" style="display: none;">
+			<h3>You're not on paper's pdf webpage</h3>
+			<p>This extension can bring you from an Arxiv-hosted pdf webpage to its Arxiv Abstract page.</p>
+			<p>For instance from https://arxiv.org/pdf/1703.06907.pdf to https://arxiv.org/abs/1703.06907</p>
+		</div>
+
+		<div id="isArxiv" style="display: none;">
+
+			<button class="learn-more">
+				<div class="circle">
+					<span class="icon arrow"></span>
+				</div>
+				<p class="button-text" id="goToAbstract"></p>
+			</button>
+
+		</div>
+
+		<button class="dots"><span></span></button>
+
+
+		<div id="helpDiv" style="display: none;">
+
+			<p>It's the little things that make your research smoother.</p>
+
+			<p>Look at the code ; raise issues ; share improvement ideas:</p>
+
+			<p><a id="helpGithubLink"
+					href="https://github.com/vict0rsch/arxiv-pdf-abs">https://github.com/vict0rsch/arxiv-pdf-abs</a>
+			</p>
+
+			<p>Using VSCode? Checkout <a id="coblock"
+					href="https://marketplace.visualstudio.com/items?itemName=vict0rsch.coblock">CoBlock</a>, an easy
+				way to structure your code with blocks of comments</p>
+
+		</div>
+
+	</div>
+
+
+	<!-- <div id="content"></div> -->
+
+</body>
+
+<script src="../../js/jquery/jquery.min.js"></script>
+<script src="../../js/script.js"></script>
+
+
+</html>
