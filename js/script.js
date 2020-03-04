@@ -23,7 +23,7 @@ const arxiv = id => {
             const title = xml.find("entry title").text();
             let authors = [];
             xml.find("entry author name").each((i, a) => authors.push(a.textContent));
-            const cite=authors[0].split(" ")[0] + year + title.split(" ")[0];
+            const cite = authors[0].split(" ")[0] + year + title.split(" ")[0];
             const template = `@misc{${cite},
                 title={${title}},
                 author={${authors.join(" and ")}},

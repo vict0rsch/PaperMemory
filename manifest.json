@@ -20,7 +20,21 @@
   },
   "permissions": [
     "https://arxiv.org/*",
-    "tabs"
+    "tabs",
+    "activeTab"
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "https://arxiv.org/*"
+      ],
+      "js": [
+        "js/jquery/jquery.min.js",
+        "js/title.js"
+      ],
+      "css": [
+        "css/downloadButton.css"
+      ]
+    }
   ]
-
 }
