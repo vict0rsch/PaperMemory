@@ -2,9 +2,9 @@
 <html>
 
 <head>
-	<link rel="stylesheet" type="text/css" href="../../css/main.css">
-	<link rel="stylesheet" type="text/css" href="../../css/goToButton.css">
-	<link rel="stylesheet" type="text/css" href="../../css/menu.css">
+	<link rel="stylesheet" type="text/css" href="./main.css">
+	<link rel="stylesheet" type="text/css" href="./goToButton.css">
+	<link rel="stylesheet" type="text/css" href="./menu.css">
 </head>
 
 <body>
@@ -53,10 +53,21 @@
 					href="https://github.com/vict0rsch/arxiv-pdf-abs">https://github.com/vict0rsch/arxiv-pdf-abs</a>
 			</p>
 
-			<p>Using VSCode? Checkout <a id="coblock"
+			<!-- <p>Using VSCode? Checkout <a id="coblock"
 					href="https://marketplace.visualstudio.com/items?itemName=vict0rsch.coblock">CoBlock</a>, an easy
-				way to structure your code with blocks of comments</p>
+				way to structure your code with blocks of comments</p> -->
 
+			<h4>Options</h4>
+			Do you want the following sections in arxiv.org's right-most column?<br><br>
+
+			<input type="checkbox" id="checkDownload" name="checkDownload" value="checkDownload">
+			<label for="checkDownload">Add PDF direct download button</label><br>
+
+			<input type="checkbox" id="checkMd" name="checkMd" value="checkMd">
+			<label for="checkMd">Add Markdown Link section</label><br>
+
+			<input type="checkbox" id="checkBib" name="checkBib" value="checkBib">
+			<label for="checkBib">Add BibTex citation section</label><br>
 		</div>
 
 	</div>
@@ -69,7 +80,7 @@
 <script src="../../js/jquery/jquery.min.js"></script>
 <script src="../../js/jquery-easing.js"></script>
 <script src="../../js/arxiv_search.js"></script>
-<script src="../../js/script.js"></script>
+<script src="./popup.js"></script>
 
 
 </html>

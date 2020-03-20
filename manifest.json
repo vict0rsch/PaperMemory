@@ -1,8 +1,8 @@
 {
-  "name": "Arxiv: pdf to abs",
+  "name": "ArxivTools",
   "version": "0.0.1",
   "manifest_version": 2,
-  "description": "Instantly go from an Arxiv pdf's webpage to its abstract page",
+  "description": "Enhance Arxiv with direct download, Markdown link, BibTex citation and more!",
   "homepage_url": "https://github.com/vict0rsch/arxiv-pdf-abs",
   "icons": {
     "64": "icons/1571249796.ico"
@@ -16,12 +16,13 @@
   "browser_action": {
     "default_icon": "icons/1571249796.ico",
     "default_title": "Arxiv: pdf to abs",
-    "default_popup": "src/page_action/page_action.html"
+    "default_popup": "src/popup/popup.html"
   },
   "permissions": [
     "https://arxiv.org/*",
     "tabs",
-    "activeTab"
+    "activeTab",
+    "storage"
   ],
   "content_scripts": [
     {
@@ -30,10 +31,12 @@
       ],
       "js": [
         "js/jquery/jquery.min.js",
-        "js/title.js"
+        "src/content_scripts/content_script.js"
       ],
       "css": [
-        "css/downloadButton.css"
+        "src/content_scripts/downloadButton.css",
+        "src/content_scripts/loader.css",
+        "src/content_scripts/content_script.css"
       ]
     }
   ]

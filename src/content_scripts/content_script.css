@@ -1,0 +1,54 @@
+@import url("https://fonts.googleapis.com/css?family=Mukta:700");
+
+* {
+    box-sizing: border-box;
+}
+
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+.leftcolumn {
+    width: calc(100% - 25em) !important;
+}
+
+.extra-services {
+    width: 25em !important;
+}
+
+.arxivTools-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.arxivTools-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1em;
+    margin-top: 1em;
+}
+
+.arxivTools-codify {
+    white-space: pre-wrap;
+    color: grey;
+    font-family: monospace;
+}
+
+#bibtexDiv {
+    padding: 0.2rem;
+}
+
+#feedback-notif {
+    padding: 1em;
+    min-width: 12em;
+    text-align: center;
+    color: white;
+    background: royalblue;
+    border-radius: 8px;
+    position: absolute;
+    bottom: 32px;
+    right: 32px;
+}
