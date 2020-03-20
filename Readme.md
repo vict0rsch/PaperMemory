@@ -1,12 +1,15 @@
 # Arxiv: pdf to abs browser extension
 
-This browser extension allows you to do 1 thing, and it does it well: **go from an Arxiv pdf's page to its abstract page**.
+This browser extension allows you to do enhance Arxiv with 4 features:
 
-For intance: from https://arxiv.org/pdf/1703.06907.pdf to https://arxiv.org/abs/1703.06907 in a couple of clicks. Thats it.
+1. **Go back to an arxiv-hosted pdf to its abstract page**. For instance: from https://arxiv.org/pdf/1703.06907.pdf to https://arxiv.org/abs/1703.06907 in a couple of clicks.
+2. **Add a direct download button** so that you don't have to open the pdf's webpage and then download it from your browser
+3. **Add a Markdown link**, because it's the little things that make sharing a paper easier (to be used in issues, PRs, Readme etc.)
+4. **Add the paper's BibTex citation directly on its abstract webpage**, because citing papers should not be a hassle
 
-![](https://github.com/vict0rsch/arxiv-pdf-abs/blob/master/imgs/show2.gif?raw=true)
+![](https://github.com/vict0rsch/ArxivTools/blob/master/imgs/demo.gif?raw=true)
 
-Share ideas 💡 in [issues](https://github.com/vict0rsch/arxiv-pdf-abs/issues) and love with [stars](https://github.com/vict0rsch/arxiv-pdf-abs/stargazers) ⭐️:)
+Share ideas 💡 in [issues](https://github.com/vict0rsch/ArxivTools/issues) and love with [stars](https://github.com/vict0rsch/ArxivTools/stargazers) ⭐️:)
 
 ## Installation
 

@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "manifest_version": 2,
   "description": "Enhance Arxiv with direct download, Markdown link, BibTex citation and more!",
-  "homepage_url": "https://github.com/vict0rsch/arxiv-pdf-abs",
+  "homepage_url": "https://github.com/vict0rsch/ArxivTools",
   "icons": {
     "64": "icons/1571249796.ico"
   },
@@ -15,7 +15,7 @@
   },
   "browser_action": {
     "default_icon": "icons/1571249796.ico",
-    "default_title": "Arxiv: pdf to abs",
+    "default_title": "ArxivTools",
     "default_popup": "src/popup/popup.html"
   },
   "permissions": [
