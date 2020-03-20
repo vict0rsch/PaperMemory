@@ -11,7 +11,15 @@ This browser extension allows you to do enhance Arxiv with 4 features:
 
 ![](https://github.com/vict0rsch/ArxivTools/blob/master/imgs/demo.gif?raw=true)
 
+Customize these features in the menu:
+
+![](https://github.com/vict0rsch/ArxivTools/blob/master/imgs/menu.png?raw=true)
+
+---
+
 Share ideas 💡 in [issues](https://github.com/vict0rsch/ArxivTools/issues) and love with [stars](https://github.com/vict0rsch/ArxivTools/stargazers) ⭐️:)
+
+
 
 ## Installation
 
