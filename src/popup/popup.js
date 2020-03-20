@@ -53,7 +53,7 @@ const main = url => {
         });
     })
 
-    const checks = ["checkBib", "checkMd", "checkDownload"]
+    const checks = ["checkBib", "checkMd", "checkDownload", "checkPdfTitle"]
     chrome.storage.sync.get(checks, function (items) {
 
         console.log({ items })

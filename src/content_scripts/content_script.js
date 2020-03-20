@@ -67,17 +67,13 @@ $(() => {
     var checkMd = true;
     var checkBib = true;
     var checkDownload = true;
-    chrome.storage.sync.get(['checkBib', 'checkMd', 'checkDownload'], function (items) {
-
-        console.log(">> received", items);
+    var checkPdfTitle = true
+    chrome.storage.sync.get(['checkBib', 'checkMd', 'checkDownload', 'checkPdfTitle'], function (items) {
 
         checkMd = items.hasOwnProperty("checkMd") && items.checkMd;
         checkBib = items.hasOwnProperty("checkBib") && items.checkBib;
         checkDownload = items.hasOwnProperty("checkDownload") && items.checkDownload;
-        console.log({ checkMd, checkBib, checkDownload });
-
-
-
+        checkPdfTitle = items.hasOwnProperty("checkPdfTitle") && items.checkPdfTitle;
 
         var h = null;
         $("h2").each((idx, el) => {
@@ -85,14 +81,15 @@ $(() => {
                 h = $(el);
             }
         });
-        const id = document.title.slice(1, 11);
+        const id = window.location.href.match(/\d\d\d\d\.\d\d\d\d\d/g)[0];
+        const isPdf = window.location.href.match(/\d\d\d\d\.\d\d\d\d\d\.pdf/g);
         const pdfUrl = "https://arxiv.org/pdf/" + id + ".pdf";
         const fileName = id + " - " + document.title.split(" ").slice(1).join(" ") + ".pdf";
 
         // -----------------------------
         // -----  Download Button  -----
         // -----------------------------
-        if (checkDownload) {
+        if (checkDownload && !isPdf) {
             const button = `
             <div class="arxivTools-container">
                 <button id="arxiv-button" class="arxiv-learn-more">
@@ -105,14 +102,13 @@ $(() => {
             `;
             h.parent().append(button)
             $("#arxiv-button").click(() => {
-                console.log("click");
                 download_file(pdfUrl, fileName);
             })
         }
         // ---------------------------
         // -----  Markdown Link  -----
         // ---------------------------
-        if (checkMd) {
+        if (checkMd && !isPdf) {
             h.parent().append(`
             <div id="markdown-container">
                 <div id="markdown-header" class="arxivTools-header">
@@ -128,7 +124,17 @@ $(() => {
             });
         }
 
-        if (checkBib) {
+        if (checkPdfTitle && isPdf) {
+
+            $.get(`https://export.arxiv.org/api/query?id_list=${id}`).then(data => {
+                const bib = $(data);
+                const title = $(bib.find("entry title")[0]).text();
+                window.document.title = title + ` (${id}).pdf`
+            });
+
+        }
+
+        if (checkBib && !isPdf) {
 
             h.parent().append(`
                 <div id="loader-container" class="arxivTools-container">

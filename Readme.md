@@ -14,7 +14,7 @@ This browser extension allows you to do enhance Arxiv with 4 features:
 Customize these features in the menu:
 
 <p align="center">
-<img src="https://github.com/vict0rsch/ArxivTools/blob/master/imgs/m.png?raw=true" width="200">
+<img src="https://github.com/vict0rsch/ArxivTools/blob/master/imgs/m.png?raw=true" width="250">
 </p>
 
 ---
