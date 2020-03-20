@@ -25,10 +25,12 @@ Share ideas 💡 in [issues](https://github.com/vict0rsch/ArxivTools/issues) and
 
 ## Installation
 
+[🏪**Chrome (& Brave) web store**](https://chrome.google.com/webstore/detail/arxivtools/hmebhknlgddhfbbdhgplnillngljgmdi?authuser=1&hl=fr)
+
+**Manually:**
+
 * download the repo
 * go to Chrome/Brave's extension manager
-* enable developper mode
+* enable developer mode
 * load unpackaged extension
 * chose downloaded repo :)
-
-Chrome webstore maybe someday
