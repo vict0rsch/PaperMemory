@@ -1,12 +1,12 @@
-(function () {
-    var dotsMenu;
-    dotsMenu = document.querySelector(".dots");
+// (function () {
+//     var dotsMenu;
+//     dotsMenu = document.querySelector(".dots");
 
-    dotsMenu.addEventListener("click", function () {
-        return dotsMenu.classList.toggle("on");
-    });
+//     dotsMenu.addEventListener("click", function () {
+//         return dotsMenu.classList.toggle("on");
+//     });
 
-}).call(this);
+// }).call(this);
 
 function parseUrl(url) {
     var a = document.createElement('a');
@@ -53,6 +53,34 @@ const main = url => {
         });
     })
 
+    $("#tabler-menu").click(() => {
+        helpIsOpen ?
+        $("#helpDiv").slideUp({
+            duration: 500,
+            easing: "easeOutQuint"
+        }) && $("#tabler-menu").fadeOut( ()=> {
+            $("#tabler-menu").html(`
+                <svg class="tabler-icon">
+                    <use xlink:href="../../icons/tabler-sprite-nostroke.svg#tabler-adjustments" />
+                </svg>
+            `);
+            $("#tabler-menu").fadeIn()
+        })
+        :
+        $("#helpDiv").slideDown({
+            duration: 500,
+            easing: "easeOutQuint"
+        }) &&  $("#tabler-menu").fadeOut( ()=> {
+            $("#tabler-menu").html(`
+                <svg class="tabler-icon">
+                    <use xlink:href="../../icons/tabler-sprite-nostroke.svg#tabler-circle-x" />
+                </svg>
+            `);
+            $("#tabler-menu").fadeIn()
+        })
+        helpIsOpen = !helpIsOpen;
+    })
+
     const checks = ["checkBib", "checkMd", "checkDownload", "checkPdfTitle"]
     chrome.storage.sync.get(checks, function (items) {
 
@@ -86,19 +114,6 @@ const main = url => {
                 });
             });
         }
-
-        $("button.dots").click(() => {
-            helpIsOpen ?
-                $("#helpDiv").slideUp({
-                    duration: 500,
-                    easing: "easeOutQuint"
-                }) :
-                $("#helpDiv").slideDown({
-                    duration: 500,
-                    easing: "easeOutQuint"
-                });
-            helpIsOpen = !helpIsOpen;
-        })
 
         if (url.hostname === "arxiv.org") {
             $("#notArxiv").hide();

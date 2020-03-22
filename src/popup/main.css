@@ -52,6 +52,22 @@ h3 {
     font-size: 0.9rem;
 }
 
+#tabler-menu {
+    position: absolute;
+    bottom: 12px;
+    right: 12px;
+    cursor: pointer;
+    z-index: 2;
+}
+
+#tabler-menu svg{
+    transition: all .2s ease-in-out;
+}
+
+#tabler-menu svg:hover{
+    transform: scale(1.2);
+}
+
 .options-emoji {
     font-size: 1.2rem;
 }
