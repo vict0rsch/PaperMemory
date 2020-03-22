@@ -2,6 +2,7 @@
 <html>
 
 <head>
+	<meta charset='utf-8'>
 	<link rel="stylesheet" type="text/css" href="./main.css">
 	<link rel="stylesheet" type="text/css" href="./goToButton.css">
 	<link rel="stylesheet" type="text/css" href="./menu.css">
@@ -9,11 +10,16 @@
 
 <body>
 
-	<div class="h1">ArxivTools</div>
+	<div class="h1">ArxivTools ⚒</div>
 
 	<div id="container">
 		<div id="notArxiv">
-			<h3>You're not on Arxiv!</h3>
+			<div class="header">
+				<h3>You're not on Arxiv</h3> &nbsp;&nbsp;
+				<svg class="tabler-icon">
+					<use xlink:href="../../icons/tabler-sprite-nostroke.svg#tabler-circle-x" />
+				</svg>
+			</div>
 
 			<p>This extension can bring you from an Arxiv-hosted pdf webpage to its Arxiv Abstract page.</p>
 			<p>For instance from https://arxiv.org/pdf/1703.06907.pdf to https://arxiv.org/abs/1703.06907</p>
@@ -47,7 +53,7 @@
 
 			<p>It's the little things that make your research smoother.</p>
 
-			<p>Look at the code ; raise issues ; share improvement ideas:</p>
+			<p>Look at the code ; raise issues ; share improvement ideas </p>
 
 			<p><a id="helpGithubLink"
 					href="https://github.com/vict0rsch/ArxivTools">https://github.com/vict0rsch/ArxivTools</a>
@@ -58,19 +64,23 @@
 				way to structure your code with blocks of comments</p> -->
 
 			<h4>Options</h4>
-			Do you want the following sections in arxiv.org's right-most column?<br><br>
 
-			<input type="checkbox" id="checkDownload" name="checkDownload" value="checkDownload">
-			<label for="checkDownload">Add PDF direct download button</label><br>
+			<div id="options">
+				<input type="checkbox" id="checkDownload" name="checkDownload" value="checkDownload">
+				<label for="checkDownload"> <span class="options-emoji">🗂</span> Add PDF direct download
+					button</label><br>
 
-			<input type="checkbox" id="checkMd" name="checkMd" value="checkMd">
-			<label for="checkMd">Add Markdown Link section</label><br>
+				<input type="checkbox" id="checkMd" name="checkMd" value="checkMd">
+				<label for="checkMd"> <span class="options-emoji"> 🔗</span>Add Markdown Link section</label><br>
 
-			<input type="checkbox" id="checkBib" name="checkBib" value="checkBib">
-			<label for="checkBib">Add BibTex citation section</label><br>
+				<input type="checkbox" id="checkBib" name="checkBib" value="checkBib">
+				<label for="checkBib"> <span class="options-emoji"> 🎫</span> Add BibTex citation section</label><br>
 
-			<input type="checkbox" id="checkPdfTitle" name="checkPdfTitle" value="checkPdfTitle">
-			<label for="checkPdfTitle">Change pdf webpage title: from `&lt;id&gt;.pdf` to `&lt;title&gt; (&lt;id&gt;).pdf`</label><br>
+				<input type="checkbox" id="checkPdfTitle" name="checkPdfTitle" value="checkPdfTitle">
+				<label for="checkPdfTitle"> <span class="options-emoji"> 🎬 </span> Change pdf webpage title: from
+					`&lt;id&gt;.pdf` to `&lt;title&gt;
+					(&lt;id&gt;).pdf`</label><br>
+			</div>
 		</div>
 
 	</div>

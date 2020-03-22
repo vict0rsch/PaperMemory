@@ -30,6 +30,18 @@ h3 {
     font-size: 1.2rem;
 }
 
+.header {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.tabler-icon {
+    height: 32px;
+    width: 32px;
+    color: #b31b1b;
+    stroke-width: 1px;
+}
 
 #container {
     padding: 32px;
@@ -37,6 +49,11 @@ h3 {
     display: flex;
     align-items: center;
     justify-content: center;
+    font-size: 0.9rem;
+}
+
+.options-emoji {
+    font-size: 1.2rem;
 }
 
 #helpDiv {
