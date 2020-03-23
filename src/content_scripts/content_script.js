@@ -539,7 +539,7 @@ $(() => {
                     $("body").append(`
                         <div id="arxivTools-${arxivId}" class="arxivTools-card" style="top:${offset.top + 30}px">
                             <div class="arxivTools-card-body">
-                                <div class="arxivTools-header">
+                                <div class="arxivTools-card-header">
                                     ArxivTools: BibTex citation
                                 </div>
                                 <div class="arxivTools-bibtex" id="arxivTools-bibtex-${arxivId}">
