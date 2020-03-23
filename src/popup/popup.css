@@ -15,11 +15,24 @@ body {
     flex-direction: column;
 }
 
-.h1 {
-    font-size: 1.8rem;
+.popup-header {
     background-color: #b31b1b;
     padding: 16px;
     color: white;
+    display: flex;
+    justify-content: end;
+    align-items: center;
+}
+
+.popup-header .tabler-icon {
+    color: white !important;
+    margin-left: 0.5rem;
+}
+
+h1 {
+    margin: 0;
+    font-weight: 300;
+    font-size: 2rem;
 }
 
 p {
@@ -60,11 +73,22 @@ h3 {
     z-index: 2;
 }
 
-#tabler-menu svg{
+#tabler-menu svg {
     transition: all .2s ease-in-out;
 }
 
-#tabler-menu svg:hover{
+#tabler-menu svg:hover {
+    transform: scale(1.2);
+}
+
+#tabler-copy-link {
+    transition: all .2s ease-in-out;
+    cursor: pointer;
+    border-radius: 100000px;
+    color: #0276ff;
+}
+
+#tabler-copy-link:hover {
     transform: scale(1.2);
 }
 
@@ -104,4 +128,27 @@ h3 {
     justify-content: center;
     align-items: center;
     flex-direction: column;
+}
+
+#markdown-header div {
+    transition: all .2s ease-in-out;
+}
+
+#markdown-header div:hover {
+    transform: scale(1.2);
+}
+
+
+#check-feedback {
+    position: fixed;
+    bottom: 48px;
+    right: -100px;
+    opacity: 0;
+    -webkit-box-shadow: 14px 30px 122px -30px rgba(0, 0, 0, 0.75);
+    -moz-box-shadow: 14px 30px 122px -30px rgba(0, 0, 0, 0.75);
+    box-shadow: 14px 30px 122px -30px rgba(0, 0, 0, 0.75);
+}
+
+#check-feedback svg {
+    color: #00C854 !important;
 }

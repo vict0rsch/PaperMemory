@@ -38,17 +38,42 @@
 }
 
 #bibtexDiv {
-    padding: 0.2rem;
+    padding: 0rem;
 }
 
 #feedback-notif {
     padding: 1em;
-    min-width: 12em;
+    min-width: 150px;
     text-align: center;
     color: white;
-    background: royalblue;
-    border-radius: 8px;
-    position: absolute;
-    bottom: 32px;
-    right: 32px;
+    background: rgb(0, 119, 255);
+    border-radius: 4px;
+    position: fixed;
+    bottom: 64px;
+    right: -200px;
+    opacity: 0;
+    padding: 1rem;
+    -webkit-box-shadow: 14px 30px 122px -30px rgba(0,0,0,0.75);
+    -moz-box-shadow: 14px 30px 122px -30px rgba(0,0,0,0.75);
+    box-shadow: 14px 30px 122px -30px rgba(0,0,0,0.75);
+}
+
+.tabler-icon {
+    height: 40px;
+    width: 40px;
+    color: rgb(0, 119, 255);
+    stroke-width: 1px;
+    transition: all 0.2s ease;
+    cursor: pointer;
+    margin-right: 16px;
+    -webkit-tap-highlight-color: transparent;
+    border-radius: 50%;
+}
+.tabler-icon:hover{
+    transform: scale(1.2);
+    /* background: rgba(34, 50, 84, 0.05); */
+}
+
+#markdown-link, #texTextarea{
+    padding: 8px;
 }

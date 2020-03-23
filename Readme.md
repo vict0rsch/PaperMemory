@@ -10,7 +10,7 @@ This browser extension allows you to do enhance Arxiv with 4 features:
 
 ## Demo
 
-![](https://github.com/vict0rsch/ArxivTools/blob/master/imgs/d.gif?raw=true)
+![](https://github.com/vict0rsch/ArxivTools/blob/master/imgs/d2.gif?raw=true)
 
 Customize these features in the menu:
 

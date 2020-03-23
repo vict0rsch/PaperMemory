@@ -1,0 +1,33 @@
+#abstract-card {
+    width: 150px;
+    border: 2px solid rgb(0, 119, 255);
+    padding: 1rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 1.15rem;
+    transition: all ease 0.2s;
+}
+
+#abstract-card svg {
+    color: rgb(0, 119, 255);
+}
+
+#abstract-card-header {
+    display: flex;
+    justify-content: space-evenly;
+    align-items: center;
+    color: rgb(0, 119, 255);
+    margin-bottom: 8px;
+}
+
+#abstract-card:hover {
+    transform: scale(1.1);
+    box-shadow: 10px 10px 30px 0px rgba(0, 0, 0, 0.25);
+}
+
+
+#abstract-card-title {
+    font-size: 0.9rem;
+    text-align: center;
+    color: rgb(70, 70, 70);
+}

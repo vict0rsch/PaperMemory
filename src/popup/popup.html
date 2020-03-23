@@ -3,13 +3,19 @@
 
 <head>
 	<meta charset='utf-8'>
-	<link rel="stylesheet" type="text/css" href="./main.css">
-	<link rel="stylesheet" type="text/css" href="./goToButton.css">
+	<link rel="stylesheet" type="text/css" href="./popup.css">
+	<link rel="stylesheet" type="text/css" href="./options.css">
+	<link rel="stylesheet" type="text/css" href="./abstract.css">
 </head>
 
 <body>
 
-	<div class="h1">ArxivTools ⚒</div>
+	<div class="popup-header">
+		<h1>ArxivTools</h1>
+		<svg class="tabler-icon">
+			<use xlink:href="../../icons/tabler-sprite-nostroke.svg#tabler-bolt" />
+		</svg>
+	</div>
 
 	<div id="container">
 		<div id="notArxiv">
@@ -36,12 +42,15 @@
 
 			<br><br>
 
-			<button class="learn-more">
-				<div class="circle">
-					<span class="icon arrow"></span>
+			<div id="abstract-card">
+				<div id="abstract-card-header">
+					<svg class="tabler-icon">
+						<use xlink:href="../../icons/tabler-sprite-nostroke.svg#tabler-id" />
+					</svg>
+					<div class="button-text" id="goToAbstract"></div>
 				</div>
-				<p class="button-text" id="goToAbstract"></p>
-			</button>
+				<div id="abstract-card-title"></div>
+			</div>
 
 		</div>
 
@@ -63,20 +72,18 @@
 			<h4>Options</h4>
 
 			<div id="options">
-				<input type="checkbox" id="checkDownload" name="checkDownload" value="checkDownload">
-				<label for="checkDownload"> <span class="options-emoji">🗂</span> Add PDF direct download
-					button</label><br>
+				<input class="switch" type="checkbox" id="checkDownload" name="checkDownload" value="checkDownload">
+				<label for="checkDownload">Add PDF direct download
+					button</label><br><br>
 
-				<input type="checkbox" id="checkMd" name="checkMd" value="checkMd">
-				<label for="checkMd"> <span class="options-emoji"> 🔗</span>Add Markdown Link section</label><br>
+				<input class="switch" type="checkbox" id="checkMd" name="checkMd" value="checkMd">
+				<label for="checkMd"> Add Markdown Link section</label><br><br>
 
-				<input type="checkbox" id="checkBib" name="checkBib" value="checkBib">
-				<label for="checkBib"> <span class="options-emoji"> 🎫</span> Add BibTex citation section</label><br>
+				<input class="switch" type="checkbox" id="checkBib" name="checkBib" value="checkBib">
+				<label for="checkBib"> Add BibTex citation section</label><br><br>
 
-				<input type="checkbox" id="checkPdfTitle" name="checkPdfTitle" value="checkPdfTitle">
-				<label for="checkPdfTitle"> <span class="options-emoji"> 🎬 </span> Change pdf webpage title: from
-					`&lt;id&gt;.pdf` to `&lt;title&gt;
-					(&lt;id&gt;).pdf`</label><br>
+				<input class="switch" type="checkbox" id="checkPdfTitle" name="checkPdfTitle" value="checkPdfTitle">
+				<label for="checkPdfTitle"> Change pdf webpage title</label><br><br>
 			</div>
 		</div>
 

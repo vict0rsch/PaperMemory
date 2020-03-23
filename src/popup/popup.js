@@ -37,14 +37,49 @@ const arxiv = id => {
     )
 }
 
-const main = url => {
-    url = parseUrl(url);
+const main = tab => {
+
+    var feedbackTimeout = null;
+    var feedbackPrevent = false;
+
+    const feedback = () => {
+        try {
+            clearTimeout(feedbackTimeout)
+            $("#feedback-notif").remove();
+            feedbackPrevent = true;
+        } catch (error) {
+            console.log("No feedback to remove.")
+        }
+        $("#helpDiv").append(`
+            <div id="check-feedback">
+                <svg class="tabler-icon">
+                    <use xlink:href="../../icons/tabler-sprite-nostroke.svg#tabler-floppy-disk" />
+                </svg>
+            </div>
+        `)
+        $("#check-feedback").animate({
+            right: "12px",
+            opacity: "1"
+        }, 300, "easeInOutBack");
+        feedbackTimeout = setTimeout(() => {
+            $("#check-feedback").animate({
+                right: "-100px",
+                opacity: "0"
+            }, 300, "easeInOutBack", () => {
+                !feedbackPrevent && $("#check-feedback").remove();
+                feedbackPrevent = false;
+            });
+
+        }, 1500)
+    }
+
+    const url = parseUrl(tab.url);
     console.log(url);
 
 
     $("#helpGithubLink").click(() => {
         chrome.tabs.update({
-            url: "https://github.com/vict0rsch/arxiv-pdf-abs"
+            url: "https://github.com/vict0rsch/ArxivTools"
         });
     })
     $("#coblock").click(() => {
@@ -55,36 +90,34 @@ const main = url => {
 
     $("#tabler-menu").click(() => {
         helpIsOpen ?
-        $("#helpDiv").slideUp({
-            duration: 500,
-            easing: "easeOutQuint"
-        }) && $("#tabler-menu").fadeOut( ()=> {
-            $("#tabler-menu").html(`
+            $("#helpDiv").slideUp({
+                duration: 500,
+                easing: "easeOutQuint"
+            }) && $("#tabler-menu").fadeOut(() => {
+                $("#tabler-menu").html(`
                 <svg class="tabler-icon">
                     <use xlink:href="../../icons/tabler-sprite-nostroke.svg#tabler-adjustments" />
                 </svg>
             `);
-            $("#tabler-menu").fadeIn()
-        })
-        :
-        $("#helpDiv").slideDown({
-            duration: 500,
-            easing: "easeOutQuint"
-        }) &&  $("#tabler-menu").fadeOut( ()=> {
-            $("#tabler-menu").html(`
+                $("#tabler-menu").fadeIn()
+            })
+            :
+            $("#helpDiv").slideDown({
+                duration: 500,
+                easing: "easeOutQuint"
+            }) && $("#tabler-menu").fadeOut(() => {
+                $("#tabler-menu").html(`
                 <svg class="tabler-icon">
                     <use xlink:href="../../icons/tabler-sprite-nostroke.svg#tabler-circle-x" />
                 </svg>
             `);
-            $("#tabler-menu").fadeIn()
-        })
+                $("#tabler-menu").fadeIn()
+            })
         helpIsOpen = !helpIsOpen;
     })
 
     const checks = ["checkBib", "checkMd", "checkDownload", "checkPdfTitle"]
     chrome.storage.sync.get(checks, function (items) {
-
-        console.log({ items })
 
         const hasKey = {};
         for (const key of checks) {
@@ -110,6 +143,7 @@ const main = url => {
             $("#" + key).change(function () {
                 const checked = this.checked;
                 chrome.storage.sync.set({ [key]: checked }, function () {
+                    feedback()
                     console.log(`Settings saved for ${key} (${checked})`);
                 });
             });
@@ -123,13 +157,18 @@ const main = url => {
                 $("#isArxiv").show();
                 const paperId = url.href.split("/").reverse()[0].replace(".pdf", "");
                 const newURL = `https://arxiv.org/abs/` + paperId;
-                $("#goToAbstract").text(paperId)
-                $("#goToAbstract").click((e) => {
+                $("#goToAbstract").text(paperId);
+                $("#abstract-card").click((e) => {
                     chrome.tabs.update({
                         url: newURL
                     });
                     window.close();
                 })
+                $.get(`https://export.arxiv.org/api/query?id_list=${paperId}`).then(data => {
+                    const bib = $(data);
+                    const title = $(bib.find("entry title")[0]).text();
+                    $("#abstract-card-title").text(title);
+                });
             }
         }
     });
@@ -142,7 +181,8 @@ $(() => {
         'lastFocusedWindow': true
     }, function (tabs) {
         var url = tabs[0].url;
-        main(url)
+        console.log(tabs[0])
+        main(tabs[0])
     });
 
 });
