@@ -24,9 +24,7 @@
 }
 
 .arxivTools-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
+    text-align: center;
     margin-bottom: 1em;
     margin-top: 1em;
 }
@@ -53,9 +51,9 @@
     right: -200px;
     opacity: 0;
     padding: 1rem;
-    -webkit-box-shadow: 14px 30px 122px -30px rgba(0,0,0,0.75);
-    -moz-box-shadow: 14px 30px 122px -30px rgba(0,0,0,0.75);
-    box-shadow: 14px 30px 122px -30px rgba(0,0,0,0.75);
+    -webkit-box-shadow: 14px 30px 122px -30px rgba(0, 0, 0, 0.75);
+    -moz-box-shadow: 14px 30px 122px -30px rgba(0, 0, 0, 0.75);
+    box-shadow: 14px 30px 122px -30px rgba(0, 0, 0, 0.75);
 }
 
 .tabler-icon {
@@ -65,15 +63,54 @@
     stroke-width: 1px;
     transition: all 0.2s ease;
     cursor: pointer;
-    margin-right: 16px;
     -webkit-tap-highlight-color: transparent;
     border-radius: 50%;
 }
-.tabler-icon:hover{
+
+.tabler-icon:hover {
     transform: scale(1.2);
     /* background: rgba(34, 50, 84, 0.05); */
 }
 
-#markdown-link, #texTextarea{
+#markdown-link,
+#texTextarea {
     padding: 8px;
+}
+
+.arxivTools-card {
+    width: 300px;
+    right: 32px;
+    position: absolute;
+    border: 1px solid #0276ff;
+    padding: 16px;
+    font-size: 0.8rem;
+    border-radius: 8px;
+    background: white;
+    box-shadow: 10px 10px 30px 0px rgba(184, 184, 184, 1);
+}
+
+.arxivTools-card-body {
+    position: relative;
+    color: rgba(0, 0, 0, 0.75)
+}
+
+.arxiv-tools-close, .arxiv-tools-close {
+    margin: 0px;
+    justify-content: center;
+    display: flex;
+}
+.arxiv-tools-close svg, .arxiv-tools-close svg{
+    margin: 0px !important;
+}
+
+.arxivTools-buttons {
+    display: flex;
+    justify-content: space-evenly;
+    align-items: center;
+}
+
+.arxivTools-bibtex {
+    white-space: pre-wrap;
+    color: grey;
+    font-family: monospace;
 }

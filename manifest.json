@@ -8,7 +8,6 @@
     "64": "icons/1571249796.ico",
     "128": "icons/favicon-128.png"
   },
-  "default_locale": "en",
   "background": {
     "scripts": [
       "src/bg/background.js"
@@ -28,7 +27,8 @@
   "content_scripts": [
     {
       "matches": [
-        "https://arxiv.org/*"
+        "https://arxiv.org/*",
+        "https://*.arxiv-vanity.com/*"
       ],
       "js": [
         "js/jquery/jquery.min.js",
