@@ -1,4 +1,16 @@
-# ArxivTools 🔨
+# ArxivTools ⚡
+
+<br/><br/>
+
+<p align="center">
+    <a href="https://chrome.google.com/webstore/detail/arxivtools/hmebhknlgddhfbbdhgplnillngljgmdi?authuser=1&hl=fr">
+        <strong>
+            🏪 Chrome (& Brave) web store
+        </strong>
+    </a>
+</p>
+
+<br/><br/>
 
 This browser extension allows you to do enhance Arxiv with 4 features:
 
@@ -15,7 +27,7 @@ This browser extension allows you to do enhance Arxiv with 4 features:
 Customize these features in the menu:
 
 <p align="center">
-<img src="https://github.com/vict0rsch/ArxivTools/blob/master/imgs/m.png?raw=true" width="250">
+<img src="https://github.com/vict0rsch/ArxivTools/blob/master/imgs/m.png?raw=true">
 </p>
 
 ---
@@ -24,14 +36,14 @@ Share ideas 💡 in [issues](https://github.com/vict0rsch/ArxivTools/issues) and
 
 
 
-## Installation
-
-[🏪**Chrome (& Brave) web store**](https://chrome.google.com/webstore/detail/arxivtools/hmebhknlgddhfbbdhgplnillngljgmdi?authuser=1&hl=fr)
-
-**Manually:**
+## Manual Installation
 
 * download the repo
 * go to Chrome/Brave's extension manager
 * enable developer mode
 * load unpackaged extension
 * chose downloaded repo :)
+
+## Firefox
+
+Using Firefox? Raise an issue if you're willing to help a little 🚁
