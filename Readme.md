@@ -12,7 +12,7 @@
 
 <br/><br/>
 
-This browser extension allows you to do enhance Arxiv with 4 features:
+This browser extension allows you to do enhance Arxiv with 5 features:
 
 1. 📄 **Go back to an arxiv-hosted pdf to its abstract page**. For instance: from https://arxiv.org/pdf/1703.06907.pdf to https://arxiv.org/abs/1703.06907 in a couple of clicks.
 2. 🗂 **Add a direct download button** so that you don't have to open the pdf's webpage and then download it from your browser
