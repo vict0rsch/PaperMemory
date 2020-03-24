@@ -103,7 +103,12 @@ h3 {
     height: 100%;
     background: rgba(255, 255, 255, 0.95);
     z-index: 2;
-    padding: 32px;
+    padding: 16px 32px;
+}
+
+#helpDiv p{
+    margin-top: 8px;
+    margin-bottom: 8px;
 }
 
 #helpButton {

@@ -116,7 +116,7 @@ const main = tab => {
         helpIsOpen = !helpIsOpen;
     })
 
-    const checks = ["checkBib", "checkMd", "checkDownload", "checkPdfTitle"]
+    const checks = ["checkBib", "checkMd", "checkDownload", "checkPdfTitle", "checkVanity"]
     chrome.storage.sync.get(checks, function (items) {
 
         const hasKey = {};

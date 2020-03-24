@@ -204,6 +204,100 @@ $.extend($.easing,
  *
  */
 
+var timeout = null;
+var prevent = false;
+
+const svg = name => {
+
+    switch (name) {
+        case "download":
+            return `<svg
+                        width="52px" height="42px" viewBox="0 0 22 16"
+                    >
+                        <path d="M2,10 L6,13 L12.8760559,4.5959317 C14.1180021,3.0779974 16.2457925,2.62289624 18,3.5 L18,3.5 C19.8385982,4.4192991 21,6.29848669 21,8.35410197 L21,10 C21,12.7614237 18.7614237,15 16,15 L1,15" id="check"></path>
+                        <polyline points="4.5 8.5 8 11 11.5 8.5" class="svg-out"></polyline>
+                        <path d="M8,1 L8,11" class="svg-out"></path>
+                    </svg>`
+        case "clipboard-default":
+            return `<svg
+                class="copy-feedback tabler-icon"
+                xmlns="http://www.w3.org/2000/svg"
+                width="64" height="32" viewBox="0 0 24 24"
+                stroke-width="1.25" stroke="rgb(0, 119, 255)" fill="none"
+                stroke-linecap="round" stroke-linejoin="round"
+            >
+                <path d="M9 5H7a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2V7a2 2 0 0 0 -2 -2h-2" />
+                <rect x="9" y="3" width="6" height="4" rx="2" />
+                <line x1="9" y1="12" x2="9.01" y2="12" />
+                <line x1="13" y1="12" x2="15" y2="12" />
+                <line x1="9" y1="16" x2="9.01" y2="16" />
+                <line x1="13" y1="16" x2="15" y2="16" />
+            </svg>`
+
+        case "clipboard-default-ok":
+            return `<svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="tabler-icon copy-feedback-ok"
+                style="display:none"
+                width="64" height="64" viewBox="0 0 24 24"
+                stroke-width="1.25" stroke="rgb(0, 200, 84)" fill="none"
+                stroke-linecap="round" stroke-linejoin="round"
+            >
+                <path stroke="none" d="M0 0h24v24H0z"/>
+                <path d="M9 5H7a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2V7a2 2 0 0 0 -2 -2h-2" />
+                <rect x="9" y="3" width="6" height="4" rx="2" />
+                <path d="M9 14l2 2l4 -4" />
+            </svg>`
+
+        case "vanity-close":
+            return `<svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="tabler-icon"
+                width="24" height="24" viewBox="0 0 24 24"
+                stroke-width="1.25" stroke="#b31b1b" fill="none"
+                stroke-linecap="round" stroke-linejoin="round"
+            >
+                <path stroke="none" d="M0 0h24v24H0z"/>
+                <circle cx="12" cy="12" r="9" />
+                <path d="M10 10l4 4m0 -4l-4 4" />
+            </svg>`
+
+        case "vanity-clipboard":
+            return `<svg
+                class="copy-feedback tabler-icon" xmlns="http://www.w3.org/2000/svg"
+                width="24" height="24" viewBox="0 0 24 24"
+                stroke-width="1.25" stroke="rgb(0, 119, 255)" fill="none"
+                stroke-linecap="round" stroke-linejoin="round"
+            >
+                <path stroke="none" d="M0 0h24v24H0z"/>
+                <path d="M9 5H7a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2V7a2 2 0 0 0 -2 -2h-2" />
+                <rect x="9" y="3" width="6" height="4" rx="2" />
+                <line x1="9" y1="12" x2="9.01" y2="12" />
+                <line x1="13" y1="12" x2="15" y2="12" />
+                <line x1="9" y1="16" x2="9.01" y2="16" />
+                <line x1="13" y1="16" x2="15" y2="16" />
+            </svg>`
+
+        case "vanity-clipboard-ok":
+            return `<svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="tabler-icon copy-feedback-ok"
+                style="display:none"
+                width="64" height="64" viewBox="0 0 24 24"
+                stroke-width="1.25" stroke="rgb(0, 200, 84)" fill="none"
+                stroke-linecap="round" stroke-linejoin="round"
+            >
+                <path stroke="none" d="M0 0h24v24H0z"/>
+                <path d="M9 5H7a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2V7a2 2 0 0 0 -2 -2h-2" />
+                <rect x="9" y="3" width="6" height="4" rx="2" />
+                <path d="M9 14l2 2l4 -4" />
+            </svg>`
+
+        default:
+            break;
+    }
+}
+
 const copyDivToClipboard = divId => {
     var range = document.createRange();
     range.selectNode(document.getElementById(divId));
@@ -214,7 +308,7 @@ const copyDivToClipboard = divId => {
 }
 
 /* Helper function */
-function download_file(fileURL, fileName) {
+const download_file = (fileURL, fileName) => {
     // for non-IE
     if (!window.ActiveXObject) {
         var save = document.createElement('a');
@@ -245,147 +339,130 @@ function download_file(fileURL, fileName) {
     }
 }
 
-$(() => {
+const main = checks => {
 
     const isVanity = window.location.href.indexOf("arxiv-vanity.com") > -1;
     if (!isVanity) {
-        var timeout = null;
-        var prevent = false;
+        arxiv(checks)
+    } else if (checks.checkVanity) {
+        vanity()
+    }
+}
 
-        const feedback = text => {
-            try {
-                clearTimeout(timeout)
-                $("#feedback-notif").remove();
-                prevent = true;
-            } catch (error) {
-                console.log("No feedback to remove.")
-            }
-            $("body").append(`
-            <div id="feedback-notif">${text}</div>
-        `)
-            $("#feedback-notif").animate({
-                right: "64px",
-                opacity: "1"
-            }, 400, "easeInOutBack");
-            timeout = setTimeout(() => {
-                $("#feedback-notif").animate({
-                    right: "-200px",
-                    opacity: "0"
-                }, 400, "easeInOutBack", () => {
-                    !prevent && $("#feedback-notif").remove();
-                    prevent = false;
-                });
+const feedback = text => {
+    try {
+        clearTimeout(timeout)
+        $("#feedback-notif").remove();
+        prevent = true;
+    } catch (error) {
+        console.log("No feedback to remove.")
+    }
+    $("body").append(`
+        <div id="feedback-notif">${text}</div>
+    `)
+    $("#feedback-notif").animate({
+        right: "64px",
+        opacity: "1"
+    }, 400, "easeInOutBack");
+    timeout = setTimeout(() => {
+        $("#feedback-notif").animate({
+            right: "-200px",
+            opacity: "0"
+        }, 400, "easeInOutBack", () => {
+            !prevent && $("#feedback-notif").remove();
+            prevent = false;
+        });
 
-            }, 2000)
+    }, 2000)
+}
+
+const arxiv = checks => {
+
+    const { checkMd,
+        checkBib,
+        checkDownload,
+        checkPdfTitle } = checks;
+
+    var h = null;
+    $("h2").each((idx, el) => {
+        if ($(el).html() === "Download:") {
+            h = $(el);
         }
+    });
+    const id = window.location.href.match(/\d\d\d\d\.\d\d\d\d\d/g)[0];
+    const isPdf = window.location.href.match(/\d\d\d\d\.\d\d\d\d\d\.pdf/g);
+    const pdfUrl = "https://arxiv.org/pdf/" + id + ".pdf";
+    const fileName = id + " - " + document.title.split(" ").slice(1).join(" ") + ".pdf";
 
-        var checkMd = true;
-        var checkBib = true;
-        var checkDownload = true;
-        var checkPdfTitle = true
-        chrome.storage.sync.get(['checkBib', 'checkMd', 'checkDownload', 'checkPdfTitle'], function (items) {
-
-            checkMd = items.hasOwnProperty("checkMd") && items.checkMd;
-            checkBib = items.hasOwnProperty("checkBib") && items.checkBib;
-            checkDownload = items.hasOwnProperty("checkDownload") && items.checkDownload;
-            checkPdfTitle = items.hasOwnProperty("checkPdfTitle") && items.checkPdfTitle;
-
-            var h = null;
-            $("h2").each((idx, el) => {
-                if ($(el).html() === "Download:") {
-                    h = $(el);
-                }
-            });
-            const id = window.location.href.match(/\d\d\d\d\.\d\d\d\d\d/g)[0];
-            const isPdf = window.location.href.match(/\d\d\d\d\.\d\d\d\d\d\.pdf/g);
-            const pdfUrl = "https://arxiv.org/pdf/" + id + ".pdf";
-            const fileName = id + " - " + document.title.split(" ").slice(1).join(" ") + ".pdf";
-
-            // -----------------------------
-            // -----  Download Button  -----
-            // -----------------------------
-            if (checkDownload && !isPdf) {
-                const button = `
+    // -----------------------------
+    // -----  Download Button  -----
+    // -----------------------------
+    if (checkDownload && !isPdf) {
+        const button = `
             <div class="arxivTools-container">
                 <div id="arxiv-button">
-                    <svg width="52px" height="42px" viewBox="0 0 22 16">
-                        <path d="M2,10 L6,13 L12.8760559,4.5959317 C14.1180021,3.0779974 16.2457925,2.62289624 18,3.5 L18,3.5 C19.8385982,4.4192991 21,6.29848669 21,8.35410197 L21,10 C21,12.7614237 18.7614237,15 16,15 L1,15" id="check"></path>
-                        <polyline points="4.5 8.5 8 11 11.5 8.5" class="svg-out"></polyline>
-                        <path d="M8,1 L8,11" class="svg-out"></path>
-                    </svg>
+                    ${svg("download")}
                 </div>
             </div>
             `;
-                h.parent().append(button)
-                var downloadTimeout;
-                $("#arxiv-button").click(() => {
-                    $("#arxiv-button").removeClass("downloaded");
-                    $("#arxiv-button").addClass("downloaded");
-                    downloadTimeout && clearTimeout(downloadTimeout);
-                    downloadTimeout = setTimeout(() => {
-                        $("#arxiv-button").hasClass("downloaded") && $("#arxiv-button").removeClass("downloaded");
-                    }, 1500)
-                    download_file(pdfUrl, fileName);
-                })
-            }
-            // ---------------------------
-            // -----  Markdown Link  -----
-            // ---------------------------
-            if (checkMd && !isPdf) {
-                h.parent().append(`
+        h.parent().append(button)
+        var downloadTimeout;
+        $("#arxiv-button").click(() => {
+            $("#arxiv-button").removeClass("downloaded");
+            $("#arxiv-button").addClass("downloaded");
+            downloadTimeout && clearTimeout(downloadTimeout);
+            downloadTimeout = setTimeout(() => {
+                $("#arxiv-button").hasClass("downloaded") && $("#arxiv-button").removeClass("downloaded");
+            }, 1500)
+            download_file(pdfUrl, fileName);
+        })
+    }
+    // ---------------------------
+    // -----  Markdown Link  -----
+    // ---------------------------
+    if (checkMd && !isPdf) {
+        h.parent().append(`
             <div id="markdown-container">
                 <div id="markdown-header" class="arxivTools-header">
                     <h3>Markdown</h3>
-                    <svg class="copy-feedback tabler-icon" xmlns="http://www.w3.org/2000/svg"
-                    width="64" height="32" viewBox="0 0 24 24"
-                    stroke-width="1.25" stroke="rgb(0, 119, 255)" fill="none"
-                    stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M9 5H7a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2V7a2 2 0 0 0 -2 -2h-2" /><rect x="9" y="3" width="6" height="4" rx="2" /><line x1="9" y1="12" x2="9.01" y2="12" /><line x1="13" y1="12" x2="15" y2="12" /><line x1="9" y1="16" x2="9.01" y2="16" /><line x1="13" y1="16" x2="15" y2="16" />
-                    </svg>
-                    <svg xmlns="http://www.w3.org/2000/svg"
-                    class="tabler-icon copy-feedback-ok"
-                    style="display:none"
-                    width="64" height="64" viewBox="0 0 24 24"
-                    stroke-width="1.25" stroke="rgb(0, 200, 84)" fill="none"
-                    stroke-linecap="round" stroke-linejoin="round">
-                    <path stroke="none" d="M0 0h24v24H0z"/><path d="M9 5H7a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2V7a2 2 0 0 0 -2 -2h-2" /><rect x="9" y="3" width="6" height="4" rx="2" /><path d="M9 14l2 2l4 -4" />
-                    </svg>
+                    ${svg("clipboard-default")}
+                    ${svg("clipboard-default-ok")}
                 </div>
                 <div id="markdown-link" class="arxivTools-codify">[${document.title}](${window.location.href})</div>
             </div>
         `);
-                $("#markdown-header .copy-feedback").click(e => {
-                    $("#markdown-header .copy-feedback").fadeOut(200, () => {
-                        $("#markdown-header .copy-feedback-ok").fadeIn(200, () => {
-                            setTimeout(() => {
-                                $("#markdown-header .copy-feedback-ok").fadeOut(200,
-                                    () => {
-                                        $("#markdown-header .copy-feedback").fadeIn(200)
-                                    }
-                                )
-                            }, 1500)
-                        })
-                    })
-                    copyDivToClipboard("markdown-link");
-                    feedback("Markdown Link Copied!");
+        $("#markdown-header .copy-feedback").click(e => {
+            $("#markdown-header .copy-feedback").fadeOut(200, () => {
+                $("#markdown-header .copy-feedback-ok").fadeIn(200, () => {
+                    setTimeout(() => {
+                        $("#markdown-header .copy-feedback-ok").fadeOut(200,
+                            () => {
+                                $("#markdown-header .copy-feedback").fadeIn(200)
+                            }
+                        )
+                    }, 1500)
+                })
+            })
+            copyDivToClipboard("markdown-link");
+            feedback("Markdown Link Copied!");
+        });
+    }
+
+    if (checkPdfTitle && isPdf) {
+        setTimeout(
+            () => {
+                $.get(`https://export.arxiv.org/api/query?id_list=${id}`).then(data => {
+                    const bib = $(data);
+                    const title = $(bib.find("entry title")[0]).text();
+                    window.document.title = title + ` (${id}).pdf`
                 });
-            }
+            }, 500
+        )
+    }
 
-            if (checkPdfTitle && isPdf) {
-                setTimeout(
-                    () => {
-                        $.get(`https://export.arxiv.org/api/query?id_list=${id}`).then(data => {
-                            const bib = $(data);
-                            const title = $(bib.find("entry title")[0]).text();
-                            window.document.title = title + ` (${id}).pdf`
-                        });
-                    }, 500
-                )
-            }
+    if (checkBib && !isPdf) {
 
-            if (checkBib && !isPdf) {
-
-                h.parent().append(`
+        h.parent().append(`
                 <div id="loader-container" class="arxivTools-container">
                     <div class="sk-folding-cube">
                         <div class="sk-cube1 sk-cube"></div>
@@ -398,145 +475,135 @@ $(() => {
 
 
 
-                $.get(`https://export.arxiv.org/api/query?id_list=${id}`).then(data => {
+        $.get(`https://export.arxiv.org/api/query?id_list=${id}`).then(data => {
 
-                    var bib = $(data);
-                    var authors = [];
-                    var key = "";
-                    bib.find("author name").each((k, v) => {
-                        authors.push($(v).text());
-                        if (k === 0) {
-                            key += $(v).text().split(" ")[$(v).text().split(" ").length - 1].toLowerCase();
-                        }
-                    })
-                    const author = "{" + authors.join(" and ") + "}";
-                    const title = "{" + $(bib.find("entry title")[0]).text() + "}";
-                    const year = $(bib.find("entry published")[0]).text().slice(0, 4);
-                    key += year;
-                    key += title.slice(1).split(" ")[0].toLowerCase().replace(/[^0-9a-z]/gi, '');
+            var bib = $(data);
+            var authors = [];
+            var key = "";
+            bib.find("author name").each((k, v) => {
+                authors.push($(v).text());
+                if (k === 0) {
+                    key += $(v).text().split(" ")[$(v).text().split(" ").length - 1].toLowerCase();
+                }
+            })
+            const author = "{" + authors.join(" and ") + "}";
+            const title = "{" + $(bib.find("entry title")[0]).text() + "}";
+            const year = $(bib.find("entry published")[0]).text().slice(0, 4);
+            key += year;
+            key += title.slice(1).split(" ")[0].toLowerCase().replace(/[^0-9a-z]/gi, '');
 
-                    let bibtex = `@article{${key},\n`;
-                    bibtex += `    title=${title},\n`;
-                    bibtex += `    author=${author},\n`;
-                    bibtex += `    year={${year}},\n`;
-                    bibtex += `    journal={arXiv preprint arXiv:${id}}\n`;
-                    bibtex += `}`;
+            let bibtex = `@article{${key},\n`;
+            bibtex += `    title=${title},\n`;
+            bibtex += `    author=${author},\n`;
+            bibtex += `    year={${year}},\n`;
+            bibtex += `    journal={arXiv preprint arXiv:${id}}\n`;
+            bibtex += `}`;
 
-                    const bibtexDiv = `
+            const bibtexDiv = `
                     <div id="bibtexDiv">
                         <div id="texHeader" class="arxivTools-header">
                             <h3>BibTex:</h3>
-                            <svg class="copy-feedback tabler-icon" xmlns="http://www.w3.org/2000/svg"
-                            width="64" height="64" viewBox="0 0 24 24"
-                            stroke-width="1.25" stroke="rgb(0, 119, 255)" fill="none"
-                            stroke-linecap="round" stroke-linejoin="round">
-                            <path d="M9 5H7a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2V7a2 2 0 0 0 -2 -2h-2" /><rect x="9" y="3" width="6" height="4" rx="2" /><line x1="9" y1="12" x2="9.01" y2="12" /><line x1="13" y1="12" x2="15" y2="12" /><line x1="9" y1="16" x2="9.01" y2="16" /><line x1="13" y1="16" x2="15" y2="16" />
-                            </svg>
-                            <svg xmlns="http://www.w3.org/2000/svg"
-                            class="tabler-icon copy-feedback-ok"
-                            style="display:none"
-                            width="64" height="64" viewBox="0 0 24 24"
-                            stroke-width="1.25" stroke="rgb(0, 200, 84)" fill="none"
-                            stroke-linecap="round" stroke-linejoin="round">
-                            <path stroke="none" d="M0 0h24v24H0z"/><path d="M9 5H7a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2V7a2 2 0 0 0 -2 -2h-2" /><rect x="9" y="3" width="6" height="4" rx="2" /><path d="M9 14l2 2l4 -4" />
-                            </svg>
+                            ${svg("clipboard-default")}
+                            ${svg("clipboard-default-ok")}
                         </div>
                         <div id="texTextarea" class="arxivTools-codify">${bibtex}</div>
                     </div>
                 `;
 
-                    $("#loader-container").fadeOut(() => {
-                        $("#loader-container").remove();
-                        h.parent().append(bibtexDiv);
-                        $("#texHeader .copy-feedback").click(e => {
-                            $("#texHeader .copy-feedback").fadeOut(200, () => {
-                                $("#texHeader .copy-feedback-ok").fadeIn(200, () => {
-                                    setTimeout(() => {
-                                        $("#texHeader .copy-feedback-ok").fadeOut(200,
-                                            () => {
-                                                $("#texHeader .copy-feedback").fadeIn(200)
-                                            }
-                                        )
-                                    }, 1500)
-                                })
-                            })
-                            copyDivToClipboard("texTextarea");
-                            feedback("Bibtex Citation Copied!");
-                        });
-                    });
+            $("#loader-container").fadeOut(() => {
+                $("#loader-container").remove();
+                h.parent().append(bibtexDiv);
+                $("#texHeader .copy-feedback").click(e => {
+                    $("#texHeader .copy-feedback").fadeOut(200, () => {
+                        $("#texHeader .copy-feedback-ok").fadeIn(200, () => {
+                            setTimeout(() => {
+                                $("#texHeader .copy-feedback-ok").fadeOut(200,
+                                    () => {
+                                        $("#texHeader .copy-feedback").fadeIn(200)
+                                    }
+                                )
+                            }, 1500)
+                        })
+                    })
+                    copyDivToClipboard("texTextarea");
+                    feedback("Bibtex Citation Copied!");
+                });
+            });
 
 
-                })
+        })
+    }
+}
+
+const vanity = () => {
+
+    var citationtimeout
+    $(".ltx_ref").on("mouseenter", (e) => {
+        clearTimeout(citationtimeout);
+        $(".arxivTools-card").remove();
+        if (!$(e.target).hasClass("ltx_engrafo_tooltip")) {
+            return
+        }
+        citationtimeout = setTimeout(() => {
+            const popper = $($(".tippy-popper:visible")[0])
+            const journal = $(popper.find(".ltx_bib_journal")[0])
+            let query;
+            let arxivId;
+            let vanityTitle;
+            let isArxivCitation = false;
+            if (journal.text().indexOf("arXiv:") > -1) {
+                arxivId = journal.text().split("arXiv:");
+                arxivId = arxivId[arxivId.length - 1];
+                query = `https://export.arxiv.org/api/query?id_list=${arxivId}`;
+                isArxivCitation = true;
             }
-        });
-    } else {
-        var citationtimeout
-        $(".ltx_ref").on("mouseenter", (e) => {
-            clearTimeout(citationtimeout);
-            $(".arxivTools-card").remove();
-            if (!$(e.target).hasClass("ltx_engrafo_tooltip")) {
-                return
+            else {
+                vanityTitle = $(popper.find(".ltx_bib_title")[0]).text();
+                query = `https://export.arxiv.org/api/query?search_query=all:${vanityTitle}&max_results=1`
             }
-            citationtimeout = setTimeout(() => {
-                const popper = $($(".tippy-popper:visible")[0])
-                const journal = $(popper.find(".ltx_bib_journal")[0])
-                let query;
-                let arxivId;
-                let vanityTitle;
-                let isArxivCitation = false;
-                if (journal.text().indexOf("arXiv:") > -1) {
-                    arxivId = journal.text().split("arXiv:");
-                    arxivId = arxivId[arxivId.length - 1];
-                    query = `https://export.arxiv.org/api/query?id_list=${arxivId}`;
-                    isArxivCitation = true;
-                }
-                else {
-                    vanityTitle = $(popper.find(".ltx_bib_title")[0]).text();
-                    query = `https://export.arxiv.org/api/query?search_query=all:${vanityTitle}&max_results=1`
-                }
 
-                $.get(query).then(data => {
-                    $(".arxivTools-card").remove();
-                    var bib = $(data);
-                    const bibtexTitle = "{" + $(bib.find("entry title")[0]).text() + "}";
-                    if (
-                        !isArxivCitation
-                        && bibtexTitle.toLowerCase().replace(/[^a-z]/gi, '') !== vanityTitle.toLowerCase().replace(/[^a-z]/gi, '')
-                    ) {
-                        console.log("Wrong title from Arxiv API:",
-                            vanityTitle,
-                            bibtexTitle
-                        )
-                        return
+            $.get(query).then(data => {
+                $(".arxivTools-card").remove();
+                var bib = $(data);
+                const bibtexTitle = "{" + $(bib.find("entry title")[0]).text() + "}";
+                if (
+                    !isArxivCitation
+                    && bibtexTitle.toLowerCase().replace(/[^a-z]/gi, '') !== vanityTitle.toLowerCase().replace(/[^a-z]/gi, '')
+                ) {
+                    console.log("Wrong title from Arxiv API:",
+                        vanityTitle,
+                        bibtexTitle
+                    )
+                    return
+                }
+                const ids = bib.find("id");
+                ids.each((k, v) => {
+                    if ($(v).html().match(/\d\d\d\d\.\d\d\d\d\d/g)) {
+                        arxivId = $(v).html().match(/\d\d\d\d\.\d\d\d\d\d/g)[0]
                     }
-                    const ids = bib.find("id");
-                    ids.each((k, v) => {
-                        if ($(v).html().match(/\d\d\d\d\.\d\d\d\d\d/g)){
-                            arxivId = $(v).html().match(/\d\d\d\d\.\d\d\d\d\d/g)[0]
-                        }
-                    })
-                    arxivId = $(ids[ids.length - 1]).html().match()[0];
-                    var authors = [];
-                    var key = "";
-                    bib.find("author name").each((k, v) => {
-                        authors.push($(v).text());
-                        if (k === 0) {
-                            key += $(v).text().split(" ")[$(v).text().split(" ").length - 1].toLowerCase();
-                        }
-                    })
-                    const author = "{" + authors.join(" and ") + "}";
-                    const year = $(bib.find("entry published")[0]).text().slice(0, 4);
-                    key += year;
-                    key += bibtexTitle.slice(1).split(" ")[0].toLowerCase().replace(/[^0-9a-z]/gi, '');
+                })
+                arxivId = $(ids[ids.length - 1]).html().match()[0];
+                var authors = [];
+                var key = "";
+                bib.find("author name").each((k, v) => {
+                    authors.push($(v).text());
+                    if (k === 0) {
+                        key += $(v).text().split(" ")[$(v).text().split(" ").length - 1].toLowerCase();
+                    }
+                })
+                const author = "{" + authors.join(" and ") + "}";
+                const year = $(bib.find("entry published")[0]).text().slice(0, 4);
+                key += year;
+                key += bibtexTitle.slice(1).split(" ")[0].toLowerCase().replace(/[^0-9a-z]/gi, '');
 
-                    let bibtex = `@article{${key},\n`;
-                    bibtex += `    title=${bibtexTitle},\n`;
-                    bibtex += `    author=${author},\n`;
-                    bibtex += `    year={${year}},\n`;
-                    bibtex += `    journal={arXiv preprint arXiv:${arxivId}}\n`;
-                    bibtex += `}`;
-                    const offset = $(e.target).offset();
-                    $("body").append(`
+                let bibtex = `@article{${key},\n`;
+                bibtex += `    title=${bibtexTitle},\n`;
+                bibtex += `    author=${author},\n`;
+                bibtex += `    year={${year}},\n`;
+                bibtex += `    journal={arXiv preprint arXiv:${arxivId}}\n`;
+                bibtex += `}`;
+                const offset = $(e.target).offset();
+                $("body").append(`
                         <div id="arxivTools-${arxivId}" class="arxivTools-card" style="top:${offset.top + 30}px">
                             <div class="arxivTools-card-body">
                                 <div class="arxivTools-card-header">
@@ -547,59 +614,57 @@ $(() => {
                                 </div>
                                 <div class="arxivTools-buttons">
                                     <div class="arxivTools-close">
-                                        <svg
-                                            xmlns="http://www.w3.org/2000/svg"
-                                            class="tabler-icon"
-                                            width="24" height="24" viewBox="0 0 24 24"
-                                            stroke-width="1.25" stroke="#b31b1b" fill="none"
-                                            stroke-linecap="round" stroke-linejoin="round"
-                                        >
-                                            <path stroke="none" d="M0 0h24v24H0z"/><circle cx="12" cy="12" r="9" /><path d="M10 10l4 4m0 -4l-4 4" />
-                                        </svg>
+                                        ${svg("vanity-close")}
                                     </div>
                                     <div class="arxivTools-copy" id="arxivTools-copy-${arxivId}">
-                                    <svg
-                                        class="copy-feedback tabler-icon" xmlns="http://www.w3.org/2000/svg"
-                                        width="24" height="24" viewBox="0 0 24 24"
-                                        stroke-width="1.25" stroke="rgb(0, 119, 255)" fill="none"
-                                        stroke-linecap="round" stroke-linejoin="round"
-                                    >
-                                        <path stroke="none" d="M0 0h24v24H0z"/><path d="M9 5H7a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2V7a2 2 0 0 0 -2 -2h-2" /><rect x="9" y="3" width="6" height="4" rx="2" /><line x1="9" y1="12" x2="9.01" y2="12" /><line x1="13" y1="12" x2="15" y2="12" /><line x1="9" y1="16" x2="9.01" y2="16" /><line x1="13" y1="16" x2="15" y2="16" />
-                                    </svg>
-                                    <svg xmlns="http://www.w3.org/2000/svg"
-                                        class="tabler-icon copy-feedback-ok"
-                                        style="display:none"
-                                        width="64" height="64" viewBox="0 0 24 24"
-                                        stroke-width="1.25" stroke="rgb(0, 200, 84)" fill="none"
-                                        stroke-linecap="round" stroke-linejoin="round"
-                                    >
-                                        <path stroke="none" d="M0 0h24v24H0z"/><path d="M9 5H7a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2V7a2 2 0 0 0 -2 -2h-2" /><rect x="9" y="3" width="6" height="4" rx="2" /><path d="M9 14l2 2l4 -4" />
-                                    </svg>
+                                        ${svg("vanity-clipboard")}
+                                        ${svg("vanity-clipboard-ok")}
                                     </div>
                                 </div>
                             </div>
                         </div>
                         `);
 
-                    $(".arxivTools-close").click(() => {
-                        $(".arxivTools-card").remove()
-                    });
-                    $(".arxivTools-copy").click((e) => {
-                        let id = $($(e.target).parent().parent().find(".arxivTools-copy")[0]).attr('id').split("-");
-                        id = id[id.length - 1];
-                        copyDivToClipboard("arxivTools-bibtex-" + id)
-                        $(".copy-feedback").fadeOut(() => {
-                            $(".copy-feedback-ok").fadeIn(() => {
-                                setTimeout(() => {
-                                    $(".copy-feedback-ok").fadeOut(() => {
-                                        $(".copy-feedback").fadeIn();
-                                    });
-                                }, 1000);
-                            });
+                $(".arxivTools-close").click(() => {
+                    $(".arxivTools-card").remove()
+                });
+                $(".arxivTools-copy").click((e) => {
+                    let id = $($(e.target).parent().parent().find(".arxivTools-copy")[0]).attr('id').split("-");
+                    id = id[id.length - 1];
+                    copyDivToClipboard("arxivTools-bibtex-" + id)
+                    $(".copy-feedback").fadeOut(() => {
+                        $(".copy-feedback-ok").fadeIn(() => {
+                            setTimeout(() => {
+                                $(".copy-feedback-ok").fadeOut(() => {
+                                    $(".copy-feedback").fadeIn();
+                                });
+                            }, 1000);
                         });
                     });
-                })
-            }, 400)
+                });
+            })
+        }, 400)
+    })
+}
+
+$(() => {
+    const checks = ['checkBib', 'checkMd', 'checkDownload', 'checkPdfTitle', "checkVanity"];
+    chrome.storage.sync.get(checks, function (items) {
+
+        const checkMd = items.hasOwnProperty("checkMd") ? items.checkMd : true;
+        const checkBib = items.hasOwnProperty("checkBib") ? items.checkBib : true;
+        const checkDownload = items.hasOwnProperty("checkDownload") ? items.checkDownload : true;
+        const checkPdfTitle = items.hasOwnProperty("checkPdfTitle") ? items.checkPdfTitle : true;
+        const checkVanity = items.hasOwnProperty("checkVanity") ? items.checkVanity : true;
+
+        main({
+            checkMd,
+            checkBib,
+            checkDownload,
+            checkPdfTitle,
+            checkVanity
         })
-    }
+
+    });
+
 })
