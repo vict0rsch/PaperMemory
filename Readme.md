@@ -50,10 +50,6 @@ Share ideas 💡 in [issues](https://github.com/vict0rsch/ArxivTools/issues) and
 * load unpackaged extension
 * chose downloaded repo :)
 
-## Firefox
-
-Using Firefox? Raise an issue if you're willing to help a little 🚁
-
 ## Help
 
 * **Arxiv-Vanity**
@@ -61,3 +57,5 @@ Using Firefox? Raise an issue if you're willing to help a little 🚁
   * If link is an arxiv citation, ArxivTools fetches the citation's ID on Arxiv's `export` API.
   * Otherwise, ArxivTools extracts the paper's title, and searches for it on Arxiv's `export` API.
     * If titles don't match, Arxiv's API could not find the exact article and ArxivTools doesn't do anything
+* **Firefox**
+  * Using Firefox? Raise an issue if you're willing to help a little 🚁
