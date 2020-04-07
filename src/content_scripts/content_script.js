@@ -477,27 +477,7 @@ const arxiv = checks => {
 
         $.get(`https://export.arxiv.org/api/query?id_list=${id}`).then(data => {
 
-            var bib = $(data);
-            var authors = [];
-            var key = "";
-            bib.find("author name").each((k, v) => {
-                authors.push($(v).text());
-                if (k === 0) {
-                    key += $(v).text().split(" ")[$(v).text().split(" ").length - 1].toLowerCase();
-                }
-            })
-            const author = "{" + authors.join(" and ") + "}";
-            const title = "{" + $(bib.find("entry title")[0]).text() + "}";
-            const year = $(bib.find("entry published")[0]).text().slice(0, 4);
-            key += year;
-            key += title.slice(1).split(" ")[0].toLowerCase().replace(/[^0-9a-z]/gi, '');
-
-            let bibtex = `@article{${key},\n`;
-            bibtex += `    title=${title},\n`;
-            bibtex += `    author=${author},\n`;
-            bibtex += `    year={${year}},\n`;
-            bibtex += `    journal={arXiv preprint arXiv:${id}}\n`;
-            bibtex += `}`;
+            const { bibvars, bibtext } = parseBibtex(data)
 
             const bibtexDiv = `
                     <div id="bibtexDiv">
@@ -506,7 +486,7 @@ const arxiv = checks => {
                             ${svg("clipboard-default")}
                             ${svg("clipboard-default-ok")}
                         </div>
-                        <div id="texTextarea" class="arxivTools-codify">${bibtex}</div>
+                        <div id="texTextarea" class="arxivTools-codify">${bibtext}</div>
                     </div>
                 `;
 
@@ -564,59 +544,33 @@ const vanity = () => {
 
             $.get(query).then(data => {
                 $(".arxivTools-card").remove();
-                var bib = $(data);
-                const bibtexTitle = "{" + $(bib.find("entry title")[0]).text() + "}";
+                const { bibvars, bibtext } = parseBibtex(data)
                 if (
                     !isArxivCitation
-                    && bibtexTitle.toLowerCase().replace(/[^a-z]/gi, '') !== vanityTitle.toLowerCase().replace(/[^a-z]/gi, '')
+                    && bibvars.title.toLowerCase().replace(/[^a-z]/gi, '') !== vanityTitle.toLowerCase().replace(/[^a-z]/gi, '')
                 ) {
                     console.log("Wrong title from Arxiv API:",
                         vanityTitle,
-                        bibtexTitle
+                        bibvars.title
                     )
                     return
                 }
-                const ids = bib.find("id");
-                ids.each((k, v) => {
-                    if ($(v).html().match(/\d\d\d\d\.\d\d\d\d\d/g)) {
-                        arxivId = $(v).html().match(/\d\d\d\d\.\d\d\d\d\d/g)[0]
-                    }
-                })
-                arxivId = $(ids[ids.length - 1]).html().match()[0];
-                var authors = [];
-                var key = "";
-                bib.find("author name").each((k, v) => {
-                    authors.push($(v).text());
-                    if (k === 0) {
-                        key += $(v).text().split(" ")[$(v).text().split(" ").length - 1].toLowerCase();
-                    }
-                })
-                const author = "{" + authors.join(" and ") + "}";
-                const year = $(bib.find("entry published")[0]).text().slice(0, 4);
-                key += year;
-                key += bibtexTitle.slice(1).split(" ")[0].toLowerCase().replace(/[^0-9a-z]/gi, '');
 
-                let bibtex = `@article{${key},\n`;
-                bibtex += `    title=${bibtexTitle},\n`;
-                bibtex += `    author=${author},\n`;
-                bibtex += `    year={${year}},\n`;
-                bibtex += `    journal={arXiv preprint arXiv:${arxivId}}\n`;
-                bibtex += `}`;
                 const offset = $(e.target).offset();
                 $("body").append(`
-                        <div id="arxivTools-${arxivId}" class="arxivTools-card" style="top:${offset.top + 30}px">
+                        <div id="arxivTools-${bibvars.arxivId}" class="arxivTools-card" style="top:${offset.top + 30}px">
                             <div class="arxivTools-card-body">
                                 <div class="arxivTools-card-header">
                                     ArxivTools: BibTex citation
                                 </div>
-                                <div class="arxivTools-bibtex" id="arxivTools-bibtex-${arxivId}">
-                                    ${bibtex}
+                                <div class="arxivTools-bibtex" id="arxivTools-bibtex-${bibvars.arxivId}">
+                                    ${bibtext}
                                 </div>
                                 <div class="arxivTools-buttons">
                                     <div class="arxivTools-close">
                                         ${svg("vanity-close")}
                                     </div>
-                                    <div class="arxivTools-copy" id="arxivTools-copy-${arxivId}">
+                                    <div class="arxivTools-copy" id="arxivTools-copy-${bibvars.arxivId}">
                                         ${svg("vanity-clipboard")}
                                         ${svg("vanity-clipboard-ok")}
                                     </div>

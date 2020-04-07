@@ -38,9 +38,9 @@
 
 		<div id="isArxiv" style="display: none;">
 
-			<p>Want to reach this pdf's Arxiv page?</p>
+			<p>Want to reach this pdf's Arxiv Abstract page?</p>
 
-			<br><br>
+			<br>
 
 			<div id="abstract-card">
 				<div id="abstract-card-header">
@@ -50,6 +50,19 @@
 					<div class="button-text" id="goToAbstract"></div>
 				</div>
 				<div id="abstract-card-title"></div>
+			</div>
+
+			<div id="bibtex-card">
+				<div id="bibtex-card-header">
+					<svg class="tabler-icon" id="bibtex-svg">
+						<use xlink:href="../../icons/tabler-sprite-nostroke.svg#tabler-archive" />
+					</svg>
+					<svg class="tabler-icon" style="display: none;" id="clipboard-ok">
+						<use xlink:href="../../icons/tabler-sprite-nostroke.svg#tabler-clipboard-check" />
+					</svg>
+					<div class="button-text" id="goTobibtex">Copy BibTex entry</div>
+				</div>
+				<div id="bibtex-card-content"></div>
 			</div>
 
 		</div>
@@ -101,8 +114,9 @@
 
 </body>
 
-<script src="../../js/jquery/jquery.min.js"></script>
+<script src="../../js/jquery.min.js"></script>
 <script src="../../js/jquery-easing.js"></script>
+<script src="../../js/bibtex.js"></script>
 <script src="./popup.js"></script>
 
 

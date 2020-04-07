@@ -31,7 +31,8 @@
         "https://*.arxiv-vanity.com/*"
       ],
       "js": [
-        "js/jquery/jquery.min.js",
+        "js/bibtex.js",
+        "js/jquery.min.js",
         "src/content_scripts/content_script.js"
       ],
       "css": [

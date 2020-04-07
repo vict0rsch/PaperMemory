@@ -8,6 +8,41 @@
 
 // }).call(this);
 
+function fallbackCopyTextToClipboard(text) {
+    var textArea = document.createElement("textarea");
+    textArea.value = text;
+
+    // Avoid scrolling to bottom
+    textArea.style.top = "0";
+    textArea.style.left = "0";
+    textArea.style.position = "fixed";
+
+    document.body.appendChild(textArea);
+    textArea.focus();
+    textArea.select();
+
+    try {
+        var successful = document.execCommand('copy');
+        var msg = successful ? 'successful' : 'unsuccessful';
+        console.log('Fallback: Copying text command was ' + msg);
+    } catch (err) {
+        console.error('Fallback: Oops, unable to copy', err);
+    }
+
+    document.body.removeChild(textArea);
+}
+function copyTextToClipboard(text) {
+    if (!navigator.clipboard) {
+        fallbackCopyTextToClipboard(text);
+        return;
+    }
+    navigator.clipboard.writeText(text).then(function () {
+        console.log('Async: Copying to clipboard was successful!');
+    }, function (err) {
+        console.error('Async: Could not copy text: ', err);
+    });
+}
+
 function parseUrl(url) {
     var a = document.createElement('a');
     a.href = url;
@@ -149,9 +184,11 @@ const main = tab => {
             });
         }
 
+
         if (url.hostname === "arxiv.org") {
             $("#notArxiv").hide();
             $("#notPdf").show();
+            $("#bibtex-card-content").slideUp();
             if (url.href.endsWith(".pdf")) {
                 $("#notPdf").hide();
                 $("#isArxiv").show();
@@ -165,9 +202,21 @@ const main = tab => {
                     window.close();
                 })
                 $.get(`https://export.arxiv.org/api/query?id_list=${paperId}`).then(data => {
-                    const bib = $(data);
-                    const title = $(bib.find("entry title")[0]).text();
-                    $("#abstract-card-title").text(title);
+                    const { bibvars, bibtext } = parseBibtex(data)
+                    $("#abstract-card-title").text(bibvars.title);
+                    $("#bibtex-card-content").text(bibtext);
+                    $("#bibtex-card-header").click((e) => {
+                        copyTextToClipboard($("#bibtex-card-content").text());
+                        $("#bibtex-svg").fadeOut(() => {
+                            $("#clipboard-ok").fadeIn(() => {
+                                setTimeout(() => {
+                                    $("#clipboard-ok").fadeOut(() => {
+                                        $("#bibtex-svg").fadeIn()
+                                    })
+                                }, 1500)
+                            })
+                        })
+                    })
                 });
             }
         }

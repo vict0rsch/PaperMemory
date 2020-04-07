@@ -1,5 +1,5 @@
 #abstract-card {
-    width: 150px;
+    width: 200px;
     border: 2px solid rgb(0, 119, 255);
     padding: 1rem;
     border-radius: 4px;
@@ -20,7 +20,7 @@
     margin-bottom: 8px;
 }
 
-#abstract-card:hover {
+#abstract-card:hover, #bibtex-card:hover {
     transform: scale(1.1);
     box-shadow: 10px 10px 30px 0px rgba(0, 0, 0, 0.25);
 }
@@ -30,4 +30,29 @@
     font-size: 0.9rem;
     text-align: center;
     color: rgb(70, 70, 70);
+}
+
+#bibtex-card {
+    margin-top: 12px;
+    width: 200px;
+    border: 2px solid rgb(88, 88, 88);
+    padding: 0 1rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: all ease 0.2s;
+    color: grey;
+    font-family: monospace;
+}
+
+#bibtex-card-header {
+    display: flex;
+    justify-content: space-evenly;
+    align-items: center;
+    margin-bottom: 8px;
+    margin-top: 8px;
+}
+
+#clipboard-ok{
+    color: rgb(0, 200, 84) !important;
 }
