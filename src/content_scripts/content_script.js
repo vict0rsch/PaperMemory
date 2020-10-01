@@ -389,7 +389,7 @@ const arxiv = checks => {
             h = $(el);
         }
     });
-    const id = window.location.href.match(/\d\d\d\d\.\d\d\d\d\d/g)[0];
+    const id = window.location.href.match(/\d\d\d\d\.\d\d\d\d?\d/g)[0];
     const isPdf = window.location.href.match(/\d\d\d\d\.\d\d\d\d\d\.pdf/g);
     const pdfUrl = "https://arxiv.org/pdf/" + id + ".pdf";
     const fileName = id + " - " + document.title.split(" ").slice(1).join(" ") + ".pdf";
