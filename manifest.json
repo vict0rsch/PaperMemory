@@ -1,6 +1,6 @@
 {
   "name": "ArxivTools",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "manifest_version": 2,
   "description": "Enhance Arxiv with direct download, Markdown link, BibTex citation and more!",
   "homepage_url": "https://github.com/vict0rsch/ArxivTools",
