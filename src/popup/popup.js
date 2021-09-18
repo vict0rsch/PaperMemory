@@ -8,6 +8,15 @@
 
 // }).call(this);
 
+function delay(fn, ms) {
+    // https://stackoverflow.com/questions/1909441/how-to-delay-the-keyup-handler-until-the-user-stops-typing
+    let timer = 0
+    return function (...args) {
+        clearTimeout(timer)
+        timer = setTimeout(fn.bind(this, ...args), ms || 0)
+    }
+}
+
 function fallbackCopyTextToClipboard(text) {
     var textArea = document.createElement("textarea");
     textArea.value = text;
@@ -108,34 +117,24 @@ const openMenu = () => {
     })
 }
 
+const orderPapers = (paper1, paper2) => {
+    let val1 = paper1[state.sortKey];
+    let val2 = paper2[state.sortKey];
+
+    if (typeof val1 === "string") {
+        val1 = val1.toLocaleLowerCase();
+        val2 = val2.toLocaleLowerCase();
+    }
+    if (["addDate", "count", "lastOpenDate"].indexOf(state.sortKey) >= 0) {
+        return val1 > val2 ? -1 : 1
+    }
+    return val1 > val2 ? 1 : -1
+}
+
 const sortMemory = () => {
     state.sortedPapers = Object.values(state.papers)
-    state.sortedPapers.sort(
-        (paper1, paper2) => {
-            let val1 = paper1[state.sortKey];
-            let val2 = paper2[state.sortKey];
-
-            if (typeof val1 === "string") {
-                val1 = val1.toLocaleLowerCase();
-                val2 = val2.toLocaleLowerCase();
-            }
-
-            return val1 > val2 ? 1 : -1
-        }
-    );
-    state.papersList.sort(
-        (paper1, paper2) => {
-            let val1 = paper1[state.sortKey];
-            let val2 = paper2[state.sortKey];
-
-            if (typeof val1 === "string") {
-                val1 = val1.toLocaleLowerCase();
-                val2 = val2.toLocaleLowerCase();
-            }
-
-            return val1 > val2 ? 1 : -1
-        }
-    );
+    state.sortedPapers.sort(orderPapers)
+    state.papersList.sort(orderPapers);
 }
 
 const reverseMemory = () => {
@@ -158,22 +157,62 @@ const filterMemory = (letters) => {
 }
 
 const getMemoryItemHTML = (item) => {
+    const addDate = (new Date(item.addDate)).toLocaleString().replace(",", "")
+    const lastOpenDate = (new Date(item.lastOpenDate)).toLocaleString().replace(",", "")
     return `
     <div class="memory-item-container">
-        <h4 class="memory-item-title">
+
+        <h4 class="memory-item-title" title="Added ${addDate}&#13;&#10;Last open ${lastOpenDate}">
             ${item.title}
         </h4>
+        
         <small>${item.author}</small>
+
         <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 2px">
-            <div><small>${item.arxivId}</small></div>
-            <svg style="height: 15px; width: 15px; cursor: pointer" class="memory-item-link" id="memory-item-link-${item.arxivId}">
-                <use xlink:href="../../icons/tabler-sprite-nostroke.svg#tabler-external-link" />
-            </svg>
-            <svg style="height: 15px; width: 15px; cursor: pointer" id="memory-item-md-${item.arxivId}">
-                <use xlink:href="../../icons/tabler-sprite-nostroke.svg#tabler-clipboard-list" />
-            </svg>
-            <div>Visits: ${item.count}</div>
+            <div>
+                <small>
+                    ${item.arxivId}
+                </small>
+            </div>
+
+            <div
+                class="memory-item-link memory-item-svg-div" 
+                id="memory-item-link-${item.arxivId}"
+                title="Open ${item.pdfLink}" 
+            >
+                <svg  style="height: 15px; width: 15px; pointer-events: none;" >
+                   <use xlink:href="../../icons/tabler-sprite-nostroke.svg#tabler-external-link" />
+                </svg>
+            </div>
+                
+            <div 
+                class="memory-item-copy-link memory-item-svg-div"
+                id="memory-item-copy-link-${item.arxivId}"
+                title="Copy pdf link" 
+            >
+                <svg style="height: 15px; width: 15px; pointer-events: none;" >
+                    <use xlink:href="../../icons/tabler-sprite-nostroke.svg#tabler-link" />
+                </svg>
+            </div>
+
+            <div 
+                class="memory-item-md memory-item-svg-div"
+                id="memory-item-md-${item.arxivId}"
+                title="Copy Markdown-formatted link" 
+            >
+                <svg style="height: 15px; width: 15px; pointer-events: none;" >
+                    <use xlink:href="../../icons/tabler-sprite-nostroke.svg#tabler-clipboard-list" />
+                </svg>
+            </div>
+
+            <span style="color: green; display: none" id="memory-item-feedback-${item.arxivId}"></span>
+            
+            <div title="Number of times you have loaded&#13;&#10;the paper's Page or PDF">
+                Visits: ${item.count}
+            </div>
+
         </div>
+
         <div class="delete-memory-item" id="delete-memory-item-${item.arxivId}">x</div>
     </div>
     `
@@ -206,12 +245,61 @@ const displayMemoryTable = () => {
 
     })
     $(".memory-item-link").click((e) => {
-        const el = e.target;
-        const id = el.id;
-        const arxivId = id.replace("memory-item-link-", "");
+        const arxivId = e.target.id.replace("memory-item-link-", "");
         const url = state.papers[arxivId].pdfLink;
-        chrome.tabs.update({ url });
+        console.log(url)
+        chrome.tabs.query({ url: "https://arxiv.org/*" }, (tabs) => {
+            let validTabsIds = [];
+            let pdfTabsIds = [];
+            const urls = tabs.map(t => t.url)
+            let idx = 0;
+            for (const u of urls) {
+                if (u.indexOf(arxivId) >= 0) {
+                    validTabsIds.push(idx)
+                    if (u.indexOf(".pdf") >= 0) {
+                        pdfTabsIds.push(idx)
+                    }
+                }
+                idx += 1
+            }
+            if (validTabsIds.length > 0) {
+                let tabId = 0
+                if (pdfTabsIds.length > 0) {
+                    tabId = tabs[pdfTabsIds[0]].id
+                } else {
+                    tabId = tabs[validTabsIds[0]].id
+                }
+                var updateProperties = { 'active': true };
+                chrome.tabs.update(tabId, updateProperties, (tab) => { });
+            } else {
+                chrome.tabs.create({ url }, (tab) => { })
+            }
+
+        });
     })
+    $(".memory-item-md").click((e) => {
+        const arxivId = e.target.id.replace("memory-item-md-", "");
+        const md = state.papers[arxivId].md;
+        copyAndConfirmMemoryItem(arxivId, md, "Markdown Link Copied!")
+    })
+    $(".memory-item-copy-link").click((e) => {
+        const arxivId = e.target.id.replace("memory-item-copy-link-", "");
+        const pdfLink = state.papers[arxivId].pdfLink;
+        copyAndConfirmMemoryItem(arxivId, pdfLink, "Pdf Link Copied!")
+    })
+}
+
+const copyAndConfirmMemoryItem = (arxivId, textToCopy, feedbackText) => {
+    const elementId = `#memory-item-feedback-${arxivId}`.replace(".", "\\.")
+    copyTextToClipboard(textToCopy)
+    $(elementId).text(feedbackText)
+    $(elementId).fadeIn()
+    setTimeout(
+        () => {
+            $(elementId).text("")
+        },
+        1000
+    )
 }
 
 const confirmDelete = arxivId => {
@@ -258,12 +346,6 @@ const openMemory = () => {
             },
         );
         $("#memory-switch-text").html("Close");
-        $("#memory-search").keyup((e) => {
-            const letters = $(e.target).val();
-            filterMemory(letters);
-            makeMemoryTable();
-            displayMemoryTable();
-        })
         $("#memory-select").change((e) => {
             const sort = $(e.target).val();
             state.sortKey = sort;
@@ -295,6 +377,24 @@ const openMemory = () => {
             state.papers = papers;
             state.papersList = Object.values(papers);
             state.sortKey = "lastOpenDate";
+
+            if (state.papersList.length < 30) {
+                delayTime = 0;
+            } else if (state.papersList.length < 100) {
+                delayTime = 200;
+            } else {
+                delayTime = 350;
+            } {
+
+            }
+
+            $("#memory-search").keyup(delay((e) => {
+                const letters = $(e.target).val();
+                filterMemory(letters);
+                makeMemoryTable();
+                displayMemoryTable();
+            }, delayTime))
+
             sortMemory()
             makeMemoryTable()
             displayMemoryTable()
@@ -309,7 +409,7 @@ const closeMemory = () => {
         duration: 500,
         easing: "easeOutQuint"
     });
-    $("#memory-switch-text").text("Your ArxivMemory");
+    $("#memory-switch-text").text("ArxivMemory");
 }
 
 const main = tab => {
@@ -349,7 +449,7 @@ const main = tab => {
     }
 
     const url = parseUrl(tab.url);
-    console.log(url);
+    // console.log(url);
 
 
     $("#helpGithubLink").click(() => {
@@ -455,7 +555,6 @@ $(() => {
         'lastFocusedWindow': true
     }, function (tabs) {
         var url = tabs[0].url;
-        console.log(tabs[0])
         main(tabs[0])
     });
 

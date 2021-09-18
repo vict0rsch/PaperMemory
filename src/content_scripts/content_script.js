@@ -378,12 +378,12 @@ const feedback = text => {
 
 const save_paper = id => {
 
-    console.log(`Attempting to save ${id}`)
+    // console.log(`Attempting to save ${id}`)
 
-    chrome.storage.sync.get("papers", function ({ papers }) {
+    chrome.storage.sync.get("papers", async function ({ papers }) {
 
-        console.log("Exiting papers )>:");
-        console.log(papers);
+        // console.log("Exiting papers:");
+        // console.log(papers);
 
         if (!papers.hasOwnProperty(id)) {
             $.get(`https://export.arxiv.org/api/query?id_list=${id}`).then(data => {
@@ -398,11 +398,11 @@ const save_paper = id => {
                 papers[id] = paper;
                 paper.count = 1;
                 chrome.storage.sync.set({ "papers": papers }, () => {
-                    console.log("Added " + paper.title)
-                    chrome.storage.sync.get(["papers"], function ({ papers }) {
-                        console.log("Retrieved paper after update:")
-                        console.log(papers);
-                    })
+                    console.log("Added " + paper.title + "to ArxivMemory")
+                    // chrome.storage.sync.get(["papers"], function ({ papers }) {
+                    //     console.log("Retrieved paper after update:")
+                    //     console.log(papers);
+                    // })
                 })
             })
         } else {
@@ -412,10 +412,18 @@ const save_paper = id => {
                 papers[id].count += 1;
             }
 
-            papers[id].paper.lastOpenDate = (new Date()).toJSON();
+            papers[id].lastOpenDate = (new Date()).toJSON();
+
+            if (!papers[id].hasOwnProperty("pdfLink")) {
+                const bibdata = await fetchBibData(id);
+                const { bibvars, bibtext } = parseBibtex(bibdata)
+                papers[id].pdfLink = bibvars.pdfLink
+            }
 
             chrome.storage.sync.set({ "papers": papers }, () => {
-                console.log(`Updated ${id}'s count to ${papers[id].count}`)
+                console.log(
+                    `Updated ${id}'s count to ${papers[id].count}, lastOpenDate to ${papers[id].lastOpenDate}`
+                )
             })
         }
 
@@ -431,7 +439,7 @@ const arxiv = checks => {
         checkPdfTitle,
         checkMemory } = checks;
 
-    console.log({ checks })
+    // console.log({ checks })
 
     var h = null;
     $("h2").each((idx, el) => {
@@ -659,6 +667,7 @@ const vanity = () => {
 }
 
 $(() => {
+    console.log("Executing ArxivTools content script")
     const checks = ['checkBib', 'checkMd', 'checkDownload', 'checkPdfTitle', "checkVanity"];
     chrome.storage.sync.get(checks, function (items) {
 

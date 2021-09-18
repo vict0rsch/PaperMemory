@@ -211,6 +211,12 @@ h3 {
     border: 1px solid rgba(230, 230, 230, 0.75);
     position: relative;
     border-radius: 8px;
+    transition: all .2s ease-in-out;
+    font-size: 0.9rem;
+}
+
+.memory-item-container:hover {
+    transform: scale(1.05);
 }
 
 .delete-memory-item {
@@ -234,4 +240,9 @@ h3 {
     display: flex;
     align-items: center;
     justify-content: center;
+}
+
+.memory-item-svg-div {
+    cursor: pointer;
+    display: flex;
 }

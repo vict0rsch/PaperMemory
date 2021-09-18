@@ -1,5 +1,6 @@
 const parseBibtex = xmlData => {
     var bib = $(xmlData);
+    console.log(bib)
     var authors = [];
     var key = "";
     bib.find("author name").each((k, v) => {
@@ -9,11 +10,13 @@ const parseBibtex = xmlData => {
         }
     })
     var pdfLink = "";
-    bib.find("link").each((i, l) => {
-        if (l.title === "pdf") {
-            pdfLink = l.href
+    bib.find("link").each((k, v) => {
+        const link = $(v).attr("href")
+        if (link && link.indexOf("arxiv.org/pdf/") >= 0) {
+            pdfLink = link
         }
     })
+    console.log("pdfLink " + pdfLink)
     const author = authors.join(" and ");
     const title = $(bib.find("entry title")[0]).text();
     const year = $(bib.find("entry published")[0]).text().slice(0, 4);
@@ -39,4 +42,8 @@ const parseBibtex = xmlData => {
     return {
         bibvars, bibtext
     }
+}
+
+async function fetchBibData(arxivId) {
+    return $.get(`https://export.arxiv.org/api/query?id_list=${arxivId}`)
 }
