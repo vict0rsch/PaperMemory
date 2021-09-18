@@ -421,9 +421,9 @@ const save_paper = id => {
             }
 
             chrome.storage.sync.set({ "papers": papers }, () => {
-                console.log(
-                    `Updated ${id}'s count to ${papers[id].count}, lastOpenDate to ${papers[id].lastOpenDate}`
-                )
+                // console.log(
+                //     `Updated ${id}'s count to ${papers[id].count}, lastOpenDate to ${papers[id].lastOpenDate}`
+                // )
             })
         }
 
@@ -448,7 +448,7 @@ const arxiv = checks => {
         }
     });
     const id = window.location.href.match(/\d{4}\.\d{4,5}\d/g)[0];
-    const isPdf = window.location.href.match(/\d{4}.\d{5}(v\d{1,2})?.pdf/g);
+    const isPdf = window.location.href.match(/\d{4}.\d{4,5}(v\d{1,2})?.pdf/g);
     const pdfUrl = "https://arxiv.org/pdf/" + id + ".pdf";
     const fileName = id + " - " + document.title.split(" ").slice(1).join(" ") + ".pdf";
 
@@ -514,15 +514,17 @@ const arxiv = checks => {
     }
 
     if (checkPdfTitle && isPdf) {
-        setTimeout(
-            () => {
-                $.get(`https://export.arxiv.org/api/query?id_list=${id}`).then(data => {
-                    const bib = $(data);
-                    const title = $(bib.find("entry title")[0]).text();
-                    window.document.title = title + ` (${id}).pdf`
-                });
-            }, 500
-        )
+        var title = "";
+        const makeTitle = () => {
+            $.get(`https://export.arxiv.org/api/query?id_list=${id}`).then(data => {
+                title = $($(data).find("entry title")[0]).text() + ` (${id}).pdf`;
+                window.document.title = title;
+            });
+        }
+        setTimeout(makeTitle, 1 * 1000)
+        setTimeout(makeTitle, 5 * 1000)
+        setTimeout(makeTitle, 60 * 1000)
+        setTimeout(makeTitle, 5 * 60 * 1000)
     }
 
     if (checkBib && !isPdf) {

@@ -1,6 +1,6 @@
 const parseBibtex = xmlData => {
     var bib = $(xmlData);
-    console.log(bib)
+    // console.log(bib)
     var authors = [];
     var key = "";
     bib.find("author name").each((k, v) => {
@@ -16,7 +16,6 @@ const parseBibtex = xmlData => {
             pdfLink = link
         }
     })
-    console.log("pdfLink " + pdfLink)
     const author = authors.join(" and ");
     const title = $(bib.find("entry title")[0]).text();
     const year = $(bib.find("entry published")[0]).text().slice(0, 4);

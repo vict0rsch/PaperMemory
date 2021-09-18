@@ -1,13 +1,3 @@
-// (function () {
-//     var dotsMenu;
-//     dotsMenu = document.querySelector(".dots");
-
-//     dotsMenu.addEventListener("click", function () {
-//         return dotsMenu.classList.toggle("on");
-//     });
-
-// }).call(this);
-
 function delay(fn, ms) {
     // https://stackoverflow.com/questions/1909441/how-to-delay-the-keyup-handler-until-the-user-stops-typing
     let timer = 0
@@ -115,6 +105,37 @@ const openMenu = () => {
     `);
         $("#tabler-menu").fadeIn()
     })
+}
+
+const focusExistingOrCreateNewTab = (paperUrl, arxivId) => {
+    chrome.tabs.query({ url: "https://arxiv.org/*" }, (tabs) => {
+        let validTabsIds = [];
+        let pdfTabsIds = [];
+        const urls = tabs.map(t => t.url)
+        let idx = 0;
+        for (const u of urls) {
+            if (u.indexOf(arxivId) >= 0) {
+                validTabsIds.push(idx)
+                if (u.indexOf(".pdf") >= 0) {
+                    pdfTabsIds.push(idx)
+                }
+            }
+            idx += 1
+        }
+        if (validTabsIds.length > 0) {
+            let tabId = 0
+            if (pdfTabsIds.length > 0) {
+                tabId = tabs[pdfTabsIds[0]].id
+            } else {
+                tabId = tabs[validTabsIds[0]].id
+            }
+            var updateProperties = { 'active': true };
+            chrome.tabs.update(tabId, updateProperties, (tab) => { });
+        } else {
+            chrome.tabs.create({ paperUrl }, (tab) => { })
+        }
+
+    });
 }
 
 const orderPapers = (paper1, paper2) => {
@@ -230,52 +251,14 @@ const displayMemoryTable = () => {
     for (const html of state.htmlPapers) {
         $("#memory-table").append(html);
     }
-    $(".memory-item-title").click((e) => {
-        e.preventDefault();
-        console.log(e.target);
-        // chrome.tabs.update({
-        //     url: "https://github.com/vict0rsch/ArxivTools"
-        // });
-    })
     $(".delete-memory-item").click((e) => {
-        const el = e.target;
-        const id = el.id;
-        const arxivId = id.replace("delete-memory-item-", "");
+        const arxivId = e.target.id.replace("delete-memory-item-", "");
         confirmDelete(arxivId)
-
     })
     $(".memory-item-link").click((e) => {
         const arxivId = e.target.id.replace("memory-item-link-", "");
         const url = state.papers[arxivId].pdfLink;
-        console.log(url)
-        chrome.tabs.query({ url: "https://arxiv.org/*" }, (tabs) => {
-            let validTabsIds = [];
-            let pdfTabsIds = [];
-            const urls = tabs.map(t => t.url)
-            let idx = 0;
-            for (const u of urls) {
-                if (u.indexOf(arxivId) >= 0) {
-                    validTabsIds.push(idx)
-                    if (u.indexOf(".pdf") >= 0) {
-                        pdfTabsIds.push(idx)
-                    }
-                }
-                idx += 1
-            }
-            if (validTabsIds.length > 0) {
-                let tabId = 0
-                if (pdfTabsIds.length > 0) {
-                    tabId = tabs[pdfTabsIds[0]].id
-                } else {
-                    tabId = tabs[validTabsIds[0]].id
-                }
-                var updateProperties = { 'active': true };
-                chrome.tabs.update(tabId, updateProperties, (tab) => { });
-            } else {
-                chrome.tabs.create({ url }, (tab) => { })
-            }
-
-        });
+        focusExistingOrCreateNewTab(url, arxivId)
     })
     $(".memory-item-md").click((e) => {
         const arxivId = e.target.id.replace("memory-item-md-", "");
@@ -337,6 +320,7 @@ const confirmDelete = arxivId => {
 
 const openMemory = () => {
     state.menuIsOpen && closeMenu();
+    $("#tabler-menu").fadeOut()
     setTimeout(() => {
         $("#memory-container").slideDown(
             {
@@ -345,7 +329,9 @@ const openMemory = () => {
                 ,
             },
         );
-        $("#memory-switch-text").html("Close");
+        $("#memory-switch-text-on").fadeOut(() => {
+            $("#memory-switch-text-off").fadeIn()
+        });
         $("#memory-select").change((e) => {
             const sort = $(e.target).val();
             state.sortKey = sort;
@@ -356,13 +342,13 @@ const openMemory = () => {
         $("#memory-sort-arrow").click((e) => {
             if ($("#memory-sort-arrow svg").first()[0].id === "memory-sort-arrow-down") {
                 $("#memory-sort-arrow").html(`
-                    <svg style="height: 25px; width: 25px; cursor: pointer" id="memory-sort-arrow-up">
+                    <svg class="memory-sort-arrow-svg" id="memory-sort-arrow-up">
                         <use xlink:href="../../icons/tabler-sprite-nostroke.svg#tabler-arrow-narrow-up" />
                     </svg>
                 `)
             } else {
                 $("#memory-sort-arrow").html(`
-                <svg style="height: 25px; width: 25px; cursor: pointer" id="memory-sort-arrow-down">
+                <svg class="memory-sort-arrow-svg" id="memory-sort-arrow-down">
                     <use xlink:href="../../icons/tabler-sprite-nostroke.svg#tabler-arrow-narrow-down" />
                 </svg>
             `)
@@ -377,6 +363,7 @@ const openMemory = () => {
             state.papers = papers;
             state.papersList = Object.values(papers);
             state.sortKey = "lastOpenDate";
+            $("#memory-search").attr("placeholder", `Search ${state.papersList.length} entries ...`);
 
             if (state.papersList.length < 30) {
                 delayTime = 0;
@@ -409,7 +396,10 @@ const closeMemory = () => {
         duration: 500,
         easing: "easeOutQuint"
     });
-    $("#memory-switch-text").text("ArxivMemory");
+    $("#memory-switch-text-off").fadeOut(() => {
+        $("#memory-switch-text-on").fadeIn()
+    });
+    $("#tabler-menu").fadeIn()
 }
 
 const main = tab => {
