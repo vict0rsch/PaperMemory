@@ -1,8 +1,8 @@
 @import url("https://fonts.googleapis.com/css?family=Mukta:700");
 
 html {
-    min-width: 350px;
-    min-height: 350px;
+    min-width: 450px;
+    min-height: 450px;
     border-radius: 20px;
     font-family: "Mukta";
     font-size: 14px;
@@ -70,7 +70,7 @@ h3 {
     bottom: 12px;
     right: 12px;
     cursor: pointer;
-    z-index: 2;
+    z-index: 6;
 }
 
 #tabler-menu svg {
@@ -96,17 +96,19 @@ h3 {
     font-size: 1.2rem;
 }
 
-#helpDiv {
+#menuDiv {
     position: absolute;
     top: 0;
     left: 0;
     height: 100%;
     background: rgba(255, 255, 255, 0.95);
-    z-index: 2;
+    z-index: 5;
     padding: 16px 32px;
+    width: 100%;
+    height: 100%;
 }
 
-#helpDiv p{
+#menuDiv p {
     margin-top: 8px;
     margin-bottom: 8px;
 }
@@ -156,4 +158,80 @@ h3 {
 
 #check-feedback svg {
     color: #00C854 !important;
+}
+
+#memory-switch {
+    position: absolute;
+    bottom: 16px;
+    left: 16px;
+    cursor: pointer;
+    color: #4934a5;
+    border: 1px solid #4934a5;
+    border-radius: 8px;
+    background-color: white;
+    padding: 4px 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    transition: all .2s ease-in-out;
+    z-index: 3;
+}
+
+#memory-switch:hover {
+    transform: scale(1.1);
+}
+
+#memory-switch svg {
+    height: 32px;
+    width: 32px;
+}
+
+#memory-container {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 100%;
+    background: white;
+    z-index: 2;
+    width: 100%;
+    height: 100%;
+    overflow: scroll;
+
+}
+
+#memory-table {
+    padding: 16px;
+    margin-bottom: 40px;
+}
+
+.memory-item-container {
+    padding: 8px;
+    margin-bottom: 8px;
+    border: 1px solid rgba(230, 230, 230, 0.75);
+    position: relative;
+    border-radius: 8px;
+}
+
+.delete-memory-item {
+    padding: 6px;
+    color: rgb(196, 93, 93);
+    text-align: end;
+    position: absolute;
+    right: 0px;
+    top: -4px;
+    font-size: 1rem;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.memory-item-title {
+    margin: 0px;
+}
+
+#memory-filters {
+    margin: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
