@@ -1,4 +1,8 @@
-const parseBibtex = xmlData => {
+String.prototype.capitalize = function () {
+    return this.charAt(0).toUpperCase() + this.slice(1);
+}
+
+const parseArxivBibtex = xmlData => {
     var bib = $(xmlData);
     // console.log(bib)
     var authors = [];
@@ -43,6 +47,40 @@ const parseBibtex = xmlData => {
     }
 }
 
-async function fetchBibData(arxivId) {
+const parseNeuripsHTML = (url, htmlText) => {
+    const dom = new DOMParser().parseFromString(htmlText.replaceAll("\n", ""), "text/html");
+    const doc = $(dom);
+    const ps = doc.find(".container-fluid .col p");
+    const hash = url.split("/").slice(-1)[0].replace("-Paper.pdf", "");
+
+    const title = doc.find("h4").first().text();
+    const author = $(ps[1]).text().split(", ").map((author, k) => {
+        const parts = author.split(" ");
+        const caps = parts.map((part, i) => { return part.capitalize() })
+        return caps.join(" ")
+    }).join(" and ");
+    const pdfLink = url;
+    const year = $(ps[0]).text().match(/\d{4}/)[0];
+    const key = `neurips${year}${hash.slice(0, 8)}`;
+    const arxivId = `NeurIPS-${year}_${hash.slice(0, 8)}`;
+
+    return { key, title, author, year, arxivId, pdfLink }
+}
+
+const fetchArxivBibtex = async arxivId => {
     return $.get(`https://export.arxiv.org/api/query?id_list=${arxivId}`)
+}
+
+const fetchNeuripsHTML = async url => {
+
+    let paperPage;
+    if (url.endsWith(".pdf")) {
+        paperPage = url.replace("/file/", "/hash/").replace("-Paper.pdf", "-Abstract.html");
+    } else {
+        paperPage = url;
+    }
+
+    return fetch(paperPage).then((response) => {
+        return response.text()
+    })
 }

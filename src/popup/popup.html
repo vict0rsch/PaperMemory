@@ -6,7 +6,6 @@
 	<link rel="stylesheet" type="text/css" href="./popup.css">
 	<link rel="stylesheet" type="text/css" href="./options.css">
 	<link rel="stylesheet" type="text/css" href="./abstract.css">
-	<link rel="stylesheet" type="text/css" href="./datatables.min.css">
 </head>
 
 <body>
@@ -33,6 +32,7 @@
 			<br />
 			<p>Keep track of your readings with <strong>ArxivMemory!</strong></p>
 			<small>When opening Arxiv web pages and pdfs, a reference to that paper will be stored in your ArxivMemory.
+				Now also handles NeurIPS pdfs!
 				You can find them all by clicking on the ArxivMemory button.</small>
 		</div>
 
@@ -43,6 +43,7 @@
 			<br />
 			<p>Keep track of your readings with <strong>ArxivMemory!</strong></p>
 			<small>When opening Arxiv web pages and pdfs, a reference to that paper will be stored in your ArxivMemory.
+				Now also handles NeurIPS pdfs!
 				You can find them all by clicking on the ArxivMemory button.</small>
 		</div>
 
@@ -115,6 +116,11 @@
 				<input class="switch" type="checkbox" id="checkMemory" name="checkMemory" value="checkMemory">
 				<label for="checkMemory"> Store visited Arxiv papers in your ArxivMemory</label><br><br>
 			</div>
+
+			<div style="display: flex; align-items: center;">
+				<p>Download your ArxivMemory as json file: </p>
+				<button style="margin-left: 3px" id="download-arxivmemory">Download</button>
+			</div>
 		</div>
 
 	</div>
@@ -153,8 +159,7 @@
 
 <script src="../../js/jquery.min.js"></script>
 <script src="../../js/jquery-easing.js"></script>
-<script src="../../js/datatables.min.js"></script>
-<script src="../../js/bibtex.js"></script>
+<script src="../../js/parsers.js"></script>
 <script src="./popup.js"></script>
 
 

@@ -20,18 +20,21 @@
   },
   "permissions": [
     "https://arxiv.org/*",
+    "https://proceedings.neurips.cc/*",
     "tabs",
     "activeTab",
-    "storage"
+    "storage",
+    "unlimitedStorage"
   ],
   "content_scripts": [
     {
       "matches": [
         "https://arxiv.org/*",
-        "https://*.arxiv-vanity.com/*"
+        "https://*.arxiv-vanity.com/*",
+        "https://proceedings.neurips.cc/*"
       ],
       "js": [
-        "js/bibtex.js",
+        "js/parsers.js",
         "js/jquery.min.js",
         "src/content_scripts/content_script.js"
       ],

@@ -342,10 +342,16 @@ const download_file = (fileURL, fileName) => {
 const main = checks => {
 
     const isVanity = window.location.href.indexOf("arxiv-vanity.com") > -1;
-    if (!isVanity) {
+    const isArxiv = window.location.href.indexOf("arxiv.org") > -1;
+    const isNeurips = window.location.href.indexOf("proceedings.neurips.cc") > -1;
+    if (isArxiv) {
         arxiv(checks)
-    } else if (checks.checkVanity) {
+    } else if (isVanity && checks.checkVanity) {
         vanity()
+    }
+
+    if (checks.checkMemory && (isArxiv || isNeurips)) {
+        addOrCreatePaper(isArxiv)
     }
 }
 
@@ -376,60 +382,95 @@ const feedback = text => {
     }, 2000)
 }
 
-const save_paper = id => {
+const addOrCreatePaper = isArxiv => {
 
-    // console.log(`Attempting to save ${id}`)
+    const url = window.location.href;
 
-    chrome.storage.sync.get("papers", async function ({ papers }) {
+    // get papers already stored
+    chrome.storage.local.get("papers", async function ({ papers }) {
 
-        // console.log("Exiting papers:");
-        // console.log(papers);
-
-        if (!papers.hasOwnProperty(id)) {
-            $.get(`https://export.arxiv.org/api/query?id_list=${id}`).then(data => {
-
-                const { bibvars, bibtext } = parseBibtex(data);
-
-                let paper = bibvars;
-                paper.bibtext = bibtext;
-                paper.md = `[${paper.title}](https://arxiv.com/abs/${paper.arxivId})`;
-                paper.addDate = (new Date()).toJSON();
-                paper.lastOpenDate = paper.addDate;
-                papers[id] = paper;
-                paper.count = 1;
-                chrome.storage.sync.set({ "papers": papers }, () => {
-                    console.log("Added " + paper.title + "to ArxivMemory")
-                    // chrome.storage.sync.get(["papers"], function ({ papers }) {
-                    //     console.log("Retrieved paper after update:")
-                    //     console.log(papers);
-                    // })
-                })
-            })
-        } else {
-            if (!papers[id].hasOwnProperty("count")) {
-                papers[id].count = 1;
-            } else {
-                papers[id].count += 1;
-            }
-
-            papers[id].lastOpenDate = (new Date()).toJSON();
-
-            if (!papers[id].hasOwnProperty("pdfLink")) {
-                const bibdata = await fetchBibData(id);
-                const { bibvars, bibtext } = parseBibtex(bibdata)
-                papers[id].pdfLink = bibvars.pdfLink
-            }
-
-            chrome.storage.sync.set({ "papers": papers }, () => {
-                // console.log(
-                //     `Updated ${id}'s count to ${papers[id].count}, lastOpenDate to ${papers[id].lastOpenDate}`
-                // )
-            })
+        // no papers in storage
+        if (typeof papers === "undefined") {
+            papers = {};
         }
 
-    })
+        let id, paper, isNew;
 
+        // Extract id from url
+        if (isArxiv) {
+            id = window.location.href.match(/\d{4}\.\d{4,5}\d/g)[0];
+        } else {
+            const hash = url.split("/").slice(-1)[0].replace("-Paper.pdf", "");
+            const year = url.split("/paper/")[1].split("/")[0];
+            id = `NeurIPS-${year}_${hash.slice(0, 8)}`
+        }
+
+        // console.log(id);
+        // console.log(papers);
+
+        // Update paper if it exists
+        // Or create a new one if it does not
+        if (papers.hasOwnProperty(id)) {
+            papers = updatePapers(papers, id);
+            paper = papers[id];
+            isNew = false;
+        } else {
+            let data;
+
+            if (isArxiv) {
+                data = await fetchArxivBibtex(id);
+            } else {
+                data = await fetchNeuripsHTML(url);
+            }
+
+            paper = makePaper(isArxiv, data);
+            papers[id] = paper;
+            isNew = true;
+        }
+
+        chrome.storage.local.set({ "papers": papers }, () => {
+            if (isNew) {
+                console.log("Added '" + paper.title + "' to ArxivMemory")
+            } else {
+                console.log("Updated '" + paper.title + "' in ArxivMemory")
+            }
+        })
+
+    });
 }
+
+const makePaper = (isArxiv, data) => {
+    const url = window.location.href;
+
+    let paper;
+    if (isArxiv) {
+        const { bibvars, bibtext } = parseArxivBibtex(data);
+        paper = bibvars;
+        paper.bibtext = bibtext;
+    } else {
+        paper = parseNeuripsHTML(url, data)
+    }
+
+    paper.md = `[${paper.title}](https://arxiv.com/abs/${paper.arxivId})`;
+    paper.note = "";
+    return initPaper(paper)
+}
+
+const initPaper = paper => {
+    paper.addDate = (new Date()).toJSON();
+    paper.lastOpenDate = paper.addDate;
+    paper.count = 1;
+    return paper
+}
+
+const updatePapers = (papers, id) => {
+    papers[id].count += 1;
+    papers[id].lastOpenDate = (new Date()).toJSON();
+    return papers
+}
+
+
+
 
 const arxiv = checks => {
 
@@ -451,13 +492,6 @@ const arxiv = checks => {
     const isPdf = window.location.href.match(/\d{4}.\d{4,5}(v\d{1,2})?.pdf/g);
     const pdfUrl = "https://arxiv.org/pdf/" + id + ".pdf";
     const fileName = id + " - " + document.title.split(" ").slice(1).join(" ") + ".pdf";
-
-    // -----------------------------
-    // -----  Store in Memory  -----
-    // -----------------------------
-    if (checkMemory) {
-        save_paper(id)
-    }
 
     // -----------------------------
     // -----  Download Button  -----
@@ -544,7 +578,7 @@ const arxiv = checks => {
 
         $.get(`https://export.arxiv.org/api/query?id_list=${id}`).then(data => {
 
-            const { bibvars, bibtext } = parseBibtex(data)
+            const { bibvars, bibtext } = parseArxivBibtex(data)
 
             const bibtexDiv = `
                     <div id="bibtexDiv">
@@ -611,7 +645,7 @@ const vanity = () => {
 
             $.get(query).then(data => {
                 $(".arxivTools-card").remove();
-                const { bibvars, bibtext } = parseBibtex(data)
+                const { bibvars, bibtext } = parseArxivBibtex(data)
                 if (
                     !isArxivCitation
                     && bibvars.title.toLowerCase().replace(/[^a-z]/gi, '') !== vanityTitle.toLowerCase().replace(/[^a-z]/gi, '')
@@ -669,9 +703,22 @@ const vanity = () => {
 }
 
 $(() => {
+
+    const url = window.location.href;
+
+    if (!(
+        url.includes("arxiv.org/pdf/")
+        || url.includes("arxiv.org/abs/")
+        || url.includes("neurips.cc/paper/")
+    )) {
+        // not on a paper page (but on arxiv.org or neurips.cc)
+        return
+    }
+
     console.log("Executing ArxivTools content script")
     const checks = ['checkBib', 'checkMd', 'checkDownload', 'checkPdfTitle', "checkVanity"];
-    chrome.storage.sync.get(checks, function (items) {
+
+    chrome.storage.local.get(checks, function (items) {
 
         const checkMd = items.hasOwnProperty("checkMd") ? items.checkMd : true;
         const checkBib = items.hasOwnProperty("checkBib") ? items.checkBib : true;

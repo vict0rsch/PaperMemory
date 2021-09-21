@@ -235,16 +235,23 @@ h3 {
 }
 
 .delete-memory-item {
-    padding: 6px;
     color: rgb(196, 93, 93);
-    text-align: end;
     position: absolute;
-    right: 0px;
-    top: -4px;
-    font-size: 1rem;
-    font-weight: bold;
+    right: -5px;
+    top: -5px;
+    font-size: 1.5rem;
+    line-height: 12px;
     cursor: pointer;
+    height: 15px;
+    width: 15px;
+    border-radius: 50%;
+    border: 1px solid rgb(196, 93, 93);
+    padding-left: 0px;
+    text-align: center;
+    background-color: white;
 }
+
+
 
 .memory-item-title {
     margin: 0px;
@@ -288,4 +295,14 @@ h3 {
     display: flex;
     justify-content: center;
     align-items: center;
+}
+
+.edit-note-item {
+    color: #0276ff;
+    cursor: pointer;
+}
+
+.edit-note-item:hover {
+    color: #6da4e4;
+    text-decoration: underline;
 }
