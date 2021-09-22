@@ -41,15 +41,6 @@ Customize features in the menu:
 Share ideas 💡 in [issues](https://github.com/vict0rsch/ArxivTools/issues) and love with [stars](https://github.com/vict0rsch/ArxivTools/stargazers) ⭐️:)
 
 
-
-## Manual Installation
-
-* download the repo
-* go to Chrome/Brave's extension manager
-* enable developer mode
-* load unpackaged extension
-* chose downloaded repo :)
-
 ## ArxivMemory
 
 **ArxivMemory** is here!
@@ -64,8 +55,23 @@ Share ideas 💡 in [issues](https://github.com/vict0rsch/ArxivTools/issues) and
   * `(shift + ) tab` to navigate the paper list
   * `enter` to open a focused paper (focus an existing tab with the paper or create a new tab to the paper's pdf)
   * `backspace` to delete the paper (a confirmation will be prompted first don't worry 👮‍♀️) (use `tab` and `enter` to navigate the confirmation's options too 😉)
+* Download memory as json file (in the extension's Menu)
 
-TODO: Make visuals (Gifs, Screenshot) + Release on Chrome Webstore
+TODO: 
+
+* [ ] Make visuals
+  * [ ] Gifs
+  * [ ] Screenshots
+* [ ] Update Readme
+* [ ] Release on Chrome Webstore
+
+## Manual Installation
+
+* download the repo
+* go to Chrome/Brave's extension manager
+* enable developer mode
+* load unpackaged extension
+* chose downloaded repo :)
 
 ## Help
 
