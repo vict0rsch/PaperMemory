@@ -387,7 +387,6 @@ const confirmDelete = arxivId => {
         delete state.papers[arxivId]
         chrome.storage.local.set({ "papers": state.papers }, () => {
             state.papersList = Object.values(state.papers);
-            makeMemoryTable();
             displayMemoryTable()
             $("#confirm-modal").remove()
             console.log("Successfully deleted '" + title + "' from ArxivMemory")
@@ -442,7 +441,6 @@ const openMemory = () => {
                     $("#memory-search").keypress(delay((e) => {
                         const letters = $(e.target).val();
                         filterMemory(letters);
-                        makeMemoryTable();
                         displayMemoryTable();
                     }, delayTime)).keyup((e) => {
                         if (e.keyCode == 8) {
@@ -451,7 +449,6 @@ const openMemory = () => {
                     })
 
                     sortMemory()
-                    makeMemoryTable()
                     displayMemoryTable()
                     setTimeout(() => {
                         $("#memory-search").focus()
@@ -467,7 +464,6 @@ const openMemory = () => {
         const sort = $(e.target).val();
         state.sortKey = sort;
         sortMemory();
-        makeMemoryTable();
         displayMemoryTable();
         setMemorySortArrow("down")
     })
@@ -478,7 +474,6 @@ const openMemory = () => {
             setMemorySortArrow("down")
         }
         reverseMemory()
-        makeMemoryTable()
         displayMemoryTable()
     })
     $(document).on('keydown', function (e) {
