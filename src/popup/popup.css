@@ -230,9 +230,9 @@ h3 {
     font-size: 0.9rem;
 }
 
-.memory-item-container:hover {
+/* .memory-item-container:hover {
     transform: scale(1.05);
-}
+} */
 
 .delete-memory-item {
     color: rgb(196, 93, 93);
@@ -305,4 +305,12 @@ h3 {
 .edit-note-item:hover {
     color: #6da4e4;
     text-decoration: underline;
+}
+
+.memory-tag {
+    color: #5c5c5c;
+    padding: 3px 6px;
+    background: #ececec;
+    margin-right: 8px;
+    border-radius: 4px;
 }

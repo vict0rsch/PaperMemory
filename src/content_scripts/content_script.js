@@ -453,6 +453,7 @@ const makePaper = (isArxiv, data) => {
 
     paper.md = `[${paper.title}](https://arxiv.com/abs/${paper.arxivId})`;
     paper.note = "";
+    paper.tags = [];
     return initPaper(paper)
 }
 

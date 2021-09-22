@@ -45,19 +45,28 @@ Share ideas 💡 in [issues](https://github.com/vict0rsch/ArxivTools/issues) and
 
 **ArxivMemory** is here!
 
-* Record papers you read: Arxiv or NeurIPS papers you visit are stored, searchable, sortable, commentable
-* Keyboard navigation:
+* **Record** papers you read: Arxiv or NeurIPS papers you visit are stored, searchable, sortable, commentable, taggable
+* **Keyboard** navigation:
   * `cmd/ctrl + shift + e` will open the popup
   * `tab` will focus the memory
   * `enter` will open it
   * Search field is automatically focused
   * Search for words (`foo bar` will look for all papers whose title or author names contain `foo` *and* `bar` )
   * `(shift + ) tab` to navigate the paper list
-  * `enter` to open a focused paper (focus an existing tab with the paper or create a new tab to the paper's pdf)
-  * `backspace` to delete the paper (a confirmation will be prompted first don't worry 👮‍♀️) (use `tab` and `enter` to navigate the confirmation's options too 😉)
-* Download memory as json file (in the extension's Menu)
+    * `e` to _edit_ the paper's tags
+    * `n` to add a _note_ to that paper
+    * `enter` to _open_ a focused paper (focus an existing tab with the paper or create a new tab to the paper's pdf)
+    * `backspace` to _delete_ the paper (a confirmation will be prompted first don't worry 👮‍♀️) (use `tab` and `enter` to navigate the confirmation's options too 😉
+* **Search**
+  * In a paper's authors and title
+    * Split queries on spaces: `gan im` will look for: _all papers whose (title OR author) contain ("gan" AND "im")_
+  * In a paper's tags
+    * Start the search query with `t:` to filter by tags
+    * `t: gan` will look for _all papers whose tag-list contains at least 1 tag containing "gan"_
+    * `t: gan tim` will look for _all papers whose tag-list contains (at least 1 tag containing "gan") AND (at least 1 tag containing "tim")_
+* **Download** memory as json file (in the extension's Menu)
 
-TODO: 
+TODO:
 
 * [ ] Make visuals
   * [ ] Gifs

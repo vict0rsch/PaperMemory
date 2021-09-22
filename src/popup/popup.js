@@ -63,6 +63,7 @@ var state = {
     papersList: [],
     sortedPapers: [],
     sortKey: "",
+    paperTags: new Set(),
 };
 
 const arxiv = id => {
@@ -153,8 +154,8 @@ const orderPapers = (paper1, paper2) => {
     let val2 = paper2[state.sortKey];
 
     if (typeof val1 === "string") {
-        val1 = val1.toLocaleLowerCase();
-        val2 = val2.toLocaleLowerCase();
+        val1 = val1.toLowerCase();
+        val2 = val2.toLowerCase();
     }
     if (["addDate", "count", "lastOpenDate"].indexOf(state.sortKey) >= 0) {
         return val1 > val2 ? -1 : 1
@@ -173,7 +174,7 @@ const reverseMemory = () => {
     state.papersList.reverse()
 }
 
-const filterMemory = (letters) => {
+const filterMemoryByString = (letters) => {
     const words = letters.split(" ")
     let papersList = [];
     for (const paper of state.sortedPapers) {
@@ -188,19 +189,54 @@ const filterMemory = (letters) => {
     state.papersList = papersList;
 }
 
+const filterMemoryByTags = (letters) => {
+    const tags = letters.replace("t:", "").toLowerCase().split(" ")
+    let papersList = [];
+    for (const paper of state.sortedPapers) {
+        const paperTags = paper.tags.map(t => t.toLowerCase());
+        if (
+            tags.every(t => paperTags.some(pt => pt.indexOf(t) >= 0))
+        ) {
+            papersList.push(paper)
+        }
+    }
+    state.papersList = papersList;
+}
+
 const getMemoryItemHTML = (item) => {
     const addDate = (new Date(item.addDate)).toLocaleString().replace(",", "")
     const lastOpenDate = (new Date(item.lastOpenDate)).toLocaleString().replace(",", "")
     const displayId = item.arxivId.indexOf("_") < 0 ? item.arxivId : item.arxivId.split("_")[0];
-    const note = item.hasOwnProperty("note") ? item.note : "[no note]";
+    const note = item.note || "[no note]";
     const id = item.arxivId;
+    const tags = new Set(item.tags);
+    const tagsHtml = Array.from(state.paperTags).sort().map((t, i) => {
+        let h = `<option value="${t}"`;
+        if (tags.has(t)) {
+            h += ' selected="selected" '
+        }
+        return h + `>${t}</option>`
+    }).join("");
+
     return `
     <div class="memory-item-container" tabindex="0" id="memory-item-container-${id}">
 
         <h4 class="memory-item-title" title="Added ${addDate}&#13;&#10;Last open ${lastOpenDate}">
             ${item.title}
         </h4>
-        
+        <div style="margin: 4px 0px;">
+            <small class="tag-list" id="tag-list-${id}">
+                ${Array.from(tags).map(t => `<span class="memory-tag">${t}</span>`).join("")}
+            </small>
+            <div id="edit-tags-${id}" style="padding: 12px 0px; display: none; ">
+                <div style="display:flex; align-items: center"; justify-content: space-between">
+                    <select id="memory-item-tags-${id}"class="memory-item-tags" multiple="multiple">
+                        ${tagsHtml}
+                    </select>
+                    <button style="margin-left: 16px" id="finish-tag-edit-${id}">Done</button>
+                </div>
+            </div>
+        </div>
         <small>${item.author}</small>
 
         <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 2px">
@@ -222,6 +258,15 @@ const getMemoryItemHTML = (item) => {
                 </small>
             </div>
 
+            <div
+                class="memory-item-tag memory-item-svg-div" 
+                id="memory-item-tag-${id}"
+                title="Open ${item.pdfLink}" 
+            >
+                <svg  style="height: 15px; width: 15px; pointer-events: none;" >
+                    <use xlink:href="../../icons/tabler-sprite-nostroke.svg#tabler-tag" />
+                </svg>
+            </div>
             <div
                 class="memory-item-link memory-item-svg-div" 
                 id="memory-item-link-${id}"
@@ -308,6 +353,34 @@ const displayMemoryTable = () => {
         const pdfLink = state.papers[arxivId].pdfLink;
         copyAndConfirmMemoryItem(arxivId, pdfLink, "Pdf Link Copied!")
     })
+    $(".memory-item-tag").click((e) => {
+        const id = e.target.id.replace("memory-item-tag-", "");
+        const eid = id.replace(".", "\\.");
+        $(`#tag-list-${eid}`).hide();
+        $(`#edit-tags-${eid}`).show()
+        $(`#memory-item-tags-${eid}`).select2({
+            placeholder: "Tag paper...",
+            maximumSelectionLength: 5,
+            allowClear: true,
+            tags: true,
+            width: "75%",
+            // createTag: addPaperTag,
+        });
+        $(`#memory-item-tags-${eid}`).focus()
+        $(`#memory-item-tags-${eid}`).on('change', (e) => {
+            let selected = [];
+            $(`#memory-item-tags-${eid}`).find(":selected").each((k, el) => {
+                const t = $.trim($(el).val());
+                if (t !== "") selected.push(t)
+            });
+            updatePaperTags(id, selected)
+            updatePaperTagsHTML(id)
+        })
+        $(`#finish-tag-edit-${eid}`).click(() => {
+            $(`#edit-tags-${eid}`).hide();
+            $(`#tag-list-${eid}`).show();
+        })
+    })
     $(".form-note").submit((e) => {
         e.preventDefault();
         const id = e.target.id.replace("form-note-", "");
@@ -337,6 +410,40 @@ const displayMemoryTable = () => {
         }
     })
 
+}
+
+const updatePaperTagsHTML = id => {
+    const eid = id.replace(".", "\\.");
+    $(`#tag-list-${eid}`).html(
+        state.papers[id].tags.map(t => `<span class="memory-tag">${t}</span>`).join("")
+    )
+}
+
+
+const updatePaperTags = (id, tags) => {
+
+    tags.sort();
+    updated = false;
+    if (state.papers[id].tags !== tags) updated = true;
+    state.papers[id].tags = tags;
+
+    console.log("Update tags to: " + tags.join(", "))
+
+    if (updated) {
+        chrome.storage.local.set({ "papers": state.papers })
+    }
+    makeTags()
+}
+
+const makeTags = () => {
+    let tags = new Set();
+    for (const p of state.sortedPapers) {
+        for (const t of p.tags) {
+            tags.add(t)
+        }
+    }
+    state.paperTags = Array.from(tags);
+    state.paperTags.sort();
 }
 
 const saveNote = (id, note) => {
@@ -424,14 +531,16 @@ const openMemory = () => {
                 chrome.storage.local.get("papers", function ({ papers }) {
                     console.log("Found papers:")
                     console.log(papers)
+                    papers = migrateData(papers)
+                    console.log(papers)
                     state.papers = papers;
                     state.papersList = Object.values(papers);
                     state.sortKey = "lastOpenDate";
                     $("#memory-search").attr("placeholder", `Search ${state.papersList.length} entries ...`);
 
-                    if (state.papersList.length < 30) {
+                    if (state.papersList.length < 20) {
                         delayTime = 0;
-                    } else if (state.papersList.length < 100) {
+                    } else if (state.papersList.length < 50) {
                         delayTime = 200;
                     } else {
                         delayTime = 350;
@@ -440,8 +549,12 @@ const openMemory = () => {
                     }
 
                     $("#memory-search").keypress(delay((e) => {
-                        const letters = $(e.target).val();
-                        filterMemory(letters);
+                        const query = $.trim($(e.target).val());
+                        if (query.startsWith("t:")) {
+                            filterMemoryByTags(query)
+                        } else {
+                            filterMemoryByString(query);
+                        }
                         displayMemoryTable();
                     }, delayTime)).keyup((e) => {
                         if (e.keyCode == 8) {
@@ -450,6 +563,7 @@ const openMemory = () => {
                     })
 
                     sortMemory()
+                    makeTags()
                     displayMemoryTable()
                     setTimeout(() => {
                         $("#memory-search").focus()
@@ -481,7 +595,6 @@ const openMemory = () => {
         if (!state.memoryIsOpen) {
             return
         }
-        console.log(e.which)
         if (e.which == 13) {
             const el = $(".memory-item-container:focus").first();
             if (el.length !== 1) return
@@ -493,9 +606,53 @@ const openMemory = () => {
             const el = $(".memory-item-container:focus").first();
             if (el.length !== 1) return
             const id = el.attr('id').replace("memory-item-container-", "");
-            confirmDelete(id)
+            confirmDelete(id);
+        }
+        else if (e.which == 69) {
+            const el = $(".memory-item-container:focus").first();
+            if (el.length !== 1) return
+            e.preventDefault();
+            const id = el.attr('id').replace("memory-item-container-", "");
+            const eid = id.replace(".", "\\.");
+            $(`#memory-item-tag-${eid}`).click();
+        }
+        else if (e.which == 78) {
+            const el = $(".memory-item-container:focus").first();
+            if (el.length !== 1) return
+            e.preventDefault();
+            const id = el.attr('id').replace("memory-item-container-", "");
+            const eid = id.replace(".", "\\.");
+            $(`#memory-item-expand-${eid}`).click();
+            $(`#edit-note-item-${eid}`).click()
+            $(`#form-note-textarea-${eid}`).focus()
         }
     });
+}
+
+const migrateData = papers => {
+    let hasMigrated = false;
+
+    for (const id in papers) {
+        if (!papers[id].hasOwnProperty("tags") || !Array.isArray(papers[id].tags)) {
+            papers[id].tags = [];
+            console.log("Migrating tags for " + id);
+            hasMigrated = true;
+        }
+        if (!papers[id].hasOwnProperty("note") || typeof papers[id].note !== "string") {
+            papers[id].note = "";
+            console.log("Migrating note for " + id);
+            hasMigrated = true;
+        }
+    }
+
+    if (hasMigrated) {
+        chrome.storage.local.set({ papers }, () => {
+            console.log("Migrated papers:");
+            console.log(papers)
+        })
+    }
+
+    return papers
 }
 
 const closeMemory = () => {
