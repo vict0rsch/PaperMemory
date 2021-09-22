@@ -40,10 +40,11 @@ Customize features in the menu:
 
 Share ideas 💡 in [issues](https://github.com/vict0rsch/ArxivTools/issues) and love with [stars](https://github.com/vict0rsch/ArxivTools/stargazers) ⭐️:)
 
-
 ## ArxivMemory
 
 **ArxivMemory** is here!
+
+(_Only from source on Github, see ToDo below_)
 
 * **Record** papers you read: Arxiv or NeurIPS papers you visit are stored, searchable, sortable, commentable, taggable
 * **Keyboard** navigation:

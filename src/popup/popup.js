@@ -203,6 +203,18 @@ const filterMemoryByTags = (letters) => {
     state.papersList = papersList;
 }
 
+const getTagsHTMLOptions = id => {
+    const item = state.papers[id];
+    const tags = new Set(item.tags);
+    return Array.from(state.paperTags).sort().map((t, i) => {
+        let h = `<option value="${t}"`;
+        if (tags.has(t)) {
+            h += ' selected="selected" '
+        }
+        return h + `>${t}</option>`
+    }).join("");
+}
+
 const getMemoryItemHTML = (item) => {
     const addDate = (new Date(item.addDate)).toLocaleString().replace(",", "")
     const lastOpenDate = (new Date(item.lastOpenDate)).toLocaleString().replace(",", "")
@@ -210,13 +222,7 @@ const getMemoryItemHTML = (item) => {
     const note = item.note || "[no note]";
     const id = item.arxivId;
     const tags = new Set(item.tags);
-    const tagsHtml = Array.from(state.paperTags).sort().map((t, i) => {
-        let h = `<option value="${t}"`;
-        if (tags.has(t)) {
-            h += ' selected="selected" '
-        }
-        return h + `>${t}</option>`
-    }).join("");
+    const tagOptions = getTagsHTMLOptions(id)
 
     return `
     <div class="memory-item-container" tabindex="0" id="memory-item-container-${id}">
@@ -225,15 +231,16 @@ const getMemoryItemHTML = (item) => {
             ${item.title}
         </h4>
         <div style="margin: 4px 0px;">
-            <small class="tag-list" id="tag-list-${id}">
+            <small class="tag-list" id="tag-list--${id}">
                 ${Array.from(tags).map(t => `<span class="memory-tag">${t}</span>`).join("")}
             </small>
-            <div id="edit-tags-${id}" style="padding: 12px 0px; display: none; ">
+            <div id="edit-tags--${id}" style="padding: 12px 0px; display: none; ">
                 <div style="display:flex; align-items: center"; justify-content: space-between">
-                    <select id="memory-item-tags-${id}"class="memory-item-tags" multiple="multiple">
-                        ${tagsHtml}
+                    <select id="memory-item-tags--${id}"class="memory-item-tags" multiple="multiple">
+                        ${tagOptions}
                     </select>
-                    <button style="margin-left: 16px" id="finish-tag-edit-${id}">Done</button>
+                    <button class="back-to-focus" style="margin-left: 12px" id="save-tag-edit--${id}">Done</button>
+                    <button class="back-to-focus" style="margin-left: 12px" id="cancel-tag-edit--${id}">Cancel</button>
                 </div>
             </div>
         </div>
@@ -245,7 +252,7 @@ const getMemoryItemHTML = (item) => {
             <div style="display: flex; align-items: center">
                 <div
                     class="memory-item-expand memory-item-svg-div"
-                    id="memory-item-expand-${id}"
+                    id="memory-item-expand--${id}"
                     title="Expand paper details"
                     style="margin-right: 3px"
                 >
@@ -260,7 +267,7 @@ const getMemoryItemHTML = (item) => {
 
             <div
                 class="memory-item-tag memory-item-svg-div" 
-                id="memory-item-tag-${id}"
+                id="memory-item-tag--${id}"
                 title="Open ${item.pdfLink}" 
             >
                 <svg  style="height: 15px; width: 15px; pointer-events: none;" >
@@ -269,7 +276,7 @@ const getMemoryItemHTML = (item) => {
             </div>
             <div
                 class="memory-item-link memory-item-svg-div" 
-                id="memory-item-link-${id}"
+                id="memory-item-link--${id}"
                 title="Open ${item.pdfLink}" 
             >
                 <svg  style="height: 15px; width: 15px; pointer-events: none;" >
@@ -279,7 +286,7 @@ const getMemoryItemHTML = (item) => {
                 
             <div 
                 class="memory-item-copy-link memory-item-svg-div"
-                id="memory-item-copy-link-${id}"
+                id="memory-item-copy-link--${id}"
                 title="Copy pdf link" 
             >
                 <svg style="height: 15px; width: 15px; pointer-events: none;" >
@@ -289,7 +296,7 @@ const getMemoryItemHTML = (item) => {
 
             <div 
                 class="memory-item-md memory-item-svg-div"
-                id="memory-item-md-${id}"
+                id="memory-item-md--${id}"
                 title="Copy Markdown-formatted link" 
             >
                 <svg style="height: 15px; width: 15px; pointer-events: none;" >
@@ -297,7 +304,7 @@ const getMemoryItemHTML = (item) => {
                 </svg>
             </div>
 
-            <span style="color: green; display: none" id="memory-item-feedback-${id}"></span>
+            <span style="color: green; display: none" id="memory-item-feedback--${id}"></span>
             
             <div title="Number of times you have loaded&#13;&#10;the paper's Page or PDF">
                 Visits: ${item.count}
@@ -305,23 +312,23 @@ const getMemoryItemHTML = (item) => {
 
         </div>
 
-        <div id="extended-item-${id}" class="extended-item" style="display: none">
-            <div id="item-note-${id}">
+        <div id="extended-item--${id}" class="extended-item" style="display: none">
+            <div id="item-note--${id}">
                 <p style="font-size: 0.8rem;">
-                    <span id="note-content-${id}">${note}</span>
-                    <span id="edit-note-item-${id}" class="edit-note-item">(edit)</span>
+                    <span id="note-content--${id}">${note}</span>
+                    <span id="edit-note-item--${id}" class="edit-note-item">(edit)</span>
                 </p>
-                <form class="form-note" id="form-note-${id}" style="display: none">
-                    <textarea style="width:98%" id="form-note-textarea-${id}">${note}</textarea>
+                <form class="form-note" id="form-note--${id}" style="display: none">
+                    <textarea style="width:98%" id="form-note-textarea--${id}">${note}</textarea>
                     <div class="form-note-buttons">
                         <button type="submit">Save</button>
-                        <button class="cancel-note-form" id="cancel-note-form-${id}">Cancel</button>
+                        <button class="cancel-note-form back-to-focus" id="cancel-note-form--${id}">Cancel</button>
                     </div>
                 </form>
             </div>
         </div>
 
-        <div class="delete-memory-item" id="delete-memory-item-${id}"> - </div>
+        <div class="delete-memory-item" id="delete-memory-item--${id}"> - </div>
     </div>
     `
 }
@@ -334,79 +341,87 @@ const displayMemoryTable = () => {
         $("#memory-table").append(getMemoryItemHTML(paper))
     }
 
+    $(".back-to-focus").click((e) => {
+        const id = e.target.id.split("--").slice(-1)[0]
+        const eid = id.replace(".", "\\.");
+        $(`#memory-item-container--${eid}`).focus();
+    })
     $(".delete-memory-item").click((e) => {
-        const arxivId = e.target.id.replace("delete-memory-item-", "");
+        const arxivId = e.target.id.split("--").slice(-1)[0];
         confirmDelete(arxivId)
     })
     $(".memory-item-link").click((e) => {
-        const arxivId = e.target.id.replace("memory-item-link-", "");
+        const arxivId = e.target.id.split("--").slice(-1)[0];
         const url = state.papers[arxivId].pdfLink;
         focusExistingOrCreateNewTab(url, arxivId)
     })
     $(".memory-item-md").click((e) => {
-        const arxivId = e.target.id.replace("memory-item-md-", "");
+        const arxivId = e.target.id.split("--").slice(-1)[0];
         const md = state.papers[arxivId].md;
         copyAndConfirmMemoryItem(arxivId, md, "Markdown Link Copied!")
     })
     $(".memory-item-copy-link").click((e) => {
-        const arxivId = e.target.id.replace("memory-item-copy-link-", "");
+        const arxivId = e.target.id.split("--").slice(-1)[0];
         const pdfLink = state.papers[arxivId].pdfLink;
         copyAndConfirmMemoryItem(arxivId, pdfLink, "Pdf Link Copied!")
     })
     $(".memory-item-tag").click((e) => {
-        const id = e.target.id.replace("memory-item-tag-", "");
+        const id = e.target.id.split("--").slice(-1)[0];
         const eid = id.replace(".", "\\.");
-        $(`#tag-list-${eid}`).hide();
-        $(`#edit-tags-${eid}`).show()
-        $(`#memory-item-tags-${eid}`).select2({
+        $(`#tag-list--${eid}`).hide();
+        $(`#edit-tags--${eid}`).show()
+        $(`#memory-item-tags--${eid}`).select2({
             placeholder: "Tag paper...",
             maximumSelectionLength: 5,
             allowClear: true,
             tags: true,
             width: "75%",
-            // createTag: addPaperTag,
+            tokenSeparators: [',', ' ']
         });
-        $(`#memory-item-tags-${eid}`).focus()
-        $(`#memory-item-tags-${eid}`).on('change', (e) => {
+        $(`#memory-item-tags--${eid}`).focus()
+        $(`#save-tag-edit--${eid}`).click(() => {
             let selected = [];
-            $(`#memory-item-tags-${eid}`).find(":selected").each((k, el) => {
+            $(`#memory-item-tags--${eid}`).find(":selected").each((k, el) => {
                 const t = $.trim($(el).val());
                 if (t !== "") selected.push(t)
             });
             updatePaperTags(id, selected)
             updatePaperTagsHTML(id)
+            $(`#edit-tags--${eid}`).hide();
+            $(`#tag-list--${eid}`).show();
         })
-        $(`#finish-tag-edit-${eid}`).click(() => {
-            $(`#edit-tags-${eid}`).hide();
-            $(`#tag-list-${eid}`).show();
+        $(`#cancel-tag-edit--${eid}`).click(() => {
+            $(`#edit-tags--${eid}`).hide();
+            $(`#tag-list--${eid}`).show();
+            $(`#memory-item-tags--${eid}`).html(getTagsHTMLOptions(id));
         })
     })
     $(".form-note").submit((e) => {
         e.preventDefault();
-        const id = e.target.id.replace("form-note-", "");
+        const id = e.target.id.split("--").slice(-1)[0];
         const note = $(`#form-note-textarea-${id}`.replace(".", "\\.")).val()
         saveNote(id, note)
     })
     $(".edit-note-item").click((e) => {
         e.preventDefault();
-        const id = e.target.id.replace("edit-note-item-", "");
+        const id = e.target.id.split("--").slice(-1)[0];
         $(`#form-note-${id}`.replace(".", "\\.")).fadeIn()
     })
     $(".cancel-note-form").click((e) => {
         e.preventDefault();
-        const id = e.target.id.replace("cancel-note-form-", "");
+        const id = e.target.id.split("--").slice(-1)[0];
         $(`#form-note-${id}`.replace(".", "\\.")).hide();
     })
     $(".memory-item-expand").click((e) => {
         e.preventDefault();
-        const id = e.target.id.replace("memory-item-expand-", "");
+        const id = e.target.id.split("--").slice(-1)[0];
         const eid = id.replace(".", "\\.");
-        if ($(`#memory-item-expand-${eid}`).hasClass('expand-open')) {
-            $(`#memory-item-expand-${eid}`).removeClass("expand-open");
-            $(`#extended-item-${eid}`).slideUp();
+        if ($(`#memory-item-expand--${eid}`).hasClass('expand-open')) {
+            $(`#memory-item-expand--${eid}`).removeClass("expand-open");
+            $(`#extended-item--${eid}`).slideUp();
         } else {
-            $(`#memory-item-expand-${eid}`).addClass("expand-open");
-            $(`#extended-item-${eid}`).slideDown();
+            $(`#memory-item-expand--${eid}`).addClass("expand-open");
+            $(`#extended-item--${eid}`).slideDown();
         }
     })
 
@@ -414,7 +429,7 @@ const displayMemoryTable = () => {
 
 const updatePaperTagsHTML = id => {
     const eid = id.replace(".", "\\.");
-    $(`#tag-list-${eid}`).html(
+    $(`#tag-list--${eid}`).html(
         state.papers[id].tags.map(t => `<span class="memory-tag">${t}</span>`).join("")
     )
 }
@@ -532,7 +547,6 @@ const openMemory = () => {
                     console.log("Found papers:")
                     console.log(papers)
                     papers = migrateData(papers)
-                    console.log(papers)
                     state.papers = papers;
                     state.papersList = Object.values(papers);
                     state.sortKey = "lastOpenDate";
@@ -614,7 +628,7 @@ const openMemory = () => {
             e.preventDefault();
             const id = el.attr('id').replace("memory-item-container-", "");
             const eid = id.replace(".", "\\.");
-            $(`#memory-item-tag-${eid}`).click();
+            $(`#memory-item-tag--${eid}`).click();
         }
         else if (e.which == 78) {
             const el = $(".memory-item-container:focus").first();
@@ -622,9 +636,9 @@ const openMemory = () => {
             e.preventDefault();
             const id = el.attr('id').replace("memory-item-container-", "");
             const eid = id.replace(".", "\\.");
-            $(`#memory-item-expand-${eid}`).click();
-            $(`#edit-note-item-${eid}`).click()
-            $(`#form-note-textarea-${eid}`).focus()
+            $(`#memory-item-expand--${eid}`).click();
+            $(`#edit-note-item--${eid}`).click()
+            $(`#form-note-textarea--${eid}`).focus()
         }
     });
 }
