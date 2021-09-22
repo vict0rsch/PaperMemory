@@ -59,7 +59,6 @@ const downloadTextFile = (content, fileName, contentType) => {
 var state = {
     menuIsOpen: false,
     memoryIsOpen: false,
-    htmlPapers: [],
     papers: {},
     papersList: [],
     sortedPapers: [],
@@ -175,12 +174,13 @@ const reverseMemory = () => {
 }
 
 const filterMemory = (letters) => {
+    const words = letters.split(" ")
     let papersList = [];
     for (const paper of state.sortedPapers) {
+        const title = paper.title.toLowerCase();
+        const author = paper.author.toLowerCase();
         if (
-            paper.title.toLowerCase().indexOf(letters) >= 0
-            ||
-            paper.author.toLowerCase().indexOf(letters) >= 0
+            words.every(w => title.includes(w) || author.includes(w))
         ) {
             papersList.push(paper)
         }
@@ -281,28 +281,11 @@ const getMemoryItemHTML = (item) => {
     `
 }
 
-const makeMemoryTable = () => {
-    state.htmlPapers = [];
+
+const displayMemoryTable = () => {
+
     for (const paper of state.papersList) {
-        state.htmlPapers.push(getMemoryItemHTML(paper))
-    }
-}
-
-const displayMemoryTable = (from, to) => {
-    if (typeof from === "undefined") {
-        from = 0;
-    }
-
-    if (from === 0) {
-        $("#memory-table").html("");
-    }
-
-    for (const html of state.htmlPapers.slice(from, to)) {
-        $("#memory-table").append(html);
-    }
-
-    if (from !== 0) {
-        return
+        $("#memory-table").append(getMemoryItemHTML(paper))
     }
 
     $(".delete-memory-item").click((e) => {
