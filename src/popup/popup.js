@@ -284,6 +284,7 @@ const getMemoryItemHTML = (item) => {
 
 const displayMemoryTable = () => {
 
+    $("#memory-table").html("");
     for (const paper of state.papersList) {
         $("#memory-table").append(getMemoryItemHTML(paper))
     }
