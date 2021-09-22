@@ -50,6 +50,23 @@ Share ideas 💡 in [issues](https://github.com/vict0rsch/ArxivTools/issues) and
 * load unpackaged extension
 * chose downloaded repo :)
 
+## ArxivMemory
+
+**ArxivMemory** is here!
+
+* Record papers you read: Arxiv or NeurIPS papers you visit are stored, searchable, sortable, commentable
+* Keyboard navigation:
+  * `cmd/ctrl + shift + e` will open the popup
+  * `tab` will focus the memory
+  * `enter` will open it
+  * Search field is automatically focused
+  * Search for words (`foo bar` will look for all papers whose title or author names contain `foo` *and* `bar` )
+  * `(shift + ) tab` to navigate the paper list
+  * `enter` to open a focused paper (focus an existing tab with the paper or create a new tab to the paper's pdf)
+  * `backspace` to delete the paper (a confirmation will be prompted first don't worry 👮‍♀️) (use `tab` and `enter` to navigate the confirmation's options too 😉)
+
+TODO: Make visuals (Gifs, Screenshot) + Release on Chrome Webstore
+
 ## Help
 
 * **Arxiv-Vanity**
