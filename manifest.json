@@ -2,7 +2,7 @@
   "name": "ArxivTools",
   "version": "0.2.0",
   "manifest_version": 2,
-  "description": "Enhance Arxiv with direct download, Markdown link, BibTex citation and more!",
+  "description": "Record papers you read, enhance Arxiv with direct download, Markdown link, BibTex citation and more!",
   "homepage_url": "https://github.com/vict0rsch/ArxivTools",
   "icons": {
     "64": "icons/1571249796.ico",
