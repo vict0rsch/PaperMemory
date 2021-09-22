@@ -138,10 +138,13 @@ const focusExistingOrCreateNewTab = (paperUrl, arxivId) => {
                 tabId = tabs[validTabsIds[0]].id
             }
             var updateProperties = { 'active': true };
-            chrome.tabs.update(tabId, updateProperties, (tab) => { });
+            chrome.tabs.update(tabId, updateProperties);
         } else {
-            chrome.tabs.create({ url: paperUrl }, (tab) => { })
+            chrome.tabs.create({ url: paperUrl })
         }
+
+        state.papers[arxivId].count += 1;
+        chrome.storage.local.set({ "papers": state.papers });
 
     });
 }
@@ -192,7 +195,7 @@ const getMemoryItemHTML = (item) => {
     const note = item.hasOwnProperty("note") ? item.note : "[no note]";
     const id = item.arxivId;
     return `
-    <div class="memory-item-container">
+    <div class="memory-item-container" tabindex="0" id="memory-item-container-${id}">
 
         <h4 class="memory-item-title" title="Added ${addDate}&#13;&#10;Last open ${lastOpenDate}">
             ${item.title}
@@ -285,11 +288,23 @@ const makeMemoryTable = () => {
     }
 }
 
-const displayMemoryTable = () => {
-    $("#memory-table").html("");
-    for (const html of state.htmlPapers) {
+const displayMemoryTable = (from, to) => {
+    if (typeof from === "undefined") {
+        from = 0;
+    }
+
+    if (from === 0) {
+        $("#memory-table").html("");
+    }
+
+    for (const html of state.htmlPapers.slice(from, to)) {
         $("#memory-table").append(html);
     }
+
+    if (from !== 0) {
+        return
+    }
+
     $(".delete-memory-item").click((e) => {
         const arxivId = e.target.id.replace("delete-memory-item-", "");
         confirmDelete(arxivId)
@@ -415,70 +430,93 @@ const setMemorySortArrow = direction => {
 
 const openMemory = () => {
     state.menuIsOpen && closeMenu();
-    $("#tabler-menu").fadeOut()
-    $("#memory-select").val("lastOpenDate")
-    setMemorySortArrow("down")
-    setTimeout(() => {
-        $("#memory-container").slideDown(
-            {
-                duration: 500,
-                easing: "easeOutQuint"
-                ,
-            },
-        );
-        $("#memory-switch-text-on").fadeOut(() => {
-            $("#memory-switch-text-off").fadeIn()
-        });
-        $("#memory-select").change((e) => {
-            const sort = $(e.target).val();
-            state.sortKey = sort;
-            sortMemory();
-            makeMemoryTable();
-            displayMemoryTable();
+    $("#tabler-menu").fadeOut();
+    $("#memory-select").val("lastOpenDate");
+    setMemorySortArrow("down");
+    $("#memory-container").slideDown(
+        {
+            duration: 300,
+            easing: "easeOutQuint",
+            complete: () => {
+                chrome.storage.local.get("papers", function ({ papers }) {
+                    console.log("Found papers:")
+                    console.log(papers)
+                    state.papers = papers;
+                    state.papersList = Object.values(papers);
+                    state.sortKey = "lastOpenDate";
+                    $("#memory-search").attr("placeholder", `Search ${state.papersList.length} entries ...`);
+
+                    if (state.papersList.length < 30) {
+                        delayTime = 0;
+                    } else if (state.papersList.length < 100) {
+                        delayTime = 200;
+                    } else {
+                        delayTime = 350;
+                    } {
+
+                    }
+
+                    $("#memory-search").keypress(delay((e) => {
+                        const letters = $(e.target).val();
+                        filterMemory(letters);
+                        makeMemoryTable();
+                        displayMemoryTable();
+                    }, delayTime)).keyup((e) => {
+                        if (e.keyCode == 8) {
+                            $('#memory-search').trigger('keypress');
+                        }
+                    })
+
+                    sortMemory()
+                    makeMemoryTable()
+                    displayMemoryTable()
+                    setTimeout(() => {
+                        $("#memory-search").focus()
+                    }, 400);
+                })
+            }
+        },
+    );
+    $("#memory-switch-text-on").fadeOut(() => {
+        $("#memory-switch-text-off").fadeIn()
+    });
+    $("#memory-select").change((e) => {
+        const sort = $(e.target).val();
+        state.sortKey = sort;
+        sortMemory();
+        makeMemoryTable();
+        displayMemoryTable();
+        setMemorySortArrow("down")
+    })
+    $("#memory-sort-arrow").click((e) => {
+        if ($("#memory-sort-arrow svg").first()[0].id === "memory-sort-arrow-down") {
+            setMemorySortArrow("up")
+        } else {
             setMemorySortArrow("down")
-        })
-        $("#memory-sort-arrow").click((e) => {
-            if ($("#memory-sort-arrow svg").first()[0].id === "memory-sort-arrow-down") {
-                setMemorySortArrow("up")
-            } else {
-                setMemorySortArrow("down")
-            }
-            reverseMemory()
-            makeMemoryTable()
-            displayMemoryTable()
-        })
-        chrome.storage.local.get("papers", function ({ papers }) {
-            console.log("Found papers:")
-            console.log(papers)
-            state.papers = papers;
-            state.papersList = Object.values(papers);
-            state.sortKey = "lastOpenDate";
-            $("#memory-search").attr("placeholder", `Search ${state.papersList.length} entries ...`);
-
-            if (state.papersList.length < 30) {
-                delayTime = 0;
-            } else if (state.papersList.length < 100) {
-                delayTime = 200;
-            } else {
-                delayTime = 350;
-            } {
-
-            }
-
-            $("#memory-search").keyup(delay((e) => {
-                const letters = $(e.target).val();
-                filterMemory(letters);
-                makeMemoryTable();
-                displayMemoryTable();
-            }, delayTime))
-
-            sortMemory()
-            makeMemoryTable()
-            displayMemoryTable()
-        })
-
-    }
-        , state.menuIsOpen ? 500 : 0)
+        }
+        reverseMemory()
+        makeMemoryTable()
+        displayMemoryTable()
+    })
+    $(document).on('keydown', function (e) {
+        if (!state.memoryIsOpen) {
+            return
+        }
+        console.log(e.which)
+        if (e.which == 13) {
+            const el = $(".memory-item-container:focus").first();
+            if (el.length !== 1) return
+            const id = el.attr('id').replace("memory-item-container-", "");
+            const url = state.papers[id].pdfLink;
+            focusExistingOrCreateNewTab(url, id);
+        }
+        else if (e.which == 8) {
+            const el = $(".memory-item-container:focus").first();
+            if (el.length !== 1) return
+            const id = el.attr('id').replace("memory-item-container-", "");
+            confirmDelete(id)
+        }
+    });
 }
 
 const closeMemory = () => {
@@ -541,6 +579,16 @@ const main = tab => {
         chrome.tabs.update({
             url: "https://marketplace.visualstudio.com/items?itemName=vict0rsch.coblock"
         });
+    })
+    $(document).on('keydown', function (e) {
+        if (state.memoryIsOpen) {
+            return
+        }
+        if (e.which == 13) {
+            const el = $("#memory-switch-text-on:focus").first();
+            if (el.length !== 1) return
+            $("#memory-switch-text-on").click()
+        }
     })
 
     $("#tabler-menu").click(() => {

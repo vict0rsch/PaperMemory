@@ -18,6 +18,13 @@
     "default_title": "ArxivTools",
     "default_popup": "src/popup/popup.html"
   },
+  "commands": {
+    "_execute_browser_action": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+E"
+      }
+    }
+  },
   "permissions": [
     "https://arxiv.org/*",
     "https://proceedings.neurips.cc/*",
