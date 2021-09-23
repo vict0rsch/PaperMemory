@@ -551,13 +551,20 @@ const arxiv = checks => {
     if (checkPdfTitle && isPdf) {
         var title = "";
         const makeTitle = () => {
+            if (title !== "") {
+                document.title = title;
+                console.log("Update window title to" + title)
+                return
+            }
             $.get(`https://export.arxiv.org/api/query?id_list=${id}`).then(data => {
                 title = $($(data).find("entry title")[0]).text() + ` (${id}).pdf`;
-                window.document.title = title;
+                document.title = title;
+                console.log("Update window title to" + title)
             });
         }
         setTimeout(makeTitle, 1 * 1000)
         setTimeout(makeTitle, 5 * 1000)
+        setTimeout(makeTitle, 20 * 1000)
         setTimeout(makeTitle, 60 * 1000)
         setTimeout(makeTitle, 5 * 60 * 1000)
     }
