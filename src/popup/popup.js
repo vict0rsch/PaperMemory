@@ -225,7 +225,7 @@ const getMemoryItemHTML = (item) => {
     const tagOptions = getTagsHTMLOptions(id)
 
     return `
-    <div class="memory-item-container" tabindex="0" id="memory-item-container-${id}">
+    <div class="memory-item-container" tabindex="0" id="memory-item-container--${id}">
 
         <h4 class="memory-item-title" title="Added ${addDate}&#13;&#10;Last open ${lastOpenDate}">
             ${item.title}
@@ -399,23 +399,25 @@ const displayMemoryTable = () => {
     $(".form-note").submit((e) => {
         e.preventDefault();
         const id = e.target.id.split("--").slice(-1)[0];
-        const note = $(`#form-note-textarea-${id}`.replace(".", "\\.")).val()
+        const eid = id.replace(".", "\\.");
+        const note = $(`#form-note-textarea--${eid}`).val()
         saveNote(id, note)
     })
     $(".edit-note-item").click((e) => {
         e.preventDefault();
-        const id = e.target.id.split("--").slice(-1)[0];
-        $(`#form-note-${id}`.replace(".", "\\.")).fadeIn()
+        const eid = e.target.id.split("--").slice(-1)[0].replace(".", "\\.");
+        $(`#form-note--${eid}`).fadeIn();
     })
     $(".cancel-note-form").click((e) => {
         e.preventDefault();
         const id = e.target.id.split("--").slice(-1)[0];
-        $(`#form-note-${id}`.replace(".", "\\.")).hide();
+        const eid = id.replace(".", "\\.");
+        $(`#form-note--${eid}`).hide();
+        $(`#form-note-textarea--${eid}`).val(state.papers[id].note)
     })
     $(".memory-item-expand").click((e) => {
         e.preventDefault();
-        const id = e.target.id.split("--").slice(-1)[0];
-        const eid = id.replace(".", "\\.");
+        const eid = e.target.id.split("--").slice(-1)[0].replace(".", "\\.");
         if ($(`#memory-item-expand--${eid}`).hasClass('expand-open')) {
             $(`#memory-item-expand--${eid}`).removeClass("expand-open");
             $(`#extended-item--${eid}`).slideUp();
@@ -466,13 +468,13 @@ const saveNote = (id, note) => {
     state.papers[id].note = note
     chrome.storage.local.set({ "papers": state.papers }, () => {
         console.log("Updated the note for " + state.papers[id].title);
-        $(`#form-note-${id}`.replace(".", "\\.")).hide();
-        $(`#note-content-${id}`.replace(".", "\\.")).text(note);
+        $(`#form-note--${id}`.replace(".", "\\.")).hide();
+        $(`#note-content--${id}`.replace(".", "\\.")).text(note);
     })
 }
 
 const copyAndConfirmMemoryItem = (arxivId, textToCopy, feedbackText) => {
-    const elementId = `#memory-item-feedback-${arxivId}`.replace(".", "\\.")
+    const elementId = `#memory-item-feedback--${arxivId}`.replace(".", "\\.")
     copyTextToClipboard(textToCopy)
     $(elementId).text(feedbackText)
     $(elementId).fadeIn()
