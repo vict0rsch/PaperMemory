@@ -25,21 +25,21 @@ const parseArxivBibtex = xmlData => {
     const year = $(bib.find("entry published")[0]).text().slice(0, 4);
     key += year;
     key += title.slice(1).split(" ")[0].toLowerCase().replace(/[^0-9a-z]/gi, '');
-    let arxivId;
+    let id;
     const ids = bib.find("id");
     ids.each((k, v) => {
         if ($(v).html().match(/\d\d\d\d\.\d\d\d\d\d/g)) {
-            arxivId = $(v).html().match(/\d\d\d\d\.\d\d\d\d\d/g)[0];
+            id = $(v).html().match(/\d\d\d\d\.\d\d\d\d\d/g)[0];
         }
     })
 
-    const bibvars = { key, title, author, year, arxivId, pdfLink };
+    const bibvars = { key, title, author, year, id, pdfLink };
 
     let bibtext = `@article{${key},\n`;
     bibtext += `    title={${title}},\n`;
     bibtext += `    author={${author}},\n`;
     bibtext += `    year={${year}},\n`;
-    bibtext += `    journal={arXiv preprint arXiv:${arxivId}}\n`;
+    bibtext += `    journal={arXiv preprint arXiv:${id}}\n`;
     bibtext += `}`;
 
     return {
@@ -62,13 +62,13 @@ const parseNeuripsHTML = (url, htmlText) => {
     const pdfLink = url;
     const year = $(ps[0]).text().match(/\d{4}/)[0];
     const key = `neurips${year}${hash.slice(0, 8)}`;
-    const arxivId = `NeurIPS-${year}_${hash.slice(0, 8)}`;
+    const id = `NeurIPS-${year}_${hash.slice(0, 8)}`;
 
-    return { key, title, author, year, arxivId, pdfLink }
+    return { key, title, author, year, id, pdfLink }
 }
 
-const fetchArxivBibtex = async arxivId => {
-    return $.get(`https://export.arxiv.org/api/query?id_list=${arxivId}`)
+const fetchArxivBibtex = async id => {
+    return $.get(`https://export.arxiv.org/api/query?id_list=${id}`)
 }
 
 const fetchNeuripsHTML = async url => {

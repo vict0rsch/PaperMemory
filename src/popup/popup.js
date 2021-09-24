@@ -115,14 +115,14 @@ const openMenu = () => {
     })
 }
 
-const focusExistingOrCreateNewTab = (paperUrl, arxivId) => {
+const focusExistingOrCreateNewTab = (paperUrl, id) => {
     chrome.tabs.query({ url: "https://arxiv.org/*" }, (tabs) => {
         let validTabsIds = [];
         let pdfTabsIds = [];
         const urls = tabs.map(t => t.url)
         let idx = 0;
         for (const u of urls) {
-            if (u.indexOf(arxivId) >= 0) {
+            if (u.indexOf(id) >= 0) {
                 validTabsIds.push(idx)
                 if (u.indexOf(".pdf") >= 0) {
                     pdfTabsIds.push(idx)
@@ -143,7 +143,7 @@ const focusExistingOrCreateNewTab = (paperUrl, arxivId) => {
             chrome.tabs.create({ url: paperUrl })
         }
 
-        state.papers[arxivId].count += 1;
+        state.papers[id].count += 1;
         chrome.storage.local.set({ "papers": state.papers });
 
     });
@@ -218,9 +218,9 @@ const getTagsHTMLOptions = id => {
 const getMemoryItemHTML = (item) => {
     const addDate = (new Date(item.addDate)).toLocaleString().replace(",", "")
     const lastOpenDate = (new Date(item.lastOpenDate)).toLocaleString().replace(",", "")
-    const displayId = item.arxivId.indexOf("_") < 0 ? item.arxivId : item.arxivId.split("_")[0];
+    const displayId = item.id.indexOf("_") < 0 ? item.id : item.id.split("_")[0];
     const note = item.note || "[no note]";
-    const id = item.arxivId;
+    const id = item.id;
     const tags = new Set(item.tags);
     const tagOptions = getTagsHTMLOptions(id)
 
@@ -333,6 +333,11 @@ const getMemoryItemHTML = (item) => {
     `
 }
 
+const eventId = e => {
+    const id = e.target.id.split("--")[1];
+    const eid = id.replace(".", "\\.")
+    return { id, eid }
+}
 
 const displayMemoryTable = () => {
 
@@ -342,32 +347,30 @@ const displayMemoryTable = () => {
     }
 
     $(".back-to-focus").click((e) => {
-        const id = e.target.id.split("--").slice(-1)[0]
-        const eid = id.replace(".", "\\.");
+        const { id, eid } = eventId(e);
         $(`#memory-item-container--${eid}`).focus();
     })
     $(".delete-memory-item").click((e) => {
-        const arxivId = e.target.id.split("--").slice(-1)[0];
-        confirmDelete(arxivId)
+        const { id, eid } = eventId(e);
+        confirmDelete(id)
     })
     $(".memory-item-link").click((e) => {
-        const arxivId = e.target.id.split("--").slice(-1)[0];
-        const url = state.papers[arxivId].pdfLink;
-        focusExistingOrCreateNewTab(url, arxivId)
+        const { id, eid } = eventId(e);
+        const url = state.papers[id].pdfLink;
+        focusExistingOrCreateNewTab(url, id)
     })
     $(".memory-item-md").click((e) => {
-        const arxivId = e.target.id.split("--").slice(-1)[0];
-        const md = state.papers[arxivId].md;
-        copyAndConfirmMemoryItem(arxivId, md, "Markdown Link Copied!")
+        const { id, eid } = eventId(e);
+        const md = state.papers[id].md;
+        copyAndConfirmMemoryItem(id, md, "Markdown Link Copied!")
     })
     $(".memory-item-copy-link").click((e) => {
-        const arxivId = e.target.id.split("--").slice(-1)[0];
-        const pdfLink = state.papers[arxivId].pdfLink;
-        copyAndConfirmMemoryItem(arxivId, pdfLink, "Pdf Link Copied!")
+        const { id, eid } = eventId(e);
+        const pdfLink = state.papers[id].pdfLink;
+        copyAndConfirmMemoryItem(id, pdfLink, "Pdf Link Copied!")
     })
     $(".memory-item-tag").click((e) => {
-        const id = e.target.id.split("--").slice(-1)[0];
-        const eid = id.replace(".", "\\.");
+        const { id, eid } = eventId(e);
         $(`#tag-list--${eid}`).hide();
         $(`#edit-tags--${eid}`).show()
         $(`#memory-item-tags--${eid}`).select2({
@@ -398,26 +401,24 @@ const displayMemoryTable = () => {
     })
     $(".form-note").submit((e) => {
         e.preventDefault();
-        const id = e.target.id.split("--").slice(-1)[0];
-        const eid = id.replace(".", "\\.");
+        const { id, eid } = eventId(e);
         const note = $(`#form-note-textarea--${eid}`).val()
         saveNote(id, note)
     })
     $(".edit-note-item").click((e) => {
         e.preventDefault();
-        const eid = e.target.id.split("--").slice(-1)[0].replace(".", "\\.");
+        const { id, eid } = eventId(e);
         $(`#form-note--${eid}`).fadeIn();
     })
     $(".cancel-note-form").click((e) => {
         e.preventDefault();
-        const id = e.target.id.split("--").slice(-1)[0];
-        const eid = id.replace(".", "\\.");
+        const { id, eid } = eventId(e);
         $(`#form-note--${eid}`).hide();
         $(`#form-note-textarea--${eid}`).val(state.papers[id].note)
     })
     $(".memory-item-expand").click((e) => {
         e.preventDefault();
-        const eid = e.target.id.split("--").slice(-1)[0].replace(".", "\\.");
+        const { id, eid } = eventId(e);
         if ($(`#memory-item-expand--${eid}`).hasClass('expand-open')) {
             $(`#memory-item-expand--${eid}`).removeClass("expand-open");
             $(`#extended-item--${eid}`).slideUp();
@@ -473,8 +474,8 @@ const saveNote = (id, note) => {
     })
 }
 
-const copyAndConfirmMemoryItem = (arxivId, textToCopy, feedbackText) => {
-    const elementId = `#memory-item-feedback--${arxivId}`.replace(".", "\\.")
+const copyAndConfirmMemoryItem = (id, textToCopy, feedbackText) => {
+    const elementId = `#memory-item-feedback--${id}`.replace(".", "\\.")
     copyTextToClipboard(textToCopy)
     $(elementId).text(feedbackText)
     $(elementId).fadeIn()
@@ -486,8 +487,8 @@ const copyAndConfirmMemoryItem = (arxivId, textToCopy, feedbackText) => {
     )
 }
 
-const confirmDelete = arxivId => {
-    const title = state.papers[arxivId].title;
+const confirmDelete = id => {
+    const title = state.papers[id].title;
     $("body").append(`
     <div style="width: 100%; height: 100%; background-color:  #e0e0e0; position: absolute; top: 0; left: 0; z-index: 100; display:  flex; justify-content:  center; align-items: center; flex-direction: column" id="confirm-modal">
     
@@ -509,7 +510,7 @@ const confirmDelete = arxivId => {
         $("#confirm-modal").remove()
     })
     $("#confirm-modal-button").click(() => {
-        delete state.papers[arxivId]
+        delete state.papers[id]
         chrome.storage.local.set({ "papers": state.papers }, () => {
             state.papersList = Object.values(state.papers);
             displayMemoryTable()
@@ -611,33 +612,27 @@ const openMemory = () => {
         if (!state.memoryIsOpen) {
             return
         }
+        if ([8, 13, 69, 78].indexOf(e.which) < 0) {
+            return
+        }
+
+        const el = $(".memory-item-container:focus").first();
+        if (el.length !== 1) return
+        e.preventDefault();
+        const id = el.attr('id').split("--")[1];
+        const eid = id.replace(".", "\\.");
+
         if (e.which == 13) {
-            const el = $(".memory-item-container:focus").first();
-            if (el.length !== 1) return
-            const id = el.attr('id').replace("memory-item-container-", "");
             const url = state.papers[id].pdfLink;
             focusExistingOrCreateNewTab(url, id);
         }
         else if (e.which == 8) {
-            const el = $(".memory-item-container:focus").first();
-            if (el.length !== 1) return
-            const id = el.attr('id').replace("memory-item-container-", "");
             confirmDelete(id);
         }
         else if (e.which == 69) {
-            const el = $(".memory-item-container:focus").first();
-            if (el.length !== 1) return
-            e.preventDefault();
-            const id = el.attr('id').replace("memory-item-container-", "");
-            const eid = id.replace(".", "\\.");
             $(`#memory-item-tag--${eid}`).click();
         }
         else if (e.which == 78) {
-            const el = $(".memory-item-container:focus").first();
-            if (el.length !== 1) return
-            e.preventDefault();
-            const id = el.attr('id').replace("memory-item-container-", "");
-            const eid = id.replace(".", "\\.");
             $(`#memory-item-expand--${eid}`).click();
             $(`#edit-note-item--${eid}`).click()
             $(`#form-note-textarea--${eid}`).focus()
@@ -656,6 +651,12 @@ const migrateData = papers => {
         }
         if (!papers[id].hasOwnProperty("note") || typeof papers[id].note !== "string") {
             papers[id].note = "";
+            console.log("Migrating note for " + id);
+            hasMigrated = true;
+        }
+        if (papers[id].hasOwnProperty("arxivId") || typeof papers[id].arxivId !== "undefined") {
+            papers[id].id = papers[id].arxivId;
+            delete papers[id].arxivId
             console.log("Migrating note for " + id);
             hasMigrated = true;
         }

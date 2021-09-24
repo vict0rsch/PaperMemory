@@ -451,7 +451,7 @@ const makePaper = (isArxiv, data) => {
         paper = parseNeuripsHTML(url, data)
     }
 
-    paper.md = `[${paper.title}](https://arxiv.com/abs/${paper.arxivId})`;
+    paper.md = `[${paper.title}](https://arxiv.com/abs/${paper.id})`;
     paper.note = "";
     paper.tags = [];
     return initPaper(paper)
@@ -637,13 +637,13 @@ const vanity = () => {
             const popper = $($(".tippy-popper:visible")[0])
             const journal = $(popper.find(".ltx_bib_journal")[0])
             let query;
-            let arxivId;
+            let id;
             let vanityTitle;
             let isArxivCitation = false;
             if (journal.text().indexOf("arXiv:") > -1) {
-                arxivId = journal.text().split("arXiv:");
-                arxivId = arxivId[arxivId.length - 1];
-                query = `https://export.arxiv.org/api/query?id_list=${arxivId}`;
+                id = journal.text().split("arXiv:");
+                id = id[id.length - 1];
+                query = `https://export.arxiv.org/api/query?id_list=${id}`;
                 isArxivCitation = true;
             }
             else {
@@ -667,19 +667,19 @@ const vanity = () => {
 
                 const offset = $(e.target).offset();
                 $("body").append(`
-                        <div id="arxivTools-${bibvars.arxivId}" class="arxivTools-card" style="top:${offset.top + 30}px">
+                        <div id="arxivTools-${bibvars.id}" class="arxivTools-card" style="top:${offset.top + 30}px">
                             <div class="arxivTools-card-body">
                                 <div class="arxivTools-card-header">
                                     ArxivTools: BibTex citation
                                 </div>
-                                <div class="arxivTools-bibtex" id="arxivTools-bibtex-${bibvars.arxivId}">
+                                <div class="arxivTools-bibtex" id="arxivTools-bibtex-${bibvars.id}">
                                     ${bibtext}
                                 </div>
                                 <div class="arxivTools-buttons">
                                     <div class="arxivTools-close">
                                         ${svg("vanity-close")}
                                     </div>
-                                    <div class="arxivTools-copy" id="arxivTools-copy-${bibvars.arxivId}">
+                                    <div class="arxivTools-copy" id="arxivTools-copy-${bibvars.id}">
                                         ${svg("vanity-clipboard")}
                                         ${svg("vanity-clipboard-ok")}
                                     </div>
