@@ -20,7 +20,8 @@
     margin-bottom: 8px;
 }
 
-#abstract-card:hover, #bibtex-card:hover {
+#abstract-card:hover,
+#bibtex-card:hover {
     transform: scale(1.1);
     box-shadow: 10px 10px 30px 0px rgba(0, 0, 0, 0.25);
 }
@@ -53,7 +54,7 @@
     margin-top: 8px;
 }
 
-#clipboard-ok{
+#clipboard-ok {
     color: rgb(0, 200, 84) !important;
 
 }
