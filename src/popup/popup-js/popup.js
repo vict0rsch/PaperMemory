@@ -78,16 +78,16 @@ const main = tab => {
             url: "https://marketplace.visualstudio.com/items?itemName=vict0rsch.coblock"
         });
     })
-    // $(document).on('keydown', function (e) {
-    //     if (state.memoryIsOpen) {
-    //         return
-    //     }
-    //     if (e.which == 13) {
-    //         const el = $("#memory-switch-text-on:focus").first();
-    //         if (el.length !== 1) return
-    //         $("#memory-switch-text-on").click()
-    //     }
-    // })
+    $(document).on('keydown', function (e) {
+        if (state.memoryIsOpen) {
+            return
+        }
+        if (e.which == 13) {
+            const el = $("#memory-switch-text-on:focus").first();
+            if (el.length !== 1) return
+            $("#memory-switch-text-on").click()
+        }
+    })
 
     $("#tabler-menu").click(() => {
         state.menuIsOpen ?
