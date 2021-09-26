@@ -411,7 +411,7 @@ const addOrCreatePaper = isArxiv => {
         // Update paper if it exists
         // Or create a new one if it does not
         if (papers.hasOwnProperty(id)) {
-            papers = updatePapers(papers, id);
+            papers = updatePaper(papers, id);
             paper = papers[id];
             isNew = false;
         } else {
@@ -464,7 +464,7 @@ const initPaper = paper => {
     return paper
 }
 
-const updatePapers = (papers, id) => {
+const updatePaper = (papers, id) => {
     papers[id].count += 1;
     papers[id].lastOpenDate = (new Date()).toJSON();
     return papers

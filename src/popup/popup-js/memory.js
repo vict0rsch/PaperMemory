@@ -6,6 +6,7 @@ var state = {
     sortedPapers: [],
     sortKey: "",
     paperTags: new Set(),
+    dataVersion: 0
 };
 
 const getMemoryItemHTML = (item) => {
@@ -335,34 +336,42 @@ const makeTags = () => {
     state.paperTags.sort();
 }
 
-const migrateData = papers => {
-    let hasMigrated = false;
+const migrateData = (papers, dataVersion) => {
+
+    if (papers.hasOwnProperty("__dataVersion")) {
+        if (papers["__dataVersion"] === dataVersion) {
+            delete papers["__dataVersion"]
+            return papers
+        }
+    }
+
+    delete papers["__dataVersion"]
 
     for (const id in papers) {
-        if (!papers[id].hasOwnProperty("tags") || !Array.isArray(papers[id].tags)) {
-            papers[id].tags = [];
-            console.log("Migrating tags for " + id);
-            hasMigrated = true;
-        }
-        if (!papers[id].hasOwnProperty("note") || typeof papers[id].note !== "string") {
-            papers[id].note = "";
-            console.log("Migrating note for " + id);
-            hasMigrated = true;
-        }
-        if (papers[id].hasOwnProperty("arxivId") || typeof papers[id].arxivId !== "undefined") {
-            papers[id].id = papers[id].arxivId;
-            delete papers[id].arxivId
-            console.log("Migrating note for " + id);
-            hasMigrated = true;
-        }
+        // if (!papers[id].hasOwnProperty("tags") || !Array.isArray(papers[id].tags)) {
+        //     papers[id].tags = [];
+        //     console.log("Migrating tags for " + id);
+        // }
+        // if (!papers[id].hasOwnProperty("note") || typeof papers[id].note !== "string") {
+        //     papers[id].note = "";
+        //     console.log("Migrating note for " + id);
+        // }
+        // if (papers[id].hasOwnProperty("arxivId") || typeof papers[id].arxivId !== "undefined") {
+        //     papers[id].id = papers[id].arxivId;
+        //     delete papers[id].arxivId
+        //     console.log("Migrating note for " + id);
+        // }
     }
 
-    if (hasMigrated) {
-        chrome.storage.local.set({ papers }, () => {
-            console.log("Migrated papers:");
-            console.log(papers)
-        })
-    }
+    papers["__dataVersion"] = dataVersion;
+
+    chrome.storage.local.set({ papers }, () => {
+        console.log("Migrated papers:");
+        console.log(papers)
+    })
+
+
+    delete papers["__dataVersion"]
 
     return papers
 }
@@ -471,7 +480,8 @@ const openMemory = () => {
                 chrome.storage.local.get("papers", function ({ papers }) {
                     console.log("Found papers:")
                     console.log(papers)
-                    papers = migrateData(papers)
+                    state.dataVersion = 1
+                    papers = migrateData(papers, state.dataVersion)
                     state.papers = papers;
                     state.papersList = Object.values(papers);
                     state.sortKey = "lastOpenDate";
