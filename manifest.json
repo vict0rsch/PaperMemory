@@ -1,16 +1,16 @@
 {
-  "name": "ArxivTools",
+  "name": "Arxiv Memory",
   "version": "0.2.1",
   "manifest_version": 2,
   "description": "Record papers you read, enhance Arxiv with direct download, Markdown link, BibTex citation and more!",
-  "homepage_url": "https://github.com/vict0rsch/ArxivTools",
+  "homepage_url": "https://github.com/vict0rsch/ArxivMemory",
   "icons": {
     "64": "icons/1571249796.ico",
     "128": "icons/favicon-128.png"
   },
   "browser_action": {
     "default_icon": "icons/1571249796.ico",
-    "default_title": "ArxivTools",
+    "default_title": "Arxiv Memory",
     "default_popup": "src/popup/popup.html"
   },
   "commands": {

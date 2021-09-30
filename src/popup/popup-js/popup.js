@@ -70,7 +70,7 @@ const main = tab => {
 
     $("#helpGithubLink").click(() => {
         chrome.tabs.update({
-            url: "https://github.com/vict0rsch/ArxivTools"
+            url: "https://github.com/vict0rsch/ArxivMemory"
         });
     })
     $("#coblock").click(() => {
