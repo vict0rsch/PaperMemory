@@ -1,7 +1,7 @@
 {
   "name": "ArxivTools",
   "version": "0.2.1",
-  "manifest_version": 2,
+  "manifest_version": 3,
   "description": "Record papers you read, enhance Arxiv with direct download, Markdown link, BibTex citation and more!",
   "homepage_url": "https://github.com/vict0rsch/ArxivTools",
   "icons": {
@@ -9,11 +9,9 @@
     "128": "icons/favicon-128.png"
   },
   "background": {
-    "scripts": [
-      "src/bg/background.js"
-    ]
+    "service_worker": "src/bg/background.js"
   },
-  "browser_action": {
+  "action": {
     "default_icon": "icons/1571249796.ico",
     "default_title": "ArxivTools",
     "default_popup": "src/popup/popup.html"
@@ -26,12 +24,14 @@
     }
   },
   "permissions": [
-    "https://arxiv.org/*",
-    "https://proceedings.neurips.cc/*",
     "tabs",
     "activeTab",
     "storage",
     "unlimitedStorage"
+  ],
+  "host_permissions": [
+    "https://arxiv.org/*",
+    "https://proceedings.neurips.cc/*"
   ],
   "content_scripts": [
     {
