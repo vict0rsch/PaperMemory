@@ -66,6 +66,16 @@ Share ideas 💡 in [issues](https://github.com/vict0rsch/ArxivTools/issues) and
     * `t: gan tim` will look for _all papers whose tag-list contains (at least 1 tag containing "gan") AND (at least 1 tag containing "tim")_
 * **Download** memory as json file (in the extension's Menu)
 
+## Guides
+
+<p align="center">
+<img src="https://github.com/vict0rsch/ArxivTools/blob/master/imgs/guide-arrows.png?raw=true">
+</p>
+
+<p align="center">
+<img src="https://github.com/vict0rsch/ArxivTools/blob/master/imgs/guide-memory.png?raw=true">
+</p>
+
 ## Manual Installation
 
 * download the repo
