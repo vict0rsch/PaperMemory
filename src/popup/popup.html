@@ -51,33 +51,21 @@
 
 		<div id="isArxiv" style="display: none;">
 
-			<p>Want to reach this pdf's Arxiv Abstract page?</p>
+			<h3 style="text-align: center; max-width: 85%; font-weight: 400; margin-bottom: 0px;"
+				id="popup-paper-title"></h3>
 
-			<div id="abstract-card">
-				<div id="abstract-card-header">
-					<svg class="tabler-icon">
-						<use xlink:href="../../icons/tabler-sprite-nostroke.svg#tabler-id" />
-					</svg>
-					<div class="button-text" id="goToAbstract"></div>
+			<p style="text-align: center; max-width: 85%; font-weight: 400; color: grey" id="popup-authors"></p>
+
+			<div style="width: 75%; margin-top: 16px; margin-bottom: 24px; position: relative;">
+				<div style="display: flex; justify-content: space-evenly; align-items: center;" id="popup-copy-icons">
 				</div>
-				<div id="abstract-card-title"></div>
+				<div style="color: green; position: absolute; position: absolute; left: 50%;
+				transform: translate(-50%, 0); bottom: -25px; width: 180px; text-align: center;" id="popup-feedback-copied"></div>
 			</div>
 
-			<div id="bibtex-card">
-				<div id="bibtex-card-header">
-					<svg class="tabler-icon" id="bibtex-svg">
-						<use xlink:href="../../icons/tabler-sprite-nostroke.svg#tabler-archive" />
-					</svg>
-					<svg class="tabler-icon" style="display: none;" id="clipboard-ok">
-						<use xlink:href="../../icons/tabler-sprite-nostroke.svg#tabler-clipboard-check" />
-					</svg>
-					<div class="button-text" id="goTobibtex">Copy BibTex entry</div>
-				</div>
-				<div id="bibtex-card-content"></div>
-			</div>
-
-			<br />
 			<p>Keep track of your readings with <strong>ArxivMemory!</strong></p>
+
+			<div id="popup-memory-edit" style="width: 100%; margin-bottom: 32px;"></div>
 
 		</div>
 

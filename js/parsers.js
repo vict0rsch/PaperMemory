@@ -64,7 +64,18 @@ const parseNeuripsHTML = (url, htmlText) => {
     const key = `neurips${year}${hash.slice(0, 8)}`;
     const id = `NeurIPS-${year}_${hash.slice(0, 8)}`;
 
-    return { key, title, author, year, id, pdfLink }
+    const bibtext = `
+@inproceedings{NEURIPS${year}_${hash.slice(0, 8)}
+    author = {${author}},
+    booktitle = {Advances in Neural Information Processing Systems},
+    editor = {H. Larochelle and M. Ranzato and R. Hadsell and M. F. Balcan and H. Lin},
+    publisher = {Curran Associates, Inc.},
+    title = {${title}},
+    url = {${url}},
+    year = {${year}}
+}`
+
+    return { key, title, author, year, id, pdfLink, bibtext }
 }
 
 const fetchArxivBibtex = async id => {

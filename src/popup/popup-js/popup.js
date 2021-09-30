@@ -145,38 +145,134 @@ const main = tab => {
 
         if (url.hostname === "arxiv.org") {
             $("#notArxiv").hide();
-            $("#notPdf").show();
-            $("#bibtex-card-content").slideUp();
-            if (url.href.endsWith(".pdf")) {
-                $("#notPdf").hide();
-                $("#isArxiv").show();
-                const paperId = url.href.split("/").reverse()[0].replace(".pdf", "");
-                const newURL = `https://arxiv.org/abs/` + paperId;
-                $("#goToAbstract").text(paperId);
-                $("#abstract-card").click((e) => {
-                    chrome.tabs.update({
-                        url: newURL
-                    });
-                    window.close();
-                })
-                $.get(`https://export.arxiv.org/api/query?id_list=${paperId}`).then(data => {
-                    const { bibvars, bibtext } = parseArxivBibtex(data)
-                    $("#abstract-card-title").text(bibvars.title);
-                    $("#bibtex-card-content").text(bibtext);
-                    $("#bibtex-card-header").click((e) => {
-                        copyTextToClipboard($("#bibtex-card-content").text());
-                        $("#bibtex-svg").fadeOut(() => {
-                            $("#clipboard-ok").fadeIn(() => {
-                                setTimeout(() => {
-                                    $("#clipboard-ok").fadeOut(() => {
-                                        $("#bibtex-svg").fadeIn()
-                                    })
-                                }, 1500)
-                            })
-                        })
-                    })
+            $("#notPdf").hide();
+            $("#isArxiv").show();
+            const id = url.href.split("/").reverse()[0].replace(".pdf", "").split("v")[0];
+
+            chrome.storage.local.get("papers", ({ papers }) => {
+                if (!papers.hasOwnProperty(id)) return
+                initState(papers)
+                const paper = papers[id];
+                $("#popup-paper-title").text(paper.title);
+                $("#popup-authors").text(paper.author);
+                const eid = id.replace(".", "\\.");
+                const tagOptions = getTagsHTMLOptions(id);
+                const note = paper.note || "";
+                // ----------------------------------
+                // -----  Customize Popup html  -----
+                // ----------------------------------
+                $("#popup-memory-edit").append(`
+                    <div style="width: 100%; display: flex; justify-content: space-between; align-items: center;">
+                        <span style="margin-right: 4px">Tags:</span>
+                        <select id="popup-item-tags--${id}"class="memory-item-tags" multiple="multiple">
+                            ${tagOptions}
+                        </select>
+                        <button class="back-to-focus" id="popup-save-tag-edit--${id}">Save</button>
+                    </div>
+                    <form 
+                        class="form-note" 
+                        id="popup-form-note--${id}" 
+                        style="width: 100%; display: flex; justify-content: space-between; align-items: center; margin-top: 8px;"
+                    >
+                        <span style="margin-right: 4px">Note:</span>
+                        <textarea 
+                            rows="3" 
+                            style="width:68%; border-radius: 4px; border-color: #aaaaaa" 
+                            id="popup-form-note-textarea--${id}"
+                        >${note}</textarea>
+                        <button type="submit">Save</button>
+                    </form>
+                    
+                `)
+                $("#popup-copy-icons").html(`
+                    <div
+                        class="memory-item-svg-div" 
+                        id="popup-memory-item-link--${id}"
+                        title="Open Paper Arxiv Page"
+                        style="display: ${url.href.indexOf(".pdf") < 0 ? "none" : "inherit"}"
+                    >
+                        <svg  style="height: 25px; width: 25px; pointer-events: none;" >
+                        <use xlink:href="../../icons/tabler-sprite-nostroke.svg#tabler-external-link" />
+                        </svg>
+                    </div>
+                    <div 
+                        class="memory-item-svg-div"
+                        id="popup-memory-item-copy-link--${id}"
+                        title="Copy pdf link" 
+                    >
+                        <svg style="height: 25px; width: 25px; pointer-events: none;" >
+                            <use xlink:href="../../icons/tabler-sprite-nostroke.svg#tabler-link" />
+                        </svg>
+                    </div>
+        
+                    <div 
+                        class="memory-item-svg-div"
+                        id="popup-memory-item-md--${id}"
+                        title="Copy Markdown-formatted link" 
+                    >
+                        <svg style="height: 25px; width: 25px; pointer-events: none;" >
+                            <use xlink:href="../../icons/tabler-sprite-nostroke.svg#tabler-clipboard-list" />
+                        </svg>
+                    </div>
+                    <div 
+                        class="memory-item-svg-div"
+                        id="popup-memory-item-bibtex--${id}"
+                        title="Copy Bibtex citation" 
+                    >
+                        <svg style="height: 25px; width: 25px; pointer-events: none;" >
+                            <use xlink:href="../../icons/tabler-sprite-nostroke.svg#tabler-archive" />
+                        </svg>
+                    </div>
+                `)
+                // ------------------------------------
+                // -----  Paper attributes edits  -----
+                // ------------------------------------
+                $(`#popup-item-tags--${eid}`).select2({
+                    placeholder: "Tag paper...",
+                    maximumSelectionLength: 5,
+                    allowClear: true,
+                    tags: true,
+                    width: "70%",
+                    tokenSeparators: [',', ' ']
                 });
-            }
+                $("body").css("height", "auto")
+                $(`#popup-save-tag-edit--${eid}`).click(() => {
+                    updatePaperTags(id, `#popup-item-tags--${eid}`);
+                    $("#popup-feedback-copied").text("Saved tags!")
+                    $("#popup-feedback-copied").fadeIn()
+                    setTimeout(() => { $("#popup-feedback-copied").text("") }, 1000)
+                });
+                $(`#popup-form-note--${eid}`).submit((e) => {
+                    e.preventDefault();
+                    const note = $(`#popup-form-note-textarea--${eid}`).val()
+                    saveNote(id, note)
+                    $("#popup-feedback-copied").text("Saved note!")
+                    $("#popup-feedback-copied").fadeIn()
+                    setTimeout(() => { $("#popup-feedback-copied").text("") }, 1000)
+                });
+                // ------------------------
+                // -----  SVG clicks  -----
+                // ------------------------
+                $(`#popup-memory-item-link--${eid}`).click(() => {
+                    chrome.tabs.update({
+                        url: `https://arxiv.org/abs/${paper.id}`
+                    });
+                    window.close()
+                })
+                $(`#popup-memory-item-copy-link--${eid}`).click(() => {
+                    const pdfLink = state.papers[id].pdfLink;
+                    copyAndConfirmMemoryItem(id, pdfLink, "Pdf link copied!", true)
+                })
+                $(`#popup-memory-item-md--${eid}`).click(() => {
+                    const md = state.papers[id].md;
+                    copyAndConfirmMemoryItem(id, md, "MarkDown link copied!", true)
+                })
+                $(`#popup-memory-item-bibtex--${eid}`).click(() => {
+                    const bibtext = state.papers[id].bibtext;
+                    copyAndConfirmMemoryItem(id, bibtext, "Bibtex citation copied!", true)
+                })
+            })
+
         }
     });
 }
