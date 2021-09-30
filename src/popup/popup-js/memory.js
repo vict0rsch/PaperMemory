@@ -33,7 +33,7 @@ const getMemoryItemHTML = (item) => {
                     <select id="memory-item-tags--${id}"class="memory-item-tags" multiple="multiple">
                         ${tagOptions}
                     </select>
-                    <button class="back-to-focus" style="margin-left: 12px" id="save-tag-edit--${id}">Done</button>
+                    <button class="back-to-focus" style="margin-left: 12px" id="save-tag-edit--${id}">Save</button>
                     <button class="back-to-focus" style="margin-left: 12px" id="cancel-tag-edit--${id}">Cancel</button>
                 </div>
             </div>
