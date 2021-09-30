@@ -723,7 +723,7 @@ $(() => {
         return
     }
 
-    console.log("Executing Arxiv Memory content script")
+    console.log("Executing Arxiv Tools content script")
     const checks = ['checkBib', 'checkMd', 'checkDownload', 'checkPdfTitle', "checkVanity"];
 
     chrome.storage.local.get(checks, function (items) {

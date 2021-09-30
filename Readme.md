@@ -1,4 +1,4 @@
-# Arxiv Memory ⚡
+# Arxiv Tools ⚡
 
 <br/><br/>
 
@@ -23,33 +23,33 @@ This browser extension allows you to do automatically store ArXiv papers you rea
 
 ## Demo
 
-![](https://github.com/vict0rsch/ArxivMemory/blob/master/imgs/d2.gif?raw=true)
+![](https://github.com/vict0rsch/ArxivTools/blob/master/imgs/d2.gif?raw=true)
 
 Augment Arxiv-Vanity with Bibtex:
 
 <p align="center">
-<img src="https://github.com/vict0rsch/ArxivMemory/blob/master/imgs/v.png?raw=true">
+<img src="https://github.com/vict0rsch/ArxivTools/blob/master/imgs/v.png?raw=true">
 </p>
 
 Customize features in the menu:
 
 <p align="center">
-<img src="https://github.com/vict0rsch/ArxivMemory/blob/master/imgs/m.png?raw=true">
+<img src="https://github.com/vict0rsch/ArxivTools/blob/master/imgs/m.png?raw=true">
 </p>
 
 ---
 
-Share ideas 💡 in [issues](https://github.com/vict0rsch/ArxivMemory/issues) and love with [stars](https://github.com/vict0rsch/ArxivMemory/stargazers) ⭐️:)
+Share ideas 💡 in [issues](https://github.com/vict0rsch/ArxivTools/issues) and love with [stars](https://github.com/vict0rsch/ArxivTools/stargazers) ⭐️:)
 
 ## Keyboard Navigation
 
-**ArxivMemory** is here!
+**ArxivTools** is here!
 
 * **Record** papers you read: Arxiv or NeurIPS papers you visit are stored, searchable, sortable, commentable, taggable
 * **Keyboard** navigation:
   * `cmd/ctrl + shift + e` will open the popup
-  * `tab` will iterate through fields: tags and note if you're on a paper's page, then your ArxivMemory anyway.
-  * `enter` on your ArxivMemory will open it
+  * `tab` will iterate through fields: tags and note if you're on a paper's page, then your ArxivTools anyway.
+  * `enter` on your ArxivTools will open it
   * Search field is automatically focused
   * Search for words (`foo bar` will look for all papers whose title or author names or note contain `foo` *and* `bar` )
   * `(shift + ) tab` to navigate the paper list
@@ -69,11 +69,11 @@ Share ideas 💡 in [issues](https://github.com/vict0rsch/ArxivMemory/issues) an
 ## Guides
 
 <p align="center">
-<img src="https://github.com/vict0rsch/ArxivMemory/blob/master/imgs/guide-arrows.png?raw=true">
+<img src="https://github.com/vict0rsch/ArxivTools/blob/master/imgs/guide-arrows.png?raw=true">
 </p>
 
 <p align="center">
-<img src="https://github.com/vict0rsch/ArxivMemory/blob/master/imgs/guide-memory.png?raw=true">
+<img src="https://github.com/vict0rsch/ArxivTools/blob/master/imgs/guide-memory.png?raw=true">
 </p>
 
 ## Manual Installation
@@ -88,8 +88,8 @@ Share ideas 💡 in [issues](https://github.com/vict0rsch/ArxivMemory/issues) an
 
 * **Arxiv-Vanity**
   * Bibtex card appears on hover
-  * If link is an arxiv citation, ArxivMemory fetches the citation's ID on Arxiv's `export` API.
-  * Otherwise, ArxivMemory extracts the paper's title, and searches for it on Arxiv's `export` API.
-    * If titles don't match, Arxiv's API could not find the exact article and ArxivMemory doesn't do anything
+  * If link is an arxiv citation, ArxivTools fetches the citation's ID on Arxiv's `export` API.
+  * Otherwise, ArxivTools extracts the paper's title, and searches for it on Arxiv's `export` API.
+    * If titles don't match, Arxiv's API could not find the exact article and ArxivTools doesn't do anything
 * **Firefox**
   * Using Firefox? Raise an issue if you're willing to help a little 🚁
