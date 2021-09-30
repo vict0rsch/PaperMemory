@@ -192,28 +192,37 @@ const focusExistingOrCreateNewTab = (paperUrl, id) => {
     chrome.tabs.query({ url: "https://arxiv.org/*" }, (tabs) => {
         let validTabsIds = [];
         let pdfTabsIds = [];
-        const urls = tabs.map(t => t.url)
+        const urls = tabs.map(t => t.url);
         let idx = 0;
         for (const u of urls) {
             if (u.indexOf(id) >= 0) {
-                validTabsIds.push(idx)
-                if (u.indexOf(".pdf") >= 0) {
-                    pdfTabsIds.push(idx)
+                validTabsIds.push(idx);
+                if (u.endsWith(".pdf")) {
+                    pdfTabsIds.push(idx);
                 }
             }
             idx += 1
         }
         if (validTabsIds.length > 0) {
-            let tabId = 0
+            let tab;
             if (pdfTabsIds.length > 0) {
-                tabId = tabs[pdfTabsIds[0]].id
+                tab = tabs[pdfTabsIds[0]];
             } else {
-                tabId = tabs[validTabsIds[0]].id
+                tab = tabs[validTabsIds[0]];
             }
-            var updateProperties = { 'active': true };
-            chrome.tabs.update(tabId, updateProperties);
+            const tabUpdateProperties = { 'active': true };
+            const windowUpdateProperties = { 'focused': true };
+            chrome.windows.getCurrent((w) => {
+                if (w.id !== tab.windowId) {
+                    chrome.windows.update(tab.windowId, windowUpdateProperties, () => {
+                        chrome.tabs.update(tab.id, tabUpdateProperties);
+                    });
+                } else {
+                    chrome.tabs.update(tab.id, tabUpdateProperties);
+                }
+            })
         } else {
-            chrome.tabs.create({ url: paperUrl })
+            chrome.tabs.create({ url: paperUrl });
         }
 
         state.papers[id].count += 1;
@@ -564,17 +573,16 @@ const openMemory = () => {
         const id = el.attr('id').split("--")[1];
         const eid = id.replace(".", "\\.");
 
-        if (e.which == 13) {
-            const url = state.papers[id].pdfLink;
-            focusExistingOrCreateNewTab(url, id);
+        if (e.which == 13) { // enter
+            $(`#memory-item-link--${eid}`).click();
         }
-        else if (e.which == 8) {
-            confirmDelete(id);
+        else if (e.which == 8) { // delete
+            $(`#delete-memory-item--${eid}`).click()
         }
-        else if (e.which == 69) {
+        else if (e.which == 69) { // e
             $(`#memory-item-tag--${eid}`).click();
         }
-        else if (e.which == 78) {
+        else if (e.which == 78) { // n
             $(`#memory-item-expand--${eid}`).click();
             $(`#edit-note-item--${eid}`).click()
             $(`#form-note-textarea--${eid}`).focus()
