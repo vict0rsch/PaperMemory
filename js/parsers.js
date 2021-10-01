@@ -2,6 +2,20 @@ String.prototype.capitalize = function () {
     return this.charAt(0).toUpperCase() + this.slice(1);
 }
 
+var englishStopWords = new Set([
+    ["i", "me", "my", "myself", "we", "our", "ours", "ourselves", "you", "your", "yours", "yourself", "yourselves", "he", "him", "his", "himself", "she", "her", "hers", "herself", "it", "its", "itself", "they", "them", "their", "theirs", "themselves", "what", "which", "who", "whom", "this", "that", "these", "those", "am", "is", "are", "was", "were", "be", "been", "being", "have", "has", "had", "having", "do", "does", "did", "doing", "a", "an", "the", "and", "but", "if", "or", "because", "as", "until", "while", "of", "at", "by", "for", "with", "about", "against", "between", "into", "through", "during", "before", "after", "above", "below", "to", "from", "up", "down", "in", "out", "on", "off", "over", "under", "again", "further", "then", "once", "here", "there", "when", "where", "why", "how", "all", "any", "both", "each", "few", "more", "most", "other", "some", "such", "no", "nor", "not", "only", "own", "same", "so", "than", "too", "very", "s", "t", "can", "will", "just", "don", "should", "now"]
+]);
+
+const firstNonStopLowercase = title => {
+    let t = title.toLowerCase();
+    let words = t.split(" ").map(w => w.replace(/[^0-9a-z]/gi, ''));
+    let meaningful = words.filter(w => englishStopWords.has(w))
+    if (meaningful.length > 0) {
+        return meaningful[0]
+    }
+    return words[0]
+}
+
 const parseArxivBibtex = xmlData => {
     var bib = $(xmlData);
     // console.log(bib)
@@ -24,7 +38,7 @@ const parseArxivBibtex = xmlData => {
     const title = $(bib.find("entry title")[0]).text();
     const year = $(bib.find("entry published")[0]).text().slice(0, 4);
     key += year;
-    key += title.slice(1).split(" ")[0].toLowerCase().replace(/[^0-9a-z]/gi, '');
+    key += firstNonStopLowercase(title);
     let id;
     const ids = bib.find("id");
     ids.each((k, v) => {
