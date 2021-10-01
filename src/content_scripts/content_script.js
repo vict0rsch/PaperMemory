@@ -489,7 +489,8 @@ const arxiv = checks => {
             h = $(el);
         }
     });
-    const id = window.location.href.match(/\d{4}\.\d{4,5}\d/g)[0];
+    var url = window.location.href;
+    const id = url.match(/\d{4}\.\d{4,5}\d/g)[0];
     const isPdf = window.location.href.match(/\d{4}.\d{4,5}(v\d{1,2})?.pdf/g);
     const pdfUrl = "https://arxiv.org/pdf/" + id + ".pdf";
     const fileName = id + " - " + document.title.split(" ").slice(1).join(" ") + ".pdf";
@@ -549,24 +550,18 @@ const arxiv = checks => {
     }
 
     if (checkPdfTitle && isPdf) {
-        var title = "";
-        const makeTitle = () => {
-            if (title !== "") {
-                document.title = title;
-                console.log("Update window title to" + title)
-                return
-            }
-            $.get(`https://export.arxiv.org/api/query?id_list=${id}`).then(data => {
-                title = $($(data).find("entry title")[0]).text() + ` (${id}).pdf`;
-                document.title = title;
-                console.log("Update window title to" + title)
+        const makeTitle = async () => {
+
+            let title = await $.get(`https://export.arxiv.org/api/query?id_list=${id}`).then(data => {
+                return $($(data).find("entry title")[0]).text() + ` (${id}).pdf`;
             });
+            title = title.replaceAll('"', '"').replaceAll("\n", " ");
+            chrome.runtime.sendMessage({ type: "update-title", options: { title: title, url: window.location.href } })
+
         }
-        setTimeout(makeTitle, 1 * 1000)
-        setTimeout(makeTitle, 5 * 1000)
-        setTimeout(makeTitle, 20 * 1000)
-        setTimeout(makeTitle, 60 * 1000)
-        setTimeout(makeTitle, 5 * 60 * 1000)
+
+        makeTitle()
+
     }
 
     if (checkBib && !isPdf) {

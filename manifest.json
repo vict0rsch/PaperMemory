@@ -1,12 +1,17 @@
 {
   "name": "ArxivTools",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "manifest_version": 2,
   "description": "Record papers you read, enhance Arxiv with direct download, Markdown link, BibTex citation and more!",
   "homepage_url": "https://github.com/vict0rsch/ArxivTools",
   "icons": {
     "64": "icons/1571249796.ico",
     "128": "icons/favicon-128.png"
+  },
+  "background": {
+    "scripts": [
+      "src/bg/background.js"
+    ]
   },
   "browser_action": {
     "default_icon": "icons/1571249796.ico",
