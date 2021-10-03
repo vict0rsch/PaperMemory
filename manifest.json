@@ -8,6 +8,7 @@
     "64": "icons/1571249796.ico",
     "128": "icons/favicon-128.png"
   },
+  "content_security_policy": "script-src 'self' 'unsafe-eval'; object-src 'self'",
   "background": {
     "scripts": [
       "src/bg/background.js"
@@ -31,7 +32,8 @@
     "tabs",
     "activeTab",
     "storage",
-    "unlimitedStorage"
+    "unlimitedStorage",
+    "downloads"
   ],
   "content_scripts": [
     {
