@@ -22,6 +22,7 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
             if (changeInfo.title === title) return
             console.log("/!\\ Updating title to: ", paperTitles[tab.url])
             // https://stackoverflow.com/questions/69406482/window-title-is-not-changed-after-pdf-is-loaded
+            title = title.replaceAll('"', "'")
             chrome.tabs.executeScript(tabId, {
                 code: `document.title=''; document.title="${title}"`,
                 runAt: 'document_start',
