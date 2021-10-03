@@ -1,3 +1,9 @@
+const defaultPDFTitleFn = (title, id) => {
+    title = title.replaceAll("\n", '');
+    return `${title} - ${id}.pdf`
+}
+
+
 var state = {
     menuIsOpen: false,
     memoryIsOpen: false,
@@ -6,7 +12,8 @@ var state = {
     sortedPapers: [],
     sortKey: "",
     paperTags: new Set(),
-    dataVersion: 0
+    dataVersion: 0,
+    pdfTitleFn: defaultPDFTitleFn
 };
 
 const getMemoryItemHTML = (item) => {
@@ -382,6 +389,9 @@ const migrateData = (papers, dataVersion) => {
             papers[id].bibtext = "";
             console.log("Migrating bibtext for " + id);
         }
+        if (!papers[id].pdfLink.endsWith(".pdf")) {
+            papers[id].pdfLink = papers[id].pdfLink + ".pdf"
+        }
     }
 
     papers["__dataVersion"] = dataVersion;
@@ -485,13 +495,33 @@ const displayMemoryTable = () => {
 const initState = papers => {
     console.log("Found papers:")
     console.log(papers)
-    state.dataVersion = 2
+    state.dataVersion = 3
     papers = migrateData(papers, state.dataVersion)
     state.papers = papers;
     state.papersList = Object.values(papers);
     state.sortKey = "lastOpenDate";
     sortMemory()
     makeTags()
+}
+
+const getPdfFn = code => {
+    try {
+        pdfTitleFn = eval(code)
+    } catch (error) {
+        console.log("Error parsing pdf title function. Function string then error:");
+        console.log(code)
+        console.log(error)
+        pdfTitleFn = defaultPDFTitleFn
+    }
+    try {
+        pdfTitleFn("test", "1.2")
+    } catch (error) {
+        console.log("Error testing the user's pdf title function. Function string then error:")
+        console.log(code)
+        console.log(error)
+        pdfTitleFn = defaultPDFTitleFn
+    }
+    return pdfTitleFn
 }
 
 const openMemory = () => {
@@ -504,6 +534,7 @@ const openMemory = () => {
             duration: 300,
             easing: "easeOutQuint",
             complete: () => {
+                state.memoryIsOpen = true;
                 chrome.storage.local.get("papers", function ({ papers }) {
                     initState(papers)
                     $("#memory-search").attr("placeholder", `Search ${state.papersList.length} entries ...`);
@@ -592,11 +623,12 @@ const openMemory = () => {
 
 const closeMemory = () => {
     $("#memory-container").slideUp({
-        duration: 500,
+        duration: 300,
         easing: "easeOutQuint"
     });
     $("#memory-switch-text-off").fadeOut(() => {
         $("#memory-switch-text-on").fadeIn()
     });
     $("#tabler-menu").fadeIn()
+    state.memoryIsOpen = false;
 }

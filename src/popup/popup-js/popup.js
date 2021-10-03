@@ -1,6 +1,6 @@
 const closeMenu = () => {
     $("#menuDiv").slideUp({
-        duration: 500,
+        duration: 300,
         easing: "easeOutQuint"
     }) && $("#tabler-menu").fadeOut(() => {
         $("#tabler-menu").html(`
@@ -10,20 +10,22 @@ const closeMenu = () => {
             `);
         $("#tabler-menu").fadeIn()
     })
+    state.menuIsOpen = false;
 }
 
 const openMenu = () => {
     $("#menuDiv").slideDown({
-        duration: 500,
+        duration: 300,
         easing: "easeOutQuint"
     }) && $("#tabler-menu").fadeOut(() => {
         $("#tabler-menu").html(`
-        <svg class="tabler-icon menu-svg">
-            <use xlink:href="../../icons/tabler-sprite-nostroke.svg#tabler-circle-x" />
-        </svg>
-    `);
+            <svg class="tabler-icon menu-svg">
+                <use xlink:href="../../icons/tabler-sprite-nostroke.svg#tabler-circle-x" />
+            </svg>`
+        );
         $("#tabler-menu").fadeIn()
     })
+    state.menuIsOpen = true;
 }
 
 
@@ -73,36 +75,56 @@ const main = tab => {
             url: "https://github.com/vict0rsch/ArxivMemory"
         });
     })
+
     $("#coblock").click(() => {
         chrome.tabs.update({
             url: "https://marketplace.visualstudio.com/items?itemName=vict0rsch.coblock"
         });
     })
+
     $(document).on('keydown', function (e) {
         if (state.memoryIsOpen) {
+            if (e.which === 27) { // escape closes memory
+                e.preventDefault();
+                closeMemory();
+            }
+        }
+        if (state.menuIsOpen) {
+            if (e.which === 27) { // escape closes menu
+                e.preventDefault();
+                closeMenu();
+            }
+        }
+        if (state.memoryIsOpen || state.menuIsOpen) {
             return
         }
-        if (e.which == 13) {
-            const el = $("#memory-switch-text-on:focus").first();
-            if (el.length !== 1) return
-            $("#memory-switch-text-on").click()
+        if (e.which == 13) { // enter on the arxiv memory button opens it
+            let el = $("#memory-switch-text-on:focus").first();
+            if (el.length > 0) {
+                $("#memory-switch").click()
+                return
+            }
+            el = $("#tabler-menu:focus").first();
+            if (el.length > 0) {
+                $("#tabler-menu").click()
+                return
+            }
+
         }
+        if (e.which == 65) { // a opens the arxiv memory
+            if ($(":focus").length) return;
+            $("#memory-switch").click()
+        }
+
     })
 
+
     $("#tabler-menu").click(() => {
-        state.menuIsOpen ?
-            closeMenu()
-            :
-            openMenu()
-        state.menuIsOpen = !state.menuIsOpen;
+        state.menuIsOpen ? closeMenu() : openMenu();
     })
 
     $("#memory-switch").click(() => {
-        state.memoryIsOpen ?
-            closeMemory()
-            :
-            openMemory()
-        state.memoryIsOpen = !state.memoryIsOpen;
+        state.memoryIsOpen ? closeMemory() : openMemory();
     })
 
     $("#download-arxivmemory").click(() => {
@@ -112,22 +134,23 @@ const main = tab => {
         })
     })
 
-    const checks = ["checkBib", "checkMd", "checkDownload", "checkPdfTitle", "checkVanity", "checkMemory"]
-    chrome.storage.local.get(checks, function (items) {
+    const checks = ["checkBib", "checkMd", "checkDownload", "checkPdfTitle", "checkVanity"];
+    let storageKeys = [...checks, "pdfTitleFn"];
+    chrome.storage.local.get(storageKeys, function (dataItems) {
 
         const hasKey = {};
         for (const key of checks) {
-            hasKey[key] = items.hasOwnProperty(key);
+            hasKey[key] = dataItems.hasOwnProperty(key);
         }
         const setValues = {}
         for (const key of checks) {
-            setValues[key] = hasKey[key] ? items[key] : true;
+            setValues[key] = hasKey[key] ? dataItems[key] : true;
         }
         chrome.storage.local.set(setValues, function () {
-            chrome.storage.local.get(checks, function (items) {
+            chrome.storage.local.get(checks, function (dataItems) {
                 for (const key of checks) {
-                    $("#" + key).prop("checked", items[key]);
-                    setValues[key] = hasKey[key] ? items[key] : true;
+                    $("#" + key).prop("checked", dataItems[key]);
+                    setValues[key] = hasKey[key] ? dataItems[key] : true;
                 }
             });
         });
@@ -142,6 +165,35 @@ const main = tab => {
             });
         }
 
+
+        if (dataItems.pdfTitleFn && typeof dataItems.pdfTitleFn === "string") {
+            state.pdfTitleFn = getPdfFn(dataItems.pdfTitleFn);
+        }
+
+        chrome.storage.local.set({ pdfTitleFn: state.pdfTitleFn.toString() })
+        $("#customPdfTitleTextarea").val(pdfTitleFn.toString())
+        $("#saveCustomPdf").click(() => {
+            const code = $.trim($("#customPdfTitleTextarea").val());
+            try {
+                const fn = eval(code)
+                fn("test", "1.2")
+                $("#customPdfFeedback").html(`<span style="color: green">Saved!</span>`);
+                chrome.storage.local.set({ pdfTitleFn: code });
+                state.pdfTitleFn = fn;
+                setTimeout(() => { $("#customPdfFeedback").html("") }, 1000);
+            } catch (error) {
+                $("#customPdfFeedback").html(`<span style="color: red">${error}</span>`);
+            }
+        })
+        $("#defaultCustomPdf").click(() => {
+            console.log("click")
+            const code = defaultPDFTitleFn.toString();
+            chrome.storage.local.set({ pdfTitleFn: code });
+            state.pdfTitleFn = defaultPDFTitleFn;
+            $("#customPdfTitleTextarea").val(code);
+            $("#customPdfFeedback").html(`<span style="color: green">Saved!</span>`);
+            setTimeout(() => { $("#customPdfFeedback").html("") }, 1000);
+        });
 
         if (url.hostname === "arxiv.org") {
             $("#notArxiv").hide();
@@ -177,7 +229,7 @@ const main = tab => {
                         <span style="margin-right: 4px">Note:</span>
                         <textarea 
                             rows="3" 
-                            style="width:68%; border-radius: 4px; border-color: #aaaaaa" 
+                            style="width:68%;" 
                             id="popup-form-note-textarea--${id}"
                         >${note}</textarea>
                         <button type="submit">Save</button>
@@ -221,6 +273,15 @@ const main = tab => {
                     >
                         <svg style="height: 25px; width: 25px; pointer-events: none;" >
                             <use xlink:href="../../icons/tabler-sprite-nostroke.svg#tabler-archive" />
+                        </svg>
+                    </div>
+                    <div 
+                        class="memory-item-svg-div"
+                        id="popup-memory-item-download--${id}"
+                        title="Download pdf" 
+                    >
+                        <svg style="height: 25px; width: 25px; pointer-events: none;" >
+                            <use xlink:href="../../icons/tabler-sprite-nostroke.svg#tabler-download" />
                         </svg>
                     </div>
                 `)
@@ -270,6 +331,13 @@ const main = tab => {
                 $(`#popup-memory-item-bibtex--${eid}`).click(() => {
                     const bibtext = state.papers[id].bibtext;
                     copyAndConfirmMemoryItem(id, bibtext, "Bibtex citation copied!", true)
+                })
+                $(`#popup-memory-item-download--${eid}`).click(() => {
+                    let pdfTitle = state.pdfTitleFn(paper.title, paper.id);
+                    chrome.downloads.download({
+                        url: paper.pdfLink,
+                        filename: pdfTitle
+                    });
                 })
             })
 

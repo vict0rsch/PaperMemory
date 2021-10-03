@@ -98,26 +98,37 @@
 				<label for="checkBib"> Add BibTex citation section</label><br><br>
 
 				<input class="switch" type="checkbox" id="checkPdfTitle" name="checkPdfTitle" value="checkPdfTitle">
-				<label for="checkPdfTitle"> Change pdf webpage title</label><br><br>
+				<label for="checkPdfTitle"> Change Arxiv tab titles</label><br><br>
 
 				<input class="switch" type="checkbox" id="checkVanity" name="checkVanity" value="checkVanity">
 				<label for="checkVanity"> Add Bibtex citation on Arxiv-Vanity</label><br><br>
-
-				<input class="switch" type="checkbox" id="checkMemory" name="checkMemory" value="checkMemory">
-				<label for="checkMemory"> Store visited Arxiv papers in your ArxivMemory</label><br><br>
 			</div>
 
 			<div style="display: flex; align-items: center;">
 				<p>Download your ArxivMemory as json file: </p>
 				<button style="margin-left: 3px" id="download-arxivmemory">Download</button>
 			</div>
+
+			<div style="display: flex; justify-content: center; flex-direction: column; align-items: center;">
+				<p>
+					/!\ <strong>Beta</strong> feature: PDF file name parser -> enter a javascript function taking as
+					input
+					<code style="margin: 0px; display: inline-block;">(title, id)</code> and returning a string.
+				</p>
+
+				<textarea id="customPdfTitleTextarea" style="width: 100%; margin-bottom: 8px;" rows="5">
+(title, id) => {
+    title = title.replaceAll("\n", '');
+    return `${title} - ${id}.pdf`
+}</textarea>
+				<div style="display: flex; justify-content: space-evenly; align-items: center; margin-bottom: 16px;">
+					<button id="saveCustomPdf">Save</button>
+					<button id="defaultCustomPdf">Default</button>
+				</div>
+				<div id="customPdfFeedback"></div>
+			</div>
 		</div>
 
-	</div>
-	<div id="tabler-menu">
-		<svg id='tabler-menu-svg menu-svg' class="tabler-icon">
-			<use xlink:href="../../icons/tabler-sprite-nostroke.svg#tabler-adjustments" />
-		</svg>
 	</div>
 	<div id="memory-switch">
 		<span tabindex="0" id="memory-switch-text-on">ArxivMemory</span>
@@ -141,6 +152,11 @@
 		</div>
 		<div id="memory-table" width="100%">
 		</div>
+	</div>
+	<div id="tabler-menu" tabindex="0">
+		<svg id='tabler-menu-svg menu-svg' class="tabler-icon">
+			<use xlink:href="../../icons/tabler-sprite-nostroke.svg#tabler-adjustments" />
+		</svg>
 	</div>
 
 	<!-- <div id="content"></div> -->

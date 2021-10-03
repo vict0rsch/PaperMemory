@@ -350,7 +350,7 @@ const main = checks => {
         vanity()
     }
 
-    if (checks.checkMemory && (isArxiv || isNeurips)) {
+    if (isArxiv || isNeurips) {
         addOrCreatePaper(isArxiv)
     }
 }
@@ -479,7 +479,8 @@ const arxiv = checks => {
         checkBib,
         checkDownload,
         checkPdfTitle,
-        checkMemory } = checks;
+        pdfTitleFn
+    } = checks;
 
     // console.log({ checks })
 
@@ -493,7 +494,6 @@ const arxiv = checks => {
     const id = url.match(/\d{4}\.\d{4,5}\d/g)[0];
     const isPdf = window.location.href.match(/\d{4}.\d{4,5}(v\d{1,2})?.pdf/g);
     const pdfUrl = "https://arxiv.org/pdf/" + id + ".pdf";
-    const fileName = id + " - " + document.title.split(" ").slice(1).join(" ") + ".pdf";
 
     // -----------------------------
     // -----  Download Button  -----
@@ -508,14 +508,17 @@ const arxiv = checks => {
             `;
         h.parent().append(button)
         var downloadTimeout;
-        $("#arxiv-button").click(() => {
+        $("#arxiv-button").click(async () => {
             $("#arxiv-button").removeClass("downloaded");
             $("#arxiv-button").addClass("downloaded");
             downloadTimeout && clearTimeout(downloadTimeout);
             downloadTimeout = setTimeout(() => {
                 $("#arxiv-button").hasClass("downloaded") && $("#arxiv-button").removeClass("downloaded");
             }, 1500)
-            download_file(pdfUrl, fileName);
+            const title = await $.get(`https://export.arxiv.org/api/query?id_list=${id}`).then(data => {
+                return $($(data).find("entry title")[0]).text();
+            });
+            download_file(pdfUrl, pdfTitleFn(title, id));
         })
     }
     // ---------------------------
@@ -549,15 +552,15 @@ const arxiv = checks => {
         });
     }
 
-    if (checkPdfTitle && isPdf) {
+    if (checkPdfTitle) {
         const makeTitle = async () => {
 
             let title = await $.get(`https://export.arxiv.org/api/query?id_list=${id}`).then(data => {
-                return $($(data).find("entry title")[0]).text() + ` (${id}).pdf`;
+                return $($(data).find("entry title")[0]).text();
             });
-            title = title.replaceAll('"', '"').replaceAll("\n", " ");
+            title = pdfTitleFn(title, id);
+            window.document.title = title;
             chrome.runtime.sendMessage({ type: "update-title", options: { title: title, url: window.location.href } })
-
         }
 
         makeTitle()
@@ -705,6 +708,30 @@ const vanity = () => {
     })
 }
 
+const defaultPDFTitleFn = (title, id) => {
+    title = title.replaceAll("\n", '');
+    return `${title} - ${id}.pdf`
+}
+const getPdfFn = code => {
+    try {
+        pdfTitleFn = eval(code)
+    } catch (error) {
+        console.log("Error parsing pdf title function. Function string then error:");
+        console.log(code)
+        console.log(error)
+        pdfTitleFn = defaultPDFTitleFn
+    }
+    try {
+        pdfTitleFn("test", "1.2")
+    } catch (error) {
+        console.log("Error testing the user's pdf title function. Function string then error:")
+        console.log(code)
+        console.log(error)
+        pdfTitleFn = defaultPDFTitleFn
+    }
+    return pdfTitleFn
+}
+
 $(() => {
 
     const url = window.location.href;
@@ -720,15 +747,16 @@ $(() => {
 
     console.log("Executing Arxiv Tools content script")
     const checks = ['checkBib', 'checkMd', 'checkDownload', 'checkPdfTitle', "checkVanity"];
+    const storageKeys = [...checks, "pdfTitleFn"];
 
-    chrome.storage.local.get(checks, function (items) {
+    chrome.storage.local.get(storageKeys, function (items) {
 
         const checkMd = items.hasOwnProperty("checkMd") ? items.checkMd : true;
         const checkBib = items.hasOwnProperty("checkBib") ? items.checkBib : true;
         const checkDownload = items.hasOwnProperty("checkDownload") ? items.checkDownload : true;
         const checkPdfTitle = items.hasOwnProperty("checkPdfTitle") ? items.checkPdfTitle : true;
         const checkVanity = items.hasOwnProperty("checkVanity") ? items.checkVanity : true;
-        const checkMemory = items.hasOwnProperty("checkMemory") ? items.checkMemory : true;
+        const pdfTitleFn = (items.pdfTitleFn && typeof items.pdfTitleFn === "string") ? getPdfFn(items.pdfTitleFn) : defaultPDFTitleFn
 
         main({
             checkMd,
@@ -736,7 +764,7 @@ $(() => {
             checkDownload,
             checkPdfTitle,
             checkVanity,
-            checkMemory
+            pdfTitleFn
         })
 
     });
