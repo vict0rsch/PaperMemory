@@ -67,7 +67,6 @@ const main = tab => {
     }
 
     const url = parseUrl(tab.url);
-    // console.log(url);
 
 
     $("#helpGithubLink").click(() => {
@@ -186,7 +185,6 @@ const main = tab => {
             }
         })
         $("#defaultCustomPdf").click(() => {
-            console.log("click")
             const code = defaultPDFTitleFn.toString();
             chrome.storage.local.set({ pdfTitleFn: code });
             state.pdfTitleFn = defaultPDFTitleFn;
