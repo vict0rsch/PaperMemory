@@ -106,6 +106,7 @@ const main = tab => {
             el = $("#tabler-menu:focus").first();
             if (el.length > 0) {
                 $("#tabler-menu").click()
+                $("#tabler-menu").blur()
                 return
             }
 
