@@ -105,6 +105,16 @@ const getMemoryItemHTML = (item) => {
                 </svg>
             </div>
 
+            <div 
+                class="memory-item-bibtext memory-item-svg-div"
+                id="memory-item-bibtext--${id}"
+                title="Copy Bibtex citation" 
+            >
+                <svg style="height: 15px; width: 15px; pointer-events: none;" >
+                    <use xlink:href="../../icons/tabler-sprite-nostroke.svg#tabler-archive" />
+                </svg>
+            </div>
+
             <span style="color: green; display: none" id="memory-item-feedback--${id}"></span>
             
             <div title="Number of times you have loaded&#13;&#10;the paper's Page or PDF">
@@ -431,6 +441,11 @@ const displayMemoryTable = () => {
         const { id, eid } = eventId(e);
         const md = state.papers[id].md;
         copyAndConfirmMemoryItem(id, md, "Markdown link copied!")
+    })
+    $(".memory-item-bibtext").click((e) => {
+        const { id, eid } = eventId(e);
+        const bibtext = state.papers[id].bibtext;
+        copyAndConfirmMemoryItem(id, bibtext, "Bibtex copied!")
     })
     $(".memory-item-copy-link").click((e) => {
         const { id, eid } = eventId(e);
