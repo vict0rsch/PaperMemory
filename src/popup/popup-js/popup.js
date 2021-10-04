@@ -213,26 +213,31 @@ const main = tab => {
                 // -----  Customize Popup html  -----
                 // ----------------------------------
                 $("#popup-memory-edit").append(`
-                    <div style="width: 100%; display: flex; justify-content: space-between; align-items: center;">
-                        <span style="margin-right: 4px">Tags:</span>
-                        <select id="popup-item-tags--${id}"class="memory-item-tags" multiple="multiple">
-                            ${tagOptions}
-                        </select>
-                        <button class="back-to-focus" id="popup-save-tag-edit--${id}">Save</button>
+                <div style="width: 100%; display: flex; justify-content: space-between; align-items: center;">
+                    <div style="width: 85%">
+                        <div style="width: 100%; display: flex; justify-content: space-between; align-items: center;">
+                            <span style="margin-right: 4px">Tags:</span>
+                            <select id="popup-item-tags--${id}"class="memory-item-tags" multiple="multiple">
+                                ${tagOptions}
+                            </select>
+                        </div>
+                        <div 
+                            class="form-note" 
+                            id="popup-form-note--${id}" 
+                            style="width: 100%; display: flex; justify-content: space-between; align-items: center; margin-top: 8px;"
+                        >
+                            <span style="margin-right: 4px">Note:</span>
+                            <textarea 
+                                rows="3" 
+                                style="width:85%;" 
+                                id="popup-form-note-textarea--${id}"
+                            >${note}</textarea>
+                        </div>
                     </div>
-                    <form 
-                        class="form-note" 
-                        id="popup-form-note--${id}" 
-                        style="width: 100%; display: flex; justify-content: space-between; align-items: center; margin-top: 8px;"
-                    >
-                        <span style="margin-right: 4px">Note:</span>
-                        <textarea 
-                            rows="3" 
-                            style="width:68%;" 
-                            id="popup-form-note-textarea--${id}"
-                        >${note}</textarea>
-                        <button type="submit">Save</button>
-                    </form>
+                    <div>
+                        <button class="back-to-focus" id="popup-save-edits--${id}">Save</button>
+                    </div>
+                </div>
                     
                 `)
                 $("#popup-copy-icons").html(`
@@ -292,21 +297,19 @@ const main = tab => {
                     maximumSelectionLength: 5,
                     allowClear: true,
                     tags: true,
-                    width: "70%",
+                    width: "87%",
                     tokenSeparators: [',', ' ']
                 });
                 $("body").css("height", "auto")
-                $(`#popup-save-tag-edit--${eid}`).click(() => {
-                    updatePaperTags(id, `#popup-item-tags--${eid}`);
-                    $("#popup-feedback-copied").text("Saved tags!")
-                    $("#popup-feedback-copied").fadeIn()
-                    setTimeout(() => { $("#popup-feedback-copied").text("") }, 1000)
+                $(`#popup-form-note-textarea--${eid}`).focus(function () {
+                    var that = this;
+                    setTimeout(function () { that.selectionStart = that.selectionEnd = 10000; }, 0);
                 });
-                $(`#popup-form-note--${eid}`).submit((e) => {
-                    e.preventDefault();
+                $(`#popup-save-edits--${eid}`).click(() => {
                     const note = $(`#popup-form-note-textarea--${eid}`).val()
+                    updatePaperTags(id, `#popup-item-tags--${eid}`);
                     saveNote(id, note)
-                    $("#popup-feedback-copied").text("Saved note!")
+                    $("#popup-feedback-copied").text("Saved tags & note!")
                     $("#popup-feedback-copied").fadeIn()
                     setTimeout(() => { $("#popup-feedback-copied").text("") }, 1000)
                 });
