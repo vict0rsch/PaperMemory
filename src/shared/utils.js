@@ -120,6 +120,59 @@ const getPdfFn = code => {
     return pdfTitleFn
 }
 
+
+const migrateData = async (papers, dataVersion) => {
+    try {
+
+
+        if (papers.hasOwnProperty("__dataVersion")) {
+            if (papers["__dataVersion"] === dataVersion) {
+                delete papers["__dataVersion"]
+                return papers
+            }
+        }
+
+        delete papers["__dataVersion"]
+
+        for (const id in papers) {
+            if (!papers[id].hasOwnProperty("bibtext")) {
+                papers[id].bibtext = "";
+                console.log("Migrating bibtext for " + id);
+            }
+            if (!papers[id].pdfLink.endsWith(".pdf")) {
+                papers[id].pdfLink = papers[id].pdfLink + ".pdf"
+            }
+            if (!papers[id].source) {
+                if (papers[id].id.includes("NeurIPS")) {
+                    papers[id].source = "neurips"
+                } else {
+                    papers[id].source = "arxiv"
+                }
+            }
+            // if (!papers[id].hasOwnProperty("codes")) {
+            //     papers[id].codes = await fetchCodes(papers[id])
+            // }
+        }
+
+        papers["__dataVersion"] = dataVersion;
+
+        chrome.storage.local.set({ papers }, () => {
+            console.log("Migrated papers:");
+            console.log(papers)
+        })
+
+
+        delete papers["__dataVersion"]
+
+        return papers
+    } catch (error) {
+        console.log("Error migrating data:")
+        console.log(error)
+        return papers
+    }
+}
+
+
 var state = {
     menuIsOpen: false,
     memoryIsOpen: false,
@@ -141,4 +194,18 @@ const statePdfTitle = (title, id) => {
     }
 
     return name.replaceAll("\n", " ").replace(/\s\s+/g, ' ')
+}
+
+
+const initState = async (papers, noDisplay) => {
+    console.log("Found papers:")
+    console.log(papers)
+    state.dataVersion = 4
+    papers = await migrateData(papers, state.dataVersion)
+    if (noDisplay) return papers
+    state.papers = papers;
+    state.papersList = Object.values(papers);
+    state.sortKey = "lastOpenDate";
+    sortMemory()
+    makeTags()
 }

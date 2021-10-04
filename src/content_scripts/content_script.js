@@ -358,6 +358,8 @@ const addOrCreatePaper = isArxiv => {
     // get papers already stored
     chrome.storage.local.get("papers", async function ({ papers }) {
 
+        papers = await initState(papers, true)
+
         // no papers in storage
         if (typeof papers === "undefined") {
             papers = {};
@@ -416,10 +418,12 @@ const makePaper = async (isArxiv, data) => {
         const { bibvars, bibtext } = parseArxivBibtex(data);
         paper = bibvars;
         paper.bibtext = bibtext;
-        paper.codes = await fetchCodes(paper.id, null)
+        paper.source = "arxiv"
+        // paper.codes = await fetchCodes(paper)
     } else {
         paper = parseNeuripsHTML(url, data);
-        paper.codes = await fetchCodes(null, paper.title);
+        paper.source = "neurips"
+        // paper.codes = await fetchCodes(paper);
     }
 
     paper.md = `[${paper.title}](https://arxiv.com/abs/${paper.id})`;

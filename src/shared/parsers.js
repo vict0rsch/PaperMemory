@@ -110,6 +110,13 @@ const fetchNeuripsHTML = async url => {
     })
 }
 
+
+const fetchOpts = {
+    headers: {
+        'mode': 'no-cors'
+    }
+}
+
 const fetchPWCId = async (arxiv_id, title) => {
     let pwcPath = `https://paperswithcode.com/api/v1/papers/?`;
     if (arxiv_id) {
@@ -123,7 +130,16 @@ const fetchPWCId = async (arxiv_id, title) => {
     return json["results"][0]["id"];
 }
 
-const fetchCodes = async (arxiv_id, title) => {
+const fetchCodes = async (paper) => {
+
+
+    let arxiv_id, title;
+    if (paper.source = "neurips") {
+        title = paper.title;
+    } else {
+        arxiv_id = paper.id
+    }
+
     const pwcId = await fetchPWCId(arxiv_id, title);
     if (!pwcId) return []
 

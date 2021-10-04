@@ -365,40 +365,6 @@ const makeTags = () => {
     state.paperTags.sort();
 }
 
-const migrateData = (papers, dataVersion) => {
-
-    if (papers.hasOwnProperty("__dataVersion")) {
-        if (papers["__dataVersion"] === dataVersion) {
-            delete papers["__dataVersion"]
-            return papers
-        }
-    }
-
-    delete papers["__dataVersion"]
-
-    for (const id in papers) {
-        if (!papers[id].hasOwnProperty("bibtext")) {
-            papers[id].bibtext = "";
-            console.log("Migrating bibtext for " + id);
-        }
-        if (!papers[id].pdfLink.endsWith(".pdf")) {
-            papers[id].pdfLink = papers[id].pdfLink + ".pdf"
-        }
-    }
-
-    papers["__dataVersion"] = dataVersion;
-
-    chrome.storage.local.set({ papers }, () => {
-        console.log("Migrated papers:");
-        console.log(papers)
-    })
-
-
-    delete papers["__dataVersion"]
-
-    return papers
-}
-
 const displayMemoryTable = () => {
 
     $("#memory-table").html("");
@@ -489,18 +455,6 @@ const displayMemoryTable = () => {
 
 }
 
-const initState = papers => {
-    console.log("Found papers:")
-    console.log(papers)
-    state.dataVersion = 3
-    papers = migrateData(papers, state.dataVersion)
-    state.papers = papers;
-    state.papersList = Object.values(papers);
-    state.sortKey = "lastOpenDate";
-    sortMemory()
-    makeTags()
-}
-
 const openMemory = () => {
     state.menuIsOpen && closeMenu();
     $("#tabler-menu").fadeOut();
@@ -512,8 +466,10 @@ const openMemory = () => {
             easing: "easeOutQuint",
             complete: () => {
                 state.memoryIsOpen = true;
-                chrome.storage.local.get("papers", function ({ papers }) {
-                    initState(papers)
+                chrome.storage.local.get("papers", async function ({ papers }) {
+
+                    await initState(papers);
+
                     $("#memory-search").attr("placeholder", `Search ${state.papersList.length} entries ...`);
 
                     if (state.papersList.length < 20) {

@@ -200,10 +200,12 @@ const main = tab => {
             $("#isArxiv").show();
             const id = url.href.split("/").reverse()[0].replace(".pdf", "").split("v")[0];
 
-            chrome.storage.local.get("papers", ({ papers }) => {
+            chrome.storage.local.get("papers", async ({ papers }) => {
                 if (!papers.hasOwnProperty(id)) return
-                initState(papers)
-                const paper = papers[id];
+
+                await initState(papers);
+
+                const paper = state.papers[id];
                 $("#popup-paper-title").text(paper.title);
                 $("#popup-authors").text(paper.author);
                 const eid = id.replace(".", "\\.");
