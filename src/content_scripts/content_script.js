@@ -490,7 +490,7 @@ const arxiv = checks => {
             h = $(el);
         }
     });
-    var url = window.location.href;
+    const url = window.location.href;
     const id = url.match(/\d{4}\.\d{4,5}\d/g)[0];
     const isPdf = window.location.href.match(/\d{4}.\d{4,5}(v\d{1,2})?.pdf/g);
     const pdfUrl = "https://arxiv.org/pdf/" + id + ".pdf";
@@ -553,17 +553,21 @@ const arxiv = checks => {
     }
 
     if (checkPdfTitle) {
-        const makeTitle = async () => {
 
-            let title = await $.get(`https://export.arxiv.org/api/query?id_list=${id}`).then(data => {
+        const getArxivTitle = async (id) => {
+            return await $.get(`https://export.arxiv.org/api/query?id_list=${id}`).then(data => {
                 return $($(data).find("entry title")[0]).text();
             });
+        }
+        const makeTitle = async (id, url) => {
+
+            let title = await getArxivTitle(id);
             title = pdfTitleFn(title, id);
             window.document.title = title;
-            chrome.runtime.sendMessage({ type: "update-title", options: { title: title, url: window.location.href } })
+            chrome.runtime.sendMessage({ type: "update-title", options: { title, url } })
         }
 
-        makeTitle()
+        makeTitle(id, url)
 
     }
 
@@ -709,7 +713,7 @@ const vanity = () => {
 }
 
 const defaultPDFTitleFn = (title, id) => {
-    title = title.replaceAll("\n", '');
+    title = title.replaceAll("\n", " ").replace(/\s\s+/g, ' ');
     return `${title} - ${id}.pdf`
 }
 const getPdfFn = code => {
@@ -729,7 +733,8 @@ const getPdfFn = code => {
         console.log(error)
         pdfTitleFn = defaultPDFTitleFn
     }
-    return pdfTitleFn
+
+    return (title, id) => pdfTitleFn(title, id).replaceAll("\n", " ").replace(/\s\s+/g, ' ')
 }
 
 $(() => {

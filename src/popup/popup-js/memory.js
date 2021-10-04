@@ -1,8 +1,27 @@
 const defaultPDFTitleFn = (title, id) => {
-    title = title.replaceAll("\n", '');
+    title = title.replaceAll("\n", " ").replace(/\s\s+/g, ' ');
     return `${title} - ${id}.pdf`
 }
+const getPdfFn = code => {
+    try {
+        pdfTitleFn = eval(code)
+    } catch (error) {
+        console.log("Error parsing pdf title function. Function string then error:");
+        console.log(code)
+        console.log(error)
+        pdfTitleFn = defaultPDFTitleFn
+    }
+    try {
+        pdfTitleFn("test", "1.2")
+    } catch (error) {
+        console.log("Error testing the user's pdf title function. Function string then error:")
+        console.log(code)
+        console.log(error)
+        pdfTitleFn = defaultPDFTitleFn
+    }
 
+    return (title, id) => pdfTitleFn(title, id).replaceAll("\n", " ").replace(/\s\s+/g, ' ')
+}
 
 var state = {
     menuIsOpen: false,
@@ -517,26 +536,6 @@ const initState = papers => {
     state.sortKey = "lastOpenDate";
     sortMemory()
     makeTags()
-}
-
-const getPdfFn = code => {
-    try {
-        pdfTitleFn = eval(code)
-    } catch (error) {
-        console.log("Error parsing pdf title function. Function string then error:");
-        console.log(code)
-        console.log(error)
-        pdfTitleFn = defaultPDFTitleFn
-    }
-    try {
-        pdfTitleFn("test", "1.2")
-    } catch (error) {
-        console.log("Error testing the user's pdf title function. Function string then error:")
-        console.log(code)
-        console.log(error)
-        pdfTitleFn = defaultPDFTitleFn
-    }
-    return pdfTitleFn
 }
 
 const openMemory = () => {
