@@ -109,3 +109,32 @@ const fetchNeuripsHTML = async url => {
         return response.text()
     })
 }
+
+const fetchPWCId = async (arxiv_id, title) => {
+    let pwcPath = `https://paperswithcode.com/api/v1/papers/?`;
+    if (arxiv_id) {
+        pwcPath += new URLSearchParams({ arxiv_id })
+    } else if (title) {
+        pwcPath += new URLSearchParams({ title })
+    }
+    const response = await fetch(pwcPath);
+    const json = await response.json();
+    if (json["count"] !== 1) return
+    return json["results"][0]["id"];
+}
+
+const fetchCodes = async (arxiv_id, title) => {
+    const pwcId = await fetchPWCId(arxiv_id, title);
+    if (!pwcId) return []
+
+    let codePath = `https://paperswithcode.com/api/v1/papers/${pwcId}/repositories/?`
+    codePath += new URLSearchParams({ page: 1, items_per_page: 10 })
+
+    const response = await fetch(codePath);
+    const json = await response.json();
+    if (json["count"] < 1) return
+
+    let codes = json["results"];
+    codes.sort((a, b) => a.stars - b.stars);
+    return codes.slice(0, 5)
+}

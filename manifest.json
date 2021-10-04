@@ -11,6 +11,7 @@
   "content_security_policy": "script-src 'self' 'unsafe-eval'; object-src 'self'",
   "background": {
     "scripts": [
+      "src/shared/utils.min.js",
       "src/bg/background.js"
     ]
   },
@@ -43,8 +44,9 @@
         "https://proceedings.neurips.cc/*"
       ],
       "js": [
-        "js/parsers.js",
-        "js/jquery.min.js",
+        "src/shared/utils.min.js",
+        "src/shared/parsers.min.js",
+        "src/shared/jquery.min.js",
         "src/content_scripts/content_script.js"
       ],
       "css": [

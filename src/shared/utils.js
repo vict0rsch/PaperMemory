@@ -94,3 +94,51 @@ const download_file = (fileURL, fileName) => {
         _window.close();
     }
 }
+
+const defaultPDFTitleFn = (title, id) => {
+    title = title.replaceAll("\n", " ").replace(/\s\s+/g, ' ');
+    return `${title} - ${id}.pdf`
+}
+const getPdfFn = code => {
+    try {
+        pdfTitleFn = eval(code)
+    } catch (error) {
+        console.log("Error parsing pdf title function. Function string then error:");
+        console.log(code)
+        console.log(error)
+        pdfTitleFn = defaultPDFTitleFn
+    }
+    try {
+        pdfTitleFn("test", "1.2")
+    } catch (error) {
+        console.log("Error testing the user's pdf title function. Function string then error:")
+        console.log(code)
+        console.log(error)
+        pdfTitleFn = defaultPDFTitleFn
+    }
+
+    return pdfTitleFn
+}
+
+var state = {
+    menuIsOpen: false,
+    memoryIsOpen: false,
+    papers: {},
+    papersList: [],
+    sortedPapers: [],
+    sortKey: "",
+    paperTags: new Set(),
+    dataVersion: 0,
+    pdfTitleFn: defaultPDFTitleFn
+};
+
+const statePdfTitle = (title, id) => {
+    let name;
+    try {
+        name = state.pdfTitleFn(title, id);
+    } catch (error) {
+        name = defaultPDFTitleFn(title, id);
+    }
+
+    return name.replaceAll("\n", " ").replace(/\s\s+/g, ' ')
+}

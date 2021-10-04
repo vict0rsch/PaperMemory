@@ -335,7 +335,7 @@ const main = tab => {
                     copyAndConfirmMemoryItem(id, bibtext, "Bibtex citation copied!", true)
                 })
                 $(`#popup-memory-item-download--${eid}`).click(() => {
-                    let pdfTitle = state.pdfTitleFn(paper.title, paper.id);
+                    let pdfTitle = statePdfTitle(paper.title, paper.id);
                     chrome.downloads.download({
                         url: paper.pdfLink,
                         filename: pdfTitle

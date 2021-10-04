@@ -307,37 +307,6 @@ const copyDivToClipboard = divId => {
     window.getSelection().removeAllRanges();// to deselect
 }
 
-/* Helper function */
-const download_file = (fileURL, fileName) => {
-    // for non-IE
-    if (!window.ActiveXObject) {
-        var save = document.createElement('a');
-        save.href = fileURL;
-        save.target = '_blank';
-        var filename = fileURL.substring(fileURL.lastIndexOf('/') + 1);
-        save.download = fileName || filename;
-        if (navigator.userAgent.toLowerCase().match(/(ipad|iphone|safari)/) && navigator.userAgent.search("Chrome") < 0) {
-            document.location = save.href;
-            // window event not working here
-        } else {
-            var evt = new MouseEvent('click', {
-                'view': window,
-                'bubbles': true,
-                'cancelable': false
-            });
-            save.dispatchEvent(evt);
-            (window.URL || window.webkitURL).revokeObjectURL(save.href);
-        }
-    }
-
-    // for IE < 11
-    else if (!!window.ActiveXObject && document.execCommand) {
-        var _window = window.open(fileURL, '_blank');
-        _window.document.close();
-        _window.document.execCommand('SaveAs', true, fileName || fileURL)
-        _window.close();
-    }
-}
 
 const main = checks => {
 
@@ -423,7 +392,7 @@ const addOrCreatePaper = isArxiv => {
                 data = await fetchNeuripsHTML(url);
             }
 
-            paper = makePaper(isArxiv, data);
+            paper = await makePaper(isArxiv, data);
             papers[id] = paper;
             isNew = true;
         }
@@ -439,7 +408,7 @@ const addOrCreatePaper = isArxiv => {
     });
 }
 
-const makePaper = (isArxiv, data) => {
+const makePaper = async (isArxiv, data) => {
     const url = window.location.href;
 
     let paper;
@@ -447,13 +416,16 @@ const makePaper = (isArxiv, data) => {
         const { bibvars, bibtext } = parseArxivBibtex(data);
         paper = bibvars;
         paper.bibtext = bibtext;
+        paper.codes = await fetchCodes(paper.id, null)
     } else {
-        paper = parseNeuripsHTML(url, data)
+        paper = parseNeuripsHTML(url, data);
+        paper.codes = await fetchCodes(null, paper.title);
     }
 
     paper.md = `[${paper.title}](https://arxiv.com/abs/${paper.id})`;
     paper.note = "";
     paper.tags = [];
+
     return initPaper(paper)
 }
 
@@ -495,6 +467,8 @@ const arxiv = checks => {
     const isPdf = window.location.href.match(/\d{4}.\d{4,5}(v\d{1,2})?.pdf/g);
     const pdfUrl = "https://arxiv.org/pdf/" + id + ".pdf";
 
+    state.pdfTitleFn = pdfTitleFn
+
     // -----------------------------
     // -----  Download Button  -----
     // -----------------------------
@@ -518,7 +492,7 @@ const arxiv = checks => {
             const title = await $.get(`https://export.arxiv.org/api/query?id_list=${id}`).then(data => {
                 return $($(data).find("entry title")[0]).text();
             });
-            download_file(pdfUrl, pdfTitleFn(title, id));
+            download_file(pdfUrl, statePdfTitle(title, id));
         })
     }
     // ---------------------------
@@ -562,7 +536,7 @@ const arxiv = checks => {
         const makeTitle = async (id, url) => {
 
             let title = await getArxivTitle(id);
-            title = pdfTitleFn(title, id);
+            title = statePdfTitle(title, id);
             window.document.title = title;
             chrome.runtime.sendMessage({ type: "update-title", options: { title, url } })
         }
@@ -712,31 +686,6 @@ const vanity = () => {
     })
 }
 
-const defaultPDFTitleFn = (title, id) => {
-    title = title.replaceAll("\n", " ").replace(/\s\s+/g, ' ');
-    return `${title} - ${id}.pdf`
-}
-const getPdfFn = code => {
-    try {
-        pdfTitleFn = eval(code)
-    } catch (error) {
-        console.log("Error parsing pdf title function. Function string then error:");
-        console.log(code)
-        console.log(error)
-        pdfTitleFn = defaultPDFTitleFn
-    }
-    try {
-        pdfTitleFn("test", "1.2")
-    } catch (error) {
-        console.log("Error testing the user's pdf title function. Function string then error:")
-        console.log(code)
-        console.log(error)
-        pdfTitleFn = defaultPDFTitleFn
-    }
-
-    return (title, id) => pdfTitleFn(title, id).replaceAll("\n", " ").replace(/\s\s+/g, ' ')
-}
-
 $(() => {
 
     const url = window.location.href;
@@ -755,6 +704,8 @@ $(() => {
     const storageKeys = [...checks, "pdfTitleFn"];
 
     chrome.storage.local.get(storageKeys, function (items) {
+
+        // debugger;
 
         const checkMd = items.hasOwnProperty("checkMd") ? items.checkMd : true;
         const checkBib = items.hasOwnProperty("checkBib") ? items.checkBib : true;
