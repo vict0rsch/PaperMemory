@@ -338,9 +338,10 @@ const main = tab => {
                 })
                 $(`#popup-memory-item-download--${eid}`).click(() => {
                     let pdfTitle = statePdfTitle(paper.title, paper.id);
+                    console.log({ pdfTitle })
                     chrome.downloads.download({
                         url: paper.pdfLink,
-                        filename: pdfTitle
+                        filename: pdfTitle.replaceAll(":", "_")
                     });
                 })
             })

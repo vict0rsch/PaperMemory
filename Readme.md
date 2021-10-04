@@ -84,6 +84,12 @@ Share ideas 💡 in [issues](https://github.com/vict0rsch/ArxivTools/issues) and
 * load unpackaged extension
 * chose downloaded repo :)
 
+## Todo
+
+* [ ] More robust file patterns and document custom page naming
+* [ ] Update visuals
+* [ ] Document `:` being replaced by `_` when downloading a pdf ([OS requirements...](https://stackoverflow.com/questions/30960190/problematic-characters-for-filename-in-chrome-downloads-download))
+
 ## Help
 
 * **Arxiv-Vanity**
@@ -92,4 +98,6 @@ Share ideas 💡 in [issues](https://github.com/vict0rsch/ArxivTools/issues) and
   * Otherwise, ArxivTools extracts the paper's title, and searches for it on Arxiv's `export` API.
     * If titles don't match, Arxiv's API could not find the exact article and ArxivTools doesn't do anything
 * **Firefox**
-  * Using Firefox? Raise an issue if you're willing to help a little 🚁
+  * Using Firefox? [#9](https://github.com/vict0rsch/ArxivTools/issues/9) 🚁
+* **Papers With Code**
+  * wouldn't it be nice to automatically discover papers' repos!! see [#10](https://github.com/vict0rsch/ArxivTools/issues/10)
