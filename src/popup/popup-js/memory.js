@@ -31,32 +31,35 @@ const getMemoryItemHTML = (item) => {
 
         <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 2px">
 
-        
             <div style="display: flex; align-items: center">
                 <div
                     class="memory-item-expand memory-item-svg-div"
                     id="memory-item-expand--${id}"
                     title="Expand paper details"
-                    style="margin-right: 3px"
+                    style="margin-right: 8px"
                 >
                     <svg  style="height: 15px; width: 15px; pointer-events: none;" >
                         <use xlink:href="../../icons/tabler-sprite-nostroke.svg#tabler-arrows-vertical" />
                     </svg>
                 </div>
+
+                <div
+                    class="memory-item-tag memory-item-svg-div" 
+                    id="memory-item-tag--${id}"
+                    title="Open ${item.pdfLink}" 
+                    style="margin-right: 8px"
+                >
+                    <svg  style="height: 15px; width: 15px; pointer-events: none;" >
+                        <use xlink:href="../../icons/tabler-sprite-nostroke.svg#tabler-tag" />
+                    </svg>
+                </div>
+                
                 <small>
-                    ${displayId}
+                        ${displayId}
                 </small>
+                        
             </div>
 
-            <div
-                class="memory-item-tag memory-item-svg-div" 
-                id="memory-item-tag--${id}"
-                title="Open ${item.pdfLink}" 
-            >
-                <svg  style="height: 15px; width: 15px; pointer-events: none;" >
-                    <use xlink:href="../../icons/tabler-sprite-nostroke.svg#tabler-tag" />
-                </svg>
-            </div>
             <div
                 class="memory-item-link memory-item-svg-div" 
                 id="memory-item-link--${id}"
@@ -446,10 +449,10 @@ const displayMemoryTable = () => {
         const { id, eid } = eventId(e);
         if ($(`#memory-item-expand--${eid}`).hasClass('expand-open')) {
             $(`#memory-item-expand--${eid}`).removeClass("expand-open");
-            $(`#extended-item--${eid}`).slideUp();
+            $(`#extended-item--${eid}`).slideUp(250);
         } else {
             $(`#memory-item-expand--${eid}`).addClass("expand-open");
-            $(`#extended-item--${eid}`).slideDown();
+            $(`#extended-item--${eid}`).slideDown(250);
         }
     })
 
