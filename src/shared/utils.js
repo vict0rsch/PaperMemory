@@ -149,9 +149,9 @@ const migrateData = async (papers, dataVersion) => {
                     papers[id].source = "arxiv"
                 }
             }
-            if (!papers[id].hasOwnProperty("codes")) {
-                papers[id].codes = await fetchCodes(papers[id])
-            }
+            // if (!papers[id].hasOwnProperty("codes")) {
+            //     papers[id].codes = await fetchCodes(papers[id])
+            // }
         }
 
         papers["__dataVersion"] = dataVersion;
