@@ -43,12 +43,12 @@ Share ideas 💡 in [issues](https://github.com/vict0rsch/ArxivTools/issues) and
 
 ## Keyboard Navigation
 
-**ArxivTools** is here!
+**ArxivMemory** is here!
 
 * **Record** papers you read: Arxiv or NeurIPS papers you visit are stored, searchable, sortable, commentable, taggable
 * **Keyboard** navigation:
   * `cmd/ctrl + shift + e` will open the popup
-  * `a` from the popup's hume will open the ArxivMemory
+  * `a` from the popup's home will open the ArxivMemory
     * `esc` closes the memory (or the menu)
     * also navigate to the button with `tab` and hit `enter`
   * `tab` will iterate through fields: tags and note if you're on a paper's page, then your ArxivTools anyway.
