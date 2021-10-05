@@ -48,10 +48,11 @@ Share ideas 💡 in [issues](https://github.com/vict0rsch/ArxivTools/issues) and
 * **Record** papers you read: Arxiv or NeurIPS papers you visit are stored, searchable, sortable, commentable, taggable
 * **Keyboard** navigation:
   * `cmd/ctrl + shift + e` will open the popup
+  * `a` from the popup's hume will open the ArxivMemory
+    * `esc` closes the memory (or the menu)
+    * also navigate to the button with `tab` and hit `enter`
   * `tab` will iterate through fields: tags and note if you're on a paper's page, then your ArxivTools anyway.
-  * `enter` on your ArxivTools will open it
-  * Search field is automatically focused
-  * Search for words (`foo bar` will look for all papers whose title or author names or note contain `foo` *and* `bar` )
+  * Search field is automatically focused on memory open
   * `(shift + ) tab` to navigate the paper list
     * `e` to _edit_ the paper's tags
     * `n` to add a _note_ to that paper
