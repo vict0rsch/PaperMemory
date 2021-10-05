@@ -124,7 +124,6 @@ const getPdfFn = code => {
 const migrateData = async (papers, dataVersion) => {
     try {
 
-
         if (papers.hasOwnProperty("__dataVersion")) {
             if (papers["__dataVersion"] === dataVersion) {
                 delete papers["__dataVersion"]

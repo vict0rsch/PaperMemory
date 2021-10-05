@@ -124,10 +124,8 @@ const fetchPWCId = async (arxiv_id, title) => {
     } else if (title) {
         pwcPath += new URLSearchParams({ title })
     }
-    const json = await $.getJSON(pwcPath).then((data) => { return data });
+    const json = await $.getJSON(pwcPath)
     console.log({ json })
-
-    undefined()
 
     if (json["count"] !== 1) return
     return json["results"][0]["id"];
