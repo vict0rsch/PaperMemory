@@ -6,6 +6,23 @@ const getMemoryItemHTML = (item) => {
     const id = item.id;
     const tags = new Set(item.tags);
     const tagOptions = getTagsHTMLOptions(id)
+    let codeDiv = "";
+    let noteDiv = ""
+    if (item.codeLink) {
+        codeDiv = `
+        <small class="memory-item-faded">
+            <span class="memory-item-code-link" id="memory-item-code-link--${id}">${item.codeLink}</span>
+        </small>
+        `
+    }
+    if (item.note) {
+        noteDiv = `
+        <div class="memory-note-div">
+            <span class="note-content-header">Note:</span>
+            <span class="note-content">${note}</span>
+        </div>
+        `
+    }
 
     return `
     <div class="memory-item-container" tabindex="0" id="memory-item-container--${id}">
@@ -13,121 +30,111 @@ const getMemoryItemHTML = (item) => {
         <h4 class="memory-item-title" title="Added ${addDate}&#13;&#10;Last open ${lastOpenDate}">
             ${item.title}
         </h4>
-        <div style="margin: 4px 0px;">
-            <small class="tag-list" id="tag-list--${id}">
+        <div class="memory-item-tags-div">
+            <small class="tag-list">
                 ${Array.from(tags).map(t => `<span class="memory-tag">${t}</span>`).join("")}
             </small>
-            <div id="edit-tags--${id}" style="padding: 12px 0px; display: none; ">
+            <div class="edit-tags">
                 <div style="display:flex; align-items: center"; justify-content: space-between">
-                    <select id="memory-item-tags--${id}"class="memory-item-tags" multiple="multiple">
+                    <select class="memory-item-tags" multiple="multiple">
                         ${tagOptions}
                     </select>
-                    <button class="back-to-focus" style="margin-left: 12px" id="save-tag-edit--${id}">Save</button>
-                    <button class="back-to-focus" style="margin-left: 12px" id="cancel-tag-edit--${id}">Cancel</button>
+                    <button class="back-to-focus save-tag-edit" style="margin-left: 12px">Save</button>
+                    <button class="back-to-focus cancel-tag-edit" style="margin-left: 12px">Cancel</button>
                 </div>
             </div>
         </div>
-        <small>${item.author}</small>
+        <small class="memory-item-faded">${item.author}</small>
+        ${codeDiv}
+        ${noteDiv}
 
-        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 2px">
+        <div class="memory-item-actions">
 
             <div style="display: flex; align-items: center">
-                <div
-                    class="memory-item-expand memory-item-svg-div"
-                    id="memory-item-expand--${id}"
-                    title="Expand paper details"
-                    style="margin-right: 8px"
-                >
-                    <svg  style="height: 15px; width: 15px; pointer-events: none;" >
+                <div class="memory-item-expand memory-item-svg-div" title="Expand paper details">
+                    <svg >
                         <use xlink:href="../../icons/tabler-sprite-nostroke.svg#tabler-arrows-vertical" />
                     </svg>
                 </div>
 
-                <div
-                    class="memory-item-tag memory-item-svg-div" 
-                    id="memory-item-tag--${id}"
-                    title="Open ${item.pdfLink}" 
-                    style="margin-right: 8px"
-                >
-                    <svg  style="height: 15px; width: 15px; pointer-events: none;" >
+                <div class="memory-item-tag memory-item-svg-div"  title="Open ${item.pdfLink}" >
+                    <svg >
                         <use xlink:href="../../icons/tabler-sprite-nostroke.svg#tabler-tag" />
                     </svg>
                 </div>
                 
-                <small>
+                <small class="memory-item-faded">
                         ${displayId}
                 </small>
                         
             </div>
 
-            <div
-                class="memory-item-link memory-item-svg-div" 
-                id="memory-item-link--${id}"
-                title="Open ${item.pdfLink}" 
-            >
-                <svg  style="height: 15px; width: 15px; pointer-events: none;" >
+            <div class="memory-item-link memory-item-svg-div"  title="Open ${item.pdfLink}" >
+                <svg >
                    <use xlink:href="../../icons/tabler-sprite-nostroke.svg#tabler-external-link" />
                 </svg>
             </div>
                 
-            <div 
-                class="memory-item-copy-link memory-item-svg-div"
-                id="memory-item-copy-link--${id}"
-                title="Copy pdf link" 
-            >
-                <svg style="height: 15px; width: 15px; pointer-events: none;" >
+            <div class="memory-item-copy-link memory-item-svg-div" title="Copy pdf link" >
+                <svg >
                     <use xlink:href="../../icons/tabler-sprite-nostroke.svg#tabler-link" />
                 </svg>
             </div>
 
-            <div 
-                class="memory-item-md memory-item-svg-div"
-                id="memory-item-md--${id}"
-                title="Copy Markdown-formatted link" 
-            >
-                <svg style="height: 15px; width: 15px; pointer-events: none;" >
+            <div class="memory-item-md memory-item-svg-div" title="Copy Markdown-formatted link" >
+                <svg >
                     <use xlink:href="../../icons/tabler-sprite-nostroke.svg#tabler-clipboard-list" />
                 </svg>
             </div>
 
-            <div 
-                class="memory-item-bibtext memory-item-svg-div"
-                id="memory-item-bibtext--${id}"
-                title="Copy Bibtex citation" 
-            >
-                <svg style="height: 15px; width: 15px; pointer-events: none;" >
+            <div class="memory-item-bibtext memory-item-svg-div" title="Copy Bibtex citation" >
+                <svg >
                     <use xlink:href="../../icons/tabler-sprite-nostroke.svg#tabler-archive" />
                 </svg>
             </div>
 
-            <span style="color: green; display: none" id="memory-item-feedback--${id}"></span>
+            <span style="color: green; display: none" class="memory-item-feedback"></span>
             
-            <div title="Number of times you have loaded&#13;&#10;the paper's Page or PDF">
+            <div title="Number of times you have loaded&#13;&#10;the paper's Page or PDF"  class="memory-item-faded">
                 Visits: ${item.count}
             </div>
 
         </div>
 
-        <div id="extended-item--${id}" class="extended-item" style="display: none">
-            <div id="item-note--${id}">
-                <p style="font-size: 0.8rem;">
-                    <span id="note-content--${id}">${note}</span>
-                    <span id="edit-note-item--${id}" class="edit-note-item">(edit)</span>
+        <div class="extended-item" style="display: none">
+            <div class="item-note">
+                <p> 
+
+                    <span class="edit-note-item">(edit)</span>
                 </p>
-                <form class="form-note" id="form-note--${id}" style="display: none">
-                    <textarea style="width:98%" id="form-note-textarea--${id}">${note}</textarea>
+                <form class="form-note" style="display: none">
+                    <div class="textarea-wrapper">
+                        <span class="label">Code:</span>
+                        <input type="text" name="memory-item-code-link" class="form-code-input">
+                            ${item.codeLink || ""}
+                        </input>
+                    </div>
+                    <div class="textarea-wrapper">
+                        <span class="label">Note:</span>
+                        <textarea name="memory-item-note" rows="3" class="form-note-textarea">${note}</textarea>
+                    </div>
                     <div class="form-note-buttons">
                         <button type="submit">Save</button>
-                        <button class="cancel-note-form back-to-focus" id="cancel-note-form--${id}">Cancel</button>
+                        <button class="cancel-note-form back-to-focus">Cancel</button>
                     </div>
                 </form>
             </div>
         </div>
 
-        <div class="delete-memory-item" id="delete-memory-item--${id}"> - </div>
+        <div class="delete-memory-item"> - </div>
     </div>
     `
 }
+
+const findEl = (eid, className) => {
+    return $(`#memory-item-container--${eid}`).find(`.${className}`).first()
+}
+
 
 const getTagsHTMLOptions = id => {
     const item = state.papers[id];
@@ -178,7 +185,7 @@ const confirmDelete = id => {
 const copyAndConfirmMemoryItem = (id, textToCopy, feedbackText, isPopup) => {
     copyTextToClipboard(textToCopy)
     const eid = id.replace(".", "\\.");
-    const elementId = isPopup ? `#popup-feedback-copied` : `#memory-item-feedback--${eid}`;
+    const elementId = isPopup ? `#popup-feedback-copied` : findEl(eid, "memory-item-feedback");
     $(elementId).text(feedbackText)
     $(elementId).fadeIn()
     setTimeout(
@@ -240,10 +247,11 @@ const saveNote = (id, note) => {
     const eid = id.replace(".", "\\.")
     chrome.storage.local.set({ "papers": state.papers }, () => {
         console.log("Updated the note for " + state.papers[id].title);
-        $(`#form-note--${eid}`).hide();
-        $(`#note-content--${eid}`).text(note);
+        findEl(eid, "form-note").hide();
+        findEl(eid, "note-content").text(note);
         $(`#popup-form-note-textarea--${eid}`).val(note);
-        $(`#form-note-textarea--${eid}`).val(note);
+        findEl(eid, "form-note-textarea").val(note);
+        findEl(eid, "form-note").parent().find("p").first().show();
     })
 }
 
@@ -320,7 +328,7 @@ const filterMemoryByTags = (letters) => {
 
 const updatePaperTagsHTML = id => {
     const eid = id.replace(".", "\\.");
-    $(`#tag-list--${eid}`).html(
+    findEl(eid, "tag-list").html(
         state.papers[id].tags.map(t => `<span class="memory-tag">${t}</span>`).join("")
     )
 }
@@ -328,7 +336,7 @@ const updatePaperTagsHTML = id => {
 const updateTagOptions = id => {
     const eid = id.replace(".", "\\.");
     const tagOptions = getTagsHTMLOptions(id);
-    $(`#memory-item-tags--${eid}`).html(tagOptions)
+    find$(eid, "memory-item-tags").html(tagOptions)
     $(`#popup-item-tags--${eid}`).html(tagOptions);
 }
 
@@ -405,9 +413,9 @@ const displayMemoryTable = () => {
     })
     $(".memory-item-tag").click((e) => {
         const { id, eid } = eventId(e);
-        $(`#tag-list--${eid}`).hide();
-        $(`#edit-tags--${eid}`).show()
-        $(`#memory-item-tags--${eid}`).select2({
+        find$(eid, "tag-list").hide();
+        find$(eid, "edit-tags").show()
+        find$(eid, "memory-item-tags").select2({
             placeholder: "Tag paper...",
             maximumSelectionLength: 5,
             allowClear: true,
@@ -415,44 +423,46 @@ const displayMemoryTable = () => {
             width: "75%",
             tokenSeparators: [',', ' ']
         });
-        $(`#memory-item-tags--${eid}`).focus()
-        $(`#save-tag-edit--${eid}`).click(() => {
+        find$(eid, "memory-item-tags").focus()
+        find$(eid, "save-tag-edit").click(() => {
             updatePaperTags(id, `#memory-item-tags--${eid}`);
-            $(`#edit-tags--${eid}`).hide();
-            $(`#tag-list--${eid}`).show();
+            find$(eid, "edit-tags").hide();
+            find$(eid, "tag-list").show();
         })
-        $(`#cancel-tag-edit--${eid}`).click(() => {
-            $(`#edit-tags--${eid}`).hide();
-            $(`#tag-list--${eid}`).show();
-            $(`#memory-item-tags--${eid}`).html(getTagsHTMLOptions(id));
+        $(".cancel-tag-edit").click(() => {
+            find$(eid, "edit-tags").hide();
+            find$(eid, "tag-list").show();
+            find$(eid, "memory-item-tags").html(getTagsHTMLOptions(id));
         })
     })
     $(".form-note").submit((e) => {
         e.preventDefault();
         const { id, eid } = eventId(e);
-        const note = $(`#form-note-textarea--${eid}`).val()
+        const note = findEl(eid, "form-note-textarea").val()
         saveNote(id, note)
     })
     $(".edit-note-item").click((e) => {
         e.preventDefault();
         const { id, eid } = eventId(e);
-        $(`#form-note--${eid}`).fadeIn();
+        findEl(eid, "note-content").parent().hide()
+        findEl(eid, "form-note").fadeIn();
     })
     $(".cancel-note-form").click((e) => {
         e.preventDefault();
         const { id, eid } = eventId(e);
-        $(`#form-note--${eid}`).hide();
-        $(`#form-note-textarea--${eid}`).val(state.papers[id].note)
+        findEl(eid, "form-note").hide();
+        findEl(eid, "form-note-textarea").val(state.papers[id].note)
+        findEl(eid, "form-note").parent().find("p").first().show();
     })
     $(".memory-item-expand").click((e) => {
         e.preventDefault();
         const { id, eid } = eventId(e);
-        if ($(`#memory-item-expand--${eid}`).hasClass('expand-open')) {
-            $(`#memory-item-expand--${eid}`).removeClass("expand-open");
-            $(`#extended-item--${eid}`).slideUp(250);
+        if (findEl(eid, "memory-item-expand").hasClass('expand-open')) {
+            findEl(eid, "memory-item-expand").removeClass("expand-open");
+            findEl(eid, "extended-item").slideUp(250);
         } else {
-            $(`#memory-item-expand--${eid}`).addClass("expand-open");
-            $(`#extended-item--${eid}`).slideDown(250);
+            findEl(eid, "memory-item-expand").addClass("expand-open");
+            findEl(eid, "extended-item").slideDown(250);
         }
     })
 
@@ -541,18 +551,18 @@ const openMemory = () => {
         const eid = id.replace(".", "\\.");
 
         if (e.which == 13) { // enter
-            $(`#memory-item-link--${eid}`).click();
+            findEl(eid, "memory-item-link").click();
         }
         else if (e.which == 8) { // delete
-            $(`#delete-memory-item--${eid}`).click()
+            findEl(eid, "delete-memory-item").click()
         }
         else if (e.which == 69) { // e
-            $(`#memory-item-tag--${eid}`).click();
+            findEl(eid, "memory-item-tag").click();
         }
         else if (e.which == 78) { // n
-            $(`#memory-item-expand--${eid}`).click();
-            $(`#edit-note-item--${eid}`).click()
-            $(`#form-note-textarea--${eid}`).focus()
+            findEl(eid, "memory-item-expand").click();
+            findEl(eid, "memory-item-tag").click();
+            findEl(eid, "form-note-textarea").focus();
         }
     });
 }

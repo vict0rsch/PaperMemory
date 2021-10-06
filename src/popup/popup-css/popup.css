@@ -308,6 +308,49 @@ h3 {
     align-items: center;
 }
 
+.memory-item-expand {
+    margin-right: 8px
+}
+
+.memory-item-tag {
+    margin-right: 8px;
+}
+
+.memory-item-tags-div {
+    margin: 4px 0px;
+}
+
+.edit-tags {
+    padding: 12px 0px;
+    display: none;
+}
+
+.memory-item-faded {
+    color: rgba(54, 54, 54, 0.75)
+}
+
+.memory-item-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 2px
+}
+
+.memory-item-container svg {
+    height: 15px;
+    width: 15px;
+    pointer-events: none;
+}
+
+.form-note-buttons {
+    text-align: end;
+}
+
+.form-note .label {
+    font-family: monospace;
+    margin-right: 16px;
+}
+
 .edit-note-item {
     color: #0276ff;
     cursor: pointer;
@@ -316,6 +359,40 @@ h3 {
 .edit-note-item:hover {
     color: #6da4e4;
     text-decoration: underline;
+}
+
+.note-content-header {
+    display: block;
+    font-weight: 500;
+    text-decoration: underline;
+    margin-bottom: 6px;
+}
+
+.extended-item div p {
+    font-size: 0.8rem;
+}
+
+.textarea-wrapper {
+    display: flex;
+    justify-content: start;
+    align-items: center;
+}
+
+.form-code-input {
+    width: 85%;
+    border-radius: 4px;
+    border: 1px solid #aaa;
+    margin-top: 8px;
+    margin-bottom: 8px;
+    line-height: 1.6rem;
+
+}
+
+.form-note textarea {
+    width: 85%;
+    margin-top: 8px;
+    margin-bottom: 8px;
+    padding: 8px;
 }
 
 .memory-tag {

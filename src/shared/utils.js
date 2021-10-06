@@ -59,7 +59,8 @@ const downloadTextFile = (content, fileName, contentType) => {
 
 
 const eventId = e => {
-    const id = e.target.id.split("--")[1];
+    const el = $(e.target);
+    const id = el.closest(".memory-item-container").attr("id").split("--")[1];
     const eid = id.replace(".", "\\.")
     return { id, eid }
 }
