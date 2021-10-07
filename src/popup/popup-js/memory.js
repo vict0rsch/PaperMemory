@@ -279,8 +279,13 @@ const saveCodeLink = (id, codeLink) => {
     chrome.storage.local.set({ "papers": state.papers }, () => {
         console.log("Updated the code for " + state.papers[id].title + " to " + codeLink);
         findEl(eid, "memory-item-code-link").html(codeLink);
-        $(`#popup-form-code-input--${eid}`).val(codeLink); // TODO
+        $(`#popup-code-link`).text(codeLink); // TODO
         findEl(eid, "form-code-input").val(codeLink);
+        if (codeLink) {
+            $("#popup-code-link").show();
+        } else {
+            $("#popup-code-link").hide();
+        }
     })
 }
 

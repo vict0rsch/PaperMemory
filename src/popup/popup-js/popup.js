@@ -208,6 +208,10 @@ const main = tab => {
                 const paper = state.papers[id];
                 $("#popup-paper-title").text(paper.title);
                 $("#popup-authors").text(paper.author);
+                if (paper.codeLink) {
+                    $("#popup-code-link").show();
+                    $("#popup-code-link").text(paper.codeLink);
+                }
                 const eid = id.replace(".", "\\.");
                 const tagOptions = getTagsHTMLOptions(id);
                 const note = paper.note || "";
@@ -218,7 +222,7 @@ const main = tab => {
                 <div style="width: 100%; display: flex; justify-content: space-between; align-items: center;">
                     <div style="width: 85%">
                         <div style="width: 100%; display: flex; justify-content: space-between; align-items: center;">
-                            <span style="margin-right: 4px">Tags:</span>
+                            <span class="label">Tags:</span>
                             <select id="popup-item-tags--${id}"class="memory-item-tags" multiple="multiple">
                                 ${tagOptions}
                             </select>
@@ -226,14 +230,20 @@ const main = tab => {
                         <div 
                             class="form-note" 
                             id="popup-form-note--${id}" 
-                            style="width: 100%; display: flex; justify-content: space-between; align-items: center; margin-top: 8px;"
+                            style="width: 100%; display: flex; justify-content: space-between; align-items: center; margin-top: 8px; flex-direction: column;"
                         >
-                            <span style="margin-right: 4px">Note:</span>
-                            <textarea 
-                                rows="3" 
-                                style="width:85%;" 
-                                id="popup-form-note-textarea--${id}"
-                            >${note}</textarea>
+                            <div class="textarea-wrapper w-100 mr-0">
+                                <span class="label">Code:</span>
+                                <input type="text" class="form-code-input" value="${paper.codeLink || ''}">
+                            </div>
+                            <div class="textarea-wrapper w-100 mr-0">
+                                <span class="label">Note:</span>
+                                <textarea 
+                                    rows="3" 
+                                    style="width:85%;" 
+                                    id="popup-form-note-textarea--${id}"
+                                >${note}</textarea>
+                            </div>
                         </div>
                     </div>
                     <div>
@@ -309,9 +319,11 @@ const main = tab => {
                 });
                 $(`#popup-save-edits--${eid}`).click(() => {
                     const note = $(`#popup-form-note-textarea--${eid}`).val()
+                    const codeLink = $(`#popup-form-note--${id}`).find(".form-code-input").first().val()
                     updatePaperTags(id, `#popup-item-tags--${eid}`);
-                    saveNote(id, note)
-                    $("#popup-feedback-copied").text("Saved tags & note!")
+                    saveNote(id, note);
+                    saveCodeLink(id, codeLink);
+                    $("#popup-feedback-copied").text("Saved tags, code & note!")
                     $("#popup-feedback-copied").fadeIn()
                     setTimeout(() => { $("#popup-feedback-copied").text("") }, 1000)
                 });
@@ -323,6 +335,12 @@ const main = tab => {
                         url: `https://arxiv.org/abs/${paper.id}`
                     });
                     window.close()
+                })
+                $(`#popup-code-link`).click(() => {
+                    const codeLink = $(`#popup-code-link`).text();
+                    if (codeLink) {
+                        focusExistingOrCreateNewCodeTab(codeLink);
+                    }
                 })
                 $(`#popup-memory-item-copy-link--${eid}`).click(() => {
                     const pdfLink = state.papers[id].pdfLink;

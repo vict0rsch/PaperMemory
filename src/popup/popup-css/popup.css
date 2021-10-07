@@ -350,7 +350,7 @@ h3 {
     text-align: end;
 }
 
-.form-note .label {
+.label {
     font-family: monospace;
     margin-right: 16px;
 }
@@ -360,6 +360,14 @@ h3 {
     margin-top: 4px;
 }
 
+.w-100 {
+    width: 100%;
+}
+
+.mr-0 {
+    margin-right: 0px
+}
+
 .edit-note-item {
     color: #0276ff;
     cursor: pointer;
@@ -367,13 +375,13 @@ h3 {
 
 .edit-note-item:hover {
     color: #6da4e4;
-    text-decoration: underline;
+    font-style: italic;
 }
 
 .note-content-header {
-    font-weight: 500;
-    text-decoration: underline;
-    margin-right: 6px;
+    font-weight: 600;
+    font-style: italic;
+    margin-right: 3px;
 }
 
 .extended-item div p {
@@ -394,7 +402,8 @@ h3 {
     line-height: 1.6rem;
 }
 
-.memory-item-code-link {
+.memory-item-code-link,
+#popup-code-link {
     text-decoration: underline;
     color: rgba(61, 133, 240, 0.75);
     cursor: pointer;
