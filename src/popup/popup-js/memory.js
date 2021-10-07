@@ -1,20 +1,22 @@
+/*
+TODO: add code to paper popup | esc to close edit
+
+*/
+
 const getMemoryItemHTML = (item) => {
     const addDate = (new Date(item.addDate)).toLocaleString().replace(",", "")
     const lastOpenDate = (new Date(item.lastOpenDate)).toLocaleString().replace(",", "")
     const displayId = item.id.indexOf("_") < 0 ? item.id : item.id.split("_")[0];
-    const note = item.note || "[no note]";
+    const note = item.note || "";
     const id = item.id;
     const tags = new Set(item.tags);
     const tagOptions = getTagsHTMLOptions(id)
-    let codeDiv = "";
-    let noteDiv = ""
-    if (item.codeLink) {
-        codeDiv = `
-        <small class="memory-item-faded">
-            <span class="memory-item-code-link" id="memory-item-code-link--${id}">${item.codeLink}</span>
-        </small>
-        `
-    }
+    let codeDiv = `
+    <small class="memory-item-faded">
+    <span class="memory-item-code-link">${item.codeLink || ""}</span>
+    </small>
+    `
+    let noteDiv = `<div class="memory-note-div memory-item-faded"></div>`;
     if (item.note) {
         noteDiv = `
         <div class="memory-note-div memory-item-faded">
@@ -39,27 +41,22 @@ const getMemoryItemHTML = (item) => {
                     <select class="memory-item-tags" multiple="multiple">
                         ${tagOptions}
                     </select>
-                    <button class="back-to-focus save-tag-edit" style="margin-left: 12px">Save</button>
-                    <button class="back-to-focus cancel-tag-edit" style="margin-left: 12px">Cancel</button>
                 </div>
             </div>
         </div>
         <small class="authors">${item.author}</small>
-        ${codeDiv}
-        ${noteDiv}
+        
+        <div class="code-and-note">
+            ${codeDiv}
+            ${noteDiv}
+        </div>
 
         <div class="memory-item-actions">
 
             <div style="display: flex; align-items: center">
-                <div class="memory-item-expand memory-item-svg-div" title="Expand paper details">
+                <div class="memory-item-edit memory-item-svg-div" title="Edit paper details">
                     <svg >
-                        <use xlink:href="../../icons/tabler-sprite-nostroke.svg#tabler-arrows-vertical" />
-                    </svg>
-                </div>
-
-                <div class="memory-item-tag memory-item-svg-div"  title="Open ${item.pdfLink}" >
-                    <svg >
-                        <use xlink:href="../../icons/tabler-sprite-nostroke.svg#tabler-tag" />
+                        <use xlink:href="../../icons/tabler-sprite-nostroke.svg#tabler-writing" />
                     </svg>
                 </div>
                 
@@ -103,20 +100,14 @@ const getMemoryItemHTML = (item) => {
 
         <div class="extended-item" style="display: none">
             <div class="item-note">
-                <p> 
-
-                    <span class="edit-note-item">(edit)</span>
-                </p>
-                <form class="form-note" style="display: none">
+                <form class="form-note">
                     <div class="textarea-wrapper">
                         <span class="label">Code:</span>
-                        <input type="text" name="memory-item-code-link" class="form-code-input">
-                            ${item.codeLink || ""}
-                        </input>
+                        <input type="text" class="form-code-input" value="${item.codeLink || ''}">
                     </div>
                     <div class="textarea-wrapper">
                         <span class="label">Note:</span>
-                        <textarea name="memory-item-note" rows="3" class="form-note-textarea">${note}</textarea>
+                        <textarea rows="3" class="form-note-textarea">${note}</textarea>
                     </div>
                     <div class="form-note-buttons">
                         <button type="submit">Save</button>
@@ -196,8 +187,31 @@ const copyAndConfirmMemoryItem = (id, textToCopy, feedbackText, isPopup) => {
     )
 }
 
+const focusExistingOrCreateNewCodeTab = (codeLink) => {
+    const { origin } = new URL(codeLink);
+    chrome.tabs.query({ url: `${origin}/*` }, tabs => {
+        for (const tab of tabs) {
+            if (tab.url.includes(codeLink)) {
+                const tabUpdateProperties = { 'active': true };
+                const windowUpdateProperties = { 'focused': true };
+                chrome.windows.getCurrent((w) => {
+                    if (w.id !== tab.windowId) {
+                        chrome.windows.update(tab.windowId, windowUpdateProperties, () => {
+                            chrome.tabs.update(tab.id, tabUpdateProperties);
+                        });
+                    } else {
+                        chrome.tabs.update(tab.id, tabUpdateProperties);
+                    }
+                })
+                return
+            }
+        }
+        chrome.tabs.create({ url: codeLink });
+    });
 
-const focusExistingOrCreateNewTab = (paperUrl, id) => {
+}
+
+const focusExistingOrCreateNewPaperTab = (paperUrl, id) => {
     chrome.tabs.query({ url: "https://arxiv.org/*" }, (tabs) => {
         let validTabsIds = [];
         let pdfTabsIds = [];
@@ -247,11 +261,26 @@ const saveNote = (id, note) => {
     const eid = id.replace(".", "\\.")
     chrome.storage.local.set({ "papers": state.papers }, () => {
         console.log("Updated the note for " + state.papers[id].title);
-        findEl(eid, "form-note").hide();
-        findEl(eid, "note-content").text(note);
+
+        findEl(eid, "memory-note-div").html(note ? `
+        <div class="memory-note-div memory-item-faded">
+            <span class="note-content-header">Note:</span>
+            <span class="note-content">${note}</span>
+        </div>
+        ` : `<div class="memory-note-div memory-item-faded"></div>`);
         $(`#popup-form-note-textarea--${eid}`).val(note);
         findEl(eid, "form-note-textarea").val(note);
-        findEl(eid, "form-note").parent().find("p").first().show();
+    })
+}
+const saveCodeLink = (id, codeLink) => {
+    codeLink = $.trim(codeLink);
+    state.papers[id].codeLink = codeLink;
+    const eid = id.replace(".", "\\.")
+    chrome.storage.local.set({ "papers": state.papers }, () => {
+        console.log("Updated the code for " + state.papers[id].title + " to " + codeLink);
+        findEl(eid, "memory-item-code-link").html(codeLink);
+        $(`#popup-form-code-input--${eid}`).val(codeLink); // TODO
+        findEl(eid, "form-code-input").val(codeLink);
     })
 }
 
@@ -336,30 +365,37 @@ const updatePaperTagsHTML = id => {
 const updateTagOptions = id => {
     const eid = id.replace(".", "\\.");
     const tagOptions = getTagsHTMLOptions(id);
-    find$(eid, "memory-item-tags").html(tagOptions)
+    findEl(eid, "memory-item-tags").html(tagOptions)
     $(`#popup-item-tags--${eid}`).html(tagOptions);
 }
 
 
-const updatePaperTags = (paperId, elementId) => {
+const updatePaperTags = (id, elementId) => {
 
     let tags = [];
-    $(elementId).find(":selected").each((k, el) => {
+    let ref;
+    if (elementId.startsWith("#")) {
+        ref = $(elementId);
+    } else {
+        const eid = id.replace(".", "\\.");
+        ref = findEl(eid, elementId)
+    }
+    ref.find(":selected").each((k, el) => {
         const t = $.trim($(el).val());
         if (t !== "") tags.push(t)
     });
 
     tags.sort();
     updated = false;
-    if (state.papers[paperId].tags !== tags) updated = true;
-    state.papers[paperId].tags = tags;
+    if (state.papers[id].tags !== tags) updated = true;
+    state.papers[id].tags = tags;
 
     console.log("Update tags to: " + tags.join(", "))
 
     if (updated) {
         chrome.storage.local.set({ "papers": state.papers }, () => {
-            updateTagOptions(paperId)
-            updatePaperTagsHTML(paperId)
+            updateTagOptions(id)
+            updatePaperTagsHTML(id)
             makeTags()
         });
     }
@@ -380,11 +416,6 @@ const displayMemoryTable = () => {
 
     const start = Date.now();
 
-    // $("#memory-table").html("");
-    // for (const paper of state.papersList) {
-    //     $("#memory-table").append(getMemoryItemHTML(paper))
-    // }
-
     var memoryTable = document.getElementById("memory-table");
     memoryTable.innerHTML = "";
     for (const paper of state.papersList) {
@@ -393,7 +424,7 @@ const displayMemoryTable = () => {
 
     const end = Date.now();
 
-    console.log("Rendering duration (s) " + (end - start) / 1000)
+    console.log("Rendering duration (s): " + (end - start) / 1000)
 
     $(".back-to-focus").click((e) => {
         const { id, eid } = eventId(e);
@@ -406,7 +437,12 @@ const displayMemoryTable = () => {
     $(".memory-item-link").click((e) => {
         const { id, eid } = eventId(e);
         const url = state.papers[id].pdfLink;
-        focusExistingOrCreateNewTab(url, id)
+        focusExistingOrCreateNewPaperTab(url, id)
+    })
+    $(".memory-item-code-link").click((e) => {
+        const { id, eid } = eventId(e);
+        const url = state.papers[id].codeLink;
+        focusExistingOrCreateNewCodeTab(url);
     })
     $(".memory-item-md").click((e) => {
         const { id, eid } = eventId(e);
@@ -423,67 +459,79 @@ const displayMemoryTable = () => {
         const pdfLink = state.papers[id].pdfLink;
         copyAndConfirmMemoryItem(id, pdfLink, "Pdf link copied!")
     })
-    $(".memory-item-tag").click((e) => {
-        const { id, eid } = eventId(e);
-        find$(eid, "tag-list").hide();
-        find$(eid, "edit-tags").show()
-        find$(eid, "memory-item-tags").select2({
-            placeholder: "Tag paper...",
-            maximumSelectionLength: 5,
-            allowClear: true,
-            tags: true,
-            width: "75%",
-            tokenSeparators: [',', ' ']
-        });
-        find$(eid, "memory-item-tags").focus()
-        find$(eid, "save-tag-edit").click(() => {
-            updatePaperTags(id, `#memory-item-tags--${eid}`);
-            find$(eid, "edit-tags").hide();
-            find$(eid, "tag-list").show();
-        })
-        $(".cancel-tag-edit").click(() => {
-            find$(eid, "edit-tags").hide();
-            find$(eid, "tag-list").show();
-            find$(eid, "memory-item-tags").html(getTagsHTMLOptions(id));
-        })
-    })
     $(".form-note").submit((e) => {
         e.preventDefault();
+
         const { id, eid } = eventId(e);
         const note = findEl(eid, "form-note-textarea").val()
-        saveNote(id, note)
-    })
-    $(".edit-note-item").click((e) => {
-        e.preventDefault();
-        const { id, eid } = eventId(e);
-        findEl(eid, "note-content").parent().hide()
-        findEl(eid, "form-note").fadeIn();
-    })
+        const codeLink = findEl(eid, "form-code-input").val()
+
+        saveNote(id, note);
+        saveCodeLink(id, codeLink);
+        updatePaperTags(id, "memory-item-tags");
+
+        findEl(eid, "memory-item-edit").click()
+    });
     $(".cancel-note-form").click((e) => {
         e.preventDefault();
         const { id, eid } = eventId(e);
-        findEl(eid, "form-note").hide();
         findEl(eid, "form-note-textarea").val(state.papers[id].note)
-        findEl(eid, "form-note").parent().find("p").first().show();
+        findEl(eid, "memory-item-tags").html(getTagsHTMLOptions(id));
+        findEl(eid, "memory-item-edit").click()
     })
-    $(".memory-item-expand").click((e) => {
+    $(".memory-item-edit").click((e) => {
         e.preventDefault();
         const { id, eid } = eventId(e);
-        if (findEl(eid, "memory-item-expand").hasClass('expand-open')) {
-            findEl(eid, "memory-item-expand").removeClass("expand-open");
-            findEl(eid, "extended-item").slideUp(250);
+        const edit = findEl(eid, "memory-item-edit");
+        const codeAndNote = findEl(eid, "code-and-note");
+        const editPaper = findEl(eid, "extended-item");
+        const tagList = findEl(eid, "tag-list");
+        const tagEdit = findEl(eid, "edit-tags");
+        const tagSelect = findEl(eid, "memory-item-tags");
+        const actions = findEl(eid, "memory-item-actions");
+
+
+        if (edit.hasClass('expand-open')) {
+
+            edit.removeClass("expand-open");
+
+            codeAndNote.slideDown(250);
+            tagList.slideDown(250);
+            actions.slideDown(250);
+
+            editPaper.slideUp(250);
+            tagEdit.slideUp(250)
+
         } else {
-            findEl(eid, "memory-item-expand").addClass("expand-open");
-            findEl(eid, "extended-item").slideDown(250);
+
+            edit.addClass("expand-open");
+
+            tagSelect.select2({
+                placeholder: "Tag paper...",
+                maximumSelectionLength: 5,
+                allowClear: true,
+                tags: true,
+                width: "75%",
+                tokenSeparators: [',', ' ']
+            });
+
+            codeAndNote.slideUp(250);
+            tagList.slideUp(250);
+            actions.slideUp(250);
+
+            editPaper.slideDown(250);
+            tagEdit.slideDown(250)
+            // findEl(eid, "memory-item-tags").focus()
         }
     })
     const end2 = Date.now();
 
-    console.log("Listeners duration (s) " + (end2 - end) / 1000)
+    console.log("Listeners duration (s): " + (end2 - end) / 1000)
 
 }
 
 const openMemory = () => {
+    var openTime = Date.now();
     state.menuIsOpen && closeMenu();
 
     state.memoryIsOpen = true;
@@ -517,11 +565,18 @@ const openMemory = () => {
 
         displayMemoryTable()
         setTimeout(() => {
-            $("#memory-container").slideDown({ duration: 200, easing: "easeOutQuint" });
-        }, 200);
-        setTimeout(() => {
-            $("#memory-search").focus()
-        }, 500);
+            $("#memory-container").slideDown({
+                duration: 200,
+                easing: "easeOutQuint",
+                complete: () => {
+                    setTimeout(() => {
+                        $("#memory-search").focus();
+                        console.log("Time to display (s): " + (Date.now() - openTime) / 1000)
+                    }, 50);
+                }
+            });
+        }, 100);
+
     })
 
     $("#tabler-menu").fadeOut();
@@ -568,10 +623,10 @@ const openMemory = () => {
             findEl(eid, "delete-memory-item").click()
         }
         else if (e.which == 69) { // e
-            findEl(eid, "memory-item-tag").click();
+            findEl(eid, "memory-item-edit").click();
         }
         else if (e.which == 78) { // n
-            findEl(eid, "memory-item-expand").click();
+            findEl(eid, "memory-item-edit").click();
             findEl(eid, "memory-item-tag").click();
             findEl(eid, "form-note-textarea").focus();
         }

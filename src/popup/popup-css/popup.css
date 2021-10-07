@@ -308,7 +308,7 @@ h3 {
     align-items: center;
 }
 
-.memory-item-expand {
+.memory-item-edit {
     margin-right: 8px
 }
 
@@ -321,7 +321,7 @@ h3 {
 }
 
 .edit-tags {
-    padding: 12px 0px;
+    padding: 0px;
     display: none;
 }
 
@@ -357,7 +357,7 @@ h3 {
 
 .memory-note-div {
     font-size: 0.8rem;
-    margin-top: 12px;
+    margin-top: 4px;
 }
 
 .edit-note-item {
@@ -391,9 +391,13 @@ h3 {
     border-radius: 4px;
     border: 1px solid #aaa;
     margin-top: 8px;
-    margin-bottom: 8px;
     line-height: 1.6rem;
+}
 
+.memory-item-code-link {
+    text-decoration: underline;
+    color: rgba(61, 133, 240, 0.75);
+    cursor: pointer;
 }
 
 .form-note textarea {
