@@ -17,7 +17,7 @@ const getMemoryItemHTML = (item) => {
     }
     if (item.note) {
         noteDiv = `
-        <div class="memory-note-div">
+        <div class="memory-note-div memory-item-faded">
             <span class="note-content-header">Note:</span>
             <span class="note-content">${note}</span>
         </div>
@@ -44,7 +44,7 @@ const getMemoryItemHTML = (item) => {
                 </div>
             </div>
         </div>
-        <small class="memory-item-faded">${item.author}</small>
+        <small class="authors">${item.author}</small>
         ${codeDiv}
         ${noteDiv}
 
@@ -378,10 +378,22 @@ const makeTags = () => {
 
 const displayMemoryTable = () => {
 
-    $("#memory-table").html("");
+    const start = Date.now();
+
+    // $("#memory-table").html("");
+    // for (const paper of state.papersList) {
+    //     $("#memory-table").append(getMemoryItemHTML(paper))
+    // }
+
+    var memoryTable = document.getElementById("memory-table");
+    memoryTable.innerHTML = "";
     for (const paper of state.papersList) {
-        $("#memory-table").append(getMemoryItemHTML(paper))
+        memoryTable.insertAdjacentHTML('beforeend', getMemoryItemHTML(paper));
     }
+
+    const end = Date.now();
+
+    console.log("Rendering duration (s) " + (end - start) / 1000)
 
     $(".back-to-focus").click((e) => {
         const { id, eid } = eventId(e);
@@ -465,58 +477,57 @@ const displayMemoryTable = () => {
             findEl(eid, "extended-item").slideDown(250);
         }
     })
+    const end2 = Date.now();
+
+    console.log("Listeners duration (s) " + (end2 - end) / 1000)
 
 }
 
 const openMemory = () => {
     state.menuIsOpen && closeMenu();
+
+    state.memoryIsOpen = true;
+    chrome.storage.local.get("papers", async function ({ papers }) {
+
+        await initState(papers);
+
+        $("#memory-search").attr("placeholder", `Search ${state.papersList.length} entries ...`);
+
+        if (state.papersList.length < 20) {
+            delayTime = 0;
+        } else if (state.papersList.length < 50) {
+            delayTime = 200;
+        } else {
+            delayTime = 350;
+        }
+
+        $("#memory-search").keypress(delay((e) => {
+            const query = $.trim($(e.target).val());
+            if (query.startsWith("t:")) {
+                filterMemoryByTags(query)
+            } else {
+                filterMemoryByString(query);
+            }
+            displayMemoryTable();
+        }, delayTime)).keyup((e) => {
+            if (e.keyCode == 8) {
+                $('#memory-search').trigger('keypress');
+            }
+        })
+
+        displayMemoryTable()
+        setTimeout(() => {
+            $("#memory-container").slideDown({ duration: 200, easing: "easeOutQuint" });
+        }, 200);
+        setTimeout(() => {
+            $("#memory-search").focus()
+        }, 500);
+    })
+
     $("#tabler-menu").fadeOut();
     $("#memory-select").val("lastOpenDate");
     setMemorySortArrow("down");
-    $("#memory-container").slideDown(
-        {
-            duration: 300,
-            easing: "easeOutQuint",
-            complete: () => {
-                state.memoryIsOpen = true;
-                chrome.storage.local.get("papers", async function ({ papers }) {
 
-                    await initState(papers);
-
-                    $("#memory-search").attr("placeholder", `Search ${state.papersList.length} entries ...`);
-
-                    if (state.papersList.length < 20) {
-                        delayTime = 0;
-                    } else if (state.papersList.length < 50) {
-                        delayTime = 200;
-                    } else {
-                        delayTime = 350;
-                    } {
-
-                    }
-
-                    $("#memory-search").keypress(delay((e) => {
-                        const query = $.trim($(e.target).val());
-                        if (query.startsWith("t:")) {
-                            filterMemoryByTags(query)
-                        } else {
-                            filterMemoryByString(query);
-                        }
-                        displayMemoryTable();
-                    }, delayTime)).keyup((e) => {
-                        if (e.keyCode == 8) {
-                            $('#memory-search').trigger('keypress');
-                        }
-                    })
-
-                    displayMemoryTable()
-                    setTimeout(() => {
-                        $("#memory-search").focus()
-                    }, 400);
-                })
-            }
-        },
-    );
     $("#memory-switch-text-on").fadeOut(() => {
         $("#memory-switch-text-off").fadeIn()
     });

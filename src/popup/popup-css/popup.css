@@ -326,14 +326,18 @@ h3 {
 }
 
 .memory-item-faded {
-    color: rgba(54, 54, 54, 0.75)
+    color: rgba(54, 54, 54, 0.70)
+}
+
+.authors {
+    color: rgba(41, 41, 41, 1)
 }
 
 .memory-item-actions {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-top: 2px
+    margin-top: 12px
 }
 
 .memory-item-container svg {
@@ -351,6 +355,11 @@ h3 {
     margin-right: 16px;
 }
 
+.memory-note-div {
+    font-size: 0.8rem;
+    margin-top: 12px;
+}
+
 .edit-note-item {
     color: #0276ff;
     cursor: pointer;
@@ -362,10 +371,9 @@ h3 {
 }
 
 .note-content-header {
-    display: block;
     font-weight: 500;
     text-decoration: underline;
-    margin-bottom: 6px;
+    margin-right: 6px;
 }
 
 .extended-item div p {
