@@ -5,7 +5,7 @@
 <p align="center">
     <a href="https://chrome.google.com/webstore/detail/arxivtools/hmebhknlgddhfbbdhgplnillngljgmdi?authuser=1&hl=fr">
         <strong>
-            🏪 Chrome (& Brave) web store
+            🏪 Install from the Chrome (& Brave) web-store
         </strong>
     </a>
 </p>
@@ -14,7 +14,7 @@
 
 This browser extension allows you to do automatically store ArXiv papers you read and much more:
 
-1. 🏬 **Automatically record papers** you open, without clicking anywhere. You can then **search** them, **tag** them, **comment** them.
+1. 🏬 **Automatically record papers** you open, without clicking anywhere. You can then **search** them, **tag** them, **comment** them and link a code repository.
 2. 📄 **Go back to an arxiv-hosted pdf to its abstract page**. For instance: from `https://arxiv.org/pdf/1703.06907.pdf` to `https://arxiv.org/abs/1703.06907` in a click.
 3. 🗂 **Add a direct download button** so that you don't have to open the pdf's webpage and then download it from your browser
 4. 🔗 **Add a Markdown link**, because it's the little things that make sharing a paper easier (to be used in issues, PRs, Readme, HackMD.io etc.)
@@ -22,6 +22,8 @@ This browser extension allows you to do automatically store ArXiv papers you rea
 6. 🎬 **Change a pdf's webpage title to the article's title**, because who cares about that saved bookmark `1812.10889.pdf` when it could be `InstaGAN: Instance-aware Image-to-Image Translation (1812.10889).pdf`
 
 ## Demo
+
+(Visuals are slightly deprecated (Oct 1st 2021), I need to update them but it's currently very close to what you see here)
 
 ![](https://github.com/vict0rsch/ArxivTools/blob/master/imgs/d2.gif?raw=true)
 
@@ -61,6 +63,8 @@ Share ideas 💡 in [issues](https://github.com/vict0rsch/ArxivTools/issues) and
 * **Search**
   * In a paper's authors, title and note.
     * Split queries on spaces: `gan im` will look for: _all papers whose (title OR author) contain ("gan" AND "im")_
+  * In a paper's code link
+    * Start the search query with `c:` to only search code links
   * In a paper's tags
     * Start the search query with `t:` to filter by tags
     * `t: gan` will look for _all papers whose tag-list contains at least 1 tag containing "gan"_
@@ -77,13 +81,13 @@ Share ideas 💡 in [issues](https://github.com/vict0rsch/ArxivTools/issues) and
 <img src="https://github.com/vict0rsch/ArxivTools/blob/master/imgs/guide-memory.png?raw=true">
 </p>
 
-## Manual Installation
+## Install from source
 
-* download the repo
-* go to Chrome/Brave's extension manager
-* enable developer mode
-* load unpackaged extension
-* chose downloaded repo :)
+* Download the repo
+* Go to Chrome/Brave's extension manager
+* Enable developer mode
+* Click on "load unpackaged extension"
+* Select the downloaded repo :)
 
 ## Todo
 
@@ -101,4 +105,4 @@ Share ideas 💡 in [issues](https://github.com/vict0rsch/ArxivTools/issues) and
 * **Firefox**
   * Using Firefox? [#9](https://github.com/vict0rsch/ArxivTools/issues/9) 🚁
 * **Papers With Code**
-  * wouldn't it be nice to automatically discover papers' repos!! see [#10](https://github.com/vict0rsch/ArxivTools/issues/10)
+  * Wouldn't it be nice to automatically discover papers' repos!! see [#10](https://github.com/vict0rsch/ArxivTools/issues/10)
