@@ -131,24 +131,29 @@ const migrateData = async (papers, dataVersion) => {
                 return papers
             }
         }
-
+        const currentVersion = papers["__dataVersion"];
         delete papers["__dataVersion"]
 
         for (const id in papers) {
-            if (!papers[id].hasOwnProperty("bibtext")) {
+            if (currentVersion < 5 && !papers[id].hasOwnProperty("bibtext")) {
                 papers[id].bibtext = "";
                 console.log("Migrating bibtext for " + id);
             }
-            if (!papers[id].pdfLink.endsWith(".pdf")) {
+            if (currentVersion < 5 && !papers[id].pdfLink.endsWith(".pdf")) {
                 papers[id].pdfLink = papers[id].pdfLink + ".pdf"
             }
-            if (!papers[id].source) {
+            if (currentVersion < 5 && !papers[id].codeLink) {
+                papers[id].codeLink = ""
+            }
+            if (currentVersion < 5 && !papers[id].source) {
                 if (papers[id].id.includes("NeurIPS")) {
                     papers[id].source = "neurips"
                 } else {
                     papers[id].source = "arxiv"
                 }
             }
+
+            // need to fix https://github.com/vict0rsch/ArxivTools/issues/10
             // if (!papers[id].hasOwnProperty("codes")) {
             //     papers[id].codes = await fetchCodes(papers[id])
             // }
@@ -200,7 +205,7 @@ const statePdfTitle = (title, id) => {
 const initState = async (papers, noDisplay) => {
     console.log("Found papers:")
     console.log(papers)
-    state.dataVersion = 4
+    state.dataVersion = 5
     papers = await migrateData(papers, state.dataVersion)
     if (noDisplay) return papers
     state.papers = papers;
