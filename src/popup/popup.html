@@ -8,6 +8,7 @@
 	<!-- <link rel="stylesheet" type="text/css" href="./popup-css/popup.css"> -->
 	<link rel="stylesheet" type="text/css" href="./popup-css/options.min.css">
 	<link rel="stylesheet" type="text/css" href="./popup-css/abstract.min.css">
+	<link rel="stylesheet" type="text/css" href="./popup-css/amsify.suggestags.css">
 </head>
 
 <body>
@@ -28,14 +29,19 @@
 				</svg>
 			</div>
 
-			<p>This extension can bring you from an Arxiv-hosted pdf webpage to its Arxiv Abstract page.</p>
-			<p>For instance from https://arxiv.org/pdf/1703.06907.pdf to https://arxiv.org/abs/1703.06907</p>
 
-			<br />
-			<p>Keep track of your readings with <strong>ArxivMemory!</strong></p>
-			<small>When opening Arxiv web pages and pdfs, a reference to that paper will be stored in your ArxivMemory.
+			<p>Keep track of your readings with <strong>ArxivMemory!</strong> It automatically and locally stores Arxiv
+				papers you open in your browser</p>
+			<p>When opening Arxiv web pages and pdfs, a reference to that paper will be stored in your ArxivMemory.
 				Now also handles NeurIPS pdfs!
-				You can find them all by clicking on the ArxivMemory button.</small>
+			</p>
+
+			<p>Beyond simple searching, you can also customize a paper's entry with: a link to its code, tags and a
+				quick note.</p>
+			<p>Click on the ArxivMemory button below (or press <code
+					style="padding: 1px 4px; vertical-align: text-top; border-radius: 4px; background-color: rgb(238, 238, 238);">a</code>
+				)!
+			</p>
 		</div>
 
 		<div id="notPdf" style="display: none;">
@@ -56,13 +62,13 @@
 
 			<p style="text-align: center; max-width: 85%; font-weight: 400; color: grey" id="popup-authors"></p>
 
-			<p style="display: none;" id="popup-code-link"></p>
+			<p style="display: none" class="mt-0" id="popup-code-link"></p>
 
-			<div style="width: 75%; margin-bottom: 12px; position: relative;">
+			<div style="width: 75%; margin-bottom: 28px; position: relative;">
 				<div style="display: flex; justify-content: space-evenly; align-items: center;" id="popup-copy-icons">
 				</div>
-				<div style="color: green; position: absolute; position: absolute; left: 50%;
-				transform: translate(-50%, 0); bottom: -25px; width: 180px; text-align: center;" id="popup-feedback-copied"></div>
+				<div style="color: green; position: absolute; left: 50%; display: none;
+				transform: translate(-50%, 0); bottom: -20px; width: 180px; text-align: center;" id="popup-feedback-copied"></div>
 			</div>
 
 			<!-- <p>Keep track of your readings with <strong>ArxivMemory!</strong></p> -->
@@ -167,7 +173,7 @@
 </body>
 
 <script src="../shared/jquery.min.js"></script>
-<script src="../shared/select2.full.min.js"></script>
+<script src="../shared/select2.min.js"></script>
 <script src="../shared/utils.js"></script>
 <script src="../shared/parsers.js"></script>
 <!-- <script src="../shared/utils.min.js"></script>
