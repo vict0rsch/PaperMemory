@@ -82,40 +82,67 @@ const main = tab => {
     })
 
     $(document).on('keydown', function (e) {
-        if (state.memoryIsOpen) {
-            if (e.which === 27) { // escape closes memory
-                e.preventDefault();
-                closeMemory();
-            }
+
+        if ([8, 13, 27, 65, 69].indexOf(e.which) < 0) {
+            return
         }
+
         if (state.menuIsOpen) {
             if (e.which === 27) { // escape closes menu
                 e.preventDefault();
                 closeMenu();
             }
-        }
-        if (state.memoryIsOpen || state.menuIsOpen) {
             return
         }
-        if (e.which == 13) { // enter on the arxiv memory button opens it
-            let el = $("#memory-switch-text-on:focus").first();
-            if (el.length > 0) {
+
+        if (!state.memoryIsOpen) {
+            if (e.which == 65) { // a opens the arxiv memory
+                if ($(":focus").length) return;
                 $("#memory-switch").click()
-                return
-            }
-            el = $("#tabler-menu:focus").first();
-            if (el.length > 0) {
-                $("#tabler-menu").click()
-                $("#tabler-menu").blur()
-                return
-            }
+            } else if (e.which == 13) {
+                // enter on the arxiv memory button opens it
+                let el = $("#memory-switch-text-on:focus").first();
+                if (el.length > 0) {
+                    $("#memory-switch").click()
+                    return
+                }
+                // enter on the menu button opens it
+                el = $("#tabler-menu:focus").first();
+                if (el.length > 0) {
+                    $("#tabler-menu").click()
+                    $("#tabler-menu").blur()
+                    return
+                }
 
-        }
-        if (e.which == 65) { // a opens the arxiv memory
-            if ($(":focus").length) return;
-            $("#memory-switch").click()
+            }
+            return
         }
 
+        // Now memory is open
+
+
+        // e.preventDefault();
+        let id, eid;
+        const el = $(".memory-item-container:focus").first();
+        if (e.which !== 27) {
+            if (el.length !== 1) return
+            id = el.attr('id').split("--")[1];
+            eid = id.replace(".", "\\.");
+        }
+
+        if (e.which === 8) { // delete
+            findEl(eid, "delete-memory-item").click()
+        }
+        else if (e.which === 13) { // enter
+            findEl(eid, "memory-item-link").click();
+        }
+        else if (e.which === 27) { // esc
+            e.preventDefault();
+            closeMemory();
+        }
+        else if (e.which === 69) { // e
+            findEl(eid, "memory-item-edit").click();
+        }
     })
 
 
@@ -234,7 +261,7 @@ const main = tab => {
                         >
                             <div class="textarea-wrapper w-100 mr-0">
                                 <span class="label">Code:</span>
-                                <input type="text" class="form-code-input" value="${paper.codeLink || ''}">
+                                <input type="text" class="form-code-input mt-0" value="${paper.codeLink || ''}">
                             </div>
                             <div class="textarea-wrapper w-100 mr-0">
                                 <span class="label">Note:</span>
@@ -319,13 +346,15 @@ const main = tab => {
                 });
                 $(`#popup-save-edits--${eid}`).click(() => {
                     const note = $(`#popup-form-note-textarea--${eid}`).val()
-                    const codeLink = $(`#popup-form-note--${id}`).find(".form-code-input").first().val()
+                    const codeLink = $(`#popup-form-note--${eid}`).find(".form-code-input").first().val()
                     updatePaperTags(id, `#popup-item-tags--${eid}`);
                     saveNote(id, note);
                     saveCodeLink(id, codeLink);
                     $("#popup-feedback-copied").text("Saved tags, code & note!")
                     $("#popup-feedback-copied").fadeIn()
-                    setTimeout(() => { $("#popup-feedback-copied").text("") }, 1000)
+                    setTimeout(() => {
+                        $("#popup-feedback-copied").fadeOut()
+                    }, 1000)
                 });
                 // ------------------------
                 // -----  SVG clicks  -----
@@ -377,5 +406,6 @@ $(() => {
         var url = tabs[0].url;
         main(tabs[0])
     });
+
 
 });

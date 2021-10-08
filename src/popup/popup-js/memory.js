@@ -54,7 +54,7 @@ const getMemoryItemHTML = (item) => {
         <div class="memory-item-actions">
 
             <div style="display: flex; align-items: center">
-                <div class="memory-item-edit memory-item-svg-div" title="Edit paper details">
+                <div class="memory-item-edit memory-item-svg-div" title="Edit paper details&#13;&#10;(or press 'e' when this paper is focused,&#13;&#10; i.e. when you navigated to it with 'tab')">
                     <svg >
                         <use xlink:href="../../icons/tabler-sprite-nostroke.svg#tabler-writing" />
                     </svg>
@@ -176,12 +176,12 @@ const confirmDelete = id => {
 const copyAndConfirmMemoryItem = (id, textToCopy, feedbackText, isPopup) => {
     copyTextToClipboard(textToCopy)
     const eid = id.replace(".", "\\.");
-    const elementId = isPopup ? `#popup-feedback-copied` : findEl(eid, "memory-item-feedback");
-    $(elementId).text(feedbackText)
-    $(elementId).fadeIn()
+    const element = isPopup ? $(`#popup-feedback-copied`) : findEl(eid, "memory-item-feedback");
+    element.text(feedbackText)
+    element.fadeIn()
     setTimeout(
         () => {
-            $(elementId).text("")
+            element.fadeOut()
         },
         1000
     )
@@ -360,6 +360,21 @@ const filterMemoryByTags = (letters) => {
     state.papersList = papersList;
 }
 
+const filterMemoryByCode = (letters) => {
+    const words = letters.replace("c:", "").toLowerCase().split(" ")
+    let papersList = [];
+    for (const paper of state.sortedPapers) {
+        let paperCode = paper.codeLink || "";
+        paperCode = paperCode.toLowerCase();
+        if (
+            words.every(w => paperCode.includes(w))
+        ) {
+            papersList.push(paper)
+        }
+    }
+    state.papersList = papersList;
+}
+
 const updatePaperTagsHTML = id => {
     const eid = id.replace(".", "\\.");
     findEl(eid, "tag-list").html(
@@ -464,6 +479,10 @@ const displayMemoryTable = () => {
         const pdfLink = state.papers[id].pdfLink;
         copyAndConfirmMemoryItem(id, pdfLink, "Pdf link copied!")
     })
+    $(".form-note-textarea").focus(function () {
+        var that = this;
+        setTimeout(function () { that.selectionStart = that.selectionEnd = 10000; }, 0);
+    });
     $(".form-note").submit((e) => {
         e.preventDefault();
 
@@ -517,7 +536,8 @@ const displayMemoryTable = () => {
                 allowClear: true,
                 tags: true,
                 width: "75%",
-                tokenSeparators: [',', ' ']
+                tokenSeparators: [',', ' '],
+                dropdownParent: $(`#memory-item-container--${eid}`)
             });
 
             codeAndNote.slideUp(250);
@@ -558,7 +578,10 @@ const openMemory = () => {
             const query = $.trim($(e.target).val());
             if (query.startsWith("t:")) {
                 filterMemoryByTags(query)
-            } else {
+            } else if (query.startsWith("c:")) {
+                filterMemoryByCode(query)
+            }
+            else {
                 filterMemoryByString(query);
             }
             displayMemoryTable();
@@ -607,35 +630,6 @@ const openMemory = () => {
         reverseMemory()
         displayMemoryTable()
     })
-    $(document).on('keydown', function (e) {
-        if (!state.memoryIsOpen) {
-            return
-        }
-        if ([8, 13, 69, 78].indexOf(e.which) < 0) {
-            return
-        }
-
-        const el = $(".memory-item-container:focus").first();
-        if (el.length !== 1) return
-        e.preventDefault();
-        const id = el.attr('id').split("--")[1];
-        const eid = id.replace(".", "\\.");
-
-        if (e.which == 13) { // enter
-            findEl(eid, "memory-item-link").click();
-        }
-        else if (e.which == 8) { // delete
-            findEl(eid, "delete-memory-item").click()
-        }
-        else if (e.which == 69) { // e
-            findEl(eid, "memory-item-edit").click();
-        }
-        else if (e.which == 78) { // n
-            findEl(eid, "memory-item-edit").click();
-            findEl(eid, "memory-item-tag").click();
-            findEl(eid, "form-note-textarea").focus();
-        }
-    });
 }
 
 const closeMemory = () => {
@@ -644,8 +638,9 @@ const closeMemory = () => {
         easing: "easeOutQuint"
     });
     $("#memory-switch-text-off").fadeOut(() => {
-        $("#memory-switch-text-on").fadeIn()
+        $("#memory-switch-text-on").fadeIn();
     });
-    $("#tabler-menu").fadeIn()
+    $("#tabler-menu").fadeIn();
+    $("#memory-search").val("");
     state.memoryIsOpen = false;
 }
