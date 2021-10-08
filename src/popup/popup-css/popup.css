@@ -365,7 +365,19 @@ h3 {
 }
 
 .mr-0 {
-    margin-right: 0px
+    margin-right: 0px !important;
+}
+
+.ml-0 {
+    margin-left: 0px !important;
+}
+
+.mt-0 {
+    margin-top: 0px !important;
+}
+
+.mb-0 {
+    margin-bottom: 0px !important;
 }
 
 .edit-note-item {
@@ -399,13 +411,14 @@ h3 {
     border-radius: 4px;
     border: 1px solid #aaa;
     margin-top: 8px;
-    line-height: 1.6rem;
+    /* line-height: 1.6rem; */
+    padding: 6px;
 }
 
 .memory-item-code-link,
 #popup-code-link {
     text-decoration: underline;
-    color: rgba(61, 133, 240, 0.75);
+    color: rgb(22, 86, 184);
     cursor: pointer;
 }
 
