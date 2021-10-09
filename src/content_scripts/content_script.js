@@ -310,17 +310,23 @@ const copyDivToClipboard = divId => {
 
 const main = checks => {
 
-    const isVanity = window.location.href.indexOf("arxiv-vanity.com") > -1;
-    const isArxiv = window.location.href.indexOf("arxiv.org") > -1;
-    const isNeurips = window.location.href.indexOf("proceedings.neurips.cc") > -1;
-    if (isArxiv) {
+    const is = {
+        vanity: window.location.href.indexOf("arxiv-vanity.com") > -1,
+        arxiv: window.location.href.indexOf("arxiv.org") > -1,
+        neurips: window.location.href.indexOf("proceedings.neurips.cc") > -1,
+        cvf: window.location.href.indexOf("openaccess.thecvf.com") > -1,
+    }
+
+    console.log({ is })
+
+    if (is.arxif) {
         arxiv(checks)
-    } else if (isVanity && checks.checkVanity) {
+    } else if (is.vanity && checks.checkVanity) {
         vanity()
     }
 
-    if (isArxiv || isNeurips) {
-        addOrCreatePaper(isArxiv)
+    if (is.arxiv || is.neurips || is.cvf) {
+        addOrCreatePaper(is)
     }
 }
 
@@ -351,7 +357,7 @@ const feedback = text => {
     }, 2000)
 }
 
-const addOrCreatePaper = isArxiv => {
+const addOrCreatePaper = is => {
 
     const url = window.location.href;
 
@@ -368,12 +374,16 @@ const addOrCreatePaper = isArxiv => {
         let id, paper, isNew;
 
         // Extract id from url
-        if (isArxiv) {
+        if (is.arxiv) {
             id = window.location.href.match(/\d{4}\.\d{4,5}\d/g)[0];
-        } else {
+        } else if (is.neurips) {
             const hash = url.split("/").slice(-1)[0].replace("-Paper.pdf", "");
             const year = url.split("/paper/")[1].split("/")[0];
             id = `NeurIPS-${year}_${hash.slice(0, 8)}`
+        } else if (is.cvf) {
+            id = parseCVFUrl(url).id
+        } else {
+            return
         }
 
         // console.log(id);
@@ -388,13 +398,16 @@ const addOrCreatePaper = isArxiv => {
         } else {
             let data;
 
-            if (isArxiv) {
+            if (is.arxiv) {
                 data = await fetchArxivBibtex(id);
-            } else {
+            } else if (is.neurips) {
                 data = await fetchNeuripsHTML(url);
+            } else if (is.cvf) {
+                data = await fetchCvfHTML(url);
+                console.log({ data })
             }
 
-            paper = await makePaper(isArxiv, data);
+            paper = await makePaper(is, data);
             papers[id] = paper;
             isNew = true;
         }
@@ -410,23 +423,26 @@ const addOrCreatePaper = isArxiv => {
     });
 }
 
-const makePaper = async (isArxiv, data) => {
+const makePaper = async (is, data) => {
     const url = window.location.href;
 
     let paper;
-    if (isArxiv) {
+    if (is.arxiv) {
         const { bibvars, bibtext } = parseArxivBibtex(data);
         paper = bibvars;
         paper.bibtext = bibtext;
         paper.source = "arxiv"
         // paper.codes = await fetchCodes(paper)
-    } else {
+    } else if (is.neurips) {
         paper = parseNeuripsHTML(url, data);
         paper.source = "neurips"
         // paper.codes = await fetchCodes(paper);
+    } else if (is.cvf) {
+        paper = parseCvfHTML(url, data);
+        paper.source = "cvf"
     }
 
-    paper.md = `[${paper.title}](https://arxiv.com/abs/${paper.id})`;
+    paper.md = `[${paper.title}](https://arxiv.com/abs/${paper.id})`; // TODO fix this with migration!!
     paper.note = "";
     paper.tags = [];
 
@@ -698,6 +714,7 @@ $(() => {
         url.includes("arxiv.org/pdf/")
         || url.includes("arxiv.org/abs/")
         || url.includes("neurips.cc/paper/")
+        || url.includes("https://openaccess.thecvf.com/content_")
     )) {
         // not on a paper page (but on arxiv.org or neurips.cc)
         return

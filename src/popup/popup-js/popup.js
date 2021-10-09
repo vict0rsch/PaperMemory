@@ -402,9 +402,17 @@ $(() => {
     chrome.tabs.query({
         'active': true,
         'lastFocusedWindow': true
-    }, function (tabs) {
+    }, async function (tabs) {
         var url = tabs[0].url;
-        main(tabs[0])
+        main(tabs[0]);
+
+        const cvf = await fetch("https://openaccess.thecvf.com/content_wacv_2020/html/Riba_Kornia_an_Open_Source_Differentiable_Computer_Vision_Library_for_PyTorch_WACV_2020_paper.html").then((response) => {
+            console.log(response.ok)
+            return response.ok ? response.text() : ""
+        }).catch(() => { return "" })
+
+        console.log(cvf)
+
     });
 
 

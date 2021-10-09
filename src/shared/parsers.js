@@ -110,6 +110,30 @@ const fetchNeuripsHTML = async url => {
     })
 }
 
+const fetchCvfHTML = async url => {
+    let paperPage, text;
+    if (url.endsWith(".pdf")) {
+        paperPage = url.replace("/papers/", "/html/").replace(".pdf", ".html")
+    } else {
+        paperPage = url;
+    }
+
+    text = await fetch(paperPage).then((response) => {
+        return response.ok ? response.text() : ""
+    })
+
+    if (!text) {
+        const { conf, year } = parseCVFUrl(url);
+        paperPage = paperPage.replace(`/content_${conf}_${year}/`, `/content_${conf.toLowerCase()}_${year}/`);
+        text = await fetch(paperPage).then((response) => {
+            return response.ok ? response.text() : ""
+        })
+    }
+
+    return text
+
+}
+
 
 const fetchOpts = {
     headers: {

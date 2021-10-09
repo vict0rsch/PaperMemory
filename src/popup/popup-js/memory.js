@@ -1,5 +1,6 @@
 /*
-TODO: add code to paper popup | esc to close edit
+TODO: fix NeurIPS pdf titles & popup metadata
+TODO: fix paper.md in makePaper + create appropriate migration
 
 */
 

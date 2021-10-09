@@ -94,6 +94,7 @@ Share ideas 💡 in [issues](https://github.com/vict0rsch/ArxivTools/issues) and
 * [ ] More robust file patterns and document custom page naming
 * [ ] Update visuals
 * [ ] Document `:` being replaced by `_` when downloading a pdf ([OS requirements...](https://stackoverflow.com/questions/30960190/problematic-characters-for-filename-in-chrome-downloads-download))
+* [ ] add NeurIPS pdf titles & popup metadata (like for arxiv)
 
 ## Help
 
