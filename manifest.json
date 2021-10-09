@@ -46,9 +46,9 @@
         "https://openaccess.thecvf.com/*"
       ],
       "js": [
+        "src/shared/jquery.min.js",
         "src/shared/utils.min.js",
         "src/shared/parsers.min.js",
-        "src/shared/jquery.min.js",
         "src/content_scripts/content_script.js"
       ],
       "css": [
