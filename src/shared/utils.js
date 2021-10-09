@@ -1,3 +1,209 @@
+/*
+ * jQuery Easing v1.3 - http://gsgd.co.uk/sandbox/jquery/easing/
+ *
+ * Uses the built in easing capabilities added In jQuery 1.1
+ * to offer multiple easing options
+ *
+ * TERMS OF USE - jQuery Easing
+ *
+ * Open source under the BSD License.
+ *
+ * Copyright 2008 George McGinley Smith
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without modification,
+ * are permitted provided that the following conditions are met:
+ *
+ * Redistributions of source code must retain the above copyright notice, this list of
+ * conditions and the following disclaimer.
+ * Redistributions in binary form must reproduce the above copyright notice, this list
+ * of conditions and the following disclaimer in the documentation and/or other materials
+ * provided with the distribution.
+ *
+ * Neither the name of the author nor the names of contributors may be used to endorse
+ * or promote products derived from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY
+ * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+ * COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+ * AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+ * OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+*/
+
+// t: current time, b: begInnIng value, c: change In value, d: duration
+$.easing.jswing = $.easing.swing;
+
+$.extend($.easing,
+    {
+        def: 'easeOutQuad',
+        swing: function (x, t, b, c, d) {
+            //alert($.easing.default);
+            return $.easing[$.easing.def](x, t, b, c, d);
+        },
+        easeInQuad: function (x, t, b, c, d) {
+            return c * (t /= d) * t + b;
+        },
+        easeOutQuad: function (x, t, b, c, d) {
+            return -c * (t /= d) * (t - 2) + b;
+        },
+        easeInOutQuad: function (x, t, b, c, d) {
+            if ((t /= d / 2) < 1) return c / 2 * t * t + b;
+            return -c / 2 * ((--t) * (t - 2) - 1) + b;
+        },
+        easeInCubic: function (x, t, b, c, d) {
+            return c * (t /= d) * t * t + b;
+        },
+        easeOutCubic: function (x, t, b, c, d) {
+            return c * ((t = t / d - 1) * t * t + 1) + b;
+        },
+        easeInOutCubic: function (x, t, b, c, d) {
+            if ((t /= d / 2) < 1) return c / 2 * t * t * t + b;
+            return c / 2 * ((t -= 2) * t * t + 2) + b;
+        },
+        easeInQuart: function (x, t, b, c, d) {
+            return c * (t /= d) * t * t * t + b;
+        },
+        easeOutQuart: function (x, t, b, c, d) {
+            return -c * ((t = t / d - 1) * t * t * t - 1) + b;
+        },
+        easeInOutQuart: function (x, t, b, c, d) {
+            if ((t /= d / 2) < 1) return c / 2 * t * t * t * t + b;
+            return -c / 2 * ((t -= 2) * t * t * t - 2) + b;
+        },
+        easeInQuint: function (x, t, b, c, d) {
+            return c * (t /= d) * t * t * t * t + b;
+        },
+        easeOutQuint: function (x, t, b, c, d) {
+            return c * ((t = t / d - 1) * t * t * t * t + 1) + b;
+        },
+        easeInOutQuint: function (x, t, b, c, d) {
+            if ((t /= d / 2) < 1) return c / 2 * t * t * t * t * t + b;
+            return c / 2 * ((t -= 2) * t * t * t * t + 2) + b;
+        },
+        easeInSine: function (x, t, b, c, d) {
+            return -c * Math.cos(t / d * (Math.PI / 2)) + c + b;
+        },
+        easeOutSine: function (x, t, b, c, d) {
+            return c * Math.sin(t / d * (Math.PI / 2)) + b;
+        },
+        easeInOutSine: function (x, t, b, c, d) {
+            return -c / 2 * (Math.cos(Math.PI * t / d) - 1) + b;
+        },
+        easeInExpo: function (x, t, b, c, d) {
+            return (t == 0) ? b : c * Math.pow(2, 10 * (t / d - 1)) + b;
+        },
+        easeOutExpo: function (x, t, b, c, d) {
+            return (t == d) ? b + c : c * (-Math.pow(2, -10 * t / d) + 1) + b;
+        },
+        easeInOutExpo: function (x, t, b, c, d) {
+            if (t == 0) return b;
+            if (t == d) return b + c;
+            if ((t /= d / 2) < 1) return c / 2 * Math.pow(2, 10 * (t - 1)) + b;
+            return c / 2 * (-Math.pow(2, -10 * --t) + 2) + b;
+        },
+        easeInCirc: function (x, t, b, c, d) {
+            return -c * (Math.sqrt(1 - (t /= d) * t) - 1) + b;
+        },
+        easeOutCirc: function (x, t, b, c, d) {
+            return c * Math.sqrt(1 - (t = t / d - 1) * t) + b;
+        },
+        easeInOutCirc: function (x, t, b, c, d) {
+            if ((t /= d / 2) < 1) return -c / 2 * (Math.sqrt(1 - t * t) - 1) + b;
+            return c / 2 * (Math.sqrt(1 - (t -= 2) * t) + 1) + b;
+        },
+        easeInElastic: function (x, t, b, c, d) {
+            var s = 1.70158; var p = 0; var a = c;
+            if (t == 0) return b; if ((t /= d) == 1) return b + c; if (!p) p = d * .3;
+            if (a < Math.abs(c)) { a = c; var s = p / 4; }
+            else var s = p / (2 * Math.PI) * Math.asin(c / a);
+            return -(a * Math.pow(2, 10 * (t -= 1)) * Math.sin((t * d - s) * (2 * Math.PI) / p)) + b;
+        },
+        easeOutElastic: function (x, t, b, c, d) {
+            var s = 1.70158; var p = 0; var a = c;
+            if (t == 0) return b; if ((t /= d) == 1) return b + c; if (!p) p = d * .3;
+            if (a < Math.abs(c)) { a = c; var s = p / 4; }
+            else var s = p / (2 * Math.PI) * Math.asin(c / a);
+            return a * Math.pow(2, -10 * t) * Math.sin((t * d - s) * (2 * Math.PI) / p) + c + b;
+        },
+        easeInOutElastic: function (x, t, b, c, d) {
+            var s = 1.70158; var p = 0; var a = c;
+            if (t == 0) return b; if ((t /= d / 2) == 2) return b + c; if (!p) p = d * (.3 * 1.5);
+            if (a < Math.abs(c)) { a = c; var s = p / 4; }
+            else var s = p / (2 * Math.PI) * Math.asin(c / a);
+            if (t < 1) return -.5 * (a * Math.pow(2, 10 * (t -= 1)) * Math.sin((t * d - s) * (2 * Math.PI) / p)) + b;
+            return a * Math.pow(2, -10 * (t -= 1)) * Math.sin((t * d - s) * (2 * Math.PI) / p) * .5 + c + b;
+        },
+        easeInBack: function (x, t, b, c, d, s) {
+            if (s == undefined) s = 1.70158;
+            return c * (t /= d) * t * ((s + 1) * t - s) + b;
+        },
+        easeOutBack: function (x, t, b, c, d, s) {
+            if (s == undefined) s = 1.70158;
+            return c * ((t = t / d - 1) * t * ((s + 1) * t + s) + 1) + b;
+        },
+        easeInOutBack: function (x, t, b, c, d, s) {
+            if (s == undefined) s = 1.70158;
+            if ((t /= d / 2) < 1) return c / 2 * (t * t * (((s *= (1.525)) + 1) * t - s)) + b;
+            return c / 2 * ((t -= 2) * t * (((s *= (1.525)) + 1) * t + s) + 2) + b;
+        },
+        easeInBounce: function (x, t, b, c, d) {
+            return c - $.easing.easeOutBounce(x, d - t, 0, c, d) + b;
+        },
+        easeOutBounce: function (x, t, b, c, d) {
+            if ((t /= d) < (1 / 2.75)) {
+                return c * (7.5625 * t * t) + b;
+            } else if (t < (2 / 2.75)) {
+                return c * (7.5625 * (t -= (1.5 / 2.75)) * t + .75) + b;
+            } else if (t < (2.5 / 2.75)) {
+                return c * (7.5625 * (t -= (2.25 / 2.75)) * t + .9375) + b;
+            } else {
+                return c * (7.5625 * (t -= (2.625 / 2.75)) * t + .984375) + b;
+            }
+        },
+        easeInOutBounce: function (x, t, b, c, d) {
+            if (t < d / 2) return $.easing.easeInBounce(x, t * 2, 0, c, d) * .5 + b;
+            return $.easing.easeOutBounce(x, t * 2 - d, 0, c, d) * .5 + c * .5 + b;
+        }
+    });
+
+/*
+ *
+ * TERMS OF USE - EASING EQUATIONS
+ *
+ * Open source under the BSD License.
+ *
+ * Copyright 2001 Robert Penner
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without modification,
+ * are permitted provided that the following conditions are met:
+ *
+ * Redistributions of source code must retain the above copyright notice, this list of
+ * conditions and the following disclaimer.
+ * Redistributions in binary form must reproduce the above copyright notice, this list
+ * of conditions and the following disclaimer in the documentation and/or other materials
+ * provided with the distribution.
+ *
+ * Neither the name of the author nor the names of contributors may be used to endorse
+ * or promote products derived from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY
+ * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+ * COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+ * AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+ * OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ */
+
 function delay(fn, ms) {
     // https://stackoverflow.com/questions/1909441/how-to-delay-the-keyup-handler-until-the-user-stops-typing
     let timer = 0
@@ -5,6 +211,12 @@ function delay(fn, ms) {
         clearTimeout(timer)
         timer = setTimeout(fn.bind(this, ...args), ms || 0)
     }
+}
+
+const cleanPapers = papers => {
+    let cleaned = { ...papers };
+    delete cleaned["__dataVersion"];
+    return cleaned
 }
 
 function fallbackCopyTextToClipboard(text) {
@@ -123,33 +335,59 @@ const getPdfFn = code => {
 
 
 const migrateData = async (papers, dataVersion) => {
+
+    const currentVersion = papers["__dataVersion"] || 1;
+    var deleteIds = [];
+
     try {
 
         if (papers.hasOwnProperty("__dataVersion")) {
             if (papers["__dataVersion"] === dataVersion) {
-                delete papers["__dataVersion"]
                 return papers
             }
         }
-        const currentVersion = papers["__dataVersion"];
+
         delete papers["__dataVersion"]
 
         for (const id in papers) {
-            if (currentVersion < 5 && !papers[id].hasOwnProperty("bibtext")) {
-                papers[id].bibtext = "";
-                console.log("Migrating bibtext for " + id);
+
+            if (currentVersion < 5) {
+                if (!papers[id].hasOwnProperty("bibtext")) {
+                    papers[id].bibtext = "";
+                    console.log("Migrating bibtext for " + id);
+                }
+                if (!papers[id].pdfLink.endsWith(".pdf")) {
+                    papers[id].pdfLink = papers[id].pdfLink + ".pdf"
+                }
+                if (!papers[id].codeLink) {
+                    papers[id].codeLink = ""
+                }
+                if (!papers[id].source) {
+                    if (papers[id].id.includes("NeurIPS")) {
+                        papers[id].source = "neurips"
+                    } else {
+                        papers[id].source = "arxiv"
+                    }
+                }
             }
-            if (currentVersion < 5 && !papers[id].pdfLink.endsWith(".pdf")) {
-                papers[id].pdfLink = papers[id].pdfLink + ".pdf"
-            }
-            if (currentVersion < 5 && !papers[id].codeLink) {
-                papers[id].codeLink = ""
-            }
-            if (currentVersion < 5 && !papers[id].source) {
-                if (papers[id].id.includes("NeurIPS")) {
-                    papers[id].source = "neurips"
-                } else {
+            if (currentVersion < 6) {
+                if (papers[id].source !== "arxiv" && papers[id].md.includes("https://arxiv.com/abs/")) {
+                    papers[id].md = `[${papers[id].title}](${papers[id].pdfLink})`
+                }
+                if (papers[id].source !== "arxiv" && papers[id].pdfLink.includes("arxiv.org/pdf/")) {
                     papers[id].source = "arxiv"
+                }
+                if (id.match(/^\d/) && papers[id].source === "arxiv") {
+                    const newId = `Arxiv-${id}`;
+                    let newPaper = { ...papers[id], id: newId };
+                    papers[newId] = newPaper;
+                    deleteIds.push(id)
+                }
+                if (id.includes("Arxiv-Arxiv-") && papers[id].source === "arxiv") {
+                    const newId = `Arxiv-${id.replaceAll("Arxiv-", "")}`;
+                    let newPaper = { ...papers[id], id: newId };
+                    papers[newId] = newPaper;
+                    deleteIds.push(id)
                 }
             }
 
@@ -159,19 +397,23 @@ const migrateData = async (papers, dataVersion) => {
             // }
         }
 
-        papers["__dataVersion"] = dataVersion;
-
-        chrome.storage.local.set({ papers }, () => {
-            console.log("Migrated papers:");
-            console.log(papers)
+        deleteIds.forEach((id, k) => {
+            delete papers[id];
+            console.log("Deleting " + id)
         })
 
+        let newPapers = { ...papers };
+        newPapers["__dataVersion"] = dataVersion;
 
-        delete papers["__dataVersion"]
+        chrome.storage.local.set({ papers: newPapers }, () => {
+            console.log("Migrated papers:");
+            console.log(newPapers)
+            console.log("Data version is now " + dataVersion)
+        })
 
-        return papers
+        return newPapers
     } catch (error) {
-        console.log("Error migrating data:")
+        console.log(`Error migrating data from version ${currentVersion} to ${dataVersion}: `)
         console.log(error)
         return papers
     }
@@ -205,11 +447,14 @@ const statePdfTitle = (title, id) => {
 const initState = async (papers, noDisplay) => {
     console.log("Found papers:")
     console.log(papers)
-    state.dataVersion = 5
+    state.dataVersion = 6
+
     papers = await migrateData(papers, state.dataVersion)
+
     if (noDisplay) return papers
+
     state.papers = papers;
-    state.papersList = Object.values(papers);
+    state.papersList = Object.values(cleanPapers(papers));
     state.sortKey = "lastOpenDate";
     sortMemory()
     makeTags()
@@ -222,12 +467,139 @@ hashCode = function (s) {
 
 const parseCVFUrl = url => {
     // model: https://openaccess.thecvf.com/content_ICCV_2017/papers/Campbell_Globally-Optimal_Inlier_Set_ICCV_2017_paper.pdf
-    const confAndYear = url.replace("https://openaccess.thecvf.com/content_", "").split("/")[0].split("_");
-    const conf = confAndYear[0].toUpperCase();
-    const year = confAndYear[1];
+    // or   : https://openaccess.thecvf.com/content/ICCV2021/html/Jang_C2N_Practical_Generative_Noise_Modeling_for_Real-World_Denoising_ICCV_2021_paper.html
+    const confAndYear = url.replace("https://openaccess.thecvf.com/content", "").slice(1).split("/")[0].split("_");
+    let conf, year;
+    if (confAndYear.length === 1) {
+        conf = confAndYear[0].slice(0, -4)
+        year = confAndYear[0].slice(-4);
+    } else {
+        conf = confAndYear[0].toUpperCase();
+        year = confAndYear[1];
+    }
     const titleUrl = url.split("/").reverse()[0].split(".")[0];
     const hash = (hashCode(titleUrl) + "").replace("-", "").slice(0, 8);
     const id = `${conf}-${year}_${hash}`;
 
     return { conf, year, id }
+}
+
+const isPaper = url => {
+    const a = parseUrl(url);
+    let is = {
+        arxiv: false,
+        neurips: false,
+        cvf: false
+    };
+    if (a.hostname === "arxiv.org") {
+        if (a.pathname.startsWith("/abs/") || a.pathname.startsWith("/pdf/")) {
+            is.arxiv = true;
+        }
+    }
+    if (a.hostname === "proceedings.neurips.cc") {
+        is.neurips = a.pathname.startsWith("/paper/");
+    }
+    if (a.hostname === "openaccess.thecvf.com") {
+        if (a.pathname.startsWith("/content/") || a.pathname.startsWith("/content_")) {
+            is.cvf = true;
+        }
+    }
+
+    return is
+
+}
+
+const parseIdFromUrl = url => {
+    const is = isPaper(url);
+    if (is.arxiv) {
+        const arxivId = url.split("/").reverse()[0].replace(".pdf", "").split("v")[0];
+        return `Arxiv-${arxivId}`
+    } else if (is.neurips) {
+        const year = url.split("/paper/")[1].split("/")[0];
+        const hash = url.split("/").reverse()[0].split("-")[0].slice(0, 8);
+        return `NeurIPS-${year}_${hash}`;
+    } else if (is.cvf) {
+        return parseCVFUrl(url).id;
+    } else {
+        throw Error("unknown paper url");
+    }
+}
+
+const handlePopupKeydown = (e) => {
+
+    if ([8, 13, 27, 65, 69].indexOf(e.which) < 0) {
+        return
+    }
+
+    if (state.menuIsOpen) {
+        if (e.which === 27) { // escape closes menu
+            e.preventDefault();
+            closeMenu();
+        }
+        return
+    }
+
+    if (!state.memoryIsOpen) {
+        if (e.which == 65) { // a opens the arxiv memory
+            if ($(":focus").length) return;
+            $("#memory-switch").click()
+        } else if (e.which == 13) {
+            // enter on the arxiv memory button opens it
+            let el = $("#memory-switch-text-on:focus").first();
+            if (el.length > 0) {
+                $("#memory-switch").click()
+                return
+            }
+            // enter on the menu button opens it
+            el = $("#tabler-menu:focus").first();
+            if (el.length > 0) {
+                $("#tabler-menu").click()
+                $("#tabler-menu").blur()
+                return
+            }
+
+        }
+        return
+    }
+
+    // Now memory is open
+
+
+    // e.preventDefault();
+    let id, eid;
+    const el = $(".memory-item-container:focus").first();
+    if (e.which !== 27) {
+        if (el.length !== 1) return
+        id = el.attr('id').split("--")[1];
+        eid = id.replace(".", "\\.");
+    }
+
+    if (e.which === 8) { // delete
+        findEl(eid, "delete-memory-item").click()
+    }
+    else if (e.which === 13) { // enter
+        findEl(eid, "memory-item-link").click();
+    }
+    else if (e.which === 27) { // esc
+        e.preventDefault();
+        closeMemory();
+    }
+    else if (e.which === 69) { // e
+        findEl(eid, "memory-item-edit").click();
+    }
+}
+
+const formatBibtext = text => {
+
+    let bib = $.trim(text).split("\n").join("");
+    const matches = bib.match(/\w+\ ?=/g);
+    if (matches) {
+        for (const m of matches) {
+            bib = bib.replace(m, `\n  ${m}`);
+        }
+    }
+    if (bib.slice(-2) === "}}") {
+        bib = bib.slice(0, -1) + "\n}"
+    }
+    return bib
 }
