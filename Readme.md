@@ -81,6 +81,14 @@ Share ideas 💡 in [issues](https://github.com/vict0rsch/ArxivTools/issues) and
 <img src="https://github.com/vict0rsch/ArxivTools/blob/master/imgs/guide-memory.png?raw=true">
 </p>
 
+#### Known data sources
+
+ArxivTools can actually store data from more venues than Arxiv:
+
+* CVF conferences (ICCV / CVPR / WAC etc. )
+* NeurIPS
+* More can be added upon request (open an issue)
+
 ## Install from source
 
 * Download the repo
