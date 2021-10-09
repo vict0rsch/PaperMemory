@@ -30,41 +30,42 @@ const openMenu = () => {
 
 
 
+var feedbackTimeout = null;
+var feedbackPrevent = false;
+
+const feedback = () => {
+    try {
+        clearTimeout(feedbackTimeout)
+        $("#feedback-notif").remove();
+        feedbackPrevent = true;
+    } catch (error) {
+        console.log("No feedback to remove.")
+    }
+    $("#menuDiv").append(`
+        <div id="check-feedback">
+            <svg class="tabler-icon">
+                <use xlink:href="../../icons/tabler-sprite-nostroke.svg#tabler-floppy-disk" />
+            </svg>
+        </div>
+    `)
+    $("#check-feedback").animate({
+        right: "12px",
+        opacity: "1"
+    }, 300, "easeInOutBack");
+    feedbackTimeout = setTimeout(() => {
+        $("#check-feedback").animate({
+            right: "-100px",
+            opacity: "0"
+        }, 300, "easeInOutBack", () => {
+            !feedbackPrevent && $("#check-feedback").remove();
+            feedbackPrevent = false;
+        });
+
+    }, 1500)
+}
+
 const main = tab => {
 
-    var feedbackTimeout = null;
-    var feedbackPrevent = false;
-
-    const feedback = () => {
-        try {
-            clearTimeout(feedbackTimeout)
-            $("#feedback-notif").remove();
-            feedbackPrevent = true;
-        } catch (error) {
-            console.log("No feedback to remove.")
-        }
-        $("#menuDiv").append(`
-            <div id="check-feedback">
-                <svg class="tabler-icon">
-                    <use xlink:href="../../icons/tabler-sprite-nostroke.svg#tabler-floppy-disk" />
-                </svg>
-            </div>
-        `)
-        $("#check-feedback").animate({
-            right: "12px",
-            opacity: "1"
-        }, 300, "easeInOutBack");
-        feedbackTimeout = setTimeout(() => {
-            $("#check-feedback").animate({
-                right: "-100px",
-                opacity: "0"
-            }, 300, "easeInOutBack", () => {
-                !feedbackPrevent && $("#check-feedback").remove();
-                feedbackPrevent = false;
-            });
-
-        }, 1500)
-    }
 
     const url = parseUrl(tab.url);
 
@@ -81,69 +82,7 @@ const main = tab => {
         });
     })
 
-    $(document).on('keydown', function (e) {
-
-        if ([8, 13, 27, 65, 69].indexOf(e.which) < 0) {
-            return
-        }
-
-        if (state.menuIsOpen) {
-            if (e.which === 27) { // escape closes menu
-                e.preventDefault();
-                closeMenu();
-            }
-            return
-        }
-
-        if (!state.memoryIsOpen) {
-            if (e.which == 65) { // a opens the arxiv memory
-                if ($(":focus").length) return;
-                $("#memory-switch").click()
-            } else if (e.which == 13) {
-                // enter on the arxiv memory button opens it
-                let el = $("#memory-switch-text-on:focus").first();
-                if (el.length > 0) {
-                    $("#memory-switch").click()
-                    return
-                }
-                // enter on the menu button opens it
-                el = $("#tabler-menu:focus").first();
-                if (el.length > 0) {
-                    $("#tabler-menu").click()
-                    $("#tabler-menu").blur()
-                    return
-                }
-
-            }
-            return
-        }
-
-        // Now memory is open
-
-
-        // e.preventDefault();
-        let id, eid;
-        const el = $(".memory-item-container:focus").first();
-        if (e.which !== 27) {
-            if (el.length !== 1) return
-            id = el.attr('id').split("--")[1];
-            eid = id.replace(".", "\\.");
-        }
-
-        if (e.which === 8) { // delete
-            findEl(eid, "delete-memory-item").click()
-        }
-        else if (e.which === 13) { // enter
-            findEl(eid, "memory-item-link").click();
-        }
-        else if (e.which === 27) { // esc
-            e.preventDefault();
-            closeMemory();
-        }
-        else if (e.which === 69) { // e
-            findEl(eid, "memory-item-edit").click();
-        }
-    })
+    $(document).on('keydown', handlePopupKeydown)
 
 
     $("#tabler-menu").click(() => {
@@ -164,6 +103,8 @@ const main = tab => {
     const checks = ["checkBib", "checkMd", "checkDownload", "checkPdfTitle", "checkVanity"];
     let storageKeys = [...checks, "pdfTitleFn"];
     chrome.storage.local.get(storageKeys, function (dataItems) {
+
+        // Set checkboxes
 
         const hasKey = {};
         for (const key of checks) {
@@ -192,6 +133,7 @@ const main = tab => {
             });
         }
 
+        // Set PDF title function
 
         if (dataItems.pdfTitleFn && typeof dataItems.pdfTitleFn === "string") {
             state.pdfTitleFn = getPdfFn(dataItems.pdfTitleFn);
@@ -221,16 +163,25 @@ const main = tab => {
             setTimeout(() => { $("#customPdfFeedback").html("") }, 1000);
         });
 
-        if (url.hostname === "arxiv.org") {
+        // Display popup metadata
+
+        const is = isPaper(tab.url);
+
+        if (Object.values(is).some(i => i)) {
             $("#notArxiv").hide();
             $("#notPdf").hide();
             $("#isArxiv").show();
-            const id = url.href.split("/").reverse()[0].replace(".pdf", "").split("v")[0];
+            const id = parseIdFromUrl(tab.url);
+
+            console.log({ id })
 
             chrome.storage.local.get("papers", async ({ papers }) => {
-                if (!papers.hasOwnProperty(id)) return
 
                 await initState(papers);
+                if (!papers.hasOwnProperty(id)) {
+                    console.log("Unknown id " + id)
+                    return
+                }
 
                 const paper = state.papers[id];
                 $("#popup-paper-title").text(paper.title);
@@ -283,8 +234,8 @@ const main = tab => {
                     <div
                         class="memory-item-svg-div" 
                         id="popup-memory-item-link--${id}"
-                        title="Open Paper Arxiv Page"
-                        style="display: ${url.href.indexOf(".pdf") < 0 ? "none" : "inherit"}"
+                        title="Open Paper HTML Page"
+                        style="display: ${paper.source !== "arxiv" || (url.href.indexOf(".pdf") < 0) ? "none" : "inherit"}"
                     >
                         <svg  style="height: 25px; width: 25px; pointer-events: none;" >
                         <use xlink:href="../../icons/tabler-sprite-nostroke.svg#tabler-external-link" />
@@ -361,7 +312,7 @@ const main = tab => {
                 // ------------------------
                 $(`#popup-memory-item-link--${eid}`).click(() => {
                     chrome.tabs.update({
-                        url: `https://arxiv.org/abs/${paper.id}`
+                        url: `https://arxiv.org/abs/${paper.id.replace("Arxiv-", "")}`
                     });
                     window.close()
                 })
@@ -380,7 +331,7 @@ const main = tab => {
                     copyAndConfirmMemoryItem(id, md, "MarkDown link copied!", true)
                 })
                 $(`#popup-memory-item-bibtex--${eid}`).click(() => {
-                    const bibtext = state.papers[id].bibtext;
+                    const bibtext = formatBibtext(state.papers[id].bibtext);
                     copyAndConfirmMemoryItem(id, bibtext, "Bibtex citation copied!", true)
                 })
                 $(`#popup-memory-item-download--${eid}`).click(() => {
@@ -405,14 +356,6 @@ $(() => {
     }, async function (tabs) {
         var url = tabs[0].url;
         main(tabs[0]);
-
-        const cvf = await fetch("https://openaccess.thecvf.com/content_wacv_2020/html/Riba_Kornia_an_Open_Source_Differentiable_Computer_Vision_Library_for_PyTorch_WACV_2020_paper.html").then((response) => {
-            console.log(response.ok)
-            return response.ok ? response.text() : ""
-        }).catch(() => { return "" })
-
-        console.log(cvf)
-
     });
 
 
