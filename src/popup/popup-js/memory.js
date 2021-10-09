@@ -1,13 +1,11 @@
 /*
-TODO: fix NeurIPS pdf titles & popup metadata
-TODO: fix paper.md in makePaper + create appropriate migration
 
 */
 
 const getMemoryItemHTML = (item) => {
     const addDate = (new Date(item.addDate)).toLocaleString().replace(",", "")
     const lastOpenDate = (new Date(item.lastOpenDate)).toLocaleString().replace(",", "")
-    const displayId = item.id.indexOf("_") < 0 ? item.id : item.id.split("_")[0];
+    const displayId = item.id.split("_")[0].split(".")[0];
     const note = item.note || "";
     const id = item.id;
     const tags = new Set(item.tags);
@@ -212,14 +210,23 @@ const focusExistingOrCreateNewCodeTab = (codeLink) => {
 
 }
 
-const focusExistingOrCreateNewPaperTab = (paperUrl, id) => {
-    chrome.tabs.query({ url: "https://arxiv.org/*" }, (tabs) => {
+const focusExistingOrCreateNewPaperTab = (paper) => {
+    const hostname = parseUrl(paper.pdfLink).hostname;
+    let match = paper.pdfLink.split("/").reverse()[0].replace("-Paper.pdf", "").replace(".pdf", "");
+    if (match.match(/\d{5}v\d+$/) && paper.source === "arxiv") {
+        match = match.split("v")[0];
+    }
+
+    chrome.tabs.query({ url: `*://${hostname}/*` }, (tabs) => {
+
+        console.log({ hostname, match, tabs })
+
         let validTabsIds = [];
         let pdfTabsIds = [];
         const urls = tabs.map(t => t.url);
         let idx = 0;
         for (const u of urls) {
-            if (u.indexOf(id) >= 0) {
+            if (u.indexOf(match) >= 0) {
                 validTabsIds.push(idx);
                 if (u.endsWith(".pdf")) {
                     pdfTabsIds.push(idx);
@@ -246,10 +253,10 @@ const focusExistingOrCreateNewPaperTab = (paperUrl, id) => {
                 }
             })
         } else {
-            chrome.tabs.create({ url: paperUrl });
+            chrome.tabs.create({ url: paper.pdfLink });
         }
 
-        state.papers[id].count += 1;
+        state.papers[paper.id].count += 1;
         chrome.storage.local.set({ "papers": state.papers });
 
     });
@@ -321,7 +328,7 @@ const orderPapers = (paper1, paper2) => {
 }
 
 const sortMemory = () => {
-    state.sortedPapers = Object.values(state.papers)
+    state.sortedPapers = Object.values(cleanPapers(state.papers))
     state.sortedPapers.sort(orderPapers)
     state.papersList.sort(orderPapers);
 }
@@ -457,8 +464,7 @@ const displayMemoryTable = () => {
     })
     $(".memory-item-link").click((e) => {
         const { id, eid } = eventId(e);
-        const url = state.papers[id].pdfLink;
-        focusExistingOrCreateNewPaperTab(url, id)
+        focusExistingOrCreateNewPaperTab(state.papers[id])
     })
     $(".memory-item-code-link").click((e) => {
         const { id, eid } = eventId(e);
