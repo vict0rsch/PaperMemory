@@ -46,14 +46,15 @@ const parseArxivBibtex = xmlData => {
             id = $(v).html().match(/\d\d\d\d\.\d\d\d\d\d/g)[0];
         }
     })
+    id = `Arxiv-${id}`
 
     const bibvars = { key, title, author, year, id, pdfLink };
-
-    let bibtext = `@article{${key},\n`;
-    bibtext += `    title={${title}},\n`;
-    bibtext += `    author={${author}},\n`;
-    bibtext += `    year={${year}},\n`;
-    bibtext += `    journal={arXiv preprint arXiv:${id}}\n`;
+    let bibtext = ""
+    bibtext += `@article{${key}, \n`;
+    bibtext += `    title = { ${title} }, \n`;
+    bibtext += `    author = { ${author} }, \n`;
+    bibtext += `    year = { ${year}}, \n`;
+    bibtext += `    journal = { arXiv preprint arXiv: ${id}}\n`;
     bibtext += `}`;
 
     return {
@@ -75,21 +76,54 @@ const parseNeuripsHTML = (url, htmlText) => {
     }).join(" and ");
     const pdfLink = url;
     const year = $(ps[0]).text().match(/\d{4}/)[0];
-    const key = `neurips${year}${hash.slice(0, 8)}`;
-    const id = `NeurIPS-${year}_${hash.slice(0, 8)}`;
+    const key = `neurips${year}${hash.slice(0, 8)} `;
+    const id = `NeurIPS - ${year}_${hash.slice(0, 8)} `;
 
     const bibtext = `
 @inproceedings{NEURIPS${year}_${hash.slice(0, 8)}
-    author = {${author}},
-    booktitle = {Advances in Neural Information Processing Systems},
-    editor = {H. Larochelle and M. Ranzato and R. Hadsell and M. F. Balcan and H. Lin},
-    publisher = {Curran Associates, Inc.},
-    title = {${title}},
-    url = {${url}},
-    year = {${year}}
+    author = { ${author}
+},
+booktitle = { Advances in Neural Information Processing Systems },
+    editor = { H.Larochelle and M.Ranzato and R.Hadsell and M.F.Balcan and H.Lin },
+    publisher = { Curran Associates, Inc.},
+    title = { ${title}},
+url = { ${url}},
+year = { ${year}}
 }`
 
     return { key, title, author, year, id, pdfLink, bibtext }
+}
+
+const parseCvfHTML = (url, htmlText) => {
+    const dom = new DOMParser().parseFromString(htmlText.replaceAll("\n", ""), "text/html");
+    const doc = $(dom);
+
+    const title = $.trim(doc.find("#papertitle").text());
+    let author = doc.find("#authors i").first().text()
+    author = author.split(",").map(a => $.trim(a)).join(" and ");
+    const { year, id, conf } = parseCVFUrl(url);
+    let pdfLink = "";
+    if (url.endsWith(".pdf")) {
+        pdfLink = url;
+    } else {
+        doc.find("a").each((k, v) => {
+            if ($(v).text() === "pdf") {
+                let href = $(v).attr("href");
+                if (href.startsWith("../")) {
+                    href = href.replaceAll("../", "");
+                }
+                if (!href.startsWith('/')) {
+                    href = "/" + href;
+                }
+                pdfLink = "http://openaccess.thecvf.com" + href
+            }
+        })
+    }
+    const bibtext = doc.find(".bibref").first().text().replaceAll(",  ", ",\n  ");
+    const key = bibtext.split("{")[1].split(",")[0]
+
+    return { key, title, author, year, id, pdfLink, bibtext, conf }
+
 }
 
 const fetchArxivBibtex = async id => {
@@ -122,7 +156,7 @@ const fetchCvfHTML = async url => {
         return response.ok ? response.text() : ""
     })
 
-    if (!text) {
+    if (!text && paperPage.includes("thecvf.com/content_")) {
         const { conf, year } = parseCVFUrl(url);
         paperPage = paperPage.replace(`/content_${conf}_${year}/`, `/content_${conf.toLowerCase()}_${year}/`);
         text = await fetch(paperPage).then((response) => {
