@@ -415,8 +415,12 @@ const migrateData = async (papers, dataVersion) => {
     }
 }
 
+const logData = key => {
+    chrome.storage.local.get(key, (data) => { console.log(data[key]) })
+}
+
 const backupData = (papers) => {
-    chrome.local.storage.get("papersBackup", ({ papersBackup }) => {
+    chrome.storage.local.get("papersBackup", ({ papersBackup }) => {
 
         if (typeof papersBackup === "undefined") {
             papersBackup = {};
@@ -431,7 +435,7 @@ const backupData = (papers) => {
             delete papersBackup[key];
         }
 
-        papersBackup[papersBackup["__dataVersion"]] = papers;
+        papersBackup[papers["__dataVersion"]] = papers;
 
         chrome.storage.local.set({ papersBackup }, () => {
             console.log("Backed up data with version: " + papers["__dataVersion"])
