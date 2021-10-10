@@ -3,18 +3,20 @@
 */
 
 const getMemoryItemHTML = (item) => {
-    const addDate = (new Date(item.addDate)).toLocaleString().replace(",", "")
-    const lastOpenDate = (new Date(item.lastOpenDate)).toLocaleString().replace(",", "")
+    const addDate = new Date(item.addDate).toLocaleString().replace(",", "");
+    const lastOpenDate = new Date(item.lastOpenDate)
+        .toLocaleString()
+        .replace(",", "");
     const displayId = item.id.split("_")[0].split(".")[0];
     const note = item.note || "";
     const id = item.id;
     const tags = new Set(item.tags);
-    const tagOptions = getTagsHTMLOptions(id)
+    const tagOptions = getTagsHTMLOptions(id);
     let codeDiv = `
     <small class="memory-item-faded">
     <span class="memory-item-code-link">${item.codeLink || ""}</span>
     </small>
-    `
+    `;
     let noteDiv = `<div class="memory-note-div memory-item-faded"></div>`;
     if (item.note) {
         noteDiv = `
@@ -22,7 +24,7 @@ const getMemoryItemHTML = (item) => {
             <span class="note-content-header">Note:</span>
             <span class="note-content">${note}</span>
         </div>
-        `
+        `;
     }
 
     return `
@@ -33,7 +35,9 @@ const getMemoryItemHTML = (item) => {
         </h4>
         <div class="memory-item-tags-div">
             <small class="tag-list">
-                ${Array.from(tags).map(t => `<span class="memory-tag">${t}</span>`).join("")}
+                ${Array.from(tags)
+                    .map((t) => `<span class="memory-tag">${t}</span>`)
+                    .join("")}
             </small>
             <div class="edit-tags">
                 <div style="display:flex; align-items: center"; justify-content: space-between">
@@ -65,7 +69,9 @@ const getMemoryItemHTML = (item) => {
                         
             </div>
 
-            <div class="memory-item-link memory-item-svg-div"  title="Open ${item.pdfLink}" >
+            <div class="memory-item-link memory-item-svg-div"  title="Open ${
+                item.pdfLink
+            }" >
                 <svg >
                    <use xlink:href="../../icons/tabler-sprite-nostroke.svg#tabler-external-link" />
                 </svg>
@@ -102,7 +108,9 @@ const getMemoryItemHTML = (item) => {
                 <form class="form-note">
                     <div class="textarea-wrapper">
                         <span class="label">Code:</span>
-                        <input type="text" class="form-code-input" value="${item.codeLink || ''}">
+                        <input type="text" class="form-code-input" value="${
+                            item.codeLink || ""
+                        }">
                     </div>
                     <div class="textarea-wrapper">
                         <span class="label">Note:</span>
@@ -118,27 +126,29 @@ const getMemoryItemHTML = (item) => {
 
         <div class="delete-memory-item"> - </div>
     </div>
-    `
-}
+    `;
+};
 
 const findEl = (eid, className) => {
-    return $(`#memory-item-container--${eid}`).find(`.${className}`).first()
-}
+    return $(`#memory-item-container--${eid}`).find(`.${className}`).first();
+};
 
-
-const getTagsHTMLOptions = id => {
+const getTagsHTMLOptions = (id) => {
     const item = state.papers[id];
     const tags = new Set(item.tags);
-    return Array.from(state.paperTags).sort().map((t, i) => {
-        let h = `<option value="${t}"`;
-        if (tags.has(t)) {
-            h += ' selected="selected" '
-        }
-        return h + `>${t}</option>`
-    }).join("");
-}
+    return Array.from(state.paperTags)
+        .sort()
+        .map((t, i) => {
+            let h = `<option value="${t}"`;
+            if (tags.has(t)) {
+                h += ' selected="selected" ';
+            }
+            return h + `>${t}</option>`;
+        })
+        .join("");
+};
 
-const confirmDelete = id => {
+const confirmDelete = (id) => {
     const title = state.papers[id].title;
     $("body").append(`
     <div style="width: 100%; height: 100%; background-color:  #e0e0e0; position: absolute; top: 0; left: 0; z-index: 100; display:  flex; justify-content:  center; align-items: center; flex-direction: column" id="confirm-modal">
@@ -156,74 +166,80 @@ const confirmDelete = id => {
     </div>
     
     </div>
-    `)
+    `);
     $("#cancel-modal-button").click(() => {
-        $("#confirm-modal").remove()
-    })
+        $("#confirm-modal").remove();
+    });
     $("#confirm-modal-button").click(() => {
-        delete state.papers[id]
-        chrome.storage.local.set({ "papers": state.papers }, () => {
+        delete state.papers[id];
+        chrome.storage.local.set({ papers: state.papers }, () => {
             state.papersList = Object.values(state.papers);
-            displayMemoryTable()
-            $("#confirm-modal").remove()
-            console.log("Successfully deleted '" + title + "' from ArxivMemory")
-        })
-    })
-
-}
+            displayMemoryTable();
+            $("#confirm-modal").remove();
+            console.log(
+                "Successfully deleted '" + title + "' from ArxivMemory"
+            );
+        });
+    });
+};
 
 const copyAndConfirmMemoryItem = (id, textToCopy, feedbackText, isPopup) => {
-    copyTextToClipboard(textToCopy)
+    copyTextToClipboard(textToCopy);
     const eid = id.replace(".", "\\.");
-    const element = isPopup ? $(`#popup-feedback-copied`) : findEl(eid, "memory-item-feedback");
-    element.text(feedbackText)
-    element.fadeIn()
-    setTimeout(
-        () => {
-            element.fadeOut()
-        },
-        1000
-    )
-}
+    const element = isPopup
+        ? $(`#popup-feedback-copied`)
+        : findEl(eid, "memory-item-feedback");
+    element.text(feedbackText);
+    element.fadeIn();
+    setTimeout(() => {
+        element.fadeOut();
+    }, 1000);
+};
 
 const focusExistingOrCreateNewCodeTab = (codeLink) => {
     const { origin } = new URL(codeLink);
-    chrome.tabs.query({ url: `${origin}/*` }, tabs => {
+    chrome.tabs.query({ url: `${origin}/*` }, (tabs) => {
         for (const tab of tabs) {
             if (tab.url.includes(codeLink)) {
-                const tabUpdateProperties = { 'active': true };
-                const windowUpdateProperties = { 'focused': true };
+                const tabUpdateProperties = { active: true };
+                const windowUpdateProperties = { focused: true };
                 chrome.windows.getCurrent((w) => {
                     if (w.id !== tab.windowId) {
-                        chrome.windows.update(tab.windowId, windowUpdateProperties, () => {
-                            chrome.tabs.update(tab.id, tabUpdateProperties);
-                        });
+                        chrome.windows.update(
+                            tab.windowId,
+                            windowUpdateProperties,
+                            () => {
+                                chrome.tabs.update(tab.id, tabUpdateProperties);
+                            }
+                        );
                     } else {
                         chrome.tabs.update(tab.id, tabUpdateProperties);
                     }
-                })
-                return
+                });
+                return;
             }
         }
         chrome.tabs.create({ url: codeLink });
     });
-
-}
+};
 
 const focusExistingOrCreateNewPaperTab = (paper) => {
     const hostname = parseUrl(paper.pdfLink).hostname;
-    let match = paper.pdfLink.split("/").reverse()[0].replace("-Paper.pdf", "").replace(".pdf", "");
+    let match = paper.pdfLink
+        .split("/")
+        .reverse()[0]
+        .replace("-Paper.pdf", "")
+        .replace(".pdf", "");
     if (match.match(/\d{5}v\d+$/) && paper.source === "arxiv") {
         match = match.split("v")[0];
     }
 
     chrome.tabs.query({ url: `*://${hostname}/*` }, (tabs) => {
-
-        console.log({ hostname, match, tabs })
+        console.log({ hostname, match, tabs });
 
         let validTabsIds = [];
         let pdfTabsIds = [];
-        const urls = tabs.map(t => t.url);
+        const urls = tabs.map((t) => t.url);
         let idx = 0;
         for (const u of urls) {
             if (u.indexOf(match) >= 0) {
@@ -232,7 +248,7 @@ const focusExistingOrCreateNewPaperTab = (paper) => {
                     pdfTabsIds.push(idx);
                 }
             }
-            idx += 1
+            idx += 1;
         }
         if (validTabsIds.length > 0) {
             let tab;
@@ -241,51 +257,59 @@ const focusExistingOrCreateNewPaperTab = (paper) => {
             } else {
                 tab = tabs[validTabsIds[0]];
             }
-            const tabUpdateProperties = { 'active': true };
-            const windowUpdateProperties = { 'focused': true };
+            const tabUpdateProperties = { active: true };
+            const windowUpdateProperties = { focused: true };
             chrome.windows.getCurrent((w) => {
                 if (w.id !== tab.windowId) {
-                    chrome.windows.update(tab.windowId, windowUpdateProperties, () => {
-                        chrome.tabs.update(tab.id, tabUpdateProperties);
-                    });
+                    chrome.windows.update(
+                        tab.windowId,
+                        windowUpdateProperties,
+                        () => {
+                            chrome.tabs.update(tab.id, tabUpdateProperties);
+                        }
+                    );
                 } else {
                     chrome.tabs.update(tab.id, tabUpdateProperties);
                 }
-            })
+            });
         } else {
             chrome.tabs.create({ url: paper.pdfLink });
         }
 
         state.papers[paper.id].count += 1;
-        chrome.storage.local.set({ "papers": state.papers });
-
+        chrome.storage.local.set({ papers: state.papers });
     });
-}
-
+};
 
 const saveNote = (id, note) => {
     note = $.trim(note);
     state.papers[id].note = note;
-    const eid = id.replace(".", "\\.")
-    chrome.storage.local.set({ "papers": state.papers }, () => {
+    const eid = id.replace(".", "\\.");
+    chrome.storage.local.set({ papers: state.papers }, () => {
         console.log("Updated the note for " + state.papers[id].title);
 
-        findEl(eid, "memory-note-div").html(note ? `
+        findEl(eid, "memory-note-div").html(
+            note
+                ? `
         <div class="memory-note-div memory-item-faded">
             <span class="note-content-header">Note:</span>
             <span class="note-content">${note}</span>
         </div>
-        ` : `<div class="memory-note-div memory-item-faded"></div>`);
+        `
+                : `<div class="memory-note-div memory-item-faded"></div>`
+        );
         $(`#popup-form-note-textarea--${eid}`).val(note);
         findEl(eid, "form-note-textarea").val(note);
-    })
-}
+    });
+};
 const saveCodeLink = (id, codeLink) => {
     codeLink = $.trim(codeLink);
     state.papers[id].codeLink = codeLink;
-    const eid = id.replace(".", "\\.")
-    chrome.storage.local.set({ "papers": state.papers }, () => {
-        console.log("Updated the code for " + state.papers[id].title + " to " + codeLink);
+    const eid = id.replace(".", "\\.");
+    chrome.storage.local.set({ papers: state.papers }, () => {
+        console.log(
+            "Updated the code for " + state.papers[id].title + " to " + codeLink
+        );
         findEl(eid, "memory-item-code-link").html(codeLink);
         $(`#popup-code-link`).text(codeLink); // TODO
         findEl(eid, "form-code-input").val(codeLink);
@@ -294,24 +318,23 @@ const saveCodeLink = (id, codeLink) => {
         } else {
             $("#popup-code-link").hide();
         }
-    })
-}
+    });
+};
 
-const setMemorySortArrow = direction => {
+const setMemorySortArrow = (direction) => {
     let arrow;
     if (direction === "up") {
         arrow = `<svg class="memory-sort-arrow-svg" id="memory-sort-arrow-up">
                     <use xlink:href="../../icons/tabler-sprite-nostroke.svg#tabler-arrow-narrow-up" />
-                </svg>`
+                </svg>`;
     } else {
         arrow = `<svg class="memory-sort-arrow-svg" id="memory-sort-arrow-down">
                     <use xlink:href="../../icons/tabler-sprite-nostroke.svg#tabler-arrow-narrow-down" />
-                </svg>`
+                </svg>`;
     }
 
-    $("#memory-sort-arrow").html(arrow)
-}
-
+    $("#memory-sort-arrow").html(arrow);
+};
 
 const orderPapers = (paper1, paper2) => {
     let val1 = paper1[state.sortKey];
@@ -322,95 +345,94 @@ const orderPapers = (paper1, paper2) => {
         val2 = val2.toLowerCase();
     }
     if (["addDate", "count", "lastOpenDate"].indexOf(state.sortKey) >= 0) {
-        return val1 > val2 ? -1 : 1
+        return val1 > val2 ? -1 : 1;
     }
-    return val1 > val2 ? 1 : -1
-}
+    return val1 > val2 ? 1 : -1;
+};
 
 const sortMemory = () => {
-    state.sortedPapers = Object.values(cleanPapers(state.papers))
-    state.sortedPapers.sort(orderPapers)
+    state.sortedPapers = Object.values(cleanPapers(state.papers));
+    state.sortedPapers.sort(orderPapers);
     state.papersList.sort(orderPapers);
-}
+};
 
 const reverseMemory = () => {
-    state.sortedPapers.reverse()
-    state.papersList.reverse()
-}
+    state.sortedPapers.reverse();
+    state.papersList.reverse();
+};
 
 const filterMemoryByString = (letters) => {
-    const words = letters.split(" ")
+    const words = letters.split(" ");
     let papersList = [];
     for (const paper of state.sortedPapers) {
         const title = paper.title.toLowerCase();
         const author = paper.author.toLowerCase();
         const note = paper.note.toLowerCase();
         if (
-            words.every(w => title.includes(w) || author.includes(w) || note.includes(w))
+            words.every(
+                (w) =>
+                    title.includes(w) || author.includes(w) || note.includes(w)
+            )
         ) {
-            papersList.push(paper)
+            papersList.push(paper);
         }
     }
     state.papersList = papersList;
-}
+};
 
 const filterMemoryByTags = (letters) => {
-    const tags = letters.replace("t:", "").toLowerCase().split(" ")
+    const tags = letters.replace("t:", "").toLowerCase().split(" ");
     let papersList = [];
     for (const paper of state.sortedPapers) {
-        const paperTags = paper.tags.map(t => t.toLowerCase());
-        if (
-            tags.every(t => paperTags.some(pt => pt.indexOf(t) >= 0))
-        ) {
-            papersList.push(paper)
+        const paperTags = paper.tags.map((t) => t.toLowerCase());
+        if (tags.every((t) => paperTags.some((pt) => pt.indexOf(t) >= 0))) {
+            papersList.push(paper);
         }
     }
     state.papersList = papersList;
-}
+};
 
 const filterMemoryByCode = (letters) => {
-    const words = letters.replace("c:", "").toLowerCase().split(" ")
+    const words = letters.replace("c:", "").toLowerCase().split(" ");
     let papersList = [];
     for (const paper of state.sortedPapers) {
         let paperCode = paper.codeLink || "";
         paperCode = paperCode.toLowerCase();
-        if (
-            words.every(w => paperCode.includes(w))
-        ) {
-            papersList.push(paper)
+        if (words.every((w) => paperCode.includes(w))) {
+            papersList.push(paper);
         }
     }
     state.papersList = papersList;
-}
+};
 
-const updatePaperTagsHTML = id => {
+const updatePaperTagsHTML = (id) => {
     const eid = id.replace(".", "\\.");
     findEl(eid, "tag-list").html(
-        state.papers[id].tags.map(t => `<span class="memory-tag">${t}</span>`).join("")
-    )
-}
+        state.papers[id].tags
+            .map((t) => `<span class="memory-tag">${t}</span>`)
+            .join("")
+    );
+};
 
-const updateTagOptions = id => {
+const updateTagOptions = (id) => {
     const eid = id.replace(".", "\\.");
     const tagOptions = getTagsHTMLOptions(id);
-    findEl(eid, "memory-item-tags").html(tagOptions)
+    findEl(eid, "memory-item-tags").html(tagOptions);
     $(`#popup-item-tags--${eid}`).html(tagOptions);
-}
-
+};
 
 const updatePaperTags = (id, elementId) => {
-
     let tags = [];
     let ref;
     if (elementId.startsWith("#")) {
         ref = $(elementId);
     } else {
         const eid = id.replace(".", "\\.");
-        ref = findEl(eid, elementId)
+        ref = findEl(eid, elementId);
     }
     ref.find(":selected").each((k, el) => {
         const t = $.trim($(el).val());
-        if (t !== "") tags.push(t)
+        if (t !== "") tags.push(t);
     });
 
     tags.sort();
@@ -418,98 +440,99 @@ const updatePaperTags = (id, elementId) => {
     if (state.papers[id].tags !== tags) updated = true;
     state.papers[id].tags = tags;
 
-    console.log("Update tags to: " + tags.join(", "))
+    console.log("Update tags to: " + tags.join(", "));
 
     if (updated) {
-        chrome.storage.local.set({ "papers": state.papers }, () => {
-            updateTagOptions(id)
-            updatePaperTagsHTML(id)
-            makeTags()
+        chrome.storage.local.set({ papers: state.papers }, () => {
+            updateTagOptions(id);
+            updatePaperTagsHTML(id);
+            makeTags();
         });
     }
-}
+};
 
 const makeTags = () => {
     let tags = new Set();
     for (const p of state.sortedPapers) {
         for (const t of p.tags) {
-            tags.add(t)
+            tags.add(t);
         }
     }
     state.paperTags = Array.from(tags);
     state.paperTags.sort();
-}
+};
 
 const displayMemoryTable = () => {
-
     const start = Date.now();
 
     var memoryTable = document.getElementById("memory-table");
     memoryTable.innerHTML = "";
     for (const paper of state.papersList) {
-        memoryTable.insertAdjacentHTML('beforeend', getMemoryItemHTML(paper));
+        memoryTable.insertAdjacentHTML("beforeend", getMemoryItemHTML(paper));
     }
 
     const end = Date.now();
 
-    console.log("Rendering duration (s): " + (end - start) / 1000)
+    console.log("Rendering duration (s): " + (end - start) / 1000);
 
     $(".back-to-focus").click((e) => {
         const { id, eid } = eventId(e);
         $(`#memory-item-container--${eid}`).focus();
-    })
+    });
     $(".delete-memory-item").click((e) => {
         const { id, eid } = eventId(e);
-        confirmDelete(id)
-    })
+        confirmDelete(id);
+    });
     $(".memory-item-link").click((e) => {
         const { id, eid } = eventId(e);
-        focusExistingOrCreateNewPaperTab(state.papers[id])
-    })
+        focusExistingOrCreateNewPaperTab(state.papers[id]);
+    });
     $(".memory-item-code-link").click((e) => {
         const { id, eid } = eventId(e);
         const url = state.papers[id].codeLink;
         focusExistingOrCreateNewCodeTab(url);
-    })
+    });
     $(".memory-item-md").click((e) => {
         const { id, eid } = eventId(e);
         const md = state.papers[id].md;
-        copyAndConfirmMemoryItem(id, md, "Markdown link copied!")
-    })
+        copyAndConfirmMemoryItem(id, md, "Markdown link copied!");
+    });
     $(".memory-item-bibtext").click((e) => {
         const { id, eid } = eventId(e);
         const bibtext = state.papers[id].bibtext;
-        copyAndConfirmMemoryItem(id, bibtext, "Bibtex copied!")
-    })
+        copyAndConfirmMemoryItem(id, bibtext, "Bibtex copied!");
+    });
     $(".memory-item-copy-link").click((e) => {
         const { id, eid } = eventId(e);
         const pdfLink = state.papers[id].pdfLink;
-        copyAndConfirmMemoryItem(id, pdfLink, "Pdf link copied!")
-    })
+        copyAndConfirmMemoryItem(id, pdfLink, "Pdf link copied!");
+    });
     $(".form-note-textarea").focus(function () {
         var that = this;
-        setTimeout(function () { that.selectionStart = that.selectionEnd = 10000; }, 0);
+        setTimeout(function () {
+            that.selectionStart = that.selectionEnd = 10000;
+        }, 0);
     });
     $(".form-note").submit((e) => {
         e.preventDefault();
 
         const { id, eid } = eventId(e);
-        const note = findEl(eid, "form-note-textarea").val()
-        const codeLink = findEl(eid, "form-code-input").val()
+        const note = findEl(eid, "form-note-textarea").val();
+        const codeLink = findEl(eid, "form-code-input").val();
 
         saveNote(id, note);
         saveCodeLink(id, codeLink);
         updatePaperTags(id, "memory-item-tags");
 
-        findEl(eid, "memory-item-edit").click()
+        findEl(eid, "memory-item-edit").click();
     });
     $(".cancel-note-form").click((e) => {
         e.preventDefault();
         const { id, eid } = eventId(e);
-        findEl(eid, "form-note-textarea").val(state.papers[id].note)
+        findEl(eid, "form-note-textarea").val(state.papers[id].note);
         findEl(eid, "memory-item-tags").html(getTagsHTMLOptions(id));
-        findEl(eid, "memory-item-edit").click()
-    })
+        findEl(eid, "memory-item-edit").click();
+    });
     $(".memory-item-edit").click((e) => {
         e.preventDefault();
         const { id, eid } = eventId(e);
@@ -521,9 +544,7 @@ const displayMemoryTable = () => {
         const tagSelect = findEl(eid, "memory-item-tags");
         const actions = findEl(eid, "memory-item-actions");
 
-
-        if (edit.hasClass('expand-open')) {
-
+        if (edit.hasClass("expand-open")) {
             edit.removeClass("expand-open");
 
             codeAndNote.slideDown(250);
@@ -531,10 +552,8 @@ const displayMemoryTable = () => {
             actions.slideDown(250);
 
             editPaper.slideUp(250);
-            tagEdit.slideUp(250)
-
+            tagEdit.slideUp(250);
         } else {
-
             edit.addClass("expand-open");
 
             tagSelect.select2({
@@ -543,8 +562,8 @@ const displayMemoryTable = () => {
                 allowClear: true,
                 tags: true,
                 width: "75%",
-                tokenSeparators: [',', ' '],
-                dropdownParent: $(`#memory-item-container--${eid}`)
+                tokenSeparators: [",", " "],
+                dropdownParent: $(`#memory-item-container--${eid}`),
             });
 
             codeAndNote.slideUp(250);
@@ -552,15 +571,14 @@ const displayMemoryTable = () => {
             actions.slideUp(250);
 
             editPaper.slideDown(250);
-            tagEdit.slideDown(250)
+            tagEdit.slideDown(250);
             // findEl(eid, "memory-item-tags").focus()
         }
-    })
+    });
     const end2 = Date.now();
 
-    console.log("Listeners duration (s): " + (end2 - end) / 1000)
-
-}
+    console.log("Listeners duration (s): " + (end2 - end) / 1000);
+};
 
 const openMemory = () => {
     var openTime = Date.now();
@@ -568,10 +586,12 @@ const openMemory = () => {
 
     state.memoryIsOpen = true;
     chrome.storage.local.get("papers", async function ({ papers }) {
-
         await initState(papers);
 
-        $("#memory-search").attr("placeholder", `Search ${state.papersList.length} entries ...`);
+        $("#memory-search").attr(
+            "placeholder",
+            `Search ${state.papersList.length} entries ...`
+        );
 
         if (state.papersList.length < 20) {
             delayTime = 0;
@@ -581,24 +601,27 @@ const openMemory = () => {
             delayTime = 350;
         }
 
-        $("#memory-search").keypress(delay((e) => {
-            const query = $.trim($(e.target).val());
-            if (query.startsWith("t:")) {
-                filterMemoryByTags(query)
-            } else if (query.startsWith("c:")) {
-                filterMemoryByCode(query)
-            }
-            else {
-                filterMemoryByString(query);
-            }
-            displayMemoryTable();
-        }, delayTime)).keyup((e) => {
-            if (e.keyCode == 8) {
-                $('#memory-search').trigger('keypress');
-            }
-        })
+        $("#memory-search")
+            .keypress(
+                delay((e) => {
+                    const query = $.trim($(e.target).val());
+                    if (query.startsWith("t:")) {
+                        filterMemoryByTags(query);
+                    } else if (query.startsWith("c:")) {
+                        filterMemoryByCode(query);
+                    } else {
+                        filterMemoryByString(query);
+                    }
+                    displayMemoryTable();
+                }, delayTime)
+            )
+            .keyup((e) => {
+                if (e.keyCode == 8) {
+                    $("#memory-search").trigger("keypress");
+                }
+            });
 
-        displayMemoryTable()
+        displayMemoryTable();
         setTimeout(() => {
             $("#memory-container").slideDown({
                 duration: 200,
@@ -606,43 +629,48 @@ const openMemory = () => {
                 complete: () => {
                     setTimeout(() => {
                         $("#memory-search").focus();
-                        console.log("Time to display (s): " + (Date.now() - openTime) / 1000)
+                        console.log(
+                            "Time to display (s): " +
+                                (Date.now() - openTime) / 1000
+                        );
                     }, 50);
-                }
+                },
             });
         }, 100);
-
-    })
+    });
 
     $("#tabler-menu").fadeOut();
     $("#memory-select").val("lastOpenDate");
     setMemorySortArrow("down");
 
     $("#memory-switch-text-on").fadeOut(() => {
-        $("#memory-switch-text-off").fadeIn()
+        $("#memory-switch-text-off").fadeIn();
     });
     $("#memory-select").change((e) => {
         const sort = $(e.target).val();
         state.sortKey = sort;
         sortMemory();
         displayMemoryTable();
-        setMemorySortArrow("down")
-    })
+        setMemorySortArrow("down");
+    });
     $("#memory-sort-arrow").click((e) => {
-        if ($("#memory-sort-arrow svg").first()[0].id === "memory-sort-arrow-down") {
-            setMemorySortArrow("up")
+        if (
+            $("#memory-sort-arrow svg").first()[0].id ===
+            "memory-sort-arrow-down"
+        ) {
+            setMemorySortArrow("up");
         } else {
-            setMemorySortArrow("down")
+            setMemorySortArrow("down");
         }
-        reverseMemory()
-        displayMemoryTable()
-    })
-}
+        reverseMemory();
+        displayMemoryTable();
+    });
+};
 
 const closeMemory = () => {
     $("#memory-container").slideUp({
         duration: 300,
-        easing: "easeOutQuint"
+        easing: "easeOutQuint",
     });
     $("#memory-switch-text-off").fadeOut(() => {
         $("#memory-switch-text-on").fadeIn();
@@ -650,4 +678,4 @@ const closeMemory = () => {
     $("#tabler-menu").fadeIn();
     $("#memory-search").val("");
     state.memoryIsOpen = false;
-}
+};
