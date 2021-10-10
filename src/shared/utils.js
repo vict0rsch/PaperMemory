@@ -347,7 +347,7 @@ const migrateData = async (papers, dataVersion) => {
             }
         }
 
-        await backupData(papers);
+        backupData(papers);
 
         delete papers["__dataVersion"]
 
