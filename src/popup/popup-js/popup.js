@@ -173,8 +173,6 @@ const main = tab => {
             $("#isArxiv").show();
             const id = parseIdFromUrl(tab.url);
 
-            console.log({ id })
-
             chrome.storage.local.get("papers", async ({ papers }) => {
 
                 await initState(papers);

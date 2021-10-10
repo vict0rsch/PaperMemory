@@ -284,7 +284,6 @@ const arxiv = checks => {
     // -----  Download Button  -----
     // -----------------------------
     if (checkDownload && isArxivAbs) {
-        console.log("YESS")
         const button = `
             <div class="arxivTools-container">
                 <div id="arxiv-button">
