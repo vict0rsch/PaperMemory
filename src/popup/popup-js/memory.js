@@ -2,6 +2,11 @@
 
 */
 
+/**
+ * Return a formatted HTML string from a paper
+ * @param {object} item A paper object
+ * @returns HTML string
+ */
 const getMemoryItemHTML = (item) => {
     const addDate = new Date(item.addDate).toLocaleString().replace(",", "");
     const lastOpenDate = new Date(item.lastOpenDate)
@@ -129,6 +134,12 @@ const getMemoryItemHTML = (item) => {
     `;
 };
 
+/**
+ * Find a JQuery element with class className within #memory-item-container--${eid}
+ * @param {string} eid The escaped id for the paper (id.replaceAll(".", "\\."))
+ * @param {string} className The class of the element to find within the container with id^
+ * @returns Jquery element
+ */
 const findEl = (eid, className) => {
     return $(`#memory-item-container--${eid}`).find(`.${className}`).first();
 };
@@ -148,6 +159,10 @@ const getTagsHTMLOptions = (id) => {
         .join("");
 };
 
+/**
+ * Delete a paper ; display a modal first to get uer confirmation
+ * @param {string} id Id of the paper to delete
+ */
 const confirmDelete = (id) => {
     const title = state.papers[id].title;
     $("body").append(`
@@ -183,6 +198,13 @@ const confirmDelete = (id) => {
     });
 };
 
+/**
+ * Copy a text to the clipboard and display a feedback text
+ * @param {string} id Id of the paper to display the feedback in the memory item
+ * @param {string} textToCopy Text to copy to the clipboard
+ * @param {string} feedbackText Text to display as feedback
+ * @param {boolean} isPopup If the action took place in the main popup or in the memory
+ */
 const copyAndConfirmMemoryItem = (id, textToCopy, feedbackText, isPopup) => {
     copyTextToClipboard(textToCopy);
     const eid = id.replace(".", "\\.");
@@ -196,6 +218,12 @@ const copyAndConfirmMemoryItem = (id, textToCopy, feedbackText, isPopup) => {
     }, 1000);
 };
 
+/**
+ * Looks for an open tab with the code of the paper. Matches are not exact:
+ * a tab url needs only to include the codeLink to be valid. If no existing
+ * tab matches the codeLink, a new tab is created
+ * @param {string} codeLink URL of the code repository to open
+ */
 const focusExistingOrCreateNewCodeTab = (codeLink) => {
     const { origin } = new URL(codeLink);
     chrome.tabs.query({ url: `${origin}/*` }, (tabs) => {
@@ -223,6 +251,12 @@ const focusExistingOrCreateNewCodeTab = (codeLink) => {
     });
 };
 
+/**
+ * Looks for an open tab to the paper: either its pdf or html page.
+ * If both a pdf and an html page exist, focus the pdf.
+ * If none exist, create a new tab.
+ * @param {object} paper The paper whose pdf should be opened
+ */
 const focusExistingOrCreateNewPaperTab = (paper) => {
     const hostname = parseUrl(paper.pdfLink).hostname;
     let match = paper.pdfLink
