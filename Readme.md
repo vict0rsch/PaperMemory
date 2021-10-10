@@ -102,7 +102,7 @@ ArxivTools can actually store data from more venues than Arxiv:
 * [ ] More robust file patterns and document custom page naming
 * [ ] Update visuals
 * [ ] Document `:` being replaced by `_` when downloading a pdf ([OS requirements...](https://stackoverflow.com/questions/30960190/problematic-characters-for-filename-in-chrome-downloads-download))
-* [ ] add NeurIPS pdf titles & popup metadata (like for arxiv)
+* [ ] Document backup and how to get it
 
 ## Help
 
