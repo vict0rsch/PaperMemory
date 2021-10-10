@@ -347,6 +347,8 @@ const migrateData = async (papers, dataVersion) => {
             }
         }
 
+        await backupData(papers);
+
         delete papers["__dataVersion"]
 
         for (const id in papers) {
@@ -411,6 +413,31 @@ const migrateData = async (papers, dataVersion) => {
         console.log(error)
         return papers
     }
+}
+
+const backupData = (papers) => {
+    chrome.local.storage.get("papersBackup", ({ papersBackup }) => {
+
+        if (typeof papersBackup === "undefined") {
+            papersBackup = {};
+        }
+
+        const oldestKeys = Object.keys(papersBackup)
+            .map(v => parseInt(v))
+            .sort((a, b) => a < b ? 1 : -1)
+            .slice(4);
+
+        for (const key of oldestKeys) {
+            delete papersBackup[key];
+        }
+
+        papersBackup[papersBackup["__dataVersion"]] = papers;
+
+        chrome.storage.local.set({ papersBackup }, () => {
+            console.log("Backed up data with version: " + papers["__dataVersion"])
+        })
+
+    });
 }
 
 
