@@ -415,11 +415,27 @@ const migrateData = async (papers, dataVersion) => {
     }
 }
 
-const logData = key => {
+const logStorage = key => {
     chrome.storage.local.get(key, (data) => { console.log(data[key]) })
 }
 
-const backupData = (papers) => {
+const getStorage = async key => {
+    return new Promise((resolve, reject) => {
+        chrome.storage.local.get(key, function (data) {
+            resolve(data[key]);
+        })
+    })
+}
+
+const setStorage = async (key, value) => {
+    return new Promise((resolve, reject) => {
+        chrome.storage.local.set({ [key]: value }, function () {
+            resolve(true);
+        })
+    })
+}
+
+const backupData = async (papers) => {
     chrome.storage.local.get("papersBackup", ({ papersBackup }) => {
 
         if (typeof papersBackup === "undefined") {
