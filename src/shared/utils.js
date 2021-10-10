@@ -351,7 +351,7 @@ const migrateData = async (papers, dataVersion) => {
 
         for (const id in papers) {
 
-            if (currentVersion < 5) {
+            if (currentVersion < 5) { // pre-0.2.8 and manifestDataVersion()
                 if (!papers[id].hasOwnProperty("bibtext")) {
                     papers[id].bibtext = "";
                     console.log("Migrating bibtext for " + id);
@@ -370,7 +370,7 @@ const migrateData = async (papers, dataVersion) => {
                     }
                 }
             }
-            if (currentVersion < 6) {
+            if (currentVersion < 208) { // 0.2.8
                 if (papers[id].source !== "arxiv" && papers[id].md.includes("https://arxiv.com/abs/")) {
                     papers[id].md = `[${papers[id].title}](${papers[id].pdfLink})`
                 }
@@ -379,12 +379,6 @@ const migrateData = async (papers, dataVersion) => {
                 }
                 if (id.match(/^\d/) && papers[id].source === "arxiv") {
                     const newId = `Arxiv-${id}`;
-                    let newPaper = { ...papers[id], id: newId };
-                    papers[newId] = newPaper;
-                    deleteIds.push(id)
-                }
-                if (id.includes("Arxiv-Arxiv-") && papers[id].source === "arxiv") {
-                    const newId = `Arxiv-${id.replaceAll("Arxiv-", "")}`;
                     let newPaper = { ...papers[id], id: newId };
                     papers[newId] = newPaper;
                     deleteIds.push(id)
@@ -443,11 +437,20 @@ const statePdfTitle = (title, id) => {
     return name.replaceAll("\n", " ").replace(/\s\s+/g, ' ')
 }
 
+const manifestDataVersion = () => {
+    // ArxivTools version a.b.c => data version a * 10^4 + b * 10^2 + c
+    // (with 10^2 and 10^1, 0.3.1 would be lower than 0.2.12)
+    const manifest = chrome.runtime.getManifest();
+    return manifest.version.split(".").map(
+        (v, k) => parseInt(v) * 10 ** (4 - 2 * k)
+    ).reduce((a, b) => a + b)
+}
+
 
 const initState = async (papers, noDisplay) => {
     console.log("Found papers:")
     console.log(papers)
-    state.dataVersion = 6
+    state.dataVersion = manifestDataVersion();
 
     papers = await migrateData(papers, state.dataVersion)
 
