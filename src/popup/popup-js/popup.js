@@ -73,6 +73,14 @@ const feedback = () => {
 
 const main = (tab) => {
     const url = parseUrl(tab.url);
+    const checks = [
+        "checkBib",
+        "checkMd",
+        "checkDownload",
+        "checkPdfTitle",
+        "checkVanity",
+    ];
+    let storageKeys = [...checks, "pdfTitleFn"];
 
     $("#helpGithubLink").on("click", () => {
         chrome.tabs.update({
@@ -85,8 +93,6 @@ const main = (tab) => {
             url: "https://marketplace.visualstudio.com/items?itemName=vict0rsch.coblock",
         });
     });
-
-    $(document).on("keydown", handlePopupKeydown);
 
     $("#tabler-menu").on("click", () => {
         state.menuIsOpen ? closeMenu() : openMenu();
@@ -107,14 +113,8 @@ const main = (tab) => {
         });
     });
 
-    const checks = [
-        "checkBib",
-        "checkMd",
-        "checkDownload",
-        "checkPdfTitle",
-        "checkVanity",
-    ];
-    let storageKeys = [...checks, "pdfTitleFn"];
+    $(document).on("keydown", handlePopupKeydown);
+
     chrome.storage.local.get(storageKeys, function (dataItems) {
         // Set checkboxes
 
@@ -177,9 +177,7 @@ const main = (tab) => {
             chrome.storage.local.set({ pdfTitleFn: code });
             state.pdfTitleFn = defaultPDFTitleFn;
             $("#customPdfTitleTextarea").val(code);
-            $("#customPdfFeedback").html(
-                `<span style="color: green">Saved!</span>`
-            );
+            $("#customPdfFeedback").html(`<span style="color: green">Saved!</span>`);
             setTimeout(() => {
                 $("#customPdfFeedback").html("");
             }, 1000);
@@ -215,96 +213,8 @@ const main = (tab) => {
                 // ----------------------------------
                 // -----  Customize Popup html  -----
                 // ----------------------------------
-                $("#popup-memory-edit").append(`
-                <div style="width: 100%; display: flex; justify-content: space-between; align-items: center;">
-                    <div style="width: 85%">
-                        <div style="width: 100%; display: flex; justify-content: space-between; align-items: center;">
-                            <span class="label">Tags:</span>
-                            <select id="popup-item-tags--${id}"class="memory-item-tags" multiple="multiple">
-                                ${tagOptions}
-                            </select>
-                        </div>
-                        <div 
-                            class="form-note" 
-                            id="popup-form-note--${id}" 
-                            style="width: 100%; display: flex; justify-content: space-between; align-items: center; margin-top: 8px; flex-direction: column;"
-                        >
-                            <div class="textarea-wrapper w-100 mr-0">
-                                <span class="label">Code:</span>
-                                <input type="text" class="form-code-input mt-0" value="${
-                                    paper.codeLink || ""
-                                }">
-                            </div>
-                            <div class="textarea-wrapper w-100 mr-0">
-                                <span class="label">Note:</span>
-                                <textarea 
-                                    rows="3" 
-                                    style="width:85%;" 
-                                    id="popup-form-note-textarea--${id}"
-                                >${note}</textarea>
-                            </div>
-                        </div>
-                    </div>
-                    <div>
-                        <button class="back-to-focus" id="popup-save-edits--${id}">Save</button>
-                    </div>
-                </div>
-                    
-                `);
-                $("#popup-copy-icons").html(`
-                    <div
-                        class="memory-item-svg-div" 
-                        id="popup-memory-item-link--${id}"
-                        title="Open Paper HTML Page"
-                        style="display: ${
-                            paper.source !== "arxiv" ||
-                            url.href.indexOf(".pdf") < 0
-                                ? "none"
-                                : "inherit"
-                        }"
-                    >
-                        <svg  style="height: 25px; width: 25px; pointer-events: none;" >
-                        <use xlink:href="../../icons/tabler-sprite-nostroke.svg#tabler-external-link" />
-                        </svg>
-                    </div>
-                    <div 
-                        class="memory-item-svg-div"
-                        id="popup-memory-item-copy-link--${id}"
-                        title="Copy pdf link" 
-                    >
-                        <svg style="height: 25px; width: 25px; pointer-events: none;" >
-                            <use xlink:href="../../icons/tabler-sprite-nostroke.svg#tabler-link" />
-                        </svg>
-                    </div>
-        
-                    <div 
-                        class="memory-item-svg-div"
-                        id="popup-memory-item-md--${id}"
-                        title="Copy Markdown-formatted link" 
-                    >
-                        <svg style="height: 25px; width: 25px; pointer-events: none;" >
-                            <use xlink:href="../../icons/tabler-sprite-nostroke.svg#tabler-clipboard-list" />
-                        </svg>
-                    </div>
-                    <div 
-                        class="memory-item-svg-div"
-                        id="popup-memory-item-bibtex--${id}"
-                        title="Copy Bibtex citation" 
-                    >
-                        <svg style="height: 25px; width: 25px; pointer-events: none;" >
-                            <use xlink:href="../../icons/tabler-sprite-nostroke.svg#tabler-archive" />
-                        </svg>
-                    </div>
-                    <div 
-                        class="memory-item-svg-div"
-                        id="popup-memory-item-download--${id}"
-                        title="Download pdf" 
-                    >
-                        <svg style="height: 25px; width: 25px; pointer-events: none;" >
-                            <use xlink:href="../../icons/tabler-sprite-nostroke.svg#tabler-download" />
-                        </svg>
-                    </div>
-                `);
+                $("#popup-memory-edit").append(getPopupItemHTML(paper));
+                $("#popup-copy-icons").html(getPopupIconsHTML(paper, url));
                 // ------------------------------------
                 // -----  Paper attributes edits  -----
                 // ------------------------------------
@@ -332,9 +242,7 @@ const main = (tab) => {
                     updatePaperTags(id, `#popup-item-tags--${eid}`);
                     saveNote(id, note);
                     saveCodeLink(id, codeLink);
-                    $("#popup-feedback-copied").text(
-                        "Saved tags, code & note!"
-                    );
+                    $("#popup-feedback-copied").text("Saved tags, code & note!");
                     $("#popup-feedback-copied").fadeIn();
                     setTimeout(() => {
                         $("#popup-feedback-copied").fadeOut();
@@ -345,10 +253,7 @@ const main = (tab) => {
                 // ------------------------
                 $(`#popup-memory-item-link--${eid}`).on("click", () => {
                     chrome.tabs.update({
-                        url: `https://arxiv.org/abs/${paper.id.replace(
-                            "Arxiv-",
-                            ""
-                        )}`,
+                        url: `https://arxiv.org/abs/${paper.id.replace("Arxiv-", "")}`,
                     });
                     window.close();
                 });
@@ -360,21 +265,11 @@ const main = (tab) => {
                 });
                 $(`#popup-memory-item-copy-link--${eid}`).on("click", () => {
                     const pdfLink = state.papers[id].pdfLink;
-                    copyAndConfirmMemoryItem(
-                        id,
-                        pdfLink,
-                        "Pdf link copied!",
-                        true
-                    );
+                    copyAndConfirmMemoryItem(id, pdfLink, "Pdf link copied!", true);
                 });
                 $(`#popup-memory-item-md--${eid}`).on("click", () => {
                     const md = state.papers[id].md;
-                    copyAndConfirmMemoryItem(
-                        id,
-                        md,
-                        "MarkDown link copied!",
-                        true
-                    );
+                    copyAndConfirmMemoryItem(id, md, "MarkDown link copied!", true);
                 });
                 $(`#popup-memory-item-bibtex--${eid}`).on("click", () => {
                     const bibtext = formatBibtext(state.papers[id].bibtext);

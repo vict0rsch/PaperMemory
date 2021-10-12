@@ -146,9 +146,7 @@ $.extend($.easing, {
             var s = p / 4;
         } else var s = (p / (2 * Math.PI)) * Math.asin(c / a);
         return (
-            a *
-                Math.pow(2, -10 * t) *
-                Math.sin(((t * d - s) * (2 * Math.PI)) / p) +
+            a * Math.pow(2, -10 * t) * Math.sin(((t * d - s) * (2 * Math.PI)) / p) +
             c +
             b
         );
@@ -210,11 +208,8 @@ $.extend($.easing, {
         }
     },
     easeInOutBounce: function (x, t, b, c, d) {
-        if (t < d / 2)
-            return $.easing.easeInBounce(x, t * 2, 0, c, d) * 0.5 + b;
-        return (
-            $.easing.easeOutBounce(x, t * 2 - d, 0, c, d) * 0.5 + c * 0.5 + b
-        );
+        if (t < d / 2) return $.easing.easeInBounce(x, t * 2, 0, c, d) * 0.5 + b;
+        return $.easing.easeOutBounce(x, t * 2 - d, 0, c, d) * 0.5 + c * 0.5 + b;
     },
 });
 
@@ -368,9 +363,7 @@ const getPdfFn = (code) => {
     try {
         pdfTitleFn = eval(code);
     } catch (error) {
-        console.log(
-            "Error parsing pdf title function. Function string then error:"
-        );
+        console.log("Error parsing pdf title function. Function string then error:");
         console.log(code);
         console.log(error);
         pdfTitleFn = defaultPDFTitleFn;
@@ -431,9 +424,7 @@ const migrateData = async (papers, dataVersion) => {
                     papers[id].source !== "arxiv" &&
                     papers[id].md.includes("https://arxiv.com/abs/")
                 ) {
-                    papers[
-                        id
-                    ].md = `[${papers[id].title}](${papers[id].pdfLink})`;
+                    papers[id].md = `[${papers[id].title}](${papers[id].pdfLink})`;
                 }
                 if (
                     papers[id].source !== "arxiv" &&
@@ -519,9 +510,7 @@ const backupData = async (papers) => {
         papersBackup[papers["__dataVersion"]] = papers;
 
         chrome.storage.local.set({ papersBackup }, () => {
-            console.log(
-                "Backed up data with version: " + papers["__dataVersion"]
-            );
+            console.log("Backed up data with version: " + papers["__dataVersion"]);
         });
     });
 };
@@ -621,10 +610,7 @@ const isPaper = (url) => {
         is.neurips = a.pathname.startsWith("/paper/");
     }
     if (a.hostname === "openaccess.thecvf.com") {
-        if (
-            a.pathname.startsWith("/content/") ||
-            a.pathname.startsWith("/content_")
-        ) {
+        if (a.pathname.startsWith("/content/") || a.pathname.startsWith("/content_")) {
             is.cvf = true;
         }
     }
@@ -635,11 +621,7 @@ const isPaper = (url) => {
 const parseIdFromUrl = (url) => {
     const is = isPaper(url);
     if (is.arxiv) {
-        const arxivId = url
-            .split("/")
-            .reverse()[0]
-            .replace(".pdf", "")
-            .split("v")[0];
+        const arxivId = url.split("/").reverse()[0].replace(".pdf", "").split("v")[0];
         return `Arxiv-${arxivId}`;
     } else if (is.neurips) {
         const year = url.split("/paper/")[1].split("/")[0];

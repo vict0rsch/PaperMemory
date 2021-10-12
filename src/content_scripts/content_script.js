@@ -257,8 +257,7 @@ const updatePaper = (papers, id) => {
 };
 
 const arxiv = (checks) => {
-    const { checkMd, checkBib, checkDownload, checkPdfTitle, pdfTitleFn } =
-        checks;
+    const { checkMd, checkBib, checkDownload, checkPdfTitle, pdfTitleFn } = checks;
 
     // console.log({ checks })
 
@@ -323,14 +322,9 @@ const arxiv = (checks) => {
             $("#markdown-header .copy-feedback").fadeOut(200, () => {
                 $("#markdown-header .copy-feedback-ok").fadeIn(200, () => {
                     setTimeout(() => {
-                        $("#markdown-header .copy-feedback-ok").fadeOut(
-                            200,
-                            () => {
-                                $("#markdown-header .copy-feedback").fadeIn(
-                                    200
-                                );
-                            }
-                        );
+                        $("#markdown-header .copy-feedback-ok").fadeOut(200, () => {
+                            $("#markdown-header .copy-feedback").fadeIn(200);
+                        });
                     }, 1500);
                 });
             });
@@ -341,11 +335,11 @@ const arxiv = (checks) => {
 
     if (checkPdfTitle) {
         const getArxivTitle = async (id) => {
-            return await $.get(
-                `https://export.arxiv.org/api/query?id_list=${id}`
-            ).then((data) => {
-                return $($(data).find("entry title")[0]).text();
-            });
+            return await $.get(`https://export.arxiv.org/api/query?id_list=${id}`).then(
+                (data) => {
+                    return $($(data).find("entry title")[0]).text();
+                }
+            );
         };
         const makeTitle = async (id, url) => {
             let title = await getArxivTitle(id);
@@ -372,11 +366,10 @@ const arxiv = (checks) => {
                 </div>
             `);
 
-        $.get(`https://export.arxiv.org/api/query?id_list=${id}`).then(
-            (data) => {
-                const { bibvars, bibtext } = parseArxivBibtex(data);
+        $.get(`https://export.arxiv.org/api/query?id_list=${id}`).then((data) => {
+            const { bibvars, bibtext } = parseArxivBibtex(data);
 
-                const bibtexDiv = `
+            const bibtexDiv = `
                     <div id="bibtexDiv">
                         <div id="texHeader" class="arxivTools-header">
                             <h3>BibTex:</h3>
@@ -387,32 +380,24 @@ const arxiv = (checks) => {
                     </div>
                 `;
 
-                $("#loader-container").fadeOut(() => {
-                    $("#loader-container").remove();
-                    h.parent().append(bibtexDiv);
-                    $("#texHeader .copy-feedback").on("click", (e) => {
-                        $("#texHeader .copy-feedback").fadeOut(200, () => {
-                            $("#texHeader .copy-feedback-ok").fadeIn(
-                                200,
-                                () => {
-                                    setTimeout(() => {
-                                        $(
-                                            "#texHeader .copy-feedback-ok"
-                                        ).fadeOut(200, () => {
-                                            $(
-                                                "#texHeader .copy-feedback"
-                                            ).fadeIn(200);
-                                        });
-                                    }, 1500);
-                                }
-                            );
+            $("#loader-container").fadeOut(() => {
+                $("#loader-container").remove();
+                h.parent().append(bibtexDiv);
+                $("#texHeader .copy-feedback").on("click", (e) => {
+                    $("#texHeader .copy-feedback").fadeOut(200, () => {
+                        $("#texHeader .copy-feedback-ok").fadeIn(200, () => {
+                            setTimeout(() => {
+                                $("#texHeader .copy-feedback-ok").fadeOut(200, () => {
+                                    $("#texHeader .copy-feedback").fadeIn(200);
+                                });
+                            }, 1500);
                         });
-                        copyDivToClipboard("texTextarea");
-                        feedback("Bibtex Citation Copied!");
                     });
+                    copyDivToClipboard("texTextarea");
+                    feedback("Bibtex Citation Copied!");
                 });
-            }
-        );
+            });
+        });
     }
 };
 
@@ -461,9 +446,7 @@ const vanity = () => {
                 $("body").append(`
                         <div id="arxivTools-${
                             bibvars.id
-                        }" class="arxivTools-card" style="top:${
-                    offset.top + 30
-                }px">
+                        }" class="arxivTools-card" style="top:${offset.top + 30}px">
                             <div class="arxivTools-card-body">
                                 <div class="arxivTools-card-header">
                                     ArxivTools: BibTex citation
@@ -493,10 +476,7 @@ const vanity = () => {
                 });
                 $(".arxivTools-copy").on("click", (e) => {
                     let id = $(
-                        $(e.target)
-                            .parent()
-                            .parent()
-                            .find(".arxivTools-copy")[0]
+                        $(e.target).parent().parent().find(".arxivTools-copy")[0]
                     )
                         .attr("id")
                         .split("-");
@@ -546,9 +526,7 @@ $(() => {
         // debugger;
 
         const checkMd = items.hasOwnProperty("checkMd") ? items.checkMd : true;
-        const checkBib = items.hasOwnProperty("checkBib")
-            ? items.checkBib
-            : true;
+        const checkBib = items.hasOwnProperty("checkBib") ? items.checkBib : true;
         const checkDownload = items.hasOwnProperty("checkDownload")
             ? items.checkDownload
             : true;

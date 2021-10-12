@@ -1,139 +1,3 @@
-/*
-
-*/
-
-/**
- * Return a formatted HTML string from a paper
- * @param {object} item A paper object
- * @returns HTML string
- */
-const getMemoryItemHTML = (item) => {
-    const addDate = new Date(item.addDate).toLocaleString().replace(",", "");
-    const lastOpenDate = new Date(item.lastOpenDate)
-        .toLocaleString()
-        .replace(",", "");
-    const displayId = item.id.split("_")[0].split(".")[0];
-    const note = item.note || "";
-    const id = item.id;
-    const tags = new Set(item.tags);
-    const tagOptions = getTagsHTMLOptions(id);
-    let codeDiv = `
-    <small class="memory-item-faded">
-    <span class="memory-item-code-link">${item.codeLink || ""}</span>
-    </small>
-    `;
-    let noteDiv = `<div class="memory-note-div memory-item-faded"></div>`;
-    if (item.note) {
-        noteDiv = `
-        <div class="memory-note-div memory-item-faded">
-            <span class="note-content-header">Note:</span>
-            <span class="note-content">${note}</span>
-        </div>
-        `;
-    }
-
-    return `
-    <div class="memory-item-container" tabindex="0" id="memory-item-container--${id}">
-
-        <h4 class="memory-item-title" title="Added ${addDate}&#13;&#10;Last open ${lastOpenDate}">
-            ${item.title}
-        </h4>
-        <div class="memory-item-tags-div">
-            <small class="tag-list">
-                ${Array.from(tags)
-                    .map((t) => `<span class="memory-tag">${t}</span>`)
-                    .join("")}
-            </small>
-            <div class="edit-tags">
-                <div style="display:flex; align-items: center"; justify-content: space-between">
-                    <select class="memory-item-tags" multiple="multiple">
-                        ${tagOptions}
-                    </select>
-                </div>
-            </div>
-        </div>
-        <small class="authors">${item.author}</small>
-        
-        <div class="code-and-note">
-            ${codeDiv}
-            ${noteDiv}
-        </div>
-
-        <div class="memory-item-actions">
-
-            <div style="display: flex; align-items: center">
-                <div class="memory-item-edit memory-item-svg-div" title="Edit paper details&#13;&#10;(or press 'e' when this paper is focused,&#13;&#10; i.e. when you navigated to it with 'tab')">
-                    <svg >
-                        <use xlink:href="../../icons/tabler-sprite-nostroke.svg#tabler-writing" />
-                    </svg>
-                </div>
-                
-                <small class="memory-item-faded">
-                        ${displayId}
-                </small>
-                        
-            </div>
-
-            <div class="memory-item-link memory-item-svg-div"  title="Open ${
-                item.pdfLink
-            }" >
-                <svg >
-                   <use xlink:href="../../icons/tabler-sprite-nostroke.svg#tabler-external-link" />
-                </svg>
-            </div>
-                
-            <div class="memory-item-copy-link memory-item-svg-div" title="Copy pdf link" >
-                <svg >
-                    <use xlink:href="../../icons/tabler-sprite-nostroke.svg#tabler-link" />
-                </svg>
-            </div>
-
-            <div class="memory-item-md memory-item-svg-div" title="Copy Markdown-formatted link" >
-                <svg >
-                    <use xlink:href="../../icons/tabler-sprite-nostroke.svg#tabler-clipboard-list" />
-                </svg>
-            </div>
-
-            <div class="memory-item-bibtext memory-item-svg-div" title="Copy Bibtex citation" >
-                <svg >
-                    <use xlink:href="../../icons/tabler-sprite-nostroke.svg#tabler-archive" />
-                </svg>
-            </div>
-
-            <span style="color: green; display: none" class="memory-item-feedback"></span>
-            
-            <div title="Number of times you have loaded&#13;&#10;the paper's Page or PDF"  class="memory-item-faded">
-                Visits: ${item.count}
-            </div>
-
-        </div>
-
-        <div class="extended-item" style="display: none">
-            <div class="item-note">
-                <form class="form-note">
-                    <div class="textarea-wrapper">
-                        <span class="label">Code:</span>
-                        <input type="text" class="form-code-input" value="${
-                            item.codeLink || ""
-                        }">
-                    </div>
-                    <div class="textarea-wrapper">
-                        <span class="label">Note:</span>
-                        <textarea rows="3" class="form-note-textarea">${note}</textarea>
-                    </div>
-                    <div class="form-note-buttons">
-                        <button type="submit">Save</button>
-                        <button class="cancel-note-form back-to-focus">Cancel</button>
-                    </div>
-                </form>
-            </div>
-        </div>
-
-        <div class="delete-memory-item"> - </div>
-    </div>
-    `;
-};
-
 /**
  * Find a JQuery element with class className within #memory-item-container--${eid}
  * @param {string} eid The escaped id for the paper (id.replaceAll(".", "\\."))
@@ -144,9 +8,8 @@ const findEl = (eid, className) => {
     return $(`#memory-item-container--${eid}`).find(`.${className}`).first();
 };
 
-const getTagsHTMLOptions = (id) => {
-    const item = state.papers[id];
-    const tags = new Set(item.tags);
+const getTagsHTMLOptions = (paper) => {
+    const tags = new Set(paper.tags);
     return Array.from(state.paperTags)
         .sort()
         .map((t, i) => {
@@ -191,9 +54,7 @@ const confirmDelete = (id) => {
             state.papersList = Object.values(state.papers);
             displayMemoryTable();
             $("#confirm-modal").remove();
-            console.log(
-                "Successfully deleted '" + title + "' from ArxivMemory"
-            );
+            console.log("Successfully deleted '" + title + "' from ArxivMemory");
         });
     });
 };
@@ -295,13 +156,9 @@ const focusExistingOrCreateNewPaperTab = (paper) => {
             const windowUpdateProperties = { focused: true };
             chrome.windows.getCurrent((w) => {
                 if (w.id !== tab.windowId) {
-                    chrome.windows.update(
-                        tab.windowId,
-                        windowUpdateProperties,
-                        () => {
-                            chrome.tabs.update(tab.id, tabUpdateProperties);
-                        }
-                    );
+                    chrome.windows.update(tab.windowId, windowUpdateProperties, () => {
+                        chrome.tabs.update(tab.id, tabUpdateProperties);
+                    });
                 } else {
                     chrome.tabs.update(tab.id, tabUpdateProperties);
                 }
@@ -404,8 +261,7 @@ const filterMemoryByString = (letters) => {
         const note = paper.note.toLowerCase();
         if (
             words.every(
-                (w) =>
-                    title.includes(w) || author.includes(w) || note.includes(w)
+                (w) => title.includes(w) || author.includes(w) || note.includes(w)
             )
         ) {
             papersList.push(paper);
@@ -664,8 +520,7 @@ const openMemory = () => {
                     setTimeout(() => {
                         $("#memory-search").focus();
                         console.log(
-                            "Time to display (s): " +
-                                (Date.now() - openTime) / 1000
+                            "Time to display (s): " + (Date.now() - openTime) / 1000
                         );
                     }, 50);
                 },
@@ -688,10 +543,7 @@ const openMemory = () => {
         setMemorySortArrow("down");
     });
     $("#memory-sort-arrow").on("click", (e) => {
-        if (
-            $("#memory-sort-arrow svg").first()[0].id ===
-            "memory-sort-arrow-down"
-        ) {
+        if ($("#memory-sort-arrow svg").first()[0].id === "memory-sort-arrow-down") {
             setMemorySortArrow("up");
         } else {
             setMemorySortArrow("down");
