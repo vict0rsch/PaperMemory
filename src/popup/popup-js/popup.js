@@ -136,10 +136,12 @@ const main = (url) => {
         setStandardPopupClicks();
 
         // Set PDF title function
-        setAndHandleCustomPDFFunction();
+        setAndHandleCustomPDFFunction(menu);
 
         const is = isPaper(url);
+        console.log("is: ", is);
         const isKnownPage = Object.values(is).some((i) => i);
+        console.log("isKnownPage: ", isKnownPage);
 
         // Display popup metadata
         if (isKnownPage) {
