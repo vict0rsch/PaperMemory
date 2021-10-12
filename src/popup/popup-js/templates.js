@@ -140,7 +140,7 @@ const getMemoryItemHTML = (paper) => {
 
 const getPopupItemHTML = (paper) => {
     const id = paper.id;
-    const tagOptions = getTagsHTMLOptions(id);
+    const tagOptions = getTagsHTMLOptions(paper);
     const note = paper.note || "";
     return /*html*/ `
     <div style="width: 100%; display: flex; justify-content: space-between; align-items: center;">
@@ -181,9 +181,7 @@ const getPopupItemHTML = (paper) => {
 const getPopupIconsHTML = (paper, currentUrl) => {
     const id = paper.id;
     const display =
-        paper.source !== "arxiv" || currentUrl.href.indexOf(".pdf") < 0
-            ? "none"
-            : "inherit";
+        paper.source !== "arxiv" || currentUrl.indexOf(".pdf") < 0 ? "none" : "inherit";
 
     return /*html*/ `
     <div
