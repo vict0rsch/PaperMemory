@@ -40,82 +40,82 @@ $.easing.jswing = $.easing.swing;
 
 $.extend($.easing, {
     def: "easeOutQuad",
-    swing: function (x, t, b, c, d) {
+    swing: (x, t, b, c, d) => {
         //alert($.easing.default);
         return $.easing[$.easing.def](x, t, b, c, d);
     },
-    easeInQuad: function (x, t, b, c, d) {
+    easeInQuad: (x, t, b, c, d) => {
         return c * (t /= d) * t + b;
     },
-    easeOutQuad: function (x, t, b, c, d) {
+    easeOutQuad: (x, t, b, c, d) => {
         return -c * (t /= d) * (t - 2) + b;
     },
-    easeInOutQuad: function (x, t, b, c, d) {
+    easeInOutQuad: (x, t, b, c, d) => {
         if ((t /= d / 2) < 1) return (c / 2) * t * t + b;
         return (-c / 2) * (--t * (t - 2) - 1) + b;
     },
-    easeInCubic: function (x, t, b, c, d) {
+    easeInCubic: (x, t, b, c, d) => {
         return c * (t /= d) * t * t + b;
     },
-    easeOutCubic: function (x, t, b, c, d) {
+    easeOutCubic: (x, t, b, c, d) => {
         return c * ((t = t / d - 1) * t * t + 1) + b;
     },
-    easeInOutCubic: function (x, t, b, c, d) {
+    easeInOutCubic: (x, t, b, c, d) => {
         if ((t /= d / 2) < 1) return (c / 2) * t * t * t + b;
         return (c / 2) * ((t -= 2) * t * t + 2) + b;
     },
-    easeInQuart: function (x, t, b, c, d) {
+    easeInQuart: (x, t, b, c, d) => {
         return c * (t /= d) * t * t * t + b;
     },
-    easeOutQuart: function (x, t, b, c, d) {
+    easeOutQuart: (x, t, b, c, d) => {
         return -c * ((t = t / d - 1) * t * t * t - 1) + b;
     },
-    easeInOutQuart: function (x, t, b, c, d) {
+    easeInOutQuart: (x, t, b, c, d) => {
         if ((t /= d / 2) < 1) return (c / 2) * t * t * t * t + b;
         return (-c / 2) * ((t -= 2) * t * t * t - 2) + b;
     },
-    easeInQuint: function (x, t, b, c, d) {
+    easeInQuint: (x, t, b, c, d) => {
         return c * (t /= d) * t * t * t * t + b;
     },
-    easeOutQuint: function (x, t, b, c, d) {
+    easeOutQuint: (x, t, b, c, d) => {
         return c * ((t = t / d - 1) * t * t * t * t + 1) + b;
     },
-    easeInOutQuint: function (x, t, b, c, d) {
+    easeInOutQuint: (x, t, b, c, d) => {
         if ((t /= d / 2) < 1) return (c / 2) * t * t * t * t * t + b;
         return (c / 2) * ((t -= 2) * t * t * t * t + 2) + b;
     },
-    easeInSine: function (x, t, b, c, d) {
+    easeInSine: (x, t, b, c, d) => {
         return -c * Math.cos((t / d) * (Math.PI / 2)) + c + b;
     },
-    easeOutSine: function (x, t, b, c, d) {
+    easeOutSine: (x, t, b, c, d) => {
         return c * Math.sin((t / d) * (Math.PI / 2)) + b;
     },
-    easeInOutSine: function (x, t, b, c, d) {
+    easeInOutSine: (x, t, b, c, d) => {
         return (-c / 2) * (Math.cos((Math.PI * t) / d) - 1) + b;
     },
-    easeInExpo: function (x, t, b, c, d) {
+    easeInExpo: (x, t, b, c, d) => {
         return t == 0 ? b : c * Math.pow(2, 10 * (t / d - 1)) + b;
     },
-    easeOutExpo: function (x, t, b, c, d) {
+    easeOutExpo: (x, t, b, c, d) => {
         return t == d ? b + c : c * (-Math.pow(2, (-10 * t) / d) + 1) + b;
     },
-    easeInOutExpo: function (x, t, b, c, d) {
+    easeInOutExpo: (x, t, b, c, d) => {
         if (t == 0) return b;
         if (t == d) return b + c;
         if ((t /= d / 2) < 1) return (c / 2) * Math.pow(2, 10 * (t - 1)) + b;
         return (c / 2) * (-Math.pow(2, -10 * --t) + 2) + b;
     },
-    easeInCirc: function (x, t, b, c, d) {
+    easeInCirc: (x, t, b, c, d) => {
         return -c * (Math.sqrt(1 - (t /= d) * t) - 1) + b;
     },
-    easeOutCirc: function (x, t, b, c, d) {
+    easeOutCirc: (x, t, b, c, d) => {
         return c * Math.sqrt(1 - (t = t / d - 1) * t) + b;
     },
-    easeInOutCirc: function (x, t, b, c, d) {
+    easeInOutCirc: (x, t, b, c, d) => {
         if ((t /= d / 2) < 1) return (-c / 2) * (Math.sqrt(1 - t * t) - 1) + b;
         return (c / 2) * (Math.sqrt(1 - (t -= 2) * t) + 1) + b;
     },
-    easeInElastic: function (x, t, b, c, d) {
+    easeInElastic: (x, t, b, c, d) => {
         var s = 1.70158;
         var p = 0;
         var a = c;
@@ -134,7 +134,7 @@ $.extend($.easing, {
             ) + b
         );
     },
-    easeOutElastic: function (x, t, b, c, d) {
+    easeOutElastic: (x, t, b, c, d) => {
         var s = 1.70158;
         var p = 0;
         var a = c;
@@ -151,7 +151,7 @@ $.extend($.easing, {
             b
         );
     },
-    easeInOutElastic: function (x, t, b, c, d) {
+    easeInOutElastic: (x, t, b, c, d) => {
         var s = 1.70158;
         var p = 0;
         var a = c;
@@ -179,24 +179,24 @@ $.extend($.easing, {
             b
         );
     },
-    easeInBack: function (x, t, b, c, d, s) {
+    easeInBack: (x, t, b, c, d, s) => {
         if (s == undefined) s = 1.70158;
         return c * (t /= d) * t * ((s + 1) * t - s) + b;
     },
-    easeOutBack: function (x, t, b, c, d, s) {
+    easeOutBack: (x, t, b, c, d, s) => {
         if (s == undefined) s = 1.70158;
         return c * ((t = t / d - 1) * t * ((s + 1) * t + s) + 1) + b;
     },
-    easeInOutBack: function (x, t, b, c, d, s) {
+    easeInOutBack: (x, t, b, c, d, s) => {
         if (s == undefined) s = 1.70158;
         if ((t /= d / 2) < 1)
             return (c / 2) * (t * t * (((s *= 1.525) + 1) * t - s)) + b;
         return (c / 2) * ((t -= 2) * t * (((s *= 1.525) + 1) * t + s) + 2) + b;
     },
-    easeInBounce: function (x, t, b, c, d) {
+    easeInBounce: (x, t, b, c, d) => {
         return c - $.easing.easeOutBounce(x, d - t, 0, c, d) + b;
     },
-    easeOutBounce: function (x, t, b, c, d) {
+    easeOutBounce: (x, t, b, c, d) => {
         if ((t /= d) < 1 / 2.75) {
             return c * (7.5625 * t * t) + b;
         } else if (t < 2 / 2.75) {
@@ -207,7 +207,7 @@ $.extend($.easing, {
             return c * (7.5625 * (t -= 2.625 / 2.75) * t + 0.984375) + b;
         }
     },
-    easeInOutBounce: function (x, t, b, c, d) {
+    easeInOutBounce: (x, t, b, c, d) => {
         if (t < d / 2) return $.easing.easeInBounce(x, t * 2, 0, c, d) * 0.5 + b;
         return $.easing.easeOutBounce(x, t * 2 - d, 0, c, d) * 0.5 + c * 0.5 + b;
     },
@@ -246,22 +246,22 @@ $.extend($.easing, {
  *
  */
 
-function delay(fn, ms) {
+export const delay = (fn, ms) => {
     // https://stackoverflow.com/questions/1909441/how-to-delay-the-keyup-handler-until-the-user-stops-typing
     let timer = 0;
-    return function (...args) {
+    return (...args) => {
         clearTimeout(timer);
         timer = setTimeout(fn.bind(this, ...args), ms || 0);
     };
-}
+};
 
-const cleanPapers = (papers) => {
+export const cleanPapers = (papers) => {
     let cleaned = { ...papers };
     delete cleaned["__dataVersion"];
     return cleaned;
 };
 
-function fallbackCopyTextToClipboard(text) {
+export const fallbackCopyTextToClipboard = (text) => {
     var textArea = document.createElement("textarea");
     textArea.value = text;
 
@@ -283,30 +283,30 @@ function fallbackCopyTextToClipboard(text) {
     }
 
     document.body.removeChild(textArea);
-}
+};
 
-function copyTextToClipboard(text) {
+export const copyTextToClipboard = (text) => {
     if (!navigator.clipboard) {
         fallbackCopyTextToClipboard(text);
         return;
     }
     navigator.clipboard.writeText(text).then(
-        function () {
+        () => {
             console.log("Async: Copying to clipboard was successful!");
         },
-        function (err) {
+        (err) => {
             console.error("Async: Could not copy text: ", err);
         }
     );
-}
+};
 
-function parseUrl(url) {
+export const parseUrl = (url) => {
     var a = document.createElement("a");
     a.href = url;
     return a;
-}
+};
 
-const downloadTextFile = (content, fileName, contentType) => {
+export const downloadTextFile = (content, fileName, contentType) => {
     var a = document.createElement("a");
     var file = new Blob([content], { type: contentType });
     a.href = URL.createObjectURL(file);
@@ -314,14 +314,14 @@ const downloadTextFile = (content, fileName, contentType) => {
     a.trigger("click");
 };
 
-const eventId = (e) => {
+export const eventId = (e) => {
     const el = $(e.target);
     const id = el.closest(".memory-item-container").attr("id").split("--")[1];
     const eid = id.replace(".", "\\.");
     return { id, eid };
 };
 
-const download_file = (fileURL, fileName) => {
+export const download_file = (fileURL, fileName) => {
     // for non-IE
     if (!window.ActiveXObject) {
         var save = document.createElement("a");
@@ -355,11 +355,11 @@ const download_file = (fileURL, fileName) => {
     }
 };
 
-const defaultPDFTitleFn = (title, id) => {
+export const defaultPDFTitleFn = (title, id) => {
     title = title.replaceAll("\n", " ").replace(/\s\s+/g, " ");
     return `${title} - ${id}.pdf`;
 };
-const getPdfFn = (code) => {
+export const getPdfFn = (code) => {
     try {
         pdfTitleFn = eval(code);
     } catch (error) {
@@ -382,7 +382,7 @@ const getPdfFn = (code) => {
     return pdfTitleFn;
 };
 
-const migrateData = async (papers, dataVersion) => {
+export const migrateData = async (papers, dataVersion) => {
     const currentVersion = papers["__dataVersion"] || 1;
     var deleteIds = [];
 
@@ -470,29 +470,29 @@ const migrateData = async (papers, dataVersion) => {
     }
 };
 
-const logStorage = (key) => {
+export const logStorage = (key) => {
     chrome.storage.local.get(key, (data) => {
         console.log(data[key]);
     });
 };
 
-const getStorage = async (key) => {
+export const getStorage = async (key) => {
     return new Promise((resolve, reject) => {
-        chrome.storage.local.get(key, function (data) {
+        chrome.storage.local.get(key, (data) => {
             resolve(data[key]);
         });
     });
 };
 
-const setStorage = async (key, value) => {
+export const setStorage = async (key, value) => {
     return new Promise((resolve, reject) => {
-        chrome.storage.local.set({ [key]: value }, function () {
+        chrome.storage.local.set({ [key]: value }, () => {
             resolve(true);
         });
     });
 };
 
-const backupData = async (papers) => {
+export const backupData = async (papers) => {
     chrome.storage.local.get("papersBackup", ({ papersBackup }) => {
         if (typeof papersBackup === "undefined") {
             papersBackup = {};
@@ -515,7 +515,7 @@ const backupData = async (papers) => {
     });
 };
 
-const statePdfTitle = (title, id) => {
+export const statePdfTitle = (title, id) => {
     let name;
     try {
         name = STATE.pdfTitleFn(title, id);
@@ -526,7 +526,7 @@ const statePdfTitle = (title, id) => {
     return name.replaceAll("\n", " ").replace(/\s\s+/g, " ");
 };
 
-const manifestDataVersion = () => {
+export const manifestDataVersion = () => {
     // ArxivTools version a.b.c => data version a * 10^4 + b * 10^2 + c
     // (with 10^2 and 10^1, 0.3.1 would be lower than 0.2.12)
     const manifest = chrome.runtime.getManifest();
@@ -536,7 +536,7 @@ const manifestDataVersion = () => {
         .reduce((a, b) => a + b);
 };
 
-const initState = async (papers, noDisplay) => {
+export const initState = async (papers, noDisplay) => {
     console.log("Found papers:");
     console.log(papers);
     STATE.dataVersion = manifestDataVersion();
@@ -552,14 +552,14 @@ const initState = async (papers, noDisplay) => {
     makeTags();
 };
 
-hashCode = function (s) {
-    return s.split("").reduce(function (a, b) {
+export const hashCode = (s) => {
+    return s.split("").reduce((a, b) => {
         a = (a << 5) - a + b.charCodeAt(0);
         return a & a;
     }, 0);
 };
 
-const parseCVFUrl = (url) => {
+export const parseCVFUrl = (url) => {
     // model: https://openaccess.thecvf.com/content_ICCV_2017/papers/Campbell_Globally-Optimal_Inlier_Set_ICCV_2017_paper.pdf
     // or   : https://openaccess.thecvf.com/content/ICCV2021/html/Jang_C2N_Practical_Generative_Noise_Modeling_for_Real-World_Denoising_ICCV_2021_paper.html
     const confAndYear = url
@@ -582,7 +582,7 @@ const parseCVFUrl = (url) => {
     return { conf, year, id };
 };
 
-const isPaper = (url) => {
+export const isPaper = (url) => {
     const a = parseUrl(url);
     let is = {
         arxiv: false,
@@ -606,7 +606,7 @@ const isPaper = (url) => {
     return is;
 };
 
-const parseIdFromUrl = (url) => {
+export const parseIdFromUrl = (url) => {
     const is = isPaper(url);
     if (is.arxiv) {
         const arxivId = url.split("/").reverse()[0].replace(".pdf", "").split("v")[0];
@@ -622,7 +622,7 @@ const parseIdFromUrl = (url) => {
     }
 };
 
-const handlePopupKeydown = (e) => {
+export const handlePopupKeydown = (e) => {
     if ([8, 13, 27, 65, 69].indexOf(e.which) < 0) {
         return;
     }
@@ -661,7 +661,6 @@ const handlePopupKeydown = (e) => {
 
     // Now memory is open
 
-    // e.preventDefault();
     let id, eid;
     const el = $(".memory-item-container:focus").first();
     if (e.which !== 27) {
@@ -686,7 +685,13 @@ const handlePopupKeydown = (e) => {
     }
 };
 
-const formatBibtext = (text) => {
+export const focusEndTextarea = (element) => {
+    setTimeout(() => {
+        element.selectionStart = element.selectionEnd = 10000;
+    }, 0);
+};
+
+export const formatBibtext = (text) => {
     let bib = $.trim(text).split("\n").join("");
     const matches = bib.match(/\w+\ ?=/g);
     if (matches) {
@@ -698,10 +703,4 @@ const formatBibtext = (text) => {
         bib = bib.slice(0, -1) + "\n}";
     }
     return bib;
-};
-
-const textareaFocusEnd = (element) => {
-    setTimeout(() => {
-        element.selectionStart = element.selectionEnd = 10000;
-    }, 0);
 };

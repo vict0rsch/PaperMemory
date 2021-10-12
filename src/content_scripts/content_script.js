@@ -271,7 +271,7 @@ const arxiv = (checks) => {
         $(".abs-button.download-pdf").first().attr("href") +
         ".pdf";
 
-    state.pdfTitleFn = pdfTitleFn;
+    STATE.pdfTitleFn = pdfTitleFn;
 
     // -----------------------------
     // -----  Download Button  -----
@@ -500,54 +500,24 @@ const vanity = () => {
 $(() => {
     const url = window.location.href;
 
-    if (
-        !(
-            url.includes("arxiv.org/pdf/") ||
-            url.includes("arxiv.org/abs/") ||
-            url.includes("neurips.cc/paper/") ||
-            url.includes("https://openaccess.thecvf.com/content")
-        )
-    ) {
+    if (!knownPaperPages.some((d) => url.includes(d))) {
         // not on a paper page (but on arxiv.org or neurips.cc)
         return;
     }
 
     console.log("Executing Arxiv Tools content script");
-    const checks = [
-        "checkBib",
-        "checkMd",
-        "checkDownload",
-        "checkPdfTitle",
-        "checkVanity",
-    ];
-    const storageKeys = [...checks, "pdfTitleFn"];
 
-    chrome.storage.local.get(storageKeys, function (items) {
-        // debugger;
+    chrome.storage.local.get(menuStorageKeys, (storedMenu) => {
+        let menu = {};
+        for (const m of menuCheckNames) {
+            menu[m] = storedMenu.hasOwnProperty(m) ? storedMenu[m] : true;
+        }
 
-        const checkMd = items.hasOwnProperty("checkMd") ? items.checkMd : true;
-        const checkBib = items.hasOwnProperty("checkBib") ? items.checkBib : true;
-        const checkDownload = items.hasOwnProperty("checkDownload")
-            ? items.checkDownload
-            : true;
-        const checkPdfTitle = items.hasOwnProperty("checkPdfTitle")
-            ? items.checkPdfTitle
-            : true;
-        const checkVanity = items.hasOwnProperty("checkVanity")
-            ? items.checkVanity
-            : true;
-        const pdfTitleFn =
-            items.pdfTitleFn && typeof items.pdfTitleFn === "string"
-                ? getPdfFn(items.pdfTitleFn)
+        menu.pdfTitleFn =
+            menu.pdfTitleFn && typeof menu.pdfTitleFn === "string"
+                ? getPdfFn(menu.pdfTitleFn)
                 : defaultPDFTitleFn;
 
-        main({
-            checkMd,
-            checkBib,
-            checkDownload,
-            checkPdfTitle,
-            checkVanity,
-            pdfTitleFn,
-        });
+        main(menu);
     });
 });

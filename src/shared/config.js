@@ -1,4 +1,4 @@
-var state = {
+var STATE = {
     menuIsOpen: false,
     memoryIsOpen: false,
     papers: {},
@@ -17,6 +17,22 @@ const select2Options = {
     tags: true,
     tokenSeparators: [",", " "],
 };
+
+const menuCheckNames = [
+    "checkBib",
+    "checkMd",
+    "checkDownload",
+    "checkPdfTitle",
+    "checkVanity",
+];
+const menuStorageKeys = [...menuCheckNames, "pdfTitleFn"];
+
+const knownPaperPages = [
+    "arxiv.org/pdf/",
+    "arxiv.org/abs/",
+    "neurips.cc/paper/",
+    "openaccess.thecvf.com/content",
+];
 
 const englishStopWords = new Set([
     [
