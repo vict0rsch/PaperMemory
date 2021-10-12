@@ -219,12 +219,8 @@ const main = (tab) => {
                 // -----  Paper attributes edits  -----
                 // ------------------------------------
                 $(`#popup-item-tags--${eid}`).select2({
-                    placeholder: "Tag paper...",
-                    maximumSelectionLength: 5,
-                    allowClear: true,
-                    tags: true,
+                    ...select2Options,
                     width: "87%",
-                    tokenSeparators: [",", " "],
                 });
                 $("body").css("height", "auto");
                 $(`#popup-form-note-textarea--${eid}`).focus(function () {

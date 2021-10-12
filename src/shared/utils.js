@@ -515,18 +515,6 @@ const backupData = async (papers) => {
     });
 };
 
-var state = {
-    menuIsOpen: false,
-    memoryIsOpen: false,
-    papers: {},
-    papersList: [],
-    sortedPapers: [],
-    sortKey: "",
-    paperTags: new Set(),
-    dataVersion: 0,
-    pdfTitleFn: defaultPDFTitleFn,
-};
-
 const statePdfTitle = (title, id) => {
     let name;
     try {

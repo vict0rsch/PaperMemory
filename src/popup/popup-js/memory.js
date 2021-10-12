@@ -447,13 +447,8 @@ const displayMemoryTable = () => {
             edit.addClass("expand-open");
 
             tagSelect.select2({
-                placeholder: "Tag paper...",
-                maximumSelectionLength: 5,
-                allowClear: true,
-                tags: true,
+                ...select2Options,
                 width: "75%",
-                tokenSeparators: [",", " "],
-                dropdownParent: $(`#memory-item-container--${eid}`),
             });
 
             codeAndNote.slideUp(250);
