@@ -182,10 +182,10 @@ const confirmDelete = (id) => {
     
     </div>
     `);
-    $("#cancel-modal-button").click(() => {
+    $("#cancel-modal-button").on("click", () => {
         $("#confirm-modal").remove();
     });
-    $("#confirm-modal-button").click(() => {
+    $("#confirm-modal-button").on("click", () => {
         delete state.papers[id];
         chrome.storage.local.set({ papers: state.papers }, () => {
             state.papersList = Object.values(state.papers);
@@ -509,34 +509,34 @@ const displayMemoryTable = () => {
 
     console.log("Rendering duration (s): " + (end - start) / 1000);
 
-    $(".back-to-focus").click((e) => {
+    $(".back-to-focus").on("click", (e) => {
         const { id, eid } = eventId(e);
         $(`#memory-item-container--${eid}`).focus();
     });
-    $(".delete-memory-item").click((e) => {
+    $(".delete-memory-item").on("click", (e) => {
         const { id, eid } = eventId(e);
         confirmDelete(id);
     });
-    $(".memory-item-link").click((e) => {
+    $(".memory-item-link").on("click", (e) => {
         const { id, eid } = eventId(e);
         focusExistingOrCreateNewPaperTab(state.papers[id]);
     });
-    $(".memory-item-code-link").click((e) => {
+    $(".memory-item-code-link").on("click", (e) => {
         const { id, eid } = eventId(e);
         const url = state.papers[id].codeLink;
         focusExistingOrCreateNewCodeTab(url);
     });
-    $(".memory-item-md").click((e) => {
+    $(".memory-item-md").on("click", (e) => {
         const { id, eid } = eventId(e);
         const md = state.papers[id].md;
         copyAndConfirmMemoryItem(id, md, "Markdown link copied!");
     });
-    $(".memory-item-bibtext").click((e) => {
+    $(".memory-item-bibtext").on("click", (e) => {
         const { id, eid } = eventId(e);
         const bibtext = state.papers[id].bibtext;
         copyAndConfirmMemoryItem(id, bibtext, "Bibtex copied!");
     });
-    $(".memory-item-copy-link").click((e) => {
+    $(".memory-item-copy-link").on("click", (e) => {
         const { id, eid } = eventId(e);
         const pdfLink = state.papers[id].pdfLink;
         copyAndConfirmMemoryItem(id, pdfLink, "Pdf link copied!");
@@ -558,16 +558,16 @@ const displayMemoryTable = () => {
         saveCodeLink(id, codeLink);
         updatePaperTags(id, "memory-item-tags");
 
-        findEl(eid, "memory-item-edit").click();
+        findEl(eid, "memory-item-edit").trigger("click");
     });
-    $(".cancel-note-form").click((e) => {
+    $(".cancel-note-form").on("click", (e) => {
         e.preventDefault();
         const { id, eid } = eventId(e);
         findEl(eid, "form-note-textarea").val(state.papers[id].note);
         findEl(eid, "memory-item-tags").html(getTagsHTMLOptions(id));
-        findEl(eid, "memory-item-edit").click();
+        findEl(eid, "memory-item-edit").trigger("click");
     });
-    $(".memory-item-edit").click((e) => {
+    $(".memory-item-edit").on("click", (e) => {
         e.preventDefault();
         const { id, eid } = eventId(e);
         const edit = findEl(eid, "memory-item-edit");
@@ -687,7 +687,7 @@ const openMemory = () => {
         displayMemoryTable();
         setMemorySortArrow("down");
     });
-    $("#memory-sort-arrow").click((e) => {
+    $("#memory-sort-arrow").on("click", (e) => {
         if (
             $("#memory-sort-arrow svg").first()[0].id ===
             "memory-sort-arrow-down"

@@ -74,13 +74,13 @@ const feedback = () => {
 const main = (tab) => {
     const url = parseUrl(tab.url);
 
-    $("#helpGithubLink").click(() => {
+    $("#helpGithubLink").on("click", () => {
         chrome.tabs.update({
             url: "https://github.com/vict0rsch/ArxivMemory",
         });
     });
 
-    $("#coblock").click(() => {
+    $("#coblock").on("click", () => {
         chrome.tabs.update({
             url: "https://marketplace.visualstudio.com/items?itemName=vict0rsch.coblock",
         });
@@ -88,15 +88,15 @@ const main = (tab) => {
 
     $(document).on("keydown", handlePopupKeydown);
 
-    $("#tabler-menu").click(() => {
+    $("#tabler-menu").on("click", () => {
         state.menuIsOpen ? closeMenu() : openMenu();
     });
 
-    $("#memory-switch").click(() => {
+    $("#memory-switch").on("click", () => {
         state.memoryIsOpen ? closeMemory() : openMemory();
     });
 
-    $("#download-arxivmemory").click(() => {
+    $("#download-arxivmemory").on("click", () => {
         const now = new Date().toLocaleString();
         chrome.storage.local.get("papers", ({ papers }) => {
             downloadTextFile(
@@ -153,7 +153,7 @@ const main = (tab) => {
 
         chrome.storage.local.set({ pdfTitleFn: state.pdfTitleFn.toString() });
         $("#customPdfTitleTextarea").val(pdfTitleFn.toString());
-        $("#saveCustomPdf").click(() => {
+        $("#saveCustomPdf").on("click", () => {
             const code = $.trim($("#customPdfTitleTextarea").val());
             try {
                 const fn = eval(code);
@@ -172,7 +172,7 @@ const main = (tab) => {
                 );
             }
         });
-        $("#defaultCustomPdf").click(() => {
+        $("#defaultCustomPdf").on("click", () => {
             const code = defaultPDFTitleFn.toString();
             chrome.storage.local.set({ pdfTitleFn: code });
             state.pdfTitleFn = defaultPDFTitleFn;
@@ -323,7 +323,7 @@ const main = (tab) => {
                         that.selectionStart = that.selectionEnd = 10000;
                     }, 0);
                 });
-                $(`#popup-save-edits--${eid}`).click(() => {
+                $(`#popup-save-edits--${eid}`).on("click", () => {
                     const note = $(`#popup-form-note-textarea--${eid}`).val();
                     const codeLink = $(`#popup-form-note--${eid}`)
                         .find(".form-code-input")
@@ -343,7 +343,7 @@ const main = (tab) => {
                 // ------------------------
                 // -----  SVG clicks  -----
                 // ------------------------
-                $(`#popup-memory-item-link--${eid}`).click(() => {
+                $(`#popup-memory-item-link--${eid}`).on("click", () => {
                     chrome.tabs.update({
                         url: `https://arxiv.org/abs/${paper.id.replace(
                             "Arxiv-",
@@ -352,13 +352,13 @@ const main = (tab) => {
                     });
                     window.close();
                 });
-                $(`#popup-code-link`).click(() => {
+                $(`#popup-code-link`).on("click", () => {
                     const codeLink = $(`#popup-code-link`).text();
                     if (codeLink) {
                         focusExistingOrCreateNewCodeTab(codeLink);
                     }
                 });
-                $(`#popup-memory-item-copy-link--${eid}`).click(() => {
+                $(`#popup-memory-item-copy-link--${eid}`).on("click", () => {
                     const pdfLink = state.papers[id].pdfLink;
                     copyAndConfirmMemoryItem(
                         id,
@@ -367,7 +367,7 @@ const main = (tab) => {
                         true
                     );
                 });
-                $(`#popup-memory-item-md--${eid}`).click(() => {
+                $(`#popup-memory-item-md--${eid}`).on("click", () => {
                     const md = state.papers[id].md;
                     copyAndConfirmMemoryItem(
                         id,
@@ -376,7 +376,7 @@ const main = (tab) => {
                         true
                     );
                 });
-                $(`#popup-memory-item-bibtex--${eid}`).click(() => {
+                $(`#popup-memory-item-bibtex--${eid}`).on("click", () => {
                     const bibtext = formatBibtext(state.papers[id].bibtext);
                     copyAndConfirmMemoryItem(
                         id,
@@ -385,7 +385,7 @@ const main = (tab) => {
                         true
                     );
                 });
-                $(`#popup-memory-item-download--${eid}`).click(() => {
+                $(`#popup-memory-item-download--${eid}`).on("click", () => {
                     let pdfTitle = statePdfTitle(paper.title, paper.id);
                     console.log({ pdfTitle });
                     chrome.downloads.download({

@@ -287,7 +287,7 @@ const arxiv = (checks) => {
             `;
         h.parent().append(button);
         var downloadTimeout;
-        $("#arxiv-button").click(async () => {
+        $("#arxiv-button").on("click", async () => {
             $("#arxiv-button").removeClass("downloaded");
             $("#arxiv-button").addClass("downloaded");
             downloadTimeout && clearTimeout(downloadTimeout);
@@ -319,7 +319,7 @@ const arxiv = (checks) => {
                 }](${pdfUrl})</div>
             </div>
         `);
-        $("#markdown-header .copy-feedback").click((e) => {
+        $("#markdown-header .copy-feedback").on("click", (e) => {
             $("#markdown-header .copy-feedback").fadeOut(200, () => {
                 $("#markdown-header .copy-feedback-ok").fadeIn(200, () => {
                     setTimeout(() => {
@@ -390,7 +390,7 @@ const arxiv = (checks) => {
                 $("#loader-container").fadeOut(() => {
                     $("#loader-container").remove();
                     h.parent().append(bibtexDiv);
-                    $("#texHeader .copy-feedback").click((e) => {
+                    $("#texHeader .copy-feedback").on("click", (e) => {
                         $("#texHeader .copy-feedback").fadeOut(200, () => {
                             $("#texHeader .copy-feedback-ok").fadeIn(
                                 200,
@@ -488,10 +488,10 @@ const vanity = () => {
                         </div>
                         `);
 
-                $(".arxivTools-close").click(() => {
+                $(".arxivTools-close").on("click", () => {
                     $(".arxivTools-card").remove();
                 });
-                $(".arxivTools-copy").click((e) => {
+                $(".arxivTools-copy").on("click", (e) => {
                     let id = $(
                         $(e.target)
                             .parent()

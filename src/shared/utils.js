@@ -316,7 +316,7 @@ const downloadTextFile = (content, fileName, contentType) => {
     var file = new Blob([content], { type: contentType });
     a.href = URL.createObjectURL(file);
     a.download = fileName;
-    a.click();
+    a.trigger("click");
 };
 
 const eventId = (e) => {
@@ -670,18 +670,18 @@ const handlePopupKeydown = (e) => {
         if (e.which == 65) {
             // a opens the arxiv memory
             if ($(":focus").length) return;
-            $("#memory-switch").click();
+            $("#memory-switch").trigger("click");
         } else if (e.which == 13) {
             // enter on the arxiv memory button opens it
             let el = $("#memory-switch-text-on:focus").first();
             if (el.length > 0) {
-                $("#memory-switch").click();
+                $("#memory-switch").trigger("click");
                 return;
             }
             // enter on the menu button opens it
             el = $("#tabler-menu:focus").first();
             if (el.length > 0) {
-                $("#tabler-menu").click();
+                $("#tabler-menu").trigger("click");
                 $("#tabler-menu").blur();
                 return;
             }
@@ -702,17 +702,17 @@ const handlePopupKeydown = (e) => {
 
     if (e.which === 8) {
         // delete
-        findEl(eid, "delete-memory-item").click();
+        findEl(eid, "delete-memory-item").trigger("click");
     } else if (e.which === 13) {
         // enter
-        findEl(eid, "memory-item-link").click();
+        findEl(eid, "memory-item-link").trigger("click");
     } else if (e.which === 27) {
         // esc
         e.preventDefault();
         closeMemory();
     } else if (e.which === 69) {
         // e
-        findEl(eid, "memory-item-edit").click();
+        findEl(eid, "memory-item-edit").trigger("click");
     }
 };
 
