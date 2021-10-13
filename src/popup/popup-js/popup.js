@@ -96,7 +96,7 @@ const setAndHandleCustomPDFFunction = (menu) => {
         STATE.pdfTitleFn = getPdfFn(menu.pdfTitleFn);
     }
     chrome.storage.local.set({ pdfTitleFn: STATE.pdfTitleFn.toString() });
-    $("#customPdfTitleTextarea").val(pdfTitleFn.toString());
+    $("#customPdfTitleTextarea").val(STATE.pdfTitleFn.toString());
 
     $("#saveCustomPdf").on("click", () => {
         const code = $.trim($("#customPdfTitleTextarea").val());

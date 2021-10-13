@@ -396,6 +396,11 @@ const updatePaperTags = (id, elementId) => {
     }
 };
 
+/**
+ * Create the set of all tags used in papers. If a tag used for a paper is new,
+ * it is added to this list, if a tag is never used after it's deleted from its
+ * last paper, it is removed from the list.
+ */
 const makeTags = () => {
     let tags = new Set();
     for (const p of STATE.sortedPapers) {
@@ -407,6 +412,11 @@ const makeTags = () => {
     STATE.paperTags.sort();
 };
 
+/**
+ * Iterates over all papers in the papersList (sorted and filtered),
+ * creates each paper's HTML template and appends it to #memory-table.
+ * Also creates the relevant events.
+ */
 const displayMemoryTable = () => {
     const start = Date.now();
 
@@ -518,6 +528,11 @@ const displayMemoryTable = () => {
     console.log("Listeners duration (s): " + (end2 - end) / 1000);
 };
 
+/**
+ * Main function called after the user clicks on the ArxivMemory button
+ * or presses `a`.
+ * + closes the menu if it is open (should not be)
+ */
 const openMemory = () => {
     var openTime = Date.now();
     STATE.menuIsOpen && closeMenu();
@@ -540,7 +555,8 @@ const openMemory = () => {
         }
 
         $("#memory-search")
-            .keypress(
+            .on(
+                "keypress",
                 delay((e) => {
                     const query = $.trim($(e.target).val());
                     if (query.startsWith("t:")) {
@@ -553,7 +569,7 @@ const openMemory = () => {
                     displayMemoryTable();
                 }, delayTime)
             )
-            .keyup((e) => {
+            .on("keyup", (e) => {
                 if (e.keyCode == 8) {
                     $("#memory-search").trigger("keypress");
                 }
