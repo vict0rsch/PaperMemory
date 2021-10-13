@@ -56,8 +56,7 @@ Share ideas 💡 in [issues](https://github.com/vict0rsch/ArxivTools/issues) and
   * `tab` will iterate through fields: tags and note if you're on a paper's page, then your ArxivTools anyway.
   * Search field is automatically focused on memory open
   * `(shift + ) tab` to navigate the paper list
-    * `e` to _edit_ the paper's tags
-    * `n` to add a _note_ to that paper
+    * `e` to _edit_ the paper's metadata: tags, code and note
     * `enter` to _open_ a focused paper (*focus* an existing tab with the paper or *create a new tab* to the paper's pdf if it's not open already)
     * `backspace` to _delete_ the paper (a confirmation will be prompted first don't worry 👮‍♀️)
 * **Search**
