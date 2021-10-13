@@ -24,6 +24,7 @@ const menuCheckNames = [
     "checkDownload",
     "checkPdfTitle",
     "checkVanity",
+    "checkFeedback",
 ];
 const menuStorageKeys = [...menuCheckNames, "pdfTitleFn"];
 

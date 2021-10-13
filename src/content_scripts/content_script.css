@@ -52,7 +52,7 @@
     min-width: 150px;
     text-align: center;
     color: white;
-    background: rgb(0, 119, 255);
+    background: #b31b1b;
     border-radius: 4px;
     position: fixed;
     bottom: 64px;
@@ -62,6 +62,7 @@
     -webkit-box-shadow: 14px 30px 122px -30px rgba(0, 0, 0, 0.75);
     -moz-box-shadow: 14px 30px 122px -30px rgba(0, 0, 0, 0.75);
     box-shadow: 14px 30px 122px -30px rgba(0, 0, 0, 0.75);
+    font-family: Mukta, Arial, sans-serif, Helvetica;
 }
 
 .tabler-icon {

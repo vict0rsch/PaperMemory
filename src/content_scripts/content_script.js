@@ -1,10 +1,15 @@
 var timeout = null;
 var prevent = false;
 
+/**
+ * Centralizes HTML svg codes
+ * @param {string} name svg type
+ * @returns {string} the HTML code for a specific svg
+ */
 const svg = (name) => {
     switch (name) {
         case "download":
-            return `<svg
+            return /*html*/ `<svg
                         width="52px" height="42px" viewBox="0 0 22 16"
                     >
                         <path d="M2,10 L6,13 L12.8760559,4.5959317 C14.1180021,3.0779974 16.2457925,2.62289624 18,3.5 L18,3.5 C19.8385982,4.4192991 21,6.29848669 21,8.35410197 L21,10 C21,12.7614237 18.7614237,15 16,15 L1,15" id="check"></path>
@@ -12,7 +17,7 @@ const svg = (name) => {
                         <path d="M8,1 L8,11" class="svg-out"></path>
                     </svg>`;
         case "clipboard-default":
-            return `<svg
+            return /*html*/ `<svg
                 class="copy-feedback tabler-icon"
                 xmlns="http://www.w3.org/2000/svg"
                 width="64" height="32" viewBox="0 0 24 24"
@@ -28,7 +33,7 @@ const svg = (name) => {
             </svg>`;
 
         case "clipboard-default-ok":
-            return `<svg
+            return /*html*/ `<svg
                 xmlns="http://www.w3.org/2000/svg"
                 class="tabler-icon copy-feedback-ok"
                 style="display:none"
@@ -43,7 +48,7 @@ const svg = (name) => {
             </svg>`;
 
         case "vanity-close":
-            return `<svg
+            return /*html*/ `<svg
                 xmlns="http://www.w3.org/2000/svg"
                 class="tabler-icon"
                 width="24" height="24" viewBox="0 0 24 24"
@@ -56,7 +61,7 @@ const svg = (name) => {
             </svg>`;
 
         case "vanity-clipboard":
-            return `<svg
+            return /*html*/ `<svg
                 class="copy-feedback tabler-icon" xmlns="http://www.w3.org/2000/svg"
                 width="24" height="24" viewBox="0 0 24 24"
                 stroke-width="1.25" stroke="rgb(0, 119, 255)" fill="none"
@@ -72,7 +77,7 @@ const svg = (name) => {
             </svg>`;
 
         case "vanity-clipboard-ok":
-            return `<svg
+            return /*html*/ `<svg
                 xmlns="http://www.w3.org/2000/svg"
                 class="tabler-icon copy-feedback-ok"
                 style="display:none"
@@ -91,15 +96,11 @@ const svg = (name) => {
     }
 };
 
-const copyDivToClipboard = (divId) => {
-    var range = document.createRange();
-    range.selectNode(document.getElementById(divId));
-    window.getSelection().removeAllRanges(); // clear current selection
-    window.getSelection().addRange(range); // to select text
-    document.execCommand("copy");
-    window.getSelection().removeAllRanges(); // to deselect
-};
-
+/**
+ * Adds citation hovers on arxiv-vanity, markdown link, bibtext citation and download button on arxiv.
+ * Also, if the current website is a known paper source (isPaper), adds or updates the current paper
+ * @param {object} checks The user's stored preferences regarding menu options
+ */
 const main = (checks) => {
     let is = isPaper(window.location.href);
     is["vanity"] = window.location.href.indexOf("arxiv-vanity.com") > -1;
@@ -111,10 +112,15 @@ const main = (checks) => {
     }
 
     if (is.arxiv || is.neurips || is.cvf) {
-        addOrCreatePaper(is);
+        addOrUpdatePaper(is, checks);
     }
 };
 
+/**
+ * Slides a div in then out, bottom right, with some text to give the user
+ * a feedback on some action performed
+ * @param {string} text the text to display in the slider div
+ */
 const feedback = (text) => {
     try {
         clearTimeout(timeout);
@@ -123,7 +129,7 @@ const feedback = (text) => {
     } catch (error) {
         console.log("No feedback to remove.");
     }
-    $("body").append(`
+    $("body").append(/*html*/ `
         <div id="feedback-notif">${text}</div>
     `);
     $("#feedback-notif").animate(
@@ -150,7 +156,7 @@ const feedback = (text) => {
     }, 2000);
 };
 
-const addOrCreatePaper = (is) => {
+const addOrUpdatePaper = (is, checks) => {
     const url = window.location.href;
 
     // get papers already stored
@@ -207,6 +213,7 @@ const addOrCreatePaper = (is) => {
         chrome.storage.local.set({ papers: papers }, () => {
             if (isNew) {
                 console.log("Added '" + paper.title + "' to ArxivMemory");
+                checks.checkFeedback && feedback("Added to your ArxivMemory!");
             } else {
                 console.log("Updated '" + paper.title + "' in ArxivMemory");
             }
@@ -274,7 +281,7 @@ const arxiv = (checks) => {
     // -----  Download Button  -----
     // -----------------------------
     if (checkDownload && isArxivAbs) {
-        const button = `
+        const button = /*html*/ `
             <div class="arxivTools-container">
                 <div id="arxiv-button">
                     ${svg("download")}
@@ -303,7 +310,7 @@ const arxiv = (checks) => {
     // -----  Markdown Link  -----
     // ---------------------------
     if (checkMd && isArxivAbs) {
-        h.parent().append(`
+        h.parent().append(/*html*/ `
             <div id="markdown-container">
                 <div id="markdown-header" class="arxivTools-header">
                     <h3>Markdown</h3>
@@ -325,7 +332,7 @@ const arxiv = (checks) => {
                     }, 1500);
                 });
             });
-            copyDivToClipboard("markdown-link");
+            copyTextToClipboard($("#markdown-link").text());
             feedback("Markdown Link Copied!");
         });
     }
@@ -352,7 +359,7 @@ const arxiv = (checks) => {
     }
 
     if (checkBib && isArxivAbs) {
-        h.parent().append(`
+        h.parent().append(/*html*/ `
                 <div id="loader-container" class="arxivTools-container">
                     <div class="sk-folding-cube">
                         <div class="sk-cube1 sk-cube"></div>
@@ -366,7 +373,7 @@ const arxiv = (checks) => {
         $.get(`https://export.arxiv.org/api/query?id_list=${id}`).then((data) => {
             const { bibvars, bibtext } = parseArxivBibtex(data);
 
-            const bibtexDiv = `
+            const bibtexDiv = /*html*/ `
                     <div id="bibtexDiv">
                         <div id="texHeader" class="arxivTools-header">
                             <h3>BibTex:</h3>
@@ -390,7 +397,7 @@ const arxiv = (checks) => {
                             }, 1500);
                         });
                     });
-                    copyDivToClipboard("texTextarea");
+                    copyTextToClipboard($("#texTextarea").text());
                     feedback("Bibtex Citation Copied!");
                 });
             });
@@ -440,7 +447,7 @@ const vanity = () => {
                 }
 
                 const offset = $(e.target).offset();
-                $("body").append(`
+                $("body").append(/*html*/ `
                         <div id="arxivTools-${
                             bibvars.id
                         }" class="arxivTools-card" style="top:${offset.top + 30}px">
@@ -478,7 +485,7 @@ const vanity = () => {
                         .attr("id")
                         .split("-");
                     id = id[id.length - 1];
-                    copyDivToClipboard("arxivTools-bibtex-" + id);
+                    copyTextToClipboard($("#arxivTools-bibtex-" + id).text());
                     $(".copy-feedback").fadeOut(() => {
                         $(".copy-feedback-ok").fadeIn(() => {
                             setTimeout(() => {

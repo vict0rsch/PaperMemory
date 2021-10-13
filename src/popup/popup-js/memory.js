@@ -45,7 +45,8 @@ const confirmDelete = (id) => {
     $("#confirm-modal-button").on("click", () => {
         delete STATE.papers[id];
         chrome.storage.local.set({ papers: STATE.papers }, () => {
-            STATE.papersList = Object.values(STATE.papers);
+            STATE.papersList = Object.values(cleanPapers(STATE.papers));
+            sortMemory();
             displayMemoryTable();
             $("#confirm-modal").remove();
             console.log("Successfully deleted '" + title + "' from ArxivMemory");
@@ -423,7 +424,12 @@ const displayMemoryTable = () => {
     var memoryTable = document.getElementById("memory-table");
     memoryTable.innerHTML = "";
     for (const paper of STATE.papersList) {
-        memoryTable.insertAdjacentHTML("beforeend", getMemoryItemHTML(paper));
+        try {
+            memoryTable.insertAdjacentHTML("beforeend", getMemoryItemHTML(paper));
+        } catch (error) {
+            console.log(error);
+            console.log(paper);
+        }
     }
 
     const end = Date.now();
@@ -617,6 +623,9 @@ const openMemory = () => {
     });
 };
 
+/**
+ * Closes the memory overlay with slideUp
+ */
 const closeMemory = () => {
     $("#memory-container").slideUp({
         duration: 300,

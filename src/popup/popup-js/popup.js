@@ -20,7 +20,7 @@ const openMenu = () => {
         easing: "easeOutQuint",
     }) &&
         $("#tabler-menu").fadeOut(() => {
-            $("#tabler-menu").html(`
+            $("#tabler-menu").html(/*html*/ `
             <svg class="tabler-icon menu-svg">
                 <use xlink:href="../../icons/tabler-sprite-nostroke.svg#tabler-circle-x" />
             </svg>`);
@@ -49,7 +49,7 @@ const getAndTrackPopupMenuChecks = (menu, menuCheckNames) => {
 
     for (const key of menuCheckNames) {
         $("#" + key).on("change", () => {
-            const checked = this.checked;
+            const checked = $("#" + key).prop("checked");
             chrome.storage.local.set({ [key]: checked }, function () {
                 console.log(`Settings saved for ${key} (${checked})`);
             });
@@ -59,8 +59,14 @@ const getAndTrackPopupMenuChecks = (menu, menuCheckNames) => {
 
 const setStandardPopupClicks = () => {
     $("#helpGithubLink").on("click", () => {
-        chrome.tabs.update({
+        chrome.tabs.create({
             url: "https://github.com/vict0rsch/ArxivMemory",
+        });
+    });
+
+    $("#keyboardShortcuts").on("click", () => {
+        chrome.tabs.create({
+            url: "https://github.com/vict0rsch/ArxivTools#keyboard-navigation",
         });
     });
 
@@ -103,14 +109,18 @@ const setAndHandleCustomPDFFunction = (menu) => {
         try {
             const fn = eval(code);
             fn("test", "1.2");
-            $("#customPdfFeedback").html(`<span style="color: green">Saved!</span>`);
+            $("#customPdfFeedback").html(
+                /*html*/ `<span style="color: green">Saved!</span>`
+            );
             chrome.storage.local.set({ pdfTitleFn: code });
             STATE.pdfTitleFn = fn;
             setTimeout(() => {
                 $("#customPdfFeedback").html("");
             }, 1000);
         } catch (error) {
-            $("#customPdfFeedback").html(`<span style="color: red">${error}</span>`);
+            $("#customPdfFeedback").html(
+                /*html*/ `<span style="color: red">${error}</span>`
+            );
         }
     });
     $("#defaultCustomPdf").on("click", () => {
@@ -118,7 +128,9 @@ const setAndHandleCustomPDFFunction = (menu) => {
         chrome.storage.local.set({ pdfTitleFn: code });
         STATE.pdfTitleFn = defaultPDFTitleFn;
         $("#customPdfTitleTextarea").val(code);
-        $("#customPdfFeedback").html(`<span style="color: green">Saved!</span>`);
+        $("#customPdfFeedback").html(
+            /*html*/ `<span style="color: green">Saved!</span>`
+        );
         setTimeout(() => {
             $("#customPdfFeedback").html("");
         }, 1000);
@@ -154,6 +166,9 @@ const main = (url) => {
                 await initState(papers);
                 if (!papers.hasOwnProperty(id)) {
                     console.log("Unknown id " + id);
+                    $("#isArxiv").html(
+                        /* html */ `<div style="font-size: 1.5rem;">This paper is not in your memory</div><h4>Refresh the page to add it back</h4>`
+                    );
                     return;
                 }
 
