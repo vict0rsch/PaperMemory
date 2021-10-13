@@ -115,4 +115,4 @@ ArxivTools can actually store data from more venues than Arxiv:
 * **Papers With Code**
   * Wouldn't it be nice to automatically discover papers' repos!! see [#10](https://github.com/vict0rsch/ArxivTools/issues/10)
 * **Reading lists**
-  * Do you need to mark papers "To Read"?
+  * Do you need to mark papers "To Read"? see [#12](https://github.com/vict0rsch/ArxivTools/issues/12)
