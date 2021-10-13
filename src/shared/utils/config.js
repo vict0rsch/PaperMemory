@@ -7,7 +7,7 @@ var STATE = {
     sortKey: "",
     paperTags: new Set(),
     dataVersion: 0,
-    pdfTitleFn: defaultPDFTitleFn,
+    pdfTitleFn: null,
 };
 
 const select2Options = {
@@ -27,12 +27,11 @@ const menuCheckNames = [
 ];
 const menuStorageKeys = [...menuCheckNames, "pdfTitleFn"];
 
-const knownPaperPages = [
-    "arxiv.org/pdf/",
-    "arxiv.org/abs/",
-    "neurips.cc/paper/",
-    "openaccess.thecvf.com/content",
-];
+const knownPaperPages = {
+    arxiv: ["arxiv.org/pdf/", "arxiv.org/abs/"],
+    neurips: ["neurips.cc/paper/"],
+    cvf: ["openaccess.thecvf.com/content"],
+};
 
 const englishStopWords = new Set([
     [

@@ -101,12 +101,8 @@ const copyDivToClipboard = (divId) => {
 };
 
 const main = (checks) => {
-    const is = {
-        vanity: window.location.href.indexOf("arxiv-vanity.com") > -1,
-        arxiv: window.location.href.indexOf("arxiv.org") > -1,
-        neurips: window.location.href.indexOf("proceedings.neurips.cc") > -1,
-        cvf: window.location.href.indexOf("openaccess.thecvf.com") > -1,
-    };
+    let is = isPaper(window.location.href);
+    is["vanity"] = window.location.href.indexOf("arxiv-vanity.com") > -1;
 
     if (is.arxiv) {
         arxiv(checks);
@@ -166,11 +162,11 @@ const addOrCreatePaper = (is) => {
 
         papers = await initState(papers, true);
 
-        let id, paper, isNew;
+        let id, paper, isNew, arxivId;
 
         // Extract id from url
         if (is.arxiv) {
-            const arxivId = window.location.href.match(/\d{4}\.\d{4,5}\d/g)[0];
+            arxivId = window.location.href.match(/\d{4}\.\d{4,5}\d/g)[0];
             id = `Arxiv-${arxivId}`;
         } else if (is.neurips) {
             const hash = url.split("/").slice(-1)[0].replace("-Paper.pdf", "");
@@ -195,7 +191,7 @@ const addOrCreatePaper = (is) => {
             let data;
 
             if (is.arxiv) {
-                data = await fetchArxivBibtex(id);
+                data = await fetchArxivBibtex(arxivId);
             } else if (is.neurips) {
                 data = await fetchNeuripsHTML(url);
             } else if (is.cvf) {
@@ -236,7 +232,7 @@ const makePaper = async (is, data) => {
         paper.source = "cvf";
     }
 
-    paper.md = `[${paper.title}](${paper.pdfLink})`; // TODO fix this with migration!!
+    paper.md = `[${paper.title}](${paper.pdfLink})`;
     paper.note = "";
     paper.tags = [];
 
@@ -500,8 +496,12 @@ const vanity = () => {
 $(() => {
     const url = window.location.href;
 
-    if (!knownPaperPages.some((d) => url.includes(d))) {
-        // not on a paper page (but on arxiv.org or neurips.cc)
+    if (
+        !Object.values(knownPaperPages)
+            .reduce((a, b) => a.concat(b), [])
+            .some((d) => url.includes(d))
+    ) {
+        // not on a paper page
         return;
     }
 

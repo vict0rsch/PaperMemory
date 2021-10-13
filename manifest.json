@@ -48,8 +48,6 @@
       "js": [
         "src/shared/jquery.min.js",
         "src/shared/utils.min.js",
-        "src/shared/config.min.js",
-        "src/shared/parsers.min.js",
         "src/content_scripts/content_script.js"
       ],
       "css": [

@@ -246,7 +246,12 @@ $.extend($.easing, {
  *
  */
 
-export const delay = (fn, ms) => {
+const defaultPDFTitleFn = (title, id) => {
+    title = title.replaceAll("\n", " ").replace(/\s\s+/g, " ");
+    return `${title} - ${id}.pdf`;
+};
+
+const delay = (fn, ms) => {
     // https://stackoverflow.com/questions/1909441/how-to-delay-the-keyup-handler-until-the-user-stops-typing
     let timer = 0;
     return (...args) => {
@@ -255,13 +260,13 @@ export const delay = (fn, ms) => {
     };
 };
 
-export const cleanPapers = (papers) => {
+const cleanPapers = (papers) => {
     let cleaned = { ...papers };
     delete cleaned["__dataVersion"];
     return cleaned;
 };
 
-export const fallbackCopyTextToClipboard = (text) => {
+const fallbackCopyTextToClipboard = (text) => {
     var textArea = document.createElement("textarea");
     textArea.value = text;
 
@@ -285,7 +290,7 @@ export const fallbackCopyTextToClipboard = (text) => {
     document.body.removeChild(textArea);
 };
 
-export const copyTextToClipboard = (text) => {
+const copyTextToClipboard = (text) => {
     if (!navigator.clipboard) {
         fallbackCopyTextToClipboard(text);
         return;
@@ -300,13 +305,13 @@ export const copyTextToClipboard = (text) => {
     );
 };
 
-export const parseUrl = (url) => {
+const parseUrl = (url) => {
     var a = document.createElement("a");
     a.href = url;
     return a;
 };
 
-export const downloadTextFile = (content, fileName, contentType) => {
+const downloadTextFile = (content, fileName, contentType) => {
     var a = document.createElement("a");
     var file = new Blob([content], { type: contentType });
     a.href = URL.createObjectURL(file);
@@ -314,14 +319,14 @@ export const downloadTextFile = (content, fileName, contentType) => {
     a.trigger("click");
 };
 
-export const eventId = (e) => {
+const eventId = (e) => {
     const el = $(e.target);
     const id = el.closest(".memory-item-container").attr("id").split("--")[1];
     const eid = id.replace(".", "\\.");
     return { id, eid };
 };
 
-export const download_file = (fileURL, fileName) => {
+const download_file = (fileURL, fileName) => {
     // for non-IE
     if (!window.ActiveXObject) {
         var save = document.createElement("a");
@@ -355,11 +360,7 @@ export const download_file = (fileURL, fileName) => {
     }
 };
 
-export const defaultPDFTitleFn = (title, id) => {
-    title = title.replaceAll("\n", " ").replace(/\s\s+/g, " ");
-    return `${title} - ${id}.pdf`;
-};
-export const getPdfFn = (code) => {
+const getPdfFn = (code) => {
     try {
         pdfTitleFn = eval(code);
     } catch (error) {
@@ -382,7 +383,7 @@ export const getPdfFn = (code) => {
     return pdfTitleFn;
 };
 
-export const migrateData = async (papers, dataVersion) => {
+const migrateData = async (papers, dataVersion) => {
     const currentVersion = papers["__dataVersion"] || 1;
     var deleteIds = [];
 
@@ -470,13 +471,13 @@ export const migrateData = async (papers, dataVersion) => {
     }
 };
 
-export const logStorage = (key) => {
+const logStorage = (key) => {
     chrome.storage.local.get(key, (data) => {
         console.log(data[key]);
     });
 };
 
-export const getStorage = async (key) => {
+const getStorage = async (key) => {
     return new Promise((resolve, reject) => {
         chrome.storage.local.get(key, (data) => {
             resolve(data[key]);
@@ -484,7 +485,7 @@ export const getStorage = async (key) => {
     });
 };
 
-export const setStorage = async (key, value) => {
+const setStorage = async (key, value) => {
     return new Promise((resolve, reject) => {
         chrome.storage.local.set({ [key]: value }, () => {
             resolve(true);
@@ -492,7 +493,7 @@ export const setStorage = async (key, value) => {
     });
 };
 
-export const backupData = async (papers) => {
+const backupData = async (papers) => {
     chrome.storage.local.get("papersBackup", ({ papersBackup }) => {
         if (typeof papersBackup === "undefined") {
             papersBackup = {};
@@ -515,7 +516,7 @@ export const backupData = async (papers) => {
     });
 };
 
-export const statePdfTitle = (title, id) => {
+const statePdfTitle = (title, id) => {
     let name;
     try {
         name = STATE.pdfTitleFn(title, id);
@@ -526,7 +527,7 @@ export const statePdfTitle = (title, id) => {
     return name.replaceAll("\n", " ").replace(/\s\s+/g, " ");
 };
 
-export const manifestDataVersion = () => {
+const manifestDataVersion = () => {
     // ArxivTools version a.b.c => data version a * 10^4 + b * 10^2 + c
     // (with 10^2 and 10^1, 0.3.1 would be lower than 0.2.12)
     const manifest = chrome.runtime.getManifest();
@@ -536,14 +537,15 @@ export const manifestDataVersion = () => {
         .reduce((a, b) => a + b);
 };
 
-export const initState = async (papers, noDisplay) => {
+const initState = async (papers, is_content_script) => {
     console.log("Found papers:");
     console.log(papers);
     STATE.dataVersion = manifestDataVersion();
+    STATE.pdfTitleFn = defaultPDFTitleFn;
 
     papers = await migrateData(papers, STATE.dataVersion);
 
-    if (noDisplay) return papers;
+    if (is_content_script) return papers;
 
     STATE.papers = papers;
     STATE.papersList = Object.values(cleanPapers(papers));
@@ -552,14 +554,14 @@ export const initState = async (papers, noDisplay) => {
     makeTags();
 };
 
-export const hashCode = (s) => {
+const hashCode = (s) => {
     return s.split("").reduce((a, b) => {
         a = (a << 5) - a + b.charCodeAt(0);
         return a & a;
     }, 0);
 };
 
-export const parseCVFUrl = (url) => {
+const parseCVFUrl = (url) => {
     // model: https://openaccess.thecvf.com/content_ICCV_2017/papers/Campbell_Globally-Optimal_Inlier_Set_ICCV_2017_paper.pdf
     // or   : https://openaccess.thecvf.com/content/ICCV2021/html/Jang_C2N_Practical_Generative_Noise_Modeling_for_Real-World_Denoising_ICCV_2021_paper.html
     const confAndYear = url
@@ -582,31 +584,23 @@ export const parseCVFUrl = (url) => {
     return { conf, year, id };
 };
 
-export const isPaper = (url) => {
+const isPaper = (url) => {
     const a = parseUrl(url);
-    let is = {
-        arxiv: false,
-        neurips: false,
-        cvf: false,
-    };
-    if (a.hostname === "arxiv.org") {
-        if (a.pathname.startsWith("/abs/") || a.pathname.startsWith("/pdf/")) {
-            is.arxiv = true;
-        }
-    }
-    if (a.hostname === "proceedings.neurips.cc") {
-        is.neurips = a.pathname.startsWith("/paper/");
-    }
-    if (a.hostname === "openaccess.thecvf.com") {
-        if (a.pathname.startsWith("/content/") || a.pathname.startsWith("/content_")) {
-            is.cvf = true;
+    let is = {};
+    for (const source in knownPaperPages) {
+        const paths = knownPaperPages[source];
+        is[source] = false;
+        for (const path of paths) {
+            if (url.includes(path)) {
+                is[source] = true;
+            }
         }
     }
 
     return is;
 };
 
-export const parseIdFromUrl = (url) => {
+const parseIdFromUrl = (url) => {
     const is = isPaper(url);
     if (is.arxiv) {
         const arxivId = url.split("/").reverse()[0].replace(".pdf", "").split("v")[0];
@@ -622,7 +616,7 @@ export const parseIdFromUrl = (url) => {
     }
 };
 
-export const handlePopupKeydown = (e) => {
+const handlePopupKeydown = (e) => {
     if ([8, 13, 27, 65, 69].indexOf(e.which) < 0) {
         return;
     }
@@ -685,13 +679,13 @@ export const handlePopupKeydown = (e) => {
     }
 };
 
-export const focusEndTextarea = (element) => {
+const focusEndTextarea = (element) => {
     setTimeout(() => {
         element.selectionStart = element.selectionEnd = 10000;
     }, 0);
 };
 
-export const formatBibtext = (text) => {
+const formatBibtext = (text) => {
     let bib = $.trim(text).split("\n").join("");
     const matches = bib.match(/\w+\ ?=/g);
     if (matches) {

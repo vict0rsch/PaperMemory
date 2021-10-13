@@ -28,23 +28,17 @@ const getTagsHTMLOptions = (paper) => {
  */
 const confirmDelete = (id) => {
     const title = STATE.papers[id].title;
-    $("body").append(`
-    <div style="width: 100%; height: 100%; background-color:  #e0e0e0; position: absolute; top: 0; left: 0; z-index: 100; display:  flex; justify-content:  center; align-items: center; flex-direction: column" id="confirm-modal">
-    
-    <div style="width: 80%; padding: 32px 32px; text-align: center; font-size: 1.1rem;">
-        Are you sure you want to delete:
-         <p>${title}</p>
-         ?
-    </div>
-    
-    <div style="width: 100%; text-align: center; padding: 32px;">
-        <button style="padding: 8px 16px;" id="cancel-modal-button">Cancel</button>
-        <span style="min-width: 32px;"></span>
-        <button style="padding: 8px 16px;" id="confirm-modal-button">Confirm</button>
-    </div>
-    
-    </div>
-    `);
+    $("body").append(/*html*/ `
+    <div id="confirm-modal">
+        <div style="width: 80%; padding: 32px 32px; text-align: center; font-size: 1.1rem;">
+            Are you sure you want to delete:<p>${title}</p>?
+        </div>
+        <div style="width: 100%; text-align: center; padding: 32px;">
+            <button style="padding: 8px 16px;" id="cancel-modal-button">Cancel</button>
+            <span style="min-width: 32px;"></span>
+            <button style="padding: 8px 16px;" id="confirm-modal-button">Confirm</button>
+        </div>
+    </div>`);
     $("#cancel-modal-button").on("click", () => {
         $("#confirm-modal").remove();
     });
@@ -130,8 +124,6 @@ const focusExistingOrCreateNewPaperTab = (paper) => {
     }
 
     chrome.tabs.query({ url: `*://${hostname}/*` }, (tabs) => {
-        console.log({ hostname, match, tabs });
-
         let validTabsIds = [];
         let pdfTabsIds = [];
         const urls = tabs.map((t) => t.url);
@@ -222,6 +214,10 @@ const saveCodeLink = (id, codeLink) => {
     });
 };
 
+/**
+ * Function to change the html content of #memory-sort-arrow to an up or down arrow
+ * @param {string} direction up/down string to change the arrow's direction
+ */
 const setMemorySortArrow = (direction) => {
     let arrow;
     if (direction === "up") {
@@ -237,6 +233,15 @@ const setMemorySortArrow = (direction) => {
     $("#memory-sort-arrow").html(arrow);
 };
 
+/**
+ * Function to produce the sorting order of papers: it compares 2 papers and
+ * returns -1 or 1 depending on which should come first.
+ * addDate count and lastOpenDate are sorted descending by default.
+ * Others (id, title) are sorted ascending by default.
+ * @param {object} paper1 First item in the comparison
+ * @param {object} paper2 Second item to compare
+ * @returns {number} 1 or -1 depending on the prevalence of paper1/paper2
+ */
 const orderPapers = (paper1, paper2) => {
     let val1 = paper1[STATE.sortKey];
     let val2 = paper2[STATE.sortKey];
@@ -251,17 +256,31 @@ const orderPapers = (paper1, paper2) => {
     return val1 > val2 ? 1 : -1;
 };
 
+/**
+ * Execute the sort operation on STATE.sortedPapers using orderPapers, removing the
+ * __dataVersion element in STATE.papers.
+ */
 const sortMemory = () => {
     STATE.sortedPapers = Object.values(cleanPapers(STATE.papers));
     STATE.sortedPapers.sort(orderPapers);
     STATE.papersList.sort(orderPapers);
 };
 
+/**
+ * Reverses the STATE's 2 ordered lists: sortedPapers and papersList
+ */
 const reverseMemory = () => {
     STATE.sortedPapers.reverse();
     STATE.papersList.reverse();
 };
 
+/**
+ * Function to filter the sortedPapers list into papersList, keeping papers whose
+ * title, author or note includes all the words in the query.
+ * e.g.: "cli ga" will look for all papers for which either their note, authors or title
+ *        contains both the strings "cli" and "ga".
+ * @param {string} letters The user's string query.
+ */
 const filterMemoryByString = (letters) => {
     const words = letters.split(" ");
     let papersList = [];
@@ -280,6 +299,13 @@ const filterMemoryByString = (letters) => {
     STATE.papersList = papersList;
 };
 
+/**
+ * Filters the sortedPapers into papersList, keeping papers whose tags match the query: all
+ * papers whose tags contain all words in the query. Triggered when a query starts with "t: ".
+ * e.g.: "cli ga" will look for all papers which have at least 1 tag containing the substring "cli"
+ *        AND at least 1 tag containing the substring "ga"
+ * @param {string} letters The string representing the tags query, deleting "t:" and splitting on " "
+ */
 const filterMemoryByTags = (letters) => {
     const tags = letters.replace("t:", "").toLowerCase().split(" ");
     let papersList = [];
@@ -292,6 +318,11 @@ const filterMemoryByTags = (letters) => {
     STATE.papersList = papersList;
 };
 
+/**
+ * Filters the sortedPapers into papersList, keeping papers whose code matches the query. Similar
+ * to filterMemoryByString but looks into the codeLink attribute. Triggered when a query starts with "c: ".
+ * @param {string} letters The string representing the code query, deleting "c:" and splitting on " "
+ */
 const filterMemoryByCode = (letters) => {
     const words = letters.replace("c:", "").toLowerCase().split(" ");
     let papersList = [];
@@ -305,6 +336,10 @@ const filterMemoryByCode = (letters) => {
     STATE.papersList = papersList;
 };
 
+/**
+ * Updates a paper's tag HTML list from the object's tags array.
+ * @param {string} id The paper's id
+ */
 const updatePaperTagsHTML = (id) => {
     const eid = id.replace(".", "\\.");
     findEl(eid, "tag-list").html(
@@ -314,6 +349,11 @@ const updatePaperTagsHTML = (id) => {
     );
 };
 
+/**
+ * Update the select2 input for tags, with options from the paper's tags array attribute,
+ * using getTagsHTMLOptions.
+ * @param {string} id The paper's id
+ */
 const updateTagOptions = (id) => {
     const eid = id.replace(".", "\\.");
     const tagOptions = getTagsHTMLOptions(id);
@@ -321,6 +361,11 @@ const updateTagOptions = (id) => {
     $(`#popup-item-tags--${eid}`).html(tagOptions);
 };
 
+/**
+ * Update a paper's tags array attribute from the user's selection in a select2 multi-select input.
+ * @param {string} id The paper's id
+ * @param {string} elementId The paper's html element selector (either an id for the popup main tags, or a class for a memory item)
+ */
 const updatePaperTags = (id, elementId) => {
     let tags = [];
     let ref;

@@ -458,3 +458,17 @@ button:hover {
     border-color: #0055b6;
     background-color: rgb(240, 240, 240);
 }
+
+#confirm-modal {
+    width: 100%;
+    height: 100%;
+    background-color: #e0e0e0;
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 100;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column
+}
