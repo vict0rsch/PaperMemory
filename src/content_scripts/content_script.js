@@ -158,6 +158,7 @@ const addOrCreatePaper = (is) => {
         // no papers in storage
         if (typeof papers === "undefined") {
             papers = {};
+            papers["__dataVersion"] = manifestDataVersion();
         }
 
         papers = await initState(papers, true);

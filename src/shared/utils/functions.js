@@ -384,12 +384,11 @@ const getPdfFn = (code) => {
 };
 
 const migrateData = async (papers, dataVersion) => {
-    const currentVersion = papers["__dataVersion"] || 1;
-    var deleteIds = [];
-
     if (typeof papers === "undefined") {
         return {};
     }
+    const currentVersion = papers["__dataVersion"] || 1;
+    var deleteIds = [];
 
     try {
         if (papers.hasOwnProperty("__dataVersion")) {
