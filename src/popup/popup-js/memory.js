@@ -115,12 +115,15 @@ const focusExistingOrCreateNewCodeTab = (codeLink) => {
  */
 const focusExistingOrCreateNewPaperTab = (paper) => {
     const hostname = parseUrl(paper.pdfLink).hostname;
+
+    // create the match string to look for in existing tabs
     let match = paper.pdfLink
-        .split("/")
-        .reverse()[0]
-        .replace("-Paper.pdf", "")
-        .replace(".pdf", "");
+        .split("/") // split on parts of the path
+        .reverse()[0] // get the last one
+        .replace("-Paper.pdf", "") // clean neurips-specific end
+        .replace(".pdf", ""); // remove .pdf
     if (match.match(/\d{5}v\d+$/) && paper.source === "arxiv") {
+        // remove potential pdf version on arxiv
         match = match.split("v")[0];
     }
 
@@ -368,19 +371,24 @@ const updateTagOptions = (id) => {
  * @param {string} elementId The paper's html element selector (either an id for the popup main tags, or a class for a memory item)
  */
 const updatePaperTags = (id, elementId) => {
-    let tags = [];
     let ref;
+    // elementId may be an ID selector (in the main popup)
+    // or a class selector (in the memory)
     if (elementId.startsWith("#")) {
         ref = $(elementId);
     } else {
         const eid = id.replace(".", "\\.");
         ref = findEl(eid, elementId);
     }
+    // Store :selected <options> in the tags array
+    let tags = [];
     ref.find(":selected").each((k, el) => {
         const t = $.trim($(el).val());
         if (t !== "") tags.push(t);
     });
 
+    // sort tags alphabetically to compare with the existing array of tags
+    // for this paper
     tags.sort();
     updated = false;
     if (STATE.papers[id].tags !== tags) updated = true;
@@ -388,10 +396,16 @@ const updatePaperTags = (id, elementId) => {
 
     console.log("Update tags to: " + tags.join(", "));
 
+    // If there's a change: update the global set of tags:
+    // we need to add or remove tags to the global suggestions array
+    // for select2
     if (updated) {
         chrome.storage.local.set({ papers: STATE.papers }, () => {
+            // update the selected tags in the select2 input for this paper
             updateTagOptions(id);
+            // update the displayed tags for this paper
             updatePaperTagsHTML(id);
+            // update the global set of tags
             makeTags();
         });
     }
@@ -421,8 +435,11 @@ const makeTags = () => {
 const displayMemoryTable = () => {
     const start = Date.now();
 
+    // Clear existing items
     var memoryTable = document.getElementById("memory-table");
     memoryTable.innerHTML = "";
+    // Add relevant sorted papers (papersList may be smaller than sortedPapers
+    // depending on the search query)
     for (const paper of STATE.papersList) {
         try {
             memoryTable.insertAdjacentHTML("beforeend", getMemoryItemHTML(paper));
@@ -436,55 +453,72 @@ const displayMemoryTable = () => {
 
     console.log("Rendering duration (s): " + (end - start) / 1000);
 
+    // after a click on such a button, the focus returns to the
+    // container to navigate with tab
     $(".back-to-focus").on("click", (e) => {
         const { id, eid } = eventId(e);
-        $(`#memory-item-container--${eid}`).focus();
+        setTimeout(() => {
+            $(`#memory-item-container--${eid}`).trigger("focus");
+        }, 250);
     });
+    // delete memory item
     $(".delete-memory-item").on("click", (e) => {
         const { id, eid } = eventId(e);
         confirmDelete(id);
     });
+    // Open paper page
     $(".memory-item-link").on("click", (e) => {
         const { id, eid } = eventId(e);
         focusExistingOrCreateNewPaperTab(STATE.papers[id]);
     });
+    // Open code page
     $(".memory-item-code-link").on("click", (e) => {
         const { id, eid } = eventId(e);
         const url = STATE.papers[id].codeLink;
         focusExistingOrCreateNewCodeTab(url);
     });
+    // Copy markdown link
     $(".memory-item-md").on("click", (e) => {
         const { id, eid } = eventId(e);
         const md = STATE.papers[id].md;
         copyAndConfirmMemoryItem(id, md, "Markdown link copied!");
     });
+    // Copy bibtex citation
     $(".memory-item-bibtext").on("click", (e) => {
         const { id, eid } = eventId(e);
         const bibtext = STATE.papers[id].bibtext;
         copyAndConfirmMemoryItem(id, bibtext, "Bibtex copied!");
     });
+    // Copy pdf link
     $(".memory-item-copy-link").on("click", (e) => {
         const { id, eid } = eventId(e);
         const pdfLink = STATE.papers[id].pdfLink;
         copyAndConfirmMemoryItem(id, pdfLink, "Pdf link copied!");
     });
+    // Put cursor at the end of the textarea's text on focus
+    // (default puts the cursor at the beginning of the text)
     $(".form-note-textarea").focus(function () {
         var that = this;
         textareaFocusEnd(that);
     });
-    $(".form-note").submit((e) => {
+    // Save fields on edits save
+    $(".form-note").on("submit", (e) => {
         e.preventDefault();
 
+        // Get content
         const { id, eid } = eventId(e);
         const note = findEl(eid, "form-note-textarea").val();
         const codeLink = findEl(eid, "form-code-input").val();
 
+        // Update metadata
         saveNote(id, note);
         saveCodeLink(id, codeLink);
         updatePaperTags(id, "memory-item-tags");
 
+        // Close edit form
         findEl(eid, "memory-item-edit").trigger("click");
     });
+    // Cancel edits: bring previous values from STATE back
     $(".cancel-note-form").on("click", (e) => {
         e.preventDefault();
         const { id, eid } = eventId(e);
@@ -492,8 +526,10 @@ const displayMemoryTable = () => {
         findEl(eid, "memory-item-tags").html(getTagsHTMLOptions(id));
         findEl(eid, "memory-item-edit").trigger("click");
     });
+    // When clicking on the edit button, either open or close the edit form
     $(".memory-item-edit").on("click", (e) => {
         e.preventDefault();
+        // find elements
         const { id, eid } = eventId(e);
         const edit = findEl(eid, "memory-item-edit");
         const codeAndNote = findEl(eid, "code-and-note");
@@ -504,29 +540,30 @@ const displayMemoryTable = () => {
         const actions = findEl(eid, "memory-item-actions");
 
         if (edit.hasClass("expand-open")) {
+            // The edit form is open
             edit.removeClass("expand-open");
-
+            // Open display elements
             codeAndNote.slideDown(250);
             tagList.slideDown(250);
             actions.slideDown(250);
-
+            // Close inputs
             editPaper.slideUp(250);
             tagEdit.slideUp(250);
         } else {
+            // The edit form is closed
             edit.addClass("expand-open");
-
+            // Enable select2 tags input
             tagSelect.select2({
                 ...select2Options,
                 width: "75%",
             });
-
+            // Close display elements
             codeAndNote.slideUp(250);
             tagList.slideUp(250);
             actions.slideUp(250);
-
+            // Show form
             editPaper.slideDown(250);
             tagEdit.slideDown(250);
-            // findEl(eid, "memory-item-tags").focus()
         }
     });
     const end2 = Date.now();
@@ -541,54 +578,31 @@ const displayMemoryTable = () => {
  */
 const openMemory = () => {
     var openTime = Date.now();
-    STATE.menuIsOpen && closeMenu();
 
+    STATE.menuIsOpen && closeMenu();
     STATE.memoryIsOpen = true;
+
     chrome.storage.local.get("papers", async function ({ papers }) {
         await initState(papers);
 
+        // Fill-in input placeholder
         $("#memory-search").attr(
             "placeholder",
             `Search ${STATE.papersList.length} entries ...`
         );
 
-        if (STATE.papersList.length < 20) {
-            delayTime = 0;
-        } else if (STATE.papersList.length < 50) {
-            delayTime = 200;
-        } else {
-            delayTime = 350;
-        }
-
-        $("#memory-search")
-            .on(
-                "keypress",
-                delay((e) => {
-                    const query = $.trim($(e.target).val());
-                    if (query.startsWith("t:")) {
-                        filterMemoryByTags(query);
-                    } else if (query.startsWith("c:")) {
-                        filterMemoryByCode(query);
-                    } else {
-                        filterMemoryByString(query);
-                    }
-                    displayMemoryTable();
-                }, delayTime)
-            )
-            .on("keyup", (e) => {
-                if (e.keyCode == 8) {
-                    $("#memory-search").trigger("keypress");
-                }
-            });
-
+        // Show paper list
         displayMemoryTable();
+
+        // wait a little before sliding up
         setTimeout(() => {
             $("#memory-container").slideDown({
                 duration: 200,
                 easing: "easeOutQuint",
                 complete: () => {
                     setTimeout(() => {
-                        $("#memory-search").focus();
+                        // auto-focus search field
+                        $("#memory-search").trigger("focus");
                         console.log(
                             "Time to display (s): " + (Date.now() - openTime) / 1000
                         );
@@ -596,22 +610,67 @@ const openMemory = () => {
                 },
             });
         }, 100);
+
+        // add input search delay if there are many papers:
+        // wait for some time between keystrokes before firing the search
+        if (STATE.papersList.length < 20) {
+            delayTime = 0;
+        } else if (STATE.papersList.length < 50) {
+            delayTime = 200;
+        } else {
+            delayTime = 350;
+        }
+        // search keypress events.
+        $("#memory-search")
+            .on(
+                "keypress", // deprecated fix: https://stackoverflow.com/questions/49278648/alternative-for-events-deprecated-keyboardevent-which-property
+                delay((e) => {
+                    // read input, return if empty (after trim)
+                    const query = $.trim($(e.target).val());
+                    if (!query) return;
+
+                    if (query.startsWith("t:")) {
+                        // look into tags
+                        filterMemoryByTags(query);
+                    } else if (query.startsWith("c:")) {
+                        // look into code links
+                        filterMemoryByCode(query);
+                    } else {
+                        // look into title & authors & notes
+                        filterMemoryByString(query);
+                    }
+                    // display filtered papers
+                    displayMemoryTable();
+                }, delayTime)
+            )
+            .on("keyup", (e) => {
+                // keyup because keypress does not listen to backspaces
+                if (e.key == "Backspace") {
+                    $("#memory-search").trigger("keypress");
+                }
+            });
     });
 
+    // hide menu button
     $("#tabler-menu").fadeOut();
+    // set default sort to lastOpenDate
     $("#memory-select").val("lastOpenDate");
+    // set default sort direction arrow down
     setMemorySortArrow("down");
 
+    // remove ArxivMemory button and show the (x) to close it
     $("#memory-switch-text-on").fadeOut(() => {
         $("#memory-switch-text-off").fadeIn();
     });
-    $("#memory-select").change((e) => {
+    // listen to sorting feature change
+    $("#memory-select").on("change", (e) => {
         const sort = $(e.target).val();
         STATE.sortKey = sort;
         sortMemory();
         displayMemoryTable();
         setMemorySortArrow("down");
     });
+    // listen to sorting direction change
     $("#memory-sort-arrow").on("click", (e) => {
         if ($("#memory-sort-arrow svg").first()[0].id === "memory-sort-arrow-down") {
             setMemorySortArrow("up");
