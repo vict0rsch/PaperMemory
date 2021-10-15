@@ -161,14 +161,13 @@ const main = (url) => {
             $("#notPdf").hide();
             $("#isArxiv").show();
             const id = parseIdFromUrl(url);
+            STATE.currentId = id;
 
             chrome.storage.local.get("papers", async ({ papers }) => {
                 await initState(papers);
                 if (!papers.hasOwnProperty(id)) {
                     console.log("Unknown id " + id);
-                    $("#isArxiv").html(
-                        /* html */ `<div style="font-size: 1.5rem;">This paper is not in your memory</div><h4>Refresh the page to add it back</h4>`
-                    );
+                    updatePopupPaperNoMemory();
                     return;
                 }
 

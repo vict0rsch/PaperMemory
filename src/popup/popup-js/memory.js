@@ -22,6 +22,13 @@ const getTagsHTMLOptions = (paper) => {
         .join("");
 };
 
+const updatePopupPaperNoMemory = () => {
+    $("#isArxiv").html(/*html*/ `
+        <div style="font-size: 1.5rem;">This paper is not in your memory</div>
+        <h4> Refresh the page to add it back </h4>
+    `);
+};
+
 /**
  * Delete a paper ; display a modal first to get uer confirmation
  * @param {string} id Id of the paper to delete
@@ -50,6 +57,9 @@ const confirmDelete = (id) => {
             displayMemoryTable();
             $("#confirm-modal").remove();
             console.log("Successfully deleted '" + title + "' from ArxivMemory");
+            if (STATE.currentId === id) {
+                updatePopupPaperNoMemory();
+            }
         });
     });
 };
