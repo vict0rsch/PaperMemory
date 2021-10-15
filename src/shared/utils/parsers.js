@@ -146,7 +146,7 @@ const parseCvfHTML = (url, htmlText) => {
     return { key, title, author, year, id, pdfLink, bibtext, conf };
 };
 
-const fetchArxivBibtex = async (id) => {
+const fetchArxivXML = async (id) => {
     id += "";
     id.replace("Arxiv-", "");
     return $.get(`https://export.arxiv.org/api/query?id_list=${id}`);
