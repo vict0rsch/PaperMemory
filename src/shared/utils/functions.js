@@ -541,8 +541,8 @@ const manifestDataVersion = () => {
 };
 
 const initState = async (papers, is_content_script) => {
-    console.log("Found papers:");
-    console.log(papers);
+    console.log("Found papers:", papers);
+
     STATE.dataVersion = manifestDataVersion();
     STATE.pdfTitleFn = defaultPDFTitleFn;
 
