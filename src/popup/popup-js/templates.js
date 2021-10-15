@@ -138,7 +138,13 @@ const getMemoryItemHTML = (paper) => {
     `;
 };
 
-const getPopupItemHTML = (paper) => {
+/**
+ * Return a formatted HTML string to edit the user's stored metadata
+ * about a paper: tags, notes, code link
+ * @param {object} paper A paper object
+ * @returns HTML string
+ */
+const getPopupEditFormHTML = (paper) => {
     const id = paper.id;
     const tagOptions = getTagsHTMLOptions(paper);
     const note = paper.note || "";
@@ -178,7 +184,12 @@ const getPopupItemHTML = (paper) => {
     </div>`;
 };
 
-const getPopupIconsHTML = (paper, currentUrl) => {
+/**
+ * Return a formatted HTML string with the svg icons to display in the main popup
+ * @param {object} paper A paper object
+ * @returns HTML string
+ */
+const getPopupPaperIconsHTML = (paper, currentUrl) => {
     const id = paper.id;
     const display =
         paper.source !== "arxiv" || currentUrl.indexOf(".pdf") < 0 ? "none" : "inherit";

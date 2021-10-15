@@ -10,7 +10,7 @@ const findEl = (eid, className) => {
 
 const getTagsHTMLOptions = (paper) => {
     const tags = new Set(paper.tags);
-    return Array.from(STATE.paperTags)
+    return Array.from(_state.paperTags)
         .sort()
         .map((t, i) => {
             let h = `<option value="${t}"`;
@@ -34,7 +34,7 @@ const updatePopupPaperNoMemory = () => {
  * @param {string} id Id of the paper to delete
  */
 const confirmDelete = (id) => {
-    const title = STATE.papers[id].title;
+    const title = _state.papers[id].title;
     $("body").append(/*html*/ `
     <div id="confirm-modal">
         <div style="width: 80%; padding: 32px 32px; text-align: center; font-size: 1.1rem;">
@@ -50,14 +50,14 @@ const confirmDelete = (id) => {
         $("#confirm-modal").remove();
     });
     $("#confirm-modal-button").on("click", () => {
-        delete STATE.papers[id];
-        chrome.storage.local.set({ papers: STATE.papers }, () => {
-            STATE.papersList = Object.values(cleanPapers(STATE.papers));
+        delete _state.papers[id];
+        chrome.storage.local.set({ papers: _state.papers }, () => {
+            _state.papersList = Object.values(cleanPapers(_state.papers));
             sortMemory();
             displayMemoryTable();
             $("#confirm-modal").remove();
             console.log("Successfully deleted '" + title + "' from ArxivMemory");
-            if (STATE.currentId === id) {
+            if (_state.currentId === id) {
                 updatePopupPaperNoMemory();
             }
         });
@@ -173,8 +173,8 @@ const focusExistingOrCreateNewPaperTab = (paper) => {
             chrome.tabs.create({ url: paper.pdfLink });
         }
 
-        STATE.papers[paper.id].count += 1;
-        chrome.storage.local.set({ papers: STATE.papers });
+        _state.papers[paper.id].count += 1;
+        chrome.storage.local.set({ papers: _state.papers });
     });
 };
 
@@ -188,10 +188,10 @@ const focusExistingOrCreateNewPaperTab = (paper) => {
  */
 const saveNote = (id, note) => {
     note = $.trim(note);
-    STATE.papers[id].note = note;
+    _state.papers[id].note = note;
     const eid = id.replace(".", "\\.");
-    chrome.storage.local.set({ papers: STATE.papers }, () => {
-        console.log("Updated the note for " + STATE.papers[id].title);
+    chrome.storage.local.set({ papers: _state.papers }, () => {
+        console.log("Updated the note for " + _state.papers[id].title);
 
         findEl(eid, "memory-note-div").html(
             note
@@ -217,10 +217,10 @@ const saveNote = (id, note) => {
  */
 const saveCodeLink = (id, codeLink) => {
     codeLink = $.trim(codeLink);
-    STATE.papers[id].codeLink = codeLink;
+    _state.papers[id].codeLink = codeLink;
     const eid = id.replace(".", "\\.");
-    chrome.storage.local.set({ papers: STATE.papers }, () => {
-        console.log(`Updated the code for ${STATE.papers[id].title} to ${codeLink}`);
+    chrome.storage.local.set({ papers: _state.papers }, () => {
+        console.log(`Updated the code for ${_state.papers[id].title} to ${codeLink}`);
         findEl(eid, "memory-item-code-link").html(codeLink);
         $(`#popup-code-link`).text(codeLink);
         findEl(eid, "form-code-input").val(codeLink);
@@ -257,35 +257,35 @@ const setMemorySortArrow = (direction) => {
  * @returns {number} 1 or -1 depending on the prevalence of paper1/paper2
  */
 const orderPapers = (paper1, paper2) => {
-    let val1 = paper1[STATE.sortKey];
-    let val2 = paper2[STATE.sortKey];
+    let val1 = paper1[_state.sortKey];
+    let val2 = paper2[_state.sortKey];
 
     if (typeof val1 === "string") {
         val1 = val1.toLowerCase();
         val2 = val2.toLowerCase();
     }
-    if (["addDate", "count", "lastOpenDate"].indexOf(STATE.sortKey) >= 0) {
+    if (["addDate", "count", "lastOpenDate"].indexOf(_state.sortKey) >= 0) {
         return val1 > val2 ? -1 : 1;
     }
     return val1 > val2 ? 1 : -1;
 };
 
 /**
- * Execute the sort operation on STATE.sortedPapers using orderPapers, removing the
- * __dataVersion element in STATE.papers.
+ * Execute the sort operation on _state.sortedPapers using orderPapers, removing the
+ * __dataVersion element in _state.papers.
  */
 const sortMemory = () => {
-    STATE.sortedPapers = Object.values(cleanPapers(STATE.papers));
-    STATE.sortedPapers.sort(orderPapers);
-    STATE.papersList.sort(orderPapers);
+    _state.sortedPapers = Object.values(cleanPapers(_state.papers));
+    _state.sortedPapers.sort(orderPapers);
+    _state.papersList.sort(orderPapers);
 };
 
 /**
- * Reverses the STATE's 2 ordered lists: sortedPapers and papersList
+ * Reverses the _state's 2 ordered lists: sortedPapers and papersList
  */
 const reverseMemory = () => {
-    STATE.sortedPapers.reverse();
-    STATE.papersList.reverse();
+    _state.sortedPapers.reverse();
+    _state.papersList.reverse();
 };
 
 /**
@@ -298,7 +298,7 @@ const reverseMemory = () => {
 const filterMemoryByString = (letters) => {
     const words = letters.split(" ");
     let papersList = [];
-    for (const paper of STATE.sortedPapers) {
+    for (const paper of _state.sortedPapers) {
         const title = paper.title.toLowerCase();
         const author = paper.author.toLowerCase();
         const note = paper.note.toLowerCase();
@@ -310,7 +310,7 @@ const filterMemoryByString = (letters) => {
             papersList.push(paper);
         }
     }
-    STATE.papersList = papersList;
+    _state.papersList = papersList;
 };
 
 /**
@@ -323,13 +323,13 @@ const filterMemoryByString = (letters) => {
 const filterMemoryByTags = (letters) => {
     const tags = letters.replace("t:", "").toLowerCase().split(" ");
     let papersList = [];
-    for (const paper of STATE.sortedPapers) {
+    for (const paper of _state.sortedPapers) {
         const paperTags = paper.tags.map((t) => t.toLowerCase());
         if (tags.every((t) => paperTags.some((pt) => pt.indexOf(t) >= 0))) {
             papersList.push(paper);
         }
     }
-    STATE.papersList = papersList;
+    _state.papersList = papersList;
 };
 
 /**
@@ -340,14 +340,14 @@ const filterMemoryByTags = (letters) => {
 const filterMemoryByCode = (letters) => {
     const words = letters.replace("c:", "").toLowerCase().split(" ");
     let papersList = [];
-    for (const paper of STATE.sortedPapers) {
+    for (const paper of _state.sortedPapers) {
         let paperCode = paper.codeLink || "";
         paperCode = paperCode.toLowerCase();
         if (words.every((w) => paperCode.includes(w))) {
             papersList.push(paper);
         }
     }
-    STATE.papersList = papersList;
+    _state.papersList = papersList;
 };
 
 /**
@@ -357,7 +357,7 @@ const filterMemoryByCode = (letters) => {
 const updatePaperTagsHTML = (id) => {
     const eid = id.replace(".", "\\.");
     findEl(eid, "tag-list").html(
-        STATE.papers[id].tags
+        _state.papers[id].tags
             .map((t) => `<span class="memory-tag">${t}</span>`)
             .join("")
     );
@@ -401,8 +401,8 @@ const updatePaperTags = (id, elementId) => {
     // for this paper
     tags.sort();
     updated = false;
-    if (STATE.papers[id].tags !== tags) updated = true;
-    STATE.papers[id].tags = tags;
+    if (_state.papers[id].tags !== tags) updated = true;
+    _state.papers[id].tags = tags;
 
     console.log("Update tags to: " + tags.join(", "));
 
@@ -410,7 +410,7 @@ const updatePaperTags = (id, elementId) => {
     // we need to add or remove tags to the global suggestions array
     // for select2
     if (updated) {
-        chrome.storage.local.set({ papers: STATE.papers }, () => {
+        chrome.storage.local.set({ papers: _state.papers }, () => {
             // update the selected tags in the select2 input for this paper
             updateTagOptions(id);
             // update the displayed tags for this paper
@@ -428,13 +428,13 @@ const updatePaperTags = (id, elementId) => {
  */
 const makeTags = () => {
     let tags = new Set();
-    for (const p of STATE.sortedPapers) {
+    for (const p of _state.sortedPapers) {
         for (const t of p.tags) {
             tags.add(t);
         }
     }
-    STATE.paperTags = Array.from(tags);
-    STATE.paperTags.sort();
+    _state.paperTags = Array.from(tags);
+    _state.paperTags.sort();
 };
 
 /**
@@ -450,7 +450,7 @@ const displayMemoryTable = () => {
     memoryTable.innerHTML = "";
     // Add relevant sorted papers (papersList may be smaller than sortedPapers
     // depending on the search query)
-    for (const paper of STATE.papersList) {
+    for (const paper of _state.papersList) {
         try {
             memoryTable.insertAdjacentHTML("beforeend", getMemoryItemHTML(paper));
         } catch (error) {
@@ -479,30 +479,30 @@ const displayMemoryTable = () => {
     // Open paper page
     $(".memory-item-link").on("click", (e) => {
         const { id, eid } = eventId(e);
-        focusExistingOrCreateNewPaperTab(STATE.papers[id]);
+        focusExistingOrCreateNewPaperTab(_state.papers[id]);
     });
     // Open code page
     $(".memory-item-code-link").on("click", (e) => {
         const { id, eid } = eventId(e);
-        const url = STATE.papers[id].codeLink;
+        const url = _state.papers[id].codeLink;
         focusExistingOrCreateNewCodeTab(url);
     });
     // Copy markdown link
     $(".memory-item-md").on("click", (e) => {
         const { id, eid } = eventId(e);
-        const md = STATE.papers[id].md;
+        const md = _state.papers[id].md;
         copyAndConfirmMemoryItem(id, md, "Markdown link copied!");
     });
     // Copy bibtex citation
     $(".memory-item-bibtext").on("click", (e) => {
         const { id, eid } = eventId(e);
-        const bibtext = STATE.papers[id].bibtext;
+        const bibtext = _state.papers[id].bibtext;
         copyAndConfirmMemoryItem(id, bibtext, "Bibtex copied!");
     });
     // Copy pdf link
     $(".memory-item-copy-link").on("click", (e) => {
         const { id, eid } = eventId(e);
-        const pdfLink = STATE.papers[id].pdfLink;
+        const pdfLink = _state.papers[id].pdfLink;
         copyAndConfirmMemoryItem(id, pdfLink, "Pdf link copied!");
     });
     // Put cursor at the end of the textarea's text on focus
@@ -528,11 +528,11 @@ const displayMemoryTable = () => {
         // Close edit form
         findEl(eid, "memory-item-edit").trigger("click");
     });
-    // Cancel edits: bring previous values from STATE back
+    // Cancel edits: bring previous values from _state back
     $(".cancel-note-form").on("click", (e) => {
         e.preventDefault();
         const { id, eid } = eventId(e);
-        findEl(eid, "form-note-textarea").val(STATE.papers[id].note);
+        findEl(eid, "form-note-textarea").val(_state.papers[id].note);
         findEl(eid, "memory-item-tags").html(getTagsHTMLOptions(id));
         findEl(eid, "memory-item-edit").trigger("click");
     });
@@ -564,7 +564,7 @@ const displayMemoryTable = () => {
             edit.addClass("expand-open");
             // Enable select2 tags input
             tagSelect.select2({
-                ...select2Options,
+                ..._select2Options,
                 width: "75%",
             });
             // Close display elements
@@ -589,8 +589,8 @@ const displayMemoryTable = () => {
 const openMemory = () => {
     var openTime = Date.now();
 
-    STATE.menuIsOpen && closeMenu();
-    STATE.memoryIsOpen = true;
+    _state.menuIsOpen && closeMenu();
+    _state.memoryIsOpen = true;
 
     chrome.storage.local.get("papers", async function ({ papers }) {
         await initState(papers);
@@ -598,7 +598,7 @@ const openMemory = () => {
         // Fill-in input placeholder
         $("#memory-search").attr(
             "placeholder",
-            `Search ${STATE.papersList.length} entries ...`
+            `Search ${_state.papersList.length} entries ...`
         );
 
         // Show paper list
@@ -623,9 +623,9 @@ const openMemory = () => {
 
         // add input search delay if there are many papers:
         // wait for some time between keystrokes before firing the search
-        if (STATE.papersList.length < 20) {
+        if (_state.papersList.length < 20) {
             delayTime = 0;
-        } else if (STATE.papersList.length < 50) {
+        } else if (_state.papersList.length < 50) {
             delayTime = 200;
         } else {
             delayTime = 350;
@@ -675,7 +675,7 @@ const openMemory = () => {
     // listen to sorting feature change
     $("#memory-select").on("change", (e) => {
         const sort = $(e.target).val();
-        STATE.sortKey = sort;
+        _state.sortKey = sort;
         sortMemory();
         displayMemoryTable();
         setMemorySortArrow("down");
@@ -705,5 +705,5 @@ const closeMemory = () => {
     });
     $("#tabler-menu").fadeIn();
     $("#memory-search").val("");
-    STATE.memoryIsOpen = false;
+    _state.memoryIsOpen = false;
 };

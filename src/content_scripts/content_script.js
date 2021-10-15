@@ -257,7 +257,7 @@ const arxiv = (checks) => {
         $(".abs-button.download-pdf").first().attr("href") +
         ".pdf";
 
-    STATE.pdfTitleFn = pdfTitleFn;
+    _state.pdfTitleFn = pdfTitleFn;
 
     // -----------------------------
     // -----  Download Button  -----
@@ -487,7 +487,7 @@ $(() => {
     const url = window.location.href;
 
     if (
-        !Object.values(knownPaperPages)
+        !Object.values(_knownPaperPages)
             .reduce((a, b) => a.concat(b), [])
             .some((d) => url.includes(d))
     ) {
@@ -497,9 +497,9 @@ $(() => {
 
     console.log("Executing Arxiv Tools content script");
 
-    chrome.storage.local.get(menuStorageKeys, (storedMenu) => {
+    chrome.storage.local.get(_menuStorageKeys, (storedMenu) => {
         let menu = {};
-        for (const m of menuCheckNames) {
+        for (const m of _menuCheckNames) {
             menu[m] = storedMenu.hasOwnProperty(m) ? storedMenu[m] : true;
         }
 

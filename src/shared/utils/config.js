@@ -1,4 +1,12 @@
-var STATE = {
+/**
+ * Global variable & constants are stored in this file to be used by
+ * other files such as functions.js, parsers.js, memory.js, popup.js
+ */
+
+/**
+ * The popup's global state to store data across functions
+ */
+var _state = {
     menuIsOpen: false,
     memoryIsOpen: false,
     papers: {},
@@ -10,7 +18,10 @@ var STATE = {
     pdfTitleFn: null,
 };
 
-const select2Options = {
+/**
+ * Shared configuration for the Tags' select2 inputs
+ */
+const _select2Options = {
     placeholder: "Tag paper...",
     maximumSelectionLength: 5,
     allowClear: true,
@@ -18,7 +29,10 @@ const select2Options = {
     tokenSeparators: [",", " "],
 };
 
-const menuCheckNames = [
+/**
+ * The array of keys in the menu, i.e. options the user can dis/enable in the menu
+ */
+const _menuCheckNames = [
     "checkBib",
     "checkMd",
     "checkDownload",
@@ -26,15 +40,24 @@ const menuCheckNames = [
     "checkVanity",
     "checkFeedback",
 ];
-const menuStorageKeys = [...menuCheckNames, "pdfTitleFn"];
+/**
+ * All keys to retrieve from the menu, the checkboxes + the custom pdf function
+ */
+const _menuStorageKeys = [..._menuCheckNames, "pdfTitleFn"];
 
-const knownPaperPages = {
+/**
+ * Map of known data sources to the associated paper urls: pdf urls and web-pages urls.
+ */
+const _knownPaperPages = {
     arxiv: ["arxiv.org/pdf/", "arxiv.org/abs/"],
     neurips: ["neurips.cc/paper/"],
     cvf: ["openaccess.thecvf.com/content"],
 };
 
-const englishStopWords = new Set([
+/**
+ * English words to ignore when creating an arxiv paper's BibTex key.
+ */
+const _englishStopWords = new Set([
     [
         "i",
         "me",

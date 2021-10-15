@@ -316,7 +316,7 @@ const downloadTextFile = (content, fileName, contentType) => {
     var file = new Blob([content], { type: contentType });
     a.href = URL.createObjectURL(file);
     a.download = fileName;
-    a.trigger("click");
+    a.click();
 };
 
 const eventId = (e) => {
@@ -360,6 +360,14 @@ const download_file = (fileURL, fileName) => {
     }
 };
 
+/**
+ * Tries to parse the text input by the user to define the function that takes
+ * a paper's title and ID in order to create the custom page title / pdf filename.
+ * If there is an error, it uses the built-in function defaultPDFTitleFn.
+ * @param {string} code The string describing the code function.
+ * @returns {function} Either the user's function if it runs without errors, or the built-in
+ * formatting function
+ */
 const getPdfFn = (code) => {
     try {
         pdfTitleFn = eval(code);
@@ -522,7 +530,7 @@ const backupData = async (papers) => {
 const statePdfTitle = (title, id) => {
     let name;
     try {
-        name = STATE.pdfTitleFn(title, id);
+        name = _state.pdfTitleFn(title, id);
     } catch (error) {
         name = defaultPDFTitleFn(title, id);
     }
@@ -543,16 +551,16 @@ const manifestDataVersion = () => {
 const initState = async (papers, is_content_script) => {
     console.log("Found papers:", papers);
 
-    STATE.dataVersion = manifestDataVersion();
-    STATE.pdfTitleFn = defaultPDFTitleFn;
+    _state.dataVersion = manifestDataVersion();
+    _state.pdfTitleFn = defaultPDFTitleFn;
 
-    papers = await migrateData(papers, STATE.dataVersion);
+    papers = await migrateData(papers, _state.dataVersion);
 
     if (is_content_script) return papers;
 
-    STATE.papers = papers;
-    STATE.papersList = Object.values(cleanPapers(papers));
-    STATE.sortKey = "lastOpenDate";
+    _state.papers = papers;
+    _state.papersList = Object.values(cleanPapers(papers));
+    _state.sortKey = "lastOpenDate";
     sortMemory();
     makeTags();
 };
@@ -590,8 +598,8 @@ const parseCVFUrl = (url) => {
 const isPaper = (url) => {
     const a = parseUrl(url);
     let is = {};
-    for (const source in knownPaperPages) {
-        const paths = knownPaperPages[source];
+    for (const source in _knownPaperPages) {
+        const paths = _knownPaperPages[source];
         is[source] = false;
         for (const path of paths) {
             if (url.includes(path)) {
@@ -624,7 +632,7 @@ const handlePopupKeydown = (e) => {
         return;
     }
 
-    if (STATE.menuIsOpen) {
+    if (_state.menuIsOpen) {
         if (e.which === 27) {
             // escape closes menu
             e.preventDefault();
@@ -633,7 +641,7 @@ const handlePopupKeydown = (e) => {
         return;
     }
 
-    if (!STATE.memoryIsOpen) {
+    if (!_state.memoryIsOpen) {
         if (e.which == 65) {
             // a opens the arxiv memory
             if ($(":focus").length) return;
@@ -726,7 +734,7 @@ const validatePaper = (paper) => {
         }
     }
 
-    const sources = Object.keys(knownPaperPages);
+    const sources = Object.keys(_knownPaperPages);
     if (sources.indexOf(paper.source) < 0) {
         console.warn(`Unknown source ${paper.source} for paper ${paper}`);
     }

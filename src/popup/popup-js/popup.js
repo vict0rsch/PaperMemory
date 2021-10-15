@@ -14,7 +14,7 @@ const closeMenu = () => {
             `);
             $("#tabler-menu").fadeIn();
         });
-    STATE.menuIsOpen = false;
+    _state.menuIsOpen = false;
 };
 
 /**
@@ -32,7 +32,7 @@ const openMenu = () => {
             </svg>`);
             $("#tabler-menu").fadeIn();
         });
-    STATE.menuIsOpen = true;
+    _state.menuIsOpen = true;
 };
 /**
  * Parses menu options from the storage and adds events listeners for their change.
@@ -44,7 +44,7 @@ const getAndTrackPopupMenuChecks = (menu, menuCheckNames) => {
     let setValues = {};
     for (const key of menuCheckNames) {
         setValues[key] = menu.hasOwnProperty(key) ? menu[key] : true;
-        $("#" + key).prop("checked", menu[key]);
+        $("#" + key).prop("checked", setValues[key]);
     }
     chrome.storage.local.set(setValues);
 
@@ -58,6 +58,9 @@ const getAndTrackPopupMenuChecks = (menu, menuCheckNames) => {
     }
 };
 
+/**
+ * Creates click events on the popup
+ */
 const setStandardPopupClicks = () => {
     $("#helpGithubLink").on("click", () => {
         chrome.tabs.create({
@@ -71,18 +74,12 @@ const setStandardPopupClicks = () => {
         });
     });
 
-    $("#coblock").on("click", () => {
-        chrome.tabs.update({
-            url: "https://marketplace.visualstudio.com/items?itemName=vict0rsch.coblock",
-        });
-    });
-
     $("#tabler-menu").on("click", () => {
-        STATE.menuIsOpen ? closeMenu() : openMenu();
+        _state.menuIsOpen ? closeMenu() : openMenu();
     });
 
     $("#memory-switch").on("click", () => {
-        STATE.memoryIsOpen ? closeMemory() : openMemory();
+        _state.memoryIsOpen ? closeMemory() : openMemory();
     });
 
     $("#download-arxivmemory").on("click", () => {
@@ -98,36 +95,58 @@ const setStandardPopupClicks = () => {
     });
 };
 
+/**
+ * Retrieve the custom pdf function, updates the associated textarea and adds and
+ * event listener for when the latter changes.
+ * @param {object} menu the user's menu options, especially including pdfTitleFn
+ */
 const setAndHandleCustomPDFFunction = (menu) => {
+    // attempt to use the user's custom function
     if (menu.pdfTitleFn && typeof menu.pdfTitleFn === "string") {
-        STATE.pdfTitleFn = getPdfFn(menu.pdfTitleFn);
+        _state.pdfTitleFn = getPdfFn(menu.pdfTitleFn);
     }
-    chrome.storage.local.set({ pdfTitleFn: STATE.pdfTitleFn.toString() });
-    $("#customPdfTitleTextarea").val(STATE.pdfTitleFn.toString());
-
+    // it may have failed but getPdfFn is guaranteed to return a working function
+    // so use that and update storage just in case.
+    chrome.storage.local.set({ pdfTitleFn: _state.pdfTitleFn.toString() });
+    // update the user's textarea
+    $("#customPdfTitleTextarea").val(_state.pdfTitleFn.toString());
+    // listen to saving click
     $("#saveCustomPdf").on("click", () => {
         const code = $.trim($("#customPdfTitleTextarea").val());
         try {
+            // check code: it can be evaluated and it runs without error
             const fn = eval(code);
-            fn("test", "1.2");
+            const tested = fn("test", "1.2");
+            if (typeof tested !== "string") {
+                throw Error(
+                    "Custom function returns the wrong type:",
+                    typeof tested,
+                    tested
+                );
+            }
+            // no error so far: all good!
             $("#customPdfFeedback").html(
                 /*html*/ `<span style="color: green">Saved!</span>`
             );
+            // save function string
             chrome.storage.local.set({ pdfTitleFn: code });
-            STATE.pdfTitleFn = fn;
+            _state.pdfTitleFn = fn;
             setTimeout(() => {
                 $("#customPdfFeedback").html("");
             }, 1000);
         } catch (error) {
+            // something went wrong!
             $("#customPdfFeedback").html(
                 /*html*/ `<span style="color: red">${error}</span>`
             );
         }
     });
+    // listen to the event resetting the pdf title function
+    // to the built-in default
     $("#defaultCustomPdf").on("click", () => {
         const code = defaultPDFTitleFn.toString();
         chrome.storage.local.set({ pdfTitleFn: code });
-        STATE.pdfTitleFn = defaultPDFTitleFn;
+        _state.pdfTitleFn = defaultPDFTitleFn;
         $("#customPdfTitleTextarea").val(code);
         $("#customPdfFeedback").html(
             /*html*/ `<span style="color: green">Saved!</span>`
@@ -138,12 +157,18 @@ const setAndHandleCustomPDFFunction = (menu) => {
     });
 };
 
+/**
+ * Main function when opening the window:
+ * + Display the appropriate html depending on whether the user is currently looking at a paper
+ * + Add event listeners (clicks and keyboard)
+ * @param {str} url Currently focused and active tab's url.
+ */
 const main = (url) => {
     $(document).on("keydown", handlePopupKeydown);
 
-    chrome.storage.local.get(menuStorageKeys, (menu) => {
+    chrome.storage.local.get(_menuStorageKeys, (menu) => {
         // Set checkboxes
-        getAndTrackPopupMenuChecks(menu, menuCheckNames);
+        getAndTrackPopupMenuChecks(menu, _menuCheckNames);
 
         // Set click events (regardless of paper)
         setStandardPopupClicks();
@@ -162,7 +187,7 @@ const main = (url) => {
             $("#notPdf").hide();
             $("#isArxiv").show();
             const id = parseIdFromUrl(url);
-            STATE.currentId = id;
+            _state.currentId = id;
 
             chrome.storage.local.get("papers", async ({ papers }) => {
                 await initState(papers);
@@ -173,7 +198,7 @@ const main = (url) => {
                     return;
                 }
 
-                const paper = STATE.papers[id];
+                const paper = _state.papers[id];
                 const eid = paper.id.replace(".", "\\.");
 
                 // -----------------------------
@@ -189,14 +214,14 @@ const main = (url) => {
                 // ----------------------------------
                 // -----  Customize Popup html  -----
                 // ----------------------------------
-                $("#popup-memory-edit").append(getPopupItemHTML(paper));
-                $("#popup-copy-icons").html(getPopupIconsHTML(paper, url));
+                $("#popup-memory-edit").append(getPopupEditFormHTML(paper));
+                $("#popup-copy-icons").html(getPopupPaperIconsHTML(paper, url));
 
                 // --------------------------
                 // -----  Paper  edits  -----
                 // --------------------------
                 $(`#popup-item-tags--${eid}`).select2({
-                    ...select2Options,
+                    ..._select2Options,
                     width: "87%",
                 });
                 $("body").css("height", "auto");
@@ -236,15 +261,15 @@ const main = (url) => {
                     }
                 });
                 $(`#popup-memory-item-copy-link--${eid}`).on("click", () => {
-                    const pdfLink = STATE.papers[id].pdfLink;
+                    const pdfLink = _state.papers[id].pdfLink;
                     copyAndConfirmMemoryItem(id, pdfLink, "Pdf link copied!", true);
                 });
                 $(`#popup-memory-item-md--${eid}`).on("click", () => {
-                    const md = STATE.papers[id].md;
+                    const md = _state.papers[id].md;
                     copyAndConfirmMemoryItem(id, md, "MarkDown link copied!", true);
                 });
                 $(`#popup-memory-item-bibtex--${eid}`).on("click", () => {
-                    const bibtext = formatBibtext(STATE.papers[id].bibtext);
+                    const bibtext = formatBibtext(_state.papers[id].bibtext);
                     copyAndConfirmMemoryItem(
                         id,
                         bibtext,
