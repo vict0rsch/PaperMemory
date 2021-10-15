@@ -628,12 +628,13 @@ const parseIdFromUrl = (url) => {
 };
 
 const handlePopupKeydown = (e) => {
-    if ([8, 13, 27, 65, 69].indexOf(e.which) < 0) {
+    const key = e.key;
+    if (["Backspace", "Enter", "Escape", "a", "e"].indexOf(key) < 0) {
         return;
     }
 
     if (_state.menuIsOpen) {
-        if (e.which === 27) {
+        if (key === "Escape") {
             // escape closes menu
             e.preventDefault();
             closeMenu();
@@ -642,11 +643,10 @@ const handlePopupKeydown = (e) => {
     }
 
     if (!_state.memoryIsOpen) {
-        if (e.which == 65) {
+        if (key === "a") {
             // a opens the arxiv memory
-            if ($(":focus").length) return;
             $("#memory-switch").trigger("click");
-        } else if (e.which == 13) {
+        } else if (key === "Enter") {
             // enter on the arxiv memory button opens it
             let el = $("#memory-switch-text-on:focus").first();
             if (el.length > 0) {
@@ -657,7 +657,7 @@ const handlePopupKeydown = (e) => {
             el = $("#tabler-menu:focus").first();
             if (el.length > 0) {
                 $("#tabler-menu").trigger("click");
-                $("#tabler-menu").blur();
+                $("#tabler-menu").trigger("blur");
                 return;
             }
         }
@@ -668,24 +668,24 @@ const handlePopupKeydown = (e) => {
 
     let id, eid;
     const el = $(".memory-item-container:focus").first();
-    if (e.which !== 27) {
+    if (key !== "Escape") {
         if (el.length !== 1) return;
         id = el.attr("id").split("--")[1];
         eid = id.replace(".", "\\.");
     }
 
-    if (e.which === 8) {
+    if (key === "Backspace") {
         // delete
         findEl(eid, "delete-memory-item").trigger("click");
-    } else if (e.which === 13) {
-        // enter
+    } else if (key === "Enter") {
+        // open paper
         findEl(eid, "memory-item-link").trigger("click");
-    } else if (e.which === 27) {
-        // esc
+    } else if (key === "Escape") {
+        // close memory
         e.preventDefault();
         closeMemory();
-    } else if (e.which === 69) {
-        // e
+    } else if (key === "e") {
+        // edit item
         findEl(eid, "memory-item-edit").trigger("click");
     }
 };
