@@ -202,7 +202,7 @@ const addOrUpdatePaper = (is, checks) => {
 const makePaper = async (is, url, id) => {
     let paper;
     if (is.arxiv) {
-        const data = await fetchArxivBibtex(id);
+        const data = await fetchArxivXML(id);
         const { bibvars, bibtext } = parseArxivBibtex(data);
         paper = bibvars;
         paper.bibtext = bibtext;
