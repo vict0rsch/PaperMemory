@@ -1,10 +1,13 @@
+/**
+ * Close the menu's overlay: slide div up and update button svg
+ */
 const closeMenu = () => {
     $("#menuDiv").slideUp({
         duration: 300,
         easing: "easeOutQuint",
     }) &&
         $("#tabler-menu").fadeOut(() => {
-            $("#tabler-menu").html(`
+            $("#tabler-menu").html(/*html*/ `
                 <svg class="tabler-icon">
                     <use xlink:href="../../icons/tabler-sprite-nostroke.svg#tabler-adjustments" />
                 </svg>
@@ -14,6 +17,9 @@ const closeMenu = () => {
     STATE.menuIsOpen = false;
 };
 
+/**
+ * Open the menu's overlay: slide div down and update button svg
+ */
 const openMenu = () => {
     $("#menuDiv").slideDown({
         duration: 300,
@@ -28,24 +34,19 @@ const openMenu = () => {
         });
     STATE.menuIsOpen = true;
 };
-
+/**
+ * Parses menu options from the storage and adds events listeners for their change.
+ * Notably, if a key in `menuCheckNames` is missing from `menu` it is set to true
+ * @param {object} menu The menu retrieved from storage
+ * @param {string []} menuCheckNames The array of all expected menu options
+ */
 const getAndTrackPopupMenuChecks = (menu, menuCheckNames) => {
-    const hasKey = {};
+    let setValues = {};
     for (const key of menuCheckNames) {
-        hasKey[key] = menu.hasOwnProperty(key);
+        setValues[key] = menu.hasOwnProperty(key) ? menu[key] : true;
+        $("#" + key).prop("checked", menu[key]);
     }
-    const setValues = {};
-    for (const key of menuCheckNames) {
-        setValues[key] = hasKey[key] ? menu[key] : true;
-    }
-    chrome.storage.local.set(setValues, () => {
-        chrome.storage.local.get(menuCheckNames, (menu) => {
-            for (const key of menuCheckNames) {
-                $("#" + key).prop("checked", menu[key]);
-                setValues[key] = hasKey[key] ? menu[key] : true;
-            }
-        });
-    });
+    chrome.storage.local.set(setValues);
 
     for (const key of menuCheckNames) {
         $("#" + key).on("change", () => {
@@ -166,6 +167,7 @@ const main = (url) => {
             chrome.storage.local.get("papers", async ({ papers }) => {
                 await initState(papers);
                 if (!papers.hasOwnProperty(id)) {
+                    // Unknown paper, probably deleted by the user
                     console.log("Unknown id " + id);
                     updatePopupPaperNoMemory();
                     return;
