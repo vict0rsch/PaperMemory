@@ -161,7 +161,7 @@ const addOrUpdatePaper = (is, checks) => {
 
     // get papers already stored
     chrome.storage.local.get("papers", async function ({ papers }) {
-        // no papers in storage
+        // no paper in storage
         if (typeof papers === "undefined") {
             papers = {};
             papers["__dataVersion"] = manifestDataVersion();
@@ -169,43 +169,19 @@ const addOrUpdatePaper = (is, checks) => {
 
         papers = await initState(papers, true);
 
-        let id, paper, isNew, arxivId;
+        let paper, isNew;
 
         // Extract id from url
-        if (is.arxiv) {
-            arxivId = window.location.href.match(/\d{4}\.\d{4,5}\d/g)[0];
-            id = `Arxiv-${arxivId}`;
-        } else if (is.neurips) {
-            const hash = url.split("/").slice(-1)[0].replace("-Paper.pdf", "");
-            const year = url.split("/paper/")[1].split("/")[0];
-            id = `NeurIPS-${year}_${hash.slice(0, 8)}`;
-        } else if (is.cvf) {
-            id = parseCVFUrl(url).id;
-        } else {
-            return;
-        }
+        const id = parseIdFromUrl(url);
 
-        // console.log(id);
-        // console.log(papers);
-
-        // Update paper if it exists
-        // Or create a new one if it does not
         if (papers.hasOwnProperty(id)) {
+            // Update paper if it exists
             papers = updatePaper(papers, id);
             paper = papers[id];
             isNew = false;
         } else {
-            let data;
-
-            if (is.arxiv) {
-                data = await fetchArxivBibtex(arxivId);
-            } else if (is.neurips) {
-                data = await fetchNeuripsHTML(url);
-            } else if (is.cvf) {
-                data = await fetchCvfHTML(url);
-            }
-
-            paper = await makePaper(is, data);
+            // Or create a new one if it does not
+            paper = await makePaper(is, url, id);
             papers[id] = paper;
             isNew = true;
         }
@@ -213,6 +189,8 @@ const addOrUpdatePaper = (is, checks) => {
         chrome.storage.local.set({ papers: papers }, () => {
             if (isNew) {
                 console.log("Added '" + paper.title + "' to ArxivMemory");
+                // display red slider feedback if the user did not disable it
+                // from the menu
                 checks.checkFeedback && feedback("Added to your ArxivMemory!");
             } else {
                 console.log("Updated '" + paper.title + "' in ArxivMemory");
@@ -221,36 +199,40 @@ const addOrUpdatePaper = (is, checks) => {
     });
 };
 
-const makePaper = async (is, data) => {
-    const url = window.location.href;
-
+const makePaper = async (is, url, id) => {
     let paper;
     if (is.arxiv) {
+        const data = await fetchArxivBibtex(id);
         const { bibvars, bibtext } = parseArxivBibtex(data);
         paper = bibvars;
         paper.bibtext = bibtext;
         paper.source = "arxiv";
         // paper.codes = await fetchCodes(paper)
     } else if (is.neurips) {
+        const data = await fetchNeuripsHTML(url);
         paper = parseNeuripsHTML(url, data);
         paper.source = "neurips";
         // paper.codes = await fetchCodes(paper);
     } else if (is.cvf) {
+        const data = await fetchCvfHTML(url);
         paper = parseCvfHTML(url, data);
         paper.source = "cvf";
     }
-
-    paper.md = `[${paper.title}](${paper.pdfLink})`;
-    paper.note = "";
-    paper.tags = [];
 
     return initPaper(paper);
 };
 
 const initPaper = (paper) => {
+    paper.md = `[${paper.title}](${paper.pdfLink})`;
+    paper.note = "";
+    paper.tags = [];
+    paper.codeLink = "";
     paper.addDate = new Date().toJSON();
     paper.lastOpenDate = paper.addDate;
     paper.count = 1;
+
+    validatePaper(paper);
+
     return paper;
 };
 
