@@ -147,6 +147,8 @@ const parseCvfHTML = (url, htmlText) => {
 };
 
 const fetchArxivBibtex = async (id) => {
+    id += "";
+    id.replace("Arxiv-", "");
     return $.get(`https://export.arxiv.org/api/query?id_list=${id}`);
 };
 
