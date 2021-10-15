@@ -701,3 +701,33 @@ const formatBibtext = (text) => {
     }
     return bib;
 };
+
+const validatePaper = (paper) => {
+    const expectedKeys = [
+        "addDate", //      {string}    the paper's date of addition to the Memory
+        "author", //       {string}    ` and `-separated authors `${firstName} ${lastName}`
+        "bibtext", //      {string}    BibTex citation with new lines (`\n`)
+        "codeLink", //     {string}    to the paper's code link
+        "count", //        {int}       the paper's number of visits
+        "id", //           {string}    Unique ArxivTools ID
+        "key", //          {string}    BibTex citation key
+        "lastOpenDate", // {string}    When the paper was last opened
+        "md", //           {string}    markdown-formatted string `[${title}](${pdfLink})`
+        "note", //         {string}    of the user's note for this paper
+        "pdfLink", //      {string}    of the link to the paper's pdf
+        "source", //       {string}    describing the paper's source
+        "tags", //         {string []} the user's tags for this paper
+        "year", //         {string}    year of publication
+    ];
+
+    for (const key of expectedKeys) {
+        if (!paper.hasOwnProperty(key)) {
+            console.warn(`Key ${key} absent from paper ${paper}`);
+        }
+    }
+
+    const sources = Object.keys(knownPaperPages);
+    if (sources.indexOf(paper.source) < 0) {
+        console.warn(`Unknown source ${paper.source} for paper ${paper}`);
+    }
+};
