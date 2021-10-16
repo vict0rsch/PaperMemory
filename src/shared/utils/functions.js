@@ -395,7 +395,7 @@ const migrateData = async (papers, dataVersion) => {
     if (typeof papers === "undefined") {
         return { papers: { __dataVersion: dataVersion }, success: true };
     }
-    const currentVersion = papers["__dataVersion"] || 1;
+    const currentVersion = papers["__dataVersion"] || -1;
     var deleteIds = [];
 
     try {
@@ -497,7 +497,11 @@ const logStorage = (key) => {
 const getStorage = async (key) => {
     return new Promise((resolve, reject) => {
         chrome.storage.local.get(key, (data) => {
-            resolve(data[key]);
+            if (typeof key === "string") {
+                resolve(data[key]);
+            } else {
+                resolve(data);
+            }
         });
     });
 };
@@ -555,6 +559,9 @@ const manifestDataVersion = () => {
 };
 
 const initState = async (papers, isContentScript) => {
+    if (typeof papers === "undefined") {
+        papers = await getStorage("papers");
+    }
     console.log("Found papers:", papers);
 
     _state.dataVersion = manifestDataVersion();
@@ -568,6 +575,7 @@ const initState = async (papers, isContentScript) => {
     _state.papers = papers;
     _state.papersList = Object.values(cleanPapers(papers));
     _state.sortKey = "lastOpenDate";
+    _state.papersReady = true;
     sortMemory();
     makeTags();
 };

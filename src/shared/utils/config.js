@@ -7,16 +7,17 @@
  * The popup's global state to store data across functions
  */
 var _state = {
-    menuIsOpen: false,
+    dataVersion: 0,
     memoryIsOpen: false,
+    menuIsOpen: false,
     papers: {},
     papersList: [],
+    paperTags: new Set(),
+    pdfTitleFn: null,
+    showFavorites: false,
     sortedPapers: [],
     sortKey: "",
-    showFavorites: false,
-    paperTags: new Set(),
-    dataVersion: 0,
-    pdfTitleFn: null,
+    papersReady: false,
 };
 
 const _descendingSortKeys = ["addDate", "count", "lastOpenDate", "favoriteDate"];

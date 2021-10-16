@@ -156,46 +156,36 @@ const feedback = (text) => {
     }, 2000);
 };
 
-const addOrUpdatePaper = (is, checks) => {
+const addOrUpdatePaper = async (is, checks) => {
     const url = window.location.href;
+    const papers = await initState(undefined, true);
 
-    // get papers already stored
-    chrome.storage.local.get("papers", async function ({ papers }) {
-        // no paper in storage
-        if (typeof papers === "undefined") {
-            papers = {};
-            papers["__dataVersion"] = manifestDataVersion();
-        }
+    let paper, isNew;
 
-        papers = await initState(papers, true);
+    // Extract id from url
+    const id = parseIdFromUrl(url);
 
-        let paper, isNew;
+    if (papers.hasOwnProperty(id)) {
+        // Update paper if it exists
+        papers = updatePaper(papers, id);
+        paper = papers[id];
+        isNew = false;
+    } else {
+        // Or create a new one if it does not
+        paper = await makePaper(is, url, id);
+        papers[id] = paper;
+        isNew = true;
+    }
 
-        // Extract id from url
-        const id = parseIdFromUrl(url);
-
-        if (papers.hasOwnProperty(id)) {
-            // Update paper if it exists
-            papers = updatePaper(papers, id);
-            paper = papers[id];
-            isNew = false;
+    chrome.storage.local.set({ papers: papers }, () => {
+        if (isNew) {
+            console.log("Added '" + paper.title + "' to ArxivMemory");
+            // display red slider feedback if the user did not disable it
+            // from the menu
+            checks.checkFeedback && feedback("Added to your ArxivMemory!");
         } else {
-            // Or create a new one if it does not
-            paper = await makePaper(is, url, id);
-            papers[id] = paper;
-            isNew = true;
+            console.log("Updated '" + paper.title + "' in ArxivMemory");
         }
-
-        chrome.storage.local.set({ papers: papers }, () => {
-            if (isNew) {
-                console.log("Added '" + paper.title + "' to ArxivMemory");
-                // display red slider feedback if the user did not disable it
-                // from the menu
-                checks.checkFeedback && feedback("Added to your ArxivMemory!");
-            } else {
-                console.log("Updated '" + paper.title + "' in ArxivMemory");
-            }
-        });
     });
 };
 

@@ -163,140 +163,138 @@ const setAndHandleCustomPDFFunction = (menu) => {
  * + Add event listeners (clicks and keyboard)
  * @param {str} url Currently focused and active tab's url.
  */
-const main = (url) => {
+const popupMain = async (url) => {
     $(document).on("keydown", handlePopupKeydown);
 
-    chrome.storage.local.get(_menuStorageKeys, (menu) => {
-        // Set checkboxes
-        getAndTrackPopupMenuChecks(menu, _menuCheckNames);
+    const menu = await getStorage(_menuStorageKeys);
+    // Set checkboxes
+    getAndTrackPopupMenuChecks(menu, _menuCheckNames);
 
-        // Set click events (regardless of paper)
-        setStandardPopupClicks();
+    // Set click events (regardless of paper)
+    setStandardPopupClicks();
 
-        // Set PDF title function
-        setAndHandleCustomPDFFunction(menu);
+    // Set PDF title function
+    setAndHandleCustomPDFFunction(menu);
 
-        const is = isPaper(url);
-        console.log("is: ", is);
-        const isKnownPage = Object.values(is).some((i) => i);
-        console.log("isKnownPage: ", isKnownPage);
+    const is = isPaper(url);
+    console.log("is: ", is);
+    const isKnownPage = Object.values(is).some((i) => i);
+    console.log("isKnownPage: ", isKnownPage);
 
-        // Display popup metadata
-        if (isKnownPage) {
-            hideId("notArxiv");
-            hideId("notPdf");
-            showId("isArxiv", "flex");
-            const id = parseIdFromUrl(url);
-            _state.currentId = id;
+    // Display popup metadata
+    if (isKnownPage) {
+        showId("isArxiv", "flex");
+        const id = parseIdFromUrl(url);
+        _state.currentId = id;
 
-            chrome.storage.local.get("papers", async ({ papers }) => {
-                await initState(papers);
-                if (!papers.hasOwnProperty(id)) {
-                    // Unknown paper, probably deleted by the user
-                    console.log("Unknown id " + id);
-                    updatePopupPaperNoMemory();
-                    return;
-                }
-
-                const paper = _state.papers[id];
-                const eid = paper.id.replace(".", "\\.");
-
-                // -----------------------------
-                // -----  Fill Paper Data  -----
-                // -----------------------------
-                setTextId("popup-paper-title", paper.title);
-                setTextId("popup-authors", paper.author);
-                if (paper.codeLink) {
-                    showId("popup-code-link");
-                    setTextId("popup-code-link", paper.codeLink);
-                }
-
-                // ----------------------------------
-                // -----  Customize Popup html  -----
-                // ----------------------------------
-                setHTMLId("popup-memory-edit", getPopupEditFormHTML(paper));
-                setHTMLId("popup-copy-icons", getPopupPaperIconsHTML(paper, url));
-
-                // --------------------------
-                // -----  Paper  edits  -----
-                // --------------------------
-                $(`#popup-item-tags--${eid}`).select2({
-                    ..._select2Options,
-                    width: "87%",
-                });
-                document.body.style.height = "auto";
-                $(`#popup-form-note-textarea--${eid}`).on("focus", () => {
-                    var that = this;
-                    textareaFocusEnd(that);
-                });
-                $(`#popup-save-edits--${eid}`).on("click", () => {
-                    const note = $(`#popup-form-note-textarea--${eid}`).val();
-                    const codeLink = $(`#popup-form-note--${eid}`)
-                        .find(".form-code-input")
-                        .first()
-                        .val();
-                    const favorite = $(`#checkFavorite--${eid}`).prop("checked");
-                    updatePaperTags(id, `#popup-item-tags--${eid}`);
-                    saveNote(id, note);
-                    saveCodeLink(id, codeLink);
-                    saveFavoriteItem(id, favorite);
-                    $("#popup-feedback-copied").text(
-                        "Saved tags, code, note & favorite!"
-                    );
-                    $("#popup-feedback-copied").fadeIn(200);
-                    setTimeout(() => {
-                        $("#popup-feedback-copied").fadeOut(200);
-                    }, 1500);
-                });
-
-                // ------------------------
-                // -----  SVG clicks  -----
-                // ------------------------
-                $(`#popup-memory-item-link--${eid}`).on("click", () => {
-                    chrome.tabs.update({
-                        url: `https://arxiv.org/abs/${paper.id.replace("Arxiv-", "")}`,
-                    });
-                    window.close();
-                });
-                $(`#popup-code-link`).on("click", () => {
-                    const codeLink = $(`#popup-code-link`).text();
-                    if (codeLink) {
-                        focusExistingOrCreateNewCodeTab(codeLink);
-                    }
-                });
-                $(`#popup-memory-item-copy-link--${eid}`).on("click", () => {
-                    const pdfLink = _state.papers[id].pdfLink;
-                    copyAndConfirmMemoryItem(id, pdfLink, "Pdf link copied!", true);
-                });
-                $(`#popup-memory-item-md--${eid}`).on("click", () => {
-                    const md = _state.papers[id].md;
-                    copyAndConfirmMemoryItem(id, md, "MarkDown link copied!", true);
-                });
-                $(`#popup-memory-item-bibtex--${eid}`).on("click", () => {
-                    const bibtext = formatBibtext(_state.papers[id].bibtext);
-                    copyAndConfirmMemoryItem(
-                        id,
-                        bibtext,
-                        "Bibtex citation copied!",
-                        true
-                    );
-                });
-                $(`#popup-memory-item-download--${eid}`).on("click", () => {
-                    let pdfTitle = statePdfTitle(paper.title, paper.id);
-                    console.log({ pdfTitle });
-                    chrome.downloads.download({
-                        url: paper.pdfLink,
-                        filename: pdfTitle.replaceAll(":", "_"),
-                    });
-                });
-            });
+        const waitStart = Date.now();
+        let i = 0;
+        while (!_state.papersReady) {
+            i += 1;
         }
-    });
+        console.log("Waited for: " + (Date.now() - waitStart) / 1000);
+
+        if (!_state.papers.hasOwnProperty(id)) {
+            // Unknown paper, probably deleted by the user
+            console.log("Unknown id " + id);
+            updatePopupPaperNoMemory();
+            return;
+        }
+
+        const paper = _state.papers[id];
+        const eid = paper.id.replace(".", "\\.");
+
+        // -----------------------------
+        // -----  Fill Paper Data  -----
+        // -----------------------------
+        setTextId("popup-paper-title", paper.title);
+        setTextId("popup-authors", paper.author);
+        if (paper.codeLink) {
+            showId("popup-code-link");
+            setTextId("popup-code-link", paper.codeLink);
+        }
+
+        // ----------------------------------
+        // -----  Customize Popup html  -----
+        // ----------------------------------
+        setHTMLId("popup-memory-edit", getPopupEditFormHTML(paper));
+        setHTMLId("popup-copy-icons", getPopupPaperIconsHTML(paper, url));
+
+        // --------------------------
+        // -----  Paper  edits  -----
+        // --------------------------
+        $(`#popup-item-tags--${eid}`).select2({
+            ..._select2Options,
+            width: "87%",
+        });
+        document.body.style.height = "auto";
+        $(`#popup-form-note-textarea--${eid}`).on("focus", () => {
+            var that = this;
+            textareaFocusEnd(that);
+        });
+        $(`#popup-save-edits--${eid}`).on("click", () => {
+            const note = $(`#popup-form-note-textarea--${eid}`).val();
+            const codeLink = $(`#popup-form-note--${eid}`)
+                .find(".form-code-input")
+                .first()
+                .val();
+            const favorite = $(`#checkFavorite--${eid}`).prop("checked");
+            updatePaperTags(id, `#popup-item-tags--${eid}`);
+            saveNote(id, note);
+            saveCodeLink(id, codeLink);
+            saveFavoriteItem(id, favorite);
+            $("#popup-feedback-copied").text("Saved tags, code, note & favorite!");
+            $("#popup-feedback-copied").fadeIn(200);
+            setTimeout(() => {
+                $("#popup-feedback-copied").fadeOut(200);
+            }, 1500);
+        });
+
+        // ------------------------
+        // -----  SVG clicks  -----
+        // ------------------------
+        $(`#popup-memory-item-link--${eid}`).on("click", () => {
+            chrome.tabs.update({
+                url: `https://arxiv.org/abs/${paper.id.replace("Arxiv-", "")}`,
+            });
+            window.close();
+        });
+        $(`#popup-code-link`).on("click", () => {
+            const codeLink = $(`#popup-code-link`).text();
+            if (codeLink) {
+                focusExistingOrCreateNewCodeTab(codeLink);
+            }
+        });
+        $(`#popup-memory-item-copy-link--${eid}`).on("click", () => {
+            const pdfLink = _state.papers[id].pdfLink;
+            copyAndConfirmMemoryItem(id, pdfLink, "Pdf link copied!", true);
+        });
+        $(`#popup-memory-item-md--${eid}`).on("click", () => {
+            const md = _state.papers[id].md;
+            copyAndConfirmMemoryItem(id, md, "MarkDown link copied!", true);
+        });
+        $(`#popup-memory-item-bibtex--${eid}`).on("click", () => {
+            const bibtext = formatBibtext(_state.papers[id].bibtext);
+            copyAndConfirmMemoryItem(id, bibtext, "Bibtex citation copied!", true);
+        });
+        $(`#popup-memory-item-download--${eid}`).on("click", () => {
+            let pdfTitle = statePdfTitle(paper.title, paper.id);
+            console.log({ pdfTitle });
+            chrome.downloads.download({
+                url: paper.pdfLink,
+                filename: pdfTitle.replaceAll(":", "_"),
+            });
+        });
+    } else {
+        showId("notArxiv");
+    }
 };
 
 $(() => {
     const query = { active: true, lastFocusedWindow: true };
     chrome.tabs.query(query, async (tabs) => {
-        main(tabs[0].url);
+        await initState();
+        makeMemoryHTML();
+        popupMain(tabs[0].url);
     });
 });
