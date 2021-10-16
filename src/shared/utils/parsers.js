@@ -170,7 +170,10 @@ const fetchNeuripsHTML = async (url) => {
 const fetchCvfHTML = async (url) => {
     let paperPage, text;
     if (url.endsWith(".pdf")) {
-        paperPage = url.replace("/papers/", "/html/").replace(".pdf", ".html");
+        paperPage = url
+            .replace("/papers_backup/", "/papers/")
+            .replace("/papers/", "/html/")
+            .replace(".pdf", ".html");
     } else {
         paperPage = url;
     }

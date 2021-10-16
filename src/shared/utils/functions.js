@@ -393,7 +393,7 @@ const getPdfFn = (code) => {
 
 const migrateData = async (papers, dataVersion) => {
     if (typeof papers === "undefined") {
-        return {};
+        return { papers: { __dataVersion: dataVersion }, success: true };
     }
     const currentVersion = papers["__dataVersion"] || 1;
     var deleteIds = [];
@@ -401,7 +401,7 @@ const migrateData = async (papers, dataVersion) => {
     try {
         if (papers.hasOwnProperty("__dataVersion")) {
             if (papers["__dataVersion"] === dataVersion) {
-                return papers;
+                return { papers: papers, success: true };
             }
         }
 
