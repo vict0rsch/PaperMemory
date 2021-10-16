@@ -664,12 +664,16 @@ const openMemory = () => {
 
         // wait a little before sliding up
         $("#memory-container").slideDown({
-            duration: 200,
+            duration: 250,
             easing: "easeOutQuint",
             complete: () => {
-                $("#memory-search").trigger("focus");
-                displayMemoryTable();
-                console.log("Time to display (s): " + (Date.now() - openTime) / 1000);
+                setTimeout(() => {
+                    $("#memory-search").trigger("focus");
+                    displayMemoryTable();
+                    console.log(
+                        "Time to display (s): " + (Date.now() - openTime) / 1000
+                    );
+                }, 100);
             },
         });
 

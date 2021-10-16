@@ -554,7 +554,7 @@ const manifestDataVersion = () => {
         .reduce((a, b) => a + b);
 };
 
-const initState = async (papers, is_content_script) => {
+const initState = async (papers, isContentScript) => {
     console.log("Found papers:", papers);
 
     _state.dataVersion = manifestDataVersion();
@@ -563,7 +563,7 @@ const initState = async (papers, is_content_script) => {
     const migration = await migrateData(papers, _state.dataVersion);
     papers = migration.papers;
 
-    if (is_content_script) return papers;
+    if (isContentScript) return papers;
 
     _state.papers = papers;
     _state.papersList = Object.values(cleanPapers(papers));
