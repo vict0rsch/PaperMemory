@@ -451,6 +451,12 @@ const migrateData = async (papers, dataVersion) => {
                     deleteIds.push(id);
                 }
             }
+            if (currentVersion < 209) {
+                if (!papers[id].hasOwnProperty("favorite")) {
+                    papers[id].favorite = false;
+                    papers[id].favoriteDate = "";
+                }
+            }
 
             // need to fix https://github.com/vict0rsch/ArxivTools/issues/10
             // if (!papers[id].hasOwnProperty("codes")) {
@@ -645,6 +651,8 @@ const handlePopupKeydown = (e) => {
     if (!_state.memoryIsOpen) {
         if (key === "a") {
             // a opens the arxiv memory
+            const focused = $(":focus");
+            if (focused.length && focused.hasClass("noMemoryOnA")) return;
             $("#memory-switch").trigger("click");
         } else if (key === "Enter") {
             // enter on the arxiv memory button opens it
@@ -717,6 +725,8 @@ const validatePaper = (paper) => {
         "bibtext", //      {string}    BibTex citation with new lines (`\n`)
         "codeLink", //     {string}    to the paper's code link
         "count", //        {int}       the paper's number of visits
+        "favorite", //     {boolean}   user wants to star the paper
+        "favoriteDate", // {string}    date the paper was added as a favorite
         "id", //           {string}    Unique ArxivTools ID
         "key", //          {string}    BibTex citation key
         "lastOpenDate", // {string}    When the paper was last opened

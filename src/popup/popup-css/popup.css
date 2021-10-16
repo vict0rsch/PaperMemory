@@ -241,6 +241,10 @@ h3 {
     font-size: 0.9rem;
 }
 
+.memory-item-container.favorite {
+    border: 2px solid #b31b1b;
+}
+
 /* .memory-item-container:hover {
     transform: scale(1.05);
 } */
@@ -446,7 +450,7 @@ h3 {
 }
 
 button {
-    border: 1px solid #0276ff;
+    border: 1px solid #b31b1b;
     border-radius: 6px;
     padding: 4px 6px;
     background-color: white;
@@ -455,8 +459,8 @@ button {
 }
 
 button:hover {
-    border-color: #0055b6;
-    background-color: rgb(240, 240, 240);
+    border-color: #b31b1b;
+    background-color: rgb(253, 235, 235);
 }
 
 #confirm-modal {
@@ -471,4 +475,14 @@ button:hover {
     justify-content: center;
     align-items: center;
     flex-direction: column
+}
+
+.memory-item-favorite {
+    cursor: pointer;
+    margin-right: 1px;
+}
+
+svg.favorite {
+    stroke-width: 3px !important;
+    color: #b31b1b !important;
 }

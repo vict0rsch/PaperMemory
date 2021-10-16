@@ -227,6 +227,8 @@ const initPaper = (paper) => {
     paper.note = "";
     paper.tags = [];
     paper.codeLink = "";
+    paper.favorite = false;
+    paper.favoriteDate = "";
     paper.addDate = new Date().toJSON();
     paper.lastOpenDate = paper.addDate;
     paper.count = 1;

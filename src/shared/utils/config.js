@@ -13,10 +13,13 @@ var _state = {
     papersList: [],
     sortedPapers: [],
     sortKey: "",
+    showFavorites: false,
     paperTags: new Set(),
     dataVersion: 0,
     pdfTitleFn: null,
 };
+
+const _descendingSortKeys = ["addDate", "count", "lastOpenDate", "favoriteDate"];
 
 /**
  * Shared configuration for the Tags' select2 inputs

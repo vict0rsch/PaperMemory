@@ -160,7 +160,12 @@
 	</div>
 	<div id="memory-container" style="display: none;">
 		<div id="memory-filters">
-			<input id="memory-search" type="text" placeholder="search" style="width: 50%;" />
+			<input id="memory-search" type="text" placeholder="search" style="width: 45%;" />
+			<span style="cursor: pointer" id="filter-favorites" title="Show favorites only">
+				<svg style="vertical-align: bottom; height: 22px; width: 32px">
+					<use xlink:href="../../icons/tabler-sprite-nostroke.svg#tabler-star" />
+				</svg>
+			</span>
 			<select style="width: 30%;" id="memory-select">
 				<option value="lastOpenDate">Last Open</option>
 				<option value="addDate">Last Added</option>

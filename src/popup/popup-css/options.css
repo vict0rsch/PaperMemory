@@ -1,13 +1,13 @@
 @supports (-webkit-appearance: none) or (-moz-appearance: none) {
     input[type='checkbox'] {
-        --active: #0276ff;
+        --active: rgb(201, 19, 19);
         --active-inner: #fff;
-        --focus: 2px rgba(39, 94, 254, .3);
-        --border: #BBC1E1;
-        --border-hover: #0276ff;
+        --focus: 2px rgba(254, 39, 39, 0.3);
+        --border: #c5aaaa;
+        --border-hover: #b94141;
         --background: #fff;
-        --disabled: #F6F8FF;
-        --disabled-inner: #E1E6F9;
+        --disabled: #f9e1e1;
+        --disabled-inner: #f9e1e1;
         -webkit-appearance: none;
         -moz-appearance: none;
         height: 21px;

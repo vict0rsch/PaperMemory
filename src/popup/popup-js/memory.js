@@ -228,6 +228,39 @@ const saveCodeLink = (id, codeLink) => {
     });
 };
 
+const saveFavoriteItem = (id, favorite) => {
+    _state.papers[id].favorite = favorite;
+    _state.papers[id].favoriteDate = new Date().toJSON();
+    const eid = id.replace(".", "\\.");
+    chrome.storage.local.set({ papers: _state.papers }, () => {
+        console.log(`${_state.papers[id].title} is favorite: ${favorite}`);
+        if (favorite) {
+            $(`#memory-item-container--${eid}`).addClass("favorite");
+            findEl(eid, "memory-item-favorite")
+                .find("svg")
+                .first()
+                .addClass("favorite");
+        } else {
+            $(`#memory-item-container--${eid}`).removeClass("favorite");
+            findEl(eid, "memory-item-favorite")
+                .find("svg")
+                .first()
+                .removeClass("favorite");
+        }
+
+        if (_state.sortKey === "favoriteDate") {
+            if (!favorite) {
+                sortMemory();
+                displayMemoryTable();
+            }
+            const n = _state.sortedPapers.filter((p) => p.favorite).length;
+            $("#memory-search").prop("placeholder", `Search ${n} entries`);
+        }
+
+        $(`#checkFavorite--${eid}`).prop("checked", favorite);
+    });
+};
+
 /**
  * Function to change the html content of #memory-sort-arrow to an up or down arrow
  * @param {string} direction up/down string to change the arrow's direction
@@ -260,11 +293,18 @@ const orderPapers = (paper1, paper2) => {
     let val1 = paper1[_state.sortKey];
     let val2 = paper2[_state.sortKey];
 
+    if (typeof val1 === "undefined") {
+        val1 = "";
+    }
+    if (typeof val2 === "undefined") {
+        val2 = "";
+    }
+
     if (typeof val1 === "string") {
         val1 = val1.toLowerCase();
         val2 = val2.toLowerCase();
     }
-    if (["addDate", "count", "lastOpenDate"].indexOf(_state.sortKey) >= 0) {
+    if (_descendingSortKeys.indexOf(_state.sortKey) >= 0) {
         return val1 > val2 ? -1 : 1;
     }
     return val1 > val2 ? 1 : -1;
@@ -307,7 +347,9 @@ const filterMemoryByString = (letters) => {
                 (w) => title.includes(w) || author.includes(w) || note.includes(w)
             )
         ) {
-            papersList.push(paper);
+            if (!_state.showFavorites || paper.favorite) {
+                papersList.push(paper);
+            }
         }
     }
     _state.papersList = papersList;
@@ -326,7 +368,9 @@ const filterMemoryByTags = (letters) => {
     for (const paper of _state.sortedPapers) {
         const paperTags = paper.tags.map((t) => t.toLowerCase());
         if (tags.every((t) => paperTags.some((pt) => pt.indexOf(t) >= 0))) {
-            papersList.push(paper);
+            if (!_state.showFavorites || paper.favorite) {
+                papersList.push(paper);
+            }
         }
     }
     _state.papersList = papersList;
@@ -344,7 +388,9 @@ const filterMemoryByCode = (letters) => {
         let paperCode = paper.codeLink || "";
         paperCode = paperCode.toLowerCase();
         if (words.every((w) => paperCode.includes(w))) {
-            papersList.push(paper);
+            if (!_state.showFavorites || paper.favorite) {
+                papersList.push(paper);
+            }
         }
     }
     _state.papersList = papersList;
@@ -505,6 +551,11 @@ const displayMemoryTable = () => {
         const pdfLink = _state.papers[id].pdfLink;
         copyAndConfirmMemoryItem(id, pdfLink, "Pdf link copied!");
     });
+    $(".memory-item-favorite").on("click", (e) => {
+        const { id, eid } = eventId(e);
+        const isFavorite = $(`#memory-item-container--${eid}`).hasClass("favorite");
+        saveFavoriteItem(id, !isFavorite);
+    });
     // Put cursor at the end of the textarea's text on focus
     // (default puts the cursor at the beginning of the text)
     $(".form-note-textarea").focus(function () {
@@ -602,33 +653,24 @@ const openMemory = () => {
         );
 
         // Show paper list
-        displayMemoryTable();
 
         // wait a little before sliding up
-        setTimeout(() => {
-            $("#memory-container").slideDown({
-                duration: 200,
-                easing: "easeOutQuint",
-                complete: () => {
-                    setTimeout(() => {
-                        // auto-focus search field
-                        $("#memory-search").trigger("focus");
-                        console.log(
-                            "Time to display (s): " + (Date.now() - openTime) / 1000
-                        );
-                    }, 50);
-                },
-            });
-        }, 100);
+        $("#memory-container").slideDown({
+            duration: 200,
+            easing: "easeOutQuint",
+            complete: () => {
+                $("#memory-search").trigger("focus");
+                displayMemoryTable();
+                console.log("Time to display (s): " + (Date.now() - openTime) / 1000);
+            },
+        });
 
         // add input search delay if there are many papers:
         // wait for some time between keystrokes before firing the search
         if (_state.papersList.length < 20) {
             delayTime = 0;
         } else if (_state.papersList.length < 50) {
-            delayTime = 200;
-        } else {
-            delayTime = 350;
+            delayTime = 300;
         }
         // search keypress events.
         $("#memory-search")
@@ -637,7 +679,7 @@ const openMemory = () => {
                 delay((e) => {
                     // read input, return if empty (after trim)
                     const query = $.trim($(e.target).val());
-                    if (!query) return;
+                    if (!query && e.key !== "Backspace") return;
 
                     if (query.startsWith("t:")) {
                         // look into tags
@@ -656,7 +698,9 @@ const openMemory = () => {
             .on("keyup", (e) => {
                 // keyup because keypress does not listen to backspaces
                 if (e.key == "Backspace") {
-                    $("#memory-search").trigger("keypress");
+                    var backspaceEvent = $.Event("keypress");
+                    backspaceEvent.key = "Backspace";
+                    $("#memory-search").trigger(backspaceEvent);
                 }
             });
     });
@@ -671,6 +715,40 @@ const openMemory = () => {
     // remove ArxivMemory button and show the (x) to close it
     $("#memory-switch-text-on").fadeOut(() => {
         $("#memory-switch-text-off").fadeIn();
+    });
+    $("#filter-favorites").on("click", () => {
+        const showFavorites = !_state.showFavorites;
+        _state.showFavorites = showFavorites;
+        if (showFavorites) {
+            $("#filter-favorites").find("svg").first().addClass("favorite");
+            sortMemory();
+            _state.papersList = _state.papersList.filter((p) => p.favorite);
+            displayMemoryTable();
+            setMemorySortArrow("down");
+            $("#memory-select").append(
+                `<option value="favoriteDate">Last favoured</option>`
+            );
+            const n = _state.papersList.length;
+            $("#memory-search").prop("placeholder", `Search ${n} entries...`);
+        } else {
+            $("#filter-favorites").find("svg").first().removeClass("favorite");
+            if ($("#memory-select").val() === "favoriteDate") {
+                $("#memory-select").val("lastOpenDate");
+                _state.sortKey = "lastOpenDate";
+            }
+            $(`#memory-select option[value="favoriteDate"]`).remove();
+            sortMemory();
+            setMemorySortArrow("down");
+
+            if ($.trim($("#memory-search").val())) {
+                $("#memory-search").trigger("keypress");
+            } else {
+                _state.papersList = _state.sortedPapers;
+                displayMemoryTable();
+            }
+            const n = _state.sortedPapers.length;
+            $("#memory-search").prop("placeholder", `Search ${n} entries...`);
+        }
     });
     // listen to sorting feature change
     $("#memory-select").on("change", (e) => {

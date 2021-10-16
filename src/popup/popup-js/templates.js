@@ -11,6 +11,7 @@ const getMemoryItemHTML = (paper) => {
     const id = paper.id;
     const tags = new Set(paper.tags);
     const tagOptions = getTagsHTMLOptions(paper);
+    const favoriteClass = paper.favorite ? "favorite" : "";
     const titles = {
         edit: `"Edit paper details&#13;&#10;(or press 'e' when this paper is focused,&#13;&#10; i.e. when you navigated to it with 'tab')"`,
         pdfLink: `"Open ${paper.pdfLink}"`,
@@ -35,10 +36,15 @@ const getMemoryItemHTML = (paper) => {
     }
 
     return /*html*/ `
-    <div class="memory-item-container" tabindex="0" id="memory-item-container--${id}">
+    <div class="memory-item-container ${favoriteClass}" tabindex="0" id="memory-item-container--${id}">
 
         <h4 class="memory-item-title" title="Added ${addDate}&#13;&#10;Last open ${lastOpenDate}">
-            ${paper.title}
+                <span class="memory-item-favorite">
+                    <svg style="vertical-align: bottom; stroke-width: 1px;" class="${favoriteClass}">
+                        <use xlink:href="../../icons/tabler-sprite-nostroke.svg#tabler-star" />
+                    </svg>
+                </span>
+                ${paper.title}
         </h4>
         <div class="memory-item-tags-div">
             <small class="tag-list">
@@ -149,8 +155,8 @@ const getPopupEditFormHTML = (paper) => {
     const tagOptions = getTagsHTMLOptions(paper);
     const note = paper.note || "";
     return /*html*/ `
-    <div style="width: 100%; display: flex; justify-content: space-between; align-items: center;">
-        <div style="width: 85%">
+    <div style="max-width: 100%; display: flex; justify-content: space-between; align-items: center; padding: 16px;">
+        <div style="width: 100%">
             <div style="width: 100%; display: flex; justify-content: space-between; align-items: center;">
                 <span class="label">Tags:</span>
                 <select id="popup-item-tags--${id}"class="memory-item-tags" multiple="multiple">
@@ -164,7 +170,7 @@ const getPopupEditFormHTML = (paper) => {
             >
                 <div class="textarea-wrapper w-100 mr-0">
                     <span class="label">Code:</span>
-                    <input type="text" class="form-code-input mt-0" value="${
+                    <input type="text" class="form-code-input mt-0 noMemoryOnA" value="${
                         paper.codeLink || ""
                     }">
                 </div>
@@ -173,13 +179,23 @@ const getPopupEditFormHTML = (paper) => {
                     <textarea 
                         rows="3" 
                         style="width:85%;" 
+                        class="noMemoryOnA"
                         id="popup-form-note-textarea--${id}"
                     >${note}</textarea>
                 </div>
             </div>
+            <div style="display: flex; justify-content: space-between; align-items: center">
+                <div style="display: flex; justify-content: flex-start; align-items: center">
+                    <label for="checkFavorite" style="font-family: monospace; margin-right: 16px;">Favorite: </label>
+                    <input checked="${
+                        paper.favorite ? "true" : ""
+                    }" class="switch" type="checkbox" id="checkFavorite--${id}" name="checkFavorite" value="checkFavorite">
+                </div>
+                <button class="back-to-focus" id="popup-save-edits--${id}">Save</button>
+            </div>
         </div>
         <div>
-            <button class="back-to-focus" id="popup-save-edits--${id}">Save</button>
+            
         </div>
     </div>`;
 };

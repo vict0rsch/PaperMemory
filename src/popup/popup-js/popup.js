@@ -235,9 +235,11 @@ const main = (url) => {
                         .find(".form-code-input")
                         .first()
                         .val();
+                    const favorite = $(`#checkFavorite--${eid}`).prop("checked");
                     updatePaperTags(id, `#popup-item-tags--${eid}`);
                     saveNote(id, note);
                     saveCodeLink(id, codeLink);
+                    saveFavoriteItem(id, favorite);
                     $("#popup-feedback-copied").text("Saved tags, code & note!");
                     $("#popup-feedback-copied").fadeIn();
                     setTimeout(() => {
