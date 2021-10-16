@@ -17,9 +17,8 @@ body {
 
 textarea {
     border-radius: 4px;
-    border-color: #aaaaaa
+    border-color: #aaaaaa;
 }
-
 
 .popup-header {
     background-color: #b31b1b;
@@ -49,6 +48,14 @@ h3 {
     font-size: 1.2rem;
 }
 
+svg {
+    stroke-width: 1.15;
+    stroke: #2c3e50;
+    fill: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
 .header {
     display: flex;
     align-items: center;
@@ -60,6 +67,14 @@ h3 {
     width: 32px;
     color: #b31b1b;
     stroke-width: 1px;
+}
+.memory-item-favorite-svg {
+    vertical-align: bottom;
+}
+
+.memory-icon-svg {
+    height: 15px;
+    width: 15px;
 }
 
 #container {
@@ -83,7 +98,7 @@ h3 {
 }
 
 #tabler-menu svg {
-    transition: all .2s ease-in-out;
+    transition: all 0.2s ease-in-out;
 }
 
 #tabler-menu svg:hover {
@@ -91,7 +106,7 @@ h3 {
 }
 
 #tabler-copy-link {
-    transition: all .2s ease-in-out;
+    transition: all 0.2s ease-in-out;
     cursor: pointer;
     border-radius: 100000px;
     color: #0276ff;
@@ -133,13 +148,12 @@ h3 {
     background: white;
     padding: 2px 6px;
     border-radius: 100px;
-    transition: all .1s ease-in-out;
+    transition: all 0.1s ease-in-out;
 }
 
 #helpButton:hover {
     transform: scale(1.5);
 }
-
 
 #isArxiv {
     display: flex;
@@ -149,13 +163,12 @@ h3 {
 }
 
 #markdown-header div {
-    transition: all .2s ease-in-out;
+    transition: all 0.2s ease-in-out;
 }
 
 #markdown-header div:hover {
     transform: scale(1.2);
 }
-
 
 #check-feedback {
     position: fixed;
@@ -168,7 +181,7 @@ h3 {
 }
 
 #check-feedback svg {
-    color: #00C854 !important;
+    color: #00c854 !important;
 }
 
 #memory-switch {
@@ -181,7 +194,7 @@ h3 {
     align-items: center;
     justify-content: center;
     font-size: 1rem;
-    transition: all .2s ease-in-out;
+    transition: all 0.2s ease-in-out;
     z-index: 3;
 }
 
@@ -223,7 +236,6 @@ h3 {
     width: 100%;
     height: 100%;
     overflow: scroll;
-
 }
 
 #memory-table {
@@ -237,7 +249,7 @@ h3 {
     border: 1px solid rgba(230, 230, 230, 0.75);
     position: relative;
     border-radius: 8px;
-    transition: all .2s ease-in-out;
+    transition: all 0.2s ease-in-out;
     font-size: 0.9rem;
 }
 
@@ -265,8 +277,6 @@ h3 {
     text-align: center;
     background-color: white;
 }
-
-
 
 .memory-item-title {
     margin: 0px;
@@ -313,7 +323,7 @@ h3 {
 }
 
 .memory-item-edit {
-    margin-right: 8px
+    margin-right: 8px;
 }
 
 .memory-item-tag {
@@ -330,18 +340,18 @@ h3 {
 }
 
 .memory-item-faded {
-    color: rgba(54, 54, 54, 0.70)
+    color: rgba(54, 54, 54, 0.7);
 }
 
 .authors {
-    color: rgba(41, 41, 41, 1)
+    color: rgba(41, 41, 41, 1);
 }
 
 .memory-item-actions {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-top: 12px
+    margin-top: 12px;
 }
 
 .memory-item-container svg {
@@ -474,7 +484,7 @@ button:hover {
     display: flex;
     justify-content: center;
     align-items: center;
-    flex-direction: column
+    flex-direction: column;
 }
 
 .memory-item-favorite {
@@ -485,4 +495,10 @@ button:hover {
 svg.favorite {
     stroke-width: 3px !important;
     color: #b31b1b !important;
+    stroke: #b31b1b !important;
+}
+.popup-click-svg {
+    height: 25px;
+    width: 25px;
+    pointer-events: none;
 }

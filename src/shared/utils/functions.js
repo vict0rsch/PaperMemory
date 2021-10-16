@@ -749,3 +749,133 @@ const validatePaper = (paper) => {
         console.warn(`Unknown source ${paper.source} for paper ${paper}`);
     }
 };
+
+const showId = (id, display) => {
+    if (typeof display === "undefined") display = "block";
+    document.getElementById(id).style.display = display;
+};
+const hideId = (id) => {
+    document.getElementById(id).style.display = "none";
+};
+const setTextId = (id, text) => {
+    document.getElementById(id).innerText = text;
+};
+const setHTMLId = (id, html) => {
+    document.getElementById(id).innerHTML = html;
+};
+
+const tablerSvg = (pathName, id, classNames) => {
+    if (typeof id === "undefined") {
+        id = "";
+    }
+    if (typeof classNames === "undefined") {
+        classNames = [];
+    }
+
+    if (id) {
+        id = `id="${id}"`;
+    }
+
+    classNames = classNames.filter((c) => c);
+    if (classNames) {
+        classNames = `class="${classNames.join(" ")}"`;
+    }
+
+    switch (pathName) {
+        case "adjustments":
+            return `<svg viewBox="0 0 24 24" ${id} ${classNames}>
+            <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+            <circle cx="6" cy="10" r="2" />
+            <line x1="6" y1="4" x2="6" y2="8" />
+            <line x1="6" y1="12" x2="6" y2="20" />
+            <circle cx="12" cy="16" r="2" />
+            <line x1="12" y1="4" x2="12" y2="14" />
+            <line x1="12" y1="18" x2="12" y2="20" />
+            <circle cx="18" cy="7" r="2" />
+            <line x1="18" y1="4" x2="18" y2="5" />
+            <line x1="18" y1="9" x2="18" y2="20" />
+            </svg>`;
+
+        case "circle-x":
+            return `<svg viewBox="0 0 24 24" ${id} ${classNames}>
+            <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+            <circle cx="12" cy="12" r="9" />
+            <path d="M10 10l4 4m0 -4l-4 4" />
+            </svg>`;
+
+        case "star":
+            return `<svg viewBox="0 0 24 24" ${id} ${classNames}>
+            <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+            <path d="M12 17.75l-6.172 3.245l1.179 -6.873l-5 -4.867l6.9 -1l3.086 -6.253l3.086 6.253l6.9 1l-5 4.867l1.179 6.873z" />
+            </svg>`;
+
+        case "writing":
+            return `<svg viewBox="0 0 24 24" ${id} ${classNames}>
+            <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+            <path d="M20 17v-12c0 -1.121 -.879 -2 -2 -2s-2 .879 -2 2v12l2 2l2 -2z" />
+            <path d="M16 7h4" />
+            <path d="M18 19h-13a2 2 0 1 1 0 -4h4a2 2 0 1 0 0 -4h-3" />
+            </svg>`;
+
+        case "file-symlink":
+            return `<svg viewBox="0 0 24 24" ${id} ${classNames}>
+            <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+            <path d="M4 21v-4a3 3 0 0 1 3 -3h5" />
+            <path d="M9 17l3 -3l-3 -3" />
+            <path d="M14 3v4a1 1 0 0 0 1 1h4" />
+            <path d="M5 11v-6a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2h-9.5" />
+            </svg>`;
+
+        case "link":
+            return `<svg viewBox="0 0 24 24" ${id} ${classNames}>
+            <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+            <path d="M10 14a3.5 3.5 0 0 0 5 0l4 -4a3.5 3.5 0 0 0 -5 -5l-.5 .5" />
+            <path d="M14 10a3.5 3.5 0 0 0 -5 0l-4 4a3.5 3.5 0 0 0 5 5l.5 -.5" />
+            </svg>`;
+
+        case "clipboard-list":
+            return `<svg viewBox="0 0 24 24" ${id} ${classNames}>
+            <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+            <path d="M9 5h-2a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-12a2 2 0 0 0 -2 -2h-2" />
+            <rect x="9" y="3" width="6" height="4" rx="2" />
+            <line x1="9" y1="12" x2="9.01" y2="12" />
+            <line x1="13" y1="12" x2="15" y2="12" />
+            <line x1="9" y1="16" x2="9.01" y2="16" />
+            <line x1="13" y1="16" x2="15" y2="16" />
+            </svg>`;
+
+        case "archive":
+            return `<svg viewBox="0 0 24 24" ${id} ${classNames}>
+            <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+            <rect x="3" y="4" width="18" height="4" rx="2" />
+            <path d="M5 8v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2v-10" />
+            <line x1="10" y1="12" x2="14" y2="12" />
+            </svg>`;
+
+        case "external-link":
+            return `<svg viewBox="0 0 24 24" ${id} ${classNames}>
+            <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+            <path d="M11 7h-5a2 2 0 0 0 -2 2v9a2 2 0 0 0 2 2h9a2 2 0 0 0 2 -2v-5" />
+            <line x1="10" y1="14" x2="20" y2="4" />
+            <polyline points="15 4 20 4 20 9" />
+            </svg>`;
+
+        case "file-download":
+            return `<svg viewBox="0 0 24 24" ${id} ${classNames}>
+            <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+            <path d="M14 3v4a1 1 0 0 0 1 1h4" />
+            <path d="M17 21h-10a2 2 0 0 1 -2 -2v-14a2 2 0 0 1 2 -2h7l5 5v11a2 2 0 0 1 -2 2z" />
+            <line x1="12" y1="11" x2="12" y2="17" />
+            <polyline points="9 14 12 17 15 14" />
+             </svg>`;
+
+        case "external-link":
+            return ``;
+
+        case "external-link":
+            return ``;
+
+        default:
+            return "";
+    }
+};

@@ -40,9 +40,10 @@ const getMemoryItemHTML = (paper) => {
 
         <h4 class="memory-item-title" title="Added ${addDate}&#13;&#10;Last open ${lastOpenDate}">
                 <span class="memory-item-favorite">
-                    <svg style="vertical-align: bottom; stroke-width: 1px;" class="${favoriteClass}">
-                        <use xlink:href="../../icons/tabler-sprite-nostroke.svg#tabler-star" />
-                    </svg>
+                    ${tablerSvg("star", "", [
+                        "memory-item-favorite-svg",
+                        favoriteClass,
+                    ])}
                 </span>
                 ${paper.title}
         </h4>
@@ -71,9 +72,7 @@ const getMemoryItemHTML = (paper) => {
 
             <div style="display: flex; align-items: center">
                 <div class="memory-item-edit memory-item-svg-div" title=${titles.edit} >
-                    <svg >
-                        <use xlink:href="../../icons/tabler-sprite-nostroke.svg#tabler-writing" />
-                    </svg>
+                    ${tablerSvg("writing", "", ["memory-icon-svg"])}
                 </div>
                 
                 <small class="memory-item-faded">
@@ -83,31 +82,23 @@ const getMemoryItemHTML = (paper) => {
             </div>
 
             <div class="memory-item-link memory-item-svg-div"  title=${titles.pdfLink} >
-                <svg >
-                   <use xlink:href="../../icons/tabler-sprite-nostroke.svg#tabler-external-link" />
-                </svg>
+                ${tablerSvg("file-symlink", "", ["memory-icon-svg"])}
             </div>
                 
             <div class="memory-item-copy-link memory-item-svg-div" title=${
                 titles.copyPdfLink
             } >
-                <svg >
-                    <use xlink:href="../../icons/tabler-sprite-nostroke.svg#tabler-link" />
-                </svg>
+                ${tablerSvg("link", "", ["memory-icon-svg"])}
             </div>
 
             <div class="memory-item-md memory-item-svg-div" title=${titles.copyMd} >
-                <svg >
-                    <use xlink:href="../../icons/tabler-sprite-nostroke.svg#tabler-clipboard-list" />
-                </svg>
+                ${tablerSvg("clipboard-list", "", ["memory-icon-svg"])}
             </div>
 
             <div class="memory-item-bibtext memory-item-svg-div" title=${
                 titles.copyBibtext
             }>
-                <svg >
-                    <use xlink:href="../../icons/tabler-sprite-nostroke.svg#tabler-archive" />
-                </svg>
+                ${tablerSvg("archive", "", ["memory-icon-svg"])}
             </div>
 
             <span style="color: green; display: none" class="memory-item-feedback"></span>
@@ -154,6 +145,7 @@ const getPopupEditFormHTML = (paper) => {
     const id = paper.id;
     const tagOptions = getTagsHTMLOptions(paper);
     const note = paper.note || "";
+    const checked = paper.favorite ? `checked="true"` : "";
     return /*html*/ `
     <div style="max-width: 100%; display: flex; justify-content: space-between; align-items: center; padding: 16px;">
         <div style="width: 100%">
@@ -187,9 +179,7 @@ const getPopupEditFormHTML = (paper) => {
             <div style="display: flex; justify-content: space-between; align-items: center">
                 <div style="display: flex; justify-content: flex-start; align-items: center">
                     <label for="checkFavorite" style="font-family: monospace; margin-right: 16px;">Favorite: </label>
-                    <input checked="${
-                        paper.favorite ? "true" : ""
-                    }" class="switch" type="checkbox" id="checkFavorite--${id}" name="checkFavorite" value="checkFavorite">
+                    <input ${checked} class="switch" type="checkbox" id="checkFavorite--${id}" name="checkFavorite" value="checkFavorite">
                 </div>
                 <button class="back-to-focus" id="popup-save-edits--${id}">Save</button>
             </div>
@@ -217,18 +207,14 @@ const getPopupPaperIconsHTML = (paper, currentUrl) => {
         title="Open Paper HTML Page"
         style="display: ${display}"
     >
-        <svg  style="height: 25px; width: 25px; pointer-events: none;" >
-            <use xlink:href="../../icons/tabler-sprite-nostroke.svg#tabler-external-link" />
-        </svg>
+        ${tablerSvg("external-link", "", ["popup-click-svg"])}
     </div>
     <div 
         class="memory-item-svg-div"
         id="popup-memory-item-copy-link--${id}"
         title="Copy pdf link" 
     >
-        <svg style="height: 25px; width: 25px; pointer-events: none;" >
-            <use xlink:href="../../icons/tabler-sprite-nostroke.svg#tabler-link" />
-        </svg>
+        ${tablerSvg("link", "", ["popup-click-svg"])}
     </div>
 
     <div 
@@ -236,9 +222,7 @@ const getPopupPaperIconsHTML = (paper, currentUrl) => {
         id="popup-memory-item-md--${id}"
         title="Copy Markdown-formatted link" 
     >
-        <svg style="height: 25px; width: 25px; pointer-events: none;" >
-            <use xlink:href="../../icons/tabler-sprite-nostroke.svg#tabler-clipboard-list" />
-        </svg>
+        ${tablerSvg("clipboard-list", "", ["popup-click-svg"])}
     </div>
 
     <div 
@@ -246,9 +230,7 @@ const getPopupPaperIconsHTML = (paper, currentUrl) => {
         id="popup-memory-item-bibtex--${id}"
         title="Copy Bibtex citation" 
     >
-        <svg style="height: 25px; width: 25px; pointer-events: none;" >
-            <use xlink:href="../../icons/tabler-sprite-nostroke.svg#tabler-archive" />
-        </svg>
+        ${tablerSvg("archive", "", ["popup-click-svg"])}
     </div>
 
     <div 
@@ -256,8 +238,6 @@ const getPopupPaperIconsHTML = (paper, currentUrl) => {
         id="popup-memory-item-download--${id}"
         title="Download pdf" 
     >
-        <svg style="height: 25px; width: 25px; pointer-events: none;" >
-            <use xlink:href="../../icons/tabler-sprite-nostroke.svg#tabler-download" />
-        </svg>
+        ${tablerSvg("file-download", "", ["popup-click-svg"])}
     </div>`;
 };

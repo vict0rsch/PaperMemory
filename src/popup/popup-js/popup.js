@@ -9,7 +9,7 @@ const closeMenu = () => {
         $("#tabler-menu").fadeOut(() => {
             $("#tabler-menu").html(/*html*/ `
                 <svg class="tabler-icon">
-                    <use xlink:href="../../icons/tabler-sprite-nostroke.svg#tabler-adjustments" />
+                    ${svgPath("adjustments")}
                 </svg>
             `);
             $("#tabler-menu").fadeIn();
@@ -28,7 +28,7 @@ const openMenu = () => {
         $("#tabler-menu").fadeOut(() => {
             $("#tabler-menu").html(/*html*/ `
             <svg class="tabler-icon menu-svg">
-                <use xlink:href="../../icons/tabler-sprite-nostroke.svg#tabler-circle-x" />
+                ${svgPath("adjustments")}
             </svg>`);
             $("#tabler-menu").fadeIn();
         });
@@ -183,9 +183,9 @@ const main = (url) => {
 
         // Display popup metadata
         if (isKnownPage) {
-            $("#notArxiv").hide();
-            $("#notPdf").hide();
-            $("#isArxiv").show();
+            hideId("notArxiv");
+            hideId("notPdf");
+            showId("isArxiv", "flex");
             const id = parseIdFromUrl(url);
             _state.currentId = id;
 
@@ -204,18 +204,18 @@ const main = (url) => {
                 // -----------------------------
                 // -----  Fill Paper Data  -----
                 // -----------------------------
-                $("#popup-paper-title").text(paper.title);
-                $("#popup-authors").text(paper.author);
+                setTextId("popup-paper-title", paper.title);
+                setTextId("popup-authors", paper.author);
                 if (paper.codeLink) {
-                    $("#popup-code-link").show();
-                    $("#popup-code-link").text(paper.codeLink);
+                    showId("popup-code-link");
+                    setTextId("popup-code-link", paper.codeLink);
                 }
 
                 // ----------------------------------
                 // -----  Customize Popup html  -----
                 // ----------------------------------
-                $("#popup-memory-edit").append(getPopupEditFormHTML(paper));
-                $("#popup-copy-icons").html(getPopupPaperIconsHTML(paper, url));
+                setHTMLId("popup-memory-edit", getPopupEditFormHTML(paper));
+                setHTMLId("popup-copy-icons", getPopupPaperIconsHTML(paper, url));
 
                 // --------------------------
                 // -----  Paper  edits  -----
@@ -224,7 +224,7 @@ const main = (url) => {
                     ..._select2Options,
                     width: "87%",
                 });
-                $("body").css("height", "auto");
+                document.body.style.height = "auto";
                 $(`#popup-form-note-textarea--${eid}`).on("focus", () => {
                     var that = this;
                     textareaFocusEnd(that);

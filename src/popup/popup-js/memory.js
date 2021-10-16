@@ -496,14 +496,17 @@ const displayMemoryTable = () => {
     memoryTable.innerHTML = "";
     // Add relevant sorted papers (papersList may be smaller than sortedPapers
     // depending on the search query)
+    let table = [];
     for (const paper of _state.papersList) {
         try {
-            memoryTable.insertAdjacentHTML("beforeend", getMemoryItemHTML(paper));
+            table.push(getMemoryItemHTML(paper));
         } catch (error) {
             console.log(error);
             console.log(paper);
         }
     }
+    // https://stackoverflow.com/questions/18393981/append-vs-html-vs-innerhtml-performance
+    memoryTable.innerHTML = table.join("");
 
     const end = Date.now();
 
