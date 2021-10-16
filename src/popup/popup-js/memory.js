@@ -342,9 +342,14 @@ const filterMemoryByString = (letters) => {
         const title = paper.title.toLowerCase();
         const author = paper.author.toLowerCase();
         const note = paper.note.toLowerCase();
+        const displayId = paper.id.split("-")[0].toLowerCase();
         if (
             words.every(
-                (w) => title.includes(w) || author.includes(w) || note.includes(w)
+                (w) =>
+                    title.includes(w) ||
+                    author.includes(w) ||
+                    note.includes(w) ||
+                    displayId.includes(w)
             )
         ) {
             if (!_state.showFavorites || paper.favorite) {
@@ -691,7 +696,7 @@ const openMemory = () => {
                         // look into code links
                         filterMemoryByCode(query);
                     } else {
-                        // look into title & authors & notes
+                        // look into title & authors & notes & conf
                         filterMemoryByString(query);
                     }
                     // display filtered papers
