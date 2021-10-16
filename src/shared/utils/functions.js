@@ -478,13 +478,13 @@ const migrateData = async (papers, dataVersion) => {
             console.log("Data version is now " + dataVersion);
         });
 
-        return newPapers;
+        return { papers: newPapers, success: true };
     } catch (error) {
         console.log(
             `Error migrating data from version ${currentVersion} to ${dataVersion}: `
         );
         console.log(error);
-        return papers;
+        return { papers: newPapers, success: false };
     }
 };
 
@@ -560,7 +560,8 @@ const initState = async (papers, is_content_script) => {
     _state.dataVersion = manifestDataVersion();
     _state.pdfTitleFn = defaultPDFTitleFn;
 
-    papers = await migrateData(papers, _state.dataVersion);
+    const migration = await migrateData(papers, _state.dataVersion);
+    papers = migration.papers;
 
     if (is_content_script) return papers;
 
@@ -738,16 +739,22 @@ const validatePaper = (paper) => {
         "year", //         {string}    year of publication
     ];
 
+    let warn = false;
+
     for (const key of expectedKeys) {
         if (!paper.hasOwnProperty(key)) {
+            warn = true;
             console.warn(`Key ${key} absent from paper ${paper}`);
         }
     }
 
     const sources = Object.keys(_knownPaperPages);
     if (sources.indexOf(paper.source) < 0) {
+        warn = true;
         console.warn(`Unknown source ${paper.source} for paper ${paper}`);
     }
+
+    return warn;
 };
 
 const showId = (id, display) => {
@@ -878,4 +885,39 @@ const tablerSvg = (pathName, id, classNames) => {
         default:
             return "";
     }
+};
+
+const loadJSONToMemory = async (jsonString) => {
+    let error = true;
+    let warning = false;
+    let message = "";
+    try {
+        const data = JSON.parse(jsonString);
+        if (!data.__dataVersion) {
+            data.__dataVersion = 1;
+        }
+        const migration = await migrateData(data, manifestDataVersion());
+        if (!migration.success) {
+            alert("Bug");
+            return;
+        }
+        const { papers } = migration;
+        for (const id in papers) {
+            if (!id.startsWith("__")) {
+                paperWarning = validatePaper(papers[id]);
+                if (paperWarning) {
+                    warning = true;
+                }
+            }
+        }
+        if (warning) {
+            const prevPapers = await getStorage("papers");
+            setStorage("uploadBackup", prevPapers);
+        }
+        setStorage("papers", papers);
+        error = false;
+    } catch (err) {
+        message = err;
+    }
+    return { success: error, message: message };
 };
