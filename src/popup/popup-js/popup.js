@@ -240,11 +240,13 @@ const main = (url) => {
                     saveNote(id, note);
                     saveCodeLink(id, codeLink);
                     saveFavoriteItem(id, favorite);
-                    $("#popup-feedback-copied").text("Saved tags, code & note!");
-                    $("#popup-feedback-copied").fadeIn();
+                    $("#popup-feedback-copied").text(
+                        "Saved tags, code, note & favorite!"
+                    );
+                    $("#popup-feedback-copied").fadeIn(200);
                     setTimeout(() => {
-                        $("#popup-feedback-copied").fadeOut();
-                    }, 1000);
+                        $("#popup-feedback-copied").fadeOut(200);
+                    }, 1500);
                 });
 
                 // ------------------------
