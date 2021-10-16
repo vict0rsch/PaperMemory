@@ -559,18 +559,26 @@ const manifestDataVersion = () => {
 };
 
 const initState = async (papers, isContentScript) => {
+    const s = Date.now();
     if (typeof papers === "undefined") {
         papers = await getStorage("papers");
+        console.log("Time to retrieve stored papers (s): " + (Date.now() - t) / 1000);
     }
     console.log("Found papers:", papers);
 
     _state.dataVersion = manifestDataVersion();
     _state.pdfTitleFn = defaultPDFTitleFn;
 
+    const m = Date.now();
     const migration = await migrateData(papers, _state.dataVersion);
+    console.log("Migration duration (s): " + (Date.now() - m) / 1000);
+
     papers = migration.papers;
 
-    if (isContentScript) return papers;
+    if (isContentScript) {
+        console.log("State initialization duration (s): " + (Date.now() - s) / 1000);
+        return papers;
+    }
 
     _state.papers = papers;
     _state.papersList = Object.values(cleanPapers(papers));
@@ -578,6 +586,7 @@ const initState = async (papers, isContentScript) => {
     _state.papersReady = true;
     sortMemory();
     makeTags();
+    console.log("State initialization duration (s): " + (Date.now() - s) / 1000);
 };
 
 const hashCode = (s) => {

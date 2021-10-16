@@ -1,4 +1,9 @@
 /**
+ * TODO: fix paper popup added/removed to/from favorites => update memory table
+ * TODO: remove favorite selection when closing memory
+ */
+
+/**
  * Find a JQuery element with class className within #memory-item-container--${eid}
  * @param {string} eid The escaped id for the paper (id.replaceAll(".", "\\."))
  * @param {string} className The class of the element to find within the container with id^
