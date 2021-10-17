@@ -61,8 +61,8 @@ const handleEditPaperFormSubmit = (e) => {
 
     // Get content
     const { id, eid } = eventId(e);
-    const note = findEl(eid, "form-note-textarea").val();
-    const codeLink = findEl(eid, "form-code-input").val();
+    const note = findEl(eid, "form-note-textarea").value;
+    const codeLink = findEl(eid, "form-code-input").value;
 
     // Update metadata
     saveNote(id, note);
@@ -70,15 +70,15 @@ const handleEditPaperFormSubmit = (e) => {
     updatePaperTags(id, "memory-item-tags");
 
     // Close edit form
-    findEl(eid, "memory-item-edit").trigger("click");
+    findEl(eid, "memory-item-edit").dispatchEvent(new Event("click"));
 };
 
 const handleCancelPaperEdit = (e) => {
     e.preventDefault();
     const { id, eid } = eventId(e);
-    findEl(eid, "form-note-textarea").val(_state.papers[id].note);
-    findEl(eid, "memory-item-tags").html(getTagsHTMLOptions(id));
-    findEl(eid, "memory-item-edit").trigger("click");
+    findEl(eid, "form-note-textarea").value = _state.papers[id].note;
+    findEl(eid, "memory-item-tags").innerHTML = getTagsHTMLOptions(id);
+    findEl(eid, "memory-item-edit").dispatchEvent(new Event("click"));
 };
 
 const handleTogglePaperEdit = (e) => {
@@ -95,7 +95,7 @@ const handleTogglePaperEdit = (e) => {
 
     if (edit.hasClass("expand-open")) {
         // The edit form is open
-        edit.removeClass("expand-open");
+        edit.classList.remove("expand-open");
         // Open display elements
         codeAndNote.slideDown(250);
         tagList.slideDown(250);
@@ -105,7 +105,7 @@ const handleTogglePaperEdit = (e) => {
         tagEdit.slideUp(250);
     } else {
         // The edit form is closed
-        edit.addClass("expand-open");
+        edit.classList.add("expand-open");
         // Enable select2 tags input
         tagSelect.select2({
             ..._select2Options,

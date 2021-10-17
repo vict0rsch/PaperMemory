@@ -7,10 +7,12 @@
  * Find a JQuery element with class className within #memory-item-container--${eid}
  * @param {string} eid The escaped id for the paper (id.replaceAll(".", "\\."))
  * @param {string} className The class of the element to find within the container with id^
- * @returns Jquery element
+ * @returns {HTMLElement}Jquery element
  */
 const findEl = (eid, className) => {
-    return $(`#memory-item-container--${eid}`).find(`.${className}`).first();
+    return document
+        .getElementById(`memory-item-container--${eid.replace("\\.", ".")}`)
+        .querySelector(`.${className}`);
 };
 
 const getTagsHTMLOptions = (paper) => {
@@ -28,10 +30,10 @@ const getTagsHTMLOptions = (paper) => {
 };
 
 const updatePopupPaperNoMemory = () => {
-    $("#isArxiv").html(/*html*/ `
+    $("#isArxiv").innerHTML = /*html*/ `
         <div style="font-size: 1.5rem;">This paper is not in your memory</div>
         <h4> Refresh the page to add it back </h4>
-    `);
+    `;
 };
 
 /**
@@ -80,12 +82,12 @@ const copyAndConfirmMemoryItem = (id, textToCopy, feedbackText, isPopup) => {
     copyTextToClipboard(textToCopy);
     const eid = id.replace(".", "\\.");
     const element = isPopup
-        ? $(`#popup-feedback-copied`)
+        ? document.getElementById(`popup-feedback-copied`)
         : findEl(eid, "memory-item-feedback");
-    element.text(feedbackText);
-    element.fadeIn();
+    element.innerText = feedbackText;
+    $(element).fadeIn();
     setTimeout(() => {
-        element.fadeOut();
+        $(element).fadeOut();
     }, 1000);
 };
 
@@ -198,17 +200,15 @@ const saveNote = (id, note) => {
     chrome.storage.local.set({ papers: _state.papers }, () => {
         console.log("Updated the note for " + _state.papers[id].title);
 
-        findEl(eid, "memory-note-div").html(
-            note
-                ? /*html*/ `
-        <div class="memory-note-div memory-item-faded">
-            <span class="note-content-header">Note:</span>
-            <span class="note-content">${note}</span>
-        </div>`
-                : /*html*/ `<div class="memory-note-div memory-item-faded"></div>`
-        );
-        $(`#popup-form-note-textarea--${eid}`).val(note);
-        findEl(eid, "form-note-textarea").val(note);
+        findEl(eid, "memory-note-div").innerHTML = note
+            ? /*html*/ `
+                <div class="memory-note-div memory-item-faded">
+                    <span class="note-content-header">Note:</span>
+                    <span class="note-content">${note}</span>
+                </div>`
+            : /*html*/ `<div class="memory-note-div memory-item-faded"></div>`;
+        document.getElementById(`popup-form-note-textarea--${id}`).value = note;
+        findEl(eid, "form-note-textarea").value = note;
     });
 };
 
@@ -226,31 +226,30 @@ const saveCodeLink = (id, codeLink) => {
     const eid = id.replace(".", "\\.");
     chrome.storage.local.set({ papers: _state.papers }, () => {
         console.log(`Updated the code for ${_state.papers[id].title} to ${codeLink}`);
-        findEl(eid, "memory-item-code-link").html(codeLink);
-        $(`#popup-code-link`).text(codeLink);
-        findEl(eid, "form-code-input").val(codeLink);
-        codeLink ? $("#popup-code-link").show() : $("#popup-code-link").hide();
+        findEl(eid, "memory-item-code-link").innerHTML = codeLink;
+        document.getElementById(`popup-code-link`).innerText = codeLink;
+        findEl(eid, "form-code-input").value = codeLink;
+        codeLink ? showId("popup-code-link") : hideId("popup-code-link");
     });
 };
 
 const saveFavoriteItem = (id, favorite) => {
     _state.papers[id].favorite = favorite;
     _state.papers[id].favoriteDate = new Date().toJSON();
-    const eid = id.replace(".", "\\.");
     chrome.storage.local.set({ papers: _state.papers }, () => {
         console.log(`${_state.papers[id].title} is favorite: ${favorite}`);
         if (favorite) {
-            $(`#memory-item-container--${eid}`).addClass("favorite");
-            findEl(eid, "memory-item-favorite")
-                .find("svg")
-                .first()
-                .addClass("favorite");
+            document
+                .getElementById(`memory-item-container--${id}`)
+                .classList.add("favorite");
+            findEl(id, "memory-item-favorite")
+                .querySelector(".svg")
+                .classList.add("favorite");
         } else {
-            $(`#memory-item-container--${eid}`).removeClass("favorite");
-            findEl(eid, "memory-item-favorite")
-                .find("svg")
-                .first()
-                .removeClass("favorite");
+            $(`#memory-item-container--${id}`).removeClass("favorite");
+            findEl(id, "memory-item-favorite")
+                .querySelector("svg")
+                .classList.remove("favorite");
         }
 
         if (_state.sortKey === "favoriteDate") {
@@ -259,10 +258,12 @@ const saveFavoriteItem = (id, favorite) => {
                 displayMemoryTable();
             }
             const n = _state.sortedPapers.filter((p) => p.favorite).length;
-            $("#memory-search").prop("placeholder", `Search ${n} entries`);
+            document.getElementById(
+                "memory-search"
+            ).placeholder = `Search ${n} entries`;
         }
 
-        $(`#checkFavorite--${eid}`).prop("checked", favorite);
+        document.getElementById(`checkFavorite--${id}`).checked = favorite;
     });
 };
 
@@ -282,7 +283,7 @@ const setMemorySortArrow = (direction) => {
                 </svg>`;
     }
 
-    $("#memory-sort-arrow").html(arrow);
+    document.getElementById("memory-sort-arrow").innerHTML = arrow;
 };
 
 /**
@@ -412,11 +413,9 @@ const filterMemoryByCode = (letters) => {
  */
 const updatePaperTagsHTML = (id) => {
     const eid = id.replace(".", "\\.");
-    findEl(eid, "tag-list").html(
-        _state.papers[id].tags
-            .map((t) => `<span class="memory-tag">${t}</span>`)
-            .join("")
-    );
+    findEl(eid, "tag-list").innerHTML = _state.papers[id].tags
+        .map((t) => `<span class="memory-tag">${t}</span>`)
+        .join("");
 };
 
 /**
@@ -425,10 +424,9 @@ const updatePaperTagsHTML = (id) => {
  * @param {string} id The paper's id
  */
 const updateTagOptions = (id) => {
-    const eid = id.replace(".", "\\.");
     const tagOptions = getTagsHTMLOptions(id);
-    findEl(eid, "memory-item-tags").html(tagOptions);
-    $(`#popup-item-tags--${eid}`).html(tagOptions);
+    findEl(id, "memory-item-tags").innerHTML = tagOptions;
+    document.getElementById$(`popup-item-tags--${id}`).innerHTML = tagOptions;
 };
 
 /**
@@ -441,17 +439,12 @@ const updatePaperTags = (id, elementId) => {
     // elementId may be an ID selector (in the main popup)
     // or a class selector (in the memory)
     if (elementId.startsWith("#")) {
-        ref = $(elementId);
+        ref = document.getElementById(elementId.replace("#", ""));
     } else {
-        const eid = id.replace(".", "\\.");
-        ref = findEl(eid, elementId);
+        ref = findEl(id, elementId);
     }
     // Store :selected <options> in the tags array
-    let tags = [];
-    ref.find(":selected").each((k, el) => {
-        const t = $.trim($(el).val());
-        if (t !== "") tags.push(t);
-    });
+    let tags = Array.from(ref.selectedOptions, (e) => $.trim(e.value)).filter((e) => e);
 
     // sort tags alphabetically to compare with the existing array of tags
     // for this paper
@@ -569,7 +562,7 @@ const openMemory = () => {
     // hide menu button
     $("#tabler-menu").fadeOut(200);
     // set default sort to lastOpenDate
-    $("#memory-select").val("lastOpenDate");
+    document.getElementById("memory-select").value = "lastOpenDate";
     // set default sort direction arrow down
     setMemorySortArrow("down");
 
@@ -638,50 +631,65 @@ const makeMemoryHTML = async () => {
             }
         });
 
-    $("#filter-favorites").on("click", () => {
+    document.getElementById("filter-favorites").addEventListener("click", () => {
         const showFavorites = !_state.showFavorites;
         _state.showFavorites = showFavorites;
         if (showFavorites) {
-            $("#filter-favorites").find("svg").first().addClass("favorite");
+            document
+                .getElementById("filter-favorites")
+                .querySelector(".svg")
+                .classList.add("favorite");
             sortMemory();
             _state.papersList = _state.papersList.filter((p) => p.favorite);
             displayMemoryTable();
             setMemorySortArrow("down");
-            $("#memory-select").append(
-                `<option value="favoriteDate">Last favoured</option>`
-            );
+            document.getElementById(
+                "memory-select"
+            ).innerHTML = `<option value="favoriteDate">Last favoured</option>`;
             const n = _state.papersList.length;
-            $("#memory-search").prop("placeholder", `Search ${n} entries...`);
+            document.getElementById(
+                "memory-search"
+            ).placeholder = `Search ${n} entries...`;
         } else {
-            $("#filter-favorites").find("svg").first().removeClass("favorite");
-            if ($("#memory-select").val() === "favoriteDate") {
-                $("#memory-select").val("lastOpenDate");
+            document
+                .getElementById("filter-favorites")
+                .querySelector(".svg")
+                .classList.remove("favorite");
+
+            if (document.getElementById("memory-select").value === "favoriteDate") {
+                document.getElementById("memory-select").value = "lastOpenDate";
                 _state.sortKey = "lastOpenDate";
             }
-            $(`#memory-select option[value="favoriteDate"]`).remove();
+            document
+                .querySelector(`#memory-select option[value="favoriteDate"]`)
+                .remove();
             sortMemory();
             setMemorySortArrow("down");
 
-            if ($.trim($("#memory-search").val())) {
-                $("#memory-search").trigger("keypress");
+            if ($.trim(document.getElementById("memory-search").value)) {
+                document
+                    .getElementById("memory-search")
+                    .dispatchEvent(new Event("keypress"));
             } else {
                 _state.papersList = _state.sortedPapers;
                 displayMemoryTable();
             }
             const n = _state.sortedPapers.length;
-            $("#memory-search").prop("placeholder", `Search ${n} entries...`);
+            document.getElementById(
+                "memory-search"
+            ).placeholder = `Search ${n} entries...`;
         }
     });
     // listen to sorting feature change
-    $("#memory-select").on("change", (e) => {
-        const sort = $(e.target).val();
+    document.getElementById("memory-select").addEventListener("change", (e) => {
+        const sort = e.target.value;
         _state.sortKey = sort;
         sortMemory();
         displayMemoryTable();
         setMemorySortArrow("down");
     });
     // listen to sorting direction change
-    $("#memory-sort-arrow").on("click", (e) => {
+    document.getElementById("memory-sort-arrow").addEventListener("click", (e) => {
         if ($("#memory-sort-arrow svg").first()[0].id === "memory-sort-arrow-down") {
             setMemorySortArrow("up");
         } else {
@@ -707,6 +715,6 @@ const closeMemory = () => {
         $("#memory-switch-text-on").fadeIn();
     });
     $("#tabler-menu").fadeIn(200);
-    $("#memory-search").val("");
+    document.getElementById("memory-search").value = "";
     _state.memoryIsOpen = false;
 };

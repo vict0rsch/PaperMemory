@@ -562,7 +562,7 @@ const initState = async (papers, isContentScript) => {
     const s = Date.now();
     if (typeof papers === "undefined") {
         papers = await getStorage("papers");
-        console.log("Time to retrieve stored papers (s): " + (Date.now() - t) / 1000);
+        console.log("Time to retrieve stored papers (s): " + (Date.now() - s) / 1000);
     }
     console.log("Found papers:", papers);
 
@@ -937,4 +937,17 @@ const loadJSONToMemory = async (jsonString) => {
         message = err;
     }
     return { success: error, message: message };
+};
+
+const val = (element, value) => {
+    if (element instanceof HTMLInputElement && element.type === "checkbox") {
+        if (typeof value === "undefined") {
+            return element.checked;
+        }
+        element.checked = value;
+    }
+    if (typeof value === "undefined") {
+        return element ? element.value : "";
+    }
+    element.value = value;
 };

@@ -7,11 +7,11 @@ const closeMenu = () => {
         easing: "easeOutQuint",
     }) &&
         $("#tabler-menu").fadeOut(() => {
-            $("#tabler-menu").html(/*html*/ `
-                <svg class="tabler-icon">
-                    ${svgPath("adjustments")}
-                </svg>
-            `);
+            document.getElementById("tabler-menu").innerHTML = tablerSvg(
+                "adjustments",
+                undefined,
+                ["tabler-icon"]
+            );
             $("#tabler-menu").fadeIn();
         });
     _state.menuIsOpen = false;
@@ -26,10 +26,11 @@ const openMenu = () => {
         easing: "easeOutQuint",
     }) &&
         $("#tabler-menu").fadeOut(() => {
-            $("#tabler-menu").html(/*html*/ `
-            <svg class="tabler-icon menu-svg">
-                ${svgPath("adjustments")}
-            </svg>`);
+            document.getElementById("tabler-menu").innerHTML = tablerSvg(
+                "adjustments",
+                undefined,
+                ["tabler-icon", "menu-svg"]
+            );
             $("#tabler-menu").fadeIn();
         });
     _state.menuIsOpen = true;
@@ -44,13 +45,13 @@ const getAndTrackPopupMenuChecks = (menu, menuCheckNames) => {
     let setValues = {};
     for (const key of menuCheckNames) {
         setValues[key] = menu.hasOwnProperty(key) ? menu[key] : true;
-        $("#" + key).prop("checked", setValues[key]);
+        document.getElementById(key).checked = setValues[key];
     }
     chrome.storage.local.set(setValues);
 
     for (const key of menuCheckNames) {
-        $("#" + key).on("change", () => {
-            const checked = $("#" + key).prop("checked");
+        document.getElementById(key).addEventListener("change", () => {
+            const checked = document.getElementById(key).checked;
             chrome.storage.local.set({ [key]: checked }, function () {
                 console.log(`Settings saved for ${key} (${checked})`);
             });
