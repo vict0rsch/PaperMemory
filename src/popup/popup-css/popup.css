@@ -249,7 +249,7 @@ svg {
     border: 1px solid rgba(230, 230, 230, 0.75);
     position: relative;
     border-radius: 8px;
-    transition: all 0.2s ease-in-out;
+    transition: all 0.1s ease !important;
     font-size: 0.9rem;
 }
 

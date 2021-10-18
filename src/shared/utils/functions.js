@@ -672,23 +672,23 @@ const handlePopupKeydown = (e) => {
             const focused = document.querySelectorAll(":focus");
             if (focused && focused.length && focused.classList.contains("noMemoryOnA"))
                 return;
-            document.getElementById("memory-switch").dispatchEvent(new Event("click"));
+            dispatch("memory-switch", "click");
         } else if (key === "Enter") {
             // enter on the arxiv memory button opens it
-            let el = document.getElementById("memory-switch-text-on:focus").first();
-            if (el.length > 0) {
+            let el = document.getElementById("memory-switch-text-on:focus");
+            if (el) {
                 document
                     .getElementById("memory-switch")
                     .dispatchEvent(new Event("click"));
                 return;
             }
             // enter on the menu button opens it
-            el = document.getElementById("tabler-menu:focus").first();
-            if (el.length > 0) {
+            el = document.getElementById("tabler-menu:focus");
+            if (el) {
                 document
                     .getElementById("tabler-menu")
                     .dispatchEvent(new Event("click"));
-                document.getElementById("tabler-menu").dispatchEvent(new Event("blur"));
+                dispatch("tabler-menu", "blur");
                 return;
             }
         }
@@ -706,17 +706,17 @@ const handlePopupKeydown = (e) => {
 
     if (key === "Backspace") {
         // delete
-        findEl(id, "delete-memory-item").dispatchEvent(new Event("click"));
+        dispatch(findEl(id, "delete-memory-item"), "click");
     } else if (key === "Enter") {
         // open paper
-        findEl(id, "memory-item-link").dispatchEvent(new Event("click"));
+        dispatch(findEl(id, "memory-item-link"), "click");
     } else if (key === "Escape") {
         // close memory
         e.preventDefault();
         closeMemory();
     } else if (key === "e") {
         // edit item
-        findEl(id, "memory-item-edit").dispatchEvent(new Event("click"));
+        dispatch(findEl(id, "memory-item-edit"), "click");
     }
 };
 
@@ -776,20 +776,6 @@ const validatePaper = (paper) => {
     }
 
     return warn;
-};
-
-const showId = (id, display) => {
-    if (typeof display === "undefined") display = "block";
-    document.getElementById(id).style.display = display;
-};
-const hideId = (id) => {
-    document.getElementById(id).style.display = "none";
-};
-const setTextId = (id, text) => {
-    document.getElementById(id).innerText = text;
-};
-const setHTMLId = (id, html) => {
-    document.getElementById(id).innerHTML = html;
 };
 
 const tablerSvg = (pathName, id, classNames) => {
@@ -941,19 +927,6 @@ const loadJSONToMemory = async (jsonString) => {
         message = err;
     }
     return { success: error, message: message };
-};
-
-const val = (element, value) => {
-    if (element instanceof HTMLInputElement && element.type === "checkbox") {
-        if (typeof value === "undefined") {
-            return element.checked;
-        }
-        element.checked = value;
-    }
-    if (typeof value === "undefined") {
-        return element ? element.value : "";
-    }
-    element.value = value;
 };
 
 const arraysIdentical = (a, b) => {

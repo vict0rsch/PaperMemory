@@ -30,10 +30,11 @@ const getTagsHTMLOptions = (paper) => {
 };
 
 const updatePopupPaperNoMemory = () => {
-    document.getElementById("isArxiv").innerHTML = /*html*/ `
-        <div style="font-size: 1.5rem;">This paper is not in your memory</div>
-        <h4> Refresh the page to add it back </h4>
+    const noMemoryHTML = /*html*/ `
+    <div style="font-size: 1.5rem;">This paper is not in your memory</div>
+    <h4> Refresh the page to add it back </h4>
     `;
+    setHTMLEl("isArxiv", noMemoryHTML);
 };
 
 /**
@@ -50,25 +51,11 @@ const confirmDelete = (id) => {
         <div style="width: 100%; text-align: center; padding: 32px;">
             <button style="padding: 8px 16px;" id="cancel-modal-button">Cancel</button>
             <span style="min-width: 32px;"></span>
-            <button style="padding: 8px 16px;" id="confirm-modal-button">Confirm</button>
+            <button style="padding: 8px 16px;" id="confirm-modal-button--${id}">Confirm</button>
         </div>
     </div>`;
-    document.getElementById("cancel-modal-button").addEventListener("click", () => {
-        document.getElementById("confirm-modal").remove();
-    });
-    document.getElementById("confirm-modal-button").addEventListener("click", () => {
-        delete _state.papers[id];
-        chrome.storage.local.set({ papers: _state.papers }, () => {
-            _state.papersList = Object.values(cleanPapers(_state.papers));
-            sortMemory();
-            displayMemoryTable();
-            document.getElementById("confirm-modal").remove();
-            console.log("Successfully deleted '" + title + "' from ArxivMemory");
-            if (_state.currentId === id) {
-                updatePopupPaperNoMemory();
-            }
-        });
-    });
+    addListener("cancel-modal-button", "click", handleCancelModalClick);
+    addListener(`confirm-modal-button--${id}`, "click", handleConfirmModalClick);
 };
 
 /**
@@ -83,6 +70,7 @@ const copyAndConfirmMemoryItem = (id, textToCopy, feedbackText, isPopup) => {
     const element = isPopup
         ? document.getElementById(`popup-feedback-copied`)
         : findEl(id, "memory-item-feedback");
+    if (!el) return;
     element.innerText = feedbackText;
     $(element).fadeIn();
     setTimeout(() => {
@@ -198,19 +186,19 @@ const saveNote = (id, note) => {
     chrome.storage.local.set({ papers: _state.papers }, () => {
         console.log("Updated the note for " + _state.papers[id].title);
 
-        findEl(id, "memory-note-div").innerHTML = note
-            ? /*html*/ `
+        setHTMLEl(
+            findEl(id, "memory-note-div"),
+            note
+                ? /*html*/ `
                 <div class="memory-note-div memory-item-faded">
                     <span class="note-content-header">Note:</span>
                     <span class="note-content">${note}</span>
                 </div>`
-            : /*html*/ `<div class="memory-note-div memory-item-faded"></div>`;
+                : /*html*/ `<div class="memory-note-div memory-item-faded"></div>`
+        );
         const textarea = document.getElementById(`popup-form-note-textarea--${id}`);
-        if (textarea) {
-            textarea.value = note;
-        }
-
-        findEl(id, "form-note-textarea").value = note;
+        val(textarea, note);
+        val(findEl(id, "form-note-textarea"), note);
     });
 };
 
@@ -227,14 +215,12 @@ const saveCodeLink = (id, codeLink) => {
     _state.papers[id].codeLink = codeLink;
     chrome.storage.local.set({ papers: _state.papers }, () => {
         console.log(`Updated the code for ${_state.papers[id].title} to ${codeLink}`);
-        findEl(id, "memory-item-code-link").innerHTML = codeLink;
-        document.getElementById(`popup-code-link`).innerText = codeLink;
-        findEl(id, "form-code-input").value = codeLink;
+        setHTMLEl(findEl(id, "memory-item-code-link"), codeLink);
+        setHTMLEl(`popup-code-link`, codeLink);
+        val(findEl(id, "form-code-input"), codeLink);
         codeLink ? showId("popup-code-link") : hideId("popup-code-link");
         const codeInput = document.getElementById(`popup-form-note-codeLink--${id}`);
-        if (codeInput) {
-            codeInput.value = note;
-        }
+        val(codeInput, note);
     });
 };
 
@@ -244,19 +230,17 @@ const saveFavoriteItem = (id, favorite) => {
     chrome.storage.local.set({ papers: _state.papers }, () => {
         console.log(`${_state.papers[id].title} is favorite: ${favorite}`);
         if (favorite) {
-            document
-                .getElementById(`memory-item-container--${id}`)
-                .classList.add("favorite");
-            findEl(id, "memory-item-favorite")
-                .querySelector("svg")
-                .classList.add("favorite");
+            addClass(`memory-item-container--${id}`, "favorite");
+            addClass(
+                findEl(id, "memory-item-favorite").querySelector("svg"),
+                "favorite"
+            );
         } else {
-            document
-                .getElementById(`memory-item-container--${id}`)
-                .classList.remove("favorite");
-            findEl(id, "memory-item-favorite")
-                .querySelector("svg")
-                .classList.remove("favorite");
+            removeClass(`memory-item-container--${id}`, "favorite");
+            removeClass(
+                findEl(id, "memory-item-favorite").querySelector("svg"),
+                "favorite"
+            );
         }
 
         if (_state.sortKey === "favoriteDate") {
@@ -265,9 +249,10 @@ const saveFavoriteItem = (id, favorite) => {
                 displayMemoryTable();
             }
             const n = _state.sortedPapers.filter((p) => p.favorite).length;
-            document.getElementById(
-                "memory-search"
-            ).placeholder = `Search ${n} entries`;
+            const memSearch = document.getElementById("memory-search");
+            if (memSearch) {
+                setPlaceholder(memSearch, `Search ${n} entries`);
+            }
         }
 
         let checkFavorite = document.getElementById(`checkFavorite--${id}`);
@@ -293,7 +278,7 @@ const setMemorySortArrow = (direction) => {
                 </svg>`;
     }
 
-    document.getElementById("memory-sort-arrow").innerHTML = arrow;
+    setHTMLEl("memory-sort-arrow", arrow);
 };
 
 /**
@@ -422,9 +407,12 @@ const filterMemoryByCode = (letters) => {
  * @param {string} id The paper's id
  */
 const updatePaperTagsHTML = (id) => {
-    findEl(id, "tag-list").innerHTML = _state.papers[id].tags
-        .map((t) => `<span class="memory-tag">${t}</span>`)
-        .join("");
+    setHTMLEl(
+        findEl(id, "tag-list"),
+        _state.papers[id].tags
+            .map((t) => `<span class="memory-tag">${t}</span>`)
+            .join("")
+    );
 };
 
 /**
@@ -435,11 +423,8 @@ const updatePaperTagsHTML = (id) => {
 const updateTagOptions = (id) => {
     const tagOptions = getTagsHTMLOptions(_state.papers[id]);
     console.log("tagOptions: ", tagOptions);
-    findEl(id, "memory-item-tags").innerHTML = tagOptions;
-    const popupTags = document.getElementById(`popup-item-tags--${id}`);
-    if (popupTags) {
-        popupTags.innerHTML = tagOptions;
-    }
+    setHTMLEl(findEl(id, "memory-item-tags"), tagOptions);
+    setHTMLEl(`popup-item-tags--${id}`, tagOptions);
 };
 
 /**
@@ -577,7 +562,7 @@ const openMemory = () => {
     // hide menu button
     $("#tabler-menu").fadeOut(200);
     // set default sort to lastOpenDate
-    document.getElementById("memory-select").value = "lastOpenDate";
+    val("memory-select", "lastOpenDate");
     // set default sort direction arrow down
     setMemorySortArrow("down");
 
@@ -595,9 +580,7 @@ const openMemory = () => {
 const makeMemoryHTML = async () => {
     const tstart = Date.now() / 1000;
     // Fill-in input placeholder
-    document.getElementById(
-        "memory-search"
-    ).placeholder = `Search ${_state.papersList.length} entries ...`;
+    setPlaceholder("memory-search", `Search ${_state.papersList.length} entries ...`);
 
     const tdisplay = Date.now() / 1000;
 
@@ -615,106 +598,19 @@ const makeMemoryHTML = async () => {
     console.log("Time to display table (s):" + (tevents - tdisplay));
 
     // search keypress events.
-    document.getElementById("memory-search").addEventListener(
-        "keypress", // deprecated fix: https://stackoverflow.com/questions/49278648/alternative-for-events-deprecated-keyboardevent-which-property
-        delay((e) => {
-            // read input, return if empty (after trim)
-            const query = $.trim($(e.target).val());
-            if (!query && e.key !== "Backspace") return;
-
-            if (query.startsWith("t:")) {
-                // look into tags
-                filterMemoryByTags(query);
-            } else if (query.startsWith("c:")) {
-                // look into code links
-                filterMemoryByCode(query);
-            } else {
-                // look into title & authors & notes & conf
-                filterMemoryByString(query);
-            }
-            // display filtered papers
-            displayMemoryTable();
-        }, delayTime)
+    // deprecated fix: https://stackoverflow.com/questions/49278648/alternative-for-events-deprecated-keyboardevent-which-property
+    addListener(
+        "memory-search",
+        "keypress",
+        delay(handleMemorySearchKeyPress, delayTime)
     );
-    document.getElementById("memory-search").addEventListener("keyup", (e) => {
-        // keyup because keypress does not listen to backspaces
-        if (e.key == "Backspace") {
-            var backspaceEvent = $.Event("keypress");
-            backspaceEvent.key = "Backspace";
-            document.getElementById("memory-search").dispatchEvent(backspaceEvent);
-        }
-    });
+    addListener("memory-search", "keyup", handleMemorySearchKeyUp);
 
-    document.getElementById("filter-favorites").addEventListener("click", () => {
-        const showFavorites = !_state.showFavorites;
-        _state.showFavorites = showFavorites;
-        if (showFavorites) {
-            document
-                .getElementById("filter-favorites")
-                .querySelector("svg")
-                .classList.add("favorite");
-            sortMemory();
-            _state.papersList = _state.papersList.filter((p) => p.favorite);
-            displayMemoryTable();
-            setMemorySortArrow("down");
-            document.getElementById(
-                "memory-select"
-            ).innerHTML = `<option value="favoriteDate">Last favoured</option>`;
-            const n = _state.papersList.length;
-            document.getElementById(
-                "memory-search"
-            ).placeholder = `Search ${n} entries...`;
-        } else {
-            document
-                .getElementById("filter-favorites")
-                .querySelector("svg")
-                .classList.remove("favorite");
-
-            if (document.getElementById("memory-select").value === "favoriteDate") {
-                document.getElementById("memory-select").value = "lastOpenDate";
-                _state.sortKey = "lastOpenDate";
-            }
-            document
-                .querySelector(`#memory-select option[value="favoriteDate"]`)
-                .remove();
-            sortMemory();
-            setMemorySortArrow("down");
-
-            if ($.trim(document.getElementById("memory-search").value)) {
-                document
-                    .getElementById("memory-search")
-                    .dispatchEvent(new Event("keypress"));
-            } else {
-                _state.papersList = _state.sortedPapers;
-                displayMemoryTable();
-            }
-            const n = _state.sortedPapers.length;
-            document.getElementById(
-                "memory-search"
-            ).placeholder = `Search ${n} entries...`;
-        }
-    });
+    addListener("filter-favorites", "click", handleFilterFavorites);
     // listen to sorting feature change
-    document.getElementById("memory-select").addEventListener("change", (e) => {
-        const sort = e.target.value;
-        _state.sortKey = sort;
-        sortMemory();
-        displayMemoryTable();
-        setMemorySortArrow("down");
-    });
+    addListener("memory-select", "change", handleMemorySelectChange);
     // listen to sorting direction change
-    document.getElementById("memory-sort-arrow").addEventListener("click", (e) => {
-        if (
-            document.querySelector("#memory-sort-arrow svg").id ===
-            "memory-sort-arrow-down"
-        ) {
-            setMemorySortArrow("up");
-        } else {
-            setMemorySortArrow("down");
-        }
-        reverseMemory();
-        displayMemoryTable();
-    });
+    addListener("memory-sort-arrow", "click", handleMemorySortArrow);
     const tend = Date.now() / 1000;
     console.log("Time to add events listeners (s):" + (tend - tevents));
     console.log("Total time to make (async) (s):" + (tend - tstart));
@@ -732,6 +628,6 @@ const closeMemory = () => {
         $("#memory-switch-text-on").fadeIn();
     });
     $("#tabler-menu").fadeIn(200);
-    document.getElementById("memory-search").value = "";
+    val("memory-search", "");
     _state.memoryIsOpen = false;
 };

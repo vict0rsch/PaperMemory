@@ -49,9 +49,7 @@ const handleCopyPDFLink = (e) => {
 
 const handleAddItemToFavorites = (e) => {
     const { id } = eventId(e);
-    const isFavorite = document
-        .getElementById(`memory-item-container--${id}`)
-        .classList.contains("favorite");
+    const isFavorite = hasClass(`memory-item-container--${id}`, "favorite");
     saveFavoriteItem(id, !isFavorite);
 };
 
@@ -65,8 +63,8 @@ const handleEditPaperFormSubmit = (e) => {
 
     // Get content
     const { id } = eventId(e);
-    const note = findEl(id, "form-note-textarea").value;
-    const codeLink = findEl(id, "form-code-input").value;
+    const note = val(findEl(id, "form-note-textarea"));
+    const codeLink = val(findEl(id, "form-code-input"));
 
     // Update metadata
     saveNote(id, note);
@@ -74,16 +72,16 @@ const handleEditPaperFormSubmit = (e) => {
     updatePaperTags(id, "memory-item-tags");
 
     // Close edit form
-    findEl(id, "memory-item-edit").dispatchEvent(new Event("click"));
+    dispatch(findEl(id, "memory-item-edit"), "click");
 };
 
 const handleCancelPaperEdit = (e) => {
     e.preventDefault();
     const { id } = eventId(e);
     const paper = _state.papers[id];
-    findEl(id, "form-note-textarea").value = paper.note;
-    findEl(id, "memory-item-tags").innerHTML = getTagsHTMLOptions(paper);
-    findEl(id, "memory-item-edit").dispatchEvent(new Event("click"));
+    val(findEl(id, "form-note-textarea"), paper.note);
+    setHTMLEl(findEl(id, "memory-item-tags"), getTagsHTMLOptions(paper));
+    dispatch(findEl(id, "memory-item-edit"), "click");
 };
 
 const handleTogglePaperEdit = (e) => {
@@ -125,4 +123,118 @@ const handleTogglePaperEdit = (e) => {
         editPaper.slideDown(250);
         tagEdit.slideDown(250);
     }
+};
+
+const handleMemorySelectChange = (e) => {
+    const sort = e.target.value;
+    _state.sortKey = sort;
+    sortMemory();
+    displayMemoryTable();
+    setMemorySortArrow("down");
+};
+
+const handleMemorySortArrow = (e) => {
+    if (
+        document.querySelector("#memory-sort-arrow svg").id === "memory-sort-arrow-down"
+    ) {
+        setMemorySortArrow("up");
+    } else {
+        setMemorySortArrow("down");
+    }
+    reverseMemory();
+    displayMemoryTable();
+};
+
+const handleFilterFavorites = () => {
+    const showFavorites = !_state.showFavorites;
+    _state.showFavorites = showFavorites;
+    if (showFavorites) {
+        addClass(
+            document.getElementById("filter-favorites").querySelector("svg"),
+            "favorite"
+        );
+        sortMemory();
+        _state.papersList = _state.papersList.filter((p) => p.favorite);
+        displayMemoryTable();
+        setMemorySortArrow("down");
+        setHTMLEl(
+            "memory-select",
+            `<option value="favoriteDate">Last favoured</option>`
+        );
+        const n = _state.papersList.length;
+        setPlaceholder("memory-search", `Search ${n} entries...`);
+    } else {
+        removeClass(
+            document.getElementById("filter-favorites").querySelector("svg"),
+            "favorite"
+        );
+
+        if (document.getElementById("memory-select").value === "favoriteDate") {
+            document.getElementById("memory-select").value = "lastOpenDate";
+            _state.sortKey = "lastOpenDate";
+        }
+        document.querySelector(`#memory-select option[value="favoriteDate"]`).remove();
+        sortMemory();
+        setMemorySortArrow("down");
+
+        if ($.trim(document.getElementById("memory-search").value)) {
+            dispatch("memory-search", "keypress");
+        } else {
+            _state.papersList = _state.sortedPapers;
+            displayMemoryTable();
+        }
+        const n = _state.sortedPapers.length;
+        setPlaceholder("memory-search", `Search ${n} entries...`);
+    }
+};
+
+const handleMemorySearchKeyPress = (e) => {
+    // read input, return if empty (after trim)
+    const query = $.trim($(e.target).val());
+    if (!query && e.key !== "Backspace") return;
+
+    if (query.startsWith("t:")) {
+        // look into tags
+        filterMemoryByTags(query);
+    } else if (query.startsWith("c:")) {
+        // look into code links
+        filterMemoryByCode(query);
+    } else {
+        // look into title & authors & notes & conf
+        filterMemoryByString(query);
+    }
+    // display filtered papers
+    displayMemoryTable();
+};
+
+const handleMemorySearchKeyUp = (e) => {
+    // keyup because keypress does not listen to backspaces
+    if (e.key == "Backspace") {
+        var backspaceEvent = $.Event("keypress");
+        backspaceEvent.key = "Backspace";
+        document.getElementById("memory-search").dispatchEvent(backspaceEvent);
+    }
+};
+
+const handleCancelModalClick = () => {
+    document.getElementById("confirm-modal").remove();
+};
+
+const handleConfirmModalClick = (e) => {
+    const id = e.target.id.split("--")[1];
+    delete _state.papers[id];
+    chrome.storage.local.set({ papers: _state.papers }, () => {
+        _state.papersList = Object.values(cleanPapers(_state.papers));
+        sortMemory();
+        displayMemoryTable();
+        document.getElementById("confirm-modal").remove();
+        console.log("Successfully deleted '" + title + "' from ArxivMemory");
+        if (_state.currentId === id) {
+            updatePopupPaperNoMemory();
+        }
+        setPlaceholder(
+            "memory-search",
+            `Search ${_state.papersList.length} entries ...`
+        );
+    });
 };
