@@ -63,27 +63,27 @@ const getAndTrackPopupMenuChecks = (menu, menuCheckNames) => {
  * Creates click events on the popup
  */
 const setStandardPopupClicks = () => {
-    $("#helpGithubLink").on("click", () => {
+    document.getElementById("helpGithubLink").addEventListener("click", () => {
         chrome.tabs.create({
             url: "https://github.com/vict0rsch/ArxivMemory",
         });
     });
 
-    $("#keyboardShortcuts").on("click", () => {
+    document.getElementById("keyboardShortcuts").addEventListener("click", () => {
         chrome.tabs.create({
             url: "https://github.com/vict0rsch/ArxivTools#keyboard-navigation",
         });
     });
 
-    $("#tabler-menu").on("click", () => {
+    document.getElementById("tabler-menu").addEventListener("click", () => {
         _state.menuIsOpen ? closeMenu() : openMenu();
     });
 
-    $("#memory-switch").on("click", () => {
+    document.getElementById("memory-switch").addEventListener("click", () => {
         _state.memoryIsOpen ? closeMemory() : openMemory();
     });
 
-    $("#download-arxivmemory").on("click", () => {
+    document.getElementById("download-arxivmemory").addEventListener("click", () => {
         const now = new Date().toLocaleString();
         chrome.storage.local.get("papers", ({ papers }) => {
             const version = papers.__dataVersion;
@@ -110,10 +110,11 @@ const setAndHandleCustomPDFFunction = (menu) => {
     // so use that and update storage just in case.
     chrome.storage.local.set({ pdfTitleFn: _state.pdfTitleFn.toString() });
     // update the user's textarea
-    $("#customPdfTitleTextarea").val(_state.pdfTitleFn.toString());
+    document.getElementById("customPdfTitleTextarea").value =
+        _state.pdfTitleFn.toString();
     // listen to saving click
-    $("#saveCustomPdf").on("click", () => {
-        const code = $.trim($("#customPdfTitleTextarea").val());
+    document.getElementById("saveCustomPdf").addEventListener("click", () => {
+        const code = $.trim(document.getElementById("customPdfTitleTextarea").value);
         try {
             // check code: it can be evaluated and it runs without error
             const fn = eval(code);
@@ -126,34 +127,34 @@ const setAndHandleCustomPDFFunction = (menu) => {
                 );
             }
             // no error so far: all good!
-            $("#customPdfFeedback").html(
-                /*html*/ `<span style="color: green">Saved!</span>`
-            );
+            document.getElementById(
+                "customPdfFeedback"
+            ).innerHTML = /*html*/ `<span style="color: green">Saved!</span>`;
             // save function string
             chrome.storage.local.set({ pdfTitleFn: code });
             _state.pdfTitleFn = fn;
             setTimeout(() => {
-                $("#customPdfFeedback").html("");
+                document.getElementById("customPdfFeedback").innerHTML = "";
             }, 1000);
         } catch (error) {
             // something went wrong!
-            $("#customPdfFeedback").html(
-                /*html*/ `<span style="color: red">${error}</span>`
-            );
+            document.getElementById(
+                "customPdfFeedback"
+            ).innerHTML = /*html*/ `<span style="color: red">${error}</span>`;
         }
     });
     // listen to the event resetting the pdf title function
     // to the built-in default
-    $("#defaultCustomPdf").on("click", () => {
+    document.getElementById("defaultCustomPdf").addEventListener("click", () => {
         const code = defaultPDFTitleFn.toString();
         chrome.storage.local.set({ pdfTitleFn: code });
         _state.pdfTitleFn = defaultPDFTitleFn;
-        $("#customPdfTitleTextarea").val(code);
-        $("#customPdfFeedback").html(
-            /*html*/ `<span style="color: green">Saved!</span>`
-        );
+        document.getElementById("customPdfTitleTextarea").value = code;
+        document.getElementById(
+            "customPdfFeedback"
+        ).innerHTML = /*html*/ `<span style="color: green">Saved!</span>`;
         setTimeout(() => {
-            $("#customPdfFeedback").html("");
+            document.getElementById("customPdfFeedback").innerHTML = "";
         }, 1000);
     });
 };
@@ -165,7 +166,7 @@ const setAndHandleCustomPDFFunction = (menu) => {
  * @param {str} url Currently focused and active tab's url.
  */
 const popupMain = async (url) => {
-    $(document).on("keydown", handlePopupKeydown);
+    document.addEventListener("keydown", handlePopupKeydown);
 
     const menu = await getStorage(_menuStorageKeys);
     // Set checkboxes
@@ -187,13 +188,6 @@ const popupMain = async (url) => {
         showId("isArxiv", "flex");
         const id = parseIdFromUrl(url);
         _state.currentId = id;
-
-        const waitStart = Date.now();
-        let i = 0;
-        while (!_state.papersReady) {
-            i += 1;
-        }
-        console.log("Waited for: " + (Date.now() - waitStart) / 1000);
 
         if (!_state.papers.hasOwnProperty(id)) {
             // Unknown paper, probably deleted by the user
@@ -229,63 +223,81 @@ const popupMain = async (url) => {
             width: "87%",
         });
         document.body.style.height = "auto";
-        $(`#popup-form-note-textarea--${eid}`).on("focus", () => {
-            var that = this;
-            textareaFocusEnd(that);
-        });
-        $(`#popup-save-edits--${eid}`).on("click", () => {
-            const note = $(`#popup-form-note-textarea--${eid}`).val();
-            const codeLink = $(`#popup-form-note--${eid}`)
-                .find(".form-code-input")
-                .first()
-                .val();
-            const favorite = $(`#checkFavorite--${eid}`).prop("checked");
-            updatePaperTags(id, `#popup-item-tags--${eid}`);
-            saveNote(id, note);
-            saveCodeLink(id, codeLink);
-            saveFavoriteItem(id, favorite);
-            $("#popup-feedback-copied").text("Saved tags, code, note & favorite!");
-            $("#popup-feedback-copied").fadeIn(200);
-            setTimeout(() => {
-                $("#popup-feedback-copied").fadeOut(200);
-            }, 1500);
-        });
+        document
+            .getElementById(`popup-form-note-textarea--${id}`)
+            .addEventListener("focus", () => {
+                var that = this;
+                textareaFocusEnd(that);
+            });
+        document
+            .getElementById(`popup-save-edits--${id}`)
+            .addEventListener("click", () => {
+                const note = document.getElementById(
+                    `popup-form-note-textarea--${id}`
+                ).value;
+                const codeLink = document
+                    .getElementById(`popup-form-note--${id}`)
+                    .querySelector(".form-code-input").value;
+                const favorite = document.getElementById(
+                    `checkFavorite--${id}`
+                ).checked;
+                updatePaperTags(id, `#popup-item-tags--${id}`);
+                saveNote(id, note);
+                saveCodeLink(id, codeLink);
+                saveFavoriteItem(id, favorite);
+                document.getElementById("popup-feedback-copied").innerText =
+                    "Saved tags, code, note & favorite!";
+                $("#popup-feedback-copied").fadeIn(200);
+                setTimeout(() => {
+                    $("#popup-feedback-copied").fadeOut(200);
+                }, 1500);
+            });
 
         // ------------------------
         // -----  SVG clicks  -----
         // ------------------------
-        $(`#popup-memory-item-link--${eid}`).on("click", () => {
-            chrome.tabs.update({
-                url: `https://arxiv.org/abs/${paper.id.replace("Arxiv-", "")}`,
+        document
+            .getElementById(`popup-memory-item-link--${id}`)
+            .addEventListener("click", () => {
+                chrome.tabs.update({
+                    url: `https://arxiv.org/abs/${paper.id.replace("Arxiv-", "")}`,
+                });
+                window.close();
             });
-            window.close();
-        });
-        $(`#popup-code-link`).on("click", () => {
-            const codeLink = $(`#popup-code-link`).text();
+        document.getElementById(`popup-code-link`).addEventListener("click", () => {
+            const codeLink = document.getElementById(`popup-code-link`).value;
             if (codeLink) {
                 focusExistingOrCreateNewCodeTab(codeLink);
             }
         });
-        $(`#popup-memory-item-copy-link--${eid}`).on("click", () => {
-            const pdfLink = _state.papers[id].pdfLink;
-            copyAndConfirmMemoryItem(id, pdfLink, "Pdf link copied!", true);
-        });
-        $(`#popup-memory-item-md--${eid}`).on("click", () => {
-            const md = _state.papers[id].md;
-            copyAndConfirmMemoryItem(id, md, "MarkDown link copied!", true);
-        });
-        $(`#popup-memory-item-bibtex--${eid}`).on("click", () => {
-            const bibtext = formatBibtext(_state.papers[id].bibtext);
-            copyAndConfirmMemoryItem(id, bibtext, "Bibtex citation copied!", true);
-        });
-        $(`#popup-memory-item-download--${eid}`).on("click", () => {
-            let pdfTitle = statePdfTitle(paper.title, paper.id);
-            console.log({ pdfTitle });
-            chrome.downloads.download({
-                url: paper.pdfLink,
-                filename: pdfTitle.replaceAll(":", "_"),
+        document
+            .getElementById(`popup-memory-item-copy-link--${id}`)
+            .addEventListener("click", () => {
+                const pdfLink = _state.papers[id].pdfLink;
+                copyAndConfirmMemoryItem(id, pdfLink, "Pdf link copied!", true);
             });
-        });
+        document
+            .getElementById(`popup-memory-item-md--${id}`)
+            .addEventListener("click", () => {
+                const md = _state.papers[id].md;
+                copyAndConfirmMemoryItem(id, md, "MarkDown link copied!", true);
+            });
+        document
+            .getElementById(`popup-memory-item-bibtex--${id}`)
+            .addEventListener("click", () => {
+                const bibtext = formatBibtext(_state.papers[id].bibtext);
+                copyAndConfirmMemoryItem(id, bibtext, "Bibtex citation copied!", true);
+            });
+        document
+            .getElementById(`popup-memory-item-download--${id}`)
+            .addEventListener("click", () => {
+                let pdfTitle = statePdfTitle(paper.title, paper.id);
+                console.log({ pdfTitle });
+                chrome.downloads.download({
+                    url: paper.pdfLink,
+                    filename: pdfTitle.replaceAll(":", "_"),
+                });
+            });
     } else {
         showId("notArxiv");
     }

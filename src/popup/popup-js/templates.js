@@ -162,9 +162,12 @@ const getPopupEditFormHTML = (paper) => {
             >
                 <div class="textarea-wrapper w-100 mr-0">
                     <span class="label">Code:</span>
-                    <input type="text" class="form-code-input mt-0 noMemoryOnA" value="${
-                        paper.codeLink || ""
-                    }">
+                    <input 
+                        id="popup-form-note-codeLink--${id}" 
+                        type="text" 
+                        class="form-code-input mt-0 noMemoryOnA" 
+                        value="${paper.codeLink || ""}"
+                    >
                 </div>
                 <div class="textarea-wrapper w-100 mr-0">
                     <span class="label">Note:</span>

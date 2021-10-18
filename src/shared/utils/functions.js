@@ -669,21 +669,26 @@ const handlePopupKeydown = (e) => {
     if (!_state.memoryIsOpen) {
         if (key === "a") {
             // a opens the arxiv memory
-            const focused = $(":focus");
-            if (focused.length && focused.hasClass("noMemoryOnA")) return;
-            $("#memory-switch").trigger("click");
+            const focused = document.querySelectorAll(":focus");
+            if (focused && focused.length && focused.classList.contains("noMemoryOnA"))
+                return;
+            document.getElementById("memory-switch").dispatchEvent(new Event("click"));
         } else if (key === "Enter") {
             // enter on the arxiv memory button opens it
-            let el = $("#memory-switch-text-on:focus").first();
+            let el = document.getElementById("memory-switch-text-on:focus").first();
             if (el.length > 0) {
-                $("#memory-switch").trigger("click");
+                document
+                    .getElementById("memory-switch")
+                    .dispatchEvent(new Event("click"));
                 return;
             }
             // enter on the menu button opens it
-            el = $("#tabler-menu:focus").first();
+            el = document.getElementById("tabler-menu:focus").first();
             if (el.length > 0) {
-                $("#tabler-menu").trigger("click");
-                $("#tabler-menu").trigger("blur");
+                document
+                    .getElementById("tabler-menu")
+                    .dispatchEvent(new Event("click"));
+                document.getElementById("tabler-menu").dispatchEvent(new Event("blur"));
                 return;
             }
         }
@@ -692,27 +697,26 @@ const handlePopupKeydown = (e) => {
 
     // Now memory is open
 
-    let id, eid;
-    const el = $(".memory-item-container:focus").first();
+    let id;
+    const el = document.querySelector(".memory-item-container:focus");
     if (key !== "Escape") {
-        if (el.length !== 1) return;
-        id = el.attr("id").split("--")[1];
-        eid = id.replace(".", "\\.");
+        if (!el) return;
+        id = el.id.split("--")[1];
     }
 
     if (key === "Backspace") {
         // delete
-        findEl(eid, "delete-memory-item").trigger("click");
+        findEl(id, "delete-memory-item").dispatchEvent(new Event("click"));
     } else if (key === "Enter") {
         // open paper
-        findEl(eid, "memory-item-link").trigger("click");
+        findEl(id, "memory-item-link").dispatchEvent(new Event("click"));
     } else if (key === "Escape") {
         // close memory
         e.preventDefault();
         closeMemory();
     } else if (key === "e") {
         // edit item
-        findEl(eid, "memory-item-edit").trigger("click");
+        findEl(id, "memory-item-edit").dispatchEvent(new Event("click"));
     }
 };
 
@@ -950,4 +954,13 @@ const val = (element, value) => {
         return element ? element.value : "";
     }
     element.value = value;
+};
+
+const arraysIdentical = (a, b) => {
+    var i = a.length;
+    if (i != b.length) return false;
+    while (i--) {
+        if (a[i] !== b[i]) return false;
+    }
+    return true;
 };

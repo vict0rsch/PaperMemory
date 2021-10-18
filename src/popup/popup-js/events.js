@@ -5,49 +5,53 @@ const addEventToClass = (className, eventName, fn) => {
 };
 
 const handleBackToFocus = (e) => {
-    const { id, eid } = eventId(e);
+    const { id } = eventId(e);
     setTimeout(() => {
-        $(`#memory-item-container--${eid}`).trigger("focus");
+        document
+            .getElementById(`memory-item-container--${id}`)
+            .dispatchEvent(new Event("focus"));
     }, 250);
 };
 
 const handleDeleteItem = (e) => {
-    const { id, eid } = eventId(e);
+    const { id } = eventId(e);
     confirmDelete(id);
 };
 
 const handleOpenItemLink = (e) => {
-    const { id, eid } = eventId(e);
+    const { id } = eventId(e);
     focusExistingOrCreateNewPaperTab(_state.papers[id]);
 };
 
 const handleOpenItemCodeLink = (e) => {
-    const { id, eid } = eventId(e);
+    const { id } = eventId(e);
     const url = _state.papers[id].codeLink;
     focusExistingOrCreateNewCodeTab(url);
 };
 
 const handleCopyMarkdownLink = (e) => {
-    const { id, eid } = eventId(e);
+    const { id } = eventId(e);
     const md = _state.papers[id].md;
     copyAndConfirmMemoryItem(id, md, "Markdown link copied!");
 };
 
 const handleCopyBibtex = (e) => {
-    const { id, eid } = eventId(e);
+    const { id } = eventId(e);
     const bibtext = _state.papers[id].bibtext;
     copyAndConfirmMemoryItem(id, bibtext, "Bibtex copied!");
 };
 
 const handleCopyPDFLink = (e) => {
-    const { id, eid } = eventId(e);
+    const { id } = eventId(e);
     const pdfLink = _state.papers[id].pdfLink;
     copyAndConfirmMemoryItem(id, pdfLink, "Pdf link copied!");
 };
 
 const handleAddItemToFavorites = (e) => {
-    const { id, eid } = eventId(e);
-    const isFavorite = $(`#memory-item-container--${eid}`).hasClass("favorite");
+    const { id } = eventId(e);
+    const isFavorite = document
+        .getElementById(`memory-item-container--${id}`)
+        .classList.contains("favorite");
     saveFavoriteItem(id, !isFavorite);
 };
 
@@ -60,9 +64,9 @@ const handleEditPaperFormSubmit = (e) => {
     e.preventDefault();
 
     // Get content
-    const { id, eid } = eventId(e);
-    const note = findEl(eid, "form-note-textarea").value;
-    const codeLink = findEl(eid, "form-code-input").value;
+    const { id } = eventId(e);
+    const note = findEl(id, "form-note-textarea").value;
+    const codeLink = findEl(id, "form-code-input").value;
 
     // Update metadata
     saveNote(id, note);
@@ -70,30 +74,32 @@ const handleEditPaperFormSubmit = (e) => {
     updatePaperTags(id, "memory-item-tags");
 
     // Close edit form
-    findEl(eid, "memory-item-edit").dispatchEvent(new Event("click"));
+    findEl(id, "memory-item-edit").dispatchEvent(new Event("click"));
 };
 
 const handleCancelPaperEdit = (e) => {
     e.preventDefault();
-    const { id, eid } = eventId(e);
-    findEl(eid, "form-note-textarea").value = _state.papers[id].note;
-    findEl(eid, "memory-item-tags").innerHTML = getTagsHTMLOptions(id);
-    findEl(eid, "memory-item-edit").dispatchEvent(new Event("click"));
+    const { id } = eventId(e);
+    const paper = _state.papers[id];
+    findEl(id, "form-note-textarea").value = paper.note;
+    findEl(id, "memory-item-tags").innerHTML = getTagsHTMLOptions(paper);
+    findEl(id, "memory-item-edit").dispatchEvent(new Event("click"));
 };
 
 const handleTogglePaperEdit = (e) => {
     e.preventDefault();
     // find elements
-    const { id, eid } = eventId(e);
-    const edit = findEl(eid, "memory-item-edit");
-    const codeAndNote = findEl(eid, "code-and-note");
-    const editPaper = findEl(eid, "extended-item");
-    const tagList = findEl(eid, "tag-list");
-    const tagEdit = findEl(eid, "edit-tags");
-    const tagSelect = findEl(eid, "memory-item-tags");
-    const actions = findEl(eid, "memory-item-actions");
+    const { id } = eventId(e);
+    const edit = findEl(id, "memory-item-edit");
 
-    if (edit.hasClass("expand-open")) {
+    const codeAndNote = $(findEl(id, "code-and-note"));
+    const editPaper = $(findEl(id, "extended-item"));
+    const tagList = $(findEl(id, "tag-list"));
+    const tagEdit = $(findEl(id, "edit-tags"));
+    const tagSelect = $(findEl(id, "memory-item-tags"));
+    const actions = $(findEl(id, "memory-item-actions"));
+
+    if (edit.classList.contains("expand-open")) {
         // The edit form is open
         edit.classList.remove("expand-open");
         // Open display elements
