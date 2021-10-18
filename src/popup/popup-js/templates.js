@@ -145,7 +145,7 @@ const getPopupEditFormHTML = (paper) => {
     const id = paper.id;
     const tagOptions = getTagsHTMLOptions(paper);
     const note = paper.note || "";
-    const checked = paper.favorite ? `checked="true"` : "";
+    const checked = "";
     return /*html*/ `
     <div style="max-width: 100%; display: flex; justify-content: space-between; align-items: center; padding: 4px 16px;">
         <div style="width: 100%">

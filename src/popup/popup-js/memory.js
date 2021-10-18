@@ -220,7 +220,7 @@ const saveCodeLink = (id, codeLink) => {
         val(findEl(id, "form-code-input"), codeLink);
         codeLink ? showId("popup-code-link") : hideId("popup-code-link");
         const codeInput = document.getElementById(`popup-form-note-codeLink--${id}`);
-        val(codeInput, note);
+        val(codeInput, codeLink);
     });
 };
 
@@ -441,12 +441,7 @@ const updatePaperTags = (id, elementId) => {
     } else {
         ref = findEl(id, elementId);
     }
-    // Store :selected <options> in the tags array
-    let tags = Array.from(ref.selectedOptions, (e) => $.trim(e.value)).filter((e) => e);
-
-    // sort tags alphabetically to compare with the existing array of tags
-    // for this paper
-    tags.sort();
+    const tags = parseTags(ref);
     updated = false;
     if (!arraysIdentical(_state.papers[id].tags, tags)) updated = true;
     _state.papers[id].tags = tags;
@@ -466,6 +461,36 @@ const updatePaperTags = (id, elementId) => {
             makeTags();
         });
     }
+};
+
+const parseTags = (el) => {
+    let tags = Array.from(el.selectedOptions, (e) => $.trim(e.value)).filter((e) => e);
+    tags.sort();
+    return tags;
+};
+
+const getPaperEdits = (id, isPopup) => {
+    let note, tags, codeLink, isFavorite;
+
+    if (isPopup) {
+        note = val(`popup-form-note-textarea--${id}`);
+        codeLink = val(
+            document
+                .getElementById(`popup-form-note--${id}`)
+                .querySelector(".form-code-input")
+        );
+        tags = parseTags(document.getElementById(`popup-item-tags--${id}`));
+        isFavorite = document.getElementById(`checkFavorite--${id}`).checked;
+    } else {
+        note = val(findEl(id, "form-note-textarea"));
+        codeLink = val(findEl(id, "form-code-input"));
+        tags = parseTags(findEl(id, "memory-item-tags"));
+        isFavorite = hasClass(`memory-item-container--${id}`, "favorite");
+    }
+
+    console.log({ note, tags, codeLink, isFavorite });
+
+    return { note, tags, codeLink, isFavorite };
 };
 
 /**

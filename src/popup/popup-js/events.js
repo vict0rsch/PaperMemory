@@ -63,8 +63,7 @@ const handleEditPaperFormSubmit = (e) => {
 
     // Get content
     const { id } = eventId(e);
-    const note = val(findEl(id, "form-note-textarea"));
-    const codeLink = val(findEl(id, "form-code-input"));
+    const { note, codeLink } = getPaperEdits(id);
 
     // Update metadata
     saveNote(id, note);

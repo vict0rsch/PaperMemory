@@ -196,6 +196,7 @@ const popupMain = async (url, isKnownPage) => {
         // ----------------------------------
         setHTMLEl("popup-memory-edit", getPopupEditFormHTML(paper));
         setHTMLEl("popup-copy-icons", getPopupPaperIconsHTML(paper, url));
+        document.getElementById(`checkFavorite--${id}`).checked = paper.favorite;
 
         // --------------------------
         // -----  Paper  edits  -----
@@ -210,17 +211,11 @@ const popupMain = async (url, isKnownPage) => {
             textareaFocusEnd(that);
         });
         addListener(`popup-save-edits--${id}`, "click", () => {
-            const note = val(`popup-form-note-textarea--${id}`);
-            const codeLink = val(
-                document
-                    .getElementById(`popup-form-note--${id}`)
-                    .querySelector(".form-code-input")
-            );
-            const favorite = document.getElementById(`checkFavorite--${id}`).checked;
+            const { note, codeLink, isFavorite } = getPaperEdits(id, true);
             updatePaperTags(id, `#popup-item-tags--${id}`);
             saveNote(id, note);
             saveCodeLink(id, codeLink);
-            saveFavoriteItem(id, favorite);
+            saveFavoriteItem(id, isFavorite);
             setHTMLEl("popup-feedback-copied", "Saved tags, code, note & favorite!");
             $("#popup-feedback-copied").fadeIn(200);
             setTimeout(() => {
@@ -271,6 +266,8 @@ const popupMain = async (url, isKnownPage) => {
     // Set PDF title function
     setAndHandleCustomPDFFunction(menu);
 };
+
+const monitorPaperEdits = () => {};
 
 $(() => {
     const query = { active: true, lastFocusedWindow: true };
