@@ -219,7 +219,7 @@ const saveCodeLink = (id, codeLink) => {
         setHTMLEl(`popup-code-link`, codeLink);
         val(findEl(id, "form-code-input"), codeLink);
         codeLink ? showId("popup-code-link") : hideId("popup-code-link");
-        const codeInput = document.getElementById(`popup-form-note-codeLink--${id}`);
+        const codeInput = document.getElementById(`popup-form-codeLink--${id}`);
         val(codeInput, codeLink);
     });
 };
@@ -463,36 +463,6 @@ const updatePaperTags = (id, elementId) => {
     }
 };
 
-const parseTags = (el) => {
-    let tags = Array.from(el.selectedOptions, (e) => $.trim(e.value)).filter((e) => e);
-    tags.sort();
-    return tags;
-};
-
-const getPaperEdits = (id, isPopup) => {
-    let note, tags, codeLink, isFavorite;
-
-    if (isPopup) {
-        note = val(`popup-form-note-textarea--${id}`);
-        codeLink = val(
-            document
-                .getElementById(`popup-form-note--${id}`)
-                .querySelector(".form-code-input")
-        );
-        tags = parseTags(document.getElementById(`popup-item-tags--${id}`));
-        isFavorite = document.getElementById(`checkFavorite--${id}`).checked;
-    } else {
-        note = val(findEl(id, "form-note-textarea"));
-        codeLink = val(findEl(id, "form-code-input"));
-        tags = parseTags(findEl(id, "memory-item-tags"));
-        isFavorite = hasClass(`memory-item-container--${id}`, "favorite");
-    }
-
-    console.log({ note, tags, codeLink, isFavorite });
-
-    return { note, tags, codeLink, isFavorite };
-};
-
 /**
  * Create the set of all tags used in papers. If a tag used for a paper is new,
  * it is added to this list, if a tag is never used after it's deleted from its
@@ -559,6 +529,8 @@ const displayMemoryTable = () => {
     addEventToClass(".cancel-note-form", "click", handleCancelPaperEdit);
     // When clicking on the edit button, either open or close the edit form
     addEventToClass(".memory-item-edit", "click", handleTogglePaperEdit);
+    // Monitor form changes
+    setFormChangeListener(undefined, false);
 
     // Put cursor at the end of the textarea's text on focus
     // (default puts the cursor at the beginning of the text)

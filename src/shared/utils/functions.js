@@ -670,8 +670,11 @@ const handlePopupKeydown = (e) => {
         if (key === "a") {
             // a opens the arxiv memory
             const focused = document.querySelectorAll(":focus");
-            if (focused && focused.length && focused.classList.contains("noMemoryOnA"))
-                return;
+            if (focused && focused.length) {
+                if (Array.from(focused).some((el) => hasClass(el, "noMemoryOnA"))) {
+                    return;
+                }
+            }
             dispatch("memory-switch", "click");
         } else if (key === "Enter") {
             // enter on the arxiv memory button opens it
@@ -720,7 +723,7 @@ const handlePopupKeydown = (e) => {
     }
 };
 
-const focusEndTextarea = (element) => {
+const textareaFocusEnd = (element) => {
     setTimeout(() => {
         element.selectionStart = element.selectionEnd = 10000;
     }, 0);
@@ -936,4 +939,84 @@ const arraysIdentical = (a, b) => {
         if (a[i] !== b[i]) return false;
     }
     return true;
+};
+
+const parseTags = (el) => {
+    let tags = Array.from(el.selectedOptions, (e) => $.trim(e.value)).filter((e) => e);
+    tags.sort();
+    return tags;
+};
+
+const getPaperEdits = (id, isPopup) => {
+    let note, tags, codeLink, favorite;
+
+    if (isPopup) {
+        note = val(`popup-form-note-textarea--${id}`);
+        codeLink = val(
+            document
+                .getElementById(`popup-form-note--${id}`)
+                .querySelector(".form-code-input")
+        );
+        tags = parseTags(document.getElementById(`popup-item-tags--${id}`));
+        favorite = document.getElementById(`checkFavorite--${id}`).checked;
+    } else {
+        note = val(findEl(id, "form-note-textarea"));
+        codeLink = val(findEl(id, "form-code-input"));
+        tags = parseTags(findEl(id, "memory-item-tags"));
+        favorite = hasClass(`memory-item-container--${id}`, "favorite");
+    }
+
+    return { note, tags, codeLink, favorite };
+};
+
+const setFormChangeListener = (id, isPopup) => {
+    let refTags, refNote, refCodeLink, refFavorite;
+    if (isPopup) {
+        refTags = `#popup-item-tags--${id.replace(".", "\\.")}`;
+        refCodeLink = `popup-form-codeLink--${id}`;
+        refNote = `popup-form-note-textarea--${id}`;
+        refFavorite = `checkFavorite--${id}`;
+
+        $(refTags).on("change", monitorPaperEdits(id, isPopup)); // select2 required
+        addListener(refCodeLink, "keyup", monitorPaperEdits(id, isPopup));
+        addListener(refNote, "keyup", monitorPaperEdits(id, isPopup));
+        addListener(refFavorite, "change", monitorPaperEdits(id, isPopup));
+    } else {
+        refTags = "memory-item-tags";
+        refCodeLink = ".form-code-input";
+        refNote = ".form-note-textarea";
+
+        $(`.${refTags}`).on("change", monitorPaperEdits(id, isPopup));
+        addEventToClass(refCodeLink, "keyup", monitorPaperEdits(id, isPopup));
+        addEventToClass(refNote, "keyup", monitorPaperEdits(id, isPopup));
+    }
+};
+
+const monitorPaperEdits = (id, isPopup) => (e) => {
+    if (typeof id === "undefined") {
+        id = eventId(e).id;
+    }
+    const edits = getPaperEdits(id, isPopup);
+    const paper = _state.papers[id];
+    let change = false;
+    for (const key in edits) {
+        const ref = paper[key];
+        const value = edits[key];
+        if (key === "tags" && !arraysIdentical(ref, value)) {
+            change = true;
+        } else if (key !== "tags") {
+            if (ref !== value) {
+                change = true;
+            }
+        }
+    }
+
+    let btn;
+    if (isPopup) {
+        btn = document.getElementById(`popup-save-edits--${id}`);
+    } else {
+        btn = findEl(id, "memory-item-save-edits");
+    }
+
+    btn.disabled = !change;
 };

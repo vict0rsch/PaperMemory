@@ -210,12 +210,13 @@ const popupMain = async (url, isKnownPage) => {
             var that = this;
             textareaFocusEnd(that);
         });
+        setFormChangeListener(id, true);
         addListener(`popup-save-edits--${id}`, "click", () => {
-            const { note, codeLink, isFavorite } = getPaperEdits(id, true);
+            const { note, codeLink, favorite } = getPaperEdits(id, true);
             updatePaperTags(id, `#popup-item-tags--${id}`);
             saveNote(id, note);
             saveCodeLink(id, codeLink);
-            saveFavoriteItem(id, isFavorite);
+            saveFavoriteItem(id, favorite);
             setHTMLEl("popup-feedback-copied", "Saved tags, code, note & favorite!");
             $("#popup-feedback-copied").fadeIn(200);
             setTimeout(() => {
@@ -266,8 +267,6 @@ const popupMain = async (url, isKnownPage) => {
     // Set PDF title function
     setAndHandleCustomPDFFunction(menu);
 };
-
-const monitorPaperEdits = () => {};
 
 $(() => {
     const query = { active: true, lastFocusedWindow: true };

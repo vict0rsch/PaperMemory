@@ -56,6 +56,10 @@ svg {
     stroke-linejoin: round;
 }
 
+#notArxiv {
+    font-weight: 300;
+}
+
 .header {
     display: flex;
     align-items: center;
@@ -240,12 +244,13 @@ svg {
 
 #memory-table {
     padding: 16px;
+    padding-top: 0px;
     margin-bottom: 40px;
 }
 
 .memory-item-container {
-    padding: 8px;
-    margin-bottom: 8px;
+    padding: 12px 16px;
+    margin-bottom: 14px;
     border: 1px solid rgba(230, 230, 230, 0.75);
     position: relative;
     border-radius: 8px;
@@ -254,7 +259,10 @@ svg {
 }
 
 .memory-item-container.favorite {
-    border: 2px solid #b31b1b;
+    border: 1px solid #b31b1b;
+}
+.memory-item-container h4 {
+    font-weight: 500;
 }
 
 /* .memory-item-container:hover {
@@ -467,6 +475,11 @@ button {
     transition: all ease 200ms;
     cursor: pointer;
 }
+button:disabled {
+    cursor: not-allowed;
+    pointer-events: none;
+    border-color: #e7a9a9;
+}
 
 button:hover {
     border-color: #b31b1b;
@@ -493,7 +506,7 @@ button:hover {
 }
 
 svg.favorite {
-    stroke-width: 3px !important;
+    stroke-width: 2px !important;
     color: #b31b1b !important;
     stroke: #b31b1b !important;
 }
@@ -501,4 +514,7 @@ svg.favorite {
     height: 25px;
     width: 25px;
     pointer-events: none;
+}
+button.changed {
+    border: 3px solid green;
 }

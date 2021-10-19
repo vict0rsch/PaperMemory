@@ -123,7 +123,7 @@ const getMemoryItemHTML = (paper) => {
                         <textarea rows="3" class="form-note-textarea">${note}</textarea>
                     </div>
                     <div class="form-note-buttons">
-                        <button type="submit">Save</button>
+                        <button class="memory-item-save-edits" type="submit" disabled >Save</button>
                         <button class="cancel-note-form back-to-focus">Cancel</button>
                     </div>
                 </form>
@@ -163,7 +163,7 @@ const getPopupEditFormHTML = (paper) => {
                 <div class="textarea-wrapper w-100 mr-0">
                     <span class="label">Code:</span>
                     <input 
-                        id="popup-form-note-codeLink--${id}" 
+                        id="popup-form-codeLink--${id}" 
                         type="text" 
                         class="form-code-input mt-0 noMemoryOnA" 
                         value="${paper.codeLink || ""}"
@@ -184,7 +184,7 @@ const getPopupEditFormHTML = (paper) => {
                     <label for="checkFavorite" style="font-family: monospace; margin-right: 16px;">Favorite: </label>
                     <input ${checked} class="switch" type="checkbox" id="checkFavorite--${id}" name="checkFavorite" value="checkFavorite">
                 </div>
-                <button style="border-width: 2px; padding: 6px 16px;" class="back-to-focus" id="popup-save-edits--${id}">Save</button>
+                <button style="padding: 6px 16px;" disabled class="back-to-focus" id="popup-save-edits--${id}">Save</button>
             </div>
         </div>
         <div>

@@ -5,6 +5,9 @@ const val = (element, value) => {
         }
         element.checked = value;
     }
+    if (typeof element === "string") {
+        element = document.getElementById(element);
+    }
     if (typeof value === "undefined") {
         return element ? element.value : "";
     }

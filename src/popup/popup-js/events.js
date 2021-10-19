@@ -72,6 +72,7 @@ const handleEditPaperFormSubmit = (e) => {
 
     // Close edit form
     dispatch(findEl(id, "memory-item-edit"), "click");
+    findEl(id, "memory-item-save-edits").disabled = true;
 };
 
 const handleCancelPaperEdit = (e) => {
@@ -81,6 +82,7 @@ const handleCancelPaperEdit = (e) => {
     val(findEl(id, "form-note-textarea"), paper.note);
     setHTMLEl(findEl(id, "memory-item-tags"), getTagsHTMLOptions(paper));
     dispatch(findEl(id, "memory-item-edit"), "click");
+    findEl(id, "memory-item-save-edits").disabled = true;
 };
 
 const handleTogglePaperEdit = (e) => {
