@@ -33,12 +33,11 @@
 
 	<div id="container">
 		<div id="notArxiv" style="display: none">
-			<div class="header">
-				<h3>Not on a paper page</h3> &nbsp;&nbsp;
+			<!-- <div class="header">
 				<svg class="tabler-icon">
 					<use xlink:href="../../icons/tabler-sprite-nostroke.svg#tabler-cloud-storm" />
 				</svg>
-			</div>
+			</div> -->
 
 
 			<p>Keep track of your readings with <strong>ArxivMemory!</strong> It automatically and locally stores
@@ -47,9 +46,9 @@
 				ArxivMemory. In addition to Arxiv, NeurIPS, CVPR & I/ECCV papers are supported!
 			</p>
 
-			<p>Beyond simple <strong>searching</strong>, you can also <strong>customize</strong> a paper's entry with: a
+			<!-- <p>Beyond simple <strong>searching</strong>, you can also <strong>customize</strong> a paper's entry with: a
 				link to its code, tags and a
-				quick note.</p>
+				quick note.</p> -->
 			<p>Click on the ArxivMemory button below (or press <code
 					style="padding: 1px 4px; vertical-align: text-top; border-radius: 4px; background-color: rgb(238, 238, 238);">a</code>
 				)! (<a id="keyboardShortcuts" href="#">keyboard guide</a>)
@@ -155,8 +154,21 @@
 
 	</div>
 	<div id="memory-switch">
-		<span tabindex="0" id="memory-switch-text-on">ArxivMemory</span>
-		<span id="memory-switch-text-off" style="display: none">x</span>
+		<svg xmlns="http://www.w3.org/2000/svg" tabindex="0" id="memory-switch-text-on"
+			class="icon icon-tabler icon-tabler-folders" width="44" height="44" viewBox="0 0 24 24" stroke-width="1.5"
+			fill="none" stroke-linecap="round" stroke-linejoin="round">
+			<path stroke="none" d="M0 0h24v24H0z" fill="none" />
+			<path d="M9 4h3l2 2h5a2 2 0 0 1 2 2v7a2 2 0 0 1 -2 2h-10a2 2 0 0 1 -2 -2v-9a2 2 0 0 1 2 -2" />
+			<path d="M17 17v2a2 2 0 0 1 -2 2h-10a2 2 0 0 1 -2 -2v-9a2 2 0 0 1 2 -2h2" />
+			<title>Open Memory</title>
+		</svg>
+		<svg xmlns="http://www.w3.org/2000/svg" id="memory-switch-text-off" style="display: none"
+			class="icon icon-tabler icon-tabler-circle-x" width="44" height="44" viewBox="0 0 24 24" stroke-width="1.5"
+			stroke="white" fill="#2c3e50" stroke-linecap="round" stroke-linejoin="round">
+			<path stroke="none" d="M0 0h24v24H0z" fill="none" />
+			<circle cx="12" cy="12" r="9" />
+			<path d="M10 10l4 4m0 -4l-4 4" />
+		</svg>
 	</div>
 	<div id="memory-container" style="display: none;">
 		<div id="memory-filters">
@@ -182,9 +194,9 @@
 		<div id="memory-table" width="100%">
 		</div>
 	</div>
-	<div id="tabler-menu" tabindex="0">
-		<svg id='tabler-menu-svg menu-svg' class="tabler-icon">
-			<use xlink:href="../../icons/tabler-sprite-nostroke.svg#tabler-adjustments" />
+	<div id="tabler-menu" tabindex="0" title="Open settings">
+		<svg id='tabler-menu-svg' class="tabler-icon">
+			<use xlink:href="../../icons/tabler-sprite-nostroke.svg#tabler-settings" />
 		</svg>
 	</div>
 

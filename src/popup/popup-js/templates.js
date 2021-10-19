@@ -61,7 +61,7 @@ const getMemoryItemHTML = (paper) => {
                 </div>
             </div>
         </div>
-        <small class="authors">${paper.author}</small>
+        <small class="authors">${cutAuthors(paper.author)}</small>
         
         <div class="code-and-note">
             ${codeDiv}

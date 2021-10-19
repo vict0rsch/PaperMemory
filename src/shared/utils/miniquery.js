@@ -38,7 +38,14 @@ const setHTMLEl = (el, html) => {
 };
 
 const dispatch = (el, event) => {
+    if (typeof el === "string") {
+        el = document.getElementById(el);
+    }
     if (typeof event === "string") {
+        if (event === "focus") {
+            el.focus();
+            return;
+        }
         event = new Event(event);
     }
     el.dispatchEvent(event);

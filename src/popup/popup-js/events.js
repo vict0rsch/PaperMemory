@@ -158,10 +158,9 @@ const handleFilterFavorites = () => {
         _state.papersList = _state.papersList.filter((p) => p.favorite);
         displayMemoryTable();
         setMemorySortArrow("down");
-        setHTMLEl(
-            "memory-select",
-            `<option value="favoriteDate">Last favoured</option>`
-        );
+        document.getElementById(
+            "memory-select"
+        ).innerHTML += `<option value="favoriteDate">Last favoured</option>`;
         const n = _state.papersList.length;
         setPlaceholder("memory-search", `Search ${n} entries...`);
     } else {

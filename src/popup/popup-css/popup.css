@@ -1,11 +1,10 @@
-@import url("https://fonts.googleapis.com/css?family=Mukta:700");
+@import url("https://fonts.googleapis.com/css2?family=Yantramanav:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;1,600&display=swap");
 
 html {
     min-width: 450px;
     min-height: 450px;
     border-radius: 20px;
-    font-family: "Mukta";
-    font-size: 14px;
+    font-size: 16px;
 }
 
 body {
@@ -13,6 +12,7 @@ body {
     min-height: 100vh;
     display: flex;
     flex-direction: column;
+    font-family: "Yantramanav";
 }
 
 textarea {
@@ -27,6 +27,8 @@ textarea {
     display: flex;
     justify-content: start;
     align-items: center;
+    border-radius: 0 0 85% 0 / 30%;
+    box-shadow: 14px 30px 122px -30px rgba(0, 0, 0, 0.75);
 }
 
 .popup-header .tabler-icon {
@@ -56,6 +58,10 @@ svg {
     stroke-linejoin: round;
 }
 
+strong {
+    font-weight: 500;
+}
+
 #notArxiv {
     font-weight: 300;
 }
@@ -71,6 +77,9 @@ svg {
     width: 32px;
     color: #b31b1b;
     stroke-width: 1px;
+}
+#tabler-menu-svg {
+    color: rgb(43, 43, 61);
 }
 .memory-item-favorite-svg {
     vertical-align: bottom;
@@ -203,31 +212,25 @@ svg {
 }
 
 #memory-switch-text-on {
-    border: 1px solid #4934a5;
-    border-radius: 8px;
-    background-color: white;
-    padding: 4px 6px;
+    stroke: #b31b1b;
+    height: 38px;
+    width: 38px;
 }
 
 #memory-switch-text-off {
-    border: 1px solid #4934a5;
-    border-radius: 50%;
-    background-color: white;
-    height: 25px;
-    width: 25px;
-    vertical-align: center;
-    text-align: center;
-    color: #4934a5;
-    line-height: 24px;
+    height: 30px;
+    width: 30px;
+    fill: #2c3e50;
+    stroke: white;
 }
 
 #memory-switch:hover {
-    transform: scale(1.1);
+    transform: scale(1.05);
 }
 
 #memory-switch svg {
-    height: 32px;
-    width: 32px;
+    height: 40px;
+    width: 40px;
 }
 
 #memory-container {
@@ -272,10 +275,10 @@ svg {
 .delete-memory-item {
     color: rgb(196, 93, 93);
     position: absolute;
-    right: -5px;
-    top: -5px;
+    right: -8px;
+    top: -8px;
     font-size: 1.5rem;
-    line-height: 12px;
+    line-height: 16px;
     cursor: pointer;
     height: 15px;
     width: 15px;
@@ -517,4 +520,14 @@ svg.favorite {
 }
 button.changed {
     border: 3px solid green;
+}
+.btn-secondary {
+    background-color: #4f6272;
+    color: rgb(240, 240, 240);
+    border: 0px;
+}
+.btn-secondary:hover {
+    background-color: #404e5c;
+    color: white;
+    border: 0px;
 }

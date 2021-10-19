@@ -1020,3 +1020,35 @@ const monitorPaperEdits = (id, isPopup) => (e) => {
 
     btn.disabled = !change;
 };
+
+const cutAuthors = (text, maxLen, separator) => {
+    if (typeof maxLen === "undefined") {
+        maxLen = 140;
+    }
+    if (typeof separator === "undefined") {
+        separator = ", ";
+    }
+    let cutAuthors = "";
+    const authArray = text.split(" and ");
+    const lastAuthor = authArray[authArray.length - 1];
+    for (const candidate of authArray) {
+        if (
+            5 +
+                cutAuthors.length +
+                separator.length +
+                candidate.length +
+                lastAuthor.length <
+            maxLen
+        ) {
+            if (cutAuthors) {
+                cutAuthors += ", " + candidate;
+            } else {
+                cutAuthors = candidate;
+            }
+        } else {
+            cutAuthors += " ... " + lastAuthor;
+            break;
+        }
+    }
+    return cutAuthors;
+};

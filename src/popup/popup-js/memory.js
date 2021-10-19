@@ -1,6 +1,5 @@
 /**
  * TODO: fix paper popup added/removed to/from favorites => update memory table
- * TODO: remove favorite selection when closing memory
  */
 
 /**
@@ -550,10 +549,8 @@ const openMemory = () => {
         easing: "easeOutQuint",
         complete: () => {
             setTimeout(() => {
-                document
-                    .getElementById("memory-search")
-                    .dispatchEvent(new Event("focus"));
-            }, 100);
+                dispatch("memory-search", "focus");
+            }, 150);
         },
     });
     // hide menu button
@@ -564,9 +561,8 @@ const openMemory = () => {
     setMemorySortArrow("down");
 
     // remove ArxivMemory button and show the (x) to close it
-    $("#memory-switch-text-on").fadeOut(200, () => {
-        $("#memory-switch-text-off").fadeIn(200);
-    });
+    $("#memory-switch-text-on").hide();
+    $("#memory-switch-text-off").show();
 };
 
 /**
@@ -621,10 +617,12 @@ const closeMemory = () => {
         duration: 300,
         easing: "easeOutQuint",
     });
-    $("#memory-switch-text-off").fadeOut(200, () => {
-        $("#memory-switch-text-on").fadeIn();
-    });
+    $("#memory-switch-text-off").hide();
+    $("#memory-switch-text-on").show();
     $("#tabler-menu").fadeIn(200);
     val("memory-search", "");
     _state.memoryIsOpen = false;
+    if (_state.showFavorites) {
+        dispatch("filter-favorites", "click");
+    }
 };
