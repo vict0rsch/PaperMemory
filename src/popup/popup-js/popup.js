@@ -185,8 +185,8 @@ const popupMain = async (url, isKnownPage) => {
         // -----------------------------
         // -----  Fill Paper Data  -----
         // -----------------------------
-        setTextId("popup-paper-title", paper.title);
-        setTextId("popup-authors", paper.author);
+        setTextId("popup-paper-title", paper.title.replaceAll("\n", ""));
+        setTextId("popup-authors", paper.author.replaceAll(" and ", ", "));
         if (paper.codeLink) {
             showId("popup-code-link");
             setTextId("popup-code-link", paper.codeLink);
@@ -223,6 +223,7 @@ const popupMain = async (url, isKnownPage) => {
             setTimeout(() => {
                 $("#popup-feedback-copied").fadeOut(200);
             }, 1500);
+            document.getElementById(`popup-save-edits--${id}`).disabled = true;
         });
 
         // ------------------------
