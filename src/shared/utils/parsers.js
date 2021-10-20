@@ -149,7 +149,7 @@ const parseCvfHTML = (url, htmlText) => {
 const fetchArxivXML = async (id) => {
     id += "";
     id = id.replace("Arxiv-", "");
-    return $.get(`https://export.arxiv.org/api/query?id_list=${id}`);
+    return $.get(`https://export.arxiv.org/api/query`, { id_list: id });
 };
 
 const fetchNeuripsHTML = async (url) => {

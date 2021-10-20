@@ -320,10 +320,7 @@ const downloadTextFile = (content, fileName, contentType) => {
 };
 
 const eventId = (e) => {
-    const el = $(e.target);
-    const id = el.closest(".memory-item-container").attr("id").split("--")[1];
-    const eid = id.replace(".", "\\.");
-    return { id, eid };
+    return e.target.closest(".memory-item-container").id.split("--")[1];
 };
 
 const download_file = (fileURL, fileName) => {
@@ -393,6 +390,7 @@ const getPdfFn = (code) => {
 
 const migrateData = async (papers, dataVersion) => {
     if (typeof papers === "undefined") {
+        chrome.storage.local.set({ papers: { __dataVersion: dataVersion } });
         return { papers: { __dataVersion: dataVersion }, success: true };
     }
     const currentVersion = papers["__dataVersion"] || -1;
@@ -542,6 +540,7 @@ const statePdfTitle = (title, id) => {
     try {
         name = _state.pdfTitleFn(title, id);
     } catch (error) {
+        console.log("statePdfTitle error", error);
         name = defaultPDFTitleFn(title, id);
     }
 
@@ -886,8 +885,19 @@ const tablerSvg = (pathName, id, classNames) => {
             <polyline points="9 14 12 17 15 14" />
              </svg>`;
 
-        case "external-link":
-            return ``;
+        case "cirlce-x":
+            return `<svg viewBox="0 0 24 24" ${id} ${classNames}>
+			<path stroke="none" d="M0 0h24v24H0z" fill="none" />
+			<circle cx="12" cy="12" r="9" />
+			<path d="M10 10l4 4m0 -4l-4 4" />
+		    </svg>`;
+
+        case "settings":
+            return `<svg viewBox="0 0 24 24" ${id} ${classNames}>
+            <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+            <path d="M10.325 4.317c.426 -1.756 2.924 -1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543 -.94 3.31 .826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756 .426 1.756 2.924 0 3.35a1.724 1.724 0 0 0 -1.066 2.573c.94 1.543 -.826 3.31 -2.37 2.37a1.724 1.724 0 0 0 -2.572 1.065c-.426 1.756 -2.924 1.756 -3.35 0a1.724 1.724 0 0 0 -2.573 -1.066c-1.543 .94 -3.31 -.826 -2.37 -2.37a1.724 1.724 0 0 0 -1.065 -2.572c-1.756 -.426 -1.756 -2.924 0 -3.35a1.724 1.724 0 0 0 1.066 -2.573c-.94 -1.543 .826 -3.31 2.37 -2.37c1 .608 2.296 .07 2.572 -1.065z" />
+            <circle cx="12" cy="12" r="3" />
+            </svg>`;
 
         case "external-link":
             return ``;
@@ -927,6 +937,7 @@ const loadJSONToMemory = async (jsonString) => {
         setStorage("papers", papers);
         error = false;
     } catch (err) {
+        console.log("loadJSONToMemory error", error);
         message = err;
     }
     return { success: error, message: message };
@@ -994,7 +1005,7 @@ const setFormChangeListener = (id, isPopup) => {
 
 const monitorPaperEdits = (id, isPopup) => (e) => {
     if (typeof id === "undefined") {
-        id = eventId(e).id;
+        id = eventId(e);
     }
     const edits = getPaperEdits(id, isPopup);
     const paper = _state.papers[id];

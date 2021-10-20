@@ -158,7 +158,7 @@ const feedback = (text) => {
 
 const addOrUpdatePaper = async (is, checks) => {
     const url = window.location.href;
-    const papers = await initState(undefined, true);
+    let papers = await initState(undefined, true);
 
     let paper, isNew;
 

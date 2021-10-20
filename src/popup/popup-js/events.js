@@ -5,7 +5,7 @@ const addEventToClass = (className, eventName, fn) => {
 };
 
 const handleBackToFocus = (e) => {
-    const { id } = eventId(e);
+    const id = eventId(e);
     setTimeout(() => {
         document
             .getElementById(`memory-item-container--${id}`)
@@ -14,41 +14,41 @@ const handleBackToFocus = (e) => {
 };
 
 const handleDeleteItem = (e) => {
-    const { id } = eventId(e);
+    const id = eventId(e);
     confirmDelete(id);
 };
 
 const handleOpenItemLink = (e) => {
-    const { id } = eventId(e);
+    const id = eventId(e);
     focusExistingOrCreateNewPaperTab(_state.papers[id]);
 };
 
 const handleOpenItemCodeLink = (e) => {
-    const { id } = eventId(e);
+    const id = eventId(e);
     const url = _state.papers[id].codeLink;
     focusExistingOrCreateNewCodeTab(url);
 };
 
 const handleCopyMarkdownLink = (e) => {
-    const { id } = eventId(e);
+    const id = eventId(e);
     const md = _state.papers[id].md;
     copyAndConfirmMemoryItem(id, md, "Markdown link copied!");
 };
 
 const handleCopyBibtex = (e) => {
-    const { id } = eventId(e);
+    const id = eventId(e);
     const bibtext = _state.papers[id].bibtext;
     copyAndConfirmMemoryItem(id, bibtext, "Bibtex copied!");
 };
 
 const handleCopyPDFLink = (e) => {
-    const { id } = eventId(e);
+    const id = eventId(e);
     const pdfLink = _state.papers[id].pdfLink;
     copyAndConfirmMemoryItem(id, pdfLink, "Pdf link copied!");
 };
 
 const handleAddItemToFavorites = (e) => {
-    const { id } = eventId(e);
+    const id = eventId(e);
     const isFavorite = hasClass(`memory-item-container--${id}`, "favorite");
     saveFavoriteItem(id, !isFavorite);
 };
@@ -62,7 +62,7 @@ const handleEditPaperFormSubmit = (e) => {
     e.preventDefault();
 
     // Get content
-    const { id } = eventId(e);
+    const id = eventId(e);
     const { note, codeLink } = getPaperEdits(id);
 
     // Update metadata
@@ -77,7 +77,7 @@ const handleEditPaperFormSubmit = (e) => {
 
 const handleCancelPaperEdit = (e) => {
     e.preventDefault();
-    const { id } = eventId(e);
+    const id = eventId(e);
     const paper = _state.papers[id];
     val(findEl(id, "form-note-textarea"), paper.note);
     setHTMLEl(findEl(id, "memory-item-tags"), getTagsHTMLOptions(paper));
@@ -88,7 +88,7 @@ const handleCancelPaperEdit = (e) => {
 const handleTogglePaperEdit = (e) => {
     e.preventDefault();
     // find elements
-    const { id } = eventId(e);
+    const id = eventId(e);
     const edit = findEl(id, "memory-item-edit");
 
     const codeAndNote = $(findEl(id, "code-and-note"));
@@ -210,9 +210,9 @@ const handleMemorySearchKeyPress = (e) => {
 const handleMemorySearchKeyUp = (e) => {
     // keyup because keypress does not listen to backspaces
     if (e.key == "Backspace") {
-        var backspaceEvent = $.Event("keypress");
+        var backspaceEvent = new Event("keypress");
         backspaceEvent.key = "Backspace";
-        document.getElementById("memory-search").dispatchEvent(backspaceEvent);
+        dispatch("memory-search", backspaceEvent);
     }
 };
 

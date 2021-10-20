@@ -496,6 +496,7 @@ const displayMemoryTable = () => {
         try {
             table.push(getMemoryItemHTML(paper));
         } catch (error) {
+            console.log("displayMemoryTable error:");
             console.log(error);
             console.log(paper);
         }

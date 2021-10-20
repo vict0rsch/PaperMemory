@@ -2,6 +2,7 @@
 
 html {
     min-width: 450px;
+    max-width: 450px;
     min-height: 450px;
     border-radius: 20px;
     font-size: 16px;
@@ -10,9 +11,11 @@ html {
 body {
     margin: 0;
     min-height: 100vh;
+    max-width: 450px;
     display: flex;
     flex-direction: column;
     font-family: "Yantramanav";
+    overflow: hidden;
 }
 
 textarea {
@@ -27,7 +30,7 @@ textarea {
     display: flex;
     justify-content: start;
     align-items: center;
-    border-radius: 0 0 85% 0 / 30%;
+    border-radius: 0 0 75% 0/50%;
     box-shadow: 14px 30px 122px -30px rgba(0, 0, 0, 0.75);
 }
 
@@ -52,7 +55,7 @@ h3 {
 
 svg {
     stroke-width: 1.15;
-    stroke: #2c3e50;
+    stroke: #7c7f8b;
     fill: none;
     stroke-linecap: round;
     stroke-linejoin: round;
@@ -108,6 +111,11 @@ strong {
     cursor: pointer;
     z-index: 6;
     background-color: white;
+    height: 45px;
+    width: 45px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 }
 
 #tabler-menu svg {
@@ -115,7 +123,7 @@ strong {
 }
 
 #tabler-menu svg:hover {
-    transform: scale(1.2);
+    transform: scale(1.1);
 }
 
 #tabler-copy-link {
@@ -220,15 +228,22 @@ strong {
 #memory-switch-text-off {
     height: 30px;
     width: 30px;
-    fill: #2c3e50;
+    fill: #7c7f8b;
     stroke: white;
 }
 
 #memory-switch:hover {
-    transform: scale(1.05);
+    transform: scale(1.1);
 }
 
 #memory-switch svg {
+    height: 40px;
+    width: 40px;
+}
+
+#close-menu-btn {
+    stroke: white;
+    fill: #7c7f8b;
     height: 40px;
     width: 40px;
 }
@@ -266,6 +281,7 @@ strong {
 }
 .memory-item-container h4 {
     font-weight: 500;
+    color: #3a3e52;
 }
 
 /* .memory-item-container:hover {

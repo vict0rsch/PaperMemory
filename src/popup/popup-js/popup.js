@@ -9,7 +9,7 @@ const closeMenu = () => {
         $("#tabler-menu").fadeOut(() => {
             setHTMLEl(
                 "tabler-menu",
-                tablerSvg("adjustments", undefined, ["tabler-icon"])
+                tablerSvg("settings", "tabler-menu-svg", ["tabler-icon"])
             );
             $("#tabler-menu").fadeIn();
         });
@@ -27,7 +27,7 @@ const openMenu = () => {
         $("#tabler-menu").fadeOut(() => {
             setHTMLEl(
                 "tabler-menu",
-                tablerSvg("adjustments", undefined, ["tabler-icon", "menu-svg"])
+                tablerSvg("circle-x", "close-menu-btn", ["tabler-icon", "menu-svg"])
             );
             $("#tabler-menu").fadeIn();
         });
@@ -134,6 +134,7 @@ const setAndHandleCustomPDFFunction = (menu) => {
             }, 1000);
         } catch (error) {
             // something went wrong!
+            console.log("setAndHandleCustomPDFFunction error:");
             const errorFeedback = /*html*/ `<span style="color: red">${error}</span>`;
             savedFeedback("customPdfFeedback", errorFeedback);
         }
