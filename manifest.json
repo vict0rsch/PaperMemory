@@ -19,7 +19,7 @@
   "browser_action": {
     "default_icon": "icons/1571249796.ico",
     "default_title": "ArxivTools",
-    "default_popup": "src/popup/popup.html"
+    "default_popup": "src/popup/popup.min.html"
   },
   "commands": {
     "_execute_browser_action": {
