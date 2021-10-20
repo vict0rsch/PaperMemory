@@ -188,10 +188,10 @@ const handleFilterFavorites = () => {
     }
 };
 
-const handleMemorySearchKeyPress = (e) => {
+const handleMemorySearchKeyPress = (forceEmptySearch) => (e) => {
     // read input, return if empty (after trim)
     const query = $.trim($(e.target).val());
-    if (!query && e.key !== "Backspace") return;
+    if (!query && !forceEmptySearch && e.key !== "Backspace") return;
 
     if (query.startsWith("t:")) {
         // look into tags
@@ -237,4 +237,17 @@ const handleConfirmModalClick = (e) => {
             `Search ${_state.papersList.length} entries ...`
         );
     });
+};
+
+const handleTagClick = (e) => {
+    const tagEl = e.target;
+    const query = tagEl.textContent;
+    val("memory-search", `t: ${query}`);
+    dispatch("memory-search", "keypress");
+};
+
+const handleClearSearch = (e) => {
+    if (e.target.value === "") {
+        dispatch("memory-search", "clear-search");
+    }
 };
