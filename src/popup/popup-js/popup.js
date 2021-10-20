@@ -235,7 +235,7 @@ const popupMain = async (url, isKnownPage) => {
             window.close();
         });
         addListener(`popup-code-link`, "click", () => {
-            const codeLink = document.getElementById(`popup-code-link`).value;
+            const codeLink = document.getElementById(`popup-code-link`).textContent;
             if (codeLink) {
                 focusExistingOrCreateNewCodeTab(codeLink);
             }
