@@ -39,6 +39,15 @@ textarea {
     margin-left: 0.5rem;
 }
 
+#filter-favorites {
+    height: 32px;
+    width: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
 h1 {
     margin: 0;
     font-weight: 300;
@@ -83,9 +92,6 @@ strong {
 }
 #tabler-menu-svg {
     color: rgb(43, 43, 61);
-}
-.memory-item-favorite-svg {
-    vertical-align: bottom;
 }
 
 .memory-icon-svg {
@@ -476,6 +482,7 @@ strong {
     background: #ececec;
     margin-right: 8px;
     border-radius: 4px;
+    cursor: pointer;
 }
 
 #popup-copy-icons .memory-item-svg-div {
@@ -522,6 +529,17 @@ button:hover {
 .memory-item-favorite {
     cursor: pointer;
     margin-right: 1px;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    width: 15px;
+    height: 15px;
+}
+.memory-item-favorite-svg {
+    position: absolute;
+    bottom: -2px;
+    left: 2px;
 }
 
 svg.favorite {
