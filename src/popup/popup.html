@@ -13,9 +13,6 @@
 
 	<script defer src="../shared/utils.min.js"></script>
 
-	<!-- <script defer src="../shared/utils/functions.js"></script> -->
-	<!-- <script defer src="../shared/utils/config.js"></script> -->
-	<!-- <script defer src="../shared/utils/parsers.js"></script> -->
 
 	<script defer src="./popup-js.min.js"></script>
 
@@ -33,12 +30,6 @@
 
 	<div id="container">
 		<div id="notArxiv" style="display: none">
-			<!-- <div class="header">
-				<svg class="tabler-icon">
-					<use xlink:href="../../icons/tabler-sprite-nostroke.svg#tabler-cloud-storm" />
-				</svg>
-			</div> -->
-
 
 			<p>Keep track of your readings with <strong>ArxivMemory!</strong> It automatically and locally stores
 				papers you open in your browser</p>
@@ -46,9 +37,6 @@
 				ArxivMemory. In addition to Arxiv, NeurIPS, CVPR & I/ECCV papers are supported!
 			</p>
 
-			<!-- <p>Beyond simple <strong>searching</strong>, you can also <strong>customize</strong> a paper's entry with: a
-				link to its code, tags and a
-				quick note.</p> -->
 			<p>Click on the ArxivMemory button below <svg xmlns="http://www.w3.org/2000/svg"
 					class="icon icon-tabler icon-tabler-arrow-down-left" width="20" height="20" viewBox="0 0 24 24"
 					stroke-width="2" stroke="#7c7f8b" fill="none" stroke-linecap="round" stroke-linejoin="round"
@@ -60,17 +48,6 @@
 					style="padding: 1px 4px; vertical-align: text-top; border-radius: 4px; background-color: rgb(238, 238, 238);">a</code>
 				)! (<a id="keyboardShortcuts" href="#">keyboard guide</a>)
 			</p>
-		</div>
-
-		<div id="notPdf" style="display: none;">
-			<h3>You're not on a paper's pdf webpage</h3>
-			<p>This extension can bring you from an Arxiv-hosted pdf webpage to its Arxiv Abstract page.</p>
-			<p>For instance from https://arxiv.org/pdf/1703.06907.pdf to https://arxiv.org/abs/1703.06907</p>
-			<br />
-			<p>Keep track of your readings with <strong>ArxivMemory!</strong></p>
-			<small>When opening Arxiv web pages and pdfs, a reference to that paper will be stored in your ArxivMemory.
-				Now also handles NeurIPS, CVPR & I/ECCV pdfs!
-				You can find them all by clicking on the ArxivMemory button.</small>
 		</div>
 
 		<div id="isArxiv" style="display: none;">
@@ -89,8 +66,6 @@
 				transform: translate(-50%, 0); bottom: -20px; width: 280px; text-align: center;" id="popup-feedback-copied"></div>
 			</div>
 
-			<!-- <p>Keep track of your readings with <strong>ArxivMemory!</strong></p> -->
-
 			<div id="popup-memory-edit" style="width: 100%; margin-bottom: 32px;"></div>
 
 		</div>
@@ -105,10 +80,6 @@
 			<p><a id="helpGithubLink"
 					href="https://github.com/vict0rsch/ArxivTools">https://github.com/vict0rsch/ArxivTools</a>
 			</p>
-
-			<!-- <p>Using VSCode? Checkout <a id="coblock"
-					href="https://marketplace.visualstudio.com/items?itemName=vict0rsch.coblock">CoBlock</a>, an easy
-				way to structure your code with blocks of comments</p> -->
 
 			<h4>Options</h4>
 
@@ -160,6 +131,7 @@
 		</div>
 
 	</div>
+
 	<div id="memory-switch">
 		<svg xmlns="http://www.w3.org/2000/svg" tabindex="0" id="memory-switch-text-on"
 			class="icon icon-tabler icon-tabler-folders" width="44" height="44" viewBox="0 0 24 24" stroke-width="1.5"
@@ -177,10 +149,17 @@
 			<path d="M10 10l4 4m0 -4l-4 4" />
 		</svg>
 	</div>
+
+	<div id="tabler-menu" tabindex="0" title="Open settings">
+		<svg id='tabler-menu-svg' class="tabler-icon">
+			<use xlink:href="../../icons/tabler-sprite-nostroke.svg#tabler-settings" />
+		</svg>
+	</div>
+
 	<div id="memory-container" style="display: none;">
 		<div id="memory-filters">
-			<input id="memory-search" type="text" placeholder="search" style="width: 45%;" />
-			<span style="cursor: pointer" id="filter-favorites" title="Show favorites only">
+			<input id="memory-search" type="search" placeholder="search" style="width: 45%;" />
+			<span tabindex="0" id="filter-favorites" title="Show favorites only">
 				<svg style="vertical-align: bottom; height: 22px; width: 32px">
 					<use xlink:href="../../icons/tabler-sprite-nostroke.svg#tabler-star" />
 				</svg>
@@ -192,7 +171,7 @@
 				<option value="count"># Visits</option>
 				<option value="id">ID</option>
 			</select>
-			<span id="memory-sort-arrow">
+			<span tabindex="0" id="memory-sort-arrow">
 				<svg class="memory-sort-arrow-svg" id="memory-sort-arrow-down">
 					<use xlink:href="../../icons/tabler-sprite-nostroke.svg#tabler-arrow-narrow-down" />
 				</svg>
@@ -201,13 +180,9 @@
 		<div id="memory-table" width="100%">
 		</div>
 	</div>
-	<div id="tabler-menu" tabindex="0" title="Open settings">
-		<svg id='tabler-menu-svg' class="tabler-icon">
-			<use xlink:href="../../icons/tabler-sprite-nostroke.svg#tabler-settings" />
-		</svg>
-	</div>
 
-	<!-- <div id="content"></div> -->
+
+
 
 </body>
 
