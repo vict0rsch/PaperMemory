@@ -1,5 +1,7 @@
 /**
  * TODO: fix paper popup added/removed to/from favorites => update memory table
+ * TODO: fix Firefox add tag to paper from popup
+ * TODO: fix Firefox keys listeners
  */
 
 /**
@@ -529,6 +531,8 @@ const displayMemoryTable = () => {
     addEventToClass(".cancel-note-form", "click", handleCancelPaperEdit);
     // When clicking on the edit button, either open or close the edit form
     addEventToClass(".memory-item-edit", "click", handleTogglePaperEdit);
+    // When clicking on a tag, search for it
+    addEventToClass(".memory-tag", "click", handleTagClick);
     // Monitor form changes
     setFormChangeListener(undefined, false);
 
@@ -564,6 +568,7 @@ const openMemory = () => {
     // remove ArxivMemory button and show the (x) to close it
     $("#memory-switch-text-on").hide();
     $("#memory-switch-text-off").show();
+    addListener("memory-search", "search", handleClearSearch);
 };
 
 /**
@@ -596,8 +601,9 @@ const makeMemoryHTML = async () => {
     addListener(
         "memory-search",
         "keypress",
-        delay(handleMemorySearchKeyPress, delayTime)
+        delay(handleMemorySearchKeyPress(), delayTime)
     );
+    addListener("memory-search", "clear-search", handleMemorySearchKeyPress(true));
     addListener("memory-search", "keyup", handleMemorySearchKeyUp);
 
     addListener("filter-favorites", "click", handleFilterFavorites);

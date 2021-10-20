@@ -33,6 +33,10 @@ const parseArxivBibtex = (xmlData) => {
             pdfLink = link;
         }
     });
+    const pdfVersion = pdfLink.match(/v\d+\.pdf/gi);
+    if (pdfVersion && pdfVersion.length > 0) {
+        pdfLink = pdfLink.replace(pdfVersion[0], ".pdf");
+    }
     const author = authors.join(" and ");
     const title = $(bib.find("entry title")[0]).text();
     const year = $(bib.find("entry published")[0]).text().slice(0, 4);

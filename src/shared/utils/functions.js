@@ -450,9 +450,22 @@ const migrateData = async (papers, dataVersion) => {
                 }
             }
             if (currentVersion < 209) {
+                // 0.2.9
                 if (!papers[id].hasOwnProperty("favorite")) {
                     papers[id].favorite = false;
                     papers[id].favoriteDate = "";
+                }
+            }
+            if (currentVersion < 210) {
+                if (papers[id].source === "arxiv") {
+                    // replace vX in pdfs so the paper always points to the latest
+                    const pdfVersion = papers[id].pdfLink.match(/v\d+\.pdf/gi);
+                    if (pdfVersion && pdfVersion.length > 0) {
+                        papers[id].pdfLink = papers[id].pdfLink.replace(
+                            pdfVersion[0],
+                            ".pdf"
+                        );
+                    }
                 }
             }
 
@@ -677,7 +690,7 @@ const handlePopupKeydown = (e) => {
             dispatch("memory-switch", "click");
         } else if (key === "Enter") {
             // enter on the arxiv memory button opens it
-            let el = document.getElementById("memory-switch-text-on:focus");
+            let el = document.querySelector("#memory-switch-text-on:focus");
             if (el) {
                 document
                     .getElementById("memory-switch")
@@ -685,11 +698,9 @@ const handlePopupKeydown = (e) => {
                 return;
             }
             // enter on the menu button opens it
-            el = document.getElementById("tabler-menu:focus");
+            el = document.querySelector("#tabler-menu:focus");
             if (el) {
-                document
-                    .getElementById("tabler-menu")
-                    .dispatchEvent(new Event("click"));
+                dispatch("tabler-menu", "click");
                 dispatch("tabler-menu", "blur");
                 return;
             }
@@ -699,11 +710,25 @@ const handlePopupKeydown = (e) => {
 
     // Now memory is open
 
+    if (key === "Enter") {
+        // enable Enter on favorites and sort arrows
+        const favoriteBtn = document.querySelector("#filter-favorites:focus");
+        if (favoriteBtn) {
+            dispatch("filter-favorites", "click");
+            return;
+        }
+        const arrowBtn = document.querySelector("#memory-sort-arrow:focus");
+        if (arrowBtn && key === "Enter") {
+            dispatch("memory-sort-arrow", "click");
+            return;
+        }
+    }
+
     let id;
-    const el = document.querySelector(".memory-item-container:focus");
+    const paperItem = document.querySelector(".memory-item-container:focus");
     if (key !== "Escape") {
-        if (!el) return;
-        id = el.id.split("--")[1];
+        if (!paperItem) return;
+        id = paperItem.id.split("--")[1];
     }
 
     if (key === "Backspace") {
