@@ -320,7 +320,9 @@ const arxiv = (checks) => {
             );
         };
         const makeTitle = async (id, url) => {
-            let title = await getArxivTitle(id);
+            let title = _state.papers.hasOwnProperty(id)
+                ? _state.papers[id].title
+                : await getArxivTitle(id);
             title = statePdfTitle(title, id);
             window.document.title = title;
             chrome.runtime.sendMessage({
