@@ -181,7 +181,7 @@ const getPopupEditFormHTML = (paper) => {
             </div>
             <div style="display: flex; justify-content: space-between; align-items: center">
                 <div style="display: flex; justify-content: flex-start; align-items: center">
-                    <label for="checkFavorite" style="font-family: monospace; margin-right: 16px;">Favorite: </label>
+                    <label class="label" for="checkFavorite">Favorite: </label>
                     <input ${checked} class="switch" type="checkbox" id="checkFavorite--${id}" name="checkFavorite" value="checkFavorite">
                 </div>
                 <button style="padding: 6px 16px;" disabled class="back-to-focus" id="popup-save-edits--${id}">Save</button>

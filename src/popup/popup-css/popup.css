@@ -20,7 +20,7 @@ body {
 
 textarea {
     border-radius: 4px;
-    border-color: #aaaaaa;
+    border: 1px solid #aaaaaa;
 }
 
 .popup-header {
@@ -400,6 +400,7 @@ strong {
 .label {
     font-family: monospace;
     margin-right: 16px;
+    font-size: 0.8rem;
 }
 
 .memory-note-div {

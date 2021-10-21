@@ -1,7 +1,7 @@
 /**
  * TODO: fix paper popup added/removed to/from favorites => update memory table
- * TODO: fix Firefox add tag to paper from popup
- * TODO: fix Firefox keys listeners
+ * TODO: fix Firefox esc listener
+ * TODO: fix Firefox add tag from memory item: no change watch / save is disabled (sometimes...)
  */
 
 /**
@@ -71,7 +71,7 @@ const copyAndConfirmMemoryItem = (id, textToCopy, feedbackText, isPopup) => {
     const element = isPopup
         ? document.getElementById(`popup-feedback-copied`)
         : findEl(id, "memory-item-feedback");
-    if (!el) return;
+    if (!element) return;
     element.innerText = feedbackText;
     $(element).fadeIn();
     setTimeout(() => {
@@ -454,12 +454,12 @@ const updatePaperTags = (id, elementId) => {
     // for select2
     if (updated) {
         chrome.storage.local.set({ papers: _state.papers }, () => {
+            // update the global set of tags
+            makeTags();
             // update the selected tags in the select2 input for this paper
             updateTagOptions(id);
             // update the displayed tags for this paper
             updatePaperTagsHTML(id);
-            // update the global set of tags
-            makeTags();
         });
     }
 };
