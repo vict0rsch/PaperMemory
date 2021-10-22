@@ -111,7 +111,7 @@ const setAndHandleCustomPDFFunction = (menu) => {
     val("customPdfTitleTextarea", _state.pdfTitleFn.toString());
     // listen to saving click
     addListener("saveCustomPdf", "click", () => {
-        const code = $.trim(val("customPdfTitleTextarea"));
+        const code = val("customPdfTitleTextarea").trim();
         try {
             // check code: it can be evaluated and it runs without error
             const fn = eval(code);

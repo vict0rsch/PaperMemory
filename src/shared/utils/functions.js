@@ -754,7 +754,7 @@ const textareaFocusEnd = (element) => {
 };
 
 const formatBibtext = (text) => {
-    let bib = $.trim(text).split("\n").join("");
+    let bib = text.trim().split("\n").join("");
     const matches = bib.match(/\w+\ ?=/g);
     if (matches) {
         for (const m of matches) {
@@ -978,7 +978,7 @@ const arraysIdentical = (a, b) => {
 };
 
 const parseTags = (el) => {
-    let tags = Array.from(el.selectedOptions, (e) => $.trim(e.value)).filter((e) => e);
+    let tags = Array.from(el.selectedOptions, (e) => e.value.trim()).filter((e) => e);
     tags.sort();
     return tags;
 };

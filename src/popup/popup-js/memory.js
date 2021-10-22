@@ -191,7 +191,7 @@ const focusExistingOrCreateNewPaperTab = (paper) => {
  * @param {string} note The content of the note
  */
 const saveNote = (id, note) => {
-    note = $.trim(note);
+    note = note.trim();
     _state.papers[id].note = note;
     chrome.storage.local.set({ papers: _state.papers }, () => {
         // console.log("Updated the note for " + _state.papers[id].title);
@@ -221,7 +221,7 @@ const saveNote = (id, note) => {
  * @param {string} codeLink The link to the paper's code
  */
 const saveCodeLink = (id, codeLink) => {
-    codeLink = $.trim(codeLink);
+    codeLink = codeLink.trim();
     _state.papers[id].codeLink = codeLink;
     chrome.storage.local.set({ papers: _state.papers }, () => {
         // console.log(`Updated the code for ${_state.papers[id].title} to ${codeLink}`);
@@ -635,6 +635,7 @@ const closeMemory = () => {
     $("#memory-switch-text-on").show();
     $("#tabler-menu").fadeIn(200);
     val("memory-search", "");
+    dispatch("memory-search", "clear-search");
     _state.memoryIsOpen = false;
     if (_state.showFavorites) {
         dispatch("filter-favorites", "click");

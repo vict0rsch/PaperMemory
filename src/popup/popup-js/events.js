@@ -185,7 +185,7 @@ const handleFilterFavorites = () => {
         sortMemory();
         setMemorySortArrow("down");
 
-        if ($.trim(document.getElementById("memory-search").value)) {
+        if (val("memory-search").trim()) {
             dispatch("memory-search", "keypress");
         } else {
             _state.papersList = _state.sortedPapers;
@@ -196,10 +196,10 @@ const handleFilterFavorites = () => {
     }
 };
 
-const handleMemorySearchKeyPress = (forceEmptySearch) => (e) => {
+const handleMemorySearchKeyPress = (allowEmptySearch) => (e) => {
     // read input, return if empty (after trim)
-    const query = $.trim($(e.target).val());
-    if (!query && !forceEmptySearch && e.key !== "Backspace") return;
+    const query = val("memory-search").trim();
+    if (!query && !allowEmptySearch && e.key !== "Backspace") return;
 
     if (query.startsWith("t:")) {
         // look into tags

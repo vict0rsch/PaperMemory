@@ -120,11 +120,11 @@ const parseCvfHTML = (url, htmlText) => {
     );
     const doc = $(dom);
 
-    const title = $.trim(doc.find("#papertitle").text());
+    const title = doc.find("#papertitle").text().trim();
     let author = doc.find("#authors i").first().text();
     author = author
         .split(",")
-        .map((a) => $.trim(a))
+        .map((a) => a.trim())
         .join(" and ");
     const { year, id, conf } = parseCVFUrl(url);
     let pdfLink = "";
