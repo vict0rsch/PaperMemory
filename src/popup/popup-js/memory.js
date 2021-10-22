@@ -1,7 +1,5 @@
 /**
  * TODO: fix paper popup added/removed to/from favorites => update memory table
- * TODO: fix Firefox esc listener
- * TODO: fix Firefox add tag from memory item: no change watch / save is disabled (sometimes...)
  */
 
 /**
@@ -41,8 +39,8 @@ const updateAllPaperTagOptions = () => {
 
 const updatePopupPaperNoMemory = () => {
     const noMemoryHTML = /*html*/ `
-    <div style="font-size: 1.5rem;">This paper is not in your memory</div>
-    <h4> Refresh the page to add it back </h4>
+    <div style="font-size: 1.5rem; width: 100%; text-align: center;">This paper is not in your memory</div>
+    <h4 style="width: 100%; text-align: center;"> Refresh the page to add it back </h4>
     `;
     setHTMLEl("isArxiv", noMemoryHTML);
 };
@@ -51,7 +49,7 @@ const updatePopupPaperNoMemory = () => {
  * Delete a paper ; display a modal first to get uer confirmation
  * @param {string} id Id of the paper to delete
  */
-const confirmDelete = (id) => {
+const showConfirmDeleteModal = (id) => {
     const title = _state.papers[id].title;
     document.body.innerHTML += /*html*/ `
     <div id="confirm-modal">
@@ -65,7 +63,7 @@ const confirmDelete = (id) => {
         </div>
     </div>`;
     addListener("cancel-modal-button", "click", handleCancelModalClick);
-    addListener(`confirm-modal-button--${id}`, "click", handleConfirmModalClick);
+    addListener(`confirm-modal-button--${id}`, "click", handleConfirmDeleteModalClick);
 };
 
 /**

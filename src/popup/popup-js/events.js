@@ -15,7 +15,7 @@ const handleBackToFocus = (e) => {
 
 const handleDeleteItem = (e) => {
     const id = eventId(e);
-    confirmDelete(id);
+    showConfirmDeleteModal(id);
 };
 
 const handleOpenItemLink = (e) => {
@@ -226,17 +226,19 @@ const handleMemorySearchKeyUp = (e) => {
 
 const handleCancelModalClick = () => {
     document.getElementById("confirm-modal").remove();
+    addListener("memory-switch", "click", handleMemorySwitchClick);
 };
 
-const handleConfirmModalClick = (e) => {
+const handleConfirmDeleteModalClick = (e) => {
     const id = e.target.id.split("--")[1];
+    const title = _state.papers[id].title;
     delete _state.papers[id];
     chrome.storage.local.set({ papers: _state.papers }, () => {
         _state.papersList = Object.values(cleanPapers(_state.papers));
         sortMemory();
         displayMemoryTable();
         document.getElementById("confirm-modal").remove();
-        console.log("Successfully deleted '" + title + "' from ArxivMemory");
+        console.log(`Successfully deleted "${title}" (${id}) from ArxivMemory`);
         if (_state.currentId === id) {
             updatePopupPaperNoMemory();
         }
@@ -244,6 +246,7 @@ const handleConfirmModalClick = (e) => {
             "memory-search",
             `Search ${_state.papersList.length} entries ...`
         );
+        addListener("memory-switch", "click", handleMemorySwitchClick);
     });
 };
 
@@ -258,4 +261,8 @@ const handleClearSearch = (e) => {
     if (e.target.value === "") {
         dispatch("memory-search", "clear-search");
     }
+};
+
+const handleMemorySwitchClick = () => {
+    _state.memoryIsOpen ? closeMemory() : openMemory();
 };

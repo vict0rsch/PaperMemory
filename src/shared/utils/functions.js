@@ -692,9 +692,7 @@ const handlePopupKeydown = (e) => {
             // enter on the arxiv memory button opens it
             let el = document.querySelector("#memory-switch-text-on:focus");
             if (el) {
-                document
-                    .getElementById("memory-switch")
-                    .dispatchEvent(new Event("click"));
+                dispatch("memory-switch", "click");
                 return;
             }
             // enter on the menu button opens it
