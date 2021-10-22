@@ -554,15 +554,6 @@ const displayMemoryTable = () => {
 const openMemory = () => {
     _state.menuIsOpen && closeMenu();
     _state.memoryIsOpen = true;
-    $("#memory-container").slideDown({
-        duration: 250,
-        easing: "easeOutQuint",
-        complete: () => {
-            setTimeout(() => {
-                dispatch("memory-search", "focus");
-            }, 150);
-        },
-    });
     // hide menu button
     $("#tabler-menu").fadeOut(200);
     // set default sort to lastOpenDate
@@ -573,7 +564,17 @@ const openMemory = () => {
     // remove ArxivMemory button and show the (x) to close it
     $("#memory-switch-text-on").hide();
     $("#memory-switch-text-off").show();
+
     addListener("memory-search", "search", handleClearSearch);
+    $("#memory-container").slideDown({
+        duration: 250,
+        easing: "easeOutQuint",
+        complete: () => {
+            setTimeout(() => {
+                dispatch("memory-search", "focus");
+            }, 150);
+        },
+    });
 };
 
 /**
