@@ -5,7 +5,7 @@ String.prototype.capitalize = function () {
 const firstNonStopLowercase = (title) => {
     let t = title.toLowerCase();
     let words = t.split(" ").map((w) => w.replace(/[^0-9a-z]/gi, ""));
-    let meaningful = words.filter((w) => _englishStopWords.has(w));
+    let meaningful = words.filter((w) => global.englishStopWords.has(w));
     if (meaningful.length > 0) {
         return meaningful[0];
     }

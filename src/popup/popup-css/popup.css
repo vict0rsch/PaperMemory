@@ -38,7 +38,7 @@ textarea {
     border: 1px solid #aaaaaa;
 }
 
-.popup-header {
+#popup-header {
     background-color: #b31b1b;
     padding: 12px;
     color: white;
@@ -49,9 +49,12 @@ textarea {
     box-shadow: 14px 30px 122px -30px rgba(0, 0, 0, 0.75);
 }
 
-.popup-header .tabler-icon {
-    color: white !important;
+#popup-header .tabler-icon {
     margin-left: 0.5rem;
+}
+
+.popup-form-note-textarea {
+    width: 85%;
 }
 
 #filter-favorites {
@@ -120,7 +123,6 @@ strong {
     right: 12px;
     cursor: pointer;
     z-index: 6;
-    background-color: white;
     height: 45px;
     width: 45px;
     display: flex;
@@ -151,7 +153,7 @@ strong {
     font-size: 1.2rem;
 }
 
-#menuDiv {
+#menu-container {
     position: absolute;
     top: 0;
     left: 0;
@@ -165,7 +167,7 @@ strong {
     overflow: scroll;
 }
 
-#menuDiv p {
+#menu-container p {
     margin-top: 8px;
     margin-bottom: 8px;
 }
@@ -241,6 +243,11 @@ strong {
     fill: #7c7f8b;
     stroke: white;
 }
+.dark-svg {
+    color: #a4b0be !important;
+    stroke: #a4b0be !important;
+    fill: #494a4e !important;
+}
 
 #memory-switch:hover {
     transform: scale(1.1);
@@ -287,7 +294,7 @@ strong {
 }
 
 .memory-item-container.favorite {
-    border: 1px solid #b31b1b;
+    border: 1px solid #b31b1b !important;
 }
 .memory-item-container h4 {
     font-weight: 500;
@@ -516,6 +523,20 @@ button:hover {
     border-color: #b31b1b;
     background-color: rgb(253, 235, 235);
 }
+button.dark-btn {
+    border-color: #adbac7 !important;
+    background-color: #9aa4ae !important;
+    color: #15191f;
+}
+button.dark-btn:disabled {
+    color: #2e3742 !important;
+    background-color: #5c6268 !important;
+}
+button.dark-btn:hover {
+    border-color: #d8e7f7 !important;
+    background-color: #b8c3cf !important;
+    color: #000000;
+}
 
 #confirm-modal {
     width: 100%;
@@ -569,4 +590,13 @@ button.changed {
     background-color: #404e5c;
     color: white;
     border: 0px;
+}
+
+.select2-container--default .select2-selection--multiple.dark {
+    background: #494747;
+}
+
+.select2-container--default .select2-results > .select2-results__options {
+    background: grey;
+    color: white;
 }

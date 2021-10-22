@@ -10,8 +10,9 @@ const getMemoryItemHTML = (paper) => {
     const note = paper.note || "";
     const id = paper.id;
     const tags = new Set(paper.tags);
-    const tagOptions = getTagsHTMLOptions(paper);
+    const tagOptions = getTagsOptions(paper);
     const favoriteClass = paper.favorite ? "favorite" : "";
+    const styles = global.state.memoryItemStyle;
     const titles = {
         edit: `"Edit paper details&#13;&#10;(or press 'e' when this paper is focused,&#13;&#10; i.e. when you navigated to it with 'tab')"`,
         pdfLink: `"Open ${paper.pdfLink}"`,
@@ -22,13 +23,18 @@ const getMemoryItemHTML = (paper) => {
     };
     let codeDiv = /*html*/ `
     <small class="memory-item-faded">
-        <span class="memory-item-code-link">${paper.codeLink || ""}</span>
+        <span 
+            class="memory-item-code-link" 
+            ${styles.link}
+        >
+            ${paper.codeLink || ""}
+        </span>
     </small>
     `;
-    let noteDiv = /*html*/ `<div class="memory-note-div memory-item-faded"></div>`;
+    let noteDiv = /*html*/ `<div class="memory-note-div memory-item-faded" ${styles.author}></div>`;
     if (paper.note) {
         noteDiv = /*html*/ `
-        <div class="memory-note-div memory-item-faded">
+        <div class="memory-note-div memory-item-faded" ${styles.author}>
             <span class="note-content-header">Note:</span>
             <span class="note-content">${note}</span>
         </div>
@@ -36,9 +42,18 @@ const getMemoryItemHTML = (paper) => {
     }
 
     return /*html*/ `
-    <div class="memory-item-container ${favoriteClass}" tabindex="0" id="memory-item-container--${id}">
+    <div 
+        class="memory-item-container ${favoriteClass}" 
+        tabindex="0" 
+        id="memory-item-container--${id}" 
+        ${styles.container}
+    >
 
-        <h4 class="memory-item-title" title="Added ${addDate}&#13;&#10;Last open ${lastOpenDate}">
+        <h4 
+            class="memory-item-title" 
+            title="Added ${addDate}&#13;&#10;Last open ${lastOpenDate}" 
+            ${styles.title}
+        >
                 <span class="memory-item-favorite">
                     ${tablerSvg("star", "", [
                         "memory-item-favorite-svg",
@@ -50,18 +65,21 @@ const getMemoryItemHTML = (paper) => {
         <div class="memory-item-tags-div">
             <small class="tag-list">
                 ${Array.from(tags)
-                    .map((t) => `<span class="memory-tag">${t}</span>`)
+                    .map(
+                        (t) =>
+                            `<span class="memory-tag" ${styles.tagHTML}" >${t}</span>`
+                    )
                     .join("")}
             </small>
             <div class="edit-tags">
-                <div style="display:flex; align-items: center"; justify-content: space-between">
+                <div style="display:flex; align-items: center; justify-content: space-between">
                     <select class="memory-item-tags" id="memory-item-tags--${id}" multiple="multiple">
                         ${tagOptions}
                     </select>
                 </div>
             </div>
         </div>
-        <small class="authors">${cutAuthors(paper.author)}</small>
+        <small class="authors" ${styles.author}">${cutAuthors(paper.author)}</small>
         
         <div class="code-and-note">
             ${codeDiv}
@@ -75,7 +93,7 @@ const getMemoryItemHTML = (paper) => {
                     ${tablerSvg("writing", "", ["memory-icon-svg"])}
                 </div>
                 
-                <small class="memory-item-faded">
+                <small class="memory-item-faded" ${styles.id}">
                         ${displayId}
                 </small>
                         
@@ -85,9 +103,10 @@ const getMemoryItemHTML = (paper) => {
                 ${tablerSvg("file-symlink", "", ["memory-icon-svg"])}
             </div>
                 
-            <div class="memory-item-copy-link memory-item-svg-div" title=${
-                titles.copyPdfLink
-            } >
+            <div 
+                class="memory-item-copy-link memory-item-svg-div" 
+                title=${titles.copyPdfLink} 
+            >
                 ${tablerSvg("link", "", ["memory-icon-svg"])}
             </div>
 
@@ -95,15 +114,16 @@ const getMemoryItemHTML = (paper) => {
                 ${tablerSvg("clipboard-list", "", ["memory-icon-svg"])}
             </div>
 
-            <div class="memory-item-bibtext memory-item-svg-div" title=${
-                titles.copyBibtext
-            }>
+            <div 
+                class="memory-item-bibtext memory-item-svg-div" 
+                title=${titles.copyBibtext}
+            >
                 ${tablerSvg("archive", "", ["memory-icon-svg"])}
             </div>
 
             <span style="color: green; display: none" class="memory-item-feedback"></span>
             
-            <div title=${titles.visits} class="memory-item-faded">
+            <div title=${titles.visits} class="memory-item-faded" ${styles.visits}>
                 Visits: ${paper.count}
             </div>
 
@@ -114,23 +134,45 @@ const getMemoryItemHTML = (paper) => {
                 <form class="form-note">
                     <div class="textarea-wrapper">
                         <span class="label">Code:</span>
-                        <input type="text" class="form-code-input" value="${
-                            paper.codeLink || ""
-                        }">
+                        <input 
+                            type="text" 
+                            class="form-code-input" 
+                            ${styles.input} 
+                            value="${paper.codeLink || ""}"
+                        >
                     </div>
                     <div class="textarea-wrapper">
                         <span class="label">Note:</span>
-                        <textarea rows="3" class="form-note-textarea">${note}</textarea>
+                        <textarea 
+                            rows="3" 
+                            class="form-note-textarea"${styles.input}
+                        >${note}</textarea>
                     </div>
                     <div class="form-note-buttons">
-                        <button class="memory-item-save-edits" type="submit" disabled >Save</button>
-                        <button class="cancel-note-form back-to-focus">Cancel</button>
+                        <button 
+                            class="memory-item-save-edits ${
+                                styles.button ? "dark-btn" : ""
+                            }" 
+                            type="submit"
+                            ${styles.button}
+                            disabled 
+                        >
+                            Save
+                        </button>
+                        <button 
+                            class="cancel-note-form back-to-focus ${
+                                styles.button ? "dark-btn" : ""
+                            }" 
+                            ${styles.button}
+                        >
+                            Cancel
+                        </button>
                     </div>
                 </form>
             </div>
         </div>
 
-        <div class="delete-memory-item"> - </div>
+        <div class="delete-memory-item" ${styles.deleteRound}> - </div>
     </div>
     `;
 };
@@ -143,9 +185,11 @@ const getMemoryItemHTML = (paper) => {
  */
 const getPopupEditFormHTML = (paper) => {
     const id = paper.id;
-    const tagOptions = getTagsHTMLOptions(paper);
+    const tagOptions = getTagsOptions(paper);
     const note = paper.note || "";
     const checked = "";
+    const styles = global.state.memoryItemStyle;
+
     return /*html*/ `
     <div style="max-width: 100%; display: flex; justify-content: space-between; align-items: center; padding: 4px 16px;">
         <div style="width: 100%">
@@ -167,14 +211,15 @@ const getPopupEditFormHTML = (paper) => {
                         type="text" 
                         class="form-code-input mt-0 noMemoryOnA" 
                         value="${paper.codeLink || ""}"
+                        ${styles.input}
                     >
                 </div>
                 <div class="textarea-wrapper w-100 mr-0">
                     <span class="label">Note:</span>
                     <textarea 
-                        rows="3" 
-                        style="width:85%;" 
-                        class="noMemoryOnA"
+                        rows="3"  
+                        class="noMemoryOnA popup-form-note-textarea"
+                        ${styles.input}
                         id="popup-form-note-textarea--${id}"
                     >${note}</textarea>
                 </div>
@@ -184,7 +229,14 @@ const getPopupEditFormHTML = (paper) => {
                     <label class="label" for="checkFavorite">Favorite: </label>
                     <input ${checked} class="switch" type="checkbox" id="checkFavorite--${id}" name="checkFavorite" value="checkFavorite">
                 </div>
-                <button style="padding: 6px 16px;" disabled class="back-to-focus" id="popup-save-edits--${id}">Save</button>
+                <button 
+                    style="padding: 6px 16px;" 
+                    disabled 
+                    class="back-to-focus ${styles.input ? "dark-btn" : ""}" 
+                    id="popup-save-edits--${id}"
+                >
+                    Save
+                </button>
             </div>
         </div>
         <div>

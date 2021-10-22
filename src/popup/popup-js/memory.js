@@ -14,9 +14,10 @@ const findEl = (eid, className) => {
         .querySelector(`.${className}`);
 };
 
-const getTagsHTMLOptions = (paper) => {
+const getTagsOptions = (paper) => {
     const tags = new Set(paper.tags);
-    return Array.from(_state.paperTags)
+
+    return Array.from(global.state.paperTags)
         .sort()
         .map((t, i) => {
             let h = `<option value="${t}"`;
@@ -29,10 +30,10 @@ const getTagsHTMLOptions = (paper) => {
 };
 
 const updateAllPaperTagOptions = () => {
-    for (const id in _state.papers) {
-        if (_state.papers.hasOwnProperty(id) && id !== "__dataVersion") {
-            const paper = _state.papers[id];
-            setHTMLEl(`memory-item-tags--${id}`, getTagsHTMLOptions(paper));
+    for (const id in global.state.papers) {
+        if (global.state.papers.hasOwnProperty(id) && id !== "__dataVersion") {
+            const paper = global.state.papers[id];
+            setHTMLEl(`memory-item-tags--${id}`, getTagsOptions(paper));
         }
     }
 };
@@ -50,7 +51,7 @@ const updatePopupPaperNoMemory = () => {
  * @param {string} id Id of the paper to delete
  */
 const showConfirmDeleteModal = (id) => {
-    const title = _state.papers[id].title;
+    const title = global.state.papers[id].title;
     document.body.innerHTML += /*html*/ `
     <div id="confirm-modal">
         <div style="width: 80%; padding: 32px 32px; text-align: center; font-size: 1.1rem;">
@@ -175,8 +176,8 @@ const focusExistingOrCreateNewPaperTab = (paper) => {
             chrome.tabs.create({ url: paper.pdfLink });
         }
 
-        _state.papers[paper.id].count += 1;
-        chrome.storage.local.set({ papers: _state.papers });
+        global.state.papers[paper.id].count += 1;
+        chrome.storage.local.set({ papers: global.state.papers });
     });
 };
 
@@ -190,9 +191,9 @@ const focusExistingOrCreateNewPaperTab = (paper) => {
  */
 const saveNote = (id, note) => {
     note = note.trim();
-    _state.papers[id].note = note;
-    chrome.storage.local.set({ papers: _state.papers }, () => {
-        // console.log("Updated the note for " + _state.papers[id].title);
+    global.state.papers[id].note = note;
+    chrome.storage.local.set({ papers: global.state.papers }, () => {
+        // console.log("Updated the note for " + global.state.papers[id].title);
 
         setHTMLEl(
             findEl(id, "memory-note-div"),
@@ -220,9 +221,9 @@ const saveNote = (id, note) => {
  */
 const saveCodeLink = (id, codeLink) => {
     codeLink = codeLink.trim();
-    _state.papers[id].codeLink = codeLink;
-    chrome.storage.local.set({ papers: _state.papers }, () => {
-        // console.log(`Updated the code for ${_state.papers[id].title} to ${codeLink}`);
+    global.state.papers[id].codeLink = codeLink;
+    chrome.storage.local.set({ papers: global.state.papers }, () => {
+        // console.log(`Updated the code for ${global.state.papers[id].title} to ${codeLink}`);
         setHTMLEl(findEl(id, "memory-item-code-link"), codeLink);
         setHTMLEl(`popup-code-link`, codeLink);
         val(findEl(id, "form-code-input"), codeLink);
@@ -233,10 +234,10 @@ const saveCodeLink = (id, codeLink) => {
 };
 
 const saveFavoriteItem = (id, favorite) => {
-    _state.papers[id].favorite = favorite;
-    _state.papers[id].favoriteDate = new Date().toJSON();
-    chrome.storage.local.set({ papers: _state.papers }, () => {
-        // console.log(`${_state.papers[id].title} is favorite: ${favorite}`);
+    global.state.papers[id].favorite = favorite;
+    global.state.papers[id].favoriteDate = new Date().toJSON();
+    chrome.storage.local.set({ papers: global.state.papers }, () => {
+        // console.log(`${global.state.papers[id].title} is favorite: ${favorite}`);
         if (favorite) {
             addClass(`memory-item-container--${id}`, "favorite");
             addClass(
@@ -251,12 +252,12 @@ const saveFavoriteItem = (id, favorite) => {
             );
         }
 
-        if (_state.sortKey === "favoriteDate") {
+        if (global.state.sortKey === "favoriteDate") {
             if (!favorite) {
                 sortMemory();
                 displayMemoryTable();
             }
-            const n = _state.sortedPapers.filter((p) => p.favorite).length;
+            const n = global.state.sortedPapers.filter((p) => p.favorite).length;
             const memSearch = document.getElementById("memory-search");
             if (memSearch) {
                 setPlaceholder(memSearch, `Search ${n} entries`);
@@ -299,8 +300,8 @@ const setMemorySortArrow = (direction) => {
  * @returns {number} 1 or -1 depending on the prevalence of paper1/paper2
  */
 const orderPapers = (paper1, paper2) => {
-    let val1 = paper1[_state.sortKey];
-    let val2 = paper2[_state.sortKey];
+    let val1 = paper1[global.state.sortKey];
+    let val2 = paper2[global.state.sortKey];
 
     if (typeof val1 === "undefined") {
         val1 = "";
@@ -313,28 +314,28 @@ const orderPapers = (paper1, paper2) => {
         val1 = val1.toLowerCase();
         val2 = val2.toLowerCase();
     }
-    if (_descendingSortKeys.indexOf(_state.sortKey) >= 0) {
+    if (global.descendingSortKeys.indexOf(global.state.sortKey) >= 0) {
         return val1 > val2 ? -1 : 1;
     }
     return val1 > val2 ? 1 : -1;
 };
 
 /**
- * Execute the sort operation on _state.sortedPapers using orderPapers, removing the
- * __dataVersion element in _state.papers.
+ * Execute the sort operation on global.state.sortedPapers using orderPapers, removing the
+ * __dataVersion element in global.state.papers.
  */
 const sortMemory = () => {
-    _state.sortedPapers = Object.values(cleanPapers(_state.papers));
-    _state.sortedPapers.sort(orderPapers);
-    _state.papersList.sort(orderPapers);
+    global.state.sortedPapers = Object.values(cleanPapers(global.state.papers));
+    global.state.sortedPapers.sort(orderPapers);
+    global.state.papersList.sort(orderPapers);
 };
 
 /**
- * Reverses the _state's 2 ordered lists: sortedPapers and papersList
+ * Reverses the global.state's 2 ordered lists: sortedPapers and papersList
  */
 const reverseMemory = () => {
-    _state.sortedPapers.reverse();
-    _state.papersList.reverse();
+    global.state.sortedPapers.reverse();
+    global.state.papersList.reverse();
 };
 
 /**
@@ -347,7 +348,7 @@ const reverseMemory = () => {
 const filterMemoryByString = (letters) => {
     const words = letters.split(" ");
     let papersList = [];
-    for (const paper of _state.sortedPapers) {
+    for (const paper of global.state.sortedPapers) {
         const title = paper.title.toLowerCase();
         const author = paper.author.toLowerCase();
         const note = paper.note.toLowerCase();
@@ -361,12 +362,12 @@ const filterMemoryByString = (letters) => {
                     displayId.includes(w)
             )
         ) {
-            if (!_state.showFavorites || paper.favorite) {
+            if (!global.state.showFavorites || paper.favorite) {
                 papersList.push(paper);
             }
         }
     }
-    _state.papersList = papersList;
+    global.state.papersList = papersList;
 };
 
 /**
@@ -379,15 +380,15 @@ const filterMemoryByString = (letters) => {
 const filterMemoryByTags = (letters) => {
     const tags = letters.replace("t:", "").toLowerCase().split(" ");
     let papersList = [];
-    for (const paper of _state.sortedPapers) {
+    for (const paper of global.state.sortedPapers) {
         const paperTags = paper.tags.map((t) => t.toLowerCase());
         if (tags.every((t) => paperTags.some((pt) => pt.indexOf(t) >= 0))) {
-            if (!_state.showFavorites || paper.favorite) {
+            if (!global.state.showFavorites || paper.favorite) {
                 papersList.push(paper);
             }
         }
     }
-    _state.papersList = papersList;
+    global.state.papersList = papersList;
 };
 
 /**
@@ -398,16 +399,16 @@ const filterMemoryByTags = (letters) => {
 const filterMemoryByCode = (letters) => {
     const words = letters.replace("c:", "").toLowerCase().split(" ");
     let papersList = [];
-    for (const paper of _state.sortedPapers) {
+    for (const paper of global.state.sortedPapers) {
         let paperCode = paper.codeLink || "";
         paperCode = paperCode.toLowerCase();
         if (words.every((w) => paperCode.includes(w))) {
-            if (!_state.showFavorites || paper.favorite) {
+            if (!global.state.showFavorites || paper.favorite) {
                 papersList.push(paper);
             }
         }
     }
-    _state.papersList = papersList;
+    global.state.papersList = papersList;
 };
 
 /**
@@ -415,21 +416,22 @@ const filterMemoryByCode = (letters) => {
  * @param {string} id The paper's id
  */
 const updatePaperTagsHTML = (id) => {
+    const style = global.state.memoryItemStyle.tagHTML;
     setHTMLEl(
         findEl(id, "tag-list"),
-        _state.papers[id].tags
-            .map((t) => `<span class="memory-tag">${t}</span>`)
+        global.state.papers[id].tags
+            .map((t) => `<span class="memory-tag" ${style}>${t}</span>`)
             .join("")
     );
 };
 
 /**
  * Update the select2 input for tags, with options from the paper's tags array attribute,
- * using getTagsHTMLOptions.
+ * using getTagsOptions.
  * @param {string} id The paper's id
  */
 const updateTagOptions = (id) => {
-    const tagOptions = getTagsHTMLOptions(_state.papers[id]);
+    const tagOptions = getTagsOptions(global.state.papers[id]);
     // console.log("tagOptions: ", tagOptions);
     updateAllPaperTagOptions();
     setHTMLEl(`popup-item-tags--${id}`, tagOptions);
@@ -451,14 +453,14 @@ const updatePaperTags = (id, elementId) => {
     }
     const tags = parseTags(ref);
     updated = false;
-    if (!arraysIdentical(_state.papers[id].tags, tags)) updated = true;
-    _state.papers[id].tags = tags;
+    if (!arraysIdentical(global.state.papers[id].tags, tags)) updated = true;
+    global.state.papers[id].tags = tags;
 
     // If there's a change: update the global set of tags:
     // we need to add or remove tags to the global suggestions array
     // for select2
     if (updated) {
-        chrome.storage.local.set({ papers: _state.papers }, () => {
+        chrome.storage.local.set({ papers: global.state.papers }, () => {
             // update the global set of tags
             makeTags();
             // update the selected tags in the select2 input for this paper
@@ -476,13 +478,13 @@ const updatePaperTags = (id, elementId) => {
  */
 const makeTags = () => {
     let tags = new Set();
-    for (const p of _state.sortedPapers) {
+    for (const p of global.state.sortedPapers) {
         for (const t of p.tags) {
             tags.add(t);
         }
     }
-    _state.paperTags = Array.from(tags);
-    _state.paperTags.sort();
+    global.state.paperTags = Array.from(tags);
+    global.state.paperTags.sort();
 };
 
 /**
@@ -499,7 +501,7 @@ const displayMemoryTable = () => {
     // Add relevant sorted papers (papersList may be smaller than sortedPapers
     // depending on the search query)
     let table = [];
-    for (const paper of _state.papersList) {
+    for (const paper of global.state.papersList) {
         try {
             table.push(getMemoryItemHTML(paper));
         } catch (error) {
@@ -532,7 +534,7 @@ const displayMemoryTable = () => {
     addEventToClass(".memory-item-copy-link", "click", handleCopyPDFLink);
     // Add to favorites
     addEventToClass(".memory-item-favorite", "click", handleAddItemToFavorites);
-    // Cancel edits: bring previous values from _state back
+    // Cancel edits: bring previous values from global.state back
     addEventToClass(".cancel-note-form", "click", handleCancelPaperEdit);
     // When clicking on the edit button, either open or close the edit form
     addEventToClass(".memory-item-edit", "click", handleTogglePaperEdit);
@@ -552,8 +554,8 @@ const displayMemoryTable = () => {
 };
 
 const openMemory = () => {
-    _state.menuIsOpen && closeMenu();
-    _state.memoryIsOpen = true;
+    global.state.menuIsOpen && closeMenu();
+    global.state.memoryIsOpen = true;
     // hide menu button
     $("#tabler-menu").fadeOut(200);
     // set default sort to lastOpenDate
@@ -585,7 +587,10 @@ const openMemory = () => {
 const makeMemoryHTML = async () => {
     const tstart = Date.now() / 1000;
     // Fill-in input placeholder
-    setPlaceholder("memory-search", `Search ${_state.papersList.length} entries ...`);
+    setPlaceholder(
+        "memory-search",
+        `Search ${global.state.papersList.length} entries ...`
+    );
 
     const tdisplay = Date.now() / 1000;
 
@@ -593,9 +598,9 @@ const makeMemoryHTML = async () => {
 
     // add input search delay if there are many papers:
     // wait for some time between keystrokes before firing the search
-    if (_state.papersList.length < 20) {
+    if (global.state.papersList.length < 20) {
         delayTime = 0;
-    } else if (_state.papersList.length < 50) {
+    } else if (global.state.papersList.length < 50) {
         delayTime = 300;
     }
 
@@ -635,8 +640,8 @@ const closeMemory = () => {
     $("#tabler-menu").fadeIn(200);
     val("memory-search", "");
     dispatch("memory-search", "clear-search");
-    _state.memoryIsOpen = false;
-    if (_state.showFavorites) {
+    global.state.memoryIsOpen = false;
+    if (global.state.showFavorites) {
         dispatch("filter-favorites", "click");
     }
 };

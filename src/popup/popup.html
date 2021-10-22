@@ -21,9 +21,9 @@
 
 <body>
 
-	<div class="popup-header">
+	<div id="popup-header">
 		<h1>Arxiv Tools</h1>
-		<svg class="tabler-icon">
+		<svg class="tabler-icon" id="header-icon">
 			<use xlink:href="../../icons/tabler-sprite-nostroke.svg#tabler-bolt" />
 		</svg>
 	</div>
@@ -71,7 +71,7 @@
 		</div>
 
 
-		<div id="menuDiv" style="display: none;">
+		<div id="menu-container" style="display: none;">
 
 			<p>It's the little things that make your research smoother.</p>
 
@@ -102,6 +102,10 @@
 
 				<input class="switch" type="checkbox" id="checkFeedback" name="checkFeedback" value="checkFeedback">
 				<label for="checkFeedback"> Display feedback slider when a paper is added</label><br><br>
+
+				<input class="switch" type="checkbox" id="checkColorTheme" name="checkColorTheme"
+					value="checkColorTheme">
+				<label for="checkColorTheme">Use system colors (Dark/Light)</label><br><br>
 			</div>
 
 			<div style="display: flex; align-items: center;">

@@ -20,30 +20,30 @@ const handleDeleteItem = (e) => {
 
 const handleOpenItemLink = (e) => {
     const id = eventId(e);
-    focusExistingOrCreateNewPaperTab(_state.papers[id]);
+    focusExistingOrCreateNewPaperTab(global.state.papers[id]);
 };
 
 const handleOpenItemCodeLink = (e) => {
     const id = eventId(e);
-    const url = _state.papers[id].codeLink;
+    const url = global.state.papers[id].codeLink;
     focusExistingOrCreateNewCodeTab(url);
 };
 
 const handleCopyMarkdownLink = (e) => {
     const id = eventId(e);
-    const md = _state.papers[id].md;
+    const md = global.state.papers[id].md;
     copyAndConfirmMemoryItem(id, md, "Markdown link copied!");
 };
 
 const handleCopyBibtex = (e) => {
     const id = eventId(e);
-    const bibtext = _state.papers[id].bibtext;
+    const bibtext = global.state.papers[id].bibtext;
     copyAndConfirmMemoryItem(id, bibtext, "Bibtex copied!");
 };
 
 const handleCopyPDFLink = (e) => {
     const id = eventId(e);
-    const pdfLink = _state.papers[id].pdfLink;
+    const pdfLink = global.state.papers[id].pdfLink;
     copyAndConfirmMemoryItem(id, pdfLink, "Pdf link copied!");
 };
 
@@ -78,9 +78,9 @@ const handleEditPaperFormSubmit = (e) => {
 const handleCancelPaperEdit = (e) => {
     e.preventDefault();
     const id = eventId(e);
-    const paper = _state.papers[id];
+    const paper = global.state.papers[id];
     val(findEl(id, "form-note-textarea"), paper.note);
-    setHTMLEl(findEl(id, "memory-item-tags"), getTagsHTMLOptions(paper));
+    setHTMLEl(findEl(id, "memory-item-tags"), getTagsOptions(paper));
     dispatch(findEl(id, "memory-item-edit"), "click");
     findEl(id, "memory-item-save-edits").disabled = true;
 };
@@ -115,9 +115,18 @@ const handleTogglePaperEdit = (e) => {
         edit.classList.add("expand-open");
         // Enable select2 tags input
         tagSelect.select2({
-            ..._select2Options,
+            ...global.select2Options,
             width: "75%",
         });
+        $(".select2-container--default .select2-selection--multiple").addClass("dark");
+        $(".select2-container--default .select2-results>.select2-results__options").css(
+            "background",
+            "grey"
+        );
+        $(".select2-container--default .select2-results>.select2-results__options").css(
+            "color",
+            "white"
+        );
         if (!hasClass(edit, "has-monitoring")) {
             // only listen for changes once
             tagSelect.on("change", monitorPaperEdits(id, false));
@@ -136,7 +145,7 @@ const handleTogglePaperEdit = (e) => {
 
 const handleMemorySelectChange = (e) => {
     const sort = e.target.value;
-    _state.sortKey = sort;
+    global.state.sortKey = sort;
     sortMemory();
     displayMemoryTable();
     setMemorySortArrow("down");
@@ -155,21 +164,21 @@ const handleMemorySortArrow = (e) => {
 };
 
 const handleFilterFavorites = () => {
-    const showFavorites = !_state.showFavorites;
-    _state.showFavorites = showFavorites;
+    const showFavorites = !global.state.showFavorites;
+    global.state.showFavorites = showFavorites;
     if (showFavorites) {
         addClass(
             document.getElementById("filter-favorites").querySelector("svg"),
             "favorite"
         );
         sortMemory();
-        _state.papersList = _state.papersList.filter((p) => p.favorite);
+        global.state.papersList = global.state.papersList.filter((p) => p.favorite);
         displayMemoryTable();
         setMemorySortArrow("down");
         document.getElementById(
             "memory-select"
         ).innerHTML += `<option value="favoriteDate">Last favoured</option>`;
-        const n = _state.papersList.length;
+        const n = global.state.papersList.length;
         setPlaceholder("memory-search", `Search ${n} entries...`);
     } else {
         removeClass(
@@ -179,7 +188,7 @@ const handleFilterFavorites = () => {
 
         if (document.getElementById("memory-select").value === "favoriteDate") {
             document.getElementById("memory-select").value = "lastOpenDate";
-            _state.sortKey = "lastOpenDate";
+            global.state.sortKey = "lastOpenDate";
         }
         document.querySelector(`#memory-select option[value="favoriteDate"]`).remove();
         sortMemory();
@@ -188,10 +197,10 @@ const handleFilterFavorites = () => {
         if (val("memory-search").trim()) {
             dispatch("memory-search", "keypress");
         } else {
-            _state.papersList = _state.sortedPapers;
+            global.state.papersList = global.state.sortedPapers;
             displayMemoryTable();
         }
-        const n = _state.sortedPapers.length;
+        const n = global.state.sortedPapers.length;
         setPlaceholder("memory-search", `Search ${n} entries...`);
     }
 };
@@ -231,20 +240,20 @@ const handleCancelModalClick = () => {
 
 const handleConfirmDeleteModalClick = (e) => {
     const id = e.target.id.split("--")[1];
-    const title = _state.papers[id].title;
-    delete _state.papers[id];
-    chrome.storage.local.set({ papers: _state.papers }, () => {
-        _state.papersList = Object.values(cleanPapers(_state.papers));
+    const title = global.state.papers[id].title;
+    delete global.state.papers[id];
+    chrome.storage.local.set({ papers: global.state.papers }, () => {
+        global.state.papersList = Object.values(cleanPapers(global.state.papers));
         sortMemory();
         displayMemoryTable();
         document.getElementById("confirm-modal").remove();
         console.log(`Successfully deleted "${title}" (${id}) from ArxivMemory`);
-        if (_state.currentId === id) {
+        if (global.state.currentId === id) {
             updatePopupPaperNoMemory();
         }
         setPlaceholder(
             "memory-search",
-            `Search ${_state.papersList.length} entries ...`
+            `Search ${global.state.papersList.length} entries ...`
         );
         addListener("memory-switch", "click", handleMemorySwitchClick);
     });
@@ -264,5 +273,5 @@ const handleClearSearch = (e) => {
 };
 
 const handleMemorySwitchClick = () => {
-    _state.memoryIsOpen ? closeMemory() : openMemory();
+    global.state.memoryIsOpen ? closeMemory() : openMemory();
 };

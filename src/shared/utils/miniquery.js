@@ -99,3 +99,12 @@ const setPlaceholder = (el, text) => {
     }
     if (el && typeof el.placeholder !== "undefined") el.placeholder = text;
 };
+
+const setStyle = (el, key, value) => {
+    if (typeof el === "string") {
+        el = document.getElementById(el);
+    }
+    if (!el) return;
+    el.style[key] = value;
+    console.log(el, key, value);
+};

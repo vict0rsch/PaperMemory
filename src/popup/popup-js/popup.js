@@ -2,36 +2,38 @@
  * Close the menu's overlay: slide div up and update button svg
  */
 const closeMenu = () => {
-    $("#menuDiv").slideUp({
+    let classes = ["tabler-icon"];
+    if (global.state.theme === "dark") {
+        classes.push("dark-svg");
+    }
+    $("#menu-container").slideUp({
         duration: 300,
         easing: "easeOutQuint",
     }) &&
         $("#tabler-menu").fadeOut(() => {
-            setHTMLEl(
-                "tabler-menu",
-                tablerSvg("settings", "tabler-menu-svg", ["tabler-icon"])
-            );
+            setHTMLEl("tabler-menu", tablerSvg("settings", "tabler-menu-svg", classes));
             $("#tabler-menu").fadeIn();
         });
-    _state.menuIsOpen = false;
+    global.state.menuIsOpen = false;
 };
 
 /**
  * Open the menu's overlay: slide div down and update button svg
  */
 const openMenu = () => {
-    $("#menuDiv").slideDown({
+    let classes = ["tabler-icon", "menu-svg"];
+    if (global.state.theme === "dark") {
+        classes.push("dark-svg");
+    }
+    $("#menu-container").slideDown({
         duration: 300,
         easing: "easeOutQuint",
     }) &&
         $("#tabler-menu").fadeOut(() => {
-            setHTMLEl(
-                "tabler-menu",
-                tablerSvg("circle-x", "close-menu-btn", ["tabler-icon", "menu-svg"])
-            );
+            setHTMLEl("tabler-menu", tablerSvg("circle-x", "close-menu-btn", classes));
             $("#tabler-menu").fadeIn();
         });
-    _state.menuIsOpen = true;
+    global.state.menuIsOpen = true;
 };
 /**
  * Parses menu options from the storage and adds events listeners for their change.
@@ -74,7 +76,7 @@ const setStandardPopupClicks = () => {
     });
 
     addListener("tabler-menu", "click", () => {
-        _state.menuIsOpen ? closeMenu() : openMenu();
+        global.state.menuIsOpen ? closeMenu() : openMenu();
     });
 
     addListener("memory-switch", "click", handleMemorySwitchClick);
@@ -100,13 +102,13 @@ const setStandardPopupClicks = () => {
 const setAndHandleCustomPDFFunction = (menu) => {
     // attempt to use the user's custom function
     if (menu.pdfTitleFn && typeof menu.pdfTitleFn === "string") {
-        _state.pdfTitleFn = getPdfFn(menu.pdfTitleFn);
+        global.state.pdfTitleFn = getPdfFn(menu.pdfTitleFn);
     }
     // it may have failed but getPdfFn is guaranteed to return a working function
     // so use that and update storage just in case.
-    chrome.storage.local.set({ pdfTitleFn: _state.pdfTitleFn.toString() });
+    chrome.storage.local.set({ pdfTitleFn: global.state.pdfTitleFn.toString() });
     // update the user's textarea
-    val("customPdfTitleTextarea", _state.pdfTitleFn.toString());
+    val("customPdfTitleTextarea", global.state.pdfTitleFn.toString());
     // listen to saving click
     addListener("saveCustomPdf", "click", () => {
         const code = val("customPdfTitleTextarea").trim();
@@ -126,7 +128,7 @@ const setAndHandleCustomPDFFunction = (menu) => {
             setHTMLEl("customPdfFeedback", savedFeedback);
             // save function string
             chrome.storage.local.set({ pdfTitleFn: code });
-            _state.pdfTitleFn = fn;
+            global.state.pdfTitleFn = fn;
             setTimeout(() => {
                 setHTMLEl("customPdfFeedback", "");
             }, 1000);
@@ -143,7 +145,7 @@ const setAndHandleCustomPDFFunction = (menu) => {
         const code = defaultPDFTitleFn.toString();
         const savedFeedback = /*html*/ `<span style="color: green">Saved!</span>`;
         chrome.storage.local.set({ pdfTitleFn: code });
-        _state.pdfTitleFn = defaultPDFTitleFn;
+        global.state.pdfTitleFn = defaultPDFTitleFn;
         val("customPdfTitleTextarea", code);
         setHTMLEl("customPdfFeedback", savedFeedback);
         setTimeout(() => {
@@ -168,16 +170,16 @@ const popupMain = async (url, isKnownPage) => {
     if (isKnownPage) {
         showId("isArxiv", "flex");
         const id = parseIdFromUrl(url);
-        _state.currentId = id;
+        global.state.currentId = id;
 
-        if (!_state.papers.hasOwnProperty(id)) {
+        if (!global.state.papers.hasOwnProperty(id)) {
             // Unknown paper, probably deleted by the user
             console.log("Unknown id " + id);
             updatePopupPaperNoMemory();
             return;
         }
 
-        const paper = _state.papers[id];
+        const paper = global.state.papers[id];
         const eid = paper.id.replace(".", "\\.");
 
         // -----------------------------
@@ -201,7 +203,7 @@ const popupMain = async (url, isKnownPage) => {
         // -----  Paper  edits  -----
         // --------------------------
         $(`#popup-item-tags--${eid}`).select2({
-            ..._select2Options,
+            ...global.select2Options,
             width: "87%",
         });
         document.body.style.height = "auto";
@@ -240,15 +242,15 @@ const popupMain = async (url, isKnownPage) => {
             }
         });
         addListener(`popup-memory-item-copy-link--${id}`, "click", () => {
-            const pdfLink = _state.papers[id].pdfLink;
+            const pdfLink = global.state.papers[id].pdfLink;
             copyAndConfirmMemoryItem(id, pdfLink, "Pdf link copied!", true);
         });
         addListener(`popup-memory-item-md--${id}`, "click", () => {
-            const md = _state.papers[id].md;
+            const md = global.state.papers[id].md;
             copyAndConfirmMemoryItem(id, md, "MarkDown link copied!", true);
         });
         addListener(`popup-memory-item-bibtex--${id}`, "click", () => {
-            const bibtext = formatBibtext(_state.papers[id].bibtext);
+            const bibtext = formatBibtext(global.state.papers[id].bibtext);
             copyAndConfirmMemoryItem(id, bibtext, "Bibtex citation copied!", true);
         });
         addListener(`popup-memory-item-download--${id}`, "click", () => {
@@ -260,15 +262,74 @@ const popupMain = async (url, isKnownPage) => {
             });
         });
     }
-    const menu = await getStorage(_menuStorageKeys);
+    const menu = await getStorage(global.menuStorageKeys);
     // Set checkboxes
-    getAndTrackPopupMenuChecks(menu, _menuCheckNames);
+    getAndTrackPopupMenuChecks(menu, global.menuCheckNames);
 
     // Set PDF title function
     setAndHandleCustomPDFFunction(menu);
 };
 
+const setPopupColors = async () => {
+    if ((await getTheme()) !== "dark") return;
+
+    console.log("Using Dark theme");
+    const theme = global.darkTheme;
+
+    setStyle(document.body, "background", theme.background);
+    setStyle(document.body, "color", theme.color);
+
+    document.querySelectorAll("code").forEach((el) => {
+        setStyle(el, "background", theme.codeBackground);
+    });
+    document.querySelectorAll("a").forEach((el) => {
+        setStyle(el, "color", theme.aColor);
+    });
+
+    setStyle("memory-container", "background", theme.background);
+    setStyle("popup-header", "color", theme.background);
+    setStyle("menu-container", "background", theme.background);
+    setStyle("memory-search", "background", theme.lighterBackground);
+    setStyle("memory-search", "color", theme.color);
+    setStyle("memory-search", "borderColor", theme.color);
+    setStyle("memory-select", "background", theme.lighterBackground);
+    setStyle("memory-select", "color", theme.color);
+    setStyle("memory-select", "borderColor", theme.color);
+    setStyle("customPdfTitleTextarea", "background", theme.lighterBackground);
+    setStyle("customPdfTitleTextarea", "color", theme.color);
+    setStyle("customPdfTitleTextarea", "borderColor", theme.color);
+    setStyle("header-icon", "color", theme.background);
+
+    addClass("memory-switch-text-off", "dark-svg");
+    addClass("tabler-menu-svg", "dark-svg");
+
+    addClass("download-arxivmemory", "dark-btn");
+    addClass("saveCustomPdf", "dark-btn");
+    addClass("defaultCustomPdf", "dark-btn");
+
+    // Your CSS as text
+    var styles = /*css*/ `
+    .select2-results__option--selectable{
+        background: grey;
+        color: white;
+    }
+    .select2-container--default .select2-results__option--selected{
+        background-color: rgb(165, 165, 165);
+    }
+    .select2-selection__choice{
+        background-color: ${theme.lighterBackground} !important;
+        border-color: ${theme.lighterBackground} !important;
+        color: ${theme.color} !important;
+    }`;
+    var styleSheet = document.createElement("style");
+    styleSheet.type = "text/css";
+    styleSheet.innerText = styles;
+    document.head.appendChild(styleSheet);
+};
+
 $(() => {
+    setPopupColors();
+
     const query = { active: true, lastFocusedWindow: true };
     chrome.tabs.query(query, async (tabs) => {
         const url = tabs[0].url;

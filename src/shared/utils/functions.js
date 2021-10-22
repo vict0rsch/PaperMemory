@@ -323,7 +323,7 @@ const eventId = (e) => {
     return e.target.closest(".memory-item-container").id.split("--")[1];
 };
 
-const download_file = (fileURL, fileName) => {
+const downloadFile = (fileURL, fileName) => {
     // for non-IE
     if (!window.ActiveXObject) {
         var save = document.createElement("a");
@@ -525,6 +525,19 @@ const setStorage = async (key, value) => {
     });
 };
 
+const getTheme = async () => {
+    const useSystemTheme = await getStorage("checkColorTheme");
+    if (typeof useSystemTheme === "undefined" || useSystemTheme) {
+        if (
+            window.matchMedia &&
+            window.matchMedia("(prefers-color-scheme: dark)").matches
+        ) {
+            return "dark";
+        }
+    }
+    return "light";
+};
+
 const backupData = async (papers) => {
     chrome.storage.local.get("papersBackup", ({ papersBackup }) => {
         if (typeof papersBackup === "undefined") {
@@ -551,7 +564,7 @@ const backupData = async (papers) => {
 const statePdfTitle = (title, id) => {
     let name;
     try {
-        name = _state.pdfTitleFn(title, id);
+        name = global.state.pdfTitleFn(title, id);
     } catch (error) {
         console.log("statePdfTitle error", error);
         name = defaultPDFTitleFn(title, id);
@@ -578,11 +591,11 @@ const initState = async (papers, isContentScript) => {
     }
     console.log("Found papers:", papers);
 
-    _state.dataVersion = manifestDataVersion();
-    _state.pdfTitleFn = defaultPDFTitleFn;
+    global.state.dataVersion = manifestDataVersion();
+    global.state.pdfTitleFn = defaultPDFTitleFn;
 
     const m = Date.now();
-    const migration = await migrateData(papers, _state.dataVersion);
+    const migration = await migrateData(papers, global.state.dataVersion);
     console.log("Migration duration (s): " + (Date.now() - m) / 1000);
 
     papers = migration.papers;
@@ -592,12 +605,21 @@ const initState = async (papers, isContentScript) => {
         return papers;
     }
 
-    _state.papers = papers;
-    _state.papersList = Object.values(cleanPapers(papers));
-    _state.sortKey = "lastOpenDate";
-    _state.papersReady = true;
+    global.state.papers = papers;
+    global.state.papersList = Object.values(cleanPapers(papers));
+    global.state.sortKey = "lastOpenDate";
+    global.state.papersReady = true;
     sortMemory();
     makeTags();
+    global.state.theme = await getTheme();
+    if (global.state.theme === "dark") {
+        global.state.memoryItemStyle = global.darkTheme.memoryItem;
+    } else {
+        global.state.memoryItemStyle = {};
+        for (const key in global.darkTheme.memoryItem) {
+            global.state.memoryItemStyle[key] = "";
+        }
+    }
     console.log("State initialization duration (s): " + (Date.now() - s) / 1000);
 };
 
@@ -634,8 +656,8 @@ const parseCVFUrl = (url) => {
 const isPaper = (url) => {
     const a = parseUrl(url);
     let is = {};
-    for (const source in _knownPaperPages) {
-        const paths = _knownPaperPages[source];
+    for (const source in global.knownPaperPages) {
+        const paths = global.knownPaperPages[source];
         is[source] = false;
         for (const path of paths) {
             if (url.includes(path)) {
@@ -669,7 +691,7 @@ const handlePopupKeydown = (e) => {
         return;
     }
 
-    if (_state.menuIsOpen) {
+    if (global.state.menuIsOpen) {
         if (key === "Escape") {
             // escape closes menu
             e.preventDefault();
@@ -678,7 +700,7 @@ const handlePopupKeydown = (e) => {
         return;
     }
 
-    if (!_state.memoryIsOpen) {
+    if (!global.state.memoryIsOpen) {
         if (key === "a") {
             // a opens the arxiv memory
             const focused = document.querySelectorAll(":focus");
@@ -794,7 +816,7 @@ const validatePaper = (paper) => {
         }
     }
 
-    const sources = Object.keys(_knownPaperPages);
+    const sources = Object.keys(global.knownPaperPages);
     if (sources.indexOf(paper.source) < 0) {
         warn = true;
         console.warn(`Unknown source ${paper.source} for paper ${paper}`);
@@ -1030,7 +1052,7 @@ const monitorPaperEdits = (id, isPopup) => (e) => {
         id = eventId(e);
     }
     const edits = getPaperEdits(id, isPopup);
-    const paper = _state.papers[id];
+    const paper = global.state.papers[id];
     let change = false;
     let refs = {};
     for (const key in edits) {

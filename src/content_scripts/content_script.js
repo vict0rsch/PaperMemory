@@ -249,7 +249,7 @@ const arxiv = (checks) => {
         $(".abs-button.download-pdf").first().attr("href") +
         ".pdf";
 
-    _state.pdfTitleFn = pdfTitleFn;
+    global.state.pdfTitleFn = pdfTitleFn;
 
     // -----------------------------
     // -----  Download Button  -----
@@ -277,7 +277,7 @@ const arxiv = (checks) => {
             ).then((data) => {
                 return $($(data).find("entry title")[0]).text();
             });
-            download_file(pdfUrl, statePdfTitle(title, id));
+            downloadFile(pdfUrl, statePdfTitle(title, id));
         });
     }
     // ---------------------------
@@ -320,8 +320,8 @@ const arxiv = (checks) => {
             );
         };
         const makeTitle = async (id, url) => {
-            let title = _state.papers.hasOwnProperty(id)
-                ? _state.papers[id].title
+            let title = global.state.papers.hasOwnProperty(id)
+                ? global.state.papers[id].title
                 : await getArxivTitle(id);
             title = statePdfTitle(title, id);
             window.document.title = title;
@@ -481,7 +481,7 @@ $(() => {
     const url = window.location.href;
 
     if (
-        !Object.values(_knownPaperPages)
+        !Object.values(global.knownPaperPages)
             .reduce((a, b) => a.concat(b), [])
             .some((d) => url.includes(d))
     ) {
@@ -491,9 +491,9 @@ $(() => {
 
     console.log("Executing Arxiv Tools content script");
 
-    chrome.storage.local.get(_menuStorageKeys, (storedMenu) => {
+    chrome.storage.local.get(global.menuStorageKeys, (storedMenu) => {
         let menu = {};
-        for (const m of _menuCheckNames) {
+        for (const m of global.menuCheckNames) {
             menu[m] = storedMenu.hasOwnProperty(m) ? storedMenu[m] : true;
         }
 
