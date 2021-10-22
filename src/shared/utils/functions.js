@@ -1018,11 +1018,10 @@ const setFormChangeListener = (id, isPopup) => {
         addListener(refNote, "keyup", monitorPaperEdits(id, isPopup));
         addListener(refFavorite, "change", monitorPaperEdits(id, isPopup));
     } else {
-        refTags = "memory-item-tags";
+        refTags = ".memory-item-tags";
         refCodeLink = ".form-code-input";
         refNote = ".form-note-textarea";
 
-        $(`.${refTags}`).on("change", monitorPaperEdits(id, isPopup));
         addEventToClass(refCodeLink, "keyup", monitorPaperEdits(id, isPopup));
         addEventToClass(refNote, "keyup", monitorPaperEdits(id, isPopup));
     }
@@ -1035,8 +1034,10 @@ const monitorPaperEdits = (id, isPopup) => (e) => {
     const edits = getPaperEdits(id, isPopup);
     const paper = _state.papers[id];
     let change = false;
+    let refs = {};
     for (const key in edits) {
         const ref = paper[key];
+        refs[key] = ref;
         const value = edits[key];
         if (key === "tags" && !arraysIdentical(ref, value)) {
             change = true;

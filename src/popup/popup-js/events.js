@@ -108,6 +108,7 @@ const handleTogglePaperEdit = (e) => {
         // Close inputs
         editPaper.slideUp(250);
         tagEdit.slideUp(250);
+        // destroy to enable options update in HTML
         tagSelect.select2("destroy");
     } else {
         // The edit form is closed
@@ -117,6 +118,12 @@ const handleTogglePaperEdit = (e) => {
             ..._select2Options,
             width: "75%",
         });
+        if (!hasClass(edit, "has-monitoring")) {
+            // only listen for changes once
+            tagSelect.on("change", monitorPaperEdits(id, false));
+        }
+        // monitorPaperEdits listener has been added
+        edit.classList.add("has-monitoring");
         // Close display elements
         codeAndNote.slideUp(250);
         tagList.slideUp(250);

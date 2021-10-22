@@ -194,7 +194,7 @@ const saveNote = (id, note) => {
     note = $.trim(note);
     _state.papers[id].note = note;
     chrome.storage.local.set({ papers: _state.papers }, () => {
-        console.log("Updated the note for " + _state.papers[id].title);
+        // console.log("Updated the note for " + _state.papers[id].title);
 
         setHTMLEl(
             findEl(id, "memory-note-div"),
@@ -224,7 +224,7 @@ const saveCodeLink = (id, codeLink) => {
     codeLink = $.trim(codeLink);
     _state.papers[id].codeLink = codeLink;
     chrome.storage.local.set({ papers: _state.papers }, () => {
-        console.log(`Updated the code for ${_state.papers[id].title} to ${codeLink}`);
+        // console.log(`Updated the code for ${_state.papers[id].title} to ${codeLink}`);
         setHTMLEl(findEl(id, "memory-item-code-link"), codeLink);
         setHTMLEl(`popup-code-link`, codeLink);
         val(findEl(id, "form-code-input"), codeLink);
@@ -238,7 +238,7 @@ const saveFavoriteItem = (id, favorite) => {
     _state.papers[id].favorite = favorite;
     _state.papers[id].favoriteDate = new Date().toJSON();
     chrome.storage.local.set({ papers: _state.papers }, () => {
-        console.log(`${_state.papers[id].title} is favorite: ${favorite}`);
+        // console.log(`${_state.papers[id].title} is favorite: ${favorite}`);
         if (favorite) {
             addClass(`memory-item-container--${id}`, "favorite");
             addClass(
@@ -432,7 +432,7 @@ const updatePaperTagsHTML = (id) => {
  */
 const updateTagOptions = (id) => {
     const tagOptions = getTagsHTMLOptions(_state.papers[id]);
-    console.log("tagOptions: ", tagOptions);
+    // console.log("tagOptions: ", tagOptions);
     updateAllPaperTagOptions();
     setHTMLEl(`popup-item-tags--${id}`, tagOptions);
 };
@@ -456,12 +456,9 @@ const updatePaperTags = (id, elementId) => {
     if (!arraysIdentical(_state.papers[id].tags, tags)) updated = true;
     _state.papers[id].tags = tags;
 
-    console.log("Update tags to: " + tags.join(", "));
-
     // If there's a change: update the global set of tags:
     // we need to add or remove tags to the global suggestions array
     // for select2
-    console.log(">>> Should update tags:", updated);
     if (updated) {
         chrome.storage.local.set({ papers: _state.papers }, () => {
             // update the global set of tags
