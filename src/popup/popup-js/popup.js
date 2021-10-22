@@ -77,9 +77,7 @@ const setStandardPopupClicks = () => {
         _state.menuIsOpen ? closeMenu() : openMenu();
     });
 
-    addListener("memory-switch", "click", () => {
-        _state.memoryIsOpen ? closeMemory() : openMemory();
-    });
+    addListener("memory-switch", "click", handleMemorySwitchClick);
 
     addListener("download-arxivmemory", "click", () => {
         const now = new Date().toLocaleString();
