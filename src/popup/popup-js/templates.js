@@ -55,7 +55,7 @@ const getMemoryItemHTML = (paper) => {
             </small>
             <div class="edit-tags">
                 <div style="display:flex; align-items: center"; justify-content: space-between">
-                    <select class="memory-item-tags" multiple="multiple">
+                    <select class="memory-item-tags" id="memory-item-tags--${id}" multiple="multiple">
                         ${tagOptions}
                     </select>
                 </div>

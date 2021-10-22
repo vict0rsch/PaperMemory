@@ -108,6 +108,7 @@ const handleTogglePaperEdit = (e) => {
         // Close inputs
         editPaper.slideUp(250);
         tagEdit.slideUp(250);
+        tagSelect.select2("destroy");
     } else {
         // The edit form is closed
         edit.classList.add("expand-open");

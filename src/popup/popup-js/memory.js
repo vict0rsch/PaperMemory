@@ -30,6 +30,15 @@ const getTagsHTMLOptions = (paper) => {
         .join("");
 };
 
+const updateAllPaperTagOptions = () => {
+    for (const id in _state.papers) {
+        if (_state.papers.hasOwnProperty(id) && id !== "__dataVersion") {
+            const paper = _state.papers[id];
+            setHTMLEl(`memory-item-tags--${id}`, getTagsHTMLOptions(paper));
+        }
+    }
+};
+
 const updatePopupPaperNoMemory = () => {
     const noMemoryHTML = /*html*/ `
     <div style="font-size: 1.5rem;">This paper is not in your memory</div>
@@ -424,7 +433,7 @@ const updatePaperTagsHTML = (id) => {
 const updateTagOptions = (id) => {
     const tagOptions = getTagsHTMLOptions(_state.papers[id]);
     console.log("tagOptions: ", tagOptions);
-    setHTMLEl(findEl(id, "memory-item-tags"), tagOptions);
+    updateAllPaperTagOptions();
     setHTMLEl(`popup-item-tags--${id}`, tagOptions);
 };
 
@@ -452,6 +461,7 @@ const updatePaperTags = (id, elementId) => {
     // If there's a change: update the global set of tags:
     // we need to add or remove tags to the global suggestions array
     // for select2
+    console.log(">>> Should update tags:", updated);
     if (updated) {
         chrome.storage.local.set({ papers: _state.papers }, () => {
             // update the global set of tags
