@@ -137,22 +137,16 @@ const getMemoryItemHTML = (paper) => {
                         <input 
                             type="text" 
                             class="form-code-input" 
-                            ${styles.input} 
                             value="${paper.codeLink || ""}"
                         >
                     </div>
                     <div class="textarea-wrapper">
                         <span class="label">Note:</span>
-                        <textarea 
-                            rows="3" 
-                            class="form-note-textarea"${styles.input}
-                        >${note}</textarea>
+                        <textarea rows="3" class="form-note-textarea">${note}</textarea>
                     </div>
                     <div class="form-note-buttons">
                         <button 
-                            class="memory-item-save-edits ${
-                                styles.button ? "dark-btn" : ""
-                            }" 
+                            class="memory-item-save-edits" 
                             type="submit"
                             ${styles.button}
                             disabled 
@@ -160,9 +154,7 @@ const getMemoryItemHTML = (paper) => {
                             Save
                         </button>
                         <button 
-                            class="cancel-note-form back-to-focus ${
-                                styles.button ? "dark-btn" : ""
-                            }" 
+                            class="cancel-note-form back-to-focus" 
                             ${styles.button}
                         >
                             Cancel
@@ -211,7 +203,6 @@ const getPopupEditFormHTML = (paper) => {
                         type="text" 
                         class="form-code-input mt-0 noMemoryOnA" 
                         value="${paper.codeLink || ""}"
-                        ${styles.input}
                     >
                 </div>
                 <div class="textarea-wrapper w-100 mr-0">
@@ -219,7 +210,6 @@ const getPopupEditFormHTML = (paper) => {
                     <textarea 
                         rows="3"  
                         class="noMemoryOnA popup-form-note-textarea"
-                        ${styles.input}
                         id="popup-form-note-textarea--${id}"
                     >${note}</textarea>
                 </div>
@@ -232,7 +222,7 @@ const getPopupEditFormHTML = (paper) => {
                 <button 
                     style="padding: 6px 16px;" 
                     disabled 
-                    class="back-to-focus ${styles.input ? "dark-btn" : ""}" 
+                    class="back-to-focus" 
                     id="popup-save-edits--${id}"
                 >
                     Save

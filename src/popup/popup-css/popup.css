@@ -523,20 +523,6 @@ button:hover {
     border-color: #b31b1b;
     background-color: rgb(253, 235, 235);
 }
-button.dark-btn {
-    border-color: #adbac7 !important;
-    background-color: #9aa4ae !important;
-    color: #15191f;
-}
-button.dark-btn:disabled {
-    color: #2e3742 !important;
-    background-color: #5c6268 !important;
-}
-button.dark-btn:hover {
-    border-color: #d8e7f7 !important;
-    background-color: #b8c3cf !important;
-    color: #000000;
-}
 
 #confirm-modal {
     width: 100%;

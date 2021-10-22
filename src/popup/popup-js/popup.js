@@ -303,12 +303,36 @@ const setPopupColors = async () => {
     addClass("memory-switch-text-off", "dark-svg");
     addClass("tabler-menu-svg", "dark-svg");
 
-    addClass("download-arxivmemory", "dark-btn");
-    addClass("saveCustomPdf", "dark-btn");
-    addClass("defaultCustomPdf", "dark-btn");
-
     // Your CSS as text
     var styles = /*css*/ `
+
+    button{
+        border-color: #adbac7 !important;
+        background-color: ${global.darkTheme.buttonBackground} !important;
+        color: #15191f;
+    }
+    button:disabled {
+        color: #2e3742 !important;
+        background-color: #5c6268 !important;
+    }
+    button:hover {
+        border-color: #d8e7f7 !important;
+        background-color: #eeeeee !important;
+        color: #000000;
+    }
+
+    .form-note-textarea,
+    .popup-form-note-textarea,
+    .form-code-input{
+        color: ${global.darkTheme.color}; 
+        background: ${global.darkTheme.lighterBackground}
+    }
+
+    .select2-selection__clear,
+    .select2-selection__clear:hover{
+        background: none !important
+    }
+
     .select2-results__option--selectable{
         background: grey;
         color: white;
@@ -316,7 +340,8 @@ const setPopupColors = async () => {
     .select2-container--default .select2-results__option--selected{
         background-color: rgb(165, 165, 165);
     }
-    .select2-selection__choice{
+    .select2-selection__choice, 
+    .select2-selection__choice__remove{
         background-color: ${theme.lighterBackground} !important;
         border-color: ${theme.lighterBackground} !important;
         color: ${theme.color} !important;

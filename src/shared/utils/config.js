@@ -32,7 +32,7 @@ global.darkTheme = {
     color: "#ADBAC7",
     noteColor: "#9aa4ae",
     dimColor: "#768390",
-    buttonBackground: "#373E47",
+    buttonBackground: "#bec6d3",
     lighterBackground: "#22272E",
     codeBackground: "#5a5a5a",
     aColor: "#539BF5",
@@ -47,9 +47,8 @@ global.darkTheme.memoryItem = {
     visits: `style="color: ${global.darkTheme.dimColor}"`,
     note: `style="color: ${global.darkTheme.noteColor}"`,
     link: `style="color: ${global.darkTheme.aColor}"`,
-    container: `style="border-color: ${global.darkTheme.buttonBackground}"`,
+    container: `style="border-color: ${global.darkTheme.codeBackground}"`,
     input: `style="color: ${global.darkTheme.color}; background: ${global.darkTheme.lighterBackground}"`,
-    button: `style="background: ${global.darkTheme.buttonBackground}"`,
     deleteRound: `style="background: ${global.darkTheme.background}"`,
 };
 
