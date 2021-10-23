@@ -2,7 +2,7 @@
     input[type="checkbox"] {
         --active: rgb(201, 19, 19, 0.65);
         --active-inner: #fff;
-        --focus: 2px rgba(254, 39, 39, 0.3);
+        --focus: 2px rgba(254, 39, 39, 0.596);
         --border: #c5aaaa;
         --border-hover: #b94141;
         --background: #fff;

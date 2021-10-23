@@ -84,7 +84,7 @@ const copyAndConfirmMemoryItem = (id, textToCopy, feedbackText, isPopup) => {
     $(element).fadeIn();
     setTimeout(() => {
         $(element).fadeOut();
-    }, 1000);
+    }, 2000);
 };
 
 /**

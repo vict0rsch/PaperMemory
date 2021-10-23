@@ -117,15 +117,6 @@ const handleTogglePaperEdit = (e) => {
             ...global.select2Options,
             width: "75%",
         });
-        $(".select2-container--default .select2-selection--multiple").addClass("dark");
-        $(".select2-container--default .select2-results>.select2-results__options").css(
-            "background",
-            "grey"
-        );
-        $(".select2-container--default .select2-results>.select2-results__options").css(
-            "color",
-            "white"
-        );
         if (!hasClass(container, "has-monitoring")) {
             // only listen for changes once
             tagSelect.on("change", monitorPaperEdits(id, false));

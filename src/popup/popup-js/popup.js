@@ -221,7 +221,7 @@ const popupMain = async (url, isKnownPage) => {
             $("#popup-feedback-copied").fadeIn(200);
             setTimeout(() => {
                 $("#popup-feedback-copied").fadeOut(200);
-            }, 1500);
+            }, 2000);
             document.getElementById(`popup-save-edits--${id}`).disabled = true;
         });
 
@@ -271,9 +271,6 @@ const popupMain = async (url, isKnownPage) => {
 
 const setPopupColors = async () => {
     if ((await getTheme()) !== "dark") return;
-
-    console.log("Using Dark theme");
-
     // Your CSS as text
     var link = document.createElement("link");
     link.href = chrome.extension.getURL("src/popup/popup-css/dark.min.css");

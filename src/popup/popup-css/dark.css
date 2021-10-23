@@ -7,7 +7,10 @@
     --noteColor: #aeb8c2;
     --buttonBackground: #bec6d3;
     --color: #c1cedb;
+    --lighterColor: #e5f0fc;
     --aColor: #539bf5;
+    --red: #a31717;
+    --green: #50e050;
 }
 
 /*
@@ -20,7 +23,7 @@ body {
     background: var(--background);
 }
 #popup-header {
-    color: var(--background);
+    color: var(--lighterColor);
 }
 
 #customPdfTitleTextarea {
@@ -33,10 +36,13 @@ body {
     border-color: var(--color);
 }
 #header-icon {
-    color: var(--background);
+    color: var(--lighterColor);
+}
+#popup-feedback-copied {
+    color: var(--green);
 }
 a {
-    color: var(--aColor);
+    color: var(--aColor) !important;
 }
 code {
     background: var(--codeBackground) !important;
@@ -46,6 +52,9 @@ code {
     border-radius: 2px;
     box-shadow: none;
 }
+input[type="checkbox"].switch:not(:checked) {
+    background: bottom;
+}
 
 /*
 ---------------------
@@ -53,31 +62,45 @@ code {
 ---------------------
 */
 
+/* Clear all tags x */
 .select2-selection__clear,
 .select2-selection__clear:hover {
     background: none !important;
+    color: var(--color);
 }
 
+/* Dropdown options (not selected or hovered) */
 .select2-results__option--selectable {
     background: var(--lighterBackground);
-    color: white;
+    color: var(--color);
 }
+/* Dropdown: selected options */
 .select2-container--default .select2-results__option--selected {
-    background-color: rgb(165, 165, 165);
+    background-color: rgb(128, 128, 128);
 }
+/* Input */
+.select2-container--default .select2-selection--multiple {
+    background-color: var(--lighterBackground);
+}
+/* Input tag items */
 .select2-selection__choice,
 .select2-selection__choice__remove {
-    background-color: var(--lighterBackground) !important;
-    border-color: var(--lighterBackground) !important;
-    color: var(--color) !important;
+    background-color: var(--lightestBackground) !important;
+    border-color: var(--lightestBackground) !important;
+    color: var(--lighterColor) !important;
 }
+
+/* Set input cursor and text color */
 .select2-search__field {
     color: var(--color);
 }
+
+/* Dropdown option: hover */
 .select2-container--default
     .select2-results__option--highlighted.select2-results__option--selectable {
-    background-color: rgb(33, 33, 33);
+    background-color: rgb(49, 49, 49);
 }
+
 /*
 ---------------------
 -----  Buttons  -----
@@ -100,6 +123,7 @@ button:not(.select2-selection__choice__remove):hover {
 }
 #memory-sort-arrow {
     border: 1px solid var(--buttonBackground);
+    background-color: var(--lighterBackground);
 }
 /*
 --------------------
@@ -175,6 +199,9 @@ button:not(.select2-selection__choice__remove):hover {
 .memory-container svg {
     stroke: var(--buttonBackground);
 }
+.memory-item-feedback {
+    color: var(--green);
+}
 
 /*
 -----------------------
@@ -184,8 +211,9 @@ button:not(.select2-selection__choice__remove):hover {
 
 .menu-svg,
 #memory-switch-text-off,
-#tabler-menu-svg {
-    color: #a4b0be !important;
-    stroke: #a4b0be !important;
-    fill: #494a4e !important;
+#tabler-menu-svg,
+.popup-click-svg {
+    color: var(--color) !important;
+    stroke: var(--color) !important;
+    fill: var(--background) !important;
 }

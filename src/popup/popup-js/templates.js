@@ -114,7 +114,7 @@ const getMemoryItemHTML = (paper) => {
                 ${tablerSvg("archive", "", ["memory-icon-svg"])}
             </div>
 
-            <span style="color: green; display: none" class="memory-item-feedback"></span>
+            <span style="display: none" class="memory-item-feedback"></span>
             
             <div title=${titles.visits} class="memory-item-faded memory-visits">
                 Visits: ${paper.count}
@@ -155,7 +155,7 @@ const getMemoryItemHTML = (paper) => {
             </div>
         </div>
 
-        <div class="memory-delete"> - </div>
+        <div class="memory-delete" title="Delete from Memory"> - </div>
     </div>
     `;
 };

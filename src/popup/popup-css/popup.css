@@ -1,5 +1,11 @@
 @import url("https://fonts.googleapis.com/css2?family=Yantramanav:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;1,600&display=swap");
 
+:root {
+    --blue: #0276ff;
+    --red: #b31b1b;
+    --lightRed: #cc5050;
+}
+
 html {
     min-width: 450px;
     max-width: 450px;
@@ -39,7 +45,7 @@ textarea {
 }
 
 #popup-header {
-    background-color: #b31b1b;
+    background-color: var(--red);
     padding: 12px;
     color: white;
     display: flex;
@@ -105,7 +111,7 @@ strong {
 .tabler-icon {
     height: 32px;
     width: 32px;
-    color: #b31b1b;
+    color: var(--red);
     stroke-width: 1px;
 }
 #tabler-menu-svg {
@@ -113,8 +119,9 @@ strong {
 }
 
 .memory-icon-svg {
-    height: 15px;
-    width: 15px;
+    height: 20px;
+    width: 20px;
+    pointer-events: none;
 }
 
 #tabler-menu {
@@ -142,7 +149,7 @@ strong {
     transition: all 0.2s ease-in-out;
     cursor: pointer;
     border-radius: 100000px;
-    color: #0276ff;
+    color: var(--blue);
 }
 
 #tabler-copy-link:hover {
@@ -177,7 +184,7 @@ strong {
     position: absolute;
     bottom: 16px;
     right: 16px;
-    border: 1px solid #b31b1b;
+    border: 1px solid var(--red);
     background: white;
     padding: 2px 6px;
     border-radius: 100px;
@@ -232,7 +239,7 @@ strong {
 }
 
 #memory-switch-text-on {
-    stroke: #b31b1b;
+    stroke: var(--red);
     height: 38px;
     width: 38px;
 }
@@ -289,7 +296,7 @@ strong {
 }
 
 .memory-container.favorite {
-    border: 1px solid #b31b1b !important;
+    border: 2px solid var(--red) !important;
 }
 .memory-container h4 {
     font-weight: 500;
@@ -302,7 +309,7 @@ strong {
 } */
 
 .memory-delete {
-    color: rgb(196, 93, 93);
+    color: var(--red);
     position: absolute;
     right: -8px;
     top: -8px;
@@ -312,7 +319,7 @@ strong {
     height: 15px;
     width: 15px;
     border-radius: 50%;
-    border: 1px solid rgb(196, 93, 93);
+    border: 1px solid var(--red);
     padding-left: 0px;
     text-align: center;
     background-color: white;
@@ -333,16 +340,28 @@ strong {
     cursor: pointer;
     display: flex;
 }
+.memory-item-feedback {
+    color: green;
+}
+#popup-feedback-copied {
+    color: green;
+    position: absolute;
+    left: 50%;
+    transform: translate(-50%, 0);
+    bottom: -25px;
+    width: 280px;
+    text-align: center;
+}
 
 #memory-search {
     border-radius: 6px;
-    border: 1px solid #0276ff;
+    border: 1px solid var(--blue);
     padding: 8px;
 }
 
 #memory-select {
     border-radius: 6px;
-    border: 1px solid #0276ff;
+    border: 1px solid var(--blue);
     padding: 8px;
 }
 
@@ -353,7 +372,7 @@ strong {
 }
 
 #memory-sort-arrow {
-    border: 1px solid #0276ff;
+    border: 1px solid var(--blue);
     border-radius: 6px;
     height: 33px;
     width: 33px;
@@ -394,12 +413,6 @@ strong {
     margin-top: 12px;
 }
 
-.memory-container svg {
-    height: 18px;
-    width: 18px;
-    pointer-events: none;
-}
-
 .form-note-buttons {
     text-align: end;
 }
@@ -436,7 +449,7 @@ strong {
 }
 
 .edit-note-item {
-    color: #0276ff;
+    color: var(--blue);
     cursor: pointer;
 }
 
@@ -475,6 +488,11 @@ strong {
     text-decoration: underline;
     color: rgb(22, 86, 184);
     cursor: pointer;
+    margin-bottom: 16px;
+}
+
+#popup-code-link {
+    font-size: 1.05rem;
 }
 
 .form-note textarea {
@@ -502,7 +520,7 @@ strong {
 }
 
 button {
-    border: 1px solid #b31b1b;
+    border: 1px solid var(--red);
     border-radius: 6px;
     padding: 4px 6px;
     background-color: white;
@@ -516,7 +534,7 @@ button:disabled {
 }
 
 button:hover {
-    border-color: #b31b1b;
+    border-color: var(--red);
     background-color: rgb(253, 235, 235);
 }
 
@@ -541,23 +559,23 @@ button:hover {
     justify-content: center;
     align-items: center;
     position: relative;
-    width: 15px;
-    height: 15px;
+    width: 18px;
+    height: 18px;
 }
 .memory-item-favorite-svg {
     position: absolute;
-    bottom: -2px;
-    left: 2px;
+    bottom: -5px;
+    left: -2px;
 }
 
 svg.favorite {
     stroke-width: 2px !important;
-    color: #b31b1b !important;
-    stroke: #b31b1b !important;
+    color: var(--red) !important;
+    stroke: var(--red) !important;
 }
 .popup-click-svg {
-    height: 25px;
-    width: 25px;
+    height: 30px;
+    width: 30px;
     pointer-events: none;
 }
 button.changed {
@@ -575,7 +593,6 @@ button.changed {
 }
 
 .select2-container--default .select2-selection--multiple.dark {
-    background: #494747;
 }
 
 .select2-container--default .select2-results > .select2-results__options {
