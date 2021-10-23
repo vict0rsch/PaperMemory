@@ -89,8 +89,7 @@ const handleTogglePaperEdit = (e) => {
     e.preventDefault();
     // find elements
     const id = eventId(e);
-    const edit = findEl(id, "memory-item-edit");
-
+    const container = document.getElementById(`memory-container--${id}`);
     const codeAndNote = $(findEl(id, "code-and-note"));
     const editPaper = $(findEl(id, "extended-item"));
     const tagList = $(findEl(id, "tag-list"));
@@ -98,9 +97,9 @@ const handleTogglePaperEdit = (e) => {
     const tagSelect = $(findEl(id, "memory-item-tags"));
     const actions = $(findEl(id, "memory-item-actions"));
 
-    if (edit.classList.contains("expand-open")) {
+    if (hasClass(container, "expand-open")) {
         // The edit form is open
-        edit.classList.remove("expand-open");
+        container.classList.remove("expand-open");
         // Open display elements
         codeAndNote.slideDown(250);
         tagList.slideDown(250);
@@ -112,7 +111,7 @@ const handleTogglePaperEdit = (e) => {
         tagSelect.select2("destroy");
     } else {
         // The edit form is closed
-        edit.classList.add("expand-open");
+        addClass(container, "expand-open");
         // Enable select2 tags input
         tagSelect.select2({
             ...global.select2Options,
@@ -127,12 +126,12 @@ const handleTogglePaperEdit = (e) => {
             "color",
             "white"
         );
-        if (!hasClass(edit, "has-monitoring")) {
+        if (!hasClass(container, "has-monitoring")) {
             // only listen for changes once
             tagSelect.on("change", monitorPaperEdits(id, false));
         }
         // monitorPaperEdits listener has been added
-        edit.classList.add("has-monitoring");
+        container.classList.add("has-monitoring");
         // Close display elements
         codeAndNote.slideUp(250);
         tagList.slideUp(250);
@@ -274,4 +273,90 @@ const handleClearSearch = (e) => {
 
 const handleMemorySwitchClick = () => {
     global.state.memoryIsOpen ? closeMemory() : openMemory();
+};
+
+const handlePopupKeydown = (e) => {
+    const key = e.key;
+    if (["Backspace", "Enter", "Escape", "a", "e"].indexOf(key) < 0) {
+        return;
+    }
+
+    if (global.state.menuIsOpen) {
+        if (key === "Escape") {
+            // escape closes menu
+            e.preventDefault();
+            closeMenu();
+        }
+        return;
+    }
+
+    if (!global.state.memoryIsOpen) {
+        if (key === "a") {
+            // a opens the arxiv memory
+            const focused = document.querySelectorAll(":focus");
+            if (focused && focused.length) {
+                if (Array.from(focused).some((el) => hasClass(el, "noMemoryOnA"))) {
+                    return;
+                }
+            }
+            dispatch("memory-switch", "click");
+        } else if (key === "Enter") {
+            // enter on the arxiv memory button opens it
+            let el = document.querySelector("#memory-switch-text-on:focus");
+            if (el) {
+                dispatch("memory-switch", "click");
+                return;
+            }
+            // enter on the menu button opens it
+            el = document.querySelector("#tabler-menu:focus");
+            if (el) {
+                dispatch("tabler-menu", "click");
+                dispatch("tabler-menu", "blur");
+                return;
+            }
+        }
+        return;
+    }
+
+    // Now memory is open
+
+    if (key === "Enter") {
+        // enable Enter on favorites and sort arrows
+        const favoriteBtn = document.querySelector("#filter-favorites:focus");
+        if (favoriteBtn) {
+            dispatch("filter-favorites", "click");
+            return;
+        }
+        const arrowBtn = document.querySelector("#memory-sort-arrow:focus");
+        if (arrowBtn && key === "Enter") {
+            dispatch("memory-sort-arrow", "click");
+            return;
+        }
+    }
+
+    let id;
+    const paperItem = document.querySelector(".memory-container:focus");
+    if (key !== "Escape") {
+        if (!paperItem) return;
+        id = paperItem.id.split("--")[1];
+    }
+
+    if (key === "Backspace") {
+        // delete
+        dispatch(findEl(id, "memory-delete"), "click");
+    } else if (key === "Enter") {
+        // open paper
+        dispatch(findEl(id, "memory-item-link"), "click");
+    } else if (key === "Escape") {
+        // close memory
+        e.preventDefault();
+        if (paperItem && hasClass(paperItem, "expand-open")) {
+            handleTogglePaperEdit(e);
+        } else {
+            closeMemory();
+        }
+    } else if (key === "e") {
+        // edit item
+        dispatch(findEl(id, "memory-item-edit"), "click");
+    }
 };

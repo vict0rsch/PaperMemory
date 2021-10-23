@@ -1,7 +1,8 @@
 :root {
     --background: #222a35;
-    --lighterBackground: #22272e;
+    --lighterBackground: #323942;
     --codeBackground: #5a5a5a;
+    --lightestBackground: #788089;
     --dimColor: #8d9cac;
     --noteColor: #aeb8c2;
     --buttonBackground: #bec6d3;
@@ -38,9 +39,9 @@ a {
     color: var(--aColor);
 }
 code {
-    background: var(--codeBackground);
+    background: var(--codeBackground) !important;
 }
-*:focus {
+*:not(.select2-search__field):focus {
     outline: 2px solid var(--color) !important;
     border-radius: 2px;
     box-shadow: none;
@@ -58,7 +59,7 @@ code {
 }
 
 .select2-results__option--selectable {
-    background: grey;
+    background: var(--lighterBackground);
     color: white;
 }
 .select2-container--default .select2-results__option--selected {
@@ -70,7 +71,13 @@ code {
     border-color: var(--lighterBackground) !important;
     color: var(--color) !important;
 }
-
+.select2-search__field {
+    color: var(--color);
+}
+.select2-container--default
+    .select2-results__option--highlighted.select2-results__option--selectable {
+    background-color: rgb(33, 33, 33);
+}
 /*
 ---------------------
 -----  Buttons  -----
@@ -86,12 +93,14 @@ button:disabled {
     color: #2e3742 !important;
     background-color: #5c6268 !important;
 }
-button:hover {
+button:not(.select2-selection__choice__remove):hover {
     border-color: #d8e7f7 !important;
     background-color: #eeeeee !important;
     color: #000000;
 }
-
+#memory-sort-arrow {
+    border: 1px solid var(--buttonBackground);
+}
 /*
 --------------------
 -----  Inputs  -----
@@ -117,9 +126,10 @@ button:hover {
     background: var(--background);
 }
 #memory-search {
-    background: var(--lighterBackground);
+    background: var(--lightestBackground);
+    color: white;
 }
-#memory-search {
+#memory-search::placeholder {
     color: var(--color);
 }
 #memory-search {

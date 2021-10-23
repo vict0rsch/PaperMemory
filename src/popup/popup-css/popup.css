@@ -285,7 +285,7 @@ strong {
     position: relative;
     border-radius: 8px;
     transition: all 0.1s ease !important;
-    font-size: 0.9rem;
+    font-size: 0.95rem;
 }
 
 .memory-container.favorite {
@@ -294,6 +294,7 @@ strong {
 .memory-container h4 {
     font-weight: 500;
     color: #3a3e52;
+    font-size: 1rem;
 }
 
 /* .memory-container:hover {
