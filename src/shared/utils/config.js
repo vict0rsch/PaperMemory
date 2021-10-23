@@ -23,33 +23,6 @@ global.state = {
     sortedPapers: [],
     sortKey: "",
     papersReady: false,
-    theme: "light",
-    memoryItemStyle: {},
-};
-
-global.darkTheme = {
-    background: "#1C2128",
-    color: "#ADBAC7",
-    noteColor: "#9aa4ae",
-    dimColor: "#768390",
-    buttonBackground: "#bec6d3",
-    lighterBackground: "#22272E",
-    codeBackground: "#5a5a5a",
-    aColor: "#539BF5",
-    memoryItem: {},
-};
-
-global.darkTheme.memoryItem = {
-    title: `style="color: ${global.darkTheme.color};"`,
-    tagHTML: `style="color: ${global.darkTheme.color}; background: ${global.darkTheme.codeBackground}"`,
-    author: `style="color: ${global.darkTheme.dimColor}"`,
-    id: `style="color: ${global.darkTheme.dimColor}"`,
-    visits: `style="color: ${global.darkTheme.dimColor}"`,
-    note: `style="color: ${global.darkTheme.noteColor}"`,
-    link: `style="color: ${global.darkTheme.aColor}"`,
-    container: `style="border-color: ${global.darkTheme.codeBackground}"`,
-    input: `style="color: ${global.darkTheme.color}; background: ${global.darkTheme.lighterBackground}"`,
-    deleteRound: `style="background: ${global.darkTheme.background}"`,
 };
 
 global.descendingSortKeys = ["addDate", "count", "lastOpenDate", "favoriteDate"];
@@ -75,8 +48,12 @@ global.menuCheckNames = [
     "checkPdfTitle",
     "checkVanity",
     "checkFeedback",
-    "checkColorTheme",
+    "checkDarkMode",
 ];
+/**
+ * Menu check names which should not default to true but to false
+ */
+global.menuCheckDefaultFalse = ["checkDarkMode"];
 /**
  * All keys to retrieve from the menu, the checkboxes + the custom pdf function
  */

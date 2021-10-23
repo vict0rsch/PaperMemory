@@ -12,7 +12,6 @@ const getMemoryItemHTML = (paper) => {
     const tags = new Set(paper.tags);
     const tagOptions = getTagsOptions(paper);
     const favoriteClass = paper.favorite ? "favorite" : "";
-    const styles = global.state.memoryItemStyle;
     const titles = {
         edit: `"Edit paper details&#13;&#10;(or press 'e' when this paper is focused,&#13;&#10; i.e. when you navigated to it with 'tab')"`,
         pdfLink: `"Open ${paper.pdfLink}"`,
@@ -24,17 +23,16 @@ const getMemoryItemHTML = (paper) => {
     let codeDiv = /*html*/ `
     <small class="memory-item-faded">
         <span 
-            class="memory-item-code-link" 
-            ${styles.link}
+            class="memory-code-link" 
         >
             ${paper.codeLink || ""}
         </span>
     </small>
     `;
-    let noteDiv = /*html*/ `<div class="memory-note-div memory-item-faded" ${styles.author}></div>`;
+    let noteDiv = /*html*/ `<div class="memory-note-div memory-item-faded"></div>`;
     if (paper.note) {
         noteDiv = /*html*/ `
-        <div class="memory-note-div memory-item-faded" ${styles.author}>
+        <div class="memory-note-div memory-item-faded">
             <span class="note-content-header">Note:</span>
             <span class="note-content">${note}</span>
         </div>
@@ -43,16 +41,14 @@ const getMemoryItemHTML = (paper) => {
 
     return /*html*/ `
     <div 
-        class="memory-item-container ${favoriteClass}" 
+        class="memory-container ${favoriteClass}" 
         tabindex="0" 
-        id="memory-item-container--${id}" 
-        ${styles.container}
+        id="memory-container--${id}" 
     >
 
         <h4 
-            class="memory-item-title" 
+            class="memory-title" 
             title="Added ${addDate}&#13;&#10;Last open ${lastOpenDate}" 
-            ${styles.title}
         >
                 <span class="memory-item-favorite">
                     ${tablerSvg("star", "", [
@@ -65,10 +61,7 @@ const getMemoryItemHTML = (paper) => {
         <div class="memory-item-tags-div">
             <small class="tag-list">
                 ${Array.from(tags)
-                    .map(
-                        (t) =>
-                            `<span class="memory-tag" ${styles.tagHTML}" >${t}</span>`
-                    )
+                    .map((t) => `<span class="memory-tag" >${t}</span>`)
                     .join("")}
             </small>
             <div class="edit-tags">
@@ -79,7 +72,7 @@ const getMemoryItemHTML = (paper) => {
                 </div>
             </div>
         </div>
-        <small class="authors" ${styles.author}">${cutAuthors(paper.author)}</small>
+        <small class="memory-authors">${cutAuthors(paper.author)}</small>
         
         <div class="code-and-note">
             ${codeDiv}
@@ -93,7 +86,7 @@ const getMemoryItemHTML = (paper) => {
                     ${tablerSvg("writing", "", ["memory-icon-svg"])}
                 </div>
                 
-                <small class="memory-item-faded" ${styles.id}">
+                <small class="memory-item-faded memory-display-id">
                         ${displayId}
                 </small>
                         
@@ -123,7 +116,7 @@ const getMemoryItemHTML = (paper) => {
 
             <span style="color: green; display: none" class="memory-item-feedback"></span>
             
-            <div title=${titles.visits} class="memory-item-faded" ${styles.visits}>
+            <div title=${titles.visits} class="memory-item-faded memory-visits">
                 Visits: ${paper.count}
             </div>
 
@@ -148,14 +141,12 @@ const getMemoryItemHTML = (paper) => {
                         <button 
                             class="memory-item-save-edits" 
                             type="submit"
-                            ${styles.button}
                             disabled 
                         >
                             Save
                         </button>
                         <button 
                             class="cancel-note-form back-to-focus" 
-                            ${styles.button}
                         >
                             Cancel
                         </button>
@@ -164,7 +155,7 @@ const getMemoryItemHTML = (paper) => {
             </div>
         </div>
 
-        <div class="delete-memory-item" ${styles.deleteRound}> - </div>
+        <div class="memory-delete"> - </div>
     </div>
     `;
 };
@@ -180,7 +171,6 @@ const getPopupEditFormHTML = (paper) => {
     const tagOptions = getTagsOptions(paper);
     const note = paper.note || "";
     const checked = "";
-    const styles = global.state.memoryItemStyle;
 
     return /*html*/ `
     <div style="max-width: 100%; display: flex; justify-content: space-between; align-items: center; padding: 4px 16px;">

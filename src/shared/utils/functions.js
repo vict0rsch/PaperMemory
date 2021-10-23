@@ -320,7 +320,7 @@ const downloadTextFile = (content, fileName, contentType) => {
 };
 
 const eventId = (e) => {
-    return e.target.closest(".memory-item-container").id.split("--")[1];
+    return e.target.closest(".memory-container").id.split("--")[1];
 };
 
 const downloadFile = (fileURL, fileName) => {
@@ -526,16 +526,8 @@ const setStorage = async (key, value) => {
 };
 
 const getTheme = async () => {
-    const useSystemTheme = await getStorage("checkColorTheme");
-    if (typeof useSystemTheme === "undefined" || useSystemTheme) {
-        if (
-            window.matchMedia &&
-            window.matchMedia("(prefers-color-scheme: dark)").matches
-        ) {
-            return "dark";
-        }
-    }
-    return "light";
+    const darkMode = await getStorage("checkDarkMode");
+    return darkMode ? "dark" : "light";
 };
 
 const backupData = async (papers) => {
@@ -611,15 +603,6 @@ const initState = async (papers, isContentScript) => {
     global.state.papersReady = true;
     sortMemory();
     makeTags();
-    global.state.theme = await getTheme();
-    if (global.state.theme === "dark") {
-        global.state.memoryItemStyle = global.darkTheme.memoryItem;
-    } else {
-        global.state.memoryItemStyle = {};
-        for (const key in global.darkTheme.memoryItem) {
-            global.state.memoryItemStyle[key] = "";
-        }
-    }
     console.log("State initialization duration (s): " + (Date.now() - s) / 1000);
 };
 
@@ -745,7 +728,7 @@ const handlePopupKeydown = (e) => {
     }
 
     let id;
-    const paperItem = document.querySelector(".memory-item-container:focus");
+    const paperItem = document.querySelector(".memory-container:focus");
     if (key !== "Escape") {
         if (!paperItem) return;
         id = paperItem.id.split("--")[1];
@@ -753,7 +736,7 @@ const handlePopupKeydown = (e) => {
 
     if (key === "Backspace") {
         // delete
-        dispatch(findEl(id, "delete-memory-item"), "click");
+        dispatch(findEl(id, "memory-delete"), "click");
     } else if (key === "Enter") {
         // open paper
         dispatch(findEl(id, "memory-item-link"), "click");
@@ -1019,7 +1002,7 @@ const getPaperEdits = (id, isPopup) => {
         note = val(findEl(id, "form-note-textarea"));
         codeLink = val(findEl(id, "form-code-input"));
         tags = parseTags(findEl(id, "memory-item-tags"));
-        favorite = hasClass(`memory-item-container--${id}`, "favorite");
+        favorite = hasClass(`memory-container--${id}`, "favorite");
     }
 
     return { note, tags, codeLink, favorite };

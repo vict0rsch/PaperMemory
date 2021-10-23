@@ -243,11 +243,6 @@ strong {
     fill: #7c7f8b;
     stroke: white;
 }
-.dark-svg {
-    color: #a4b0be !important;
-    stroke: #a4b0be !important;
-    fill: #494a4e !important;
-}
 
 #memory-switch:hover {
     transform: scale(1.1);
@@ -283,7 +278,7 @@ strong {
     margin-bottom: 40px;
 }
 
-.memory-item-container {
+.memory-container {
     padding: 12px 16px;
     margin-bottom: 14px;
     border: 1px solid rgba(230, 230, 230, 0.75);
@@ -293,19 +288,19 @@ strong {
     font-size: 0.9rem;
 }
 
-.memory-item-container.favorite {
+.memory-container.favorite {
     border: 1px solid #b31b1b !important;
 }
-.memory-item-container h4 {
+.memory-container h4 {
     font-weight: 500;
     color: #3a3e52;
 }
 
-/* .memory-item-container:hover {
+/* .memory-container:hover {
     transform: scale(1.05);
 } */
 
-.delete-memory-item {
+.memory-delete {
     color: rgb(196, 93, 93);
     position: absolute;
     right: -8px;
@@ -322,7 +317,7 @@ strong {
     background-color: white;
 }
 
-.memory-item-title {
+.memory-title {
     margin: 0px;
 }
 
@@ -387,7 +382,7 @@ strong {
     color: rgba(54, 54, 54, 0.7);
 }
 
-.authors {
+.memory-authors {
     color: rgba(41, 41, 41, 1);
 }
 
@@ -398,9 +393,9 @@ strong {
     margin-top: 12px;
 }
 
-.memory-item-container svg {
-    height: 15px;
-    width: 15px;
+.memory-container svg {
+    height: 18px;
+    width: 18px;
     pointer-events: none;
 }
 
@@ -474,7 +469,7 @@ strong {
     padding: 6px;
 }
 
-.memory-item-code-link,
+.memory-code-link,
 #popup-code-link {
     text-decoration: underline;
     color: rgb(22, 86, 184);
@@ -540,7 +535,7 @@ button:hover {
 
 .memory-item-favorite {
     cursor: pointer;
-    margin-right: 1px;
+    margin-right: 4px;
     display: inline-flex;
     justify-content: center;
     align-items: center;

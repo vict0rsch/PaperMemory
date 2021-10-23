@@ -3,14 +3,14 @@
  */
 
 /**
- * Find a JQuery element with class className within #memory-item-container--${eid}
+ * Find a JQuery element with class className within #memory-container--${eid}
  * @param {string} eid The escaped id for the paper (id.replaceAll(".", "\\."))
  * @param {string} className The class of the element to find within the container with id^
  * @returns {HTMLElement}Jquery element
  */
 const findEl = (eid, className) => {
     return document
-        .getElementById(`memory-item-container--${eid.replace("\\.", ".")}`)
+        .getElementById(`memory-container--${eid.replace("\\.", ".")}`)
         .querySelector(`.${className}`);
 };
 
@@ -224,7 +224,7 @@ const saveCodeLink = (id, codeLink) => {
     global.state.papers[id].codeLink = codeLink;
     chrome.storage.local.set({ papers: global.state.papers }, () => {
         // console.log(`Updated the code for ${global.state.papers[id].title} to ${codeLink}`);
-        setHTMLEl(findEl(id, "memory-item-code-link"), codeLink);
+        setHTMLEl(findEl(id, "memory-code-link"), codeLink);
         setHTMLEl(`popup-code-link`, codeLink);
         val(findEl(id, "form-code-input"), codeLink);
         codeLink ? showId("popup-code-link") : hideId("popup-code-link");
@@ -239,13 +239,13 @@ const saveFavoriteItem = (id, favorite) => {
     chrome.storage.local.set({ papers: global.state.papers }, () => {
         // console.log(`${global.state.papers[id].title} is favorite: ${favorite}`);
         if (favorite) {
-            addClass(`memory-item-container--${id}`, "favorite");
+            addClass(`memory-container--${id}`, "favorite");
             addClass(
                 findEl(id, "memory-item-favorite").querySelector("svg"),
                 "favorite"
             );
         } else {
-            removeClass(`memory-item-container--${id}`, "favorite");
+            removeClass(`memory-container--${id}`, "favorite");
             removeClass(
                 findEl(id, "memory-item-favorite").querySelector("svg"),
                 "favorite"
@@ -416,11 +416,10 @@ const filterMemoryByCode = (letters) => {
  * @param {string} id The paper's id
  */
 const updatePaperTagsHTML = (id) => {
-    const style = global.state.memoryItemStyle.tagHTML;
     setHTMLEl(
         findEl(id, "tag-list"),
         global.state.papers[id].tags
-            .map((t) => `<span class="memory-tag" ${style}>${t}</span>`)
+            .map((t) => `<span class="memory-tag">${t}</span>`)
             .join("")
     );
 };
@@ -521,11 +520,11 @@ const displayMemoryTable = () => {
     // container to navigate with tab
     addEventToClass(".back-to-focus", "click", handleBackToFocus);
     // delete memory item
-    addEventToClass(".delete-memory-item", "click", handleDeleteItem);
+    addEventToClass(".memory-delete", "click", handleDeleteItem);
     // Open paper page
     addEventToClass(".memory-item-link", "click", handleOpenItemLink);
     // Open code page
-    addEventToClass(".memory-item-code-link", "click", handleOpenItemCodeLink);
+    addEventToClass(".memory-code-link", "click", handleOpenItemCodeLink);
     // Copy markdown link
     addEventToClass(".memory-item-md", "click", handleCopyMarkdownLink);
     // Copy bibtex citation

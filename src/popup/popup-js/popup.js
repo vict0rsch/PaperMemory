@@ -2,10 +2,8 @@
  * Close the menu's overlay: slide div up and update button svg
  */
 const closeMenu = () => {
-    let classes = ["tabler-icon"];
-    if (global.state.theme === "dark") {
-        classes.push("dark-svg");
-    }
+    let classes = ["tabler-icon", "menu-svg"];
+
     $("#menu-container").slideUp({
         duration: 300,
         easing: "easeOutQuint",
@@ -22,9 +20,6 @@ const closeMenu = () => {
  */
 const openMenu = () => {
     let classes = ["tabler-icon", "menu-svg"];
-    if (global.state.theme === "dark") {
-        classes.push("dark-svg");
-    }
     $("#menu-container").slideDown({
         duration: 300,
         easing: "easeOutQuint",
@@ -44,7 +39,11 @@ const openMenu = () => {
 const getAndTrackPopupMenuChecks = (menu, menuCheckNames) => {
     let setValues = {};
     for (const key of menuCheckNames) {
-        setValues[key] = menu.hasOwnProperty(key) ? menu[key] : true;
+        setValues[key] = menu.hasOwnProperty(key)
+            ? menu[key]
+            : global.menuCheckDefaultFalse.indexOf(key) >= 0
+            ? false
+            : true;
         document.getElementById(key).checked = setValues[key];
     }
     chrome.storage.local.set(setValues);
@@ -274,82 +273,13 @@ const setPopupColors = async () => {
     if ((await getTheme()) !== "dark") return;
 
     console.log("Using Dark theme");
-    const theme = global.darkTheme;
-
-    setStyle(document.body, "background", theme.background);
-    setStyle(document.body, "color", theme.color);
-
-    document.querySelectorAll("code").forEach((el) => {
-        setStyle(el, "background", theme.codeBackground);
-    });
-    document.querySelectorAll("a").forEach((el) => {
-        setStyle(el, "color", theme.aColor);
-    });
-
-    setStyle("memory-container", "background", theme.background);
-    setStyle("popup-header", "color", theme.background);
-    setStyle("menu-container", "background", theme.background);
-    setStyle("memory-search", "background", theme.lighterBackground);
-    setStyle("memory-search", "color", theme.color);
-    setStyle("memory-search", "borderColor", theme.color);
-    setStyle("memory-select", "background", theme.lighterBackground);
-    setStyle("memory-select", "color", theme.color);
-    setStyle("memory-select", "borderColor", theme.color);
-    setStyle("customPdfTitleTextarea", "background", theme.lighterBackground);
-    setStyle("customPdfTitleTextarea", "color", theme.color);
-    setStyle("customPdfTitleTextarea", "borderColor", theme.color);
-    setStyle("header-icon", "color", theme.background);
-
-    addClass("memory-switch-text-off", "dark-svg");
-    addClass("tabler-menu-svg", "dark-svg");
 
     // Your CSS as text
-    var styles = /*css*/ `
-
-    button{
-        border-color: #adbac7 !important;
-        background-color: ${global.darkTheme.buttonBackground} !important;
-        color: #15191f;
-    }
-    button:disabled {
-        color: #2e3742 !important;
-        background-color: #5c6268 !important;
-    }
-    button:hover {
-        border-color: #d8e7f7 !important;
-        background-color: #eeeeee !important;
-        color: #000000;
-    }
-
-    .form-note-textarea,
-    .popup-form-note-textarea,
-    .form-code-input{
-        color: ${global.darkTheme.color}; 
-        background: ${global.darkTheme.lighterBackground}
-    }
-
-    .select2-selection__clear,
-    .select2-selection__clear:hover{
-        background: none !important
-    }
-
-    .select2-results__option--selectable{
-        background: grey;
-        color: white;
-    }
-    .select2-container--default .select2-results__option--selected{
-        background-color: rgb(165, 165, 165);
-    }
-    .select2-selection__choice, 
-    .select2-selection__choice__remove{
-        background-color: ${theme.lighterBackground} !important;
-        border-color: ${theme.lighterBackground} !important;
-        color: ${theme.color} !important;
-    }`;
-    var styleSheet = document.createElement("style");
-    styleSheet.type = "text/css";
-    styleSheet.innerText = styles;
-    document.head.appendChild(styleSheet);
+    var link = document.createElement("link");
+    link.href = chrome.extension.getURL("src/popup/popup-css/dark.min.css");
+    link.type = "text/css";
+    link.rel = "stylesheet";
+    document.head.appendChild(link);
 };
 
 $(() => {

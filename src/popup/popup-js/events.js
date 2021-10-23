@@ -8,7 +8,7 @@ const handleBackToFocus = (e) => {
     const id = eventId(e);
     setTimeout(() => {
         document
-            .getElementById(`memory-item-container--${id}`)
+            .getElementById(`memory-container--${id}`)
             .dispatchEvent(new Event("focus"));
     }, 250);
 };
@@ -49,7 +49,7 @@ const handleCopyPDFLink = (e) => {
 
 const handleAddItemToFavorites = (e) => {
     const id = eventId(e);
-    const isFavorite = hasClass(`memory-item-container--${id}`, "favorite");
+    const isFavorite = hasClass(`memory-container--${id}`, "favorite");
     saveFavoriteItem(id, !isFavorite);
 };
 
