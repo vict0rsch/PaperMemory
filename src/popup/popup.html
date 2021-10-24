@@ -8,6 +8,7 @@
 	<link rel="stylesheet" type="text/css" href="./popup-css/popup.min.css">
 	<link rel="stylesheet" type="text/css" href="./popup-css/options.min.css">
 	<link rel="stylesheet" type="text/css" href="./popup-css/abstract.min.css">
+	<link rel="stylesheet" type="text/css" href="./popup-css/spinner.min.css">
 
 	<script defer src="../shared/jquery.min.js"></script>
 	<script defer src="../shared/select2.min.js"></script>
@@ -130,8 +131,14 @@ return `${title} - ${id}.pdf`
 		</div>
 	</div>
 
+	<div id="memory-spinner" class="lds-ring">
+		<div></div>
+		<div></div>
+		<div></div>
+		<div></div>
+	</div>
 	<div id="memory-switch" style="display: none;">
-		<svg xmlns="http://www.w3.org/2000/svg" tabindex="0" id="memory-switch-text-on"
+		<svg xmlns="http://www.w3.org/2000/svg" tabindex="0" id="memory-switch-open"
 			class="icon icon-tabler icon-tabler-folders" width="44" height="44" viewBox="0 0 24 24" stroke-width="1.5"
 			fill="none" stroke-linecap="round" stroke-linejoin="round">
 			<path stroke="none" d="M0 0h24v24H0z" fill="none" />
@@ -139,7 +146,7 @@ return `${title} - ${id}.pdf`
 			<path d="M17 17v2a2 2 0 0 1 -2 2h-10a2 2 0 0 1 -2 -2v-9a2 2 0 0 1 2 -2h2" />
 			<title>Open Memory</title>
 		</svg>
-		<svg xmlns="http://www.w3.org/2000/svg" id="memory-switch-text-off" style="display: none"
+		<svg xmlns="http://www.w3.org/2000/svg" id="memory-switch-close" style="display: none"
 			class="icon icon-tabler icon-tabler-circle-x" width="44" height="44" viewBox="0 0 24 24" stroke-width="1.5"
 			stroke="white" fill="#7c7f8b" stroke-linecap="round" stroke-linejoin="round">
 			<path stroke="none" d="M0 0h24v24H0z" fill="none" />

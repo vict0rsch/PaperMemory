@@ -1,5 +1,4 @@
 /**
- * TODO: add loader: when papers are long to retrieve need to find a way to still open the popup asap
  * TODO: docstrings
  * TODO: miniquery for content_script.js
  */
@@ -268,13 +267,13 @@ const saveFavoriteItem = (id, favorite) => {
 const setMemorySortArrow = (direction) => {
     let arrow;
     if (direction === "up") {
-        arrow = /*html*/ `<svg class="memory-sort-arrow-svg" id="memory-sort-arrow-up">
-                    <use xlink:href="../../icons/tabler-sprite-nostroke.svg#tabler-arrow-narrow-up" />
-                </svg>`;
+        arrow = /*html*/ `<svg viewBox="0 0 24 24" class="memory-sort-arrow-svg" id="memory-sort-arrow-up">
+            <path stroke="none" d="M0 0h24v24H0z" fill="none"/><line x1="12" y1="5" x2="12" y2="19" />
+            <line x1="16" y1="9" x2="12" y2="5" /><line x1="8" y1="9" x2="12" y2="5" /></svg>`;
     } else {
-        arrow = /*html*/ `<svg class="memory-sort-arrow-svg" id="memory-sort-arrow-down">
-                    <use xlink:href="../../icons/tabler-sprite-nostroke.svg#tabler-arrow-narrow-down" />
-                </svg>`;
+        arrow = /*html*/ `<svg class="memory-sort-arrow-svg" id="memory-sort-arrow-down" viewBox="0 0 24 24">
+            <path stroke="none" d="M0 0h24v24H0z" fill="none"/><line x1="12" y1="5" x2="12" y2="19" />
+            <line x1="16" y1="15" x2="12" y2="19" /><line x1="8" y1="15" x2="12" y2="19" /></svg>`;
     }
 
     setHTML("memory-sort-arrow", arrow);
@@ -608,8 +607,8 @@ const openMemory = () => {
         setMemorySortArrow("down");
 
         // remove ArxivMemory button and show the (x) to close it
-        hideId("memory-switch-text-on");
-        showId("memory-switch-text-off");
+        hideId("memory-switch-open");
+        showId("memory-switch-close");
     }, 200);
 };
 
@@ -626,8 +625,8 @@ const closeMemory = () => {
         }
     });
     setTimeout(() => {
-        hideId("memory-switch-text-off");
-        showId("memory-switch-text-on");
+        hideId("memory-switch-close");
+        showId("memory-switch-open");
         $("#tabler-menu").fadeIn(200);
     }, 250);
 };

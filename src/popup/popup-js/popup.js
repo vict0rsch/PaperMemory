@@ -214,6 +214,7 @@ chrome.tabs.query(query, async (tabs) => {
     if (!isKnownPage) showId("notArxiv");
 
     await initState();
+    hideId("memory-spinner");
     showId("memory-switch");
     makeMemoryHTML();
     popupMain(url, isKnownPage);

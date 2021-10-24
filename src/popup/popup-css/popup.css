@@ -227,7 +227,11 @@ strong {
 #check-feedback svg {
     color: #00c854 !important;
 }
-
+#memory-spinner {
+    position: absolute;
+    bottom: 16px;
+    left: 16px;
+}
 #memory-switch {
     position: absolute;
     bottom: 16px;
@@ -242,13 +246,13 @@ strong {
     z-index: 3;
 }
 
-#memory-switch-text-on {
+#memory-switch-open {
     stroke: var(--red);
     height: 38px;
     width: 38px;
 }
 
-#memory-switch-text-off {
+#memory-switch-close {
     height: 30px;
     width: 30px;
     fill: #7c7f8b;

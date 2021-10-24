@@ -216,7 +216,7 @@ button:not(.select2-selection__choice__remove):hover {
 */
 
 .menu-svg,
-#memory-switch-text-off,
+#memory-switch-close,
 #tabler-menu-svg,
 .popup-click-svg {
     color: var(--color) !important;
