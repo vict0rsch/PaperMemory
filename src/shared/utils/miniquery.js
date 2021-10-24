@@ -108,3 +108,11 @@ const setStyle = (el, key, value) => {
     el.style[key] = value;
     console.log(el, key, value);
 };
+
+const disable = (el, isDisabled = true) => {
+    if (typeof el === "string") {
+        el = document.getElementById(el);
+    }
+    if (!el) return;
+    el.disabled = isDisabled;
+};

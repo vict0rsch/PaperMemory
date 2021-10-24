@@ -72,7 +72,7 @@ const handleEditPaperFormSubmit = (e) => {
 
     // Close edit form
     dispatch(findEl(id, "memory-item-edit"), "click");
-    findEl(id, "memory-item-save-edits").disabled = true;
+    disable(findEl(id, "memory-item-save-edits"));
 };
 
 const handleCancelPaperEdit = (e) => {
@@ -82,7 +82,7 @@ const handleCancelPaperEdit = (e) => {
     val(findEl(id, "form-note-textarea"), paper.note);
     setHTMLEl(findEl(id, "memory-item-tags"), getTagsOptions(paper));
     dispatch(findEl(id, "memory-item-edit"), "click");
-    findEl(id, "memory-item-save-edits").disabled = true;
+    disable(findEl(id, "memory-item-save-edits"));
 };
 
 const handleTogglePaperEdit = (e) => {
@@ -176,8 +176,8 @@ const handleFilterFavorites = () => {
             "favorite"
         );
 
-        if (document.getElementById("memory-select").value === "favoriteDate") {
-            document.getElementById("memory-select").value = "lastOpenDate";
+        if (val("memory-select") === "favoriteDate") {
+            val("memory-select", "lastOpenDate");
             global.state.sortKey = "lastOpenDate";
         }
         document.querySelector(`#memory-select option[value="favoriteDate"]`).remove();
@@ -350,4 +350,79 @@ const handlePopupKeydown = (e) => {
         // edit item
         dispatch(findEl(id, "memory-item-edit"), "click");
     }
+};
+
+const handleMenuCheckChange = () => {
+    const checked = document.getElementById(key).checked;
+    chrome.storage.local.set({ [key]: checked }, function () {
+        console.log(`Settings saved for ${key} (${checked})`);
+    });
+};
+
+const handleDownloadMemoryClick = () => {
+    const now = new Date().toLocaleString();
+    chrome.storage.local.get("papers", ({ papers }) => {
+        const version = papers.__dataVersion;
+        downloadTextFile(
+            JSON.stringify(papers),
+            `arxiv-memory-${version}-${now}.json`,
+            "text/json"
+        );
+    });
+};
+
+const handleCustomPDFFunctionSave = () => {
+    const code = val("customPdfTitleTextarea").trim();
+    try {
+        // check code: it can be evaluated and it runs without error
+        const fn = eval(code);
+        const tested = fn("test", "1.2");
+        if (typeof tested !== "string") {
+            throw Error(
+                "Custom function returns the wrong type:",
+                typeof tested,
+                tested
+            );
+        }
+        // no error so far: all good!
+        const savedFeedback = /*html*/ `<span style="color: green">Saved!</span>`;
+        setHTMLEl("customPdfFeedback", savedFeedback);
+        // save function string
+        chrome.storage.local.set({ pdfTitleFn: code });
+        global.state.pdfTitleFn = fn;
+        setTimeout(() => {
+            setHTMLEl("customPdfFeedback", "");
+        }, 1000);
+    } catch (error) {
+        // something went wrong!
+        console.log("setAndHandleCustomPDFFunction error:");
+        const errorFeedback = /*html*/ `<span style="color: red">${error}</span>`;
+        savedFeedback("customPdfFeedback", errorFeedback);
+    }
+};
+
+const handleDefaultPDFFunctionClick = () => {
+    const code = defaultPDFTitleFn.toString();
+    const savedFeedback = /*html*/ `<span style="color: var(--green)">Saved!</span>`;
+    chrome.storage.local.set({ pdfTitleFn: code });
+    global.state.pdfTitleFn = defaultPDFTitleFn;
+    val("customPdfTitleTextarea", code);
+    setHTMLEl("customPdfFeedback", savedFeedback);
+    setTimeout(() => {
+        setHTMLEl("customPdfFeedback", "");
+    }, 1000);
+};
+
+const handlePopupSaveEdits = () => {
+    const { note, codeLink, favorite } = getPaperEdits(id, true);
+    updatePaperTags(id, `#popup-item-tags--${id}`);
+    saveNote(id, note);
+    saveCodeLink(id, codeLink);
+    saveFavoriteItem(id, favorite);
+    setHTMLEl("popup-feedback-copied", "Saved tags, code, note & favorite!");
+    $("#popup-feedback-copied").fadeIn(200);
+    setTimeout(() => {
+        $("#popup-feedback-copied").fadeOut(200);
+    }, 2000);
+    disable(`popup-save-edits--${id}`);
 };

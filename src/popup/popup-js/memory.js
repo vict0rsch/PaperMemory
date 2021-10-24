@@ -8,10 +8,9 @@
  * @param {string} className The class of the element to find within the container with id^
  * @returns {HTMLElement}Jquery element
  */
-const findEl = (eid, className) => {
-    return document
-        .getElementById(`memory-container--${eid.replace("\\.", ".")}`)
-        .querySelector(`.${className}`);
+const findEl = (id, className) => {
+    if (typeof className === "undefined") return document.getElementById(id);
+    return findEl(`memory-container--${id}`).querySelector(`.${className}`);
 };
 
 const getTagsOptions = (paper) => {

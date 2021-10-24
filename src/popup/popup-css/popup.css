@@ -304,20 +304,16 @@ strong {
     font-size: 1rem;
 }
 
-/* .memory-container:hover {
-    transform: scale(1.05);
-} */
-
 .memory-delete {
     color: var(--red);
     position: absolute;
     right: -8px;
     top: -8px;
-    font-size: 1.5rem;
-    line-height: 16px;
+    font-size: 2rem;
+    line-height: 20px;
     cursor: pointer;
-    height: 15px;
-    width: 15px;
+    height: 20px;
+    width: 20px;
     border-radius: 50%;
     border: 1px solid var(--red);
     padding-left: 0px;
@@ -590,12 +586,4 @@ button.changed {
     background-color: #404e5c;
     color: white;
     border: 0px;
-}
-
-.select2-container--default .select2-selection--multiple.dark {
-}
-
-.select2-container--default .select2-results > .select2-results__options {
-    background: grey;
-    color: white;
 }

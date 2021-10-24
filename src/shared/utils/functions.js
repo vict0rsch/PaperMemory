@@ -976,7 +976,7 @@ const monitorPaperEdits = (id, isPopup) => (e) => {
         btn = findEl(id, "memory-item-save-edits");
     }
 
-    btn.disabled = !change;
+    disable(btn, !change);
 };
 
 const cutAuthors = (text, maxLen, separator) => {

@@ -49,12 +49,7 @@ const getAndTrackPopupMenuChecks = (menu, menuCheckNames) => {
     chrome.storage.local.set(setValues);
 
     for (const key of menuCheckNames) {
-        addListener(key, "change", () => {
-            const checked = document.getElementById(key).checked;
-            chrome.storage.local.set({ [key]: checked }, function () {
-                console.log(`Settings saved for ${key} (${checked})`);
-            });
-        });
+        addListener(key, "change", handleMenuCheckChange);
     }
 };
 
@@ -80,17 +75,7 @@ const setStandardPopupClicks = () => {
 
     addListener("memory-switch", "click", handleMemorySwitchClick);
 
-    addListener("download-arxivmemory", "click", () => {
-        const now = new Date().toLocaleString();
-        chrome.storage.local.get("papers", ({ papers }) => {
-            const version = papers.__dataVersion;
-            downloadTextFile(
-                JSON.stringify(papers),
-                `arxiv-memory-${version}-${now}.json`,
-                "text/json"
-            );
-        });
-    });
+    addListener("download-arxivmemory", "click", handleDownloadMemoryClick);
 };
 
 /**
@@ -109,48 +94,10 @@ const setAndHandleCustomPDFFunction = (menu) => {
     // update the user's textarea
     val("customPdfTitleTextarea", global.state.pdfTitleFn.toString());
     // listen to saving click
-    addListener("saveCustomPdf", "click", () => {
-        const code = val("customPdfTitleTextarea").trim();
-        try {
-            // check code: it can be evaluated and it runs without error
-            const fn = eval(code);
-            const tested = fn("test", "1.2");
-            if (typeof tested !== "string") {
-                throw Error(
-                    "Custom function returns the wrong type:",
-                    typeof tested,
-                    tested
-                );
-            }
-            // no error so far: all good!
-            const savedFeedback = /*html*/ `<span style="color: green">Saved!</span>`;
-            setHTMLEl("customPdfFeedback", savedFeedback);
-            // save function string
-            chrome.storage.local.set({ pdfTitleFn: code });
-            global.state.pdfTitleFn = fn;
-            setTimeout(() => {
-                setHTMLEl("customPdfFeedback", "");
-            }, 1000);
-        } catch (error) {
-            // something went wrong!
-            console.log("setAndHandleCustomPDFFunction error:");
-            const errorFeedback = /*html*/ `<span style="color: red">${error}</span>`;
-            savedFeedback("customPdfFeedback", errorFeedback);
-        }
-    });
+    addListener("saveCustomPdf", "click", handleCustomPDFFunctionSave);
     // listen to the event resetting the pdf title function
     // to the built-in default
-    document.getElementById("defaultCustomPdf").addEventListener("click", () => {
-        const code = defaultPDFTitleFn.toString();
-        const savedFeedback = /*html*/ `<span style="color: green">Saved!</span>`;
-        chrome.storage.local.set({ pdfTitleFn: code });
-        global.state.pdfTitleFn = defaultPDFTitleFn;
-        val("customPdfTitleTextarea", code);
-        setHTMLEl("customPdfFeedback", savedFeedback);
-        setTimeout(() => {
-            setHTMLEl("customPdfFeedback", "");
-        }, 1000);
-    });
+    addListener("defaultCustomPdf", "click", handleDefaultPDFFunctionClick);
 };
 
 /**
@@ -211,19 +158,7 @@ const popupMain = async (url, isKnownPage) => {
             textareaFocusEnd(that);
         });
         setFormChangeListener(id, true);
-        addListener(`popup-save-edits--${id}`, "click", () => {
-            const { note, codeLink, favorite } = getPaperEdits(id, true);
-            updatePaperTags(id, `#popup-item-tags--${id}`);
-            saveNote(id, note);
-            saveCodeLink(id, codeLink);
-            saveFavoriteItem(id, favorite);
-            setHTMLEl("popup-feedback-copied", "Saved tags, code, note & favorite!");
-            $("#popup-feedback-copied").fadeIn(200);
-            setTimeout(() => {
-                $("#popup-feedback-copied").fadeOut(200);
-            }, 2000);
-            document.getElementById(`popup-save-edits--${id}`).disabled = true;
-        });
+        addListener(`popup-save-edits--${id}`, "click", handlePopupSaveEdits);
 
         // ------------------------
         // -----  SVG clicks  -----
