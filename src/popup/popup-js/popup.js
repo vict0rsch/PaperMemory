@@ -17,14 +17,11 @@ const closeMenu = () => {
  */
 const openMenu = () => {
     let classes = ["tabler-icon", "menu-svg"];
-    $("#menu-container").slideDown({
-        duration: 300,
-        easing: "easeOutQuint",
-    }) &&
-        $("#tabler-menu").fadeOut(() => {
-            setHTMLEl("tabler-menu", tablerSvg("circle-x", "close-menu-btn", classes));
-            $("#tabler-menu").fadeIn();
-        });
+    slideDown("menu-container", 300);
+    $("#tabler-menu").fadeOut(() => {
+        setHTMLEl("tabler-menu", tablerSvg("circle-x", "close-menu-btn", classes));
+        $("#tabler-menu").fadeIn();
+    });
     global.state.menuIsOpen = true;
 };
 /**

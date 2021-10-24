@@ -606,8 +606,8 @@ const openMemory = () => {
         setMemorySortArrow("down");
 
         // remove ArxivMemory button and show the (x) to close it
-        $("#memory-switch-text-on").hide();
-        $("#memory-switch-text-off").show();
+        hideId("memory-switch-text-on");
+        showId("memory-switch-text-off");
     }, 200);
 };
 
