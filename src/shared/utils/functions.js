@@ -246,6 +246,17 @@ $.extend($.easing, {
  *
  */
 
+/**
+ * Find a JQuery element with class className within #memory-container--${eid}
+ * @param {string} eid The escaped id for the paper (id.replaceAll(".", "\\."))
+ * @param {string} className The class of the element to find within the container with id^
+ * @returns {HTMLElement}Jquery element
+ */
+const findEl = (id, className) => {
+    if (typeof className === "undefined") return document.getElementById(id);
+    return findEl(`memory-container--${id}`).querySelector(`.${className}`);
+};
+
 const defaultPDFTitleFn = (title, id) => {
     title = title.replaceAll("\n", " ").replace(/\s\s+/g, " ");
     return `${title} - ${id}.pdf`;
@@ -914,8 +925,8 @@ const getPaperEdits = (id, isPopup) => {
                 .getElementById(`popup-form-note--${id}`)
                 .querySelector(".form-code-input")
         );
-        tags = parseTags(document.getElementById(`popup-item-tags--${id}`));
-        favorite = document.getElementById(`checkFavorite--${id}`).checked;
+        tags = parseTags(findEl(`popup-item-tags--${id}`));
+        favorite = findEl(`checkFavorite--${id}`).checked;
     } else {
         note = val(findEl(id, "form-note-textarea"));
         codeLink = val(findEl(id, "form-code-input"));
@@ -971,7 +982,7 @@ const monitorPaperEdits = (id, isPopup) => (e) => {
 
     let btn;
     if (isPopup) {
-        btn = document.getElementById(`popup-save-edits--${id}`);
+        btn = findEl(`popup-save-edits--${id}`);
     } else {
         btn = findEl(id, "memory-item-save-edits");
     }

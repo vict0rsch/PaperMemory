@@ -89,7 +89,7 @@ const handleTogglePaperEdit = (e) => {
     e.preventDefault();
     // find elements
     const id = eventId(e);
-    const container = document.getElementById(`memory-container--${id}`);
+    const container = findEl(`memory-container--${id}`);
     const codeAndNote = $(findEl(id, "code-and-note"));
     const editPaper = $(findEl(id, "extended-item"));
     const tagList = $(findEl(id, "tag-list"));
@@ -108,7 +108,9 @@ const handleTogglePaperEdit = (e) => {
         editPaper.slideUp(250);
         tagEdit.slideUp(250);
         // destroy to enable options update in HTML
-        tagSelect.select2("destroy");
+        setTimeout(() => {
+            tagSelect.select2("destroy");
+        }, 500);
     } else {
         // The edit form is closed
         addClass(container, "expand-open");
@@ -157,24 +159,18 @@ const handleFilterFavorites = () => {
     const showFavorites = !global.state.showFavorites;
     global.state.showFavorites = showFavorites;
     if (showFavorites) {
-        addClass(
-            document.getElementById("filter-favorites").querySelector("svg"),
-            "favorite"
-        );
+        addClass(findEl("filter-favorites").querySelector("svg"), "favorite");
         sortMemory();
         global.state.papersList = global.state.papersList.filter((p) => p.favorite);
         displayMemoryTable();
         setMemorySortArrow("down");
-        document.getElementById(
+        findEl(
             "memory-select"
         ).innerHTML += `<option value="favoriteDate">Last favoured</option>`;
         const n = global.state.papersList.length;
         setPlaceholder("memory-search", `Search ${n} entries...`);
     } else {
-        removeClass(
-            document.getElementById("filter-favorites").querySelector("svg"),
-            "favorite"
-        );
+        removeClass(findEl("filter-favorites").querySelector("svg"), "favorite");
 
         if (val("memory-select") === "favoriteDate") {
             val("memory-select", "lastOpenDate");
@@ -224,7 +220,7 @@ const handleMemorySearchKeyUp = (e) => {
 };
 
 const handleCancelModalClick = () => {
-    document.getElementById("confirm-modal").remove();
+    findEl("confirm-modal").remove();
     addListener("memory-switch", "click", handleMemorySwitchClick);
 };
 
@@ -236,7 +232,7 @@ const handleConfirmDeleteModalClick = (e) => {
         global.state.papersList = Object.values(cleanPapers(global.state.papers));
         sortMemory();
         displayMemoryTable();
-        document.getElementById("confirm-modal").remove();
+        findEl("confirm-modal").remove();
         console.log(`Successfully deleted "${title}" (${id}) from ArxivMemory`);
         if (global.state.currentId === id) {
             updatePopupPaperNoMemory();
@@ -353,7 +349,7 @@ const handlePopupKeydown = (e) => {
 };
 
 const handleMenuCheckChange = () => {
-    const checked = document.getElementById(key).checked;
+    const checked = findEl(key).checked;
     chrome.storage.local.set({ [key]: checked }, function () {
         console.log(`Settings saved for ${key} (${checked})`);
     });

@@ -44,7 +44,7 @@ const getAndTrackPopupMenuChecks = (menu, menuCheckNames) => {
             : global.menuCheckDefaultFalse.indexOf(key) >= 0
             ? false
             : true;
-        document.getElementById(key).checked = setValues[key];
+        findEl(key).checked = setValues[key];
     }
     chrome.storage.local.set(setValues);
 
@@ -143,7 +143,7 @@ const popupMain = async (url, isKnownPage) => {
         // ----------------------------------
         setHTMLEl("popup-memory-edit", getPopupEditFormHTML(paper));
         setHTMLEl("popup-copy-icons", getPopupPaperIconsHTML(paper, url));
-        document.getElementById(`checkFavorite--${id}`).checked = paper.favorite;
+        findEl(`checkFavorite--${id}`).checked = paper.favorite;
 
         // --------------------------
         // -----  Paper  edits  -----
@@ -170,7 +170,7 @@ const popupMain = async (url, isKnownPage) => {
             window.close();
         });
         addListener(`popup-code-link`, "click", () => {
-            const codeLink = document.getElementById(`popup-code-link`).textContent;
+            const codeLink = findEl(`popup-code-link`).textContent;
             if (codeLink) {
                 focusExistingOrCreateNewCodeTab(codeLink);
             }

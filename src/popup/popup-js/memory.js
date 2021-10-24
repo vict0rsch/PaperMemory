@@ -2,17 +2,6 @@
  * TODO: fix paper popup added/removed to/from favorites => update memory table
  */
 
-/**
- * Find a JQuery element with class className within #memory-container--${eid}
- * @param {string} eid The escaped id for the paper (id.replaceAll(".", "\\."))
- * @param {string} className The class of the element to find within the container with id^
- * @returns {HTMLElement}Jquery element
- */
-const findEl = (id, className) => {
-    if (typeof className === "undefined") return document.getElementById(id);
-    return findEl(`memory-container--${id}`).querySelector(`.${className}`);
-};
-
 const getTagsOptions = (paper) => {
     const tags = new Set(paper.tags);
 
@@ -76,7 +65,7 @@ const showConfirmDeleteModal = (id) => {
 const copyAndConfirmMemoryItem = (id, textToCopy, feedbackText, isPopup) => {
     copyTextToClipboard(textToCopy);
     const element = isPopup
-        ? document.getElementById(`popup-feedback-copied`)
+        ? findEl(`popup-feedback-copied`)
         : findEl(id, "memory-item-feedback");
     if (!element) return;
     element.innerText = feedbackText;
@@ -204,7 +193,7 @@ const saveNote = (id, note) => {
                 </div>`
                 : /*html*/ `<div class="memory-note-div memory-item-faded"></div>`
         );
-        const textarea = document.getElementById(`popup-form-note-textarea--${id}`);
+        const textarea = findEl(`popup-form-note-textarea--${id}`);
         val(textarea, note);
         val(findEl(id, "form-note-textarea"), note);
     });
@@ -227,7 +216,7 @@ const saveCodeLink = (id, codeLink) => {
         setHTMLEl(`popup-code-link`, codeLink);
         val(findEl(id, "form-code-input"), codeLink);
         codeLink ? showId("popup-code-link") : hideId("popup-code-link");
-        const codeInput = document.getElementById(`popup-form-codeLink--${id}`);
+        const codeInput = findEl(`popup-form-codeLink--${id}`);
         val(codeInput, codeLink);
     });
 };
@@ -257,13 +246,13 @@ const saveFavoriteItem = (id, favorite) => {
                 displayMemoryTable();
             }
             const n = global.state.sortedPapers.filter((p) => p.favorite).length;
-            const memSearch = document.getElementById("memory-search");
+            const memSearch = findEl("memory-search");
             if (memSearch) {
                 setPlaceholder(memSearch, `Search ${n} entries`);
             }
         }
 
-        let checkFavorite = document.getElementById(`checkFavorite--${id}`);
+        let checkFavorite = findEl(`checkFavorite--${id}`);
         if (checkFavorite) {
             checkFavorite.checked = favorite;
         }
@@ -445,7 +434,7 @@ const updatePaperTags = (id, elementId) => {
     // elementId may be an ID selector (in the main popup)
     // or a class selector (in the memory)
     if (elementId.startsWith("#")) {
-        ref = document.getElementById(elementId.replace("#", ""));
+        ref = findEl(elementId.replace("#", ""));
     } else {
         ref = findEl(id, elementId);
     }
@@ -494,7 +483,7 @@ const displayMemoryTable = () => {
     const start = Date.now();
 
     // Clear existing items
-    var memoryTable = document.getElementById("memory-table");
+    var memoryTable = findEl("memory-table");
     memoryTable.innerHTML = "";
     // Add relevant sorted papers (papersList may be smaller than sortedPapers
     // depending on the search query)
