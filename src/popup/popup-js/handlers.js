@@ -93,6 +93,7 @@ const handleTogglePaperEdit = (e) => {
     const codeAndNote = findEl(id, "code-and-note");
     const editPaper = findEl(id, "extended-item");
     const tagList = findEl(id, "tag-list");
+    const authors = findEl(id, "memory-authors");
     const tagEdit = findEl(id, "edit-tags");
     const actions = findEl(id, "memory-item-actions");
     const tagSelect2 = $(findEl(id, "memory-item-tags"));
@@ -104,6 +105,7 @@ const handleTogglePaperEdit = (e) => {
         slideDown(codeAndNote, 150);
         slideDown(tagList, 150);
         slideDown(actions, 150);
+        slideDown(authors, 150);
         // Close inputs
         slideUp(editPaper, 150);
         slideUp(tagEdit, 150);
@@ -117,7 +119,7 @@ const handleTogglePaperEdit = (e) => {
         // Enable select2 tags input
         tagSelect2.select2({
             ...global.select2Options,
-            width: "75%",
+            width: "86%",
         });
         if (!hasClass(container, "has-monitoring")) {
             // only listen for changes once
@@ -129,6 +131,7 @@ const handleTogglePaperEdit = (e) => {
         slideUp(codeAndNote, 150);
         slideUp(tagList, 150);
         slideUp(actions, 150);
+        slideUp(authors, 150);
         // Show form
         slideDown(editPaper, 150);
         slideDown(tagEdit, 150);

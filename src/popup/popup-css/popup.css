@@ -483,8 +483,9 @@ strong {
     border-radius: 4px;
     border: 1px solid #aaa;
     margin-top: 8px;
-    /* line-height: 1.6rem; */
+    line-height: 1.1rem;
     padding: 6px;
+    margin-bottom: 4px;
 }
 
 .memory-code-link,

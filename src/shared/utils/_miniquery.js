@@ -179,7 +179,7 @@ const slideDown = (target, duration = 500, complete = () => {}) => {
     target.style.marginTop = 0;
     target.style.marginBottom = 0;
     target.offsetHeight;
-    target.style.boxSizing = "border-box";
+    // target.style.boxSizing = "border-box";
     target.style.transitionProperty = "height, margin, padding";
     target.style.transitionDuration = duration + "ms";
     target.style.height = height + "px";
