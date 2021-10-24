@@ -4,14 +4,11 @@
 const closeMenu = () => {
     let classes = ["tabler-icon", "menu-svg"];
 
-    $("#menu-container").slideUp({
-        duration: 300,
-        easing: "easeOutQuint",
-    }) &&
-        $("#tabler-menu").fadeOut(() => {
-            setHTMLEl("tabler-menu", tablerSvg("settings", "tabler-menu-svg", classes));
-            $("#tabler-menu").fadeIn();
-        });
+    slideUp("menu-container", 300);
+    $("#tabler-menu").fadeOut(() => {
+        setHTMLEl("tabler-menu", tablerSvg("settings", "tabler-menu-svg", classes));
+        $("#tabler-menu").fadeIn();
+    });
     global.state.menuIsOpen = false;
 };
 

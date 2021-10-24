@@ -90,48 +90,48 @@ const handleTogglePaperEdit = (e) => {
     // find elements
     const id = eventId(e);
     const container = findEl(`memory-container--${id}`);
-    const codeAndNote = $(findEl(id, "code-and-note"));
-    const editPaper = $(findEl(id, "extended-item"));
-    const tagList = $(findEl(id, "tag-list"));
-    const tagEdit = $(findEl(id, "edit-tags"));
-    const tagSelect = $(findEl(id, "memory-item-tags"));
-    const actions = $(findEl(id, "memory-item-actions"));
+    const codeAndNote = findEl(id, "code-and-note");
+    const editPaper = findEl(id, "extended-item");
+    const tagList = findEl(id, "tag-list");
+    const tagEdit = findEl(id, "edit-tags");
+    const actions = findEl(id, "memory-item-actions");
+    const tagSelect2 = $(findEl(id, "memory-item-tags"));
 
     if (hasClass(container, "expand-open")) {
         // The edit form is open
-        container.classList.remove("expand-open");
+        removeClass(container, "expand-open");
         // Open display elements
-        codeAndNote.slideDown(250);
-        tagList.slideDown(250);
-        actions.slideDown(250);
+        slideDown(codeAndNote, 150);
+        slideDown(tagList, 150);
+        slideDown(actions, 150);
         // Close inputs
-        editPaper.slideUp(250);
-        tagEdit.slideUp(250);
+        slideUp(editPaper, 150);
+        slideUp(tagEdit, 150);
         // destroy to enable options update in HTML
         setTimeout(() => {
-            tagSelect.select2("destroy");
+            tagSelect2.select2("destroy");
         }, 500);
     } else {
         // The edit form is closed
         addClass(container, "expand-open");
         // Enable select2 tags input
-        tagSelect.select2({
+        tagSelect2.select2({
             ...global.select2Options,
             width: "75%",
         });
         if (!hasClass(container, "has-monitoring")) {
             // only listen for changes once
-            tagSelect.on("change", monitorPaperEdits(id, false));
+            tagSelect2.on("change", monitorPaperEdits(id, false));
         }
         // monitorPaperEdits listener has been added
         container.classList.add("has-monitoring");
         // Close display elements
-        codeAndNote.slideUp(250);
-        tagList.slideUp(250);
-        actions.slideUp(250);
+        slideUp(codeAndNote, 150);
+        slideUp(tagList, 150);
+        slideUp(actions, 150);
         // Show form
-        editPaper.slideDown(250);
-        tagEdit.slideDown(250);
+        slideDown(editPaper, 150);
+        slideDown(tagEdit, 150);
     }
 };
 
@@ -273,6 +273,9 @@ const handlePopupKeydown = (e) => {
             // escape closes menu
             e.preventDefault();
             closeMenu();
+        } else if (key === "Enter") {
+            let el = document.querySelector("#tabler-menu:focus");
+            if (el) closeMenu();
         }
         return;
     }
@@ -356,12 +359,14 @@ const handleMenuCheckChange = () => {
 };
 
 const handleDownloadMemoryClick = () => {
-    const now = new Date().toLocaleString();
+    const now = new Date();
+    const date = now.toLocaleDateString().replaceAll("/", ".");
+    const time = now.toLocaleTimeString().replaceAll(":", ".");
     chrome.storage.local.get("papers", ({ papers }) => {
-        const version = papers.__dataVersion;
+        const version = versionToSemantic(papers.__dataVersion);
         downloadTextFile(
             JSON.stringify(papers),
-            `arxiv-memory-${version}-${now}.json`,
+            `memory-${version}-${date}-${time}.json`,
             "text/json"
         );
     });

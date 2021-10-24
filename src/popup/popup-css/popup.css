@@ -179,6 +179,14 @@ strong {
     margin-bottom: 8px;
 }
 
+#menu-container h4 {
+    font-size: 1rem;
+}
+
+#menu-container label {
+    font-size: 0.9rem;
+}
+
 #helpButton {
     font-size: 0.8rem;
     position: absolute;

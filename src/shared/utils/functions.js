@@ -246,17 +246,6 @@ $.extend($.easing, {
  *
  */
 
-/**
- * Find a JQuery element with class className within #memory-container--${eid}
- * @param {string} eid The escaped id for the paper (id.replaceAll(".", "\\."))
- * @param {string} className The class of the element to find within the container with id^
- * @returns {HTMLElement}Jquery element
- */
-const findEl = (id, className) => {
-    if (typeof className === "undefined") return document.getElementById(id);
-    return findEl(`memory-container--${id}`).querySelector(`.${className}`);
-};
-
 const defaultPDFTitleFn = (title, id) => {
     title = title.replaceAll("\n", " ").replace(/\s\s+/g, " ");
     return `${title} - ${id}.pdf`;
@@ -584,6 +573,17 @@ const manifestDataVersion = () => {
         .split(".")
         .map((v, k) => parseInt(v) * 10 ** (4 - 2 * k))
         .reduce((a, b) => a + b);
+};
+
+const versionToSemantic = (dataVersionInt) => {
+    // 209 -> 0.2.9
+    // 1293 -> 0.12.93
+    // 23439 -> 2.34.39
+    major = parseInt(dataVersionInt / 1e4, 10);
+    dataVersionInt -= major * 1e4;
+    minor = parseInt(dataVersionInt / 1e2, 10);
+    dataVersionInt -= minor * 1e2;
+    return `${major}.${minor}.${dataVersionInt}`;
 };
 
 const initState = async (papers, isContentScript) => {

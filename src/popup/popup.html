@@ -69,69 +69,68 @@
 
 		</div>
 
+	</div>
 
-		<div id="menu-container" style="display: none;">
+	<div id="menu-container" style="display: none;">
 
-			<p>It's the little things that make your research smoother.</p>
+		<p>It's the little things that make your research smoother.</p>
 
-			<p>Look at the code ; raise issues ; share improvement ideas </p>
+		<p>Look at the code ; raise issues ; share improvement ideas </p>
 
-			<p><a id="helpGithubLink"
-					href="https://github.com/vict0rsch/ArxivTools">https://github.com/vict0rsch/ArxivTools</a>
-			</p>
+		<p><a id="helpGithubLink"
+				href="https://github.com/vict0rsch/ArxivTools">https://github.com/vict0rsch/ArxivTools</a>
+		</p>
 
-			<h4>Options</h4>
+		<h4>Configuration</h4>
 
-			<div id="options">
-				<input class="switch" type="checkbox" id="checkDownload" name="checkDownload" value="checkDownload">
-				<label for="checkDownload">Add PDF direct download
-					button</label><br><br>
+		<div id="options">
+			<input class="switch" type="checkbox" id="checkDownload" name="checkDownload" value="checkDownload">
+			<label for="checkDownload">Add PDF direct download
+				button</label><br><br>
 
-				<input class="switch" type="checkbox" id="checkMd" name="checkMd" value="checkMd">
-				<label for="checkMd"> Add Markdown Link section</label><br><br>
+			<input class="switch" type="checkbox" id="checkMd" name="checkMd" value="checkMd">
+			<label for="checkMd"> Add Markdown Link section</label><br><br>
 
-				<input class="switch" type="checkbox" id="checkBib" name="checkBib" value="checkBib">
-				<label for="checkBib"> Add BibTex citation section</label><br><br>
+			<input class="switch" type="checkbox" id="checkBib" name="checkBib" value="checkBib">
+			<label for="checkBib"> Add BibTex citation section</label><br><br>
 
-				<input class="switch" type="checkbox" id="checkPdfTitle" name="checkPdfTitle" value="checkPdfTitle">
-				<label for="checkPdfTitle"> Change Arxiv tab titles</label><br><br>
+			<input class="switch" type="checkbox" id="checkPdfTitle" name="checkPdfTitle" value="checkPdfTitle">
+			<label for="checkPdfTitle"> Change Arxiv tab titles</label><br><br>
 
-				<input class="switch" type="checkbox" id="checkVanity" name="checkVanity" value="checkVanity">
-				<label for="checkVanity"> Add Bibtex citation on Arxiv-Vanity</label><br><br>
+			<input class="switch" type="checkbox" id="checkVanity" name="checkVanity" value="checkVanity">
+			<label for="checkVanity"> Add Bibtex citation on Arxiv-Vanity</label><br><br>
 
-				<input class="switch" type="checkbox" id="checkFeedback" name="checkFeedback" value="checkFeedback">
-				<label for="checkFeedback"> Display feedback slider when a paper is added</label><br><br>
+			<input class="switch" type="checkbox" id="checkFeedback" name="checkFeedback" value="checkFeedback">
+			<label for="checkFeedback"> Display feedback slider when a paper is added</label><br><br>
 
-				<input class="switch" type="checkbox" id="checkDarkMode" name="checkDarkMode" value="checkDarkMode">
-				<label for="checkDarkMode">Use Dark Mode</label><br><br>
-			</div>
-
-			<div style="display: flex; align-items: center;">
-				<p>Download your ArxivMemory as json file: </p>
-				<button style="margin-left: 3px" id="download-arxivmemory">Download</button>
-			</div>
-
-			<div style="display: flex; justify-content: center; flex-direction: column; align-items: center;">
-				<p>
-					/!\ <strong>Beta</strong> feature: PDF file name parser -> enter a javascript function taking as
-					input
-					<code style="margin: 0px; display: inline-block;">(title, id)</code> and returning a string.
-				</p>
-
-				<textarea id="customPdfTitleTextarea" style="width: 100%; margin-bottom: 8px;" rows="5">
-(title, id) => {
-    title = title.replaceAll("\n", '');
-    return `${title} - ${id}.pdf`
-}</textarea>
-				<div
-					style="display: flex; justify-content: space-evenly; align-items: center; margin-bottom: 16px; width: 60%">
-					<button id="saveCustomPdf">Save function</button>
-					<button id="defaultCustomPdf">Back to default</button>
-				</div>
-				<div id="customPdfFeedback"></div>
-			</div>
+			<input class="switch" type="checkbox" id="checkDarkMode" name="checkDarkMode" value="checkDarkMode">
+			<label for="checkDarkMode">Use Dark Mode</label><br><br>
 		</div>
 
+		<div style="display: flex; align-items: center;">
+			<p>Download your ArxivMemory as json file: </p>
+			<button style="margin-left: 3px" id="download-arxivmemory">Download</button>
+		</div>
+
+		<div style="display: flex; justify-content: center; flex-direction: column; align-items: center;">
+			<p>
+				/!\ <strong>Beta</strong> feature: PDF file name parser -> enter a javascript function taking as
+				input
+				<code style="margin: 0px; display: inline-block;">(title, id)</code> and returning a string.
+			</p>
+
+			<textarea id="customPdfTitleTextarea" style="width: 100%; margin-bottom: 8px;" rows="5">
+(title, id) => {
+title = title.replaceAll("\n", '');
+return `${title} - ${id}.pdf`
+}</textarea>
+			<div
+				style="display: flex; justify-content: space-evenly; align-items: center; margin-bottom: 16px; width: 60%">
+				<button id="saveCustomPdf">Save function</button>
+				<button id="defaultCustomPdf">Back to default</button>
+			</div>
+			<div id="customPdfFeedback"></div>
+		</div>
 	</div>
 
 	<div id="memory-switch">

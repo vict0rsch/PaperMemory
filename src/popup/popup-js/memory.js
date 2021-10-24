@@ -540,32 +540,6 @@ const displayMemoryTable = () => {
     console.log("[displayMemoryTable] Listeners duration (s): " + (end2 - end) / 1000);
 };
 
-const openMemory = () => {
-    global.state.menuIsOpen && closeMenu();
-    global.state.memoryIsOpen = true;
-    // hide menu button
-    $("#tabler-menu").fadeOut(200);
-    // set default sort to lastOpenDate
-    val("memory-select", "lastOpenDate");
-    // set default sort direction arrow down
-    setMemorySortArrow("down");
-
-    // remove ArxivMemory button and show the (x) to close it
-    $("#memory-switch-text-on").hide();
-    $("#memory-switch-text-off").show();
-
-    addListener("memory-search", "search", handleClearSearch);
-    $("#memory-container").slideDown({
-        duration: 250,
-        easing: "easeOutQuint",
-        complete: () => {
-            setTimeout(() => {
-                dispatch("memory-search", "focus");
-            }, 150);
-        },
-    });
-};
-
 /**
  * Main function called after the user clicks on the ArxivMemory button
  * or presses `a`.
@@ -614,21 +588,44 @@ const makeMemoryHTML = async () => {
     console.log("Total time to make (async) (s):" + (tend - tstart));
 };
 
+const openMemory = () => {
+    global.state.menuIsOpen && closeMenu();
+    global.state.memoryIsOpen = true;
+    // hide menu button
+    $("#tabler-menu").fadeOut(100);
+    slideDown("memory-container", 200, () => {
+        setTimeout(() => {
+            dispatch("memory-search", "focus");
+        }, 150);
+    });
+    setTimeout(() => {
+        addListener("memory-search", "search", handleClearSearch);
+        // set default sort to lastOpenDate
+        val("memory-select", "lastOpenDate");
+        // set default sort direction arrow down
+        setMemorySortArrow("down");
+
+        // remove ArxivMemory button and show the (x) to close it
+        $("#memory-switch-text-on").hide();
+        $("#memory-switch-text-off").show();
+    }, 200);
+};
+
 /**
  * Closes the memory overlay with slideUp
  */
 const closeMemory = () => {
-    $("#memory-container").slideUp({
-        duration: 300,
-        easing: "easeOutQuint",
+    slideUp("memory-container", 200, () => {
+        val("memory-search", "");
+        dispatch("memory-search", "clear-search");
+        global.state.memoryIsOpen = false;
+        if (global.state.showFavorites) {
+            dispatch("filter-favorites", "click");
+        }
     });
-    $("#memory-switch-text-off").hide();
-    $("#memory-switch-text-on").show();
-    $("#tabler-menu").fadeIn(200);
-    val("memory-search", "");
-    dispatch("memory-search", "clear-search");
-    global.state.memoryIsOpen = false;
-    if (global.state.showFavorites) {
-        dispatch("filter-favorites", "click");
-    }
+    setTimeout(() => {
+        hideId("memory-switch-text-off");
+        showId("memory-switch-text-on");
+        $("#tabler-menu").fadeIn(200);
+    }, 250);
 };
