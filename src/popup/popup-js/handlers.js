@@ -277,7 +277,7 @@ const handlePopupKeydown = (e) => {
             e.preventDefault();
             closeMenu();
         } else if (key === "Enter") {
-            let el = document.querySelector("#tabler-menu:focus");
+            let el = document.querySelector("#menu-switch:focus");
             if (el) closeMenu();
         }
         return;
@@ -301,10 +301,10 @@ const handlePopupKeydown = (e) => {
                 return;
             }
             // enter on the menu button opens it
-            el = document.querySelector("#tabler-menu:focus");
+            el = document.querySelector("#menu-switch:focus");
             if (el) {
-                dispatch("tabler-menu", "click");
-                dispatch("tabler-menu", "blur");
+                dispatch("menu-switch", "click");
+                dispatch("menu-switch", "blur");
                 return;
             }
         }
@@ -425,9 +425,9 @@ const handlePopupSaveEdits = (id) => () => {
     saveCodeLink(id, codeLink);
     saveFavoriteItem(id, favorite);
     setHTML("popup-feedback-copied", "Saved tags, code, note & favorite!");
-    $("#popup-feedback-copied").fadeIn(200);
+    fadeIn("popup-feedback-copied");
     setTimeout(() => {
-        $("#popup-feedback-copied").fadeOut(200);
+        fadeOut("popup-feedback-copied");
     }, 2000);
     disable(`popup-save-edits--${id}`);
 };

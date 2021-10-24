@@ -124,7 +124,7 @@ const main = (checks) => {
 const feedback = (text) => {
     try {
         clearTimeout(timeout);
-        $("#feedback-notif").remove();
+        findEl("feedback-notif").remove();
         prevent = true;
     } catch (error) {
         console.log("No feedback to remove.");
@@ -239,14 +239,14 @@ const arxiv = (checks) => {
 
     // console.log({ checks })
 
-    var h = $(".extra-services .full-text h2").first();
+    var h = document.querySelector(".extra-services .full-text h2");
 
     const url = window.location.href;
     const id = url.match(/\d{4}\.\d{4,5}\d/g)[0];
     const isArxivAbs = window.location.href.includes("https://arxiv.org/abs/");
     const pdfUrl =
         "https://arxiv.org" +
-        $(".abs-button.download-pdf").first().attr("href") +
+        document.querySelector(".abs-button.download-pdf").href +
         ".pdf";
 
     global.state.pdfTitleFn = pdfTitleFn;
@@ -262,15 +262,15 @@ const arxiv = (checks) => {
                 </div>
             </div>
             `;
-        h.parent().append(button);
+        h.parentElement.innerHTML += button;
         var downloadTimeout;
         $("#arxiv-button").on("click", async () => {
-            $("#arxiv-button").removeClass("downloaded");
-            $("#arxiv-button").addClass("downloaded");
+            removeClass("arxiv-button", "downloaded");
+            addClass("arxiv-button", "downloaded");
             downloadTimeout && clearTimeout(downloadTimeout);
             downloadTimeout = setTimeout(() => {
-                $("#arxiv-button").hasClass("downloaded") &&
-                    $("#arxiv-button").removeClass("downloaded");
+                hasClass("arxiv-button", "downloaded") &&
+                    removeClass("arxiv-button", "downloaded");
             }, 1500);
             const title = await $.get(
                 `https://export.arxiv.org/api/query?id_list=${id}`
@@ -284,7 +284,7 @@ const arxiv = (checks) => {
     // -----  Markdown Link  -----
     // ---------------------------
     if (checkMd && isArxivAbs) {
-        h.parent().append(/*html*/ `
+        h.parentElement.innerHTML += /*html*/ `
             <div id="markdown-container">
                 <div id="markdown-header" class="arxivTools-header">
                     <h3>Markdown</h3>
@@ -294,21 +294,24 @@ const arxiv = (checks) => {
                 <div id="markdown-link" class="arxivTools-codify">[${
                     document.title
                 }](${pdfUrl})</div>
-            </div>
-        `);
-        $("#markdown-header .copy-feedback").on("click", (e) => {
-            $("#markdown-header .copy-feedback").fadeOut(200, () => {
-                $("#markdown-header .copy-feedback-ok").fadeIn(200, () => {
-                    setTimeout(() => {
-                        $("#markdown-header .copy-feedback-ok").fadeOut(200, () => {
-                            $("#markdown-header .copy-feedback").fadeIn(200);
-                        });
-                    }, 1500);
+            </div>`;
+        addListener(
+            document.querySelector("#markdown-header .copy-feedback"),
+            "click",
+            (e) => {
+                $("#markdown-header .copy-feedback").fadeOut(200, () => {
+                    $("#markdown-header .copy-feedback-ok").fadeIn(200, () => {
+                        setTimeout(() => {
+                            $("#markdown-header .copy-feedback-ok").fadeOut(200, () => {
+                                $("#markdown-header .copy-feedback").fadeIn(200);
+                            });
+                        }, 1500);
+                    });
                 });
-            });
-            copyTextToClipboard($("#markdown-link").text());
-            feedback("Markdown Link Copied!");
-        });
+                copyTextToClipboard(findEl("markdown-link").innerText);
+                feedback("Markdown Link Copied!");
+            }
+        );
     }
 
     if (checkPdfTitle) {
@@ -335,7 +338,7 @@ const arxiv = (checks) => {
     }
 
     if (checkBib && isArxivAbs) {
-        h.parent().append(/*html*/ `
+        h.parentElement.innerHTML += /*html*/ `
                 <div id="loader-container" class="arxivTools-container">
                     <div class="sk-folding-cube">
                         <div class="sk-cube1 sk-cube"></div>
@@ -344,7 +347,7 @@ const arxiv = (checks) => {
                         <div class="sk-cube3 sk-cube"></div>
                     </div>
                 </div>
-            `);
+            `;
 
         $.get(`https://export.arxiv.org/api/query?id_list=${id}`).then((data) => {
             const { bibvars, bibtext } = parseArxivBibtex(data);
@@ -361,21 +364,28 @@ const arxiv = (checks) => {
                 `;
 
             $("#loader-container").fadeOut(() => {
-                $("#loader-container").remove();
-                h.parent().append(bibtexDiv);
-                $("#texHeader .copy-feedback").on("click", (e) => {
-                    $("#texHeader .copy-feedback").fadeOut(200, () => {
-                        $("#texHeader .copy-feedback-ok").fadeIn(200, () => {
-                            setTimeout(() => {
-                                $("#texHeader .copy-feedback-ok").fadeOut(200, () => {
-                                    $("#texHeader .copy-feedback").fadeIn(200);
-                                });
-                            }, 1500);
+                findEl("loader-container").remove();
+                h.parentElement.innerHTML += bibtexDiv;
+                addListener(
+                    document.querySelector("#texHeader .copy-feedback"),
+                    "click",
+                    (e) => {
+                        $("#texHeader .copy-feedback").fadeOut(200, () => {
+                            $("#texHeader .copy-feedback-ok").fadeIn(200, () => {
+                                setTimeout(() => {
+                                    $("#texHeader .copy-feedback-ok").fadeOut(
+                                        200,
+                                        () => {
+                                            $("#texHeader .copy-feedback").fadeIn(200);
+                                        }
+                                    );
+                                }, 1500);
+                            });
                         });
-                    });
-                    copyTextToClipboard($("#texTextarea").text());
-                    feedback("Bibtex Citation Copied!");
-                });
+                        copyTextToClipboard(findEl("texTextarea").innerText);
+                        feedback("Bibtex Citation Copied!");
+                    }
+                );
             });
         });
     }

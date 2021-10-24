@@ -18,7 +18,8 @@
 -----  Popup  -----
 -------------------
 */
-body {
+body,
+#confirm-modal {
     color: var(--color);
     background: var(--background);
 }
@@ -217,8 +218,9 @@ button:not(.select2-selection__choice__remove):hover {
 
 .menu-svg,
 #memory-switch-close,
-#tabler-menu-svg,
-.popup-click-svg {
+#menu-switch-svg,
+.popup-click-svg,
+.memory-sort-arrow-svg {
     color: var(--color) !important;
     stroke: var(--color) !important;
     fill: var(--background) !important;

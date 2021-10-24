@@ -5,9 +5,35 @@
  * @returns {HTMLElement}
  */
 const findEl = (id, memoryItemClass) => {
-    if (typeof memoryItemClass === "undefined") return document.getElementById(id);
+    if (typeof memoryItemClass === "undefined")
+        return typeof id === "string" ? document.getElementById(id) : id;
     return findEl(`memory-container--${id}`).querySelector(`.${memoryItemClass}`);
 };
+
+function fadeOut(el, duration = 250, callback = () => {}) {
+    el = findEl(el);
+    el.style.transition = `${duration}ms`;
+    el.style.opacity = 0;
+    setTimeout(() => {
+        el.style.display = "none";
+        callback();
+    }, duration);
+}
+function fadeIn(el, display = "block", duration = 250, callback = () => {}) {
+    el = findEl(el);
+    el.style.opacity = 0;
+    if (el.style.display === "none") {
+        el.style.display = display;
+    }
+    setTimeout(() => {
+        // 0 timeout: https://stackoverflow.com/a/34764787/3867406
+        el.style.transition = `${duration}ms`;
+        el.style.opacity = 1;
+        setTimeout(() => {
+            callback();
+        }, duration);
+    }, 0);
+}
 
 const val = (el, value) => {
     if (el instanceof HTMLInputElement && el.type === "checkbox") {
@@ -55,6 +81,9 @@ const dispatch = (el, event) => {
     if (typeof event === "string") {
         if (event === "focus") {
             el.focus();
+            return;
+        } else if (event === "blur") {
+            el.blur();
             return;
         }
         event = new Event(event);

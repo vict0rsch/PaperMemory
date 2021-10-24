@@ -593,11 +593,14 @@ const openMemory = () => {
     global.state.menuIsOpen && closeMenu();
     global.state.memoryIsOpen = true;
     // hide menu button
-    $("#tabler-menu").fadeOut(100);
+    hideId("memory-switch-open");
+    showId("memory-switch-close");
+    hideId("menu-switch");
+    dispatch("memory-switch", "blur");
     slideDown("memory-container", 200, () => {
         setTimeout(() => {
             dispatch("memory-search", "focus");
-        }, 150);
+        }, 100);
     });
     setTimeout(() => {
         addListener("memory-search", "search", handleClearSearch);
@@ -605,10 +608,6 @@ const openMemory = () => {
         val("memory-select", "lastOpenDate");
         // set default sort direction arrow down
         setMemorySortArrow("down");
-
-        // remove ArxivMemory button and show the (x) to close it
-        hideId("memory-switch-open");
-        showId("memory-switch-close");
     }, 200);
 };
 
@@ -616,6 +615,9 @@ const openMemory = () => {
  * Closes the memory overlay with slideUp
  */
 const closeMemory = () => {
+    dispatch("memory-switch", "blur");
+    hideId("memory-switch-close");
+    showId("memory-switch-open");
     slideUp("memory-container", 200, () => {
         val("memory-search", "");
         dispatch("memory-search", "clear-search");
@@ -623,10 +625,6 @@ const closeMemory = () => {
         if (global.state.showFavorites) {
             dispatch("filter-favorites", "click");
         }
+        showId("menu-switch");
     });
-    setTimeout(() => {
-        hideId("memory-switch-close");
-        showId("memory-switch-open");
-        $("#tabler-menu").fadeIn(200);
-    }, 250);
 };

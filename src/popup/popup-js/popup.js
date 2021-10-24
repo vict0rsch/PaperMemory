@@ -5,10 +5,8 @@ const closeMenu = () => {
     let classes = ["tabler-icon", "menu-svg"];
 
     slideUp("menu-container", 300);
-    $("#tabler-menu").fadeOut(() => {
-        setHTML("tabler-menu", tablerSvg("settings", "tabler-menu-svg", classes));
-        $("#tabler-menu").fadeIn();
-    });
+    setHTML("menu-switch", tablerSvg("settings", "menu-switch-svg", classes));
+    dispatch("menu-switch", "blur");
     global.state.menuIsOpen = false;
 };
 
@@ -18,10 +16,8 @@ const closeMenu = () => {
 const openMenu = () => {
     let classes = ["tabler-icon", "menu-svg"];
     slideDown("menu-container", 300);
-    $("#tabler-menu").fadeOut(() => {
-        setHTML("tabler-menu", tablerSvg("circle-x", "close-menu-btn", classes));
-        $("#tabler-menu").fadeIn();
-    });
+    dispatch("menu-switch", "blur");
+    setHTML("menu-switch", tablerSvg("circle-x", "close-menu-btn", classes));
     global.state.menuIsOpen = true;
 };
 /**
@@ -63,7 +59,7 @@ const setStandardPopupClicks = () => {
         });
     });
 
-    addListener("tabler-menu", "click", () => {
+    addListener("menu-switch", "click", () => {
         global.state.menuIsOpen ? closeMenu() : openMenu();
     });
 

@@ -110,7 +110,7 @@ strong {
     color: var(--red);
     stroke-width: 1px;
 }
-#tabler-menu-svg {
+#menu-switch-svg {
     color: rgb(43, 43, 61);
 }
 
@@ -120,7 +120,7 @@ strong {
     pointer-events: none;
 }
 
-#tabler-menu {
+#menu-switch {
     position: absolute;
     bottom: 12px;
     right: 12px;
@@ -133,11 +133,11 @@ strong {
     align-items: center;
 }
 
-#tabler-menu svg {
+#menu-switch svg {
     transition: all 0.2s ease-in-out;
 }
 
-#tabler-menu svg:hover {
+#menu-switch svg:hover {
     transform: scale(1.1);
 }
 
