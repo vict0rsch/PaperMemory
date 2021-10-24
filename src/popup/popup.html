@@ -3,6 +3,7 @@
 
 <head>
 	<meta charset='utf-8'>
+	<script src="./theme.min.js"></script>
 	<link rel="stylesheet" type="text/css" href="./popup-css/select2.min.css">
 	<link rel="stylesheet" type="text/css" href="./popup-css/popup.min.css">
 	<link rel="stylesheet" type="text/css" href="./popup-css/options.min.css">
@@ -10,21 +11,17 @@
 
 	<script defer src="../shared/jquery.min.js"></script>
 	<script defer src="../shared/select2.min.js"></script>
-
 	<script defer src="../shared/utils.min.js"></script>
-
-
 	<script defer src="./popup-js.min.js"></script>
-
-
 </head>
 
 <body>
 
 	<div id="popup-header">
 		<h1>Arxiv Tools</h1>
-		<svg class="tabler-icon" id="header-icon">
-			<use xlink:href="../../icons/tabler-sprite-nostroke.svg#tabler-bolt" />
+		<svg viewBox="0 0 24 24" class="tabler-icon" id="header-icon">
+			<path stroke="none" d="M0 0h24v24H0z" fill="none" />
+			<polyline points="13 3 13 10 19 10 11 21 11 14 5 14 13 3" />
 		</svg>
 	</div>
 
@@ -133,7 +130,7 @@ return `${title} - ${id}.pdf`
 		</div>
 	</div>
 
-	<div id="memory-switch">
+	<div id="memory-switch" style="display: none;">
 		<svg xmlns="http://www.w3.org/2000/svg" tabindex="0" id="memory-switch-text-on"
 			class="icon icon-tabler icon-tabler-folders" width="44" height="44" viewBox="0 0 24 24" stroke-width="1.5"
 			fill="none" stroke-linecap="round" stroke-linejoin="round">
@@ -152,18 +149,25 @@ return `${title} - ${id}.pdf`
 	</div>
 
 	<div id="tabler-menu" tabindex="0" title="Open settings">
-		<svg id='tabler-menu-svg' class="tabler-icon">
-			<use xlink:href="../../icons/tabler-sprite-nostroke.svg#tabler-settings" />
+		<svg viewBox="0 0 24 24" id='tabler-menu-svg' class="tabler-icon">
+			<path stroke="none" d="M0 0h24v24H0z" fill="none" />
+			<path
+				d="M10.325 4.317c.426 -1.756 2.924 -1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543 -.94 3.31 .826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756 .426 1.756 2.924 0 3.35a1.724 1.724 0 0 0 -1.066 2.573c.94 1.543 -.826 3.31 -2.37 2.37a1.724 1.724 0 0 0 -2.572 1.065c-.426 1.756 -2.924 1.756 -3.35 0a1.724 1.724 0 0 0 -2.573 -1.066c-1.543 .94 -3.31 -.826 -2.37 -2.37a1.724 1.724 0 0 0 -1.065 -2.572c-1.756 -.426 -1.756 -2.924 0 -3.35a1.724 1.724 0 0 0 1.066 -2.573c-.94 -1.543 .826 -3.31 2.37 -2.37c1 .608 2.296 .07 2.572 -1.065z" />
+			<circle cx="12" cy="12" r="3" />
 		</svg>
+
 	</div>
 
 	<div id="memory-container" style="display: none;">
 		<div id="memory-filters">
 			<input id="memory-search" type="search" placeholder="search" style="width: 45%;" />
 			<span tabindex="0" id="filter-favorites" title="Show favorites only">
-				<svg style="vertical-align: bottom; height: 22px; width: 32px">
-					<use xlink:href="../../icons/tabler-sprite-nostroke.svg#tabler-star" />
+				<svg viewBox="0 0 24 24" style="vertical-align: bottom; height: 22px; width: 32px">
+					<path stroke="none" d="M0 0h24v24H0z" fill="none" />
+					<path
+						d="M12 17.75l-6.172 3.245l1.179 -6.873l-5 -4.867l6.9 -1l3.086 -6.253l3.086 6.253l6.9 1l-5 4.867l1.179 6.873z" />
 				</svg>
+
 			</span>
 			<select style="width: 30%;" id="memory-select">
 				<option value="lastOpenDate">Last Open</option>
@@ -173,17 +177,17 @@ return `${title} - ${id}.pdf`
 				<option value="id">ID</option>
 			</select>
 			<span tabindex="0" id="memory-sort-arrow">
-				<svg class="memory-sort-arrow-svg" id="memory-sort-arrow-down">
-					<use xlink:href="../../icons/tabler-sprite-nostroke.svg#tabler-arrow-narrow-down" />
+				<svg viewBox="0 0 24 24" class="memory-sort-arrow-svg" id="memory-sort-arrow-down">
+					<path stroke="none" d="M0 0h24v24H0z" fill="none" />
+					<line x1="12" y1="5" x2="12" y2="19" />
+					<line x1="16" y1="15" x2="12" y2="19" />
+					<line x1="8" y1="15" x2="12" y2="19" />
 				</svg>
 			</span>
 		</div>
 		<div id="memory-table" width="100%">
 		</div>
 	</div>
-
-
-
 
 </body>
 

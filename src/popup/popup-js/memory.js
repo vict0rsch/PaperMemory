@@ -1,5 +1,7 @@
 /**
- * TODO: fix paper popup added/removed to/from favorites => update memory table
+ * TODO: add loader: when papers are long to retrieve need to find a way to still open the popup asap
+ * TODO: docstrings
+ * TODO: miniquery for content_script.js
  */
 
 const getTagsOptions = (paper) => {

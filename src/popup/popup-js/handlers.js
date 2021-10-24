@@ -292,7 +292,7 @@ const handlePopupKeydown = (e) => {
                     return;
                 }
             }
-            dispatch("memory-switch", "click");
+            global.state.papers && dispatch("memory-switch", "click");
         } else if (key === "Enter") {
             // enter on the arxiv memory button opens it
             let el = document.querySelector("#memory-switch-text-on:focus");

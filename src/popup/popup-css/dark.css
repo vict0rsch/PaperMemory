@@ -36,7 +36,8 @@ body {
     border-color: var(--color);
 }
 #header-icon {
-    color: var(--lighterColor);
+    color: var(--lighterColor) !important;
+    stroke: var(--lighterColor) !important;
 }
 #popup-feedback-copied {
     color: var(--green);
@@ -71,6 +72,11 @@ input[type="checkbox"].switch:not(:checked) {
 
 /* Dropdown options (not selected or hovered) */
 .select2-results__option--selectable {
+    background: var(--lighterBackground);
+    color: var(--color);
+}
+/* Empty Results */
+.select2-results__option.select2-results__message {
     background: var(--lighterBackground);
     color: var(--color);
 }
@@ -150,7 +156,7 @@ button:not(.select2-selection__choice__remove):hover {
     background: var(--background);
 }
 #memory-search {
-    background: var(--lightestBackground);
+    background: var(--codeBackground);
     color: white;
 }
 #memory-search::placeholder {

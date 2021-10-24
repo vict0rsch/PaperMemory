@@ -198,32 +198,23 @@ const popupMain = async (url, isKnownPage) => {
     setAndHandleCustomPDFFunction(menu);
 };
 
-const setPopupColors = async () => {
-    if ((await getTheme()) !== "dark") return;
-    // Your CSS as text
-    var link = document.createElement("link");
-    link.href = chrome.extension.getURL("src/popup/popup-css/dark.min.css");
-    link.type = "text/css";
-    link.rel = "stylesheet";
-    document.head.appendChild(link);
-};
+// ------------------------------
+// -----  Script Execution  -----
+// ------------------------------
 
-$(() => {
-    setPopupColors();
+const query = { active: true, lastFocusedWindow: true };
+chrome.tabs.query(query, async (tabs) => {
+    const url = tabs[0].url;
 
-    const query = { active: true, lastFocusedWindow: true };
-    chrome.tabs.query(query, async (tabs) => {
-        const url = tabs[0].url;
+    const is = isPaper(url);
+    console.log("is: ", is);
+    const isKnownPage = Object.values(is).some((i) => i);
+    console.log("isKnownPage: ", isKnownPage);
 
-        const is = isPaper(url);
-        console.log("is: ", is);
-        const isKnownPage = Object.values(is).some((i) => i);
-        console.log("isKnownPage: ", isKnownPage);
+    if (!isKnownPage) showId("notArxiv");
 
-        if (!isKnownPage) showId("notArxiv");
-
-        await initState();
-        makeMemoryHTML();
-        popupMain(url, isKnownPage);
-    });
+    await initState();
+    showId("memory-switch");
+    makeMemoryHTML();
+    popupMain(url, isKnownPage);
 });
