@@ -80,7 +80,7 @@ const handleCancelPaperEdit = (e) => {
     const id = eventId(e);
     const paper = global.state.papers[id];
     val(findEl(id, "form-note-textarea"), paper.note);
-    setHTMLEl(findEl(id, "memory-item-tags"), getTagsOptions(paper));
+    setHTML(findEl(id, "memory-item-tags"), getTagsOptions(paper));
     dispatch(findEl(id, "memory-item-edit"), "click");
     disable(findEl(id, "memory-item-save-edits"));
 };
@@ -354,7 +354,8 @@ const handlePopupKeydown = (e) => {
     }
 };
 
-const handleMenuCheckChange = () => {
+const handleMenuCheckChange = (e) => {
+    const key = e.target.id;
     const checked = findEl(key).checked;
     chrome.storage.local.set({ [key]: checked }, function () {
         console.log(`Settings saved for ${key} (${checked})`);
@@ -390,12 +391,12 @@ const handleCustomPDFFunctionSave = () => {
         }
         // no error so far: all good!
         const savedFeedback = /*html*/ `<span style="color: green">Saved!</span>`;
-        setHTMLEl("customPdfFeedback", savedFeedback);
+        setHTML("customPdfFeedback", savedFeedback);
         // save function string
         chrome.storage.local.set({ pdfTitleFn: code });
         global.state.pdfTitleFn = fn;
         setTimeout(() => {
-            setHTMLEl("customPdfFeedback", "");
+            setHTML("customPdfFeedback", "");
         }, 1000);
     } catch (error) {
         // something went wrong!
@@ -411,19 +412,19 @@ const handleDefaultPDFFunctionClick = () => {
     chrome.storage.local.set({ pdfTitleFn: code });
     global.state.pdfTitleFn = defaultPDFTitleFn;
     val("customPdfTitleTextarea", code);
-    setHTMLEl("customPdfFeedback", savedFeedback);
+    setHTML("customPdfFeedback", savedFeedback);
     setTimeout(() => {
-        setHTMLEl("customPdfFeedback", "");
+        setHTML("customPdfFeedback", "");
     }, 1000);
 };
 
-const handlePopupSaveEdits = () => {
+const handlePopupSaveEdits = (id) => () => {
     const { note, codeLink, favorite } = getPaperEdits(id, true);
     updatePaperTags(id, `#popup-item-tags--${id}`);
     saveNote(id, note);
     saveCodeLink(id, codeLink);
     saveFavoriteItem(id, favorite);
-    setHTMLEl("popup-feedback-copied", "Saved tags, code, note & favorite!");
+    setHTML("popup-feedback-copied", "Saved tags, code, note & favorite!");
     $("#popup-feedback-copied").fadeIn(200);
     setTimeout(() => {
         $("#popup-feedback-copied").fadeOut(200);

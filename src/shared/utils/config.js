@@ -31,7 +31,7 @@ global.descendingSortKeys = ["addDate", "count", "lastOpenDate", "favoriteDate"]
  * Shared configuration for the Tags' select2 inputs
  */
 global.select2Options = {
-    placeholder: "Tag paper...",
+    placeholder: "Tag paper",
     maximumSelectionLength: 5,
     allowClear: true,
     tags: true,

@@ -21,7 +21,7 @@ const updateAllPaperTagOptions = () => {
     for (const id in global.state.papers) {
         if (global.state.papers.hasOwnProperty(id) && id !== "__dataVersion") {
             const paper = global.state.papers[id];
-            setHTMLEl(`memory-item-tags--${id}`, getTagsOptions(paper));
+            setHTML(`memory-item-tags--${id}`, getTagsOptions(paper));
         }
     }
 };
@@ -31,7 +31,7 @@ const updatePopupPaperNoMemory = () => {
     <div style="font-size: 1.5rem; width: 100%; text-align: center;">This paper is not in your memory</div>
     <h4 style="width: 100%; text-align: center;"> Refresh the page to add it back </h4>
     `;
-    setHTMLEl("isArxiv", noMemoryHTML);
+    setHTML("isArxiv", noMemoryHTML);
 };
 
 /**
@@ -183,7 +183,7 @@ const saveNote = (id, note) => {
     chrome.storage.local.set({ papers: global.state.papers }, () => {
         // console.log("Updated the note for " + global.state.papers[id].title);
 
-        setHTMLEl(
+        setHTML(
             findEl(id, "memory-note-div"),
             note
                 ? /*html*/ `
@@ -212,8 +212,8 @@ const saveCodeLink = (id, codeLink) => {
     global.state.papers[id].codeLink = codeLink;
     chrome.storage.local.set({ papers: global.state.papers }, () => {
         // console.log(`Updated the code for ${global.state.papers[id].title} to ${codeLink}`);
-        setHTMLEl(findEl(id, "memory-code-link"), codeLink);
-        setHTMLEl(`popup-code-link`, codeLink);
+        setHTML(findEl(id, "memory-code-link"), codeLink);
+        setHTML(`popup-code-link`, codeLink);
         val(findEl(id, "form-code-input"), codeLink);
         codeLink ? showId("popup-code-link") : hideId("popup-code-link");
         const codeInput = findEl(`popup-form-codeLink--${id}`);
@@ -275,7 +275,7 @@ const setMemorySortArrow = (direction) => {
                 </svg>`;
     }
 
-    setHTMLEl("memory-sort-arrow", arrow);
+    setHTML("memory-sort-arrow", arrow);
 };
 
 /**
@@ -404,7 +404,7 @@ const filterMemoryByCode = (letters) => {
  * @param {string} id The paper's id
  */
 const updatePaperTagsHTML = (id) => {
-    setHTMLEl(
+    setHTML(
         findEl(id, "tag-list"),
         global.state.papers[id].tags
             .map((t) => `<span class="memory-tag">${t}</span>`)
@@ -421,7 +421,7 @@ const updateTagOptions = (id) => {
     const tagOptions = getTagsOptions(global.state.papers[id]);
     // console.log("tagOptions: ", tagOptions);
     updateAllPaperTagOptions();
-    setHTMLEl(`popup-item-tags--${id}`, tagOptions);
+    setHTML(`popup-item-tags--${id}`, tagOptions);
 };
 
 /**
@@ -484,7 +484,7 @@ const displayMemoryTable = () => {
 
     // Clear existing items
     var memoryTable = findEl("memory-table");
-    memoryTable.innerHTML = "";
+    setHTML(memoryTable, "");
     // Add relevant sorted papers (papersList may be smaller than sortedPapers
     // depending on the search query)
     let table = [];
@@ -498,7 +498,7 @@ const displayMemoryTable = () => {
         }
     }
     // https://stackoverflow.com/questions/18393981/append-vs-html-vs-innerhtml-performance
-    memoryTable.innerHTML = table.join("");
+    setHTML(memoryTable, table.join(""));
 
     const end = Date.now();
 

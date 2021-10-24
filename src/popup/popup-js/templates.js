@@ -132,11 +132,16 @@ const getMemoryItemHTML = (paper) => {
                             type="text" 
                             class="form-code-input" 
                             value="${paper.codeLink || ""}"
+                            placeholder="Add link"
                         >
                     </div>
                     <div class="textarea-wrapper">
                         <span class="label">Note:</span>
-                        <textarea rows="3" class="form-note-textarea">${note}</textarea>
+                        <textarea 
+                            rows="3" 
+                            class="form-note-textarea"
+                            placeholder="Anything to note?"
+                        >${note}</textarea>
                     </div>
                     <div class="form-note-buttons">
                         <button 
@@ -194,6 +199,7 @@ const getPopupEditFormHTML = (paper) => {
                         type="text" 
                         class="form-code-input mt-0 noMemoryOnA" 
                         value="${paper.codeLink || ""}"
+                        placeholder="Add link"
                     >
                 </div>
                 <div class="textarea-wrapper w-100 mr-0">
@@ -202,6 +208,7 @@ const getPopupEditFormHTML = (paper) => {
                         rows="3"  
                         class="noMemoryOnA popup-form-note-textarea"
                         id="popup-form-note-textarea--${id}"
+                        placeholder="Anything to note? to note?"
                     >${note}</textarea>
                 </div>
             </div>

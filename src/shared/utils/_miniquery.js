@@ -9,20 +9,20 @@ const findEl = (id, memoryItemClass) => {
     return findEl(`memory-container--${id}`).querySelector(`.${memoryItemClass}`);
 };
 
-const val = (element, value) => {
-    if (element instanceof HTMLInputElement && element.type === "checkbox") {
+const val = (el, value) => {
+    if (el instanceof HTMLInputElement && el.type === "checkbox") {
         if (typeof value === "undefined") {
-            return element.checked;
+            return el.checked;
         }
-        element.checked = value;
+        el.checked = value;
     }
-    if (typeof element === "string") {
-        element = findEl(element);
+    if (typeof el === "string") {
+        el = findEl(el);
     }
     if (typeof value === "undefined") {
-        return element ? element.value : "";
+        return el ? el.value : "";
     }
-    if (element) element.value = value;
+    if (el) el.value = value;
 };
 
 const showId = (id, display) => {
@@ -41,7 +41,7 @@ const setTextId = (id, text) => {
     if (el) el.innerText = text;
 };
 
-const setHTMLEl = (el, html) => {
+const setHTML = (el, html) => {
     if (typeof el === "string") {
         el = findEl(el);
     }
@@ -59,7 +59,7 @@ const dispatch = (el, event) => {
         }
         event = new Event(event);
     }
-    el.dispatchEvent(event);
+    el && el.dispatchEvent(event);
 };
 
 const hasClass = (elOrId, className) => {
@@ -81,7 +81,7 @@ const addClass = (elOrId, className) => {
         el = elOrId;
     }
 
-    if (el) el.classList.add(className);
+    el && el.classList.add(className);
 };
 
 const removeClass = (elOrId, className) => {
@@ -99,9 +99,7 @@ const addListener = (el, event, listener) => {
     if (typeof el === "string") {
         el = findEl(el);
     }
-    if (!el) return;
-
-    el.addEventListener(event, listener);
+    el && el.addEventListener(event, listener);
 };
 
 const setPlaceholder = (el, text) => {
@@ -115,92 +113,91 @@ const setStyle = (el, key, value) => {
     if (typeof el === "string") {
         el = findEl(el);
     }
-    if (!el) return;
-    el.style[key] = value;
-    console.log(el, key, value);
+    if (el) el.style[key] = value;
 };
 
 const disable = (el, isDisabled = true) => {
     if (typeof el === "string") {
         el = findEl(el);
     }
-    if (!el) return;
-    el.disabled = isDisabled;
+    if (el) el.disabled = isDisabled;
 };
 
 // https://w3bits.com/labs/javascript-slidetoggle/
-const slideUp = (target, duration = 250, complete = () => {}) => {
-    if (typeof target === "string") {
-        target = findEl(target);
+const slideUp = (el, duration = 250, complete = () => {}) => {
+    if (typeof el === "string") {
+        el = findEl(el);
     }
-    target.style.transitionProperty = "height, margin, padding";
-    target.style.transitionDuration = duration + "ms";
-    // target.style.boxSizing = "border-box";
-    target.style.height = target.offsetHeight + "px";
-    target.offsetHeight;
-    target.style.overflow = "hidden";
-    target.style.height = 0;
-    target.style.paddingTop = 0;
-    target.style.paddingBottom = 0;
-    target.style.marginTop = 0;
-    target.style.marginBottom = 0;
+    if (!el) return;
+    el.style.transitionProperty = "height, margin, padding";
+    el.style.transitionDuration = duration + "ms";
+    // el.style.boxSizing = "border-box";
+    el.style.height = el.offsetHeight + "px";
+    el.offsetHeight;
+    el.style.overflow = "hidden";
+    el.style.height = 0;
+    el.style.paddingTop = 0;
+    el.style.paddingBottom = 0;
+    el.style.marginTop = 0;
+    el.style.marginBottom = 0;
     window.setTimeout(() => {
-        target.style.display = "none";
-        target.style.removeProperty("height");
-        target.style.removeProperty("padding-top");
-        target.style.removeProperty("padding-bottom");
-        target.style.removeProperty("margin-top");
-        target.style.removeProperty("margin-bottom");
-        target.style.removeProperty("overflow");
-        target.style.removeProperty("transition-duration");
-        target.style.removeProperty("transition-property");
-        target.style.removeProperty("box-sizing");
+        el.style.display = "none";
+        el.style.removeProperty("height");
+        el.style.removeProperty("padding-top");
+        el.style.removeProperty("padding-bottom");
+        el.style.removeProperty("margin-top");
+        el.style.removeProperty("margin-bottom");
+        el.style.removeProperty("overflow");
+        el.style.removeProperty("transition-duration");
+        el.style.removeProperty("transition-property");
+        el.style.removeProperty("box-sizing");
         complete();
         //alert("!");
     }, duration);
 };
 
 // https://w3bits.com/labs/javascript-slidetoggle/
-const slideDown = (target, duration = 500, complete = () => {}) => {
-    if (typeof target === "string") {
-        target = findEl(target);
+const slideDown = (el, duration = 500, complete = () => {}) => {
+    if (typeof el === "string") {
+        el = findEl(el);
     }
-    target.style.removeProperty("display");
-    let display = window.getComputedStyle(target).display;
+    if (!el) return;
+    el.style.removeProperty("display");
+    let display = window.getComputedStyle(el).display;
 
     if (display === "none") display = "block";
 
-    target.style.display = display;
-    let height = target.offsetHeight;
-    target.style.overflow = "hidden";
-    target.style.height = 0;
-    target.style.paddingTop = 0;
-    target.style.paddingBottom = 0;
-    target.style.marginTop = 0;
-    target.style.marginBottom = 0;
-    target.offsetHeight;
-    // target.style.boxSizing = "border-box";
-    target.style.transitionProperty = "height, margin, padding";
-    target.style.transitionDuration = duration + "ms";
-    target.style.height = height + "px";
-    target.style.removeProperty("padding-top");
-    target.style.removeProperty("padding-bottom");
-    target.style.removeProperty("margin-top");
-    target.style.removeProperty("margin-bottom");
+    el.style.display = display;
+    let height = el.offsetHeight;
+    el.style.overflow = "hidden";
+    el.style.height = 0;
+    el.style.paddingTop = 0;
+    el.style.paddingBottom = 0;
+    el.style.marginTop = 0;
+    el.style.marginBottom = 0;
+    el.offsetHeight;
+    // el.style.boxSizing = "border-box";
+    el.style.transitionProperty = "height, margin, padding";
+    el.style.transitionDuration = duration + "ms";
+    el.style.height = height + "px";
+    el.style.removeProperty("padding-top");
+    el.style.removeProperty("padding-bottom");
+    el.style.removeProperty("margin-top");
+    el.style.removeProperty("margin-bottom");
     window.setTimeout(() => {
-        target.style.removeProperty("height");
-        target.style.removeProperty("overflow");
-        target.style.removeProperty("transition-duration");
-        target.style.removeProperty("transition-property");
+        el.style.removeProperty("height");
+        el.style.removeProperty("overflow");
+        el.style.removeProperty("transition-duration");
+        el.style.removeProperty("transition-property");
         complete();
     }, duration);
 };
 
 // https://w3bits.com/labs/javascript-slidetoggle/
-const slideToggle = (target, duration = 500, complete = () => {}) => {
-    if (window.getComputedStyle(target).display === "none") {
-        return slideDown(target, duration, complete);
+const slideToggle = (el, duration = 500, complete = () => {}) => {
+    if (window.getComputedStyle(el).display === "none") {
+        return slideDown(el, duration, complete);
     } else {
-        return slideUp(target, duration, complete);
+        return slideUp(el, duration, complete);
     }
 };

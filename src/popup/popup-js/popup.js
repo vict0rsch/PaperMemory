@@ -6,7 +6,7 @@ const closeMenu = () => {
 
     slideUp("menu-container", 300);
     $("#tabler-menu").fadeOut(() => {
-        setHTMLEl("tabler-menu", tablerSvg("settings", "tabler-menu-svg", classes));
+        setHTML("tabler-menu", tablerSvg("settings", "tabler-menu-svg", classes));
         $("#tabler-menu").fadeIn();
     });
     global.state.menuIsOpen = false;
@@ -19,7 +19,7 @@ const openMenu = () => {
     let classes = ["tabler-icon", "menu-svg"];
     slideDown("menu-container", 300);
     $("#tabler-menu").fadeOut(() => {
-        setHTMLEl("tabler-menu", tablerSvg("circle-x", "close-menu-btn", classes));
+        setHTML("tabler-menu", tablerSvg("circle-x", "close-menu-btn", classes));
         $("#tabler-menu").fadeIn();
     });
     global.state.menuIsOpen = true;
@@ -135,8 +135,8 @@ const popupMain = async (url, isKnownPage) => {
         // ----------------------------------
         // -----  Customize Popup html  -----
         // ----------------------------------
-        setHTMLEl("popup-memory-edit", getPopupEditFormHTML(paper));
-        setHTMLEl("popup-copy-icons", getPopupPaperIconsHTML(paper, url));
+        setHTML("popup-memory-edit", getPopupEditFormHTML(paper));
+        setHTML("popup-copy-icons", getPopupPaperIconsHTML(paper, url));
         findEl(`checkFavorite--${id}`).checked = paper.favorite;
 
         // --------------------------
@@ -152,7 +152,7 @@ const popupMain = async (url, isKnownPage) => {
             textareaFocusEnd(that);
         });
         setFormChangeListener(id, true);
-        addListener(`popup-save-edits--${id}`, "click", handlePopupSaveEdits);
+        addListener(`popup-save-edits--${id}`, "click", handlePopupSaveEdits(id));
 
         // ------------------------
         // -----  SVG clicks  -----
