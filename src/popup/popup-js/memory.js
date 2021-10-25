@@ -1,7 +1,6 @@
 /**
  * TODO: docstrings
  * TODO: miniquery for content_script.js
- * TODO: content_script monitor dynamic url change (eg: from an OR paper to another)
  * TODO: investigate error: https://openreview.net/forum?id=MAWgLrYvMs0
  */
 

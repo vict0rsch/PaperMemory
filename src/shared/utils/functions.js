@@ -643,13 +643,13 @@ const initState = async (papers, isContentScript) => {
     console.log("Migration duration (s): " + (Date.now() - m) / 1000);
 
     papers = migration.papers;
+    global.state.papers = papers;
 
     if (isContentScript) {
         console.log("State initialization duration (s): " + (Date.now() - s) / 1000);
-        return papers;
+        return;
     }
 
-    global.state.papers = papers;
     global.state.papersList = Object.values(cleanPapers(papers));
     global.state.sortKey = "lastOpenDate";
     global.state.papersReady = true;
@@ -704,7 +704,7 @@ const isPaper = (url) => {
     return is;
 };
 
-const parseIdFromUrl = (url, papers) => {
+const parseIdFromUrl = (url) => {
     const is = isPaper(url);
     if (is.arxiv) {
         const arxivId = url.split("/").reverse()[0].replace(".pdf", "").split("v")[0];
@@ -717,7 +717,7 @@ const parseIdFromUrl = (url, papers) => {
         return parseCVFUrl(url).id;
     } else if (is.openreview) {
         const OR_id = url.match(/id=\w+/)[0].replace("id=", "");
-        const paper = Object.values(cleanPapers(papers)).filter((p) => {
+        const paper = Object.values(cleanPapers(global.state.papers)).filter((p) => {
             return p.id.includes(OR_id);
         })[0];
         return paper && paper.id;
