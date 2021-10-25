@@ -204,6 +204,7 @@ strong {
     justify-content: center;
     align-items: center;
     flex-direction: column;
+    min-width: 100%;
 }
 
 #markdown-header div {
