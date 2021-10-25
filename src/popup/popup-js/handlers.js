@@ -37,8 +37,8 @@ const handleCopyMarkdownLink = (e) => {
 
 const handleCopyBibtex = (e) => {
     const id = eventId(e);
-    const bibtext = global.state.papers[id].bibtext;
-    copyAndConfirmMemoryItem(id, bibtext, "Bibtex copied!");
+    const bibtex = global.state.papers[id].bibtex;
+    copyAndConfirmMemoryItem(id, bibtex, "Bibtex copied!");
 };
 
 const handleCopyPDFLink = (e) => {

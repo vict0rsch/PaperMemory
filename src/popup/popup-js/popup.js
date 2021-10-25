@@ -174,8 +174,8 @@ const popupMain = async (url, isKnownPage) => {
             copyAndConfirmMemoryItem(id, md, "MarkDown link copied!", true);
         });
         addListener(`popup-memory-item-bibtex--${id}`, "click", () => {
-            const bibtext = formatBibtext(global.state.papers[id].bibtext);
-            copyAndConfirmMemoryItem(id, bibtext, "Bibtex citation copied!", true);
+            const bibtex = formatBibtext(global.state.papers[id].bibtex);
+            copyAndConfirmMemoryItem(id, bibtex, "Bibtex citation copied!", true);
         });
         addListener(`popup-memory-item-download--${id}`, "click", () => {
             let pdfTitle = statePdfTitle(paper.title, paper.id);
@@ -203,9 +203,7 @@ chrome.tabs.query(query, async (tabs) => {
     const url = tabs[0].url;
 
     const is = isPaper(url);
-    console.log("is: ", is);
     const isKnownPage = Object.values(is).some((i) => i);
-    console.log("isKnownPage: ", isKnownPage);
 
     if (!isKnownPage) showId("notArxiv");
 

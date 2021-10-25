@@ -109,7 +109,7 @@ const getMemoryItemHTML = (paper) => {
             </div>
 
             <div 
-                class="memory-item-bibtext memory-item-svg-div" 
+                class="memory-item-bibtex memory-item-svg-div" 
                 title=${titles.copyBibtext}
             >
                 ${tablerSvg("archive", "", ["memory-icon-svg"])}

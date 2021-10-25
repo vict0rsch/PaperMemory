@@ -7,7 +7,6 @@ const __theme = async () => {
 };
 
 const darkMode = await __theme();
-console.log("darkMode: ", darkMode);
 
 if (darkMode) {
     var link = document.createElement("link");

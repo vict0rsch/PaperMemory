@@ -64,7 +64,8 @@ const fetchOpenReviewJSON = async (url) => {
 // -----  Parse  -----
 // -------------------
 
-const parseArxivBibtex = (xmlData) => {
+const parseArxivBibtex = async (arxivId) => {
+    const xmlData = await fetchArxivXML(arxivId);
     var bib = $(xmlData);
     // console.log(bib)
     var authors = [];
@@ -108,28 +109,27 @@ const parseArxivBibtex = (xmlData) => {
         }
     });
     id = `Arxiv-${id}`;
+    const conf = "arXiv";
 
-    const bibvars = { key, title, author, year, id, pdfLink };
-    let bibtext = "";
-    bibtext += `@article{${key}, \n`;
-    bibtext += `    title = { ${title} }, \n`;
-    bibtext += `    author = { ${author} }, \n`;
-    bibtext += `    year = { ${year}}, \n`;
-    bibtext += `    journal = { arXiv preprint arXiv: ${id}}\n`;
-    bibtext += `}`;
+    let bibtex = "";
+    bibtex += `@article{${key}, \n`;
+    bibtex += `    title = { ${title} }, \n`;
+    bibtex += `    author = { ${author} }, \n`;
+    bibtex += `    year = { ${year}}, \n`;
+    bibtex += `    journal = { arXiv preprint arXiv: ${id}}\n`;
+    bibtex += `}`;
 
-    return {
-        bibvars,
-        bibtext,
-    };
+    return { author, bibtex, conf, id, key, pdfLink, title, year };
 };
 
-const parseNeuripsHTML = (url, htmlText) => {
+const parseNeuripsHTML = async (url) => {
+    const htmlText = await fetchNeuripsHTML(url);
     const dom = new DOMParser().parseFromString(
         htmlText.replaceAll("\n", ""),
         "text/html"
     );
     const doc = $(dom);
+
     const ps = doc.find(".container-fluid .col p");
     const hash = url.split("/").slice(-1)[0].replace("-Paper.pdf", "");
 
@@ -149,8 +149,10 @@ const parseNeuripsHTML = (url, htmlText) => {
     const year = $(ps[0]).text().match(/\d{4}/)[0];
     const key = `neurips${year}${hash.slice(0, 8)} `;
     const id = `NeurIPS-${year}_${hash.slice(0, 8)} `;
+    const conf = `NeurIPS ${year}`;
+    const note = `Accepted @ ${conf}`;
 
-    const bibtext = `
+    const bibtex = `
 @inproceedings{NEURIPS${year}_${hash.slice(0, 8)}
     author = { ${author}
 },
@@ -162,10 +164,11 @@ url = { ${url}},
 year = { ${year}}
 }`;
 
-    return { key, title, author, year, id, pdfLink, bibtext };
+    return { author, bibtex, conf, id, key, note, pdfLink, title, year };
 };
 
-const parseCvfHTML = (url, htmlText) => {
+const parseCvfHTML = async (url) => {
+    const htmlText = await fetchCvfHTML(url);
     const dom = new DOMParser().parseFromString(
         htmlText.replaceAll("\n", ""),
         "text/html"
@@ -196,25 +199,30 @@ const parseCvfHTML = (url, htmlText) => {
             }
         });
     }
-    const bibtext = doc.find(".bibref").first().text().replaceAll(",  ", ",\n  ");
-    const key = bibtext.split("{")[1].split(",")[0];
+    const note = `Accepted @ ${conf} ${year}`;
+    const bibtex = doc.find(".bibref").first().text().replaceAll(",  ", ",\n  ");
+    const key = bibtex.split("{")[1].split(",")[0];
 
-    return { key, title, author, year, id, pdfLink, bibtext, conf };
+    return { author, bibtex, conf, id, key, note, pdfLink, title, year };
 };
 
-const parseOpenReviewJSON = (json) => {
+const parseOpenReviewJSON = async (url) => {
+    const json = await fetchOpenReviewJSON(url);
+
     const noteItem = json.notes[0];
     const ORpaper = noteItem.content;
     const title = ORpaper.title;
     const pdfLink = `https://openreview.net/pdf?id=${noteItem.id}`;
     const author = ORpaper.authors.join(" and ");
-    const bibtext = ORpaper._bibtex;
-    const year = bibtext.split("year={")[1].split("}")[0];
+    const bibtex = ORpaper._bibtex;
+    const key = bibtex.split("{")[1].split(",")[0].trim();
+    const year = bibtex.split("year={")[1].split("}")[0];
     const confParts = noteItem.invitation.split("/");
     const organizer = confParts[0].split(".")[0];
     const event = confParts.slice(1).join("/").split("-")[0].replaceAll("/", " ");
-    const conf = `${organizer} ${event}`;
+    const conf = `${organizer} ${event}`.replace(/ \d\d\d\d/g, "");
     const id = `OR-${organizer}-${year}_${noteItem.id}`;
+
     const decisionItem = noteItem.details
         ? noteItem.details.directReplies
             ? noteItem.details.directReplies.filter((r) => {
@@ -226,7 +234,6 @@ const parseOpenReviewJSON = (json) => {
             : ""
         : "";
     let note;
-    console.log("decisionItem: ", decisionItem);
     if (decisionItem && decisionItem.length === 1) {
         const decision = decisionItem[0].content.decision
             .split(" ")
@@ -234,13 +241,13 @@ const parseOpenReviewJSON = (json) => {
                 return i === 0 ? v + "ed" : v;
             })
             .join(" ");
-        note = `${decision} @ ${conf}`;
+        note = `${decision} @ ${conf} ${year}`;
     }
     if (author === "Anonymous") {
-        note = `Under review @ ${conf} (${new Date().toLocaleDateString()})`;
+        note = `Under review @ ${conf} ${year} (${new Date().toLocaleDateString()})`;
     }
 
-    return { title, author, year, id, pdfLink, bibtext, conf, note };
+    return { author, bibtex, conf, id, key, note, pdfLink, title, year };
 };
 
 // ----------------------------------------------

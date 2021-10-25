@@ -527,7 +527,7 @@ const displayMemoryTable = () => {
     // Copy markdown link
     addEventToClass(".memory-item-md", "click", handleCopyMarkdownLink);
     // Copy bibtex citation
-    addEventToClass(".memory-item-bibtext", "click", handleCopyBibtex);
+    addEventToClass(".memory-item-bibtex", "click", handleCopyBibtex);
     // Copy pdf link
     addEventToClass(".memory-item-copy-link", "click", handleCopyPDFLink);
     // Add to favorites

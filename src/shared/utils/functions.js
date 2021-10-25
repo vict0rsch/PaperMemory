@@ -246,6 +246,10 @@ $.extend($.easing, {
  *
  */
 
+const info = (...args) => {
+    console.log("%c" + args.join(" "), "color: #328DD2");
+};
+
 const defaultPDFTitleFn = (title, id) => {
     title = title.replaceAll("\n", " ").replace(/\s\s+/g, " ");
     id = id.split("_")[0].split(".")[0];
@@ -403,17 +407,18 @@ const getPdfFn = (code) => {
     return pdfTitleFn;
 };
 
-const migrateData = async (papers, dataVersion) => {
+const migrateData = async (papers, manifestDataVersion) => {
     if (typeof papers === "undefined") {
-        chrome.storage.local.set({ papers: { __dataVersion: dataVersion } });
-        return { papers: { __dataVersion: dataVersion }, success: true };
+        chrome.storage.local.set({ papers: { __dataVersion: manifestDataVersion } });
+        return { papers: { __dataVersion: manifestDataVersion }, success: true };
     }
     const currentVersion = papers["__dataVersion"] || -1;
     var deleteIds = [];
+    const latestDataVersion = 210;
 
     try {
         if (papers.hasOwnProperty("__dataVersion")) {
-            if (papers["__dataVersion"] === dataVersion) {
+            if (papers["__dataVersion"] === latestDataVersion) {
                 return { papers: papers, success: true };
             }
         }
@@ -424,10 +429,11 @@ const migrateData = async (papers, dataVersion) => {
 
         for (const id in papers) {
             if (currentVersion < 5) {
+                info("Applying migration 5");
                 // pre-0.2.8 and manifestDataVersion()
-                if (!papers[id].hasOwnProperty("bibtext")) {
-                    papers[id].bibtext = "";
-                    console.log("Migrating bibtext for " + id);
+                if (!papers[id].hasOwnProperty("bibtex")) {
+                    papers[id].bibtex = "";
+                    console.log("Migrating bibtex for " + id);
                 }
                 if (!papers[id].pdfLink.endsWith(".pdf")) {
                     papers[id].pdfLink = papers[id].pdfLink + ".pdf";
@@ -445,6 +451,7 @@ const migrateData = async (papers, dataVersion) => {
             }
             if (currentVersion < 208) {
                 // 0.2.8
+                info("Applying migration 0.2.8");
                 if (
                     papers[id].source !== "arxiv" &&
                     papers[id].md.includes("https://arxiv.com/abs/")
@@ -466,12 +473,14 @@ const migrateData = async (papers, dataVersion) => {
             }
             if (currentVersion < 209) {
                 // 0.2.9
+                info("Applying migration 0.2.9");
                 if (!papers[id].hasOwnProperty("favorite")) {
                     papers[id].favorite = false;
                     papers[id].favoriteDate = "";
                 }
             }
             if (currentVersion < 210) {
+                info("Applying migration 0.2.10");
                 if (papers[id].source === "arxiv") {
                     // replace vX in pdfs so the paper always points to the latest
                     const pdfVersion = papers[id].pdfLink.match(/v\d+\.pdf/gi);
@@ -481,6 +490,10 @@ const migrateData = async (papers, dataVersion) => {
                             ".pdf"
                         );
                     }
+                }
+                if (papers[id].hasOwnProperty("bibtext")) {
+                    papers[id].bibtex = papers[id].bibtext + "";
+                    delete papers[id].bibtext;
                 }
             }
 
@@ -496,18 +509,18 @@ const migrateData = async (papers, dataVersion) => {
         });
 
         let newPapers = { ...papers };
-        newPapers["__dataVersion"] = dataVersion;
+        newPapers["__dataVersion"] = manifestDataVersion;
 
         chrome.storage.local.set({ papers: newPapers }, () => {
             console.log("Migrated papers:");
             console.log(newPapers);
-            console.log("Data version is now " + dataVersion);
+            console.log("Data version is now " + manifestDataVersion);
         });
 
         return { papers: newPapers, success: true };
     } catch (error) {
         console.log(
-            `Error migrating data from version ${currentVersion} to ${dataVersion}: `
+            `Error migrating data from version ${currentVersion} to ${manifestDataVersion}: `
         );
         console.log(error);
         return { papers: newPapers, success: false };
@@ -594,7 +607,7 @@ const statePdfTitle = (title, id) => {
     return name.replaceAll("\n", " ").replace(/\s\s+/g, " ");
 };
 
-const manifestDataVersion = () => {
+const getManifestDataVersion = () => {
     // ArxivTools version a.b.c => data version a * 10^4 + b * 10^2 + c
     // (with 10^2 and 10^1, 0.3.1 would be lower than 0.2.12)
     const manifest = chrome.runtime.getManifest();
@@ -621,9 +634,8 @@ const initState = async (papers, isContentScript) => {
         papers = await getStorage("papers");
         console.log("Time to retrieve stored papers (s): " + (Date.now() - s) / 1000);
     }
-    console.log("Found papers:", papers);
 
-    global.state.dataVersion = manifestDataVersion();
+    global.state.dataVersion = getManifestDataVersion();
     global.state.pdfTitleFn = defaultPDFTitleFn;
 
     const m = Date.now();
@@ -722,7 +734,7 @@ const textareaFocusEnd = (element) => {
 
 const formatBibtext = (text) => {
     let bib = text.trim().split("\n").join("");
-    const matches = bib.match(/\w+\ ?=/g);
+    const matches = bib.match(/\w+\ ?=\ ?{/g);
     if (matches) {
         for (const m of matches) {
             bib = bib.replace(m, `\n  ${m}`);
@@ -738,7 +750,7 @@ const validatePaper = (paper) => {
     const expectedKeys = [
         "addDate", //      {string}    the paper's date of addition to the Memory
         "author", //       {string}    ` and `-separated authors `${firstName} ${lastName}`
-        "bibtext", //      {string}    BibTex citation with new lines (`\n`)
+        "bibtex", //      {string}    BibTex citation with new lines (`\n`)
         "codeLink", //     {string}    to the paper's code link
         "count", //        {int}       the paper's number of visits
         "favorite", //     {boolean}   user wants to star the paper
