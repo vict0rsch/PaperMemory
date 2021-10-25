@@ -101,9 +101,11 @@ const svg = (name) => {
  * Also, if the current website is a known paper source (isPaper), adds or updates the current paper
  * @param {object} checks The user's stored preferences regarding menu options
  */
-const main = (checks) => {
-    let is = isPaper(window.location.href);
-    is["vanity"] = window.location.href.indexOf("arxiv-vanity.com") > -1;
+const main = async (checks) => {
+    const url = window.location.href;
+    let is = isPaper(url);
+    console.log("is: ", is);
+    is["vanity"] = url.indexOf("arxiv-vanity.com") > -1;
 
     if (is.arxiv) {
         arxiv(checks);
@@ -112,7 +114,29 @@ const main = (checks) => {
     }
 
     if (Object.values(is).some((i) => i)) {
-        addOrUpdatePaper(is, checks);
+        let papers = await initState(undefined, true);
+        const id = await addOrUpdatePaper(is, checks, papers);
+
+        if (checks.checkPdfTitle) {
+            // const getArxivTitle = async (id) => {
+            //     return await $.get(
+            //         `https://export.arxiv.org/api/query?id_list=${id}`
+            //     ).then((data) => {
+            //         return $($(data).find("entry title")[0]).text();
+            //     });
+            // };
+            const makeTitle = async (id, url, papers) => {
+                let title = papers.hasOwnProperty(id) ? papers[id].title : "";
+                if (!title) return;
+                title = statePdfTitle(title, id);
+                window.document.title = title;
+                chrome.runtime.sendMessage({
+                    type: "update-title",
+                    options: { title, url },
+                });
+            };
+            makeTitle(id, url, papers);
+        }
     }
 };
 
@@ -156,9 +180,8 @@ const feedback = (text) => {
     }, 2000);
 };
 
-const addOrUpdatePaper = async (is, checks) => {
+const addOrUpdatePaper = async (is, checks, papers) => {
     const url = window.location.href;
-    let papers = await initState(undefined, true);
 
     let paper, isNew;
 
@@ -187,6 +210,8 @@ const addOrUpdatePaper = async (is, checks) => {
             console.log("Updated '" + paper.title + "' in ArxivMemory");
         }
     });
+
+    return id;
 };
 
 const makePaper = async (is, url, id) => {
@@ -241,19 +266,22 @@ const updatePaper = (papers, id) => {
 };
 
 const arxiv = (checks) => {
-    const { checkMd, checkBib, checkDownload, checkPdfTitle, pdfTitleFn } = checks;
+    const { checkMd, checkBib, checkDownload, pdfTitleFn } = checks;
 
     // console.log({ checks })
 
     var h = document.querySelector(".extra-services .full-text h2");
 
     const url = window.location.href;
-    const id = url.match(/\d{4}\.\d{4,5}\d/g)[0];
+    const id = parseIdFromUrl(url, global.state.papers);
     const isArxivAbs = window.location.href.includes("https://arxiv.org/abs/");
-    const pdfUrl =
-        "https://arxiv.org" +
-        document.querySelector(".abs-button.download-pdf").href +
-        ".pdf";
+    let pdfUrl;
+    if (isArxivAbs) {
+        pdfUrl =
+            "https://arxiv.org" +
+            document.querySelector(".abs-button.download-pdf").href +
+            ".pdf";
+    }
 
     global.state.pdfTitleFn = pdfTitleFn;
 
@@ -318,29 +346,6 @@ const arxiv = (checks) => {
                 feedback("Markdown Link Copied!");
             }
         );
-    }
-
-    if (checkPdfTitle) {
-        const getArxivTitle = async (id) => {
-            return await $.get(`https://export.arxiv.org/api/query?id_list=${id}`).then(
-                (data) => {
-                    return $($(data).find("entry title")[0]).text();
-                }
-            );
-        };
-        const makeTitle = async (id, url) => {
-            let title = global.state.papers.hasOwnProperty(id)
-                ? global.state.papers[id].title
-                : await getArxivTitle(id);
-            title = statePdfTitle(title, id);
-            window.document.title = title;
-            chrome.runtime.sendMessage({
-                type: "update-title",
-                options: { title, url },
-            });
-        };
-
-        makeTitle(id, url);
     }
 
     if (checkBib && isArxivAbs) {

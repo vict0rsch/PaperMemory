@@ -1,6 +1,15 @@
 var paperTitles = {};
 var updates = {};
 
+const knownPageHasUrl = (url) => {
+    const pdfPages = Object.values(global.knownPaperPages).map((v) => v.reverse()[0]);
+    return pdfPages.some((p) => url.includes(p));
+};
+
+const isPdf = (url) => {
+    return url.endsWith(".pdf") || url.includes("openreview.net/pdf");
+};
+
 chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
     if (request.type == "update-title") {
         console.log("Background message options:");
@@ -25,9 +34,9 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
     if (
         paperTitle && // title from content_script message is set
         changeInfo.title && // change is about title
-        !changeInfo.title.startsWith("https://arxiv.org/pdf") && // ignore event triggered by `document.title=''` which sets title to url
+        !knownPageHasUrl(changeInfo.title) && // ignore event triggered by `document.title=''` which sets title to url
         changeInfo.title !== paperTitle && // there is a new title
-        tab.url.endsWith(".pdf") // only valid for pdfs
+        isPdf(tab.url) // only valid for pdfs
     ) {
         // console.log(">>>>> onUpdated: tabId, changeInfo, tab, paperTiles");
         // console.log(tabId);
