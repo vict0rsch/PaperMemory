@@ -105,7 +105,7 @@ const popupMain = async (url, isKnownPage) => {
     // Display popup metadata
     if (isKnownPage) {
         showId("isArxiv", "flex");
-        const id = parseIdFromUrl(url, global.state.papers);
+        const id = parseIdFromUrl(url);
         global.state.currentId = id;
 
         if (!global.state.papers.hasOwnProperty(id)) {
@@ -201,6 +201,7 @@ const popupMain = async (url, isKnownPage) => {
 const query = { active: true, lastFocusedWindow: true };
 chrome.tabs.query(query, async (tabs) => {
     const url = tabs[0].url;
+    console.log("url: ", url);
 
     const is = isPaper(url);
     const isKnownPage = Object.values(is).some((i) => i);
