@@ -105,7 +105,7 @@ const popupMain = async (url, isKnownPage) => {
     // Display popup metadata
     if (isKnownPage) {
         showId("isArxiv", "flex");
-        const id = parseIdFromUrl(url);
+        const id = parseIdFromUrl(url, global.state.papers);
         global.state.currentId = id;
 
         if (!global.state.papers.hasOwnProperty(id)) {

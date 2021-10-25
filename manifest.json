@@ -33,6 +33,8 @@
     "https://export.arxiv.org/*",
     "https://proceedings.neurips.cc/*",
     "https://openaccess.thecvf.com/*",
+    "https://openreview.net/*",
+    "https://api.openreview.net/*",
     "tabs",
     "activeTab",
     "storage",
@@ -45,7 +47,8 @@
         "*://arxiv.org/*",
         "*://*.arxiv-vanity.com/*",
         "*://proceedings.neurips.cc/*",
-        "*://openaccess.thecvf.com/*"
+        "*://openaccess.thecvf.com/*",
+        "*://openreview.net/*"
       ],
       "run_at": "document_start",
       "js": [

@@ -1,16 +1,68 @@
-String.prototype.capitalize = function () {
-    return this.charAt(0).toUpperCase() + this.slice(1);
+// -------------------
+// -----  Fetch  -----
+// -------------------
+
+const fetchArxivXML = async (id) => {
+    id += "";
+    id = id.replace("Arxiv-", "");
+    return $.get(`https://export.arxiv.org/api/query`, { id_list: id });
 };
 
-const firstNonStopLowercase = (title) => {
-    let t = title.toLowerCase();
-    let words = t.split(" ").map((w) => w.replace(/[^0-9a-z]/gi, ""));
-    let meaningful = words.filter((w) => global.englishStopWords.has(w));
-    if (meaningful.length > 0) {
-        return meaningful[0];
+const fetchNeuripsHTML = async (url) => {
+    let paperPage;
+    if (url.endsWith(".pdf")) {
+        paperPage = url
+            .replace("/file/", "/hash/")
+            .replace("-Paper.pdf", "-Abstract.html");
+    } else {
+        paperPage = url;
     }
-    return words[0];
+
+    return fetch(paperPage).then((response) => {
+        return response.text();
+    });
 };
+
+const fetchCvfHTML = async (url) => {
+    let paperPage, text;
+    if (url.endsWith(".pdf")) {
+        paperPage = url
+            .replace("/papers_backup/", "/papers/")
+            .replace("/papers/", "/html/")
+            .replace(".pdf", ".html");
+    } else {
+        paperPage = url;
+    }
+
+    text = await fetch(paperPage).then((response) => {
+        return response.ok ? response.text() : "";
+    });
+
+    if (!text && paperPage.includes("thecvf.com/content_")) {
+        const { conf, year } = parseCVFUrl(url);
+        paperPage = paperPage.replace(
+            `/content_${conf}_${year}/`,
+            `/content_${conf.toLowerCase()}_${year}/`
+        );
+        text = await fetch(paperPage).then((response) => {
+            return response.ok ? response.text() : "";
+        });
+    }
+
+    return text;
+};
+
+const fetchOpenReviewJSON = async (url) => {
+    const id = url.match(/id=\w+/)[0].replace("id=", "");
+    const api = `https://api.openreview.net/notes?forum=${id}&limit=1&offset=0`;
+    return fetch(api).then((response) => {
+        return response.json();
+    });
+};
+
+// -------------------
+// -----  Parse  -----
+// -------------------
 
 const parseArxivBibtex = (xmlData) => {
     var bib = $(xmlData);
@@ -88,7 +140,7 @@ const parseNeuripsHTML = (url, htmlText) => {
         .map((author, k) => {
             const parts = author.split(" ");
             const caps = parts.map((part, i) => {
-                return part.capitalize();
+                return capitalize(part);
             });
             return caps.join(" ");
         })
@@ -96,7 +148,7 @@ const parseNeuripsHTML = (url, htmlText) => {
     const pdfLink = url;
     const year = $(ps[0]).text().match(/\d{4}/)[0];
     const key = `neurips${year}${hash.slice(0, 8)} `;
-    const id = `NeurIPS - ${year}_${hash.slice(0, 8)} `;
+    const id = `NeurIPS-${year}_${hash.slice(0, 8)} `;
 
     const bibtext = `
 @inproceedings{NEURIPS${year}_${hash.slice(0, 8)}
@@ -150,55 +202,50 @@ const parseCvfHTML = (url, htmlText) => {
     return { key, title, author, year, id, pdfLink, bibtext, conf };
 };
 
-const fetchArxivXML = async (id) => {
-    id += "";
-    id = id.replace("Arxiv-", "");
-    return $.get(`https://export.arxiv.org/api/query`, { id_list: id });
-};
-
-const fetchNeuripsHTML = async (url) => {
-    let paperPage;
-    if (url.endsWith(".pdf")) {
-        paperPage = url
-            .replace("/file/", "/hash/")
-            .replace("-Paper.pdf", "-Abstract.html");
-    } else {
-        paperPage = url;
+const parseOpenReviewJSON = (json) => {
+    const noteItem = json.notes[0];
+    const ORpaper = noteItem.content;
+    const title = ORpaper.title;
+    const pdfLink = `https://openreview.net/pdf?id=${noteItem.id}`;
+    const author = ORpaper.authors.join(" and ");
+    const bibtext = ORpaper._bibtex;
+    const year = bibtext.split("year={")[1].split("}")[0];
+    const confParts = noteItem.invitation.split("/");
+    const organizer = confParts[0].split(".")[0];
+    const event = confParts.slice(1).join("/").split("-")[0].replaceAll("/", " ");
+    const conf = `${organizer} ${event}`;
+    const id = `OR-${organizer}-${year}_${noteItem.id}`;
+    const decisionItem = noteItem.details
+        ? noteItem.details.directReplies
+            ? noteItem.details.directReplies.filter((r) => {
+                  return (
+                      r &&
+                      ["Final Decision", "Paper Decision"].indexOf(r.content.title) > -1
+                  );
+              })
+            : ""
+        : "";
+    let note;
+    console.log("decisionItem: ", decisionItem);
+    if (decisionItem && decisionItem.length === 1) {
+        const decision = decisionItem[0].content.decision
+            .split(" ")
+            .map((v, i) => {
+                return i === 0 ? v + "ed" : v;
+            })
+            .join(" ");
+        note = `${decision} @ ${conf}`;
+    }
+    if (author === "Anonymous") {
+        note = `Under review @ ${conf} (${new Date().toLocaleDateString()})`;
     }
 
-    return fetch(paperPage).then((response) => {
-        return response.text();
-    });
+    return { title, author, year, id, pdfLink, bibtext, conf, note };
 };
 
-const fetchCvfHTML = async (url) => {
-    let paperPage, text;
-    if (url.endsWith(".pdf")) {
-        paperPage = url
-            .replace("/papers_backup/", "/papers/")
-            .replace("/papers/", "/html/")
-            .replace(".pdf", ".html");
-    } else {
-        paperPage = url;
-    }
-
-    text = await fetch(paperPage).then((response) => {
-        return response.ok ? response.text() : "";
-    });
-
-    if (!text && paperPage.includes("thecvf.com/content_")) {
-        const { conf, year } = parseCVFUrl(url);
-        paperPage = paperPage.replace(
-            `/content_${conf}_${year}/`,
-            `/content_${conf.toLowerCase()}_${year}/`
-        );
-        text = await fetch(paperPage).then((response) => {
-            return response.ok ? response.text() : "";
-        });
-    }
-
-    return text;
-};
+// ----------------------------------------------
+// -----  Papers With Code: non functional  -----
+// ----------------------------------------------
 
 const fetchOpts = {
     headers: {

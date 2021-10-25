@@ -111,7 +111,7 @@ const main = (checks) => {
         vanity();
     }
 
-    if (is.arxiv || is.neurips || is.cvf) {
+    if (Object.values(is).some((i) => i)) {
         addOrUpdatePaper(is, checks);
     }
 };
@@ -163,9 +163,9 @@ const addOrUpdatePaper = async (is, checks) => {
     let paper, isNew;
 
     // Extract id from url
-    const id = parseIdFromUrl(url);
+    const id = parseIdFromUrl(url, papers);
 
-    if (papers.hasOwnProperty(id)) {
+    if (id && papers.hasOwnProperty(id)) {
         // Update paper if it exists
         papers = updatePaper(papers, id);
         paper = papers[id];
@@ -173,7 +173,7 @@ const addOrUpdatePaper = async (is, checks) => {
     } else {
         // Or create a new one if it does not
         paper = await makePaper(is, url, id);
-        papers[id] = paper;
+        papers[paper.id] = paper;
         isNew = true;
     }
 
@@ -207,14 +207,20 @@ const makePaper = async (is, url, id) => {
         const data = await fetchCvfHTML(url);
         paper = parseCvfHTML(url, data);
         paper.source = "cvf";
+    } else if (is.openreview) {
+        const data = await fetchOpenReviewJSON(url);
+        paper = parseOpenReviewJSON(data);
+        paper.source = "openreview";
     }
 
     return initPaper(paper);
 };
 
 const initPaper = (paper) => {
+    if (!paper.note) {
+        paper.note = "";
+    }
     paper.md = `[${paper.title}](${paper.pdfLink})`;
-    paper.note = "";
     paper.tags = [];
     paper.codeLink = "";
     paper.favorite = false;

@@ -177,6 +177,7 @@ const getPopupEditFormHTML = (paper) => {
     const tagOptions = getTagsOptions(paper);
     const note = paper.note || "";
     const checked = "";
+    const displayId = paper.id.split("_")[0].split(".")[0];
 
     return /*html*/ `
     <div style="max-width: 100%; display: flex; justify-content: space-between; align-items: center; padding: 4px 16px;">
@@ -208,7 +209,7 @@ const getPopupEditFormHTML = (paper) => {
                         rows="3"  
                         class="noMemoryOnA popup-form-note-textarea"
                         id="popup-form-note-textarea--${id}"
-                        placeholder="Anything to note? to note?"
+                        placeholder="Anything to note?"
                     >${note}</textarea>
                 </div>
             </div>
@@ -217,6 +218,9 @@ const getPopupEditFormHTML = (paper) => {
                     <label class="label" for="checkFavorite">Favorite: </label>
                     <input ${checked} class="switch" type="checkbox" id="checkFavorite--${id}" name="checkFavorite" value="checkFavorite">
                 </div>
+                <small id="popup-displayId">
+                    ${displayId}
+                </small>
                 <button 
                     style="padding: 6px 16px;" 
                     disabled 

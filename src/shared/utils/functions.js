@@ -248,6 +248,7 @@ $.extend($.easing, {
 
 const defaultPDFTitleFn = (title, id) => {
     title = title.replaceAll("\n", " ").replace(/\s\s+/g, " ");
+    id = id.split("_")[0].split(".")[0];
     return `${title} - ${id}.pdf`;
 };
 
@@ -264,6 +265,20 @@ const cleanPapers = (papers) => {
     let cleaned = { ...papers };
     delete cleaned["__dataVersion"];
     return cleaned;
+};
+
+const capitalize = (s) => {
+    return s.charAt(0).toUpperCase() + s.slice(1);
+};
+
+const firstNonStopLowercase = (title) => {
+    let t = title.toLowerCase();
+    let words = t.split(" ").map((w) => w.replace(/[^0-9a-z]/gi, ""));
+    let meaningful = words.filter((w) => global.englishStopWords.has(w));
+    if (meaningful.length > 0) {
+        return meaningful[0];
+    }
+    return words[0];
 };
 
 const fallbackCopyTextToClipboard = (text) => {
@@ -525,6 +540,20 @@ const setStorage = async (key, value) => {
     });
 };
 
+const deletePaperInStorage = async (id) => {
+    const papers = await getStorage("papers");
+    let deleted = false;
+    if (papers.hasOwnProperty(id)) {
+        deleted = delete papers[id];
+    }
+    if (deleted) {
+        setStorage("papers", papers);
+        console.log("Successfully deleted paper", id);
+    } else {
+        console.log("Error: no deletion");
+    }
+};
+
 const getTheme = async () => {
     const darkMode = await getStorage("checkDarkMode");
     return darkMode ? "dark" : "light";
@@ -663,7 +692,7 @@ const isPaper = (url) => {
     return is;
 };
 
-const parseIdFromUrl = (url) => {
+const parseIdFromUrl = (url, papers) => {
     const is = isPaper(url);
     if (is.arxiv) {
         const arxivId = url.split("/").reverse()[0].replace(".pdf", "").split("v")[0];
@@ -674,6 +703,12 @@ const parseIdFromUrl = (url) => {
         return `NeurIPS-${year}_${hash}`;
     } else if (is.cvf) {
         return parseCVFUrl(url).id;
+    } else if (is.openreview) {
+        const OR_id = url.match(/id=\w+/)[0].replace("id=", "");
+        const paper = Object.values(cleanPapers(papers)).filter((p) => {
+            return p.id.includes(OR_id);
+        })[0];
+        return paper && paper.id;
     } else {
         throw Error("unknown paper url");
     }

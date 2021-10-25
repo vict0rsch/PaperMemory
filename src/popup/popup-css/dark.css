@@ -43,6 +43,9 @@ body,
 #popup-feedback-copied {
     color: var(--green);
 }
+#popup-displayId {
+    color: var(--dimColor);
+}
 a {
     color: var(--aColor) !important;
 }

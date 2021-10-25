@@ -1,6 +1,7 @@
 /**
  * TODO: docstrings
  * TODO: miniquery for content_script.js
+ * TODO: content_script monitor dynamic url change (eg: from an OR paper to another)
  */
 
 const getTagsOptions = (paper) => {
@@ -625,6 +626,6 @@ const closeMemory = () => {
         if (global.state.showFavorites) {
             dispatch("filter-favorites", "click");
         }
-        showId("menu-switch");
+        showId("menu-switch", "flex");
     });
 };

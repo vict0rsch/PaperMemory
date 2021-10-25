@@ -10,7 +10,7 @@ const findEl = (id, memoryItemClass) => {
     return findEl(`memory-container--${id}`).querySelector(`.${memoryItemClass}`);
 };
 
-function fadeOut(el, duration = 250, callback = () => {}) {
+const fadeOut = (el, duration = 250, callback = () => {}) => {
     el = findEl(el);
     el.style.transition = `${duration}ms`;
     el.style.opacity = 0;
@@ -18,8 +18,9 @@ function fadeOut(el, duration = 250, callback = () => {}) {
         el.style.display = "none";
         callback();
     }, duration);
-}
-function fadeIn(el, display = "block", duration = 250, callback = () => {}) {
+};
+
+const fadeIn = (el, display = "block", duration = 250, callback = () => {}) => {
     el = findEl(el);
     el.style.opacity = 0;
     if (el.style.display === "none") {
@@ -33,7 +34,7 @@ function fadeIn(el, display = "block", duration = 250, callback = () => {}) {
             callback();
         }, duration);
     }, 0);
-}
+};
 
 const val = (el, value) => {
     if (el instanceof HTMLInputElement && el.type === "checkbox") {
@@ -51,8 +52,7 @@ const val = (el, value) => {
     if (el) el.value = value;
 };
 
-const showId = (id, display) => {
-    if (typeof display === "undefined") display = "block";
+const showId = (id, display = "block") => {
     let el = findEl(id);
     if (el) el.style.display = display;
 };

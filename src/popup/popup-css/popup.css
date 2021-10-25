@@ -409,7 +409,15 @@ strong {
 .memory-authors {
     color: rgba(41, 41, 41, 1);
 }
-
+#popup-authors {
+    text-align: center;
+    max-width: 95%;
+    font-weight: 300;
+    color: grey;
+}
+#popup-displayId {
+    color: gray;
+}
 .memory-item-actions {
     display: flex;
     justify-content: space-between;

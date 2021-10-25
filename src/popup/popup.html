@@ -53,7 +53,7 @@
 			<h3 style="text-align: center; max-width: 95%; font-weight: 400; margin-bottom: 0px; margin-top: 0px; font-size: 1.1rem"
 				id="popup-paper-title"></h3>
 
-			<p style="text-align: center; max-width: 95%; font-weight: 300; color: grey" id="popup-authors"></p>
+			<p id="popup-authors"></p>
 
 			<a style="display: none" class="mt-0" id="popup-code-link"></a>
 
@@ -79,7 +79,7 @@
 				href="https://github.com/vict0rsch/ArxivTools">https://github.com/vict0rsch/ArxivTools</a>
 		</p>
 
-		<h4>Configuration</h4>
+		<h3 style="margin-top: 24px;">Configuration</h3>
 
 		<div id="options">
 			<input class="switch" type="checkbox" id="checkDownload" name="checkDownload" value="checkDownload">
@@ -105,19 +105,18 @@
 			<label for="checkDarkMode">Use Dark Mode</label><br><br>
 		</div>
 
-		<div style="display: flex; align-items: center;">
-			<p>Download your ArxivMemory as json file: </p>
+		<div style="display: flex; align-items: center; margin: 16px 0px">
+			<p><strong>Download</strong> your ArxivMemory as json file: </p>
 			<button style="margin-left: 3px" id="download-arxivmemory">Download</button>
 		</div>
 
 		<div style="display: flex; justify-content: center; flex-direction: column; align-items: center;">
 			<p>
-				/!\ <strong>Beta</strong> feature: PDF file name parser -> enter a javascript function taking as
-				input
+				<strong>/!\ Beta</strong> feature: PDF file name parser -> enter a javascript function taking as input
 				<code style="margin: 0px; display: inline-block;">(title, id)</code> and returning a string.
 			</p>
 
-			<textarea id="customPdfTitleTextarea" style="width: 100%; margin-bottom: 8px;" rows="5">
+			<textarea id="customPdfTitleTextarea" style="width: 100%; margin-bottom: 8px;" rows="3">
 (title, id) => {
 title = title.replaceAll("\n", '');
 return `${title} - ${id}.pdf`

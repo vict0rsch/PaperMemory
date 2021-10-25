@@ -66,6 +66,7 @@ global.knownPaperPages = {
     arxiv: ["arxiv.org/pdf/", "arxiv.org/abs/"],
     neurips: ["neurips.cc/paper/"],
     cvf: ["openaccess.thecvf.com/content"],
+    openreview: ["openreview.net/forum", "openreview.net/pdf"],
 };
 
 /**
