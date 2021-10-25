@@ -103,6 +103,7 @@ const svg = (name) => {
  */
 const contentScriptMain = async (url) => {
     const storedMenu = await getStorage(global.menuStorageKeys);
+    await initState(undefined, true);
     let menu = {};
     for (const m of global.menuCheckNames) {
         menu[m] = storedMenu.hasOwnProperty(m) ? storedMenu[m] : true;
@@ -117,14 +118,13 @@ const contentScriptMain = async (url) => {
     is["vanity"] = url.indexOf("arxiv-vanity.com") > -1;
 
     if (is.arxiv) {
-        arxiv(menu);
+        arxiv(menu, papers);
     } else if (is.vanity && menu.checkVanity) {
         vanity();
     }
 
     if (Object.values(is).some((i) => i)) {
-        let papers = await initState(undefined, true);
-        const id = await addOrUpdatePaper(is, menu, papers);
+        const id = await addOrUpdatePaper(url, is, menu);
 
         if (menu.checkPdfTitle) {
             // const getArxivTitle = async (id) => {
@@ -134,8 +134,10 @@ const contentScriptMain = async (url) => {
             //         return $($(data).find("entry title")[0]).text();
             //     });
             // };
-            const makeTitle = async (id, url, papers) => {
-                let title = papers.hasOwnProperty(id) ? papers[id].title : "";
+            const makeTitle = async (id, url) => {
+                let title = global.state.papers.hasOwnProperty(id)
+                    ? global.state.papers[id].title
+                    : "";
                 if (!title) return;
                 title = statePdfTitle(title, id);
                 window.document.title = title;
@@ -144,7 +146,7 @@ const contentScriptMain = async (url) => {
                     options: { title, url },
                 });
             };
-            makeTitle(id, url, papers);
+            makeTitle(id, url);
         }
     }
 };
@@ -187,29 +189,28 @@ const feedback = (text) => {
     }, 2000);
 };
 
-const addOrUpdatePaper = async (is, checks, papers) => {
-    const url = window.location.href;
-
+const addOrUpdatePaper = async (url, is, checks) => {
     let paper, isNew;
 
     // Extract id from url
-    const id = parseIdFromUrl(url, papers);
+    const id = parseIdFromUrl(url);
 
-    if (id && papers.hasOwnProperty(id)) {
+    if (id && global.state.papers.hasOwnProperty(id)) {
         // Update paper if it exists
-        papers = updatePaper(papers, id);
-        paper = papers[id];
+        global.state.papers = updatePaper(global.state.papers, id);
+        paper = global.state.papers[id];
         isNew = false;
     } else {
         // Or create a new one if it does not
         paper = await makePaper(is, url, id);
-        papers[paper.id] = paper;
+        global.state.papers[paper.id] = paper;
         isNew = true;
     }
 
-    chrome.storage.local.set({ papers: papers }, () => {
+    chrome.storage.local.set({ papers: global.state.papers }, () => {
         if (isNew) {
             console.log("Added '" + paper.title + "' to ArxivMemory");
+            console.log("paper: ", paper);
             // display red slider feedback if the user did not disable it
             // from the menu
             checks.checkFeedback && feedback("Added to your ArxivMemory!");
@@ -274,7 +275,7 @@ const arxiv = (checks) => {
     var h = document.querySelector(".extra-services .full-text h2");
 
     const url = window.location.href;
-    const id = parseIdFromUrl(url, global.state.papers);
+    const id = parseIdFromUrl(url);
     const isArxivAbs = window.location.href.includes("https://arxiv.org/abs/");
     let pdfUrl;
     if (isArxivAbs) {
@@ -503,17 +504,14 @@ $(() => {
     const url = window.location.href;
 
     if (
-        !Object.values(global.knownPaperPages)
+        Object.values(global.knownPaperPages)
             .reduce((a, b) => a.concat(b), [])
             .some((d) => url.includes(d))
     ) {
         // not on a paper page
-        return;
+        info("Executing Arxiv Tools content script");
+        contentScriptMain(url);
     }
-
-    info("Executing Arxiv Tools content script");
-
-    contentScriptMain(url);
 
     chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
         // listen for messages sent from background.js
