@@ -97,27 +97,36 @@ const svg = (name) => {
 };
 
 /**
- * Adds citation hovers on arxiv-vanity, markdown link, bibtext citation and download button on arxiv.
+ * Adds citation hovers on arxiv-vanity, markdown link, bibtex citation and download button on arxiv.
  * Also, if the current website is a known paper source (isPaper), adds or updates the current paper
  * @param {object} checks The user's stored preferences regarding menu options
  */
-const main = async (checks) => {
-    const url = window.location.href;
+const contentScriptMain = async (url) => {
+    const storedMenu = await getStorage(global.menuStorageKeys);
+    let menu = {};
+    for (const m of global.menuCheckNames) {
+        menu[m] = storedMenu.hasOwnProperty(m) ? storedMenu[m] : true;
+    }
+
+    menu.pdfTitleFn =
+        menu.pdfTitleFn && typeof menu.pdfTitleFn === "string"
+            ? getPdfFn(menu.pdfTitleFn)
+            : defaultPDFTitleFn;
+
     let is = isPaper(url);
-    console.log("is: ", is);
     is["vanity"] = url.indexOf("arxiv-vanity.com") > -1;
 
     if (is.arxiv) {
-        arxiv(checks);
-    } else if (is.vanity && checks.checkVanity) {
+        arxiv(menu);
+    } else if (is.vanity && menu.checkVanity) {
         vanity();
     }
 
     if (Object.values(is).some((i) => i)) {
         let papers = await initState(undefined, true);
-        const id = await addOrUpdatePaper(is, checks, papers);
+        const id = await addOrUpdatePaper(is, menu, papers);
 
-        if (checks.checkPdfTitle) {
+        if (menu.checkPdfTitle) {
             // const getArxivTitle = async (id) => {
             //     return await $.get(
             //         `https://export.arxiv.org/api/query?id_list=${id}`
@@ -150,9 +159,7 @@ const feedback = (text) => {
         clearTimeout(timeout);
         findEl("feedback-notif").remove();
         prevent = true;
-    } catch (error) {
-        console.log("No feedback to remove.");
-    }
+    } catch (error) {}
     $("body").append(/*html*/ `
         <div id="feedback-notif">${text}</div>
     `);
@@ -217,24 +224,18 @@ const addOrUpdatePaper = async (is, checks, papers) => {
 const makePaper = async (is, url, id) => {
     let paper;
     if (is.arxiv) {
-        const data = await fetchArxivXML(id);
-        const { bibvars, bibtext } = parseArxivBibtex(data);
-        paper = bibvars;
-        paper.bibtext = bibtext;
+        const paper = await parseArxivBibtex(id);
         paper.source = "arxiv";
         // paper.codes = await fetchCodes(paper)
     } else if (is.neurips) {
-        const data = await fetchNeuripsHTML(url);
-        paper = parseNeuripsHTML(url, data);
+        paper = await parseNeuripsHTML(url);
         paper.source = "neurips";
         // paper.codes = await fetchCodes(paper);
     } else if (is.cvf) {
-        const data = await fetchCvfHTML(url);
-        paper = parseCvfHTML(url, data);
+        paper = await parseCvfHTML(url);
         paper.source = "cvf";
     } else if (is.openreview) {
-        const data = await fetchOpenReviewJSON(url);
-        paper = parseOpenReviewJSON(data);
+        paper = await parseOpenReviewJSON(url);
         paper.source = "openreview";
     }
 
@@ -361,7 +362,7 @@ const arxiv = (checks) => {
             `;
 
         $.get(`https://export.arxiv.org/api/query?id_list=${id}`).then((data) => {
-            const { bibvars, bibtext } = parseArxivBibtex(data);
+            const { bibvars, bibtex } = parseArxivBibtex(data);
 
             const bibtexDiv = /*html*/ `
                     <div id="bibtexDiv">
@@ -370,7 +371,7 @@ const arxiv = (checks) => {
                             ${svg("clipboard-default")}
                             ${svg("clipboard-default-ok")}
                         </div>
-                        <div id="texTextarea" class="arxivTools-codify">${bibtext}</div>
+                        <div id="texTextarea" class="arxivTools-codify">${bibtex}</div>
                     </div>
                 `;
 
@@ -429,7 +430,7 @@ const vanity = () => {
 
             $.get(query).then((data) => {
                 $(".arxivTools-card").remove();
-                const { bibvars, bibtext } = parseArxivBibtex(data);
+                const { bibvars, bibtex } = parseArxivBibtex(data);
                 if (
                     !isArxivCitation &&
                     bibvars.title.toLowerCase().replace(/[^a-z]/gi, "") !==
@@ -455,7 +456,7 @@ const vanity = () => {
                                 <div class="arxivTools-bibtex" id="arxivTools-bibtex-${
                                     bibvars.id
                                 }">
-                                    ${bibtext}
+                                    ${bibtex}
                                 </div>
                                 <div class="arxivTools-buttons">
                                     <div class="arxivTools-close">
@@ -510,19 +511,16 @@ $(() => {
         return;
     }
 
-    console.log("Executing Arxiv Tools content script");
+    info("Executing Arxiv Tools content script");
 
-    chrome.storage.local.get(global.menuStorageKeys, (storedMenu) => {
-        let menu = {};
-        for (const m of global.menuCheckNames) {
-            menu[m] = storedMenu.hasOwnProperty(m) ? storedMenu[m] : true;
+    contentScriptMain(url);
+
+    chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
+        // listen for messages sent from background.js
+        if (request.message === "hello!") {
+            info("Running content_script for url update");
+            console.log(request.url); // new url is now in content scripts!
+            contentScriptMain(request.url);
         }
-
-        menu.pdfTitleFn =
-            menu.pdfTitleFn && typeof menu.pdfTitleFn === "string"
-                ? getPdfFn(menu.pdfTitleFn)
-                : defaultPDFTitleFn;
-
-        main(menu);
     });
 });
