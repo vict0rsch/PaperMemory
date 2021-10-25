@@ -70,6 +70,11 @@ global.knownPaperPages = {
     openreview: ["openreview.net/forum", "openreview.net/pdf"],
 };
 
+global.overrideORConfs = {
+    "robot-learning": "CoRL",
+    ijcai: "IJCAI",
+};
+
 /**
  * English words to ignore when creating an arxiv paper's BibTex key.
  */

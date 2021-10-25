@@ -52,9 +52,16 @@ const fetchCvfHTML = async (url) => {
     return text;
 };
 
-const fetchOpenReviewJSON = async (url) => {
+const fetchOpenReviewNoteJSON = async (url) => {
     const id = url.match(/id=\w+/)[0].replace("id=", "");
-    const api = `https://api.openreview.net/notes?forum=${id}&limit=1&offset=0`;
+    const api = `https://api.openreview.net/notes?id=${id}`;
+    return fetch(api).then((response) => {
+        return response.json();
+    });
+};
+const fetchOpenReviewForumJSON = async (url) => {
+    const id = url.match(/id=\w+/)[0].replace("id=", "");
+    const api = `https://api.openreview.net/notes?forum=${id}`;
     return fetch(api).then((response) => {
         return response.json();
     });
@@ -67,7 +74,6 @@ const fetchOpenReviewJSON = async (url) => {
 const parseArxivBibtex = async (arxivId) => {
     const xmlData = await fetchArxivXML(arxivId);
     var bib = $(xmlData);
-    // console.log(bib)
     var authors = [];
     var key = "";
     bib.find("author name").each((k, v) => {
@@ -207,35 +213,57 @@ const parseCvfHTML = async (url) => {
 };
 
 const parseOpenReviewJSON = async (url) => {
-    const json = await fetchOpenReviewJSON(url);
+    const noteJson = await fetchOpenReviewNoteJSON(url);
+    const forumJson = await fetchOpenReviewForumJSON(url);
 
-    const noteItem = json.notes[0];
-    const ORpaper = noteItem.content;
-    const title = ORpaper.title;
-    const pdfLink = `https://openreview.net/pdf?id=${noteItem.id}`;
-    const author = ORpaper.authors.join(" and ");
-    const bibtex = ORpaper._bibtex;
+    var paper = noteJson.notes[0];
+    var forum = forumJson.notes;
+
+    const title = paper.content.title;
+    const pdfLink = `https://openreview.net/pdf?id=${paper.id}`;
+    const author = paper.content.authors.join(" and ");
+    const bibtex = paper.content._bibtex;
     const key = bibtex.split("{")[1].split(",")[0].trim();
     const year = bibtex.split("year={")[1].split("}")[0];
-    const confParts = noteItem.invitation.split("/");
-    const organizer = confParts[0].split(".")[0];
-    const event = confParts.slice(1).join("/").split("-")[0].replaceAll("/", " ");
-    const conf = `${organizer} ${event}`.replace(/ \d\d\d\d/g, "");
-    const id = `OR-${organizer}-${year}_${noteItem.id}`;
 
-    const decisionItem = noteItem.details
-        ? noteItem.details.directReplies
-            ? noteItem.details.directReplies.filter((r) => {
-                  return (
-                      r &&
-                      ["Final Decision", "Paper Decision"].indexOf(r.content.title) > -1
-                  );
-              })
-            : ""
-        : "";
-    let note;
-    if (decisionItem && decisionItem.length === 1) {
-        const decision = decisionItem[0].content.decision
+    const confParts = paper.invitation.split("/");
+    let organizer = confParts[0].split(".")[0];
+    let event = confParts
+        .slice(1)
+        .join("/")
+        .split("-")[0]
+        .replaceAll("/", " ")
+        .replace(" Conference", "");
+
+    let overrideOrg = organizer;
+    let overridden = false;
+    if (global.overrideORConfs.hasOwnProperty(organizer)) {
+        overrideOrg = global.overrideORConfs[organizer];
+        overridden = true;
+    }
+    if (overridden) {
+        event = event.replace(overrideOrg, "");
+        organizer = overrideOrg;
+    }
+
+    const conf = `${organizer} ${event}`
+        .replace(/ \d\d\d\d/g, "")
+        .replace(/\s\s+/g, " ");
+    const id = `OR-${organizer}-${year}_${paper.id}`;
+
+    let candidates, decision, note;
+
+    candidates = forum.filter((r) => {
+        return (
+            r &&
+            r.content &&
+            ["Final Decision", "Paper Decision"].indexOf(r.content.title) > -1
+        );
+    });
+    console.log("forum: ", forum);
+    console.log("candidates: ", candidates);
+    if (candidates && candidates.length > 0) {
+        decision = candidates[0].content.decision
             .split(" ")
             .map((v, i) => {
                 return i === 0 ? v + "ed" : v;
@@ -243,6 +271,7 @@ const parseOpenReviewJSON = async (url) => {
             .join(" ");
         note = `${decision} @ ${conf} ${year}`;
     }
+
     if (author === "Anonymous") {
         note = `Under review @ ${conf} ${year} (${new Date().toLocaleDateString()})`;
     }
