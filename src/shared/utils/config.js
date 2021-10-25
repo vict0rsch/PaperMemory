@@ -61,9 +61,10 @@ global.menuStorageKeys = [...global.menuCheckNames, "pdfTitleFn"];
 
 /**
  * Map of known data sources to the associated paper urls: pdf urls and web-pages urls.
+ * IMPORTANT: paper page before pdf (see background script)
  */
 global.knownPaperPages = {
-    arxiv: ["arxiv.org/pdf/", "arxiv.org/abs/"],
+    arxiv: ["arxiv.org/abs/", "arxiv.org/pdf/"],
     neurips: ["neurips.cc/paper/"],
     cvf: ["openaccess.thecvf.com/content"],
     openreview: ["openreview.net/forum", "openreview.net/pdf"],
