@@ -2,6 +2,7 @@
  * TODO: docstrings
  * TODO: miniquery for content_script.js
  * TODO: content_script monitor dynamic url change (eg: from an OR paper to another)
+ * TODO: investigate error: https://openreview.net/forum?id=MAWgLrYvMs0
  */
 
 const getTagsOptions = (paper) => {
@@ -31,7 +32,15 @@ const updateAllPaperTagOptions = () => {
 const updatePopupPaperNoMemory = () => {
     const noMemoryHTML = /*html*/ `
     <div style="font-size: 1.5rem; width: 100%; text-align: center;">This paper is not in your memory</div>
-    <h4 style="width: 100%; text-align: center;"> Refresh the page to add it back </h4>
+    <ul>It can be for one of 3 reasons:
+        <br/>
+        <br/>
+        <li>You deleted the paper (refresh the page to add it back)</li>
+        <br/>
+        <li>There was an error parsing the paper's data (you can check the console if you think this is an issue)</li>
+        <br/>
+        <li>You are actually not on a paper page but the extension made a mistake</li>
+    </ul>
     `;
     setHTML("isArxiv", noMemoryHTML);
 };
@@ -561,10 +570,11 @@ const makeMemoryHTML = async () => {
 
     // add input search delay if there are many papers:
     // wait for some time between keystrokes before firing the search
+    let delayTime = 300;
     if (global.state.papersList.length < 20) {
         delayTime = 0;
     } else if (global.state.papersList.length < 50) {
-        delayTime = 300;
+        delayTime = 150;
     }
 
     const tevents = Date.now() / 1000;
