@@ -2,10 +2,9 @@
 // -----  Fetch  -----
 // -------------------
 
-const fetchArxivXML = async (id) => {
-    id += "";
-    id = id.replace("Arxiv-", "");
-    return $.get(`https://export.arxiv.org/api/query`, { id_list: id });
+const fetchArxivXML = async (paperId) => {
+    const arxivId = paperId.replace("Arxiv-", "");
+    return $.get(`https://export.arxiv.org/api/query`, { id_list: arxivId });
 };
 
 const fetchNeuripsHTML = async (url) => {
@@ -71,8 +70,13 @@ const fetchOpenReviewForumJSON = async (url) => {
 // -----  Parse  -----
 // -------------------
 
-const parseArxivBibtex = async (arxivId) => {
-    const xmlData = await fetchArxivXML(arxivId);
+const parseArxivBibtex = async (arxivId, data) => {
+    let xmlData;
+    if (typeof data === "undefined") {
+        xmlData = await fetchArxivXML(arxivId);
+    } else {
+        xmlData = data;
+    }
     var bib = $(xmlData);
     var authors = [];
     var key = "";
@@ -153,21 +157,20 @@ const parseNeuripsHTML = async (url) => {
         .join(" and ");
     const pdfLink = url;
     const year = $(ps[0]).text().match(/\d{4}/)[0];
-    const key = `neurips${year}${hash.slice(0, 8)} `;
-    const id = `NeurIPS-${year}_${hash.slice(0, 8)} `;
+    const key = `neurips${year}${hash.slice(0, 8)}`;
+    const id = `NeurIPS-${year}_${hash.slice(0, 8)}`;
     const conf = `NeurIPS ${year}`;
     const note = `Accepted @ ${conf}`;
 
     const bibtex = `
 @inproceedings{NEURIPS${year}_${hash.slice(0, 8)}
-    author = { ${author}
-},
-booktitle = { Advances in Neural Information Processing Systems },
-    editor = { H.Larochelle and M.Ranzato and R.Hadsell and M.F.Balcan and H.Lin },
-    publisher = { Curran Associates, Inc.},
-    title = { ${title}},
-url = { ${url}},
-year = { ${year}}
+    author = {${author}},
+    booktitle = {Advances in Neural Information Processing Systems },
+    editor = {H.Larochelle and M.Ranzato and R.Hadsell and M.F.Balcan and H.Lin },
+    publisher = {Curran Associates, Inc.},
+    title = {${title}},
+    url = {${url}},
+    year = {${year}}
 }`;
 
     return { author, bibtex, conf, id, key, note, pdfLink, title, year };
@@ -220,11 +223,21 @@ const parseOpenReviewJSON = async (url) => {
     var forum = forumJson.notes;
 
     const title = paper.content.title;
-    const pdfLink = `https://openreview.net/pdf?id=${paper.id}`;
     const author = paper.content.authors.join(" and ");
     const bibtex = paper.content._bibtex;
     const key = bibtex.split("{")[1].split(",")[0].trim();
     const year = bibtex.split("year={")[1].split("}")[0];
+
+    let pdfLink;
+    if (paper.pdf) {
+        pdfLink = `https://openreview.net/pdf?id=${paper.id}`;
+    } else {
+        if (paper.html) {
+            pdfLink = paper.html;
+        } else {
+            pdfLink = url;
+        }
+    }
 
     const confParts = paper.invitation.split("/");
     let organizer = confParts[0].split(".")[0];

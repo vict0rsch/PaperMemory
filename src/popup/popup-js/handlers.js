@@ -375,6 +375,48 @@ const handleDownloadMemoryClick = () => {
         );
     });
 };
+const handleDownloadBibtexJsonClick = () => {
+    const now = new Date();
+    const date = now.toLocaleDateString().replaceAll("/", ".");
+    const time = now.toLocaleTimeString().replaceAll(":", ".");
+    chrome.storage.local.get("papers", ({ papers }) => {
+        const version = versionToSemantic(papers.__dataVersion);
+        delete papers.__dataVersion;
+        const bibtex = Object.keys(papers).reduce((obj, k) => {
+            obj[k] = papers[k].bibtex || "";
+            return obj;
+        }, {});
+        downloadTextFile(
+            JSON.stringify(bibtex),
+            `memory-bibtex-${version}-${date}-${time}.json`,
+            "text/json"
+        );
+    });
+};
+const handleDownloadBibtexPlainClick = () => {
+    const now = new Date();
+    const date = now.toLocaleDateString().replaceAll("/", ".");
+    const time = now.toLocaleTimeString().replaceAll(":", ".");
+    chrome.storage.local.get("papers", ({ papers }) => {
+        const version = versionToSemantic(papers.__dataVersion);
+        delete papers.__dataVersion;
+        const bibtex = Object.values(papers)
+            .map((v, k) => {
+                let b = v.bibtex;
+                if (!b) {
+                    b = "";
+                    console.log(v);
+                }
+                return b;
+            })
+            .join("\n");
+        downloadTextFile(
+            JSON.stringify(bibtex),
+            `memory-bibtex-${version}-${date}-${time}.bib`,
+            "text/plain"
+        );
+    });
+};
 
 const handleCustomPDFFunctionSave = () => {
     const code = val("customPdfTitleTextarea").trim();

@@ -66,6 +66,8 @@ const setStandardPopupClicks = () => {
     addListener("memory-switch", "click", handleMemorySwitchClick);
 
     addListener("download-arxivmemory", "click", handleDownloadMemoryClick);
+    addListener("download-bibtex-json", "click", handleDownloadBibtexJsonClick);
+    addListener("download-bibtex-plain", "click", handleDownloadBibtexPlainClick);
 };
 
 /**

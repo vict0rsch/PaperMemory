@@ -118,7 +118,7 @@ const contentScriptMain = async (url) => {
     is["vanity"] = url.indexOf("arxiv-vanity.com") > -1;
 
     if (is.arxiv) {
-        arxiv(menu, papers);
+        arxiv(menu);
     } else if (is.vanity && menu.checkVanity) {
         vanity();
     }
@@ -194,6 +194,7 @@ const addOrUpdatePaper = async (url, is, checks) => {
 
     // Extract id from url
     const id = parseIdFromUrl(url);
+    console.log("id: ", id);
 
     if (id && global.state.papers.hasOwnProperty(id)) {
         // Update paper if it exists
@@ -225,7 +226,7 @@ const addOrUpdatePaper = async (url, is, checks) => {
 const makePaper = async (is, url, id) => {
     let paper;
     if (is.arxiv) {
-        const paper = await parseArxivBibtex(id);
+        paper = await parseArxivBibtex(id);
         paper.source = "arxiv";
         // paper.codes = await fetchCodes(paper)
     } else if (is.neurips) {
@@ -256,6 +257,12 @@ const initPaper = (paper) => {
     paper.lastOpenDate = paper.addDate;
     paper.count = 1;
 
+    for (const k in paper) {
+        if (paper.hasOwnProperty(k) && typeof paper[k] === "string") {
+            paper[k] = paper[k].trim();
+        }
+    }
+
     validatePaper(paper);
 
     return paper;
@@ -272,7 +279,9 @@ const arxiv = (checks) => {
 
     // console.log({ checks })
 
-    var h = document.querySelector(".extra-services .full-text h2");
+    const arxivAbsCol = document.querySelector(
+        ".extra-services .full-text h2"
+    ).parentElement;
 
     const url = window.location.href;
     const id = parseIdFromUrl(url);
@@ -298,7 +307,7 @@ const arxiv = (checks) => {
                 </div>
             </div>
             `;
-        h.parentElement.innerHTML += button;
+        arxivAbsCol.innerHTML += button;
         var downloadTimeout;
         $("#arxiv-button").on("click", async () => {
             removeClass("arxiv-button", "downloaded");
@@ -309,7 +318,7 @@ const arxiv = (checks) => {
                     removeClass("arxiv-button", "downloaded");
             }, 1500);
             const title = await $.get(
-                `https://export.arxiv.org/api/query?id_list=${id}`
+                `https://export.arxiv.org/api/query?id_list=${id.split("-")[1]}`
             ).then((data) => {
                 return $($(data).find("entry title")[0]).text();
             });
@@ -320,7 +329,7 @@ const arxiv = (checks) => {
     // -----  Markdown Link  -----
     // ---------------------------
     if (checkMd && isArxivAbs) {
-        h.parentElement.innerHTML += /*html*/ `
+        arxivAbsCol.innerHTML += /*html*/ `
             <div id="markdown-container">
                 <div id="markdown-header" class="arxivTools-header">
                     <h3>Markdown</h3>
@@ -351,7 +360,7 @@ const arxiv = (checks) => {
     }
 
     if (checkBib && isArxivAbs) {
-        h.parentElement.innerHTML += /*html*/ `
+        arxivAbsCol.innerHTML += /*html*/ `
                 <div id="loader-container" class="arxivTools-container">
                     <div class="sk-folding-cube">
                         <div class="sk-cube1 sk-cube"></div>
@@ -362,45 +371,51 @@ const arxiv = (checks) => {
                 </div>
             `;
 
-        $.get(`https://export.arxiv.org/api/query?id_list=${id}`).then((data) => {
-            const { bibvars, bibtex } = parseArxivBibtex(data);
+        $.get(`https://export.arxiv.org/api/query?id_list=${id.split("-")[1]}`).then(
+            async (data) => {
+                const paper = await parseArxivBibtex(id, data);
 
-            const bibtexDiv = /*html*/ `
+                const bibtexDiv = /*html*/ `
                     <div id="bibtexDiv">
                         <div id="texHeader" class="arxivTools-header">
                             <h3>BibTex:</h3>
                             ${svg("clipboard-default")}
                             ${svg("clipboard-default-ok")}
                         </div>
-                        <div id="texTextarea" class="arxivTools-codify">${bibtex}</div>
+                        <div id="texTextarea" class="arxivTools-codify">${
+                            paper.bibtex
+                        }</div>
                     </div>
                 `;
 
-            $("#loader-container").fadeOut(() => {
-                findEl("loader-container").remove();
-                h.parentElement.innerHTML += bibtexDiv;
-                addListener(
-                    document.querySelector("#texHeader .copy-feedback"),
-                    "click",
-                    (e) => {
-                        $("#texHeader .copy-feedback").fadeOut(200, () => {
-                            $("#texHeader .copy-feedback-ok").fadeIn(200, () => {
-                                setTimeout(() => {
-                                    $("#texHeader .copy-feedback-ok").fadeOut(
-                                        200,
-                                        () => {
-                                            $("#texHeader .copy-feedback").fadeIn(200);
-                                        }
-                                    );
-                                }, 1500);
+                $("#loader-container").fadeOut(() => {
+                    findEl("loader-container").remove();
+                    arxivAbsCol.innerHTML += bibtexDiv;
+                    addListener(
+                        document.querySelector("#texHeader .copy-feedback"),
+                        "click",
+                        (e) => {
+                            $("#texHeader .copy-feedback").fadeOut(200, () => {
+                                $("#texHeader .copy-feedback-ok").fadeIn(200, () => {
+                                    setTimeout(() => {
+                                        $("#texHeader .copy-feedback-ok").fadeOut(
+                                            200,
+                                            () => {
+                                                $("#texHeader .copy-feedback").fadeIn(
+                                                    200
+                                                );
+                                            }
+                                        );
+                                    }, 1500);
+                                });
                             });
-                        });
-                        copyTextToClipboard(findEl("texTextarea").innerText);
-                        feedback("Bibtex Citation Copied!");
-                    }
-                );
-            });
-        });
+                            copyTextToClipboard(findEl("texTextarea").innerText);
+                            feedback("Bibtex Citation Copied!");
+                        }
+                    );
+                });
+            }
+        );
     }
 };
 
@@ -431,7 +446,7 @@ const vanity = () => {
 
             $.get(query).then((data) => {
                 $(".arxivTools-card").remove();
-                const { bibvars, bibtex } = parseArxivBibtex(data);
+                const { bibvars, bibtex } = parseArxivBibtex(id, data);
                 if (
                     !isArxivCitation &&
                     bibvars.title.toLowerCase().replace(/[^a-z]/gi, "") !==

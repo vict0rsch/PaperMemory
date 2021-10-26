@@ -332,9 +332,15 @@ const parseUrl = (url) => {
 
 const downloadTextFile = (content, fileName, contentType) => {
     var a = document.createElement("a");
-    var file = new Blob([content], { type: contentType });
-    a.href = URL.createObjectURL(file);
-    a.download = fileName;
+    if (contentType === "text/plain") {
+        content = content.replace(/\\n/g, "%0D%0A").replace(/"/g, "");
+        a.download = fileName;
+        a.href = "data:text/plain," + content;
+    } else {
+        var file = new Blob([content], { type: contentType });
+        a.href = URL.createObjectURL(file);
+        a.download = fileName;
+    }
     a.click();
 };
 
