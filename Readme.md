@@ -1,4 +1,4 @@
-# Arxiv Tools ⚡
+# My Paper Memory ⚡
 
 <br/><br/>
 
@@ -12,14 +12,26 @@
 
 <br/><br/>
 
-This browser extension allows you to do automatically store ArXiv papers you read and much more:
+An **automated**, web-based and minimalist reference manager.
+
+It is not meant to replace, rather complete more standard reference managers as Zotero etc.
+
+This browser extension allows you to do automatically store research papers you read and much more:
 
 1. 🏬 **Automatically record papers** you open, without clicking anywhere. You can then **search** them, **tag** them, **comment** them and link a code repository.
-2. 📄 **Go back to an arxiv-hosted pdf to its abstract page**. For instance: from `https://arxiv.org/pdf/1703.06907.pdf` to `https://arxiv.org/abs/1703.06907` in a click.
-3. 🗂 **Add a direct download button** so that you don't have to open the pdf's webpage and then download it from your browser
-4. 🔗 **Add a Markdown link**, because it's the little things that make sharing a paper easier (to be used in issues, PRs, Readme, HackMD.io etc.)
-5. 🎫 **Add the paper's BibTex citation directly on its abstract webpage**, because citing papers should not be a hassle, the extension directly queries and parses Arxiv's API (also works on [arxiv-vanity.com](https://arxiv-vanity.com) *(remember to always double check if a paper has been published before going for the ArXiv citation)*
-6. 🎬 **Change a pdf's webpage title to the article's title**, because who cares about that saved bookmark `1812.10889.pdf` when it could be `InstaGAN: Instance-aware Image-to-Image Translation (1812.10889).pdf`
+2. 🎬 **Change a pdf's webpage title to the article's title**, because who cares about that saved bookmark `1812.10889.pdf` when it could be `InstaGAN Instance-aware Image-to-Image Translation.pdf`
+3. 🎫 **BibTex citation**, because citing papers should not be a hassle you can copy a BibTex citation to your clipboard or export the Memory itself as a `.bib` file
+4. 🔗 **Markdown link**, `[title](url)` because it's the little things that make sharing a paper easier (to be used in issues, PRs, Readme, HackMD.io etc.)
+5. 🗂 **Direct download button** with a nice name including the paper's title, so that you don't have to open the pdf's webpage and then download it from your browser.
+6. 📄 **Go back from a pdf to its abstract page**. For instance: from `https://arxiv.org/pdf/1703.06907.pdf` to `https://arxiv.org/abs/1703.06907` in a click.
+
+Supported venues:
+
+* arxiv.org
+* neurips.cc (NeurIPS)
+* openreview.net (ICLR etc.)
+* openaccess.cvf.com (I/ECCV, CVPR etc.)
+* [Add more](https://github.com/vict0rsch/ArxivTools/issues/13)
 
 ## Demo
 
@@ -45,20 +57,25 @@ Share ideas 💡 in [issues](https://github.com/vict0rsch/ArxivTools/issues) and
 
 ## Keyboard Navigation
 
-**ArxivMemory** is here!
-
-* **Record** papers you read: Arxiv or NeurIPS papers you visit are stored, searchable, sortable, commentable, taggable
 * **Keyboard** navigation:
-  * `cmd/ctrl + shift + e` will open the popup
-  * `a` from the popup's home will open the ArxivMemory
-    * `esc` closes the memory (or the menu)
-    * also navigate to the button with `tab` and hit `enter`
-  * `tab` will iterate through fields: tags and note if you're on a paper's page, then your ArxivTools anyway.
-  * Search field is automatically focused on memory open
-  * `(shift + ) tab` to navigate the paper list
-    * `e` to _edit_ the paper's metadata: tags, code and note
-    * `enter` to _open_ a focused paper (*focus* an existing tab with the paper or *create a new tab* to the paper's pdf if it's not open already)
-    * `backspace` to _delete_ the paper (a confirmation will be prompted first don't worry 👮‍♀️)
+  * Open the popup:
+    * `cmd/ctrl + shift + e`
+  * Open the Memory
+    * `a` from the popup's home will open the ArxivMemory
+    * navigate to the bottom left button with `tab` and hit `enter`
+  * Search
+    * Search field is automatically focused on memory open
+    * Navigate to the top input with `tab` or `shift + tab`
+  * Navigate papers
+    * `tab` will iterate through papers down the list
+    * `shift + tab` will go back up the list
+  * Edit a paper
+    * Press `e` to _edit_ the paper's metadata: tags, code and note when the paper is *focused* (from click or keyboard `tab` navigation)
+      * Navigate through fields with `(shift+) tab`: tags and note if you're on a paper's page, then your ArxivTools anyway.
+    * Press `enter` to _open_ a focused paper (*focus* an existing tab with the paper or *create a new tab* to the paper's pdf if it's not open already)
+    * `backspace` to _delete_ a focused paper (a confirmation will be prompted first don't worry 👮‍♀️)
+  * Close Memory or Menu
+    * `esc` closes the memory (or the menu -- **not** in Firefox)
 * **Search**
   * In a paper's authors, title and note.
     * Split queries on spaces: `gan im` will look for: _all papers whose (title OR author) contain ("gan" AND "im")_
@@ -80,15 +97,7 @@ Share ideas 💡 in [issues](https://github.com/vict0rsch/ArxivTools/issues) and
 <img src="https://github.com/vict0rsch/ArxivTools/blob/master/extra/imgs/guide-memory.png?raw=true">
 </p>
 
-#### Known data sources
-
-ArxivTools can actually store data from more venues than Arxiv:
-
-* CVF conferences (ICCV / CVPR / WAC etc. )
-* NeurIPS
-* More can be added upon request (open an issue)
-
-## Install from source
+## Install from source (Brave & Chrome)
 
 * Download the repo
 * Go to Chrome/Brave's extension manager
@@ -98,7 +107,6 @@ ArxivTools can actually store data from more venues than Arxiv:
 
 ## Todo
 
-* [ ] More robust file patterns and document custom page naming
 * [ ] Update visuals
 * [ ] Document `:` being replaced by `_` when downloading a pdf ([OS requirements...](https://stackoverflow.com/questions/30960190/problematic-characters-for-filename-in-chrome-downloads-download))
 * [ ] Document backup and how to get it
@@ -114,5 +122,3 @@ ArxivTools can actually store data from more venues than Arxiv:
   * Using Firefox? [#9](https://github.com/vict0rsch/ArxivTools/issues/9) 🚁
 * **Papers With Code**
   * Wouldn't it be nice to automatically discover papers' repos!! see [#10](https://github.com/vict0rsch/ArxivTools/issues/10)
-* **Reading lists**
-  * Do you need to mark papers "To Read"? see [#12](https://github.com/vict0rsch/ArxivTools/issues/12)
