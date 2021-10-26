@@ -25,18 +25,18 @@ This browser extension allows you to do automatically store ArXiv papers you rea
 
 (Visuals are slightly deprecated (Oct 1st 2021), I need to update them but it's currently very close to what you see here)
 
-![](https://github.com/vict0rsch/ArxivTools/blob/master/imgs/d2.gif?raw=true)
+![](https://github.com/vict0rsch/ArxivTools/blob/master/extra/imgs/d2.gif?raw=true)
 
 Augment Arxiv-Vanity with Bibtex:
 
 <p align="center">
-<img src="https://github.com/vict0rsch/ArxivTools/blob/master/imgs/v.png?raw=true">
+<img src="https://github.com/vict0rsch/ArxivTools/blob/master/extra/imgs/v.png?raw=true">
 </p>
 
 Customize features in the menu:
 
 <p align="center">
-<img src="https://github.com/vict0rsch/ArxivTools/blob/master/imgs/m.png?raw=true">
+<img src="https://github.com/vict0rsch/ArxivTools/blob/master/extra/imgs/m.png?raw=true">
 </p>
 
 ---
@@ -73,11 +73,11 @@ Share ideas 💡 in [issues](https://github.com/vict0rsch/ArxivTools/issues) and
 ## Guides
 
 <p align="center">
-<img src="https://github.com/vict0rsch/ArxivTools/blob/master/imgs/guide-arrows.png?raw=true">
+<img src="https://github.com/vict0rsch/ArxivTools/blob/master/extra/imgs/guide-arrows.png?raw=true">
 </p>
 
 <p align="center">
-<img src="https://github.com/vict0rsch/ArxivTools/blob/master/imgs/guide-memory.png?raw=true">
+<img src="https://github.com/vict0rsch/ArxivTools/blob/master/extra/imgs/guide-memory.png?raw=true">
 </p>
 
 #### Known data sources
