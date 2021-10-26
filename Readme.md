@@ -110,6 +110,7 @@ Share ideas 💡 in [issues](https://github.com/vict0rsch/ArxivTools/issues) and
 * [ ] Update visuals
 * [ ] Document `:` being replaced by `_` when downloading a pdf ([OS requirements...](https://stackoverflow.com/questions/30960190/problematic-characters-for-filename-in-chrome-downloads-download))
 * [ ] Document backup and how to get it
+* [ ] Improve `Contributing.md`
 
 ## Help
 
