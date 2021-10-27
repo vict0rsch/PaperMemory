@@ -128,11 +128,14 @@ const focusExistingOrCreateNewPaperTab = (paper) => {
     const hostname = parseUrl(paper.pdfLink).hostname;
 
     // create the match string to look for in existing tabs
+    // as ~ : focusTab = url.contains(match)
     let match = paper.pdfLink
         .split("/") // split on parts of the path
-        .reverse()[0] // get the last one
-        .replace("-Paper.pdf", "") // clean neurips-specific end
-        .replace(".pdf", ""); // remove .pdf
+        .reverse()[0] // get the last one (all)
+        .replace("-Paper.pdf", "") // (neurips)
+        .replace(".pdf", "") // remove .pdf (cvf)
+        .split("?") // remove get args if any
+        .reverse()[0]; // find id (openreview)
     if (match.match(/\d{5}v\d+$/) && paper.source === "arxiv") {
         // remove potential pdf version on arxiv
         match = match.split("v")[0];

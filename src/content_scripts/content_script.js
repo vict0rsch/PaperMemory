@@ -239,6 +239,8 @@ const makePaper = async (is, url, id) => {
     } else if (is.openreview) {
         paper = await parseOpenReviewJSON(url);
         paper.source = "openreview";
+    } else {
+        throw Error("Unknown paper source: " + JSON.stringify({ is, url, id }));
     }
 
     return initPaper(paper);

@@ -422,6 +422,8 @@ const migrateData = async (papers, manifestDataVersion) => {
     var deleteIds = [];
     const latestDataVersion = 210;
 
+    let newPapers = { ...papers };
+
     try {
         if (papers.hasOwnProperty("__dataVersion")) {
             if (papers["__dataVersion"] === latestDataVersion) {
@@ -514,7 +516,7 @@ const migrateData = async (papers, manifestDataVersion) => {
             console.log("Deleting " + id);
         });
 
-        let newPapers = { ...papers };
+        newPapers = { ...papers };
         newPapers["__dataVersion"] = manifestDataVersion;
 
         chrome.storage.local.set({ papers: newPapers }, () => {
@@ -524,12 +526,12 @@ const migrateData = async (papers, manifestDataVersion) => {
         });
 
         return { papers: newPapers, success: true };
-    } catch (error) {
+    } catch (err) {
         console.log(
             `Error migrating data from version ${currentVersion} to ${manifestDataVersion}: `
         );
-        console.log(error);
-        return { papers: newPapers, success: false };
+        console.log(err);
+        return { papers: newPapers, success: false, error: err };
     }
 };
 
@@ -772,22 +774,24 @@ const validatePaper = (paper) => {
         "year", //         {string}    year of publication
     ];
 
-    let warn = false;
+    let warns = [];
 
     for (const key of expectedKeys) {
         if (!paper.hasOwnProperty(key)) {
-            warn = true;
-            console.warn(`Key ${key} absent from paper ${paper}`);
+            message = `Key ${key} absent from paper ${paper}`;
+            warns.push(message);
+            console.warn(message);
         }
     }
 
     const sources = Object.keys(global.knownPaperPages);
     if (sources.indexOf(paper.source) < 0) {
-        warn = true;
-        console.warn(`Unknown source ${paper.source} for paper ${paper}`);
+        message = `Unknown source ${paper.source} for paper ${paper}`;
+        warns.push(message);
+        console.warn(message);
     }
 
-    return warn;
+    return warns;
 };
 
 const tablerSvg = (pathName, id, classNames) => {
@@ -917,26 +921,44 @@ const tablerSvg = (pathName, id, classNames) => {
     }
 };
 
-const loadJSONToMemory = async (jsonString) => {
+const stringifyError = (e) => {
+    const extId = chrome.runtime.id;
+    return e.stack
+        .split("\n")
+        .map((line) =>
+            line
+                .split(" ")
+                .map((word) => word.split(extId).reverse()[0])
+                .join(" ")
+        )
+        .join("<br/>");
+};
+
+const overwriteMemory = async (data) => {
     let error = true;
-    let warning = false;
+    let warning = "";
     let message = "";
     try {
-        const data = JSON.parse(jsonString);
         if (!data.__dataVersion) {
             data.__dataVersion = 1;
         }
-        const migration = await migrateData(data, manifestDataVersion());
+        const migration = await migrateData(data, getManifestDataVersion());
         if (!migration.success) {
-            alert("Bug");
-            return;
+            message = "Could not migrate the data before storing it";
+            if (migration.error) {
+                message += ":<br/>" + stringifyError(migration.error);
+            }
+            return {
+                success: false,
+                message: message,
+            };
         }
         const { papers } = migration;
         for (const id in papers) {
             if (!id.startsWith("__")) {
-                paperWarning = validatePaper(papers[id]);
+                paperWarnings = validatePaper(papers[id]);
                 if (paperWarning) {
-                    warning = true;
+                    warning = paperWarnings.join("<br/>");
                 }
             }
         }
@@ -944,13 +966,14 @@ const loadJSONToMemory = async (jsonString) => {
             const prevPapers = await getStorage("papers");
             setStorage("uploadBackup", prevPapers);
         }
-        setStorage("papers", papers);
+        // setStorage("papers", papers);
         error = false;
     } catch (err) {
-        console.log("loadJSONToMemory error", error);
-        message = err;
+        console.log("overwriteMemory error", err);
+        message = "overwriteMemory error:<br/>" + stringifyError(err);
+        error = true;
     }
-    return { success: error, message: message };
+    return { success: !error, message: message };
 };
 
 const arraysIdentical = (a, b) => {

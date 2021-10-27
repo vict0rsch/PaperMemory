@@ -68,6 +68,7 @@ const setStandardPopupClicks = () => {
     addListener("download-arxivmemory", "click", handleDownloadMemoryClick);
     addListener("download-bibtex-json", "click", handleDownloadBibtexJsonClick);
     addListener("download-bibtex-plain", "click", handleDownloadBibtexPlainClick);
+    addListener("overwrite-arxivmemory-button", "click", handleOverwriteMemory);
 };
 
 /**
@@ -106,7 +107,12 @@ const popupMain = async (url, isKnownPage) => {
 
     // Display popup metadata
     if (isKnownPage) {
+        setTimeout(() => {
+            document.body.style.height = "auto";
+            document.body.style.minHeight = "450px";
+        }, 0);
         showId("isArxiv", "flex");
+
         const id = parseIdFromUrl(url);
         global.state.currentId = id;
 
@@ -144,7 +150,6 @@ const popupMain = async (url, isKnownPage) => {
             ...global.select2Options,
             width: "87%",
         });
-        document.body.style.height = "auto";
         addListener(`popup-form-note-textarea--${id}`, "focus", () => {
             var that = this;
             textareaFocusEnd(that);

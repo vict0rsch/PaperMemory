@@ -149,6 +149,25 @@
 			</button>
 		</div>
 
+		<div style="margin: 16px 0px">
+			<p><strong>Overwrite</strong> your Memory: </p>
+			<div style="display: flex; align-items: center; ">
+				<input type="file" style="margin-left: 8px; display: flex;" id="overwrite-arxivmemory-input"></input>
+				<button
+					style="font-family: monospace; margin-left: 8px; display: flex; align-items: center; justify-content: space-between;"
+					id="overwrite-arxivmemory-button">
+					.json&nbsp;
+					<svg viewBox="0 0 24 24" style="height: 18px; width: 18px; color: black; stroke: black">
+						<path stroke="none" d="M0 0h24v24H0z" fill="none" />
+						<path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2 -2v-2" />
+						<polyline points="7 9 12 4 17 9" />
+						<line x1="12" y1="4" x2="12" y2="16" />
+					</svg>
+				</button>
+			</div>
+			<div style="text-align: center;" id="overwriteFeedback"></div>
+		</div>
+
 		<div style="display: flex; justify-content: center; flex-direction: column; align-items: center;">
 			<p>
 				<strong>/!\ Beta</strong> feature: PDF file name parser -> enter a javascript function taking as input

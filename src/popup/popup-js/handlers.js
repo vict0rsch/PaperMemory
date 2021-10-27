@@ -418,6 +418,39 @@ const handleDownloadBibtexPlainClick = () => {
     });
 };
 
+const handleOverwriteMemory = () => {
+    var file = document.getElementById("overwrite-arxivmemory-input").files;
+    if (!file || file.length < 1) {
+        return;
+    }
+    file = file[0];
+    var reader = new FileReader();
+    reader.onload = function (e) {
+        try {
+            const overwritingPapers = JSON.parse(e.target.result);
+            setHTML(
+                "overwriteFeedback",
+                `<div class="lds-ring"><div></div><div></div><div></div><div></div></div>`
+            );
+            setTimeout(async () => {
+                const { success, message } = await overwriteMemory(overwritingPapers);
+                if (success) {
+                    setHTML("overwriteFeedback", `<h4>Done.</h4>`);
+                } else {
+                    setStyle("overwriteFeedback", "text-align", "left");
+                    setHTML("overwriteFeedback", "<br/>" + message);
+                }
+            }, 1500);
+        } catch (error) {
+            setHTML(
+                "overwriteFeedback",
+                `<br/><strong>Error:</strong><br/>${stringifyError(error)}`
+            );
+        }
+    };
+    reader.readAsText(file);
+};
+
 const handleCustomPDFFunctionSave = () => {
     const code = val("customPdfTitleTextarea").trim();
     try {
