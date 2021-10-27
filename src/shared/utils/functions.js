@@ -755,38 +755,129 @@ const formatBibtext = (text) => {
 };
 
 const validatePaper = (paper) => {
-    const expectedKeys = [
-        "addDate", //      {string}    the paper's date of addition to the Memory
-        "author", //       {string}    ` and `-separated authors `${firstName} ${lastName}`
-        "bibtex", //      {string}    BibTex citation with new lines (`\n`)
-        "codeLink", //     {string}    to the paper's code link
-        "count", //        {int}       the paper's number of visits
-        "favorite", //     {boolean}   user wants to star the paper
-        "favoriteDate", // {string}    date the paper was added as a favorite
-        "id", //           {string}    Unique ArxivTools ID
-        "key", //          {string}    BibTex citation key
-        "lastOpenDate", // {string}    When the paper was last opened
-        "md", //           {string}    markdown-formatted string `[${title}](${pdfLink})`
-        "note", //         {string}    of the user's note for this paper
-        "pdfLink", //      {string}    of the link to the paper's pdf
-        "source", //       {string}    describing the paper's source
-        "tags", //         {string []} the user's tags for this paper
-        "year", //         {string}    year of publication
-    ];
+    const expectedKeys = {
+        addDate: {
+            type: "string",
+            desc: "the paper's date of addition to the Memory",
+            default: (p) => new Date().toJSON(),
+        },
+        author: {
+            type: "string",
+            desc: "` and `-separated authors `${firstName} ${lastName}`",
+        },
+        bibtex: {
+            type: "string",
+            desc: "BibTex citation with new lines (`\n`)",
+        },
+        codeLink: {
+            type: "string",
+            desc: "the paper's code link",
+            default: (p) => "",
+        },
+        count: {
+            type: "number",
+            desc: "the paper's number of visits",
+            default: (p) => 1,
+        },
+        favorite: {
+            type: "boolean",
+            desc: "user wants to star the paper",
+            default: (p) => false,
+        },
+        favoriteDate: {
+            type: "string",
+            desc: "date the paper was added as a favorite",
+            default: (p) => new Date().toJSON(),
+        },
+        id: {
+            type: "string",
+            desc: "Unique ArxivTools ID",
+        },
+        key: {
+            type: "string",
+            desc: "BibTex citation key",
+            default: (p) => `defaultKey_${p.id}`,
+        },
+        lastOpenDate: {
+            type: "string",
+            desc: "When the paper was last opened",
+            default: (p) => new Date().toJSON(),
+        },
+        md: {
+            type: "string",
+            desc: "markdown-formatted string `[${title}](${pdfLink})`",
+            default: (p) => `[${p.title}](${p.pdfLink})`,
+        },
+        note: {
+            type: "string",
+            desc: "the user's note for this paper",
+            default: (p) => "",
+        },
+        pdfLink: {
+            type: "string",
+            desc: "the link to the paper's pdf",
+        },
+        source: {
+            type: "string",
+            desc: "the paper's source i.e. where it was added to the memory from",
+        },
+        tags: {
+            type: "array[string]",
+            desc: "the user's tags for this paper",
+            default: (p) => [],
+        },
+        year: {
+            type: "string",
+            desc: "year of publication",
+        },
+    };
 
     let warns = [];
 
-    for (const key of expectedKeys) {
+    for (const key in expectedKeys) {
         if (!paper.hasOwnProperty(key)) {
-            message = `Key ${key} absent from paper ${paper}`;
+            message = `Attribute "${key}" absent (${paper.id})`;
             warns.push(message);
             console.warn(message);
+            if (expectedKeys[key].default) {
+                paper[key] = expectedKeys[key].default(paper); // useless for now, mechanism for later if need be
+            } else {
+                throw Error(
+                    `Cannot continue, paper is corrupted. Missing mandatory attribute "${key}" in ${paper.id}`
+                );
+            }
+        } else {
+            const expectedType = expectedKeys[key].type;
+            const keyType = typeof paper[key];
+            if (!expectedType.startsWith("array")) {
+                if (keyType !== expectedType) {
+                    message = `${key} should be of type ${expectedType} not ${keyType} (${paper.id})`;
+                    warns.push(message);
+                    console.warn(message);
+                }
+            } else {
+                const subType = expectedType.split("[")[1].replace("]", "");
+                if (!Array.isArray(paper[key])) {
+                    message = `${key} should be an array (${paper.id})`;
+                    warns.push(message);
+                    console.warn(message);
+                } else {
+                    if (paper[key].length > 0) {
+                        const keyType = typeof paper[key][0];
+                        if (keyType !== subType) {
+                            message = `${key} should contain ${subType} not ${keyType} (${paper.id})`;
+                            warns.push(message);
+                            console.warn(message);
+                        }
+                    }
+                }
+            }
         }
     }
 
     const sources = Object.keys(global.knownPaperPages);
     if (sources.indexOf(paper.source) < 0) {
-        message = `Unknown source ${paper.source} for paper ${paper}`;
+        message = `Unknown source ${paper.source} (${paper.id})`;
         warns.push(message);
         console.warn(message);
     }
@@ -957,8 +1048,8 @@ const overwriteMemory = async (data) => {
         for (const id in papers) {
             if (!id.startsWith("__")) {
                 paperWarnings = validatePaper(papers[id]);
-                if (paperWarning) {
-                    warning = paperWarnings.join("<br/>");
+                if (paperWarnings && paperWarnings.length > 0) {
+                    warning += "<br/>" + paperWarnings.join("<br/>");
                 }
             }
         }
@@ -970,10 +1061,12 @@ const overwriteMemory = async (data) => {
         error = false;
     } catch (err) {
         console.log("overwriteMemory error", err);
-        message = "overwriteMemory error:<br/>" + stringifyError(err);
+        message =
+            `<h5 class="errorTitle"> /!\\ OverwriteMemoryError:</h5><br/>` +
+            stringifyError(err);
         error = true;
     }
-    return { success: !error, message: message };
+    return { success: !error, message: message, warning: warning };
 };
 
 const arraysIdentical = (a, b) => {

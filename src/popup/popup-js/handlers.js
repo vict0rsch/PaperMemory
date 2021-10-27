@@ -428,17 +428,28 @@ const handleOverwriteMemory = () => {
     reader.onload = function (e) {
         try {
             const overwritingPapers = JSON.parse(e.target.result);
+            showId("overwriteFeedback");
             setHTML(
                 "overwriteFeedback",
-                `<div class="lds-ring"><div></div><div></div><div></div><div></div></div>`
+                `<div style="display: flex; justify-content: center;"><div class="lds-ring"><div></div><div></div><div></div><div></div></div></div>`
             );
             setTimeout(async () => {
-                const { success, message } = await overwriteMemory(overwritingPapers);
+                const { success, message, warning } = await overwriteMemory(
+                    overwritingPapers
+                );
                 if (success) {
-                    setHTML("overwriteFeedback", `<h4>Done.</h4>`);
+                    if (warning) {
+                        const nWarnings = (warning.match(/<br\/>/g) || []).length;
+                        setHTML(
+                            "overwriteFeedback",
+                            `<h5 class="errorTitle">Done with ${nWarnings} warnings:</h5>${warning}`
+                        );
+                    } else {
+                        setStyle("overwriteFeedback", "text-align", "center");
+                        setHTML("overwriteFeedback", `<h4>Done.</h4>`);
+                    }
                 } else {
-                    setStyle("overwriteFeedback", "text-align", "left");
-                    setHTML("overwriteFeedback", "<br/>" + message);
+                    setHTML("overwriteFeedback", message);
                 }
             }, 1500);
         } catch (error) {

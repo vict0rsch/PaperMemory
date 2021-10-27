@@ -614,3 +614,13 @@ button.changed {
 .select2-search__field {
     font-size: 0.85rem !important;
 }
+.errorTitle {
+    margin: 0px;
+    font-size: 0.9rem;
+}
+#overwriteFeedback {
+    margin-top: 12px;
+    border: 1px solid grey;
+    border-radius: 4px;
+    padding: 8px 16px;
+}
