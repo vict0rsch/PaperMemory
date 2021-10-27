@@ -122,11 +122,11 @@ const parseArxivBibtex = async (arxivId, data) => {
     const conf = "arXiv";
 
     let bibtex = "";
-    bibtex += `@article{${key}, \n`;
-    bibtex += `    title = { ${title} }, \n`;
-    bibtex += `    author = { ${author} }, \n`;
-    bibtex += `    year = { ${year}}, \n`;
-    bibtex += `    journal = { arXiv preprint arXiv: ${id}}\n`;
+    bibtex += `@article{${key},\n`;
+    bibtex += `    title={${title} },\n`;
+    bibtex += `    author={${author} },\n`;
+    bibtex += `    year={${year}},\n`;
+    bibtex += `    journal={arXiv preprint arXiv: ${id}}\n`;
     bibtex += `}`;
 
     return { author, bibtex, conf, id, key, pdfLink, title, year };
@@ -162,16 +162,17 @@ const parseNeuripsHTML = async (url) => {
     const conf = `NeurIPS ${year}`;
     const note = `Accepted @ ${conf}`;
 
-    const bibtex = `
-@inproceedings{NEURIPS${year}_${hash.slice(0, 8)}
-    author = {${author}},
-    booktitle = {Advances in Neural Information Processing Systems },
-    editor = {H.Larochelle and M.Ranzato and R.Hadsell and M.F.Balcan and H.Lin },
-    publisher = {Curran Associates, Inc.},
-    title = {${title}},
-    url = {${url}},
-    year = {${year}}
-}`;
+    let bibtex = "";
+
+    bibtex += `@inproceedings{NEURIPS${year}_${hash.slice(0, 8)}\n`;
+    bibtex += `    author={${author}},\n`;
+    bibtex += `    booktitle={Advances in Neural Information Processing Systems},\n`;
+    bibtex += `    editor={H.Larochelle and M.Ranzato and R.Hadsell and M.F.Balcan and H.Lin},\n`;
+    bibtex += `    publisher={Curran Associates, Inc.},\n`;
+    bibtex += `    title={${title}},\n`;
+    bibtex += `    url={${url}},\n`;
+    bibtex += `    year={${year}}\n`;
+    bibtex += `}`;
 
     return { author, bibtex, conf, id, key, note, pdfLink, title, year };
 };
