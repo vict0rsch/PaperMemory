@@ -715,7 +715,7 @@ const isPaper = (url) => {
 const parseIdFromUrl = (url) => {
     const is = isPaper(url);
     if (is.arxiv) {
-        const arxivId = url.split("/").reverse()[0].replace(".pdf", "").split("v")[0];
+        const arxivId = url.match(/\d{4}\.\d{4,5}(v\d)?/g)[0];
         return `Arxiv-${arxivId}`;
     } else if (is.neurips) {
         const year = url.split("/paper/")[1].split("/")[0];

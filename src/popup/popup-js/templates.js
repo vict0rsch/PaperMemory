@@ -206,7 +206,7 @@ const getPopupEditFormHTML = (paper) => {
                 <div class="textarea-wrapper w-100 mr-0">
                     <span class="label">Note:</span>
                     <textarea 
-                        rows="3"  
+                        rows="2"  
                         class="noMemoryOnA popup-form-note-textarea"
                         id="popup-form-note-textarea--${id}"
                         placeholder="Anything to note?"
