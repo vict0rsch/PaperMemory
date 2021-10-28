@@ -370,7 +370,7 @@ const handleDownloadMemoryClick = () => {
         const version = versionToSemantic(papers.__dataVersion);
         downloadTextFile(
             JSON.stringify(papers),
-            `memory-${version}-${date}-${time}.json`,
+            `memory-data-${version}-${date}-${time}.json`,
             "text/json"
         );
     });
@@ -431,23 +431,35 @@ const handleOverwriteMemory = () => {
             showId("overwriteFeedback");
             setHTML(
                 "overwriteFeedback",
-                `<div style="display: flex; justify-content: center;"><div class="lds-ring"><div></div><div></div><div></div><div></div></div></div>`
+                `<div class="flex-center-center"><div class="lds-ring"><div></div><div></div><div></div><div></div></div></div>`
             );
+            const confirm = `<button id="confirm-overwrite">Confirm</button>`;
+            const cancel = `<button id="cancel-overwrite">Cancel</button>`;
+            const tile = `<h4 style="width: 100%">Be careful, you will not be able to revert this operation. Make sure you have downloaded a backup of your memory before overwriting it.</h4>`;
+            const overwriteDiv = `<div id="overwrite-buttons"> ${tile} <div class="flex-center-evenly w-100">${cancel} ${confirm}</div></div>`;
             setTimeout(async () => {
-                const { success, message, warning } = await overwriteMemory(
-                    overwritingPapers
-                );
+                const { success, message, warning, papersToWrite } =
+                    await overwriteMemory(overwritingPapers);
                 if (success) {
                     if (warning) {
                         const nWarnings = (warning.match(/<br\/>/g) || []).length;
                         setHTML(
                             "overwriteFeedback",
-                            `<h5 class="errorTitle">Done with ${nWarnings} warnings:</h5>${warning}`
+                            `<h5 class="errorTitle">Done with ${nWarnings} warnings. Confirm overwrite?</h5>${warning}${overwriteDiv}`
                         );
                     } else {
                         setStyle("overwriteFeedback", "text-align", "center");
-                        setHTML("overwriteFeedback", `<h4>Done.</h4>`);
+                        setHTML(
+                            "overwriteFeedback",
+                            `<h4>Data is valid. Confirm overwrite?</h4>${overwriteDiv}`
+                        );
                     }
+                    addListener(
+                        "confirm-overwrite",
+                        "click",
+                        handleConfirmOverwrite(papersToWrite, warning)
+                    );
+                    addListener("cancel-overwrite", "click", handleCancelOverwrite);
                 } else {
                     setHTML("overwriteFeedback", message);
                 }
@@ -460,6 +472,33 @@ const handleOverwriteMemory = () => {
         }
     };
     reader.readAsText(file);
+};
+
+const handleConfirmOverwrite = (papersToWrite, warning) => (e) => {
+    setHTML(
+        "overwriteFeedback",
+        `<div style="display: flex; justify-content: center;"><div class="lds-ring"><div></div><div></div><div></div><div></div></div></div>`
+    );
+    setTimeout(() => {
+        if (warning) {
+            for (const id in papersToWrite) {
+                if (papersToWrite.hasOwnProperty(id) && !id.startsWith("__")) {
+                    papersToWrite[id] = validatePaper(papersToWrite[id], false);
+                }
+            }
+        }
+        // await setStorage("papers", papersToWrite);
+        setHTML(
+            "overwriteFeedback",
+            `<h4>Memory overwritten. Close & Re-open the extension for the update to be effective.</h4>`
+        );
+        val("overwrite-arxivmemory-input", "");
+    }, 700);
+};
+const handleCancelOverwrite = (e) => {
+    hideId("overwriteFeedback");
+    setHTML("overwriteFeedback", ``);
+    val("overwrite-arxivmemory-input", "");
 };
 
 const handleCustomPDFFunctionSave = () => {

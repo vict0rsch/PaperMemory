@@ -413,7 +413,7 @@ const getPdfFn = (code) => {
     return pdfTitleFn;
 };
 
-const migrateData = async (papers, manifestDataVersion) => {
+const migrateData = async (papers, manifestDataVersion, store = true) => {
     if (typeof papers === "undefined") {
         chrome.storage.local.set({ papers: { __dataVersion: manifestDataVersion } });
         return { papers: { __dataVersion: manifestDataVersion }, success: true };
@@ -425,13 +425,11 @@ const migrateData = async (papers, manifestDataVersion) => {
     let newPapers = { ...papers };
 
     try {
-        if (papers.hasOwnProperty("__dataVersion")) {
-            if (papers["__dataVersion"] === latestDataVersion) {
-                return { papers: papers, success: true };
-            }
+        if (currentVersion === latestDataVersion) {
+            return { papers: papers, success: true };
         }
 
-        backupData({ ...papers });
+        store && backupData({ ...papers });
 
         delete papers["__dataVersion"];
 
@@ -519,12 +517,13 @@ const migrateData = async (papers, manifestDataVersion) => {
         newPapers = { ...papers };
         newPapers["__dataVersion"] = manifestDataVersion;
 
-        chrome.storage.local.set({ papers: newPapers }, () => {
-            console.log("Migrated papers:");
-            console.log(newPapers);
-            console.log("Data version is now " + manifestDataVersion);
-        });
-
+        if (store) {
+            chrome.storage.local.set({ papers: newPapers }, () => {
+                console.log("Migrated papers:");
+                console.log(newPapers);
+                console.log("Data version is now " + manifestDataVersion);
+            });
+        }
         return { papers: newPapers, success: true };
     } catch (err) {
         console.log(
@@ -754,7 +753,7 @@ const formatBibtext = (text) => {
     return bib;
 };
 
-const validatePaper = (paper) => {
+const validatePaper = (paper, log = true) => {
     const expectedKeys = {
         addDate: {
             type: "string",
@@ -787,7 +786,7 @@ const validatePaper = (paper) => {
         favoriteDate: {
             type: "string",
             desc: "date the paper was added as a favorite",
-            default: (p) => new Date().toJSON(),
+            default: (p) => "",
         },
         id: {
             type: "string",
@@ -838,7 +837,7 @@ const validatePaper = (paper) => {
         if (!paper.hasOwnProperty(key)) {
             message = `Attribute "${key}" absent (${paper.id})`;
             warns.push(message);
-            console.warn(message);
+            log && console.warn(message);
             if (expectedKeys[key].default) {
                 paper[key] = expectedKeys[key].default(paper); // useless for now, mechanism for later if need be
             } else {
@@ -853,21 +852,21 @@ const validatePaper = (paper) => {
                 if (keyType !== expectedType) {
                     message = `${key} should be of type ${expectedType} not ${keyType} (${paper.id})`;
                     warns.push(message);
-                    console.warn(message);
+                    log && console.warn(message);
                 }
             } else {
                 const subType = expectedType.split("[")[1].replace("]", "");
                 if (!Array.isArray(paper[key])) {
                     message = `${key} should be an array (${paper.id})`;
                     warns.push(message);
-                    console.warn(message);
+                    log && console.warn(message);
                 } else {
                     if (paper[key].length > 0) {
                         const keyType = typeof paper[key][0];
                         if (keyType !== subType) {
                             message = `${key} should contain ${subType} not ${keyType} (${paper.id})`;
                             warns.push(message);
-                            console.warn(message);
+                            log && console.warn(message);
                         }
                     }
                 }
@@ -882,7 +881,7 @@ const validatePaper = (paper) => {
         console.warn(message);
     }
 
-    return warns;
+    return { warnings: warns, paper: paper };
 };
 
 const tablerSvg = (pathName, id, classNames) => {
@@ -1029,11 +1028,12 @@ const overwriteMemory = async (data) => {
     let error = true;
     let warning = "";
     let message = "";
+    let papersToWrite;
     try {
         if (!data.__dataVersion) {
             data.__dataVersion = 1;
         }
-        const migration = await migrateData(data, getManifestDataVersion());
+        const migration = await migrateData(data, getManifestDataVersion(), false);
         if (!migration.success) {
             message = "Could not migrate the data before storing it";
             if (migration.error) {
@@ -1044,10 +1044,10 @@ const overwriteMemory = async (data) => {
                 message: message,
             };
         }
-        const { papers } = migration;
-        for (const id in papers) {
+        papersToWrite = migration.papers;
+        for (const id in papersToWrite) {
             if (!id.startsWith("__")) {
-                paperWarnings = validatePaper(papers[id]);
+                paperWarnings = validatePaper(papersToWrite[id]).warnings;
                 if (paperWarnings && paperWarnings.length > 0) {
                     warning += "<br/>" + paperWarnings.join("<br/>");
                 }
@@ -1057,7 +1057,6 @@ const overwriteMemory = async (data) => {
             const prevPapers = await getStorage("papers");
             setStorage("uploadBackup", prevPapers);
         }
-        // setStorage("papers", papers);
         error = false;
     } catch (err) {
         console.log("overwriteMemory error", err);
@@ -1066,7 +1065,12 @@ const overwriteMemory = async (data) => {
             stringifyError(err);
         error = true;
     }
-    return { success: !error, message: message, warning: warning };
+    return {
+        success: !error,
+        message: message,
+        warning: warning,
+        papersToWrite: papersToWrite,
+    };
 };
 
 const arraysIdentical = (a, b) => {

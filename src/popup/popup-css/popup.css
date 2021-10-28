@@ -623,4 +623,23 @@ button.changed {
     border: 1px solid grey;
     border-radius: 4px;
     padding: 8px 16px;
+    max-height: 150px;
+    overflow: scroll;
+}
+#overwrite-buttons {
+    display: flex;
+    padding: 16px 32px;
+    justify-content: space-evenly;
+    align-items: center;
+    flex-direction: column;
+}
+.flex-center-center {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.flex-center-evenly {
+    display: flex;
+    align-items: center;
+    justify-content: space-evenly;
 }

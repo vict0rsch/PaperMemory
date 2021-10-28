@@ -278,30 +278,28 @@ const updatePaper = (papers, id) => {
 
 const arxiv = (checks) => {
     const { checkMd, checkBib, checkDownload, pdfTitleFn } = checks;
+    global.state.pdfTitleFn = pdfTitleFn;
 
     // console.log({ checks })
 
+    const url = window.location.href;
+    const isArxivAbs = url.includes("https://arxiv.org/abs/");
+
+    if (!isArxivAbs) return;
+
+    const id = parseIdFromUrl(url);
     const arxivAbsCol = document.querySelector(
         ".extra-services .full-text h2"
     ).parentElement;
-
-    const url = window.location.href;
-    const id = parseIdFromUrl(url);
-    const isArxivAbs = window.location.href.includes("https://arxiv.org/abs/");
-    let pdfUrl;
-    if (isArxivAbs) {
-        pdfUrl =
-            "https://arxiv.org" +
-            document.querySelector(".abs-button.download-pdf").href +
-            ".pdf";
-    }
-
-    global.state.pdfTitleFn = pdfTitleFn;
+    const pdfUrl =
+        "https://arxiv.org" +
+        document.querySelector(".abs-button.download-pdf").href +
+        ".pdf";
 
     // -----------------------------
     // -----  Download Button  -----
     // -----------------------------
-    if (checkDownload && isArxivAbs) {
+    if (checkDownload) {
         const button = /*html*/ `
             <div class="arxivTools-container">
                 <div id="arxiv-button">
@@ -330,7 +328,7 @@ const arxiv = (checks) => {
     // ---------------------------
     // -----  Markdown Link  -----
     // ---------------------------
-    if (checkMd && isArxivAbs) {
+    if (checkMd) {
         arxivAbsCol.innerHTML += /*html*/ `
             <div id="markdown-container">
                 <div id="markdown-header" class="arxivTools-header">
@@ -361,7 +359,7 @@ const arxiv = (checks) => {
         );
     }
 
-    if (checkBib && isArxivAbs) {
+    if (checkBib) {
         arxivAbsCol.innerHTML += /*html*/ `
                 <div id="loader-container" class="arxivTools-container">
                     <div class="sk-folding-cube">
