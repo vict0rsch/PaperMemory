@@ -835,11 +835,12 @@ const validatePaper = (paper, log = true) => {
 
     for (const key in expectedKeys) {
         if (!paper.hasOwnProperty(key)) {
-            message = `Attribute "${key}" absent (${paper.id})`;
-            warns.push(message);
-            log && console.warn(message);
             if (expectedKeys[key].default) {
-                paper[key] = expectedKeys[key].default(paper); // useless for now, mechanism for later if need be
+                const defaultValue = expectedKeys[key].default(paper);
+                paper[key] = defaultValue;
+                message = `➤ Attribute "${key}" absent; will be set to "${defaultValue}" (${paper.id})`;
+                warns.push(message);
+                log && console.warn(message);
             } else {
                 throw Error(
                     `Cannot continue, paper is corrupted. Missing mandatory attribute "${key}" in ${paper.id}`
@@ -850,7 +851,7 @@ const validatePaper = (paper, log = true) => {
             const keyType = typeof paper[key];
             if (!expectedType.startsWith("array")) {
                 if (keyType !== expectedType) {
-                    message = `${key} should be of type ${expectedType} not ${keyType} (${paper.id})`;
+                    message = `➤ ${key} should be of type ${expectedType} not ${keyType} (${paper.id})`;
                     warns.push(message);
                     log && console.warn(message);
                 }
@@ -864,7 +865,7 @@ const validatePaper = (paper, log = true) => {
                     if (paper[key].length > 0) {
                         const keyType = typeof paper[key][0];
                         if (keyType !== subType) {
-                            message = `${key} should contain ${subType} not ${keyType} (${paper.id})`;
+                            message = `➤ ${key} should contain ${subType} not ${keyType} (${paper.id})`;
                             warns.push(message);
                             log && console.warn(message);
                         }

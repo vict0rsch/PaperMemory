@@ -435,7 +435,7 @@ const handleOverwriteMemory = () => {
             );
             const confirm = `<button id="confirm-overwrite">Confirm</button>`;
             const cancel = `<button id="cancel-overwrite">Cancel</button>`;
-            const tile = `<h4 style="width: 100%">Be careful, you will not be able to revert this operation. Make sure you have downloaded a backup of your memory before overwriting it.</h4>`;
+            const tile = `<h4 style="width: 100%; font-size: 0.9rem; font-family: 'Fira Code', monospace;">Be careful, you will not be able to revert this operation. Make sure you have downloaded a backup of your memory before overwriting it.</h4>`;
             const overwriteDiv = `<div id="overwrite-buttons"> ${tile} <div class="flex-center-evenly w-100">${cancel} ${confirm}</div></div>`;
             setTimeout(async () => {
                 const { success, message, warning, papersToWrite } =
@@ -479,15 +479,17 @@ const handleConfirmOverwrite = (papersToWrite, warning) => (e) => {
         "overwriteFeedback",
         `<div style="display: flex; justify-content: center;"><div class="lds-ring"><div></div><div></div><div></div><div></div></div></div>`
     );
-    setTimeout(() => {
+    setTimeout(async () => {
         if (warning) {
             for (const id in papersToWrite) {
                 if (papersToWrite.hasOwnProperty(id) && !id.startsWith("__")) {
-                    papersToWrite[id] = validatePaper(papersToWrite[id], false);
+                    const { paper, warnings } = validatePaper(papersToWrite[id], false);
+                    papersToWrite[id] = paper;
+                    console.log(warnings);
                 }
             }
         }
-        // await setStorage("papers", papersToWrite);
+        await setStorage("papers", papersToWrite);
         setHTML(
             "overwriteFeedback",
             `<h4>Memory overwritten. Close & Re-open the extension for the update to be effective.</h4>`
