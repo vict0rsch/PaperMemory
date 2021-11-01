@@ -1,11 +1,16 @@
 /**
  * TODO: docstrings
  * TODO: miniquery for content_script.js
- * TODO: investigate error: https://openreview.net/forum?id=MAWgLrYvMs0
  * TODO: add click event listener when adding a new tag from the memory
  * TODO: add usage guide in the menu
  */
 
+/**
+ * Get a the HTML string listing all the <option>tag</option> of all known tags,
+ * setting the <option>'s "selected" attribute according to the paper's own tags
+ * @param {object} paper The paper whose options' HTML string are being created
+ * @returns {string} The HTML string of the paper's options
+ */
 const getTagsOptions = (paper) => {
     const tags = new Set(paper.tags);
 
@@ -20,8 +25,10 @@ const getTagsOptions = (paper) => {
         })
         .join("");
 };
-
-const updateAllPaperTagOptions = () => {
+/**
+ * Updates all the papers' options HTML list
+ */
+const updateAllMemoryPaperTagOptions = () => {
     for (const id in global.state.papers) {
         if (global.state.papers.hasOwnProperty(id) && id !== "__dataVersion") {
             const paper = global.state.papers[id];
@@ -433,9 +440,9 @@ const updatePaperTagsHTML = (id) => {
  * @param {string} id The paper's id
  */
 const updateTagOptions = (id) => {
+    updateAllMemoryPaperTagOptions();
+    // update popup tags if the current paper is being edited in the memory
     const tagOptions = getTagsOptions(global.state.papers[id]);
-    // console.log("tagOptions: ", tagOptions);
-    updateAllPaperTagOptions();
     setHTML(`popup-item-tags--${id}`, tagOptions);
 };
 
@@ -455,6 +462,7 @@ const updatePaperTags = (id, elementId) => {
     }
     const tags = parseTags(ref);
     updated = false;
+    let newTags = new Set();
     if (!arraysIdentical(global.state.papers[id].tags, tags)) updated = true;
     global.state.papers[id].tags = tags;
 
@@ -469,6 +477,12 @@ const updatePaperTags = (id, elementId) => {
             updateTagOptions(id);
             // update the displayed tags for this paper
             updatePaperTagsHTML(id);
+            const tagEls = Array.from(
+                findEl(id, "tag-list").querySelectorAll(".memory-tag")
+            );
+            for (const el of tagEls) {
+                addListener(el, "click", handleTagClick);
+            }
         });
     }
 };
@@ -549,7 +563,7 @@ const displayMemoryTable = () => {
     // (default puts the cursor at the beginning of the text)
     addEventToClass(".form-note-textarea", "focus", handleTextareaFocus);
     // Save fields on edits save (submit)
-    addEventToClass(".form-note", "submit", handleEditPaperFormSubmit);
+    addEventToClass(".form-note", "submit", handleMemorySaveEdits);
     const end2 = Date.now();
 
     console.log("[displayMemoryTable] Listeners duration (s): " + (end2 - end) / 1000);

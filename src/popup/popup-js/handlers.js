@@ -58,7 +58,7 @@ const handleTextareaFocus = () => {
     textareaFocusEnd(that);
 };
 
-const handleEditPaperFormSubmit = (e) => {
+const handleMemorySaveEdits = (e) => {
     e.preventDefault();
 
     // Get content
