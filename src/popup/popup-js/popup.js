@@ -54,9 +54,17 @@ const setStandardPopupClicks = () => {
     });
 
     addListener("keyboardShortcuts", "click", () => {
-        chrome.tabs.create({
-            url: "https://github.com/vict0rsch/ArxivTools#keyboard-navigation",
-        });
+        style("user-guide-modal", "display", "flex");
+    });
+    addListener("close-user-guide-modal", "click", () => {
+        style("user-guide-modal", "display", "none");
+    });
+
+    // When the user clicks anywhere outside of the modal, close it
+    addListener(window, "click", (event) => {
+        if (event.target === findEl("user-guide-modal")) {
+            style("user-guide-modal", "display", "none");
+        }
     });
 
     addListener("menu-switch", "click", () => {

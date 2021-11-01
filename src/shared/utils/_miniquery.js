@@ -138,11 +138,16 @@ const setPlaceholder = (el, text) => {
     if (el && typeof el.placeholder !== "undefined") el.placeholder = text;
 };
 
-const setStyle = (el, key, value) => {
+const style = (el, key, value) => {
     if (typeof el === "string") {
         el = findEl(el);
     }
-    if (el) el.style[key] = value;
+    if (el) {
+        if (typeof value === "undefined") {
+            return el.style[key];
+        }
+        el.style[key] = value;
+    }
 };
 
 const disable = (el, isDisabled = true) => {

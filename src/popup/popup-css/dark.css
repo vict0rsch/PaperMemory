@@ -29,11 +29,7 @@ body,
 
 #customPdfTitleTextarea {
     background: var(--lighterBackground);
-}
-#customPdfTitleTextarea {
     color: var(--color);
-}
-#customPdfTitleTextarea {
     border-color: var(--color);
 }
 #header-icon {
@@ -59,6 +55,14 @@ code {
 }
 input[type="checkbox"].switch:not(:checked) {
     background: bottom;
+}
+.user-guide-modal-content {
+    background-color: var(--lighterBackground);
+    color: var(--color);
+}
+#close-user-guide-modal:hover,
+#close-user-guide-modal:focus {
+    color: var(--color);
 }
 
 /*

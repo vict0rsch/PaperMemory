@@ -2,6 +2,8 @@
  * TODO: docstrings
  * TODO: miniquery for content_script.js
  * TODO: investigate error: https://openreview.net/forum?id=MAWgLrYvMs0
+ * TODO: add click event listener when adding a new tag from the memory
+ * TODO: add usage guide in the menu
  */
 
 const getTagsOptions = (paper) => {

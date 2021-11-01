@@ -448,7 +448,7 @@ const handleOverwriteMemory = () => {
                             `<h5 class="errorTitle">Done with ${nWarnings} warnings. Confirm overwrite?</h5>${warning}${overwriteDiv}`
                         );
                     } else {
-                        setStyle("overwriteFeedback", "text-align", "center");
+                        style("overwriteFeedback", "text-align", "center");
                         setHTML(
                             "overwriteFeedback",
                             `<h4>Data is valid. Confirm overwrite?</h4>${overwriteDiv}`

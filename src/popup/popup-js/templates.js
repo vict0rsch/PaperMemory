@@ -138,7 +138,7 @@ const getMemoryItemHTML = (paper) => {
                     <div class="textarea-wrapper">
                         <span class="label">Note:</span>
                         <textarea 
-                            rows="3" 
+                            rows="2" 
                             class="form-note-textarea"
                             placeholder="Anything to note?"
                         >${note}</textarea>

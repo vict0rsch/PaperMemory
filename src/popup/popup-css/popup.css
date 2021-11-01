@@ -1,4 +1,5 @@
 @import url("https://fonts.googleapis.com/css2?family=Yantramanav:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;1,600&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;500;600;700&display=swap");
 
 :root {
     --blue: #0276ff;
@@ -92,6 +93,14 @@ svg {
 
 strong {
     font-weight: 500;
+}
+
+code {
+    font-family: "Fira Code", monospace;
+    padding: 1px 4px;
+    vertical-align: text-top;
+    border-radius: 4px;
+    background-color: rgb(238, 238, 238);
 }
 
 #notArxiv {
@@ -428,7 +437,7 @@ strong {
 }
 
 .label {
-    font-family: monospace;
+    font-family: "Fira Code", monospace;
     margin-right: 16px;
     font-size: 0.8rem;
 }
@@ -625,6 +634,7 @@ button.changed {
     padding: 8px 16px;
     max-height: 150px;
     overflow: scroll;
+    font-family: "Fira Code", monospace;
 }
 #overwrite-buttons {
     display: flex;
@@ -642,4 +652,59 @@ button.changed {
     display: flex;
     align-items: center;
     justify-content: space-evenly;
+}
+
+#customPdfTitleTextarea {
+    font-family: "Fira-code", monospace;
+}
+
+/*
+----------------------------
+-----  Keyboard Modal  -----
+----------------------------
+*/
+
+.user-guide-modal {
+    display: none; /* Hidden by default */
+    position: fixed; /* Stay in place */
+    z-index: 10; /* Sit on top */
+    left: 0;
+    top: 0;
+    width: 100%; /* Full width */
+    height: 100%; /* Full height */
+    overflow: auto; /* Enable scroll if needed */
+    background-color: rgb(0, 0, 0); /* Fallback color */
+    background-color: rgba(0, 0, 0, 0.2); /* Black w/ opacity */
+    backdrop-filter: blur(6px);
+    justify-content: center;
+    align-items: center;
+    transition: all ease 0.5s;
+}
+
+/* Modal Content/Box */
+.user-guide-modal-content {
+    background-color: #fefefe;
+    padding: 20px;
+    border-radius: 6px;
+    width: 70%; /* Could be more or less, depending on screen size */
+    max-height: 350px;
+    overflow: scroll;
+}
+
+/* The Close Button */
+#close-user-guide-modal {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+}
+
+#close-user-guide-modal:hover,
+#close-user-guide-modal:focus {
+    color: black;
+    text-decoration: none;
+    cursor: pointer;
+}
+.user-guide-modal-content ul {
+    font-size: 0.9rem;
+    padding-left: 12px;
 }

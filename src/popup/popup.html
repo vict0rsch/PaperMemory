@@ -44,7 +44,7 @@
 					<polyline points="16 17 7 17 7 8" />
 				</svg> (or press <code
 					style="padding: 1px 4px; vertical-align: text-top; border-radius: 4px; background-color: rgb(238, 238, 238);">a</code>
-				)! (<a id="keyboardShortcuts" href="#">keyboard guide</a>)
+				)! (<code style="cursor: pointer;" id="keyboardShortcuts" href="#">usage guide</code>)
 			</p>
 		</div>
 
@@ -114,7 +114,7 @@
 		<div style="display: flex; align-items: center; margin: 16px 0px">
 			<p><strong>Download</strong> your complete Memory's data: </p>
 			<button
-				style="font-family: monospace; margin-left: 8px; display: flex; align-items: center; justify-content: space-between;"
+				style="font-family: 'Fira Code', monospace; margin-left: 8px; display: flex; align-items: center; justify-content: space-between;"
 				id="download-arxivmemory">
 				.json&nbsp;
 				<svg viewBox="0 0 24 24" style="height: 18px; width: 18px; color: black; stroke: black">
@@ -130,7 +130,7 @@
 		<div style="display: flex; align-items: center; margin: 16px 0px">
 			<p><strong>Download</strong> the Memory's BibTex: </p>
 			<button
-				style="font-family: monospace; margin-left: 8px; display: flex; align-items: center; justify-content: space-between;"
+				style="font-family: 'Fira Code', monospace; margin-left: 8px; display: flex; align-items: center; justify-content: space-between;"
 				id="download-bibtex-json">
 				.json&nbsp;
 				<svg viewBox="0 0 24 24" style="height: 18px; width: 18px; color: black; stroke: black">
@@ -142,7 +142,7 @@
 				</svg>
 			</button>
 			<button
-				style="font-family: monospace; margin-left: 12px; display: flex; align-items: center; justify-content: space-between;"
+				style="font-family: 'Fira Code', monospace; margin-left: 12px; display: flex; align-items: center; justify-content: space-between;"
 				id="download-bibtex-plain">
 				.bib&nbsp;
 				<svg viewBox="0 0 24 24" style="height: 18px; width: 18px; color: black; stroke: black">
@@ -160,7 +160,7 @@
 			<div style="display: flex; align-items: center; ">
 				<input type="file" id="overwrite-arxivmemory-input"></input>
 				<button
-					style="font-family: monospace; margin-left: 8px; display: flex; align-items: center; justify-content: space-between;"
+					style="font-family: 'Fira Code', monospace; margin-left: 8px; display: flex; align-items: center; justify-content: space-between;"
 					id="overwrite-arxivmemory-button">
 					.json&nbsp;
 					<svg viewBox="0 0 24 24" style="height: 18px; width: 18px; color: black; stroke: black">
@@ -182,7 +182,7 @@
 				<code style="margin: 0px; display: inline-block;">(title, id)</code> and returning a string.
 			</p>
 
-			<textarea id="customPdfTitleTextarea" style="width: 100%; margin-bottom: 8px;" rows="3">
+			<textarea id="customPdfTitleTextarea" style="width: 100%; margin-bottom: 8px;" rows="4">
 (title, id) => {
 title = title.replaceAll("\n", '');
 return `${title} - ${id}.pdf`
@@ -259,6 +259,79 @@ return `${title} - ${id}.pdf`
 		</div>
 		<div id="memory-table" width="100%">
 		</div>
+	</div>
+
+	<div class="user-guide-modal" id="user-guide-modal" style="display:none">
+
+		<div class="user-guide-modal-content">
+			<span id="close-user-guide-modal">&times;</span>
+			<h3>Keyboard navigation</h3>
+			<ul>
+				<li>Open the popup:<ul>
+						<li><code>cmd/ctrl + shift + e</code></li>
+					</ul>
+				</li>
+				<li>Open the Memory<ul>
+						<li><code>a</code> from the popup&#39;s home will open the ArxivMemory</li>
+						<li>navigate to the bottom left button with <code>tab</code> and hit <code>enter</code>
+						</li>
+					</ul>
+				</li>
+				<li>Search<ul>
+						<li>Search field is automatically focused on memory open</li>
+						<li>Navigate to the top input with <code>tab</code> or <code>shift + tab</code></li>
+					</ul>
+				</li>
+				<li>Navigate papers<ul>
+						<li><code>tab</code> will iterate through papers down the list</li>
+						<li><code>shift + tab</code> will go back up the list</li>
+					</ul>
+				</li>
+				<li>Edit a paper<ul>
+						<li>Press <code>e</code> to <em>edit</em> the paper&#39;s metadata: tags, code and note
+							when the paper is <em>focused</em> (from click or keyboard <code>tab</code>
+							navigation)<ul>
+								<li>Navigate through fields with <code>(shift+) tab</code>: tags and note if
+									you&#39;re on a paper&#39;s page, then your ArxivTools anyway.</li>
+							</ul>
+						</li>
+						<li>Press <code>enter</code> to <em>open</em> a focused paper (<em>focus</em> an
+							existing tab with the paper or <em>create a new tab</em> to the paper&#39;s pdf if
+							it&#39;s not open already)</li>
+						<li><code>backspace</code> to <em>delete</em> a focused paper (a confirmation will be
+							prompted first don&#39;t worry 👮‍♀️)</li>
+					</ul>
+				</li>
+				<li>Close Memory or Menu<ul>
+						<li><code>esc</code> closes the memory (or the menu -- <strong>not</strong> in Firefox)
+						</li>
+					</ul>
+				</li>
+			</ul>
+			<h3>Search</h3>
+			<ul>
+				<li>In a paper&#39;s authors, title and note.<ul>
+						<li>Split queries on spaces: <code>gan im</code> will look for: <em>all papers whose
+								(title OR author) contain (&quot;gan&quot; AND &quot;im&quot;)</em></li>
+					</ul>
+				</li>
+				<li>In a paper&#39;s code link<ul>
+						<li>Start the search query with <code>c:</code> to only search code links</li>
+					</ul>
+				</li>
+				<li>In a paper&#39;s tags<ul>
+						<li>Start the search query with <code>t:</code> to filter by tags</li>
+						<li><code>t: gan</code> will look for <em>all papers whose tag-list contains at least 1
+								tag containing &quot;gan&quot;</em></li>
+						<li><code>t: gan tim</code> will look for <em>all papers whose tag-list contains (at
+								least 1 tag containing &quot;gan&quot;) AND (at least 1 tag containing
+								&quot;tim&quot;)</em></li>
+					</ul>
+				</li>
+			</ul>
+
+		</div>
+
 	</div>
 
 </body>
