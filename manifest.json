@@ -57,7 +57,7 @@
       ],
       "css": [
         "src/content_scripts/downloadButton.css",
-        "src/content_scripts/loader.css",
+        "src/shared/loader.css",
         "src/content_scripts/content_script.css"
       ]
     }
