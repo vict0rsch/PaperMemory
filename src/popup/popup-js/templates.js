@@ -64,7 +64,7 @@ const getMemoryItemHTML = (paper) => {
                     .map((t) => `<span class="memory-tag" >${t}</span>`)
                     .join("")}
             </small>
-            <div class="edit-tags p-0 d-none">
+            <div class="edit-tags p-0" style="display: none">
                 <div class="flex-center-between">
                 <span class="label">Tags:</span>
                 <select class="memory-item-tags" id="memory-item-tags--${id}" multiple="multiple">
