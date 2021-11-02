@@ -56,10 +56,6 @@ textarea {
     box-shadow: 14px 30px 122px -30px rgba(0, 0, 0, 0.75);
 }
 
-#popup-header .tabler-icon {
-    margin-left: 0.5rem;
-}
-
 #filter-favorites {
     height: 32px;
     width: 32px;
@@ -83,6 +79,10 @@ h3 {
     font-size: 1.2rem;
 }
 
+h5 {
+    font-size: 0.9rem;
+}
+
 svg {
     stroke-width: 1.15;
     stroke: #7c7f8b;
@@ -95,6 +95,28 @@ strong {
     font-weight: 500;
 }
 
+button,
+#file-upload-label {
+    border: 1px solid var(--red);
+    border-radius: 6px;
+    padding: 4px 6px;
+    background-color: white;
+    transition: all ease 200ms;
+    cursor: pointer;
+}
+button:disabled,
+#file-upload-label:disabled {
+    cursor: not-allowed;
+    pointer-events: none;
+    border-color: #e7a9a9;
+}
+
+button:hover,
+#file-upload-label:hover {
+    border-color: var(--red);
+    background-color: rgb(253, 235, 235);
+}
+
 code {
     font-family: "Fira Code", monospace;
     padding: 1px 4px;
@@ -102,15 +124,12 @@ code {
     border-radius: 4px;
     background-color: rgb(238, 238, 238);
 }
+.code-font {
+    font-family: "Fira Code", monospace;
+}
 
 #notArxiv {
     font-weight: 300;
-}
-
-.header {
-    display: flex;
-    align-items: center;
-    justify-content: center;
 }
 
 .tabler-icon {
@@ -119,6 +138,7 @@ code {
     color: var(--red);
     stroke-width: 1px;
 }
+
 #menu-switch-svg {
     color: rgb(43, 43, 61);
 }
@@ -174,7 +194,6 @@ code {
     z-index: 5;
     padding: 16px 32px;
     width: calc(100% - 64px);
-    /* height: 100%; */
     max-height: calc(100% - 32px);
     overflow: scroll;
 }
@@ -396,23 +415,6 @@ code {
     align-items: center;
 }
 
-.memory-item-edit {
-    margin-right: 8px;
-}
-
-.memory-item-tag {
-    margin-right: 8px;
-}
-
-.memory-item-tags-div {
-    margin: 4px 0px;
-}
-
-.edit-tags {
-    padding: 0px;
-    display: none;
-}
-
 .memory-item-faded {
     color: rgba(54, 54, 54, 0.7);
 }
@@ -429,12 +431,6 @@ code {
 #popup-displayId {
     color: gray;
 }
-.memory-item-actions {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-top: 12px;
-}
 
 .label {
     font-family: "Fira Code", monospace;
@@ -445,26 +441,6 @@ code {
 .memory-note-div {
     font-size: 0.8rem;
     margin-top: 4px;
-}
-
-.w-100 {
-    width: 100%;
-}
-
-.mr-0 {
-    margin-right: 0px !important;
-}
-
-.ml-0 {
-    margin-left: 0px !important;
-}
-
-.mt-0 {
-    margin-top: 0px !important;
-}
-
-.mb-0 {
-    margin-bottom: 0px !important;
 }
 
 .edit-note-item {
@@ -485,12 +461,6 @@ code {
 
 .extended-item div p {
     font-size: 0.8rem;
-}
-
-.textarea-wrapper {
-    display: flex;
-    justify-content: start;
-    align-items: center;
 }
 
 .form-code-input {
@@ -545,25 +515,6 @@ code {
 
 #popup-copy-icons .memory-item-svg-div:hover {
     transform: scale(1.1);
-}
-
-button {
-    border: 1px solid var(--red);
-    border-radius: 6px;
-    padding: 4px 6px;
-    background-color: white;
-    transition: all ease 200ms;
-    cursor: pointer;
-}
-button:disabled {
-    cursor: not-allowed;
-    pointer-events: none;
-    border-color: #e7a9a9;
-}
-
-button:hover {
-    border-color: var(--red);
-    background-color: rgb(253, 235, 235);
 }
 
 #confirm-modal {
@@ -625,7 +576,6 @@ button.changed {
 }
 .errorTitle {
     margin: 0px;
-    font-size: 0.9rem;
 }
 #overwriteFeedback {
     margin-top: 12px;
@@ -637,12 +587,14 @@ button.changed {
     font-family: "Fira Code", monospace;
 }
 #overwrite-buttons {
-    display: flex;
-    padding: 16px 32px;
-    justify-content: space-evenly;
-    align-items: center;
     flex-direction: column;
 }
+#overwrite-file-name {
+    max-width: 200px;
+    padding: 2px 8px;
+    word-break: break-all;
+}
+
 .flex-center-center {
     display: flex;
     align-items: center;
@@ -652,6 +604,16 @@ button.changed {
     display: flex;
     align-items: center;
     justify-content: space-evenly;
+}
+.flex-center-between {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.flex-center-start {
+    display: flex;
+    align-items: center;
+    justify-content: start;
 }
 
 #customPdfTitleTextarea {
@@ -684,7 +646,7 @@ button.changed {
 /* Modal Content/Box */
 .user-guide-modal-content {
     background-color: #fefefe;
-    padding: 20px;
+    padding: 20px 35px;
     border-radius: 6px;
     width: 70%; /* Could be more or less, depending on screen size */
     max-height: 350px;
