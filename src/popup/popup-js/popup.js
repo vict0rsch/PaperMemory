@@ -228,4 +228,7 @@ chrome.tabs.query(query, async (tabs) => {
     showId("memory-switch");
     makeMemoryHTML();
     popupMain(url, isKnownPage);
+    if (navigator.userAgent.search("Firefox") > -1) {
+        hideId("overwrite-container");
+    }
 });
