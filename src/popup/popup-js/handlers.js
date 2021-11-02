@@ -223,19 +223,18 @@ const handleMemorySearchKeyUp = (e) => {
 };
 
 const handleCancelModalClick = () => {
-    findEl("confirm-modal").remove();
-    addListener("memory-switch", "click", handleMemorySwitchClick);
+    hideId("confirm-modal");
 };
 
 const handleConfirmDeleteModalClick = (e) => {
-    const id = e.target.id.split("--")[1];
+    const id = findEl("hidden-modal-id").innerHTML;
     const title = global.state.papers[id].title;
     delete global.state.papers[id];
     chrome.storage.local.set({ papers: global.state.papers }, () => {
         global.state.papersList = Object.values(cleanPapers(global.state.papers));
         sortMemory();
         displayMemoryTable();
-        findEl("confirm-modal").remove();
+        hideId("confirm-modal");
         console.log(`Successfully deleted "${title}" (${id}) from ArxivMemory`);
         if (global.state.currentId === id) {
             updatePopupPaperNoMemory();

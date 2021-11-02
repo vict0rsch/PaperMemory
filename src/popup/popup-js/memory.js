@@ -57,19 +57,9 @@ const updatePopupPaperNoMemory = () => {
  */
 const showConfirmDeleteModal = (id) => {
     const title = global.state.papers[id].title;
-    document.body.innerHTML += /*html*/ `
-    <div id="confirm-modal">
-        <div style="width: 80%; padding: 32px 32px; text-align: center; font-size: 1.1rem;">
-            Are you sure you want to delete:<p>${title}</p>?
-        </div>
-        <div style="width: 100%; text-align: center; padding: 32px;">
-            <button style="padding: 8px 16px;" id="cancel-modal-button">Cancel</button>
-            <span style="min-width: 32px;"></span>
-            <button style="padding: 8px 16px;" id="confirm-modal-button--${id}">Confirm</button>
-        </div>
-    </div>`;
-    addListener("cancel-modal-button", "click", handleCancelModalClick);
-    addListener(`confirm-modal-button--${id}`, "click", handleConfirmDeleteModalClick);
+    setTextId("delete-modal-title", title);
+    setHTML("hidden-modal-id", id);
+    showId("confirm-modal", "flex");
 };
 
 /**
@@ -605,7 +595,8 @@ const makeMemoryHTML = async () => {
     );
     addListener("memory-search", "clear-search", handleMemorySearchKeyPress(true));
     addListener("memory-search", "keyup", handleMemorySearchKeyUp);
-
+    addListener("cancel-modal-button", "click", handleCancelModalClick);
+    addListener("confirm-modal-button", "click", handleConfirmDeleteModalClick);
     addListener("filter-favorites", "click", handleFilterFavorites);
     // listen to sorting feature change
     addListener("memory-select", "change", handleMemorySelectChange);
