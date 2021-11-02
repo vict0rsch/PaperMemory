@@ -77,6 +77,7 @@ const setStandardPopupClicks = () => {
     addListener("download-bibtex-json", "click", handleDownloadBibtexJsonClick);
     addListener("download-bibtex-plain", "click", handleDownloadBibtexPlainClick);
     addListener("overwrite-arxivmemory-button", "click", handleOverwriteMemory);
+    addListener("overwrite-arxivmemory-input", "change", handleSelectOverwriteFile);
 };
 
 /**
@@ -170,7 +171,7 @@ const popupMain = async (url, isKnownPage) => {
         // ------------------------
         addListener(`popup-memory-item-link--${id}`, "click", () => {
             chrome.tabs.update({
-                url: `https://arxiv.org/abs/${paper.id.replace("Arxiv-", "")}`,
+                url: paperToPDF(paper) === url ? paperToAbs(paper) : paperToPDF(paper),
             });
             window.close();
         });
@@ -216,7 +217,6 @@ const popupMain = async (url, isKnownPage) => {
 const query = { active: true, lastFocusedWindow: true };
 chrome.tabs.query(query, async (tabs) => {
     const url = tabs[0].url;
-    console.log("url: ", url);
 
     const is = isPaper(url);
     const isKnownPage = Object.values(is).some((i) => i);

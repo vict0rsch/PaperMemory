@@ -164,7 +164,7 @@ const parseNeuripsHTML = async (url) => {
 
     let bibtex = "";
 
-    bibtex += `@inproceedings{NEURIPS${year}_${hash.slice(0, 8)}\n`;
+    bibtex += `@inproceedings{NEURIPS${year}_${hash.slice(0, 8)},\n`;
     bibtex += `    author={${author}},\n`;
     bibtex += `    booktitle={Advances in Neural Information Processing Systems},\n`;
     bibtex += `    editor={H.Larochelle and M.Ranzato and R.Hadsell and M.F.Balcan and H.Lin},\n`;
@@ -210,7 +210,7 @@ const parseCvfHTML = async (url) => {
         });
     }
     const note = `Accepted @ ${conf} ${year}`;
-    const bibtex = doc.find(".bibref").first().text().replaceAll(",  ", ",\n  ");
+    const bibtex = doc.find(".bibref").first().text();
     const key = bibtex.split("{")[1].split(",")[0];
 
     return { author, bibtex, conf, id, key, note, pdfLink, title, year };
@@ -234,9 +234,9 @@ const parseOpenReviewJSON = async (url) => {
         pdfLink = `https://openreview.net/pdf?id=${paper.id}`;
     } else {
         if (paper.html) {
-            pdfLink = paper.html;
+            pdfLink = paper.html.replace("/forum?id=", "/pdf?id=");
         } else {
-            pdfLink = url;
+            pdfLink = url.replace("/forum?id=", "/pdf?id=");
         }
     }
 

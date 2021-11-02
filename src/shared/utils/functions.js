@@ -733,6 +733,65 @@ const parseIdFromUrl = (url) => {
     }
 };
 
+const paperToAbs = (paper) => {
+    const pdf = paper.pdfLink;
+    let abs = "";
+    switch (paper.source) {
+        case "arxiv":
+            abs = `https://arxiv.org/pdf/${paper.id.split("-")[1]}`;
+            break;
+
+        case "neurips":
+            abs = pdf
+                .replace("/file/", "/hash/")
+                .replace("-Paper.pdf", "-Abstract.html");
+            break;
+
+        case "cvf":
+            abs = pdf.replace("/papers/", "/html/").replace(".pdf", ".html");
+            break;
+
+        case "openreview":
+            abs = pdf.replace("/pdf?", "/forum?");
+            break;
+
+        default:
+            abs = "https://xkcd.com/1969/";
+            break;
+    }
+
+    return abs.replace("http://", "https://");
+};
+const paperToPDF = (paper) => {
+    const pdf = paper.pdfLink;
+    let abs = "";
+    switch (paper.source) {
+        case "arxiv":
+            abs = `https://arxiv.org/abs/${paper.id.split("-")[1]}`;
+            break;
+
+        case "neurips":
+            abs = pdf
+                .replace("/hash/", "/file/")
+                .replace("-Abstract.html", "-Paper.pdf");
+            break;
+
+        case "cvf":
+            abs = pdf.replace("/html/", "/papers/").replace(".html", ".pdf");
+            break;
+
+        case "openreview":
+            abs = pdf.replace("/forum?", "/pdf?");
+            break;
+
+        default:
+            abs = "https://xkcd.com/1969/";
+            break;
+    }
+
+    return abs.replace("http://", "https://");
+};
+
 const textareaFocusEnd = (element) => {
     setTimeout(() => {
         element.selectionStart = element.selectionEnd = 10000;
@@ -740,19 +799,25 @@ const textareaFocusEnd = (element) => {
 };
 
 const formatBibtext = (text) => {
-    let bib = text.trim().split("\n").join("");
-    const matches = bib.match(/\w+\ ?=\ ?{/g);
-    if (matches) {
-        for (const m of matches) {
-            bib = bib.replace(m, `\n  ${m}`);
+    let bib = text.trim().split("\n").join("").replace(/\s+=/g, " =");
+    const spaceMatches = bib.match(/\ \w+\ ?=\ ?{/g) || [];
+    const commaMatches = bib.match(/,\w+\ ?=\ ?{/g) || [];
+    if (spaceMatches && spaceMatches.length > 0) {
+        for (const m of spaceMatches) {
+            bib = bib.replace(m, `\n ${m}`);
+        }
+    }
+    if (commaMatches && commaMatches.length > 0) {
+        for (const m of commaMatches) {
+            const key = m.replace(",", "");
+            bib = bib.replace(m, `,\n  ${key}`);
         }
     }
     if (bib.slice(-2) === "}}") {
         bib = bib.slice(0, -1) + "\n}";
     }
-    return bib;
+    return bib.replaceAll("{ ", "{").replaceAll(" }", "}").replaceAll(" = ", "=");
 };
-
 const validatePaper = (paper, log = true) => {
     const expectedKeys = {
         addDate: {

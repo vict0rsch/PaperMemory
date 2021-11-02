@@ -58,14 +58,14 @@ const getMemoryItemHTML = (paper) => {
                 </span>
                 ${paper.title}
         </h4>
-        <div class="memory-item-tags-div">
+        <div class="my-1 mx-0">
             <small class="tag-list">
                 ${Array.from(tags)
                     .map((t) => `<span class="memory-tag" >${t}</span>`)
                     .join("")}
             </small>
-            <div class="edit-tags">
-                <div style="display:flex; align-items: center; justify-content: space-between">
+            <div class="edit-tags p-0 d-none">
+                <div class="flex-center-between">
                 <span class="label">Tags:</span>
                 <select class="memory-item-tags" id="memory-item-tags--${id}" multiple="multiple">
                         ${tagOptions}
@@ -80,10 +80,12 @@ const getMemoryItemHTML = (paper) => {
             ${noteDiv}
         </div>
 
-        <div class="memory-item-actions">
+        <div class="memory-item-actions flex-center-between mt-2">
 
-            <div style="display: flex; align-items: center">
-                <div class="memory-item-edit memory-item-svg-div" title=${titles.edit} >
+            <div class="d-flex align-items-center">
+                <div class="memory-item-edit memory-item-svg-div me-2" title=${
+                    titles.edit
+                } >
                     ${tablerSvg("writing", "", ["memory-icon-svg"])}
                 </div>
                 
@@ -126,7 +128,7 @@ const getMemoryItemHTML = (paper) => {
         <div class="extended-item" style="display: none">
             <div class="item-note">
                 <form class="form-note">
-                    <div class="textarea-wrapper">
+                    <div class="flex-center-start">
                         <span class="label">Code:</span>
                         <input 
                             type="text" 
@@ -135,7 +137,7 @@ const getMemoryItemHTML = (paper) => {
                             placeholder="Add link"
                         >
                     </div>
-                    <div class="textarea-wrapper">
+                    <div class="flex-center-start">
                         <span class="label">Note:</span>
                         <textarea 
                             rows="2" 
@@ -193,7 +195,7 @@ const getPopupEditFormHTML = (paper) => {
                 id="popup-form-note--${id}" 
                 style="width: 100%; display: flex; justify-content: space-between; align-items: center; margin-top: 8px; flex-direction: column;"
             >
-                <div class="textarea-wrapper w-100 mr-0">
+                <div class="flex-center-start w-100 mr-0">
                     <span class="label">Code:</span>
                     <input 
                         id="popup-form-codeLink--${id}" 
@@ -203,7 +205,7 @@ const getPopupEditFormHTML = (paper) => {
                         placeholder="Add link"
                     >
                 </div>
-                <div class="textarea-wrapper w-100 mr-0">
+                <div class="flex-center-start w-100 mr-0">
                     <span class="label">Note:</span>
                     <textarea 
                         rows="2"  
@@ -244,15 +246,13 @@ const getPopupEditFormHTML = (paper) => {
  */
 const getPopupPaperIconsHTML = (paper, currentUrl) => {
     const id = paper.id;
-    const display =
-        paper.source !== "arxiv" || currentUrl.indexOf(".pdf") < 0 ? "none" : "inherit";
+    const name = paperToAbs(paper) === currentUrl ? "HTML" : "PDF";
 
     return /*html*/ `
     <div
         class="memory-item-svg-div" 
         id="popup-memory-item-link--${id}"
-        title="Open Paper HTML Page"
-        style="display: ${display}"
+        title="Open Paper ${name} Page"
     >
         ${tablerSvg("external-link", "", ["popup-click-svg"])}
     </div>

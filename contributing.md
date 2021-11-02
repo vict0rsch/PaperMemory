@@ -66,6 +66,7 @@ TODO
 * update `content_script.js:makePaper()` to create a new entry
   * Typically, add a parser function in `parsers.js`  
 * `memory.js:focusExistingOrCreateNewPaperTab()` -> update the `match` creation process to define the piece of a pdf's URL which should be matched to existing tabs in order to focus it.
+* Update `functions.js:paperToAbs()` to enable to pdf->webpage button
 * Update `manifest.json` to
   * trigger `content_script.js` in the correct domains
   * enable your parsing function to fetch/query the data you need

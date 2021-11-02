@@ -5,6 +5,8 @@
 	<meta charset='utf-8'>
 	<script src="./theme.min.js"></script>
 	<link rel="stylesheet" type="text/css" href="./popup-css/select2.min.css">
+	<link rel="stylesheet" type="text/css" href="../shared/loader.css">
+	<link rel="stylesheet" type="text/css" href="./popup-css/bootstrap-utilities.min.css">
 	<link rel="stylesheet" type="text/css" href="./popup-css/popup.min.css">
 	<link rel="stylesheet" type="text/css" href="./popup-css/options.min.css">
 	<link rel="stylesheet" type="text/css" href="./popup-css/abstract.min.css">
@@ -20,7 +22,7 @@
 
 	<div id="popup-header">
 		<h1>Arxiv Tools</h1>
-		<svg viewBox="0 0 24 24" class="tabler-icon" id="header-icon">
+		<svg viewBox="0 0 24 24" class="tabler-icon ml-3" id="header-icon">
 			<path stroke="none" d="M0 0h24v24H0z" fill="none" />
 			<polyline points="13 3 13 10 19 10 11 21 11 14 5 14 13 3" />
 		</svg>
@@ -42,8 +44,7 @@
 					<path stroke="none" d="M0 0h24v24H0z" fill="none" />
 					<line x1="17" y1="7" x2="7" y2="17" />
 					<polyline points="16 17 7 17 7 8" />
-				</svg> (or press <code
-					style="padding: 1px 4px; vertical-align: text-top; border-radius: 4px; background-color: rgb(238, 238, 238);">a</code>
+				</svg> (or press <code>a</code>
 				)! (<code style="cursor: pointer;" id="keyboardShortcuts" href="#">usage guide</code>)
 			</p>
 		</div>
@@ -81,7 +82,7 @@
 				href="https://github.com/vict0rsch/ArxivTools">https://github.com/vict0rsch/ArxivTools</a>
 		</p>
 
-		<h3 style="margin-top: 24px;">⋗ Configuration</h3>
+		<h3 class="mt-4">⋗ Configuration</h3>
 
 		<div id="options">
 			<input class="switch" type="checkbox" id="checkDownload" name="checkDownload" value="checkDownload">
@@ -109,13 +110,11 @@
 
 
 
-		<h3 style="margin-top: 24px;margin-bottom: 0px;">⋗ Data Management</h3>
+		<h3 class="mt-4 mb-0">⋗ Data Management</h3>
 
 		<div style="display: flex; align-items: center; margin: 16px 0px">
 			<p><strong>Download</strong> your complete Memory's data: </p>
-			<button
-				style="font-family: 'Fira Code', monospace; margin-left: 8px; display: flex; align-items: center; justify-content: space-between;"
-				id="download-arxivmemory">
+			<button class="ms-2 flex-center-between code-font" id="download-arxivmemory">
 				.json&nbsp;
 				<svg viewBox="0 0 24 24" style="height: 18px; width: 18px; color: black; stroke: black">
 					<path stroke="none" d="M0 0h24v24H0z" fill="none" />
@@ -129,9 +128,7 @@
 
 		<div style="display: flex; align-items: center; margin: 16px 0px">
 			<p><strong>Download</strong> the Memory's BibTex: </p>
-			<button
-				style="font-family: 'Fira Code', monospace; margin-left: 8px; display: flex; align-items: center; justify-content: space-between;"
-				id="download-bibtex-json">
+			<button class="ms-2 flex-center-between code-font" id="download-bibtex-json">
 				.json&nbsp;
 				<svg viewBox="0 0 24 24" style="height: 18px; width: 18px; color: black; stroke: black">
 					<path stroke="none" d="M0 0h24v24H0z" fill="none" />
@@ -141,9 +138,7 @@
 					<line x1="12" y1="14" x2="8" y2="10" />
 				</svg>
 			</button>
-			<button
-				style="font-family: 'Fira Code', monospace; margin-left: 12px; display: flex; align-items: center; justify-content: space-between;"
-				id="download-bibtex-plain">
+			<button class="ms-3 flex-center-between code-font" id="download-bibtex-plain">
 				.bib&nbsp;
 				<svg viewBox="0 0 24 24" style="height: 18px; width: 18px; color: black; stroke: black">
 					<path stroke="none" d="M0 0h24v24H0z" fill="none" />
@@ -158,10 +153,10 @@
 		<div style="margin: 16px 0px">
 			<p><strong>Overwrite</strong> your Memory: </p>
 			<div style="display: flex; align-items: center; ">
-				<input type="file" id="overwrite-arxivmemory-input"></input>
-				<button
-					style="font-family: 'Fira Code', monospace; margin-left: 8px; display: flex; align-items: center; justify-content: space-between;"
-					id="overwrite-arxivmemory-button">
+				<label id="file-upload-label" for="overwrite-arxivmemory-input">Select
+					file</label><input type="file" id="overwrite-arxivmemory-input" class="d-none"></input>
+				<span id="overwrite-file-name"></span>
+				<button id="overwrite-arxivmemory-button" disabled class="ms-2 flex-center-between code-font">
 					.json&nbsp;
 					<svg viewBox="0 0 24 24" style="height: 18px; width: 18px; color: black; stroke: black">
 						<path stroke="none" d="M0 0h24v24H0z" fill="none" />
@@ -174,21 +169,20 @@
 			<div style="display: none;" id="overwriteFeedback"></div>
 		</div>
 
-		<h3 style="margin-top: 24px;">⋗ Beta</h3>
+		<h3 class="mt-4">⋗ Beta</h3>
 
-		<div style="display: flex; justify-content: center; flex-direction: column; align-items: center;">
+		<div class="flex-center-center" style="flex-direction: column;">
 			<p>
 				Beta feature: PDF file name parser -> enter a javascript function taking as input
 				<code style="margin: 0px; display: inline-block;">(title, id)</code> and returning a string.
 			</p>
 
-			<textarea id="customPdfTitleTextarea" style="width: 100%; margin-bottom: 8px;" rows="4">
+			<textarea id="customPdfTitleTextarea" class="w-100 mb-2" rows="4">
 (title, id) => {
 title = title.replaceAll("\n", '');
 return `${title} - ${id}.pdf`
 }</textarea>
-			<div
-				style="display: flex; justify-content: space-evenly; align-items: center; margin-bottom: 16px; width: 60%">
+			<div class="flex-center-evenly mb-3" style="width: 60%">
 				<button id="saveCustomPdf">Save function</button>
 				<button id="defaultCustomPdf">Back to default</button>
 			</div>
@@ -196,11 +190,13 @@ return `${title} - ${id}.pdf`
 		</div>
 	</div>
 
-	<div id="memory-spinner" class="lds-ring">
-		<div></div>
-		<div></div>
-		<div></div>
-		<div></div>
+	<div id="memory-spinner" class="arxivTools-container">
+		<div class="sk-folding-cube">
+			<div class="sk-cube1 sk-cube"></div>
+			<div class="sk-cube2 sk-cube"></div>
+			<div class="sk-cube4 sk-cube"></div>
+			<div class="sk-cube3 sk-cube"></div>
+		</div>
 	</div>
 	<div id="memory-switch" style="display: none;">
 		<svg xmlns="http://www.w3.org/2000/svg" tabindex="0" id="memory-switch-open"

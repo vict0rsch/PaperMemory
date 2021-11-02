@@ -38,7 +38,7 @@ const handleCopyMarkdownLink = (e) => {
 const handleCopyBibtex = (e) => {
     const id = eventId(e);
     const bibtex = global.state.papers[id].bibtex;
-    copyAndConfirmMemoryItem(id, bibtex, "Bibtex copied!");
+    copyAndConfirmMemoryItem(id, formatBibtext(bibtex), "Bibtex copied!");
 };
 
 const handleCopyPDFLink = (e) => {
@@ -383,7 +383,7 @@ const handleDownloadBibtexJsonClick = () => {
         const version = versionToSemantic(papers.__dataVersion);
         delete papers.__dataVersion;
         const bibtex = Object.keys(papers).reduce((obj, k) => {
-            obj[k] = papers[k].bibtex || "";
+            obj[k] = formatBibtext(papers[k].bibtex) || "";
             return obj;
         }, {});
         downloadTextFile(
@@ -407,7 +407,7 @@ const handleDownloadBibtexPlainClick = () => {
                     b = "";
                     console.log(v);
                 }
-                return b;
+                return formatBibtext(b);
             })
             .join("\n");
         downloadTextFile(
@@ -416,6 +416,17 @@ const handleDownloadBibtexPlainClick = () => {
             "text/plain"
         );
     });
+};
+
+const handleSelectOverwriteFile = () => {
+    var file = document.getElementById("overwrite-arxivmemory-input").files;
+    if (!file || file.length < 1) {
+        return;
+    }
+    file = file[0];
+    setHTML("overwrite-file-name", file.name);
+    if (!file.name.endsWith(".json")) return;
+    findEl("overwrite-arxivmemory-button").disabled = false;
 };
 
 const handleOverwriteMemory = () => {
@@ -431,12 +442,12 @@ const handleOverwriteMemory = () => {
             showId("overwriteFeedback");
             setHTML(
                 "overwriteFeedback",
-                `<div class="flex-center-center"><div class="lds-ring"><div></div><div></div><div></div><div></div></div></div>`
+                `<div class="arxivTools-container"><div class="sk-folding-cube"><div class="sk-cube1 sk-cube"></div><div class="sk-cube2 sk-cube"></div><div class="sk-cube4 sk-cube"></div><div class="sk-cube3 sk-cube"></div></div></div>`
             );
             const confirm = `<button id="confirm-overwrite">Confirm</button>`;
             const cancel = `<button id="cancel-overwrite">Cancel</button>`;
-            const tile = `<h4 style="width: 100%; font-size: 0.9rem; font-family: 'Fira Code', monospace;">Be careful, you will not be able to revert this operation. Make sure you have downloaded a backup of your memory before overwriting it.</h4>`;
-            const overwriteDiv = `<div id="overwrite-buttons"> ${tile} <div class="flex-center-evenly w-100">${cancel} ${confirm}</div></div>`;
+            const tile = `<h4 class="w-100 code-font" style="font-size: 0.9rem;>Be careful, you will not be able to revert this operation. Make sure you have downloaded a backup of your memory before overwriting it.</h4>`;
+            const overwriteDiv = `<div id="overwrite-buttons" class="flex-center-evenly py-3 px-4"> ${tile} <div class="flex-center-evenly w-100">${cancel} ${confirm}</div></div>`;
             setTimeout(async () => {
                 const { success, message, warning, papersToWrite } =
                     await overwriteMemory(overwritingPapers);
@@ -451,7 +462,7 @@ const handleOverwriteMemory = () => {
                         style("overwriteFeedback", "text-align", "center");
                         setHTML(
                             "overwriteFeedback",
-                            `<h4>Data is valid. Confirm overwrite?</h4>${overwriteDiv}`
+                            `<h5 class="mb-0">Data seems valid. Confirm overwrite?</h5>${overwriteDiv}`
                         );
                     }
                     addListener(
@@ -477,7 +488,7 @@ const handleOverwriteMemory = () => {
 const handleConfirmOverwrite = (papersToWrite, warning) => (e) => {
     setHTML(
         "overwriteFeedback",
-        `<div style="display: flex; justify-content: center;"><div class="lds-ring"><div></div><div></div><div></div><div></div></div></div>`
+        `<div class="arxivTools-container"><div class="sk-folding-cube"><div class="sk-cube1 sk-cube"></div><div class="sk-cube2 sk-cube"></div><div class="sk-cube4 sk-cube"></div><div class="sk-cube3 sk-cube"></div></div></div>`
     );
     setTimeout(async () => {
         if (warning) {
