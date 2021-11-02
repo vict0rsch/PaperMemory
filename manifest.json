@@ -30,7 +30,8 @@
   "permissions": [
     "https://arxiv.org/*",
     "https://export.arxiv.org/*",
-    "https://proceedings.neurips.cc/*",
+    "*://*.neurips.cc/*",
+    "*://*.nips.cc/*",
     "https://openaccess.thecvf.com/*",
     "https://openreview.net/*",
     "https://api.openreview.net/*",
@@ -45,7 +46,8 @@
       "matches": [
         "*://arxiv.org/*",
         "*://*.arxiv-vanity.com/*",
-        "*://proceedings.neurips.cc/*",
+        "*://*.neurips.cc/*",
+        "*://*.nips.cc/*",
         "*://openaccess.thecvf.com/*",
         "*://openreview.net/*"
       ],

@@ -65,7 +65,7 @@ global.menuStorageKeys = [...global.menuCheckNames, "pdfTitleFn"];
  */
 global.knownPaperPages = {
     arxiv: ["arxiv.org/abs/", "arxiv.org/pdf/"],
-    neurips: ["neurips.cc/paper/"],
+    neurips: ["neurips.cc/paper/", "nips.cc/paper/"],
     cvf: ["openaccess.thecvf.com/content"],
     openreview: ["openreview.net/forum", "openreview.net/pdf"],
 };
