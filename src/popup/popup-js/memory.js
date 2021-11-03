@@ -579,7 +579,7 @@ const makeMemoryHTML = async () => {
     let delayTime = 300;
     if (global.state.papersList.length < 20) {
         delayTime = 0;
-    } else if (global.state.papersList.length < 50) {
+    } else if (global.state.papersList.length < 100) {
         delayTime = 150;
     }
 
@@ -621,7 +621,7 @@ const openMemory = () => {
         }, 100);
     });
     setTimeout(() => {
-        addListener("memory-search", "search", handleClearSearch);
+        addListener("memory-search-clear-icon", "click", handleClearSearch);
         // set default sort to lastOpenDate
         val("memory-select", "lastOpenDate");
         // set default sort direction arrow down

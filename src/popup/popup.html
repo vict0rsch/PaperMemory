@@ -200,24 +200,24 @@ return `${title} - ${id}.pdf`
 	</div>
 	<div id="memory-switch" style="display: none;">
 		<svg xmlns="http://www.w3.org/2000/svg" tabindex="0" id="memory-switch-open"
-			class="icon icon-tabler icon-tabler-folders" width="44" height="44" viewBox="0 0 24 24" stroke-width="1.5"
-			fill="none" stroke-linecap="round" stroke-linejoin="round">
+			class="rounded icon icon-tabler icon-tabler-folders" width="44" height="44" viewBox="0 0 24 24"
+			stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round">
 			<path stroke="none" d="M0 0h24v24H0z" fill="none" />
 			<path d="M9 4h3l2 2h5a2 2 0 0 1 2 2v7a2 2 0 0 1 -2 2h-10a2 2 0 0 1 -2 -2v-9a2 2 0 0 1 2 -2" />
 			<path d="M17 17v2a2 2 0 0 1 -2 2h-10a2 2 0 0 1 -2 -2v-9a2 2 0 0 1 2 -2h2" />
 			<title>Open Memory</title>
 		</svg>
 		<svg xmlns="http://www.w3.org/2000/svg" id="memory-switch-close" style="display: none"
-			class="icon icon-tabler icon-tabler-circle-x" width="44" height="44" viewBox="0 0 24 24" stroke-width="1.5"
-			stroke="white" fill="#7c7f8b" stroke-linecap="round" stroke-linejoin="round">
+			class="rounded icon icon-tabler icon-tabler-circle-x" width="44" height="44" viewBox="0 0 24 24"
+			stroke-width="1.5" stroke="white" fill="#7c7f8b" stroke-linecap="round" stroke-linejoin="round">
 			<path stroke="none" d="M0 0h24v24H0z" fill="none" />
 			<circle cx="12" cy="12" r="9" />
 			<path d="M10 10l4 4m0 -4l-4 4" />
 		</svg>
 	</div>
 
-	<div id="menu-switch" tabindex="0" title="Open settings">
-		<svg viewBox="0 0 24 24" id='menu-switch-svg' class="tabler-icon">
+	<div id="menu-switch" tabindex="0" title="Open settings" class="rounded">
+		<svg viewBox="0 0 24 24" id='menu-switch-svg' class="tabler-icon rounded">
 			<path stroke="none" d="M0 0h24v24H0z" fill="none" />
 			<path
 				d="M10.325 4.317c.426 -1.756 2.924 -1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543 -.94 3.31 .826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756 .426 1.756 2.924 0 3.35a1.724 1.724 0 0 0 -1.066 2.573c.94 1.543 -.826 3.31 -2.37 2.37a1.724 1.724 0 0 0 -2.572 1.065c-.426 1.756 -2.924 1.756 -3.35 0a1.724 1.724 0 0 0 -2.573 -1.066c-1.543 .94 -3.31 -.826 -2.37 -2.37a1.724 1.724 0 0 0 -1.065 -2.572c-1.756 -.426 -1.756 -2.924 0 -3.35a1.724 1.724 0 0 0 1.066 -2.573c-.94 -1.543 .826 -3.31 2.37 -2.37c1 .608 2.296 .07 2.572 -1.065z" />
@@ -228,8 +228,12 @@ return `${title} - ${id}.pdf`
 
 	<div id="memory-container" style="display: none;">
 		<div id="memory-filters">
-			<input id="memory-search" type="search" placeholder="search" style="width: 45%;" />
-			<span tabindex="0" id="filter-favorites" title="Show favorites only">
+			<!-- <input id="memory-search" type="search" placeholder="search" style="width: 45%;" /> -->
+			<div class="memory-search-wrapper">
+				<input id="memory-search" placeholder="Search" type="text">
+				<span id="memory-search-clear-icon">&times;</span>
+			</div>
+			<span tabindex="0" id="filter-favorites" title="Show favorites only" class="rounded">
 				<svg viewBox="0 0 24 24" style="vertical-align: bottom; height: 22px; width: 32px">
 					<path stroke="none" d="M0 0h24v24H0z" fill="none" />
 					<path

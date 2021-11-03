@@ -48,11 +48,12 @@ a {
 code {
     background: var(--codeBackground) !important;
 }
-*:not(.select2-search__field):focus {
+*:not(.select2-search__field):focus,
+.memory-search-wrapper:focus-within {
     outline: 2px solid var(--color) !important;
-    border-radius: 2px;
     box-shadow: none;
 }
+
 input[type="checkbox"].switch:not(:checked) {
     background: bottom;
 }
@@ -166,15 +167,13 @@ button:not(.select2-selection__choice__remove):hover,
 #menu-container {
     background: var(--background);
 }
-#memory-search {
+.memory-search-wrapper {
     background: var(--codeBackground);
     color: white;
+    border-color: var(--color);
 }
 #memory-search::placeholder {
     color: var(--color);
-}
-#memory-search {
-    border-color: var(--color);
 }
 #memory-select {
     background: var(--lighterBackground);

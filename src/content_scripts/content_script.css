@@ -84,6 +84,9 @@
 #markdown-link,
 #texTextarea {
     padding: 8px;
+    word-break: break-word;
+    overflow: hidden;
+    font-size: 0.9rem;
 }
 
 .arxivTools-card {

@@ -197,8 +197,18 @@ const handleFilterFavorites = () => {
 const handleMemorySearchKeyPress = (allowEmptySearch) => (e) => {
     // read input, return if empty (after trim)
     const query = val("memory-search").trim();
-    if (!query && !allowEmptySearch && e.key !== "Backspace") return;
 
+    if (!query) {
+        setTimeout(() => {
+            style("memory-search-clear-icon", "visibility", "hidden");
+        }, 0);
+    }
+
+    if (!query && !allowEmptySearch && e.key !== "Backspace") {
+        return;
+    }
+    style("memory-search-clear-icon", "visibility", "visible");
+    console.log("yes");
     if (query.startsWith("t:")) {
         // look into tags
         filterMemoryByTags(query);
@@ -255,9 +265,9 @@ const handleTagClick = (e) => {
 };
 
 const handleClearSearch = (e) => {
-    if (e.target.value === "") {
-        dispatch("memory-search", "clear-search");
-    }
+    val("memory-search", "");
+    dispatch("memory-search", "clear-search");
+    style("memory-search-clear-icon", "visibility", "hidden");
 };
 
 const handleMemorySwitchClick = () => {
