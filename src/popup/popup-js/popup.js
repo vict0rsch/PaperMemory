@@ -56,6 +56,9 @@ const setStandardPopupClicks = () => {
     addListener("keyboardShortcuts", "click", () => {
         style("user-guide-modal", "display", "flex");
     });
+    addListener("keyboardShortcutsMenu", "click", () => {
+        style("user-guide-modal", "display", "flex");
+    });
     addListener("close-user-guide-modal", "click", () => {
         style("user-guide-modal", "display", "none");
     });
