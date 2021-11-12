@@ -1,5 +1,5 @@
 {
-  "name": "Arxiv Tools",
+  "name": "Paper Memory",
   "version": "0.2.10",
   "manifest_version": 2,
   "description": "Record papers you read, enhance Arxiv with direct download, Markdown link, BibTex citation and more!",
