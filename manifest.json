@@ -2,8 +2,8 @@
   "name": "Paper Memory",
   "version": "0.2.10",
   "manifest_version": 2,
-  "description": "Record papers you read, enhance Arxiv with direct download, Markdown link, BibTex citation and more!",
-  "homepage_url": "https://github.com/vict0rsch/ArxivTools",
+  "description": "Automatically record papers you read from Arxiv, OpenReview and more! Organize your library with tags, links to code repositories and take quick notes.",
+  "homepage_url": "https://github.com/vict0rsch/PaperMemory",
   "icons": {
     "128": "icons/favicon-128.png"
   },
@@ -17,7 +17,7 @@
   },
   "browser_action": {
     "default_icon": "icons/1571249796.ico",
-    "default_title": "ArxivTools",
+    "default_title": "PaperMemory",
     "default_popup": "src/popup/popup.min.html"
   },
   "commands": {

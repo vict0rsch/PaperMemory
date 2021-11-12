@@ -503,7 +503,7 @@ const migrateData = async (papers, manifestDataVersion, store = true) => {
                 }
             }
 
-            // need to fix https://github.com/vict0rsch/ArxivTools/issues/10
+            // need to fix https://github.com/vict0rsch/PaperMemory/issues/10
             // if (!papers[id].hasOwnProperty("codes")) {
             //     papers[id].codes = await fetchCodes(papers[id])
             // }
@@ -855,7 +855,7 @@ const validatePaper = (paper, log = true) => {
         },
         id: {
             type: "string",
-            desc: "Unique ArxivTools ID",
+            desc: "Unique PaperMemory ID",
         },
         key: {
             type: "string",

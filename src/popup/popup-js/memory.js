@@ -562,7 +562,7 @@ const displayMemoryTable = () => {
 };
 
 /**
- * Main function called after the user clicks on the ArxivMemory button
+ * Main function called after the user clicks on the PaperMemory button
  * or presses `a`.
  * + closes the menu if it is open (should not be)
  */

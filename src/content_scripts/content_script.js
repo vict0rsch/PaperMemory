@@ -210,13 +210,13 @@ const addOrUpdatePaper = async (url, is, checks) => {
 
     chrome.storage.local.set({ papers: global.state.papers }, () => {
         if (isNew) {
-            console.log("Added '" + paper.title + "' to ArxivMemory");
+            console.log("Added '" + paper.title + "' to your Memory");
             console.log("paper: ", paper);
             // display red slider feedback if the user did not disable it
             // from the menu
-            checks.checkFeedback && feedback("Added to your ArxivMemory!");
+            checks.checkFeedback && feedback("Added to your Memory!");
         } else {
-            console.log("Updated '" + paper.title + "' in ArxivMemory");
+            console.log("Updated '" + paper.title + "' in your Memory");
         }
     });
 
@@ -536,7 +536,7 @@ $(() => {
             .some((d) => url.includes(d))
     ) {
         // not on a paper page
-        info("Executing Arxiv Tools content script");
+        info("Executing Paper Memory content script");
         contentScriptMain(url);
     }
 

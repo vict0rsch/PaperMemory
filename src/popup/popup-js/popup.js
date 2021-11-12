@@ -49,7 +49,7 @@ const getAndTrackPopupMenuChecks = (menu, menuCheckNames) => {
 const setStandardPopupClicks = () => {
     addListener("helpGithubLink", "click", () => {
         chrome.tabs.create({
-            url: "https://github.com/vict0rsch/ArxivMemory",
+            url: "https://github.com/vict0rsch/PaperMemory",
         });
     });
 

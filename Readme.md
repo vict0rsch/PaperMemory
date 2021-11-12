@@ -31,29 +31,23 @@ Supported venues:
 * neurips.cc (NeurIPS)
 * openreview.net (ICLR etc.)
 * openaccess.cvf.com (I/ECCV, CVPR etc.)
-* [Add more](https://github.com/vict0rsch/ArxivTools/issues/13)
+* [Add more](https://github.com/vict0rsch/PaperMemory/issues/13)
 
 ## Demo
 
 (Visuals are slightly deprecated (Oct 1st 2021), I need to update them but it's currently very close to what you see here)
 
-![](https://github.com/vict0rsch/ArxivTools/blob/master/extra/imgs/d2.gif?raw=true)
-
-Augment Arxiv-Vanity with Bibtex:
-
-<p align="center">
-<img src="https://github.com/vict0rsch/ArxivTools/blob/master/extra/imgs/v.png?raw=true">
-</p>
+![](https://github.com/vict0rsch/PaperMemory/blob/master/extra/imgs/d2.gif?raw=true)
 
 Customize features in the menu:
 
 <p align="center">
-<img src="https://github.com/vict0rsch/ArxivTools/blob/master/extra/imgs/m.png?raw=true">
+<img src="https://github.com/vict0rsch/PaperMemory/blob/master/extra/imgs/m.png?raw=true">
 </p>
 
 ---
 
-Share ideas 💡 in [issues](https://github.com/vict0rsch/ArxivTools/issues) and love with [stars](https://github.com/vict0rsch/ArxivTools/stargazers) ⭐️:)
+Share ideas 💡 in [issues](https://github.com/vict0rsch/PaperMemory/issues) and love with [stars](https://github.com/vict0rsch/PaperMemory/stargazers) ⭐️:)
 
 ## Keyboard Navigation
 
@@ -61,7 +55,7 @@ Share ideas 💡 in [issues](https://github.com/vict0rsch/ArxivTools/issues) and
   * Open the popup:
     * `cmd/ctrl + shift + e`
   * Open the Memory
-    * `a` from the popup's home will open the ArxivMemory
+    * `a` from the popup's home will open it
     * navigate to the bottom left button with `tab` and hit `enter`
   * Search
     * Search field is automatically focused on memory open
@@ -71,7 +65,7 @@ Share ideas 💡 in [issues](https://github.com/vict0rsch/ArxivTools/issues) and
     * `shift + tab` will go back up the list
   * Edit a paper
     * Press `e` to _edit_ the paper's metadata: tags, code and note when the paper is *focused* (from click or keyboard `tab` navigation)
-      * Navigate through fields with `(shift+) tab`: tags and note if you're on a paper's page, then your ArxivTools anyway.
+      * Navigate through fields with `(shift+) tab`: tags and note if you're on a paper's page.
     * Press `enter` to _open_ a focused paper (*focus* an existing tab with the paper or *create a new tab* to the paper's pdf if it's not open already)
     * `backspace` to _delete_ a focused paper (a confirmation will be prompted first don't worry 👮‍♀️)
   * Close Memory or Menu
@@ -90,11 +84,11 @@ Share ideas 💡 in [issues](https://github.com/vict0rsch/ArxivTools/issues) and
 ## Guides
 
 <p align="center">
-<img src="https://github.com/vict0rsch/ArxivTools/blob/master/extra/imgs/guide-arrows.png?raw=true">
+<img src="https://github.com/vict0rsch/PaperMemory/blob/master/extra/imgs/guide-arrows.png?raw=true">
 </p>
 
 <p align="center">
-<img src="https://github.com/vict0rsch/ArxivTools/blob/master/extra/imgs/guide-memory.png?raw=true">
+<img src="https://github.com/vict0rsch/PaperMemory/blob/master/extra/imgs/guide-memory.png?raw=true">
 </p>
 
 ## Install from source (Brave & Chrome)
@@ -114,12 +108,7 @@ Share ideas 💡 in [issues](https://github.com/vict0rsch/ArxivTools/issues) and
 
 ## Help
 
-* **Arxiv-Vanity**
-  * Bibtex card appears on hover
-  * If link is an arxiv citation, ArxivTools fetches the citation's ID on Arxiv's `export` API.
-  * Otherwise, ArxivTools extracts the paper's title, and searches for it on Arxiv's `export` API.
-    * If titles don't match, Arxiv's API could not find the exact article and ArxivTools doesn't do anything
 * **Firefox**
-  * Using Firefox? [#9](https://github.com/vict0rsch/ArxivTools/issues/9) 🚁
+  * Using Firefox? [#9](https://github.com/vict0rsch/PaperMemory/issues/9) 🚁
 * **Papers With Code**
-  * Wouldn't it be nice to automatically discover papers' repos!! see [#10](https://github.com/vict0rsch/ArxivTools/issues/10)
+  * Wouldn't it be nice to automatically discover papers' repos!! see [#10](https://github.com/vict0rsch/PaperMemory/issues/10)
