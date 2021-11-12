@@ -250,6 +250,7 @@ const getPopupPaperIconsHTML = (paper, currentUrl) => {
 
     return /*html*/ `
     <div
+        tabindex="0"
         class="memory-item-svg-div" 
         id="popup-memory-item-link--${id}"
         title="Open Paper ${name} Page"
@@ -257,6 +258,7 @@ const getPopupPaperIconsHTML = (paper, currentUrl) => {
         ${tablerSvg("external-link", "", ["popup-click-svg"])}
     </div>
     <div 
+        tabindex="0"
         class="memory-item-svg-div"
         id="popup-memory-item-copy-link--${id}"
         title="Copy pdf link" 
@@ -265,6 +267,7 @@ const getPopupPaperIconsHTML = (paper, currentUrl) => {
     </div>
 
     <div 
+        tabindex="0"
         class="memory-item-svg-div"
         id="popup-memory-item-md--${id}"
         title="Copy Markdown-formatted link" 
@@ -273,6 +276,7 @@ const getPopupPaperIconsHTML = (paper, currentUrl) => {
     </div>
 
     <div 
+        tabindex="0"
         class="memory-item-svg-div"
         id="popup-memory-item-bibtex--${id}"
         title="Copy Bibtex citation" 
@@ -281,6 +285,7 @@ const getPopupPaperIconsHTML = (paper, currentUrl) => {
     </div>
 
     <div 
+        tabindex="0"
         class="memory-item-svg-div"
         id="popup-memory-item-download--${id}"
         title="Download pdf" 

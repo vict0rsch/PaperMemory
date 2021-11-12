@@ -38,14 +38,18 @@ const updateAllMemoryPaperTagOptions = () => {
 const updatePopupPaperNoMemory = () => {
     const noMemoryHTML = /*html*/ `
     <div style="font-size: 1.5rem; width: 100%; text-align: center;">This paper is not in your memory</div>
-    <ul>It can be for one of 3 reasons:
-        <br/>
-        <br/>
-        <li>You deleted the paper (refresh the page to add it back)</li>
-        <br/>
-        <li>There was an error parsing the paper's data (you can check the console if you think this is an issue)</li>
-        <br/>
-        <li>You are actually not on a paper page but the extension made a mistake</li>
+    <ul>It can be for one of 4 reasons:
+        <li style="margin-top: 4px">
+        On Firefox, content scripts are not triggered on pdfs.
+            <ul>
+            <li>This is not something I can do anything about, it's a known issue but a design choice by Firefox's developers.</li>
+            <li>The extension would work on the paper's <i>page</i> (for instance arxiv.org/<strong>abs</strong>/1106.0245)</li>
+            </ul>
+        </li>
+        <li style="margin-top: 4px">You deleted the paper (refresh the page to add it back)</li>
+        <li style="margin-top: 4px">There was an error parsing the paper's data (you can check the console if you think this is an issue)</li>
+        <li style="margin-top: 4px">You are actually not on a paper page but the extension made a mistake</li>
+        <p style="font-size: 0.9rem">Open an issue on <a href="https://github.com/vict0rsch/PaperMemory/issues">Github</a> if you think you encountered a malfunction.</p>
     </ul>
     `;
     setHTML("isArxiv", noMemoryHTML);
@@ -519,7 +523,7 @@ const displayMemoryTable = () => {
 
     const end = Date.now();
 
-    console.log("[displayMemoryTable] Rendering duration (s): " + (end - start) / 1000);
+    // console.log("[displayMemoryTable] Rendering duration (s): " + (end - start) / 1000);
 
     // after a click on such a button, the focus returns to the
     // container to navigate with tab
@@ -554,7 +558,7 @@ const displayMemoryTable = () => {
     addEventToClass(".form-note", "submit", handleMemorySaveEdits);
     const end2 = Date.now();
 
-    console.log("[displayMemoryTable] Listeners duration (s): " + (end2 - end) / 1000);
+    // console.log("[displayMemoryTable] Listeners duration (s): " + (end2 - end) / 1000);
 };
 
 /**

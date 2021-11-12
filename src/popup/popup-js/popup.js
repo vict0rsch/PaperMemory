@@ -113,6 +113,12 @@ const popupMain = async (url, isKnownPage) => {
 
     // Set click events (regardless of paper)
     setStandardPopupClicks();
+    const menu = await getStorage(global.menuStorageKeys);
+    // Set checkboxes
+    getAndTrackPopupMenuChecks(menu, global.menuCheckNames);
+
+    // Set PDF title function
+    setAndHandleCustomPDFFunction(menu);
 
     // Display popup metadata
     if (isKnownPage) {
@@ -202,12 +208,6 @@ const popupMain = async (url, isKnownPage) => {
             });
         });
     }
-    const menu = await getStorage(global.menuStorageKeys);
-    // Set checkboxes
-    getAndTrackPopupMenuChecks(menu, global.menuCheckNames);
-
-    // Set PDF title function
-    setAndHandleCustomPDFFunction(menu);
 };
 
 // ------------------------------

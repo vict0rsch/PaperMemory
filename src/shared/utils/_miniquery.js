@@ -98,7 +98,6 @@ const hasClass = (elOrId, className) => {
     } else {
         el = elOrId;
     }
-
     if (el) return el.classList.contains(className);
 };
 

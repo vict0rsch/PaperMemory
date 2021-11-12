@@ -337,26 +337,11 @@ const arxiv = (checks) => {
                     ${svg("clipboard-default-ok")}
                 </div>
                 <div id="markdown-link" class="arxivTools-codify">[${
-                    document.title
+                    global.state.papers.hasOwnProperty(id)
+                        ? global.state.papers[id].title
+                        : document.title
                 }](${pdfUrl})</div>
             </div>`;
-        addListener(
-            document.querySelector("#markdown-header .copy-feedback"),
-            "click",
-            (e) => {
-                $("#markdown-header .copy-feedback").fadeOut(200, () => {
-                    $("#markdown-header .copy-feedback-ok").fadeIn(200, () => {
-                        setTimeout(() => {
-                            $("#markdown-header .copy-feedback-ok").fadeOut(200, () => {
-                                $("#markdown-header .copy-feedback").fadeIn(200);
-                            });
-                        }, 1500);
-                    });
-                });
-                copyTextToClipboard(findEl("markdown-link").innerText);
-                feedback("Markdown Link Copied!");
-            }
-        );
     }
 
     if (checkBib) {
@@ -411,6 +396,33 @@ const arxiv = (checks) => {
                             });
                             copyTextToClipboard(findEl("texTextarea").innerText);
                             feedback("Bibtex Citation Copied!");
+                        }
+                    );
+                    addListener(
+                        document.querySelector("#markdown-header .copy-feedback"),
+                        "click",
+                        (e) => {
+                            console.log("click");
+                            $("#markdown-header .copy-feedback").fadeOut(200, () => {
+                                $("#markdown-header .copy-feedback-ok").fadeIn(
+                                    200,
+                                    () => {
+                                        setTimeout(() => {
+                                            $(
+                                                "#markdown-header .copy-feedback-ok"
+                                            ).fadeOut(200, () => {
+                                                $(
+                                                    "#markdown-header .copy-feedback"
+                                                ).fadeIn(200);
+                                            });
+                                        }, 1500);
+                                    }
+                                );
+                            });
+                            copyTextToClipboard(
+                                findEl("markdown-link").innerText.replaceAll("\n", "")
+                            );
+                            feedback("Markdown Link Copied!");
                         }
                     );
                 });

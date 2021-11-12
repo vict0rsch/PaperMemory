@@ -70,10 +70,10 @@ const fetchOpenReviewForumJSON = async (url) => {
 // -----  Parse  -----
 // -------------------
 
-const parseArxivBibtex = async (arxivId, data) => {
+const parseArxivBibtex = async (memoryId) => {
     let xmlData;
     if (typeof data === "undefined") {
-        xmlData = await fetchArxivXML(arxivId);
+        xmlData = await fetchArxivXML(memoryId);
     } else {
         xmlData = data;
     }
@@ -105,20 +105,8 @@ const parseArxivBibtex = async (arxivId, data) => {
     const year = $(bib.find("entry published")[0]).text().slice(0, 4);
     key += year;
     key += firstNonStopLowercase(title);
-    let id;
-    const ids = bib.find("id");
-    ids.each((k, v) => {
-        if (
-            $(v)
-                .html()
-                .match(/\d\d\d\d\.\d\d\d\d\d/g)
-        ) {
-            id = $(v)
-                .html()
-                .match(/\d\d\d\d\.\d\d\d\d\d/g)[0];
-        }
-    });
-    id = `Arxiv-${id}`;
+
+    const id = memoryId;
     const conf = "arXiv";
 
     let bibtex = "";

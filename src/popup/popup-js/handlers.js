@@ -208,7 +208,6 @@ const handleMemorySearchKeyPress = (allowEmptySearch) => (e) => {
         return;
     }
     style("memory-search-clear-icon", "visibility", "visible");
-    console.log("yes");
     if (query.startsWith("t:")) {
         // look into tags
         filterMemoryByTags(query);
@@ -304,17 +303,15 @@ const handlePopupKeydown = (e) => {
             global.state.papers && dispatch("memory-switch", "click");
         } else if (key === "Enter") {
             // enter on the arxiv memory button opens it
-            let el = document.querySelector("#memory-switch-open:focus");
-            if (el) {
+            let focused = document.querySelector(":focus");
+            // if (!focused || !focused.length < 1) return;
+            if (focused.id === "memory-switch-open") {
                 dispatch("memory-switch", "click");
-                return;
-            }
-            // enter on the menu button opens it
-            el = document.querySelector("#menu-switch:focus");
-            if (el) {
+            } else if (focused.id === "menu-switch") {
                 dispatch("menu-switch", "click");
                 dispatch("menu-switch", "blur");
-                return;
+            } else if (hasClass(focused, "memory-item-svg-div")) {
+                dispatch(focused, "click");
             }
         }
         return;

@@ -47,7 +47,7 @@ textarea {
     font-family: "Yantramanav";
 }
 
-*:not(.select2-search__field):focus,
+*:not(.select2-search__field, .switch):focus,
 .memory-search-wrapper:focus-within {
     outline: 2px solid var(--outline) !important;
     box-shadow: none;
@@ -385,6 +385,7 @@ code {
 .memory-item-svg-div {
     cursor: pointer;
     display: flex;
+    border-radius: var(--rounder);
 }
 .memory-item-feedback {
     color: green;
