@@ -204,16 +204,41 @@ const parseCvfHTML = async (url) => {
     return { author, bibtex, conf, id, key, note, pdfLink, title, year };
 };
 
+makeOpenReviewBibTex = (paper, url) => {
+    const title = paper.content.title;
+    const author = paper.content.authors.join(" and ");
+    const year = paper.cdate ? new Date(paper.cdate).getFullYear() : "0000";
+    if (!paper.cdate) {
+        console.log("makeOpenReviewBibTex: no cdate found in", paper);
+    }
+
+    let key = paper.content.authors[0].split(" ").reverse()[0];
+    key += year;
+    key += firstNonStopLowercase(title);
+
+    let bibtex = "";
+    bibtex += `@inproceedings{${key},\n`;
+    bibtex += `    title={${title}},\n`;
+    bibtex += `    author={${author}},\n`;
+    bibtex += `    year={${year}},\n`;
+    bibtex += `    url={${url}},\n`;
+    bibtex += `}`;
+
+    return bibtex;
+};
+
 const parseOpenReviewJSON = async (url) => {
     const noteJson = await fetchOpenReviewNoteJSON(url);
     const forumJson = await fetchOpenReviewForumJSON(url);
 
     var paper = noteJson.notes[0];
+    console.log("paper: ", paper);
     var forum = forumJson.notes;
+    console.log("forum: ", forum);
 
     const title = paper.content.title;
     const author = paper.content.authors.join(" and ");
-    const bibtex = paper.content._bibtex;
+    const bibtex = paper.content._bibtex || makeOpenReviewBibTex(paper, url);
     const key = bibtex.split("{")[1].split(",")[0].trim();
     const year = bibtex.split("year={")[1].split("}")[0];
 
@@ -259,11 +284,12 @@ const parseOpenReviewJSON = async (url) => {
         return (
             r &&
             r.content &&
-            ["Final Decision", "Paper Decision"].indexOf(r.content.title) > -1
+            ["Final Decision", "Paper Decision", "Acceptance Decision"].indexOf(
+                r.content.title
+            ) > -1
         );
     });
     console.log("forum: ", forum);
-    console.log("candidates: ", candidates);
     if (candidates && candidates.length > 0) {
         decision = candidates[0].content.decision
             .split(" ")
