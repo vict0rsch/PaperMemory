@@ -41,7 +41,7 @@ Supported venues:
 Customize features in the menu:
 
 <p align="center">
-<img src="https://github.com/vict0rsch/PaperMemory/blob/master/extra/imgs/m.png?raw=true">
+<img width="400" src="https://github.com/vict0rsch/PaperMemory/blob/master/extra/imgs/m.png?raw=true">
 </p>
 
 Switch between Light and Dark mode
