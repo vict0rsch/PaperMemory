@@ -35,7 +35,6 @@ Supported venues:
 
 ## Demo
 
-(Visuals are slightly deprecated (Oct 1st 2021), I need to update them but it's currently very close to what you see here)
 
 ![](https://github.com/vict0rsch/PaperMemory/blob/master/extra/imgs/d2.gif?raw=true)
 
@@ -44,6 +43,15 @@ Customize features in the menu:
 <p align="center">
 <img src="https://github.com/vict0rsch/PaperMemory/blob/master/extra/imgs/m.png?raw=true">
 </p>
+
+Switch between Light and Dark mode
+
+
+<p align="center">
+<img src="https://github.com/vict0rsch/PaperMemory/blob/master/extra/imgs/dm.png?raw=true">
+</p>
+
+
 
 ---
 
