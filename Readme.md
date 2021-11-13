@@ -92,11 +92,11 @@ Share ideas 💡 in [issues](https://github.com/vict0rsch/PaperMemory/issues) an
 ## Guides
 
 <p align="center">
-<img src="https://github.com/vict0rsch/PaperMemory/blob/master/extra/imgs/guide-arrows.png?raw=true">
+<img src="https://raw.github.com/vict0rsch/PaperMemory/master/extra/imgs/guide-arrows.png?raw=true">
 </p>
 
 <p align="center">
-<img src="https://github.com/vict0rsch/PaperMemory/blob/master/extra/imgs/guide-memory.png?raw=true">
+<img src="https://raw.github.com/vict0rsch/PaperMemory/master/extra/imgs/guide-memory.png?raw=true">
 </p>
 
 ## Install from source (Brave & Chrome)
