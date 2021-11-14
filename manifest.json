@@ -5,7 +5,7 @@
   "description": "Automatically record papers you read from Arxiv, OpenReview & more! Organize your library with tags, links to code and quick notes.",
   "homepage_url": "https://github.com/vict0rsch/PaperMemory",
   "icons": {
-    "128": "icons/favicon-128.png"
+    "192": "icons/favicon-192x192.png"
   },
   "content_security_policy": "script-src 'self' 'unsafe-eval'; object-src 'self'",
   "background": {
@@ -16,7 +16,7 @@
     ]
   },
   "browser_action": {
-    "default_icon": "icons/1571249796.ico",
+    "default_icon": "icons/favicon-192x192.png",
     "default_title": "PaperMemory",
     "default_popup": "src/popup/popup.min.html"
   },
