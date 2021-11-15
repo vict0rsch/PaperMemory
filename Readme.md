@@ -1,18 +1,20 @@
 # My Paper Memory ⚡
 
-<br/><br/>
+<br/>
 
 <p align="center">
-    🏪
+    🏪 Official stores
+    <br/>
     <a href="https://chrome.google.com/webstore/detail/arxivtools/hmebhknlgddhfbbdhgplnillngljgmdi">
-        <strong>Chrome (& Brave) web-store</strong>
+        <strong>Chrome & Brave</strong>
     </a>
+    &nbsp;•&nbsp;
     <a href="🏪">
-        <strong> Firefox web-store</strong>
+        <strong>Firefox</strong>
     </a>
 </p>
 
-<br/><br/>
+<br/>
 
 An **automated**, web-based and minimalist reference manager.
 
