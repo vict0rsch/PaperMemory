@@ -137,6 +137,9 @@ const focusExistingOrCreateNewPaperTab = (paper) => {
         .replace(".pdf", "") // remove .pdf (cvf)
         .split("?") // remove get args if any
         .reverse()[0]; // find id (openreview)
+    if (paper.source === "biorxiv") {
+        match = cleanBiorxivURL(paper.pdfLink);
+    }
     if (match.match(/\d{5}v\d+$/) && paper.source === "arxiv") {
         // remove potential pdf version on arxiv
         match = match.split("v")[0];

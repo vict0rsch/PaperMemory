@@ -29,6 +29,7 @@
   },
   "permissions": [
     "https://arxiv.org/*",
+    "*://api.biorxiv.org/*",
     "https://export.arxiv.org/*",
     "*://*.neurips.cc/*",
     "*://*.nips.cc/*",
@@ -45,6 +46,7 @@
     {
       "matches": [
         "*://arxiv.org/*",
+        "*://*.biorxiv.org/*",
         "*://*.arxiv-vanity.com/*",
         "*://*.neurips.cc/*",
         "*://*.nips.cc/*",

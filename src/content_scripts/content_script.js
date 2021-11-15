@@ -239,6 +239,9 @@ const makePaper = async (is, url, id) => {
     } else if (is.openreview) {
         paper = await parseOpenReviewJSON(url);
         paper.source = "openreview";
+    } else if (is.biorxiv) {
+        paper = await parseBiorxivJSON(url);
+        paper.source = "biorxiv";
     } else {
         throw Error("Unknown paper source: " + JSON.stringify({ is, url, id }));
     }
@@ -529,14 +532,13 @@ const vanity = () => {
 
 $(() => {
     const url = window.location.href;
-
+    info("Executing Paper Memory content script");
     if (
         Object.values(global.knownPaperPages)
             .reduce((a, b) => a.concat(b), [])
             .some((d) => url.includes(d))
     ) {
-        // not on a paper page
-        info("Executing Paper Memory content script");
+        info("Running contentScriptMain for", url);
         contentScriptMain(url);
     }
 
