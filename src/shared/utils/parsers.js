@@ -338,7 +338,11 @@ const parseBiorxivJSON = async (url) => {
     const author = bibtex
         .match(/author\ ?=\ ?{.+}/)[0]
         .replace(/author\ ?=\ ?{/, "")
-        .replace("}", "")
+        .trim()
+        .slice(0, -1)
+        .replaceAll("{", "")
+        .replaceAll("}", "")
+        .replaceAll("\\", "")
         .split(" and ")
         .map((a) => a.split(", ").reverse().join(" "))
         .join(" and ");
