@@ -3,10 +3,12 @@
 <br/><br/>
 
 <p align="center">
-    <a href="https://chrome.google.com/webstore/detail/arxivtools/hmebhknlgddhfbbdhgplnillngljgmdi?authuser=1&hl=fr">
-        <strong>
-            🏪 Install from the Chrome (& Brave) web-store
-        </strong>
+    🏪
+    <a href="https://chrome.google.com/webstore/detail/arxivtools/hmebhknlgddhfbbdhgplnillngljgmdi">
+        <strong>Chrome (& Brave) web-store</strong>
+    </a>
+    <a href="🏪">
+        <strong> Firefox web-store</strong>
     </a>
 </p>
 
