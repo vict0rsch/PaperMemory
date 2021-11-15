@@ -9,7 +9,7 @@
         <strong>Chrome & Brave</strong>
     </a>
     &nbsp;•&nbsp;
-    <a href="🏪">
+    <a href="https://addons.mozilla.org/en-US/firefox/addon/paper-memory/">
         <strong>Firefox</strong>
     </a>
 </p>
