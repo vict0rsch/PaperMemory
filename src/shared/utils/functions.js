@@ -711,6 +711,14 @@ const isPaper = (url) => {
     return is;
 };
 
+const cleanBiorxivURL = (url) => {
+    url = url.replace(".full.pdf", "");
+    if (!url.match(/\d$/)) {
+        url = url.split(".").slice(0, -1).join(".");
+    }
+    return url;
+};
+
 const parseIdFromUrl = (url) => {
     const is = isPaper(url);
     if (is.arxiv) {
@@ -728,6 +736,13 @@ const parseIdFromUrl = (url) => {
             return p.id.includes(OR_id);
         })[0];
         return paper && paper.id;
+    } else if (is.biorxiv) {
+        url = cleanBiorxivURL(url);
+        let id = url.split("/").reverse()[0];
+        if (id.match(/v\d+$/)) {
+            id = id.split("v")[0];
+        }
+        return `Biorxiv-${id}`;
     } else {
         throw Error("unknown paper url");
     }
@@ -738,7 +753,7 @@ const paperToAbs = (paper) => {
     let abs = "";
     switch (paper.source) {
         case "arxiv":
-            abs = `https://arxiv.org/pdf/${paper.id.split("-")[1]}`;
+            abs = `https://arxiv.org/abs/${paper.id.split("-")[1]}`;
             break;
 
         case "neurips":
@@ -755,6 +770,10 @@ const paperToAbs = (paper) => {
             abs = pdf.replace("/pdf?", "/forum?");
             break;
 
+        case "biorxiv":
+            abs = pdf.replace(".full.pdf", "");
+            break;
+
         default:
             abs = "https://xkcd.com/1969/";
             break;
@@ -763,33 +782,36 @@ const paperToAbs = (paper) => {
     return abs.replace("http://", "https://");
 };
 const paperToPDF = (paper) => {
-    const pdf = paper.pdfLink;
-    let abs = "";
+    let pdf = paper.pdfLink;
     switch (paper.source) {
         case "arxiv":
-            abs = `https://arxiv.org/abs/${paper.id.split("-")[1]}`;
+            pdf = `https://arxiv.org/pdf/${paper.id.split("-")[1]}.pdf`;
             break;
 
         case "neurips":
-            abs = pdf
+            pdf = pdf
                 .replace("/hash/", "/file/")
                 .replace("-Abstract.html", "-Paper.pdf");
             break;
 
         case "cvf":
-            abs = pdf.replace("/html/", "/papers/").replace(".html", ".pdf");
+            pdf = pdf.replace("/html/", "/papers/").replace(".html", ".pdf");
             break;
 
         case "openreview":
-            abs = pdf.replace("/forum?", "/pdf?");
+            pdf = pdf.replace("/forum?", "/pdf?");
+            break;
+
+        case "biorxiv":
+            pdf = cleanBiorxivURL(pdf) + ".full.pdf";
             break;
 
         default:
-            abs = "https://xkcd.com/1969/";
+            pdf = "https://xkcd.com/1969/";
             break;
     }
 
-    return abs.replace("http://", "https://");
+    return pdf.replace("http://", "https://");
 };
 
 const textareaFocusEnd = (element) => {
