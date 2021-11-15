@@ -32,6 +32,7 @@ This browser extension allows you to do automatically store research papers you 
 Supported venues:
 
 * arxiv.org
+* biorxiv.org
 * neurips.cc (NeurIPS)
 * openreview.net (ICLR etc.)
 * openaccess.cvf.com (I/ECCV, CVPR etc.)
