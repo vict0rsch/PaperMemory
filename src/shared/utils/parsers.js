@@ -307,6 +307,57 @@ const parseOpenReviewJSON = async (url) => {
     return { author, bibtex, conf, id, key, note, pdfLink, title, year };
 };
 
+const parseBiorxivJSON = async (url) => {
+    const biorxivAPI = "https://api.biorxiv.org/";
+    const pageURL = url.replace(".full.pdf", "");
+    const biorxivID = url
+        .split("/")
+        .slice(-2)
+        .join("/")
+        .replace(".full.pdf", "")
+        .split("v")[0];
+    const api = `${biorxivAPI}/details/biorxiv/${biorxivID}`;
+    const data = await fetch(api).then((response) => {
+        return response.json();
+    });
+
+    if (data.messages[0].status !== "ok")
+        throw new Error(`${api} returned ${data.messages[0].status}`);
+
+    const paper = data.collection.reverse()[0];
+
+    const pageData = await fetch(pageURL);
+    const pageText = await pageData.text();
+    const dom = new DOMParser().parseFromString(
+        pageText.replaceAll("\n", ""),
+        "text/html"
+    );
+    const bibtextLink = dom.querySelector(".bibtext a").href;
+    const bibtex = await (await fetch(bibtextLink)).text();
+
+    const author = bibtex
+        .match(/author\ ?=\ ?{.+}/)[0]
+        .replace(/author\ ?=\ ?{/, "")
+        .trim()
+        .slice(0, -1)
+        .replaceAll("{", "")
+        .replaceAll("}", "")
+        .replaceAll("\\", "")
+        .split(" and ")
+        .map((a) => a.split(", ").reverse().join(" "))
+        .join(" and ");
+
+    const conf = "BioRxiv";
+    const id = parseIdFromUrl(url);
+    const key = bibtex.split("\n")[0].split("{")[1].replace(",", "").trim();
+    const note = "";
+    const pdfLink = cleanBiorxivURL(url) + ".full.pdf";
+    const title = paper.title;
+    const year = paper.date.split("-")[0];
+
+    return { author, bibtex, conf, id, key, note, pdfLink, title, year };
+};
+
 // ----------------------------------------------
 // -----  Papers With Code: non functional  -----
 // ----------------------------------------------

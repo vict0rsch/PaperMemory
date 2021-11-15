@@ -1,16 +1,20 @@
 # My Paper Memory ⚡
 
-<br/><br/>
+<br/>
 
 <p align="center">
-    <a href="https://chrome.google.com/webstore/detail/arxivtools/hmebhknlgddhfbbdhgplnillngljgmdi?authuser=1&hl=fr">
-        <strong>
-            🏪 Install from the Chrome (& Brave) web-store
-        </strong>
+    🏪 Official stores
+    <br/>
+    <a href="https://chrome.google.com/webstore/detail/arxivtools/hmebhknlgddhfbbdhgplnillngljgmdi">
+        <strong>Chrome & Brave</strong>
+    </a>
+    &nbsp;•&nbsp;
+    <a href="https://addons.mozilla.org/en-US/firefox/addon/paper-memory/">
+        <strong>Firefox</strong>
     </a>
 </p>
 
-<br/><br/>
+<br/>
 
 An **automated**, web-based and minimalist reference manager.
 
@@ -28,6 +32,7 @@ This browser extension allows you to do automatically store research papers you 
 Supported venues:
 
 * arxiv.org
+* biorxiv.org
 * neurips.cc (NeurIPS)
 * openreview.net (ICLR etc.)
 * openaccess.cvf.com (I/ECCV, CVPR etc.)

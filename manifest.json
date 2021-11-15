@@ -1,6 +1,6 @@
 {
   "name": "Paper Memory",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "manifest_version": 2,
   "description": "Automatically record papers you read from Arxiv, OpenReview & more! Organize your library with tags, links to code and quick notes.",
   "homepage_url": "https://github.com/vict0rsch/PaperMemory",
@@ -29,6 +29,7 @@
   },
   "permissions": [
     "https://arxiv.org/*",
+    "*://api.biorxiv.org/*",
     "https://export.arxiv.org/*",
     "*://*.neurips.cc/*",
     "*://*.nips.cc/*",
@@ -45,6 +46,7 @@
     {
       "matches": [
         "*://arxiv.org/*",
+        "*://*.biorxiv.org/*",
         "*://*.arxiv-vanity.com/*",
         "*://*.neurips.cc/*",
         "*://*.nips.cc/*",

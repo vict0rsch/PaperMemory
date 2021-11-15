@@ -142,7 +142,7 @@ const popupMain = async (url, isKnownPage) => {
         }
 
         const paper = global.state.papers[id];
-        const eid = paper.id.replace(".", "\\.");
+        const eid = paper.id.replaceAll(".", "\\.");
 
         // -----------------------------
         // -----  Fill Paper Data  -----
@@ -157,6 +157,7 @@ const popupMain = async (url, isKnownPage) => {
         // ----------------------------------
         // -----  Customize Popup html  -----
         // ----------------------------------
+        console.log(paper);
         setHTML("popup-memory-edit", getPopupEditFormHTML(paper));
         setHTML("popup-copy-icons", getPopupPaperIconsHTML(paper, url));
         findEl(`checkFavorite--${id}`).checked = paper.favorite;

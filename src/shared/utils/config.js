@@ -68,6 +68,7 @@ global.knownPaperPages = {
     neurips: ["neurips.cc/paper/", "nips.cc/paper/"],
     cvf: ["openaccess.thecvf.com/content"],
     openreview: ["openreview.net/forum", "openreview.net/pdf"],
+    biorxiv: ["biorxiv.org/content"],
 };
 
 global.overrideORConfs = {
