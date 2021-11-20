@@ -31,11 +31,12 @@ This browser extension allows you to do automatically store research papers you 
 
 Supported venues:
 
-* arxiv.org
-* biorxiv.org
-* neurips.cc (NeurIPS)
-* openreview.net (ICLR etc.)
-* openaccess.cvf.com (I/ECCV, CVPR etc.)
+* Arxiv
+* BioRxiv
+* NeurIPS
+* Open Review (ICLR etc.)
+* Computer Vision Foundation (I/ECCV, CVPR etc.)
+* Proceedings of Machine Learning Research (PMLR) (AISTATS, ICML, CoRL, CoLT, ALT, UAI etc.)
 * [Add more](https://github.com/vict0rsch/PaperMemory/issues/13)
 
 ## Demo

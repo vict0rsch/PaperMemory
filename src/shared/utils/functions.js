@@ -250,6 +250,14 @@ const info = (...args) => {
     console.log("%c" + args.join(" "), "color: #328DD2");
 };
 
+const getDisplayId = (id) => {
+    id = id.split("_")[0].split(".")[0];
+    if (!id.startsWith("OR-")) {
+        id = id.split("-").slice(0, 2).join("-");
+    }
+    return id;
+};
+
 const defaultPDFTitleFn = (title, id) => {
     title = title.replaceAll("\n", " ").replace(/\s\s+/g, " ");
     id = id.split("_")[0].split(".")[0];
@@ -743,6 +751,10 @@ const parseIdFromUrl = (url) => {
             id = id.split("v")[0];
         }
         return `Biorxiv-${id}`;
+    } else if (is.pmlr) {
+        const key = url.split("/").reverse()[0].split(".")[0];
+        const year = "20" + key.match(/\d+/)[0];
+        return `PMLR-${year}-${key}`;
     } else {
         throw Error("unknown paper url");
     }
@@ -772,6 +784,10 @@ const paperToAbs = (paper) => {
 
         case "biorxiv":
             abs = pdf.replace(".full.pdf", "");
+            break;
+
+        case "pmlr":
+            abs = pdf.split("/").slice(0, -1).join("/") + ".html";
             break;
 
         default:
@@ -804,6 +820,9 @@ const paperToPDF = (paper) => {
 
         case "biorxiv":
             pdf = cleanBiorxivURL(pdf) + ".full.pdf";
+            break;
+
+        case "pmlr":
             break;
 
         default:
