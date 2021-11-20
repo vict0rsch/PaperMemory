@@ -33,6 +33,7 @@
     "https://export.arxiv.org/*",
     "*://*.neurips.cc/*",
     "*://*.nips.cc/*",
+    "*://proceedings.mlr.press/*",
     "https://openaccess.thecvf.com/*",
     "https://openreview.net/*",
     "https://api.openreview.net/*",
@@ -47,6 +48,7 @@
       "matches": [
         "*://arxiv.org/*",
         "*://*.biorxiv.org/*",
+        "*://proceedings.mlr.press/*",
         "*://*.arxiv-vanity.com/*",
         "*://*.neurips.cc/*",
         "*://*.nips.cc/*",

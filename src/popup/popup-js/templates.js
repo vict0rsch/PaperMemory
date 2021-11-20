@@ -6,7 +6,7 @@
 const getMemoryItemHTML = (paper) => {
     const addDate = new Date(paper.addDate).toLocaleString().replace(",", "");
     const lastOpenDate = new Date(paper.lastOpenDate).toLocaleString().replace(",", "");
-    const displayId = paper.id.split("_")[0].split(".")[0];
+    const displayId = getDisplayId(paper.id);
     const note = paper.note || "";
     const id = paper.id;
     const tags = new Set(paper.tags);
@@ -179,7 +179,7 @@ const getPopupEditFormHTML = (paper) => {
     const tagOptions = getTagsOptions(paper);
     const note = paper.note || "";
     const checked = "";
-    const displayId = paper.id.split("_")[0].split(".")[0];
+    const displayId = getDisplayId(paper.id);
 
     return /*html*/ `
     <div style="max-width: 100%; display: flex; justify-content: space-between; align-items: center; padding: 4px 16px;">

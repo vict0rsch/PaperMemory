@@ -1,4 +1,28 @@
 // -------------------
+// -----  Utils  -----
+// -------------------
+
+const extractBibtexValue = (bibtex, key) => {
+    const regex = new RegExp(`${key}\\s?=\\s?{(.+)},`, "gi");
+    console.log(regex);
+    const match = regex.exec(bibtex);
+    if (match) {
+        const regex2 = new RegExp(`${key}\\s?=\\s?{`, "gi");
+        return match[0].replace(regex2, "").slice(0, -2);
+    }
+    return "";
+};
+
+const extractAuthor = (bibtex) =>
+    extractBibtexValue(bibtex, "author")
+        .replaceAll("{", "")
+        .replaceAll("}", "")
+        .replaceAll("\\", "")
+        .split(" and ")
+        .map((a) => a.split(", ").reverse().join(" "))
+        .join(" and ");
+
+// -------------------
 // -----  Fetch  -----
 // -------------------
 
@@ -335,17 +359,7 @@ const parseBiorxivJSON = async (url) => {
     const bibtextLink = dom.querySelector(".bibtext a").href;
     const bibtex = await (await fetch(bibtextLink)).text();
 
-    const author = bibtex
-        .match(/author\ ?=\ ?{.+}/)[0]
-        .replace(/author\ ?=\ ?{/, "")
-        .trim()
-        .slice(0, -1)
-        .replaceAll("{", "")
-        .replaceAll("}", "")
-        .replaceAll("\\", "")
-        .split(" and ")
-        .map((a) => a.split(", ").reverse().join(" "))
-        .join(" and ");
+    const author = extractAuthor(bibtex);
 
     const conf = "BioRxiv";
     const id = parseIdFromUrl(url);
@@ -354,6 +368,61 @@ const parseBiorxivJSON = async (url) => {
     const pdfLink = cleanBiorxivURL(url) + ".full.pdf";
     const title = paper.title;
     const year = paper.date.split("-")[0];
+
+    return { author, bibtex, conf, id, key, note, pdfLink, title, year };
+};
+
+const parsePMLRHTML = async (url) => {
+    const key = url.split("/").reverse()[0].split(".")[0];
+    const id = parseIdFromUrl(url);
+
+    const absURL = url.includes(".html")
+        ? url
+        : url.split("/").slice(0, -2).join("/") + `${key}.html`;
+
+    const pdfLink = absURL.replace(".html", "") + `/${key}.pdf`;
+
+    const doc = new DOMParser().parseFromString(
+        (await (await fetch(absURL)).text()).replaceAll("\n", ""),
+        "text/html"
+    );
+
+    const bibURL = doc
+        .getElementById("button-bibtex1")
+        .getAttribute("onclick")
+        .match(/https.+\.bib/)[0];
+    const bibtexRaw = doc
+        .getElementById("bibtex")
+        .innerText.replaceAll("\t", " ")
+        .replaceAll(/\s\s+/g, " ");
+    let bibtex = bibtexRaw;
+    const items = bibtexRaw.match(/,\ ?\w+ ?= ?{/g);
+    for (const item of items) {
+        bibtex = bibtex.replace(
+            item,
+            item.replace(", ", ",\n    ").replace(" = ", "=")
+        );
+    }
+    if (bibtex.endsWith("}}")) {
+        bibtex = bibtex.slice(0, -2) + "}\n}";
+    }
+
+    const author = extractAuthor(bibtex);
+    const title = doc.getElementsByTagName("h1")[0].innerText;
+    const year = extractBibtexValue(bibtex, "year");
+
+    let conf = extractBibtexValue(bibtex, "booktitle").replaceAll(
+        "Proceedings of the",
+        ""
+    );
+    note = "Accepted @ " + conf + ` (${year})`;
+    for (const long in global.overridePMLRConfs) {
+        if (conf.includes(long)) {
+            conf = global.overridePMLRConfs[long] + " " + year;
+            note = "Accepted @ " + conf;
+            break;
+        }
+    }
 
     return { author, bibtex, conf, id, key, note, pdfLink, title, year };
 };

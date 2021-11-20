@@ -242,6 +242,9 @@ const makePaper = async (is, url, id) => {
     } else if (is.biorxiv) {
         paper = await parseBiorxivJSON(url);
         paper.source = "biorxiv";
+    } else if (is.pmlr) {
+        paper = await parsePMLRHTML(url);
+        paper.source = "pmlr";
     } else {
         throw Error("Unknown paper source: " + JSON.stringify({ is, url, id }));
     }

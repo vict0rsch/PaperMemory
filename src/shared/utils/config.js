@@ -69,11 +69,20 @@ global.knownPaperPages = {
     cvf: ["openaccess.thecvf.com/content"],
     openreview: ["openreview.net/forum", "openreview.net/pdf"],
     biorxiv: ["biorxiv.org/content"],
+    pmlr: ["proceedings.mlr.press/"],
 };
 
 global.overrideORConfs = {
     "robot-learning": "CoRL",
     ijcai: "IJCAI",
+};
+global.overridePMLRConfs = {
+    "Conference on Learning Theory": "CoLT",
+    "International Conference on Machine Learning": "ICML",
+    "Conference on Uncertainty in Artificial Intelligence": "UAI",
+    "Conference on Robot Learning": "CoRL",
+    "International Conference on Artificial Intelligence and Statistics": "AISTATS",
+    "International Conference on Algorithmic Learning Theory": "ALT",
 };
 
 /**

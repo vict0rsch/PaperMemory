@@ -357,7 +357,7 @@ const filterMemoryByString = (letters) => {
         const title = paper.title.toLowerCase();
         const author = paper.author.toLowerCase();
         const note = paper.note.toLowerCase();
-        const displayId = paper.id.split("-")[0].toLowerCase();
+        const displayId = getDisplayId(paper.id).toLowerCase();
         if (
             words.every(
                 (w) =>
