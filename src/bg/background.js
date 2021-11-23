@@ -1,5 +1,5 @@
 var paperTitles = {};
-var updates = {};
+var titleUpdates = {};
 
 const knownPageHasUrl = (url) => {
     const pdfPages = Object.values(global.knownPaperPages).map((v) => v.reverse()[0]);
@@ -21,13 +21,13 @@ chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
 
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
     const paperTitle = paperTitles[tab.url];
-    if (!updates.hasOwnProperty(tabId)) updates[tabId] = 0;
-    if (updates[tabId] > 9) {
-        if (updates[tabId] == 10) {
+    if (!titleUpdates.hasOwnProperty(tabId)) titleUpdates[tabId] = 0;
+    if (titleUpdates[tabId] > 9) {
+        if (titleUpdates[tabId] == 10) {
             console.log(
-                "WARNING: max number of title updates reached. This is a logic failure in PaperMemory. Please open an issue at https://github.com/vict0rsch/PaperMemory"
+                "WARNING: max number of title titleUpdates reached. This is a logic failure in PaperMemory. Please open an issue at https://github.com/vict0rsch/PaperMemory"
             );
-            updates[tabId] += 1;
+            titleUpdates[tabId] += 1;
         }
         return; // in case of logic failure on different browsers, prevent infinite loop
     }
@@ -38,20 +38,14 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
         changeInfo.title !== paperTitle && // there is a new title
         isPdf(tab.url) // only valid for pdfs
     ) {
-        // console.log(">>>>> onUpdated: tabId, changeInfo, tab, paperTiles");
-        // console.log(tabId);
-        // console.log(changeInfo);
-        // console.log(tab);
-        // console.log(paperTitles);
         console.log(`Updating pdf file name to "${paperTitle}"`);
-        // console.log("<<<<<<<<<<<");
 
         // https://stackoverflow.com/questions/69406482/window-title-is-not-changed-after-pdf-is-loaded
         chrome.tabs.executeScript(tabId, {
             code: `document.title=''; document.title="${paperTitle}"`,
             runAt: "document_start",
         });
-        updates[tabId] += 1;
+        titleUpdates[tabId] += 1;
     }
 });
 
