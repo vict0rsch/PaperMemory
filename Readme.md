@@ -28,6 +28,7 @@ This browser extension allows you to do automatically store research papers you 
 4. 🔗 **Markdown link**, `[title](url)` because it's the little things that make sharing a paper easier (to be used in issues, PRs, Readme, HackMD.io etc.)
 5. 🗂 **Direct download button** with a nice name including the paper's title, so that you don't have to open the pdf's webpage and then download it from your browser.
 6. 📄 **Go back from a pdf to its abstract page**. For instance: from `https://arxiv.org/pdf/1703.06907.pdf` to `https://arxiv.org/abs/1703.06907` in a click.
+7. 🏛️ **Download your data** as a `.json` file or a `.bib` full BibTex export
 
 Supported venues:
 

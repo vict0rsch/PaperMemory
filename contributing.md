@@ -23,8 +23,6 @@ TODO
     │   └── loader.css ➤➤➤ the style for the loader before the BibTex entry is displayed on arxiv.org/abs/*
     ├── popup
     │   ├── popup-css ➤➤➤ The popup's style
-    │   │   ├── abstract.css ➤➤➤ Style for Arxiv Vanity cards (deprecated)
-    │   │   ├── abstract.min.css
     │   │   ├── dark.css ➤➤➤ Dark mode style sheet
     │   │   ├── dark.min.css
     │   │   ├── options.css ➤➤➤ Sliding checkboxes style

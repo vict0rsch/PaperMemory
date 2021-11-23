@@ -49,7 +49,6 @@
         "*://arxiv.org/*",
         "*://*.biorxiv.org/*",
         "*://proceedings.mlr.press/*",
-        "*://*.arxiv-vanity.com/*",
         "*://*.neurips.cc/*",
         "*://*.nips.cc/*",
         "*://openaccess.thecvf.com/*",

@@ -46,7 +46,6 @@ global.menuCheckNames = [
     "checkMd",
     "checkDownload",
     "checkPdfTitle",
-    "checkVanity",
     "checkFeedback",
     "checkDarkMode",
 ];
