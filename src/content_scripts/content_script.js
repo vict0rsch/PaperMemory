@@ -47,57 +47,13 @@ const svg = (name) => {
                 <path d="M9 14l2 2l4 -4" />
             </svg>`;
 
-        case "vanity-close":
-            return /*html*/ `<svg
-                xmlns="http://www.w3.org/2000/svg"
-                class="tabler-icon"
-                width="24" height="24" viewBox="0 0 24 24"
-                stroke-width="1.25" stroke="#b31b1b" fill="none"
-                stroke-linecap="round" stroke-linejoin="round"
-            >
-                <path stroke="none" d="M0 0h24v24H0z"/>
-                <circle cx="12" cy="12" r="9" />
-                <path d="M10 10l4 4m0 -4l-4 4" />
-            </svg>`;
-
-        case "vanity-clipboard":
-            return /*html*/ `<svg
-                class="copy-feedback tabler-icon" xmlns="http://www.w3.org/2000/svg"
-                width="24" height="24" viewBox="0 0 24 24"
-                stroke-width="1.25" stroke="rgb(0, 119, 255)" fill="none"
-                stroke-linecap="round" stroke-linejoin="round"
-            >
-                <path stroke="none" d="M0 0h24v24H0z"/>
-                <path d="M9 5H7a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2V7a2 2 0 0 0 -2 -2h-2" />
-                <rect x="9" y="3" width="6" height="4" rx="2" />
-                <line x1="9" y1="12" x2="9.01" y2="12" />
-                <line x1="13" y1="12" x2="15" y2="12" />
-                <line x1="9" y1="16" x2="9.01" y2="16" />
-                <line x1="13" y1="16" x2="15" y2="16" />
-            </svg>`;
-
-        case "vanity-clipboard-ok":
-            return /*html*/ `<svg
-                xmlns="http://www.w3.org/2000/svg"
-                class="tabler-icon copy-feedback-ok"
-                style="display:none"
-                width="64" height="64" viewBox="0 0 24 24"
-                stroke-width="1.25" stroke="rgb(0, 200, 84)" fill="none"
-                stroke-linecap="round" stroke-linejoin="round"
-            >
-                <path stroke="none" d="M0 0h24v24H0z"/>
-                <path d="M9 5H7a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2V7a2 2 0 0 0 -2 -2h-2" />
-                <rect x="9" y="3" width="6" height="4" rx="2" />
-                <path d="M9 14l2 2l4 -4" />
-            </svg>`;
-
         default:
             break;
     }
 };
 
 /**
- * Adds citation hovers on arxiv-vanity, markdown link, bibtex citation and download button on arxiv.
+ * Adds markdown link, bibtex citation and download button on arxiv.
  * Also, if the current website is a known paper source (isPaper), adds or updates the current paper
  * @param {object} checks The user's stored preferences regarding menu options
  */
@@ -115,12 +71,9 @@ const contentScriptMain = async (url) => {
             : defaultPDFTitleFn;
 
     let is = isPaper(url);
-    is["vanity"] = url.indexOf("arxiv-vanity.com") > -1;
 
     if (is.arxiv) {
         arxiv(menu);
-    } else if (is.vanity && menu.checkVanity) {
-        vanity();
     }
 
     if (Object.values(is).some((i) => i)) {
@@ -435,102 +388,6 @@ const arxiv = (checks) => {
             }
         );
     }
-};
-
-const vanity = () => {
-    var citationtimeout;
-    $(".ltx_ref").on("mouseenter", (e) => {
-        clearTimeout(citationtimeout);
-        $(".arxivTools-card").remove();
-        if (!$(e.target).hasClass("ltx_engrafo_tooltip")) {
-            return;
-        }
-        citationtimeout = setTimeout(() => {
-            const popper = $($(".tippy-popper:visible")[0]);
-            const journal = $(popper.find(".ltx_bib_journal")[0]);
-            let query;
-            let id;
-            let vanityTitle;
-            let isArxivCitation = false;
-            if (journal.text().indexOf("arXiv:") > -1) {
-                id = journal.text().split("arXiv:");
-                id = id[id.length - 1];
-                query = `https://export.arxiv.org/api/query?id_list=${id}`;
-                isArxivCitation = true;
-            } else {
-                vanityTitle = $(popper.find(".ltx_bib_title")[0]).text();
-                query = `https://export.arxiv.org/api/query?search_query=all:${vanityTitle}&max_results=1`;
-            }
-
-            $.get(query).then((data) => {
-                $(".arxivTools-card").remove();
-                const { bibvars, bibtex } = parseArxivBibtex(id, data);
-                if (
-                    !isArxivCitation &&
-                    bibvars.title.toLowerCase().replace(/[^a-z]/gi, "") !==
-                        vanityTitle.toLowerCase().replace(/[^a-z]/gi, "")
-                ) {
-                    console.log(
-                        "Wrong title from Arxiv API:",
-                        vanityTitle,
-                        bibvars.title
-                    );
-                    return;
-                }
-
-                const offset = $(e.target).offset();
-                $("body").append(/*html*/ `
-                        <div id="arxivTools-${
-                            bibvars.id
-                        }" class="arxivTools-card" style="top:${offset.top + 30}px">
-                            <div class="arxivTools-card-body">
-                                <div class="arxivTools-card-header">
-                                    ArxivTools: BibTex citation
-                                </div>
-                                <div class="arxivTools-bibtex" id="arxivTools-bibtex-${
-                                    bibvars.id
-                                }">
-                                    ${bibtex}
-                                </div>
-                                <div class="arxivTools-buttons">
-                                    <div class="arxivTools-close">
-                                        ${svg("vanity-close")}
-                                    </div>
-                                    <div class="arxivTools-copy" id="arxivTools-copy-${
-                                        bibvars.id
-                                    }">
-                                        ${svg("vanity-clipboard")}
-                                        ${svg("vanity-clipboard-ok")}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        `);
-
-                $(".arxivTools-close").on("click", () => {
-                    $(".arxivTools-card").remove();
-                });
-                $(".arxivTools-copy").on("click", (e) => {
-                    let id = $(
-                        $(e.target).parent().parent().find(".arxivTools-copy")[0]
-                    )
-                        .attr("id")
-                        .split("-");
-                    id = id[id.length - 1];
-                    copyTextToClipboard($("#arxivTools-bibtex-" + id).text());
-                    $(".copy-feedback").fadeOut(() => {
-                        $(".copy-feedback-ok").fadeIn(() => {
-                            setTimeout(() => {
-                                $(".copy-feedback-ok").fadeOut(() => {
-                                    $(".copy-feedback").fadeIn();
-                                });
-                            }, 1000);
-                        });
-                    });
-                });
-            });
-        }, 400);
-    });
 };
 
 $(() => {
