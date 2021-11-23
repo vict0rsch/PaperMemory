@@ -34,7 +34,10 @@ const getAndTrackPopupMenuChecks = (menu, menuCheckNames) => {
             : global.menuCheckDefaultFalse.indexOf(key) >= 0
             ? false
             : true;
-        findEl(key).checked = setValues[key];
+        const el = findEl(key);
+        if (el) {
+            el.checked = setValues[key];
+        }
     }
     chrome.storage.local.set(setValues);
 

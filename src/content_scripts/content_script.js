@@ -47,6 +47,16 @@ const svg = (name) => {
                 <path d="M9 14l2 2l4 -4" />
             </svg>`;
 
+        case "notif-cancel":
+            return /*html*/ `<svg width="25" height="25" viewBox="0 0 24 24" stroke-width="1" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke="white">
+            <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+            <line x1="4" y1="7" x2="20" y2="7" />
+            <line x1="10" y1="11" x2="10" y2="17" />
+            <line x1="14" y1="11" x2="14" y2="17" />
+            <path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12" />
+            <path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3" />
+          </svg>`;
+
         default:
             break;
     }
@@ -80,13 +90,6 @@ const contentScriptMain = async (url) => {
         const id = await addOrUpdatePaper(url, is, menu);
 
         if (menu.checkPdfTitle) {
-            // const getArxivTitle = async (id) => {
-            //     return await $.get(
-            //         `https://export.arxiv.org/api/query?id_list=${id}`
-            //     ).then((data) => {
-            //         return $($(data).find("entry title")[0]).text();
-            //     });
-            // };
             const makeTitle = async (id, url) => {
                 let title = global.state.papers.hasOwnProperty(id)
                     ? global.state.papers[id].title
@@ -109,15 +112,28 @@ const contentScriptMain = async (url) => {
  * a feedback on some action performed
  * @param {string} text the text to display in the slider div
  */
-const feedback = (text) => {
+const feedback = (text, paper = null) => {
     try {
         clearTimeout(timeout);
         findEl("feedback-notif").remove();
         prevent = true;
     } catch (error) {}
+
+    if (paper) {
+        console.log(paper);
+    }
+    text = /*html*/ `
+    <div id="notif-text">
+        <div>${text}</div>
+    </div>
+    <div title="Cancel" id="notif-cancel">
+        <div>${svg("notif-cancel")}</div>
+    </div>`;
+
     $("body").append(/*html*/ `
         <div id="feedback-notif">${text}</div>
     `);
+    style("feedback-notif", "padding", "0px");
     $("#feedback-notif").animate(
         {
             right: "64px",
@@ -128,10 +144,7 @@ const feedback = (text) => {
     );
     timeout = setTimeout(() => {
         $("#feedback-notif").animate(
-            {
-                right: "-200px",
-                opacity: "0",
-            },
+            { right: "-200px", opacity: "0" },
             400,
             "easeInOutBack",
             () => {
@@ -139,94 +152,25 @@ const feedback = (text) => {
                 prevent = false;
             }
         );
-    }, 2000);
-};
-
-const addOrUpdatePaper = async (url, is, checks) => {
-    let paper, isNew;
-
-    // Extract id from url
-    const id = parseIdFromUrl(url);
-    console.log("id: ", id);
-
-    if (id && global.state.papers.hasOwnProperty(id)) {
-        // Update paper if it exists
-        global.state.papers = updatePaper(global.state.papers, id);
-        paper = global.state.papers[id];
-        isNew = false;
-    } else {
-        // Or create a new one if it does not
-        paper = await makePaper(is, url, id);
-        global.state.papers[paper.id] = paper;
-        isNew = true;
-    }
-
-    chrome.storage.local.set({ papers: global.state.papers }, () => {
-        if (isNew) {
-            console.log("Added '" + paper.title + "' to your Memory");
-            console.log("paper: ", paper);
-            // display red slider feedback if the user did not disable it
-            // from the menu
-            checks.checkFeedback && feedback("Added to your Memory!");
-        } else {
-            console.log("Updated '" + paper.title + "' in your Memory");
-        }
+    }, 3000);
+    addListener("notif-cancel", "click", () => {
+        clearTimeout(timeout);
+        delete global.state.papers[paper.id];
+        chrome.storage.local.set({ papers: global.state.papers }, () => {
+            timeout = setTimeout(() => {
+                $("#feedback-notif").animate(
+                    { right: "-200px", opacity: "0" },
+                    400,
+                    "easeInOutBack",
+                    () => {
+                        !prevent && $("#feedback-notif").remove();
+                        prevent = false;
+                    }
+                );
+            }, 1500);
+            setHTML("notif-text", "<div>Removed from memory</div>");
+        });
     });
-
-    return id;
-};
-
-const makePaper = async (is, url, id) => {
-    let paper;
-    if (is.arxiv) {
-        paper = await parseArxivBibtex(id);
-        paper.source = "arxiv";
-        // paper.codes = await fetchCodes(paper)
-    } else if (is.neurips) {
-        paper = await parseNeuripsHTML(url);
-        paper.source = "neurips";
-        // paper.codes = await fetchCodes(paper);
-    } else if (is.cvf) {
-        paper = await parseCvfHTML(url);
-        paper.source = "cvf";
-    } else if (is.openreview) {
-        paper = await parseOpenReviewJSON(url);
-        paper.source = "openreview";
-    } else if (is.biorxiv) {
-        paper = await parseBiorxivJSON(url);
-        paper.source = "biorxiv";
-    } else if (is.pmlr) {
-        paper = await parsePMLRHTML(url);
-        paper.source = "pmlr";
-    } else {
-        throw Error("Unknown paper source: " + JSON.stringify({ is, url, id }));
-    }
-
-    return initPaper(paper);
-};
-
-const initPaper = (paper) => {
-    if (!paper.note) {
-        paper.note = "";
-    }
-    paper.md = `[${paper.title}](${paper.pdfLink})`;
-    paper.tags = [];
-    paper.codeLink = "";
-    paper.favorite = false;
-    paper.favoriteDate = "";
-    paper.addDate = new Date().toJSON();
-    paper.lastOpenDate = paper.addDate;
-    paper.count = 1;
-
-    for (const k in paper) {
-        if (paper.hasOwnProperty(k) && typeof paper[k] === "string") {
-            paper[k] = paper[k].trim();
-        }
-    }
-
-    validatePaper(paper);
-
-    return paper;
 };
 
 const updatePaper = (papers, id) => {

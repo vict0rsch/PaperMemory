@@ -473,3 +473,94 @@ const fetchCodes = async (paper) => {
     codes.sort((a, b) => a.stars - b.stars);
     return codes.slice(0, 5);
 };
+
+// -----------------------------
+// -----  Creating papers  -----
+// -----------------------------
+
+const initPaper = (paper) => {
+    if (!paper.note) {
+        paper.note = "";
+    }
+    paper.md = `[${paper.title}](${paper.pdfLink})`;
+    paper.tags = [];
+    paper.codeLink = "";
+    paper.favorite = false;
+    paper.favoriteDate = "";
+    paper.addDate = new Date().toJSON();
+    paper.lastOpenDate = paper.addDate;
+    paper.count = 1;
+
+    for (const k in paper) {
+        if (paper.hasOwnProperty(k) && typeof paper[k] === "string") {
+            paper[k] = paper[k].trim();
+        }
+    }
+
+    validatePaper(paper);
+
+    return paper;
+};
+
+const makePaper = async (is, url, id) => {
+    let paper;
+    if (is.arxiv) {
+        paper = await parseArxivBibtex(id);
+        paper.source = "arxiv";
+        // paper.codes = await fetchCodes(paper)
+    } else if (is.neurips) {
+        paper = await parseNeuripsHTML(url);
+        paper.source = "neurips";
+        // paper.codes = await fetchCodes(paper);
+    } else if (is.cvf) {
+        paper = await parseCvfHTML(url);
+        paper.source = "cvf";
+    } else if (is.openreview) {
+        paper = await parseOpenReviewJSON(url);
+        paper.source = "openreview";
+    } else if (is.biorxiv) {
+        paper = await parseBiorxivJSON(url);
+        paper.source = "biorxiv";
+    } else if (is.pmlr) {
+        paper = await parsePMLRHTML(url);
+        paper.source = "pmlr";
+    } else {
+        throw Error("Unknown paper source: " + JSON.stringify({ is, url, id }));
+    }
+
+    return initPaper(paper);
+};
+
+const addOrUpdatePaper = async (url, is, checks) => {
+    let paper, isNew;
+
+    // Extract id from url
+    const id = parseIdFromUrl(url);
+    console.log("id: ", id);
+
+    if (id && global.state.papers.hasOwnProperty(id)) {
+        // Update paper if it exists
+        global.state.papers = updatePaper(global.state.papers, id);
+        paper = global.state.papers[id];
+        isNew = false;
+    } else {
+        // Or create a new one if it does not
+        paper = await makePaper(is, url, id);
+        global.state.papers[paper.id] = paper;
+        isNew = true;
+    }
+
+    chrome.storage.local.set({ papers: global.state.papers }, () => {
+        if (isNew) {
+            console.log("Added '" + paper.title + "' to your Memory");
+            console.log("paper: ", paper);
+            // display red slider feedback if the user did not disable it
+            // from the menu
+            checks && checks.checkFeedback && feedback("Added to your Memory!", paper);
+        } else {
+            console.log("Updated '" + paper.title + "' in your Memory");
+        }
+    });
+
+    return id;
+};
