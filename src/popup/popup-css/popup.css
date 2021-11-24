@@ -700,6 +700,14 @@ button.changed {
     right: 3px;
 }
 
+#modal-whatsnew-content li {
+    margin-top: 4px;
+}
+#modal-whatsnew-content a {
+    margin-top: 16px;
+    display: inline-block;
+}
+
 /*
 ----------------------------
 -----  Keyboard Modal  -----
