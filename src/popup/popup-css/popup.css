@@ -678,6 +678,29 @@ button.changed {
 }
 
 /*
+------------------------
+-----  What's New  -----
+------------------------
+*/
+
+#whats-new-container {
+    position: absolute;
+    top: -65px;
+    right: 0px;
+    cursor: pointer;
+}
+
+#whats-new-marker {
+    min-width: 12px;
+    min-height: 12px;
+    border-radius: 100%;
+    background: radial-gradient(#dd2d44, #9f051c);
+    position: absolute;
+    top: 0px;
+    right: 3px;
+}
+
+/*
 ----------------------------
 -----  Keyboard Modal  -----
 ----------------------------

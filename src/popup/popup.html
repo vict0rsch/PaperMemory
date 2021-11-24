@@ -29,7 +29,7 @@
 	</div>
 
 	<div id="popup-container">
-		<div id="notArxiv" style="display: none">
+		<div id="notArxiv" style="display: none; position: relative">
 
 			<p>Keep track of your readings with <strong>PaperMemory!</strong> It automatically and locally stores
 				papers you open in your browser</p>
@@ -48,6 +48,18 @@
 				</svg> (or press <code>a</code>
 				)! (<code style="cursor: pointer;" id="keyboardShortcuts" href="#">usage guide</code>)
 			</p>
+
+			<div id="whats-new-container">
+				<div class="d-relative">
+					<svg width="34" height="34" viewBox="0 0 24 24" stroke-width="1" fill="none" stroke-linecap="round"
+						stroke-linejoin="round">
+						<path stroke="none" d="M0 0h24v24H0z" fill="none" />
+						<path
+							d="M10 5a2 2 0 0 1 4 0a7 7 0 0 1 4 6v3a4 4 0 0 0 2 3h-16a4 4 0 0 0 2 -3v-3a7 7 0 0 1 4 -6" />
+						<path d="M9 17v1a3 3 0 0 0 6 0v-1" />
+					</svg> <span id="whats-new-marker" style="display: none;"></span>
+				</div>
+			</div>
 		</div>
 
 		<div id="isArxiv" style="display: none;">
@@ -278,71 +290,86 @@ return `${title} - ${id}.pdf`
 	<div class="user-guide-modal" id="user-guide-modal" style="display:none">
 
 		<div class="user-guide-modal-content">
-			<span id="close-user-guide-modal">&times;</span>
-			<h3>Keyboard navigation</h3>
-			<ul>
-				<li>Open the popup:<ul>
-						<li><code>cmd/ctrl + shift + e</code></li>
-					</ul>
-				</li>
-				<li>Open the Memory<ul>
-						<li><code>a</code> from the popup&#39;s home will open the ArxivMemory</li>
-						<li>navigate to the bottom left button with <code>tab</code> and hit <code>enter</code>
-						</li>
-					</ul>
-				</li>
-				<li>Search<ul>
-						<li>Search field is automatically focused on memory open</li>
-						<li>Navigate to the top input with <code>tab</code> or <code>shift + tab</code></li>
-					</ul>
-				</li>
-				<li>Navigate papers<ul>
-						<li><code>tab</code> will iterate through papers down the list</li>
-						<li><code>shift + tab</code> will go back up the list</li>
-					</ul>
-				</li>
-				<li>Edit a paper<ul>
-						<li>Press <code>e</code> to <em>edit</em> the paper&#39;s metadata: tags, code and note
-							when the paper is <em>focused</em> (from click or keyboard <code>tab</code>
-							navigation)<ul>
-								<li>Navigate through fields with <code>(shift+) tab</code>: tags and note if
-									you&#39;re on a paper&#39;s page, then your ArxivTools anyway.</li>
-							</ul>
-						</li>
-						<li>Press <code>enter</code> to <em>open</em> a focused paper (<em>focus</em> an
-							existing tab with the paper or <em>create a new tab</em> to the paper&#39;s pdf if
-							it&#39;s not open already)</li>
-						<li><code>backspace</code> to <em>delete</em> a focused paper (a confirmation will be
-							prompted first don&#39;t worry 👮‍♀️)</li>
-					</ul>
-				</li>
-				<li>Close Memory or Menu<ul>
-						<li><code>esc</code> closes the memory (or the menu -- <strong>not</strong> in Firefox)
-						</li>
-					</ul>
-				</li>
-			</ul>
-			<h3>Search</h3>
-			<ul>
-				<li>In a paper&#39;s authors, title and note.<ul>
-						<li>Split queries on spaces: <code>gan im</code> will look for: <em>all papers whose
-								(title OR author) contain (&quot;gan&quot; AND &quot;im&quot;)</em></li>
-					</ul>
-				</li>
-				<li>In a paper&#39;s code link<ul>
-						<li>Start the search query with <code>c:</code> to only search code links</li>
-					</ul>
-				</li>
-				<li>In a paper&#39;s tags<ul>
-						<li>Start the search query with <code>t:</code> to filter by tags</li>
-						<li><code>t: gan</code> will look for <em>all papers whose tag-list contains at least 1
-								tag containing &quot;gan&quot;</em></li>
-						<li><code>t: gan tim</code> will look for <em>all papers whose tag-list contains (at
-								least 1 tag containing &quot;gan&quot;) AND (at least 1 tag containing
-								&quot;tim&quot;)</em></li>
-					</ul>
-				</li>
-			</ul>
+			<div id="modal-keyboard-content" style="display:none;">
+				<span id="close-user-guide-modal">&times;</span>
+				<h3>Keyboard navigation</h3>
+				<ul>
+					<li>Open the popup:<ul>
+							<li><code>cmd/ctrl + shift + e</code></li>
+						</ul>
+					</li>
+					<li>Open the Memory<ul>
+							<li><code>a</code> from the popup&#39;s home will open the ArxivMemory</li>
+							<li>navigate to the bottom left button with <code>tab</code> and hit <code>enter</code>
+							</li>
+						</ul>
+					</li>
+					<li>Search<ul>
+							<li>Search field is automatically focused on memory open</li>
+							<li>Navigate to the top input with <code>tab</code> or <code>shift + tab</code></li>
+						</ul>
+					</li>
+					<li>Navigate papers<ul>
+							<li><code>tab</code> will iterate through papers down the list</li>
+							<li><code>shift + tab</code> will go back up the list</li>
+						</ul>
+					</li>
+					<li>Edit a paper<ul>
+							<li>Press <code>e</code> to <em>edit</em> the paper&#39;s metadata: tags, code and note
+								when the paper is <em>focused</em> (from click or keyboard <code>tab</code>
+								navigation)<ul>
+									<li>Navigate through fields with <code>(shift+) tab</code>: tags and note if
+										you&#39;re on a paper&#39;s page, then your ArxivTools anyway.</li>
+								</ul>
+							</li>
+							<li>Press <code>enter</code> to <em>open</em> a focused paper (<em>focus</em> an
+								existing tab with the paper or <em>create a new tab</em> to the paper&#39;s pdf if
+								it&#39;s not open already)</li>
+							<li><code>backspace</code> to <em>delete</em> a focused paper (a confirmation will be
+								prompted first don&#39;t worry 👮‍♀️)</li>
+						</ul>
+					</li>
+					<li>Close Memory or Menu<ul>
+							<li><code>esc</code> closes the memory (or the menu -- <strong>not</strong> in Firefox)
+							</li>
+						</ul>
+					</li>
+				</ul>
+				<h3>Search</h3>
+				<ul>
+					<li>In a paper&#39;s authors, title and note.<ul>
+							<li>Split queries on spaces: <code>gan im</code> will look for: <em>all papers whose
+									(title OR author) contain (&quot;gan&quot; AND &quot;im&quot;)</em></li>
+						</ul>
+					</li>
+					<li>In a paper&#39;s code link<ul>
+							<li>Start the search query with <code>c:</code> to only search code links</li>
+						</ul>
+					</li>
+					<li>In a paper&#39;s tags<ul>
+							<li>Start the search query with <code>t:</code> to filter by tags</li>
+							<li><code>t: gan</code> will look for <em>all papers whose tag-list contains at least 1
+									tag containing &quot;gan&quot;</em></li>
+							<li><code>t: gan tim</code> will look for <em>all papers whose tag-list contains (at
+									least 1 tag containing &quot;gan&quot;) AND (at least 1 tag containing
+									&quot;tim&quot;)</em></li>
+						</ul>
+					</li>
+				</ul>
+			</div>
+
+			<div id="modal-whatsnew-content" style="display: none;">
+				<h4>What's new</h4>
+				<ul>
+					<li><strong>Current: 0.3.3</strong>
+						<ul>
+							<li>a</li>
+							<li>b</li>
+							<li>c</li>
+						</ul>
+					</li>
+				</ul>
+			</div>
 
 		</div>
 
