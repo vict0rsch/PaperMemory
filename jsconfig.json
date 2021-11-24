@@ -3,8 +3,5 @@
         "module": "commonjs",
         "target": "es6"
     },
-    "include": ["src/**/*", "src/shared/select2.min.js"],
-    "typeAcquisition": {
-        "include": ["jquery"]
-    }
+    "include": ["src/**/*"]
 }
