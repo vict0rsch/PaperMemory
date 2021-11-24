@@ -20,14 +20,14 @@ const getMemoryItemHTML = (paper) => {
         copyBibtext: `"Copy Bibtex citation"`,
         visits: `"Number of times you have loaded&#13;&#10;the paper's Page or PDF"`,
     };
-    let codeDiv = html/*html*/ `
+    let codeDiv = /*html*/ `
         <small class="memory-item-faded">
             <span class="memory-code-link"> ${paper.codeLink || ""} </span>
         </small>
     `;
-    let noteDiv = html/*html*/ `<div class="memory-note-div memory-item-faded"></div>`;
+    let noteDiv = /*html*/ `<div class="memory-note-div memory-item-faded"></div>`;
     if (paper.note) {
-        noteDiv = html/*html*/ `
+        noteDiv = /*html*/ `
             <div class="memory-note-div memory-item-faded">
                 <span class="note-content-header">Note:</span>
                 <span class="note-content">${note}</span>
@@ -35,7 +35,7 @@ const getMemoryItemHTML = (paper) => {
         `;
     }
 
-    return html/*html*/ `
+    return /*html*/ `
         <div
             class="memory-container ${favoriteClass}"
             tabindex="0"
@@ -178,7 +178,7 @@ const getPopupEditFormHTML = (paper) => {
     const checked = "";
     const displayId = getDisplayId(paper.id);
 
-    return html/*html*/ ` <div
+    return /*html*/ ` <div
         style="max-width: 100%; display: flex; justify-content: space-between; align-items: center; padding: 4px 16px;"
     >
         <div style="width: 100%">
@@ -279,7 +279,7 @@ const getPopupPaperIconsHTML = (paper, currentUrl) => {
     const id = paper.id;
     const name = paperToAbs(paper) === currentUrl ? "HTML" : "PDF";
 
-    return html/*html*/ ` <div
+    return /*html*/ ` <div
             tabindex="0"
             class="memory-item-svg-div"
             id="popup-memory-item-link--${id}"

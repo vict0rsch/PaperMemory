@@ -9,7 +9,7 @@ var prevent = false;
 const svg = (name) => {
     switch (name) {
         case "download":
-            return html/*html*/ `<svg width="52px" height="42px" viewBox="0 0 22 16">
+            return /*html*/ `<svg width="52px" height="42px" viewBox="0 0 22 16">
                 <path
                     d="M2,10 L6,13 L12.8760559,4.5959317 C14.1180021,3.0779974 16.2457925,2.62289624 18,3.5 L18,3.5 C19.8385982,4.4192991 21,6.29848669 21,8.35410197 L21,10 C21,12.7614237 18.7614237,15 16,15 L1,15"
                     id="check"
@@ -18,7 +18,7 @@ const svg = (name) => {
                 <path d="M8,1 L8,11" class="svg-out"></path>
             </svg>`;
         case "clipboard-default":
-            return html/*html*/ `<svg
+            return /*html*/ `<svg
                 class="copy-feedback tabler-icon"
                 xmlns="http://www.w3.org/2000/svg"
                 width="64"
@@ -56,7 +56,7 @@ const svg = (name) => {
             </svg>`;
 
         case "notif-cancel":
-            return html/*html*/ `<svg
+            return /*html*/ `<svg
                 width="25"
                 height="25"
                 viewBox="0 0 24 24"
@@ -139,14 +139,14 @@ const feedback = (text, paper = null) => {
     if (paper) {
         console.log(paper);
     }
-    text = html/*html*/ ` <div id="notif-text">
+    text = /*html*/ ` <div id="notif-text">
             <div>${text}</div>
         </div>
         <div title="Cancel" id="notif-cancel">
             <div>${svg("notif-cancel")}</div>
         </div>`;
 
-    $("body").append(html/*html*/ ` <div id="feedback-notif">${text}</div> `);
+    $("body").append(/*html*/ ` <div id="feedback-notif">${text}</div> `);
     style("feedback-notif", "padding", "0px");
     $("#feedback-notif").animate(
         {
@@ -217,7 +217,7 @@ const arxiv = (checks) => {
     // -----  Download Button  -----
     // -----------------------------
     if (checkDownload) {
-        const button = html/*html*/ `
+        const button = /*html*/ `
             <div class="arxivTools-container">
                 <div id="arxiv-button">${svg("download")}</div>
             </div>
@@ -244,21 +244,23 @@ const arxiv = (checks) => {
     // -----  Markdown Link  -----
     // ---------------------------
     if (checkMd) {
-        arxivAbsCol.innerHTML += html/*html*/ ` <div id="markdown-container">
+        arxivAbsCol.innerHTML += /*html*/ ` <div id="markdown-container">
             <div id="markdown-header" class="arxivTools-header">
                 <h3>Markdown</h3>
                 ${svg("clipboard-default")} ${svg("clipboard-default-ok")}
             </div>
             <div id="markdown-link" class="arxivTools-codify">
-                [${global.state.papers.hasOwnProperty(id)
-                    ? global.state.papers[id].title
-                    : document.title}](${pdfUrl})
+                [${
+                    global.state.papers.hasOwnProperty(id)
+                        ? global.state.papers[id].title
+                        : document.title
+                }](${pdfUrl})
             </div>
         </div>`;
     }
 
     if (checkBib) {
-        arxivAbsCol.innerHTML += html/*html*/ `
+        arxivAbsCol.innerHTML += /*html*/ `
             <div id="loader-container" class="arxivTools-container">
                 <div class="sk-folding-cube">
                     <div class="sk-cube1 sk-cube"></div>
@@ -273,7 +275,7 @@ const arxiv = (checks) => {
             async (data) => {
                 const paper = await parseArxivBibtex(id, data);
 
-                const bibtexDiv = html/*html*/ `
+                const bibtexDiv = /*html*/ `
                     <div id="bibtexDiv">
                         <div id="texHeader" class="arxivTools-header">
                             <h3>BibTex:</h3>

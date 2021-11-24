@@ -36,7 +36,7 @@ const updateAllMemoryPaperTagOptions = () => {
 };
 
 const updatePopupPaperNoMemory = (url) => {
-    let noMemoryHTML = html/*html*/ `
+    let noMemoryHTML = /*html*/ `
         <div style="font-size: 1.5rem; width: 100%; text-align: center;">
             This paper is not in your memory
         </div>
@@ -243,11 +243,11 @@ const saveNote = (id, note) => {
         setHTML(
             findEl(id, "memory-note-div"),
             note
-                ? html/*html*/ ` <div class="memory-note-div memory-item-faded">
+                ? /*html*/ ` <div class="memory-note-div memory-item-faded">
                       <span class="note-content-header">Note:</span>
                       <span class="note-content">${note}</span>
                   </div>`
-                : html/*html*/ `<div class="memory-note-div memory-item-faded"></div>`
+                : /*html*/ `<div class="memory-note-div memory-item-faded"></div>`
         );
         const textarea = findEl(`popup-form-note-textarea--${id}`);
         val(textarea, note);
@@ -322,7 +322,7 @@ const saveFavoriteItem = (id, favorite) => {
 const setMemorySortArrow = (direction) => {
     let arrow;
     if (direction === "up") {
-        arrow = html/*html*/ `<svg
+        arrow = /*html*/ `<svg
             viewBox="0 0 24 24"
             class="memory-sort-arrow-svg"
             id="memory-sort-arrow-up"
@@ -333,7 +333,7 @@ const setMemorySortArrow = (direction) => {
             <line x1="8" y1="9" x2="12" y2="5" />
         </svg>`;
     } else {
-        arrow = html/*html*/ `<svg
+        arrow = /*html*/ `<svg
             class="memory-sort-arrow-svg"
             id="memory-sort-arrow-down"
             viewBox="0 0 24 24"
