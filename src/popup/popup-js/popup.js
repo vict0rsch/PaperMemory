@@ -56,10 +56,31 @@ const setStandardPopupClicks = () => {
         });
     });
 
+    addListener("whats-new-container", "click", () => {
+        hideId("modal-keyboard-content");
+        showId("modal-whatsnew-content", "contents");
+        chrome.storage.local.get("whatsnew", ({ whatsnew }) => {
+            const version = chrome.runtime.getManifest().version;
+            if (typeof whatsnew === "undefined") {
+                whatsnew = {};
+            }
+            if (!whatsnew.hasOwnProperty(version)) {
+                hideId("whats-new-marker");
+            }
+            chrome.storage.local.set({
+                whatsnew: { ...whatsnew, [version]: true },
+            });
+            style("user-guide-modal", "display", "flex");
+        });
+    });
     addListener("keyboardShortcuts", "click", () => {
+        hideId("modal-whatsnew-content");
+        showId("modal-keyboard-content", "contents");
         style("user-guide-modal", "display", "flex");
     });
     addListener("keyboardShortcutsMenu", "click", () => {
+        hideId("modal-whatsnew-content");
+        showId("modal-keyboard-content", "contents");
         style("user-guide-modal", "display", "flex");
     });
     addListener("close-user-guide-modal", "click", () => {
@@ -116,6 +137,13 @@ const setAndHandleCustomPDFFunction = (menu) => {
  */
 const popupMain = async (url, isKnownPage, manualTrigger = false) => {
     addListener(document, "keydown", handlePopupKeydown);
+
+    chrome.storage.local.get("whatsnew", ({ whatsnew }) => {
+        const version = chrome.runtime.getManifest().version;
+        if (!whatsnew.hasOwnProperty(version)) {
+            showId("whats-new-marker");
+        }
+    });
 
     if (manualTrigger) {
         // manual trigger: do not re-create standard listeners
