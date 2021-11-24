@@ -15,7 +15,12 @@ function popupJS() {
         "src/popup/popup-js/popup.js",
     ])
         .pipe(concat("popup.js"))
-        .pipe(minifyJSTemplate({ collapseWhitespace: true }))
+        .pipe(
+            minifyJSTemplate({
+                minifyOptions: { minifyCSS: false, collapseWhitespace: true },
+                shouldMinify: (template) => true,
+            })
+        )
         .pipe(uglify({ mangle: false }))
         .pipe(rename({ suffix: ".min" }))
         .pipe(dest("src/popup/"));
@@ -29,7 +34,12 @@ function utilsJS() {
         "src/shared/utils/parsers.js",
     ])
         .pipe(concat("utils.js"))
-        .pipe(minifyJSTemplate({ collapseWhitespace: true }))
+        .pipe(
+            minifyJSTemplate({
+                minifyOptions: { minifyCSS: false, collapseWhitespace: true },
+                shouldMinify: (template) => true,
+            })
+        )
         .pipe(uglify({ mangle: false }))
         .pipe(rename({ suffix: ".min" }))
         .pipe(dest("src/shared/"));
