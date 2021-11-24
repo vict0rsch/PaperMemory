@@ -1,4 +1,4 @@
-var { src, dest, parallel } = require("gulp");
+var { src, dest, parallel, watch } = require("gulp");
 var concat = require("gulp-concat");
 var uglify = require("gulp-uglify");
 var cleanCss = require("gulp-clean-css");
@@ -67,13 +67,23 @@ function popupCSS() {
         .pipe(dest("src/popup/"));
 }
 
-exports.popupJS = popupJS;
-exports.themeJS = themeJS;
-exports.utilsJS = popupHTML;
-exports.popupHTMLDev = popupHTMLDev;
+function watchFiles() {
+    watch("src/popup/popup-js/*.js", popupJS);
+    watch("src/popup/theme.js", themeJS);
+    watch("src/popup/popup-css/*.css", popupCSS);
+    watch("src/popup/popup.html", popupHTMLDev);
+    watch("src/shared/utils/*.js", utilsJS);
+}
 
-exports.popupCSS = popupCSS;
+// exports.popupJS = popupJS;
+// exports.themeJS = themeJS;
+// exports.utilsJS = popupHTML;
+// exports.popupHTMLDev = popupHTMLDev;
 
-exports.popupHTML = popupHTML;
+// exports.popupCSS = popupCSS;
 
-exports.popup = parallel(popupJS, themeJS, utilsJS, popupCSS, popupHTML);
+// exports.popupHTML = popupHTML;
+
+exports.build = parallel(popupJS, themeJS, utilsJS, popupCSS, popupHTML);
+exports.dev = parallel(popupJS, themeJS, utilsJS, popupCSS, popupHTMLDev);
+exports.watch = watchFiles;
