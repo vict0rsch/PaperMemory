@@ -8,6 +8,7 @@
     --round: 4px;
     --rounder: 6px;
     --outline: grey;
+    --color: black;
 }
 
 html {
@@ -654,6 +655,26 @@ button.changed {
 
 #customPdfTitleTextarea {
     font-family: "Fira-code", monospace;
+}
+
+#manual-firefox {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 6px 8px;
+    border-radius: 4px;
+    background-color: var(--red);
+    cursor: pointer;
+    color: white;
+}
+#manual-firefox:hover {
+    background-color: rgb(151, 16, 16);
+}
+#popup-delete-paper {
+    cursor: pointer;
+}
+#popup-delete-paper svg:hover {
+    stroke: var(--red);
 }
 
 /*

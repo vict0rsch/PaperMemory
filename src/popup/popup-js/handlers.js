@@ -238,6 +238,7 @@ const handleCancelModalClick = () => {
 const handleConfirmDeleteModalClick = (e) => {
     const id = findEl("hidden-modal-id").innerHTML;
     const title = global.state.papers[id].title;
+    const url = global.state.papers[id].pdfLink;
     delete global.state.papers[id];
     chrome.storage.local.set({ papers: global.state.papers }, () => {
         global.state.papersList = Object.values(cleanPapers(global.state.papers));
@@ -246,7 +247,7 @@ const handleConfirmDeleteModalClick = (e) => {
         hideId("confirm-modal");
         console.log(`Successfully deleted "${title}" (${id}) from PaperMemory`);
         if (global.state.currentId === id) {
-            updatePopupPaperNoMemory();
+            updatePopupPaperNoMemory(url);
         }
         setPlaceholder(
             "memory-search",
@@ -574,4 +575,8 @@ const handlePopupSaveEdits = (id) => () => {
         fadeOut("popup-feedback-copied");
     }, 2000);
     disable(`popup-save-edits--${id}`);
+};
+
+const handlePopupDeletePaper = (id) => () => {
+    showConfirmDeleteModal(id);
 };

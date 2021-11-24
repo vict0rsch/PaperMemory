@@ -114,11 +114,22 @@ const setAndHandleCustomPDFFunction = (menu) => {
  * + Add event listeners (clicks and keyboard)
  * @param {str} url Currently focused and active tab's url.
  */
-const popupMain = async (url, isKnownPage) => {
+const popupMain = async (url, isKnownPage, manualTrigger = false) => {
     addListener(document, "keydown", handlePopupKeydown);
 
-    // Set click events (regardless of paper)
-    setStandardPopupClicks();
+    if (manualTrigger) {
+        // manual trigger: do not re-create standard listeners
+        // but update the current state and rebuild the Memory's HTML
+        hideId("memory-switch");
+        showId("memory-spinner");
+        await initState();
+        hideId("memory-spinner");
+        showId("memory-switch");
+        makeMemoryHTML();
+    } else {
+        // Set click events (regardless of paper)
+        setStandardPopupClicks();
+    }
     const menu = await getStorage(global.menuStorageKeys);
     // Set checkboxes
     getAndTrackPopupMenuChecks(menu, global.menuCheckNames);
@@ -140,7 +151,7 @@ const popupMain = async (url, isKnownPage) => {
         if (!global.state.papers.hasOwnProperty(id)) {
             // Unknown paper, probably deleted by the user
             console.log("Unknown id " + id);
-            updatePopupPaperNoMemory();
+            updatePopupPaperNoMemory(url);
             return;
         }
 
@@ -178,6 +189,7 @@ const popupMain = async (url, isKnownPage) => {
         });
         setFormChangeListener(id, true);
         addListener(`popup-save-edits--${id}`, "click", handlePopupSaveEdits(id));
+        addListener("popup-delete-paper", "click", handlePopupDeletePaper(id));
 
         // ------------------------
         // -----  SVG clicks  -----

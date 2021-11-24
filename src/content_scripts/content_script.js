@@ -87,7 +87,7 @@ const contentScriptMain = async (url) => {
     }
 
     if (Object.values(is).some((i) => i)) {
-        const id = await addOrUpdatePaper(url, is, menu);
+        const { id } = await addOrUpdatePaper(url, is, menu);
 
         if (menu.checkPdfTitle) {
             const makeTitle = async (id, url) => {
