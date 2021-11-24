@@ -15,7 +15,7 @@ const getTagsOptions = (paper) => {
     return Array.from(global.state.paperTags)
         .sort()
         .map((t, i) => {
-            let h = `<option value="${t}"`;
+            let h = '<option value="' + t + '"'; // not string literal here for minification
             if (tags.has(t)) {
                 h += ' selected="selected" ';
             }
