@@ -9,22 +9,30 @@ var prevent = false;
 const svg = (name) => {
     switch (name) {
         case "download":
-            return /*html*/ `<svg
-                        width="52px" height="42px" viewBox="0 0 22 16"
-                    >
-                        <path d="M2,10 L6,13 L12.8760559,4.5959317 C14.1180021,3.0779974 16.2457925,2.62289624 18,3.5 L18,3.5 C19.8385982,4.4192991 21,6.29848669 21,8.35410197 L21,10 C21,12.7614237 18.7614237,15 16,15 L1,15" id="check"></path>
-                        <polyline points="4.5 8.5 8 11 11.5 8.5" class="svg-out"></polyline>
-                        <path d="M8,1 L8,11" class="svg-out"></path>
-                    </svg>`;
+            return html/*html*/ `<svg width="52px" height="42px" viewBox="0 0 22 16">
+                <path
+                    d="M2,10 L6,13 L12.8760559,4.5959317 C14.1180021,3.0779974 16.2457925,2.62289624 18,3.5 L18,3.5 C19.8385982,4.4192991 21,6.29848669 21,8.35410197 L21,10 C21,12.7614237 18.7614237,15 16,15 L1,15"
+                    id="check"
+                ></path>
+                <polyline points="4.5 8.5 8 11 11.5 8.5" class="svg-out"></polyline>
+                <path d="M8,1 L8,11" class="svg-out"></path>
+            </svg>`;
         case "clipboard-default":
-            return /*html*/ `<svg
+            return html/*html*/ `<svg
                 class="copy-feedback tabler-icon"
                 xmlns="http://www.w3.org/2000/svg"
-                width="64" height="32" viewBox="0 0 24 24"
-                stroke-width="1.25" stroke="rgb(0, 119, 255)" fill="none"
-                stroke-linecap="round" stroke-linejoin="round"
+                width="64"
+                height="32"
+                viewBox="0 0 24 24"
+                stroke-width="1.25"
+                stroke="rgb(0, 119, 255)"
+                fill="none"
+                stroke-linecap="round"
+                stroke-linejoin="round"
             >
-                <path d="M9 5H7a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2V7a2 2 0 0 0 -2 -2h-2" />
+                <path
+                    d="M9 5H7a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2V7a2 2 0 0 0 -2 -2h-2"
+                />
                 <rect x="9" y="3" width="6" height="4" rx="2" />
                 <line x1="9" y1="12" x2="9.01" y2="12" />
                 <line x1="13" y1="12" x2="15" y2="12" />
@@ -48,14 +56,23 @@ const svg = (name) => {
             </svg>`;
 
         case "notif-cancel":
-            return /*html*/ `<svg width="25" height="25" viewBox="0 0 24 24" stroke-width="1" fill="none" stroke-linecap="round" stroke-linejoin="round" stroke="white">
-            <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
-            <line x1="4" y1="7" x2="20" y2="7" />
-            <line x1="10" y1="11" x2="10" y2="17" />
-            <line x1="14" y1="11" x2="14" y2="17" />
-            <path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12" />
-            <path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3" />
-          </svg>`;
+            return html/*html*/ `<svg
+                width="25"
+                height="25"
+                viewBox="0 0 24 24"
+                stroke-width="1"
+                fill="none"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke="white"
+            >
+                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                <line x1="4" y1="7" x2="20" y2="7" />
+                <line x1="10" y1="11" x2="10" y2="17" />
+                <line x1="14" y1="11" x2="14" y2="17" />
+                <path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12" />
+                <path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3" />
+            </svg>`;
 
         default:
             break;
@@ -122,17 +139,14 @@ const feedback = (text, paper = null) => {
     if (paper) {
         console.log(paper);
     }
-    text = /*html*/ `
-    <div id="notif-text">
-        <div>${text}</div>
-    </div>
-    <div title="Cancel" id="notif-cancel">
-        <div>${svg("notif-cancel")}</div>
-    </div>`;
+    text = html/*html*/ ` <div id="notif-text">
+            <div>${text}</div>
+        </div>
+        <div title="Cancel" id="notif-cancel">
+            <div>${svg("notif-cancel")}</div>
+        </div>`;
 
-    $("body").append(/*html*/ `
-        <div id="feedback-notif">${text}</div>
-    `);
+    $("body").append(html/*html*/ ` <div id="feedback-notif">${text}</div> `);
     style("feedback-notif", "padding", "0px");
     $("#feedback-notif").animate(
         {
@@ -203,13 +217,11 @@ const arxiv = (checks) => {
     // -----  Download Button  -----
     // -----------------------------
     if (checkDownload) {
-        const button = /*html*/ `
+        const button = html/*html*/ `
             <div class="arxivTools-container">
-                <div id="arxiv-button">
-                    ${svg("download")}
-                </div>
+                <div id="arxiv-button">${svg("download")}</div>
             </div>
-            `;
+        `;
         arxivAbsCol.innerHTML += button;
         var downloadTimeout;
         $("#arxiv-button").on("click", async () => {
@@ -232,47 +244,44 @@ const arxiv = (checks) => {
     // -----  Markdown Link  -----
     // ---------------------------
     if (checkMd) {
-        arxivAbsCol.innerHTML += /*html*/ `
-            <div id="markdown-container">
-                <div id="markdown-header" class="arxivTools-header">
-                    <h3>Markdown</h3>
-                    ${svg("clipboard-default")}
-                    ${svg("clipboard-default-ok")}
-                </div>
-                <div id="markdown-link" class="arxivTools-codify">[${
-                    global.state.papers.hasOwnProperty(id)
-                        ? global.state.papers[id].title
-                        : document.title
-                }](${pdfUrl})</div>
-            </div>`;
+        arxivAbsCol.innerHTML += html/*html*/ ` <div id="markdown-container">
+            <div id="markdown-header" class="arxivTools-header">
+                <h3>Markdown</h3>
+                ${svg("clipboard-default")} ${svg("clipboard-default-ok")}
+            </div>
+            <div id="markdown-link" class="arxivTools-codify">
+                [${global.state.papers.hasOwnProperty(id)
+                    ? global.state.papers[id].title
+                    : document.title}](${pdfUrl})
+            </div>
+        </div>`;
     }
 
     if (checkBib) {
-        arxivAbsCol.innerHTML += /*html*/ `
-                <div id="loader-container" class="arxivTools-container">
-                    <div class="sk-folding-cube">
-                        <div class="sk-cube1 sk-cube"></div>
-                        <div class="sk-cube2 sk-cube"></div>
-                        <div class="sk-cube4 sk-cube"></div>
-                        <div class="sk-cube3 sk-cube"></div>
-                    </div>
+        arxivAbsCol.innerHTML += html/*html*/ `
+            <div id="loader-container" class="arxivTools-container">
+                <div class="sk-folding-cube">
+                    <div class="sk-cube1 sk-cube"></div>
+                    <div class="sk-cube2 sk-cube"></div>
+                    <div class="sk-cube4 sk-cube"></div>
+                    <div class="sk-cube3 sk-cube"></div>
                 </div>
-            `;
+            </div>
+        `;
 
         $.get(`https://export.arxiv.org/api/query?id_list=${id.split("-")[1]}`).then(
             async (data) => {
                 const paper = await parseArxivBibtex(id, data);
 
-                const bibtexDiv = /*html*/ `
+                const bibtexDiv = html/*html*/ `
                     <div id="bibtexDiv">
                         <div id="texHeader" class="arxivTools-header">
                             <h3>BibTex:</h3>
-                            ${svg("clipboard-default")}
-                            ${svg("clipboard-default-ok")}
+                            ${svg("clipboard-default")} ${svg("clipboard-default-ok")}
                         </div>
-                        <div id="texTextarea" class="arxivTools-codify">${
-                            paper.bibtex
-                        }</div>
+                        <div id="texTextarea" class="arxivTools-codify">
+                            ${paper.bibtex}
+                        </div>
                     </div>
                 `;
 

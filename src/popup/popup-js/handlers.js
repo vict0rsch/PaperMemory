@@ -535,7 +535,7 @@ const handleCustomPDFFunctionSave = () => {
             );
         }
         // no error so far: all good!
-        const savedFeedback = /*html*/ `<span style="color: green">Saved!</span>`;
+        const savedFeedback = html/*html*/ `<span style="color: green">Saved!</span>`;
         setHTML("customPdfFeedback", savedFeedback);
         // save function string
         chrome.storage.local.set({ pdfTitleFn: code });
@@ -546,14 +546,16 @@ const handleCustomPDFFunctionSave = () => {
     } catch (error) {
         // something went wrong!
         console.log("setAndHandleCustomPDFFunction error:");
-        const errorFeedback = /*html*/ `<span style="color: red">${error}</span>`;
+        const errorFeedback = html/*html*/ `<span style="color: red">${error}</span>`;
         savedFeedback("customPdfFeedback", errorFeedback);
     }
 };
 
 const handleDefaultPDFFunctionClick = () => {
     const code = defaultPDFTitleFn.toString();
-    const savedFeedback = /*html*/ `<span style="color: var(--green)">Saved!</span>`;
+    const savedFeedback = html/*html*/ `<span style="color: var(--green)"
+        >Saved!</span
+    >`;
     chrome.storage.local.set({ pdfTitleFn: code });
     global.state.pdfTitleFn = defaultPDFTitleFn;
     val("customPdfTitleTextarea", code);

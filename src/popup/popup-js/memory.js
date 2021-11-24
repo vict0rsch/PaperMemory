@@ -36,21 +36,41 @@ const updateAllMemoryPaperTagOptions = () => {
 };
 
 const updatePopupPaperNoMemory = (url) => {
-    let noMemoryHTML = /*html*/ `
-    <div style="font-size: 1.5rem; width: 100%; text-align: center;">This paper is not in your memory</div>
-    <ul>It can be for one of 4 reasons:
-        <li style="margin-top: 4px">
-        On Firefox, content scripts are not triggered on pdfs.
-            <ul>
-            <li>This is not something I can do anything about, it's a known issue but a design choice by Firefox's developers.</li>
-            <li>The extension would work on the paper's <i>page</i> (for instance arxiv.org/<strong>abs</strong>/1106.0245)</li>
-            </ul>
-        </li>
-        <li style="margin-top: 4px">You deleted the paper (refresh the page to add it back)</li>
-        <li style="margin-top: 4px">There was an error parsing the paper's data (you can check the console if you think this is an issue)</li>
-        <li style="margin-top: 4px">You are actually not on a paper page but the extension made a mistake</li>
-        <p style="font-size: 0.9rem">Open an issue on <a href="https://github.com/vict0rsch/PaperMemory/issues">Github</a> if you think you encountered a malfunction.</p>
-    </ul>
+    let noMemoryHTML = html/*html*/ `
+        <div style="font-size: 1.5rem; width: 100%; text-align: center;">
+            This paper is not in your memory
+        </div>
+        <ul>
+            It can be for one of 4 reasons:
+            <li style="margin-top: 4px">
+                On Firefox, content scripts are not triggered on pdfs.
+                <ul>
+                    <li>
+                        This is not something I can do anything about, it's a known
+                        issue but a design choice by Firefox's developers.
+                    </li>
+                    <li>
+                        The extension would work on the paper's <i>page</i> (for
+                        instance arxiv.org/<strong>abs</strong>/1106.0245)
+                    </li>
+                </ul>
+            </li>
+            <li style="margin-top: 4px">
+                You deleted the paper (refresh the page to add it back)
+            </li>
+            <li style="margin-top: 4px">
+                There was an error parsing the paper's data (you can check the console
+                if you think this is an issue)
+            </li>
+            <li style="margin-top: 4px">
+                You are actually not on a paper page but the extension made a mistake
+            </li>
+            <p style="font-size: 0.9rem">
+                Open an issue on
+                <a href="https://github.com/vict0rsch/PaperMemory/issues">Github</a> if
+                you think you encountered a malfunction.
+            </p>
+        </ul>
     `;
     if (navigator.userAgent.search("Firefox") > -1) {
         noMemoryHTML += `<div id="manual-firefox">Try manual trigger</div>`;
@@ -223,12 +243,11 @@ const saveNote = (id, note) => {
         setHTML(
             findEl(id, "memory-note-div"),
             note
-                ? /*html*/ `
-                <div class="memory-note-div memory-item-faded">
-                    <span class="note-content-header">Note:</span>
-                    <span class="note-content">${note}</span>
-                </div>`
-                : /*html*/ `<div class="memory-note-div memory-item-faded"></div>`
+                ? html/*html*/ ` <div class="memory-note-div memory-item-faded">
+                      <span class="note-content-header">Note:</span>
+                      <span class="note-content">${note}</span>
+                  </div>`
+                : html/*html*/ `<div class="memory-note-div memory-item-faded"></div>`
         );
         const textarea = findEl(`popup-form-note-textarea--${id}`);
         val(textarea, note);
@@ -303,13 +322,27 @@ const saveFavoriteItem = (id, favorite) => {
 const setMemorySortArrow = (direction) => {
     let arrow;
     if (direction === "up") {
-        arrow = /*html*/ `<svg viewBox="0 0 24 24" class="memory-sort-arrow-svg" id="memory-sort-arrow-up">
-            <path stroke="none" d="M0 0h24v24H0z" fill="none"/><line x1="12" y1="5" x2="12" y2="19" />
-            <line x1="16" y1="9" x2="12" y2="5" /><line x1="8" y1="9" x2="12" y2="5" /></svg>`;
+        arrow = html/*html*/ `<svg
+            viewBox="0 0 24 24"
+            class="memory-sort-arrow-svg"
+            id="memory-sort-arrow-up"
+        >
+            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+            <line x1="12" y1="5" x2="12" y2="19" />
+            <line x1="16" y1="9" x2="12" y2="5" />
+            <line x1="8" y1="9" x2="12" y2="5" />
+        </svg>`;
     } else {
-        arrow = /*html*/ `<svg class="memory-sort-arrow-svg" id="memory-sort-arrow-down" viewBox="0 0 24 24">
-            <path stroke="none" d="M0 0h24v24H0z" fill="none"/><line x1="12" y1="5" x2="12" y2="19" />
-            <line x1="16" y1="15" x2="12" y2="19" /><line x1="8" y1="15" x2="12" y2="19" /></svg>`;
+        arrow = html/*html*/ `<svg
+            class="memory-sort-arrow-svg"
+            id="memory-sort-arrow-down"
+            viewBox="0 0 24 24"
+        >
+            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+            <line x1="12" y1="5" x2="12" y2="19" />
+            <line x1="16" y1="15" x2="12" y2="19" />
+            <line x1="8" y1="15" x2="12" y2="19" />
+        </svg>`;
     }
 
     setHTML("memory-sort-arrow", arrow);
