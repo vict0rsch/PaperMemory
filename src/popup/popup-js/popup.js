@@ -189,6 +189,7 @@ const popupMain = async (url, isKnownPage, manualTrigger = false) => {
         });
         setFormChangeListener(id, true);
         addListener(`popup-save-edits--${id}`, "click", handlePopupSaveEdits(id));
+        addListener("popup-delete-paper", "click", handlePopupDeletePaper(id));
 
         // ------------------------
         // -----  SVG clicks  -----

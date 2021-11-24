@@ -670,6 +670,12 @@ button.changed {
 #manual-firefox:hover {
     background-color: rgb(151, 16, 16);
 }
+#popup-delete-paper {
+    cursor: pointer;
+}
+#popup-delete-paper svg:hover {
+    stroke: var(--red);
+}
 
 /*
 ----------------------------

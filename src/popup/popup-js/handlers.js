@@ -576,3 +576,7 @@ const handlePopupSaveEdits = (id) => () => {
     }, 2000);
     disable(`popup-save-edits--${id}`);
 };
+
+const handlePopupDeletePaper = (id) => () => {
+    showConfirmDeleteModal(id);
+};
