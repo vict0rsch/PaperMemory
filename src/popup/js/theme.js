@@ -11,7 +11,7 @@
 
     if (darkMode) {
         var link = document.createElement("link");
-        link.href = chrome.runtime.getURL("src/popup/dark.min.css");
+        link.href = chrome.runtime.getURL("src/popup/min/dark.min.css");
         link.type = "text/css";
         link.rel = "stylesheet";
         document.head.appendChild(link);

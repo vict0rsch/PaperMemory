@@ -1,32 +1,42 @@
 <!doctype html>
 <html>
 
+<!--
+---------------------------------------------------------------------------
+-----  NOTE: relative paths should be relative to min/popup.min.html  -----
+-----        not to popup.html                                        -----
+---------------------------------------------------------------------------
+-->
+
 <head>
 	<meta charset='utf-8'>
+
 	<script src="./theme.min.js"></script>
+
 	<style>
 		@import url("https://fonts.googleapis.com/css2?family=Yantramanav:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;1,600&display=swap");
 		@import url("https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;500;600;700&display=swap");
 	</style>
-	<link rel="stylesheet" type="text/css" href="./popup-css/select2.min.css">
-	<link rel="stylesheet" type="text/css" href="./popup-css/bootstrap-utilities.min.css">
-	<link rel="stylesheet" type="text/css" href="./popup.min.css">
 
-	<script defer src="../shared/jquery.min.js"></script>
-	<script defer src="../shared/select2.min.js"></script>
+	<link rel="stylesheet" type="text/css" href="../css/select2.min.css">
+	<link rel="stylesheet" type="text/css" href="../css/bootstrap-utilities.min.css">
+	<link rel="stylesheet" type="text/css" href="popup.min.css">
+
+	<script defer src="../../shared/jquery.min.js"></script>
+	<script defer src="../../shared/select2.min.js"></script>
 
 	<!-- @if DEV -->
-	<script defer src="../shared/utils/miniquery.js"></script>
-	<script defer src="../shared/utils/config.js"></script>
-	<script defer src="../shared/utils/functions.js"></script>
-	<script defer src="../shared/utils/parsers.js"></script>
-	<script defer src="./popup-js/handlers.js"></script>
-	<script defer src="./popup-js/templates.js"></script>
-	<script defer src="./popup-js/memory.js"></script>
-	<script defer src="./popup-js/popup.js"></script>
+	<script defer src="../../shared/utils/miniquery.js"></script>
+	<script defer src="../../shared/utils/config.js"></script>
+	<script defer src="../../shared/utils/functions.js"></script>
+	<script defer src="../../shared/utils/parsers.js"></script>
+	<script defer src="../js/handlers.js"></script>
+	<script defer src="../js/templates.js"></script>
+	<script defer src="../js/memory.js"></script>
+	<script defer src="../js/popup.js"></script>
 	<!-- @else -->
-	<script defer src="../shared/utils.min.js"></script>
-	<script defer src="./popup.min.js"></script>
+	<script defer src="../../shared/utils.min.js"></script>
+	<script defer src="popup.min.js"></script>
 	<!-- @endif -->
 </head>
 

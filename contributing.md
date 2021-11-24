@@ -22,7 +22,7 @@ TODO
     │   ├── downloadButton.css ➤➤➤ the style for the direct download button on arxiv.org/abs/*
     │   └── loader.css ➤➤➤ the style for the loader before the BibTex entry is displayed on arxiv.org/abs/*
     ├── popup
-    │   ├── popup-css ➤➤➤ The popup's style
+    │   ├── css ➤➤➤ The popup's style
     │   │   ├── dark.css ➤➤➤ Dark mode style sheet
     │   │   ├── dark.min.css
     │   │   ├── options.css ➤➤➤ Sliding checkboxes style
@@ -32,12 +32,12 @@ TODO
     │   │   ├── select2.min.css ➤➤➤ Style for the select2 dropdowns (don't modify)
     │   │   ├── spinner.css  ➤➤➤ Style for the tiny circle loader when the extension reads paper data on popup open
     │   │   └── spinner.min.css
-    │   ├── popup-js  ➤➤➤ The javascript files specific to the popup, minified together in this order into popup-js.min.js
+    │   ├── js  ➤➤➤ The javascript files specific to the popup, minified together in this order into js.min.js
     │   │   ├── handlers.js  ➤➤➤ Event handlers
     │   │   ├── memory.js ➤➤➤ Memory-specific functions
     │   │   ├── popup.js ➤➤➤ Main execution
     │   │   └── templates.js ➤➤➤ HTML string templates: memory items and paper popup
-    │   ├── popup-js.min.js
+    │   ├── js.min.js
     │   ├── popup.html  ➤➤➤ Main HTML file
     │   ├── popup.min.html
     │   ├── theme.js ➤➤➤ The first thing that is executed when the popup is opened: selecting dark/light theme based on user preferences

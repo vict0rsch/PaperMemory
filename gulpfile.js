@@ -9,10 +9,10 @@ const minifyJSTemplate = require("gulp-minify-html-literals");
 
 function popupJS() {
     return src([
-        "src/popup/popup-js/handlers.js",
-        "src/popup/popup-js/templates.js",
-        "src/popup/popup-js/memory.js",
-        "src/popup/popup-js/popup.js",
+        "src/popup/js/handlers.js",
+        "src/popup/js/templates.js",
+        "src/popup/js/memory.js",
+        "src/popup/js/popup.js",
     ])
         .pipe(concat("popup.js"))
         .pipe(
@@ -23,7 +23,7 @@ function popupJS() {
         )
         .pipe(uglify({ mangle: false }))
         .pipe(rename({ suffix: ".min" }))
-        .pipe(dest("src/popup/"));
+        .pipe(dest("src/popup/min/"));
 }
 
 function utilsJS() {
@@ -46,10 +46,10 @@ function utilsJS() {
 }
 
 function themeJS() {
-    return src(["src/popup/theme.js"])
+    return src(["src/popup/js/theme.js"])
         .pipe(uglify({ mangle: false }))
         .pipe(rename({ suffix: ".min" }))
-        .pipe(dest("src/popup/"));
+        .pipe(dest("src/popup/min/"));
 }
 
 function popupHTMLDev() {
@@ -57,38 +57,38 @@ function popupHTMLDev() {
         .pipe(preprocess({ context: { DEV: true } }))
         .pipe(rename("popup.min.html"))
         .pipe(htmlmin({ collapseWhitespace: true, removeComments: true }))
-        .pipe(dest("src/popup/"));
+        .pipe(dest("src/popup/min/"));
 }
 function popupHTML() {
     return src(["src/popup/popup.html"])
         .pipe(preprocess({ context: { DEV: false } }))
         .pipe(rename("popup.min.html"))
         .pipe(htmlmin({ collapseWhitespace: true, removeComments: true }))
-        .pipe(dest("src/popup/"));
+        .pipe(dest("src/popup/min/"));
 }
 
 function popupCSS() {
     return src([
-        "src/popup/popup-css/options.css",
-        "src/popup/popup-css/popup.css",
+        "src/popup/css/options.css",
+        "src/popup/css/popup.css",
         "src/shared/loader.css",
     ])
         .pipe(concat("popup.css"))
         .pipe(cleanCss())
         .pipe(rename({ suffix: ".min" }))
-        .pipe(dest("src/popup/"));
+        .pipe(dest("src/popup/min/"));
 }
 function popupDarkCSS() {
-    return src(["src/popup/popup-css/dark.css"])
+    return src(["src/popup/css/dark.css"])
         .pipe(cleanCss())
         .pipe(rename({ suffix: ".min" }))
-        .pipe(dest("src/popup/"));
+        .pipe(dest("src/popup/min/"));
 }
 
 function watchFiles() {
-    watch("src/popup/popup-js/*.js", popupJS);
+    watch("src/popup/js/*.js", popupJS);
     watch("src/popup/theme.js", themeJS);
-    watch("src/popup/popup-css/*.css", parallel(popupCSS, popupDarkCSS));
+    watch("src/popup/css/*.css", parallel(popupCSS, popupDarkCSS));
     watch("src/popup/popup.html", popupHTMLDev);
     watch("src/shared/utils/*.js", utilsJS);
 }
