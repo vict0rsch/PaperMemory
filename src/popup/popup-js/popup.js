@@ -140,7 +140,7 @@ const popupMain = async (url, isKnownPage, manualTrigger = false) => {
 
     chrome.storage.local.get("whatsnew", ({ whatsnew }) => {
         const version = chrome.runtime.getManifest().version;
-        if (!whatsnew.hasOwnProperty(version)) {
+        if (!whatsnew || !whatsnew.hasOwnProperty(version)) {
             showId("whats-new-marker");
         }
     });
