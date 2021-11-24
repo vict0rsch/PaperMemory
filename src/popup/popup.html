@@ -5,21 +5,25 @@
 	<meta charset='utf-8'>
 	<script src="./theme.min.js"></script>
 	<link rel="stylesheet" type="text/css" href="./popup-css/select2.min.css">
-	<link rel="stylesheet" type="text/css" href="../shared/loader.css">
 	<link rel="stylesheet" type="text/css" href="./popup-css/bootstrap-utilities.min.css">
-	<link rel="stylesheet" type="text/css" href="./popup-css/popup.min.css">
-	<link rel="stylesheet" type="text/css" href="./popup-css/options.min.css">
-	<link rel="stylesheet" type="text/css" href="./popup-css/abstract.min.css">
-	<link rel="stylesheet" type="text/css" href="./popup-css/spinner.min.css">
+	<link rel="stylesheet" type="text/css" href="./popup.min.css">
 
 	<script defer src="../shared/jquery.min.js"></script>
 	<script defer src="../shared/select2.min.js"></script>
-	<script defer src="../shared/utils.min.js"></script>
-	<script defer src="./popup-js.min.js"></script>
-	<!-- <script defer src="./popup-js/handlers.js"></script>
-	<script defer src="./popup-js/memory.js"></script>
+
+	<!-- @if DEV -->
+	<script defer src="../shared/utils/miniquery.js"></script>
+	<script defer src="../shared/utils/config.js"></script>
+	<script defer src="../shared/utils/functions.js"></script>
+	<script defer src="../shared/utils/parsers.js"></script>
+	<script defer src="./popup-js/handlers.js"></script>
 	<script defer src="./popup-js/templates.js"></script>
-	<script defer src="./popup-js/popup.js"></script> -->
+	<script defer src="./popup-js/memory.js"></script>
+	<script defer src="./popup-js/popup.js"></script>
+	<!-- @else -->
+	<script defer src="../shared/utils.min.js"></script>
+	<script defer src="./popup.min.js"></script>
+	<!-- @endif -->
 </head>
 
 <body>
