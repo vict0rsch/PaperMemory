@@ -35,8 +35,8 @@ const updateAllMemoryPaperTagOptions = () => {
     }
 };
 
-const updatePopupPaperNoMemory = () => {
-    const noMemoryHTML = /*html*/ `
+const updatePopupPaperNoMemory = (url) => {
+    let noMemoryHTML = /*html*/ `
     <div style="font-size: 1.5rem; width: 100%; text-align: center;">This paper is not in your memory</div>
     <ul>It can be for one of 4 reasons:
         <li style="margin-top: 4px">
@@ -52,7 +52,27 @@ const updatePopupPaperNoMemory = () => {
         <p style="font-size: 0.9rem">Open an issue on <a href="https://github.com/vict0rsch/PaperMemory/issues">Github</a> if you think you encountered a malfunction.</p>
     </ul>
     `;
+    if (navigator.userAgent.search("Firefox") > -1) {
+        noMemoryHTML += `<div id="manual-firefox">Try manual trigger</div>`;
+    }
+    const previousIsArxiv = findEl("isArxiv").innerHTML;
     setHTML("isArxiv", noMemoryHTML);
+
+    if (navigator.userAgent.search("Firefox") > -1) {
+        addListener("manual-firefox", "click", async () => {
+            const is = isPaper(url);
+            const { paper } = await addOrUpdatePaper(url, is);
+            console.log("paper: ", paper);
+            console.log("previousIsArxiv: ", previousIsArxiv);
+            console.log("url: ", url);
+            const isKnownPage = Object.values(is).some((i) => i);
+            console.log("isKnownPage: ", isKnownPage);
+            if (paper) {
+                setHTML("isArxiv", previousIsArxiv);
+                popupMain(url, isKnownPage, true);
+            }
+        });
+    }
 };
 
 /**

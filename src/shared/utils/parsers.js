@@ -562,5 +562,5 @@ const addOrUpdatePaper = async (url, is, checks) => {
         }
     });
 
-    return id;
+    return { paper, id };
 };
