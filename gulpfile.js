@@ -1,4 +1,4 @@
-var { src, dest, parallel, watch } = require("gulp");
+var { src, dest, parallel, watch, series } = require("gulp");
 var concat = require("gulp-concat");
 var uglify = require("gulp-uglify");
 var cleanCss = require("gulp-clean-css");
@@ -56,7 +56,6 @@ function popupHTML() {
 
 function popupCSS() {
     return src([
-        "src/popup/popup-css/dark.css",
         "src/popup/popup-css/options.css",
         "src/popup/popup-css/popup.css",
         "src/shared/loader.css",
@@ -66,11 +65,17 @@ function popupCSS() {
         .pipe(rename({ suffix: ".min" }))
         .pipe(dest("src/popup/"));
 }
+function popupDarkCSS() {
+    return src(["src/popup/popup-css/dark.css"])
+        .pipe(cleanCss())
+        .pipe(rename({ suffix: ".min" }))
+        .pipe(dest("src/popup/"));
+}
 
 function watchFiles() {
     watch("src/popup/popup-js/*.js", popupJS);
     watch("src/popup/theme.js", themeJS);
-    watch("src/popup/popup-css/*.css", popupCSS);
+    watch("src/popup/popup-css/*.css", parallel(popupCSS, popupDarkCSS));
     watch("src/popup/popup.html", popupHTMLDev);
     watch("src/shared/utils/*.js", utilsJS);
 }
@@ -84,6 +89,6 @@ function watchFiles() {
 
 // exports.popupHTML = popupHTML;
 
-exports.build = parallel(popupJS, themeJS, utilsJS, popupCSS, popupHTML);
-exports.dev = parallel(popupJS, themeJS, utilsJS, popupCSS, popupHTMLDev);
-exports.watch = watchFiles;
+exports.build = parallel(popupJS, themeJS, utilsJS, popupCSS, popupDarkCSS, popupHTML);
+exports.dev = parallel(popupJS, themeJS, utilsJS, popupCSS, popupDarkCSS, popupHTMLDev);
+exports.watch = series(popupHTMLDev, watchFiles);
