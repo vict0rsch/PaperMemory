@@ -48,11 +48,12 @@ global.menuCheckNames = [
     "checkPdfTitle",
     "checkFeedback",
     "checkDarkMode",
+    "checkDirectOpen",
 ];
 /**
  * Menu check names which should not default to true but to false
  */
-global.menuCheckDefaultFalse = ["checkDarkMode"];
+global.menuCheckDefaultFalse = ["checkDarkMode", "checkDirectOpen"];
 /**
  * All keys to retrieve from the menu, the checkboxes + the custom pdf function
  */

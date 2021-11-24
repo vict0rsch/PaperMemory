@@ -152,6 +152,9 @@ const popupMain = async (url, isKnownPage, manualTrigger = false) => {
             // Unknown paper, probably deleted by the user
             console.log("Unknown id " + id);
             updatePopupPaperNoMemory(url);
+            if (menu.checkDirectOpen) {
+                dispatchEvent("memory-switch", "click");
+            }
             return;
         }
 
@@ -226,6 +229,10 @@ const popupMain = async (url, isKnownPage, manualTrigger = false) => {
                 filename: pdfTitle.replaceAll(":", "_"),
             });
         });
+    } else {
+        if (menu.checkDirectOpen) {
+            dispatch("memory-switch", "click");
+        }
     }
 };
 
