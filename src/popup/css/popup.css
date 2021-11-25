@@ -23,7 +23,7 @@ body {
     display: flex;
     flex-direction: column;
     font-family: "Yantramanav";
-    overflow: hidden;
+    position: relative;
 }
 
 #popup-container {
@@ -37,6 +37,7 @@ body {
     box-sizing: border-box;
     max-width: 450px;
     min-width: 450px;
+    margin: auto;
 }
 
 textarea {
@@ -718,6 +719,7 @@ button.changed {
     left: 0;
     top: 0;
     width: 100%; /* Full width */
+    max-width: 450px; /* Full width */
     height: 100%; /* Full height */
     overflow: auto; /* Enable scroll if needed */
     background-color: rgb(0, 0, 0); /* Fallback color */
