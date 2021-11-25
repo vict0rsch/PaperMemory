@@ -155,3 +155,71 @@
 #notif-cancel:hover {
     background: #7f2828;
 }
+
+/*
+-----------------------------------
+-----  Arxiv Download Button  -----
+-----------------------------------
+*/
+#arxiv-button {
+    cursor: pointer;
+    display: block;
+    width: 68px;
+    height: 68px;
+    border-radius: 50%;
+    -webkit-tap-highlight-color: transparent;
+    transition: all 0.2s ease;
+}
+
+#arxiv-button:hover {
+    /* background: rgba(34, 50, 84, 0.03); */
+    transform: scale(1.2);
+}
+
+#arxiv-button svg {
+    margin: 16px 0 0 16px;
+    fill: none;
+    transform: translate3d(0, 0, 0);
+}
+
+#arxiv-button svg polyline,
+#arxiv-button svg path {
+    stroke: #0077ff;
+    stroke-width: 2;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    transition: all 0.3s ease;
+    transition-delay: 0.3s;
+}
+
+#arxiv-button svg path#check {
+    stroke-dasharray: 38;
+    stroke-dashoffset: 114;
+    transition: all 0.4s ease;
+}
+
+#arxiv-button.downloaded svg .svg-out {
+    opacity: 0;
+    animation: drop 0.3s linear;
+    transition-delay: 0.4s;
+}
+
+#arxiv-button.downloaded svg path#check {
+    stroke: #20cca5;
+    stroke-dashoffset: 174;
+    transition-delay: 0.4s;
+}
+
+@keyframes drop {
+    20% {
+        transform: translate(0, -3px);
+    }
+
+    80% {
+        transform: translate(0, 2px);
+    }
+
+    95% {
+        transform: translate(0, 0);
+    }
+}

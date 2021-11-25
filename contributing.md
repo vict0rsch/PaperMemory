@@ -2,55 +2,76 @@
 
 ## Set-up
 
-TODO
+1. [Install `npm`](https://www.npmjs.com/get-npm): Node's package manager
+2. [Install `gulp`](https://gulpjs.com/): a build tool
+3. Install dependencies: from the root of this repo `$ npm install`
+4. Watch file changes: `$ gulp watch`
+5. Edit files!
+
+`gulp` mainly runs the concatenation of files into a single one (especially for css and js) and its minification.
+
+In `popup.html` you will notice:
+
+```html
+<!-- @if DEV -->
+<script defer src="../../shared/utils/miniquery.js"></script>
+<script defer src="../../shared/utils/config.js"></script>
+<script defer src="../../shared/utils/functions.js"></script>
+<script defer src="../../shared/utils/parsers.js"></script>
+<script defer src="../js/handlers.js"></script>
+<script defer src="../js/templates.js"></script>
+<script defer src="../js/memory.js"></script>
+<script defer src="../js/popup.js"></script>
+<!-- @else -->
+<script defer src="../../shared/utils.min.js"></script>
+<script defer src="popup.min.js"></script>
+<!-- @endif -->
+```
+
+Those `@` commands are meant for `gulp` (using the `preprocess` package) to choose whether to use raw, un-minified files for development (`$ gulp watch`) or concatenated and minified ones for production (`$ gulp build`)
+
+Note: the file loaded in the popup is `src/popup/min/popup.min.html`, *not* `src/popup/popup.html`
+
 
 ## Conventions
 
 ### File structure
 
-TODO
 
 ```tree
 ├── jsconfig.json ➤➤➤ vscode js config
 ├── manifest.json ➤➤➤ the extension's configuration file for the browser
 └── src  ➤➤➤ actual code
-    ├── bg ➤➤➤ background code
+    ├── background ➤➤➤ background code
     │   └── background.js ➤➤➤ background.js can interact with some browser apis content_scripts can't use
     ├── content_scripts
     │   ├── content_script.css  ➤➤➤ styling for pages modified by the content_script
     │   ├── content_script.js ➤➤➤ the code run at the opening of a page matched in manifest.json
-    │   ├── downloadButton.css ➤➤➤ the style for the direct download button on arxiv.org/abs/*
-    │   └── loader.css ➤➤➤ the style for the loader before the BibTex entry is displayed on arxiv.org/abs/*
     ├── popup
-    │   ├── popup-css ➤➤➤ The popup's style
+    │   ├── css ➤➤➤ The popup's style
     │   │   ├── dark.css ➤➤➤ Dark mode style sheet
-    │   │   ├── dark.min.css
     │   │   ├── options.css ➤➤➤ Sliding checkboxes style
-    │   │   ├── options.min.css
     │   │   ├── popup.css ➤➤➤ Main style
-    │   │   ├── popup.min.css
     │   │   ├── select2.min.css ➤➤➤ Style for the select2 dropdowns (don't modify)
-    │   │   ├── spinner.css  ➤➤➤ Style for the tiny circle loader when the extension reads paper data on popup open
-    │   │   └── spinner.min.css
-    │   ├── popup-js  ➤➤➤ The javascript files specific to the popup, minified together in this order into popup-js.min.js
+    │   ├── js  ➤➤➤ The javascript files specific to the popup, minified together in this order into js.min.js
     │   │   ├── handlers.js  ➤➤➤ Event handlers
     │   │   ├── memory.js ➤➤➤ Memory-specific functions
     │   │   ├── popup.js ➤➤➤ Main execution
+    │   │   ├── theme.js ➤➤➤ The first thing that is executed when the popup is opened: selecting dark/light theme based on user preferences
+    │   │   ├── select2.min.js ➤➤➤ JQuery-based tagging lib for paper tags
     │   │   └── templates.js ➤➤➤ HTML string templates: memory items and paper popup
-    │   ├── popup-js.min.js
+    │   ├── min
+    │   │   └── minified scripts
     │   ├── popup.html  ➤➤➤ Main HTML file
-    │   ├── popup.min.html
-    │   ├── theme.js ➤➤➤ The first thing that is executed when the popup is opened: selecting dark/light theme based on user preferences
-    │   └── theme.min.js
     └── shared
         ├── jquery.min.js ➤➤➤ JQuery lib. Do not modify. 
-        ├── select2.min.js ➤➤➤ JQuery-based tagging lib for paper tags
         ├── utils ➤➤➤ Shared utility functions minified together in this order into utils.min.js
-        │   ├── _miniquery.js ➤➤➤ Custom vanilla js replacement for JQuery (working towards removing that dependency)
+        │   ├── miniquery.js ➤➤➤ Custom vanilla js replacement for JQuery (working towards removing that dependency)
         │   ├── config.js ➤➤➤ Constants / State variables used throughout out the code
         │   ├── functions.js ➤➤➤ Utility functions, relying on config.js
         │   └── parsers.js ➤➤➤ Parsing functions to create papers
-        └── utils.min.js
+        ├── utils.min.js ➤➤➤ Concatenation and minification of all files in src/shared/utils/
+        └── loader.css ➤➤➤ the style for the loader before the BibTex entry is displayed on arxiv.org/abs/*
 ```
 
 ### Prettier

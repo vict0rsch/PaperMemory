@@ -453,8 +453,8 @@ const handleOverwriteMemory = () => {
             );
             const confirm = `<button id="confirm-overwrite">Confirm</button>`;
             const cancel = `<button id="cancel-overwrite">Cancel</button>`;
-            const tile = `<h4 class="w-100 code-font" style="font-size: 0.9rem;>Be careful, you will not be able to revert this operation. Make sure you have downloaded a backup of your memory before overwriting it.</h4>`;
-            const overwriteDiv = `<div id="overwrite-buttons" class="flex-center-evenly py-3 px-4"> ${tile} <div class="flex-center-evenly w-100">${cancel} ${confirm}</div></div>`;
+            const title = `<h4 class="w-100 code-font" style="font-size: 0.9rem;">Be careful, you will not be able to revert this operation. Make sure you have downloaded a backup of your memory before overwriting it.</h4>`;
+            const overwriteDiv = `<div id="overwrite-buttons" class="flex-center-evenly py-3 px-4"> ${title} <div class="flex-center-evenly w-100">${cancel} ${confirm}</div></div>`;
             setTimeout(async () => {
                 const { success, message, warning, papersToWrite } =
                     await overwriteMemory(overwritingPapers);
@@ -553,7 +553,9 @@ const handleCustomPDFFunctionSave = () => {
 
 const handleDefaultPDFFunctionClick = () => {
     const code = defaultPDFTitleFn.toString();
-    const savedFeedback = /*html*/ `<span style="color: var(--green)">Saved!</span>`;
+    const savedFeedback = /*html*/ `<span style="color: var(--green)"
+        >Saved!</span
+    >`;
     chrome.storage.local.set({ pdfTitleFn: code });
     global.state.pdfTitleFn = defaultPDFTitleFn;
     val("customPdfTitleTextarea", code);
