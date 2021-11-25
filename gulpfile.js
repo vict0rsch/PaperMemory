@@ -122,15 +122,6 @@ function createArchive(cb) {
         .pipe(dest(archiveFolder));
 }
 
-// exports.popupJS = popupJS;
-// exports.themeJS = themeJS;
-// exports.utilsJS = popupHTML;
-// exports.popupHTMLDev = popupHTMLDev;
-
-// exports.popupCSS = popupCSS;
-
-// exports.popupHTML = popupHTML;
-
 exports.build = series(
     parallel(popupJS, themeJS, utilsJS, popupCSS, popupDarkCSS, popupHTML),
     createArchive
