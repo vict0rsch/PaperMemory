@@ -1,11 +1,15 @@
-var { src, dest, parallel, watch, series } = require("gulp");
-var concat = require("gulp-concat");
-var uglify = require("gulp-uglify");
-var cleanCss = require("gulp-clean-css");
-var rename = require("gulp-rename");
-var preprocess = require("gulp-preprocess");
+const { src, dest, parallel, watch, series } = require("gulp");
+const concat = require("gulp-concat");
+const uglify = require("gulp-uglify");
+const cleanCss = require("gulp-clean-css");
+const rename = require("gulp-rename");
+const preprocess = require("gulp-preprocess");
 const htmlmin = require("gulp-html-minifier-terser");
 const minifyJSTemplate = require("gulp-minify-html-literals");
+const readlineSync = require("readline-sync");
+const fs = require("fs");
+const zip = require("gulp-zip");
+const { v4: uuidv4 } = require("uuid");
 
 function popupJS() {
     return src([
@@ -93,6 +97,31 @@ function watchFiles() {
     watch("src/shared/utils/*.js", utilsJS);
 }
 
+function createArchive(cb) {
+    var manifest = JSON.parse(fs.readFileSync("./manifest.json"));
+    let archiveName = `Archive-${manifest.version}.zip`;
+    let archiveFolder = "extra/archives/";
+    const archivePath = `${archiveFolder}${archiveName}`;
+    if (fs.existsSync(archivePath)) {
+        console.log(archivePath + " already exists");
+        const index = readlineSync.keyInSelect(
+            ["Create temporary archive", "Overwrite"],
+            "What now ?"
+        );
+        if (index < 0) {
+            return cb();
+        }
+        if (index === 0) {
+            archiveName = uuidv4().split("-")[0] + "-" + archiveName;
+            archiveFolder = "extra/archives/tmp/";
+            console.log("Creating zip: " + archiveFolder + archiveName);
+        }
+    }
+    return src(["./**", "!extra/**", "!node_modules/**", "!./.vscode/**"])
+        .pipe(zip(archiveName))
+        .pipe(dest(archiveFolder));
+}
+
 // exports.popupJS = popupJS;
 // exports.themeJS = themeJS;
 // exports.utilsJS = popupHTML;
@@ -102,6 +131,10 @@ function watchFiles() {
 
 // exports.popupHTML = popupHTML;
 
-exports.build = parallel(popupJS, themeJS, utilsJS, popupCSS, popupDarkCSS, popupHTML);
+exports.build = series(
+    parallel(popupJS, themeJS, utilsJS, popupCSS, popupDarkCSS, popupHTML),
+    createArchive
+);
 exports.dev = parallel(popupJS, themeJS, utilsJS, popupCSS, popupDarkCSS, popupHTMLDev);
 exports.watch = series(popupHTMLDev, watchFiles);
+exports.archive = createArchive;
