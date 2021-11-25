@@ -136,6 +136,17 @@ const setAndHandleCustomPDFFunction = (menu) => {
  * @param {str} url Currently focused and active tab's url.
  */
 const popupMain = async (url, isKnownPage, manualTrigger = false) => {
+    console.log(navigator.userAgent);
+    if (navigator.userAgent === "PuppeteerAgent") {
+        console.log("Is puppet");
+        style(document.body, "min-width", "500px");
+        style(document.body, "max-width", "500px");
+        style(document.body, "width", "500px");
+        style("user-guide-modal", "min-width", "500px");
+        style("user-guide-modal", "max-width", "500px");
+        style("user-guide-modal", "width", "500px");
+    }
+
     addListener(document, "keydown", handlePopupKeydown);
 
     chrome.storage.local.get("whatsnew", ({ whatsnew }) => {
