@@ -548,7 +548,7 @@ const logStorage = (key) => {
     });
 };
 
-const getStorage = async (key) => {
+const getStorage = (key) => {
     return new Promise((resolve, reject) => {
         chrome.storage.local.get(key, (data) => {
             if (typeof key === "string") {
@@ -560,7 +560,7 @@ const getStorage = async (key) => {
     });
 };
 
-const setStorage = async (key, value) => {
+const setStorage = (key, value) => {
     return new Promise((resolve, reject) => {
         chrome.storage.local.set({ [key]: value }, () => {
             resolve(true);
