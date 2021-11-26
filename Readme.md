@@ -120,6 +120,7 @@ Share ideas 💡 in [issues](https://github.com/vict0rsch/PaperMemory/issues) an
 * [ ] Document `:` being replaced by `_` when downloading a pdf ([OS requirements...](https://stackoverflow.com/questions/30960190/problematic-characters-for-filename-in-chrome-downloads-download))
 * [ ] Document backup and how to get it
 * [ ] Improve `Contributing.md`
+* [ ] Tests (WIP => [Puppeteer + Mocha #26](https://github.com/vict0rsch/PaperMemory/pull/26))
 
 ## Help
 
