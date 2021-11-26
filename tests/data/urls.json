@@ -1,0 +1,26 @@
+{
+    "arxiv": [
+        "https://arxiv.org/abs/1703.10593",
+        "https://arxiv.org/pdf/1703.10593v7.pdf"
+    ],
+    "openreview": [
+        "https://openreview.net/forum?id=EZNOb_uNpJk",
+        "https://openreview.net/pdf?id=EZNOb_uNpJk"
+    ],
+    "neurips": [
+        "https://proceedings.neurips.cc/paper/2019/hash/0118a063b4aae95277f0bc1752c75abf-Abstract.html",
+        "https://proceedings.neurips.cc/paper/2019/file/0118a063b4aae95277f0bc1752c75abf-Paper.pdf"
+    ],
+    "biorxiv": [
+        "https://www.biorxiv.org/content/10.1101/2021.11.08.467690v2",
+        "https://www.biorxiv.org/content/10.1101/2021.11.08.467690v2.full.pdf"
+    ],
+    "cvf": [
+        "https://openaccess.thecvf.com/content_CVPR_2020/html/Bhattacharjee_DUNIT_Detection-Based_Unsupervised_Image-to-Image_Translation_CVPR_2020_paper.html",
+        "https://openaccess.thecvf.com/content_CVPR_2020/papers/Bhattacharjee_DUNIT_Detection-Based_Unsupervised_Image-to-Image_Translation_CVPR_2020_paper.pdf"
+    ],
+    "pmlr": [
+        "https://proceedings.mlr.press/v130/husain21a.html",
+        "https://proceedings.mlr.press/v130/husain21a/husain21a.pdf"
+    ]
+}
