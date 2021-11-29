@@ -481,16 +481,20 @@ const fetchCodes = async (paper) => {
 const tryCrossRef = async (paper) => {
     try {
         const title = encodeURI(paper.title);
-        const api = `https://api.crossref.org/works?rows=1&mailto=schmidtv%40mila.quebec&query.title=${title}`;
+        const api = `https://api.crossref.org/works?rows=1&mailto=schmidtv%40mila.quebec&select=event%2Ctitle&query.title=${title}`;
         const json = await fetch(api).then((response) => response.json());
-        if (json.message.status !== "ok") {
-            console.log(`[PM] ${api} returned ${json.message.status}`);
+
+        if (json.status !== "ok") {
+            console.log(`[PM][Crossref] ${api} returned ${json.message.status}`);
             return "";
         }
         if (json.message.items.length === 0) return "";
 
-        const crossTitle = json.message.items[0].title[0];
-        if (crossTitle !== paper.title) {
+        const crossTitle = json.message.items[0].title[0]
+            .replaceAll("\n", " ")
+            .replaceAll(/\s\s+/g, " ");
+        const refTitle = paper.title.replaceAll("\n", " ").replaceAll(/\s\s+/g, " ");
+        if (crossTitle !== refTitle) {
             return "";
         }
 
@@ -507,9 +511,9 @@ const tryCrossRef = async (paper) => {
 // -----  Creating papers  -----
 // -----------------------------
 
-const initPaper = (paper) => {
+const initPaper = async (paper) => {
     if (!paper.note) {
-        paper.note = tryCrossRef(paper);
+        paper.note = await tryCrossRef(paper);
     }
 
     paper.md = `[${paper.title}](${paper.pdfLink})`;
@@ -558,7 +562,7 @@ const makePaper = async (is, url, id) => {
         throw Error("Unknown paper source: " + JSON.stringify({ is, url, id }));
     }
 
-    return initPaper(paper);
+    return await initPaper(paper);
 };
 
 const findFuzzyPaperMatch = (paper) => {
