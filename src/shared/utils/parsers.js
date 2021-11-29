@@ -561,6 +561,23 @@ const makePaper = async (is, url, id) => {
     return initPaper(paper);
 };
 
+const findFuzzyPaperMatch = (paper) => {
+    for (const paperId in global.state.papers) {
+        if (paperId === "__dataVersion") continue;
+        const item = global.state.papers[paperId];
+        if (
+            Math.abs(item.title.length - paper.title.length) <
+            global.fuzzyTitleMatchMinDist
+        ) {
+            const dist = levenshtein(item.title, paper.title);
+            if (dist < global.fuzzyTitleMatchMinDist) {
+                return item.id;
+            }
+        }
+    }
+    return null;
+};
+
 const addOrUpdatePaper = async (url, is, checks) => {
     let paper, isNew;
 
@@ -576,8 +593,20 @@ const addOrUpdatePaper = async (url, is, checks) => {
     } else {
         // Or create a new one if it does not
         paper = await makePaper(is, url, id);
-        global.state.papers[paper.id] = paper;
-        isNew = true;
+        const existingId = null; // findFuzzyPaperMatch(paper);
+        if (existingId) {
+            // Update paper as already it exists
+            info(
+                `Found a fuzzy match for (${id}) ${paper.title}`,
+                global.state.papers[existingId]
+            );
+            global.state.papers = updatePaper(global.state.papers, existingId);
+            paper = global.state.papers[existingId];
+            isNew = false;
+        } else {
+            global.state.papers[paper.id] = paper;
+            isNew = true;
+        }
     }
 
     chrome.storage.local.set({ papers: global.state.papers }, () => {
