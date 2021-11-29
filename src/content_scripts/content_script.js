@@ -137,14 +137,17 @@ const feedback = (text, paper = null) => {
     } catch (error) {}
 
     if (paper) {
-        console.log(paper);
+        text = /*html*/ ` <div id="notif-text">
+                <div>${text}</div>
+            </div>
+            <div title="Cancel" id="notif-cancel">
+                <div>${svg("notif-cancel")}</div>
+            </div>`;
+    } else {
+        text = /*html*/ ` <div id="notif-text">
+                <div>${text}</div>
+            </div>`;
     }
-    text = /*html*/ ` <div id="notif-text">
-            <div>${text}</div>
-        </div>
-        <div title="Cancel" id="notif-cancel">
-            <div>${svg("notif-cancel")}</div>
-        </div>`;
 
     $("body").append(/*html*/ ` <div id="feedback-notif">${text}</div> `);
     style("feedback-notif", "padding", "0px");
