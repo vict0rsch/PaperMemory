@@ -474,14 +474,44 @@ const fetchCodes = async (paper) => {
     return codes.slice(0, 5);
 };
 
+// --------------------------------------------
+// -----  Try CrossRef's API for a match  -----
+// --------------------------------------------
+
+const tryCrossRef = async (paper) => {
+    try {
+        const title = encodeURI(paper.title);
+        const api = `https://api.crossref.org/works?rows=1&mailto=schmidtv%40mila.quebec&query.title=${title}`;
+        const json = await fetch(api).then((response) => response.json());
+        if (json.message.status !== "ok") {
+            console.log(`[PM] ${api} returned ${json.message.status}`);
+            return "";
+        }
+        if (json.message.items.length === 0) return "";
+
+        const crossTitle = json.message.items[0].title[0];
+        if (crossTitle !== paper.title) {
+            return "";
+        }
+
+        info("Found a CrossRef match");
+
+        return "[CrossRef]: Accepted @ " + json.message.items[0].event.name;
+    } catch (error) {
+        console.log("[PM][Crossref]", error);
+        return "";
+    }
+};
+
 // -----------------------------
 // -----  Creating papers  -----
 // -----------------------------
 
 const initPaper = (paper) => {
     if (!paper.note) {
-        paper.note = "";
+        paper.note = tryCrossRef(paper);
     }
+
     paper.md = `[${paper.title}](${paper.pdfLink})`;
     paper.tags = [];
     paper.codeLink = "";
