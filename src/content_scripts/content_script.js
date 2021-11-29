@@ -252,12 +252,11 @@ const arxiv = (checks) => {
                 <h3>Markdown</h3>
                 ${svg("clipboard-default")} ${svg("clipboard-default-ok")}
             </div>
-            <div id="markdown-link" class="arxivTools-codify">
-                [${
-                    global.state.papers.hasOwnProperty(id)
-                        ? global.state.papers[id].title
-                        : document.title
-                }](${pdfUrl})
+            <div id="markdown-link" class="arxivTools-codify">[${
+                global.state.papers.hasOwnProperty(id)
+                    ? global.state.papers[id].title
+                    : document.title
+            }](${pdfUrl})
             </div>
         </div>`;
     }
@@ -284,9 +283,9 @@ const arxiv = (checks) => {
                             <h3>BibTex:</h3>
                             ${svg("clipboard-default")} ${svg("clipboard-default-ok")}
                         </div>
-                        <div id="texTextarea" class="arxivTools-codify">
-                            ${paper.bibtex}
-                        </div>
+                        <div id="texTextarea" class="arxivTools-codify">${
+                            paper.bibtex
+                        }</div>
                     </div>
                 `;
 
