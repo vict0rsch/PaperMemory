@@ -501,20 +501,24 @@ const tryCrossRef = async (paper) => {
 
         // compare matched item's title to the paper's title
         const crossTitle = json.message.items[0].title[0]
+            .toLowerCase()
             .replaceAll("\n", " ")
             .replaceAll(/\s\s+/g, " ");
-        const refTitle = paper.title.replaceAll("\n", " ").replaceAll(/\s\s+/g, " ");
+        const refTitle = paper.title
+            .toLowerCase()
+            .replaceAll("\n", " ")
+            .replaceAll(/\s\s+/g, " ");
         if (crossTitle !== refTitle) {
             return "";
         }
-
-        info("Found a CrossRef match");
 
         // assert the matched item has an event with a name
         // (this may be too restrictive for journals, to improve)
         if (!json.message.items[0].event || !json.message.items[0].event.name)
             return "";
+
         // return the note
+        info("Found a CrossRef match");
         return `Accepted @ ${json.message.items[0].event.name.trim()} -- [crossref.org]`;
     } catch (error) {
         // something went wrong, log the error, return ""
@@ -523,13 +527,76 @@ const tryCrossRef = async (paper) => {
     }
 };
 
+const tryDBLP = async (paper) => {
+    try {
+        const title = encodeURI(paper.title);
+        const api = `https://dblp.org/search/publ/api?q=${title}&format=json`;
+        const json = await fetch(api).then((response) => response.json());
+        console.log("djson: ", json);
+
+        if (
+            !json.result ||
+            !json.result.hits ||
+            !json.result.hits.hit ||
+            !json.result.hits.hit.length
+        ) {
+            console.log("[PM][DBLP] No hits found");
+            return "";
+        }
+
+        const hits = json.result.hits.hit.sort(
+            (a, b) => parseInt(a.info.year, 10) - parseInt(b.info.year, 10)
+        );
+
+        for (const hit of hits) {
+            const hitTitle = hit.info.title
+                .toLowerCase()
+                .replaceAll("\n", " ")
+                .replaceAll(".", "")
+                .replaceAll(/\s\s+/g, " ");
+            const refTitle = paper.title
+                .toLowerCase()
+                .replaceAll("\n", " ")
+                .replaceAll(".", "")
+                .replaceAll(/\s\s+/g, " ");
+            console.log("hitTitle: ", hitTitle);
+            console.log("refTitle: ", refTitle);
+            console.log("");
+            if (hitTitle === refTitle && hit.info.venue !== "CoRR") {
+                info("Found a DPLB match");
+                const venue =
+                    global.overrideDPLBVenues[hit.info.venue] || hit.info.venue;
+                const year = hit.info.year;
+                const url = hit.info.url;
+                const note = `Accepted @ ${venue.trim()} ${year} -- [dblp.org]\n${url}`;
+                return note;
+            }
+        }
+        console.log("[PM][DBLP] No match found");
+        return "";
+    } catch (error) {
+        // something went wrong, log the error, return ""
+        console.log("[PM][DPLB]", error);
+        return "";
+    }
+};
+
+const tryPreprintMatch = async (paper) => {
+    let note = "";
+    // note = await tryDBLP(paper);
+    if (!note) {
+        note = await tryCrossRef(paper);
+    }
+    return note;
+};
+
 // -----------------------------
 // -----  Creating papers  -----
 // -----------------------------
 
 const initPaper = async (paper) => {
     if (!paper.note) {
-        paper.note = await tryCrossRef(paper);
+        paper.note = "";
     }
 
     paper.md = `[${paper.title}](${paper.pdfLink})`;
@@ -629,13 +696,24 @@ const addOrUpdatePaper = async (url, is, checks) => {
         }
     }
 
-    chrome.storage.local.set({ papers: global.state.papers }, () => {
+    chrome.storage.local.set({ papers: global.state.papers }, async () => {
         if (isNew) {
             console.log("Added '" + paper.title + "' to your Memory");
             console.log("paper: ", paper);
             // display red slider feedback if the user did not disable it
             // from the menu
             checks && checks.checkFeedback && feedback("Added to your Memory!", paper);
+            console.log("note", paper.note);
+            if (!paper.note) {
+                const note = await tryPreprintMatch(paper);
+                console.log("note: ", note);
+                if (note) {
+                    console.log("[PM] Updating preprint note to", note);
+                    paper.note = note;
+                    global.state.papers[paper.id] = paper;
+                    chrome.storage.local.set({ papers: global.state.papers });
+                }
+            }
         } else {
             console.log("Updated '" + paper.title + "' in your Memory");
         }

@@ -84,6 +84,9 @@ global.overridePMLRConfs = {
     "International Conference on Artificial Intelligence and Statistics": "AISTATS",
     "International Conference on Algorithmic Learning Theory": "ALT",
 };
+global.overrideDPLBVenues = {
+    "J. Mach. Learn. Res.": "JMLR",
+};
 
 /**
  * Minimal Levenshtein distance between two paper titles for those to be merged
