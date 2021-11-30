@@ -10,6 +10,7 @@ const readlineSync = require("readline-sync");
 const fs = require("fs");
 const zip = require("gulp-zip");
 const { v4: uuidv4 } = require("uuid");
+const debug = require("gulp-debug");
 
 function popupJS() {
     return src([
@@ -31,22 +32,26 @@ function popupJS() {
 }
 
 function utilsJS() {
-    return src([
-        "src/shared/utils/miniquery.js",
-        "src/shared/utils/config.js",
-        "src/shared/utils/functions.js",
-        "src/shared/utils/parsers.js",
-    ])
-        .pipe(concat("utils.js"))
-        .pipe(
-            minifyJSTemplate({
-                minifyOptions: { minifyCSS: false, collapseWhitespace: true },
-                shouldMinify: (template) => true,
-            })
-        )
-        .pipe(uglify({ mangle: false }))
-        .pipe(rename({ suffix: ".min" }))
-        .pipe(dest("src/shared/"));
+    return (
+        src([
+            "src/shared/utils/miniquery.js",
+            "src/shared/utils/config.js",
+            "src/shared/utils/levenshtein.js",
+            "src/shared/utils/functions.js",
+            "src/shared/utils/parsers.js",
+        ])
+            // .pipe(debug())
+            .pipe(concat("utils.js"))
+            .pipe(
+                minifyJSTemplate({
+                    minifyOptions: { minifyCSS: false, collapseWhitespace: true },
+                    shouldMinify: (template) => true,
+                })
+            )
+            .pipe(uglify({ mangle: false }))
+            .pipe(rename({ suffix: ".min" }))
+            .pipe(dest("src/shared/"))
+    );
 }
 
 function themeJS() {
@@ -94,7 +99,7 @@ function watchFiles() {
     watch("src/popup/theme.js", themeJS);
     watch("src/popup/css/*.css", parallel(popupCSS, popupDarkCSS));
     watch("src/popup/popup.html", popupHTMLDev);
-    watch("src/shared/utils/*.js", utilsJS);
+    watch("src/shared/utils/*", utilsJS);
 }
 
 function createArchive(cb) {

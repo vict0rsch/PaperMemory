@@ -137,14 +137,17 @@ const feedback = (text, paper = null) => {
     } catch (error) {}
 
     if (paper) {
-        console.log(paper);
+        text = /*html*/ ` <div id="notif-text">
+                <div>${text}</div>
+            </div>
+            <div title="Cancel" id="notif-cancel">
+                <div>${svg("notif-cancel")}</div>
+            </div>`;
+    } else {
+        text = /*html*/ ` <div id="notif-text">
+                <div>${text}</div>
+            </div>`;
     }
-    text = /*html*/ ` <div id="notif-text">
-            <div>${text}</div>
-        </div>
-        <div title="Cancel" id="notif-cancel">
-            <div>${svg("notif-cancel")}</div>
-        </div>`;
 
     $("body").append(/*html*/ ` <div id="feedback-notif">${text}</div> `);
     style("feedback-notif", "padding", "0px");
@@ -249,12 +252,11 @@ const arxiv = (checks) => {
                 <h3>Markdown</h3>
                 ${svg("clipboard-default")} ${svg("clipboard-default-ok")}
             </div>
-            <div id="markdown-link" class="arxivTools-codify">
-                [${
-                    global.state.papers.hasOwnProperty(id)
-                        ? global.state.papers[id].title
-                        : document.title
-                }](${pdfUrl})
+            <div id="markdown-link" class="arxivTools-codify">[${
+                global.state.papers.hasOwnProperty(id)
+                    ? global.state.papers[id].title
+                    : document.title
+            }](${pdfUrl})
             </div>
         </div>`;
     }
@@ -281,9 +283,9 @@ const arxiv = (checks) => {
                             <h3>BibTex:</h3>
                             ${svg("clipboard-default")} ${svg("clipboard-default-ok")}
                         </div>
-                        <div id="texTextarea" class="arxivTools-codify">
-                            ${paper.bibtex}
-                        </div>
+                        <div id="texTextarea" class="arxivTools-codify">${
+                            paper.bibtex
+                        }</div>
                     </div>
                 `;
 

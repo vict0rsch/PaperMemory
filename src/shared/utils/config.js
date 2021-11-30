@@ -86,6 +86,11 @@ global.overridePMLRConfs = {
 };
 
 /**
+ * Minimal Levenshtein distance between two paper titles for those to be merged
+ */
+global.fuzzyTitleMatchMinDist = 4;
+
+/**
  * English words to ignore when creating an arxiv paper's BibTex key.
  */
 global.englishStopWords = new Set([

@@ -247,7 +247,7 @@ $.extend($.easing, {
  */
 
 const info = (...args) => {
-    console.log("%c" + args.join(" "), "color: #328DD2");
+    console.log("%c[PM] " + args.join(" "), "color: #328DD2");
 };
 
 const getDisplayId = (id) => {

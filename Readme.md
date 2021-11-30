@@ -40,6 +40,8 @@ Supported venues:
 * Proceedings of Machine Learning Research (PMLR) (AISTATS, ICML, CoRL, CoLT, ALT, UAI etc.)
 * [Add more](https://github.com/vict0rsch/PaperMemory/issues/13)
 
+[About finding published papers from preprints](#preprints)
+
 ## Demo
 
 
@@ -113,6 +115,20 @@ Share ideas 💡 in [issues](https://github.com/vict0rsch/PaperMemory/issues) an
 * Enable developer mode
 * Click on "load unpackaged extension"
 * Select the downloaded repo :)
+
+## Preprints
+
+There currently exists, to my knowledge, no centralized source for matching a preprint to its subsequent published article. This makes it really hard to try and implement best practices in terms of citing published papers rather than their preprint.
+
+My approach with PaperMemory is to try and notify you that a publication likely exists by utilizing the `note` field. You will occasionally notice `Accepted @ X` in a Paper's notes. This will be added automatically if you are on a known published venue's website (as PMLR or NeurIPS) but also from:
+
+* [CrossRef.org](https://crossref.org)
+  * A query is sent to their [api](https://api.crossref.org/swagger-ui/index.html) for an exact paper title match
+  * The response *must* contain an `event` field with a `name` attribute. If it does not it'll be ignored. 
+  * If it does, a note is added as: `Accepted @ ${items.event.name} -- [crossref.org]`
+    * Try for instance [Attention-Guided Generative Adversarial Networks for Unsupervised Image-to-Image Translation](http://arxiv.org/pdf/1903.12296v3)
+
+There's room for improvement here, please contact me (an issue will do) if you want to help
 
 ## Todo
 

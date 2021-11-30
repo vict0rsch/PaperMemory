@@ -474,14 +474,64 @@ const fetchCodes = async (paper) => {
     return codes.slice(0, 5);
 };
 
+// --------------------------------------------
+// -----  Try CrossRef's API for a match  -----
+// --------------------------------------------
+/**
+ * Looks for a title in crossref's database, querying titles and looking for an exact match. If no
+ * exact match is found, it will return an empty note "". If a match is found and `item.event.name`
+ * exists, it will be used for a new note.
+ * @param {object} paper The paper to look for in crossref's database for an exact ttile match
+ * @returns {string} The note for the paper as `Accepted @ ${items.event.name} -- [crossref.org]`
+ */
+const tryCrossRef = async (paper) => {
+    try {
+        // fetch crossref' api for the paper's title
+        const title = encodeURI(paper.title);
+        const api = `https://api.crossref.org/works?rows=1&mailto=schmidtv%40mila.quebec&select=event%2Ctitle&query.title=${title}`;
+        const json = await fetch(api).then((response) => response.json());
+
+        // assert the response is valid
+        if (json.status !== "ok") {
+            console.log(`[PM][Crossref] ${api} returned ${json.message.status}`);
+            return "";
+        }
+        // assert there is a (loose) match
+        if (json.message.items.length === 0) return "";
+
+        // compare matched item's title to the paper's title
+        const crossTitle = json.message.items[0].title[0]
+            .replaceAll("\n", " ")
+            .replaceAll(/\s\s+/g, " ");
+        const refTitle = paper.title.replaceAll("\n", " ").replaceAll(/\s\s+/g, " ");
+        if (crossTitle !== refTitle) {
+            return "";
+        }
+
+        info("Found a CrossRef match");
+
+        // assert the matched item has an event with a name
+        // (this may be too restrictive for journals, to improve)
+        if (!json.message.items[0].event || !json.message.items[0].event.name)
+            return "";
+        // return the note
+        return `Accepted @ ${json.message.items[0].event.name.trim()} -- [crossref.org]`;
+    } catch (error) {
+        // something went wrong, log the error, return ""
+        console.log("[PM][Crossref]", error);
+        return "";
+    }
+};
+
 // -----------------------------
 // -----  Creating papers  -----
 // -----------------------------
 
-const initPaper = (paper) => {
+const initPaper = async (paper) => {
     if (!paper.note) {
-        paper.note = "";
+        paper.note = await tryCrossRef(paper);
     }
+
     paper.md = `[${paper.title}](${paper.pdfLink})`;
     paper.tags = [];
     paper.codeLink = "";
@@ -528,7 +578,24 @@ const makePaper = async (is, url, id) => {
         throw Error("Unknown paper source: " + JSON.stringify({ is, url, id }));
     }
 
-    return initPaper(paper);
+    return await initPaper(paper);
+};
+
+const findFuzzyPaperMatch = (paper) => {
+    for (const paperId in global.state.papers) {
+        if (paperId === "__dataVersion") continue;
+        const item = global.state.papers[paperId];
+        if (
+            Math.abs(item.title.length - paper.title.length) <
+            global.fuzzyTitleMatchMinDist
+        ) {
+            const dist = levenshtein(item.title, paper.title);
+            if (dist < global.fuzzyTitleMatchMinDist) {
+                return item.id;
+            }
+        }
+    }
+    return null;
 };
 
 const addOrUpdatePaper = async (url, is, checks) => {
@@ -546,8 +613,20 @@ const addOrUpdatePaper = async (url, is, checks) => {
     } else {
         // Or create a new one if it does not
         paper = await makePaper(is, url, id);
-        global.state.papers[paper.id] = paper;
-        isNew = true;
+        const existingId = null; // findFuzzyPaperMatch(paper);
+        if (existingId) {
+            // Update paper as already it exists
+            info(
+                `Found a fuzzy match for (${id}) ${paper.title}`,
+                global.state.papers[existingId]
+            );
+            global.state.papers = updatePaper(global.state.papers, existingId);
+            paper = global.state.papers[existingId];
+            isNew = false;
+        } else {
+            global.state.papers[paper.id] = paper;
+            isNew = true;
+        }
     }
 
     chrome.storage.local.set({ papers: global.state.papers }, () => {
