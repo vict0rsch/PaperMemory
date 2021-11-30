@@ -226,9 +226,9 @@ const popupMain = async (url, isKnownPage, manualTrigger = false) => {
         // -----  SVG clicks  -----
         // ------------------------
         addListener(`popup-memory-item-link--${id}`, "click", () => {
-            chrome.tabs.update({
-                url: paperToPDF(paper) === url ? paperToAbs(paper) : paperToPDF(paper),
-            });
+            const pdfURL = paperToPDF(paper);
+            const absURL = paperToAbs(paper);
+            chrome.tabs.update({ url: absURL === url ? pdfURL : absURL });
             window.close();
         });
         addListener(`popup-code-link`, "click", () => {
