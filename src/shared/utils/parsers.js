@@ -532,7 +532,6 @@ const tryDBLP = async (paper) => {
         const title = encodeURI(paper.title);
         const api = `https://dblp.org/search/publ/api?q=${title}&format=json`;
         const json = await fetch(api).then((response) => response.json());
-        console.log("djson: ", json);
 
         if (
             !json.result ||
@@ -559,9 +558,6 @@ const tryDBLP = async (paper) => {
                 .replaceAll("\n", " ")
                 .replaceAll(".", "")
                 .replaceAll(/\s\s+/g, " ");
-            console.log("hitTitle: ", hitTitle);
-            console.log("refTitle: ", refTitle);
-            console.log("");
             if (hitTitle === refTitle && hit.info.venue !== "CoRR") {
                 info("Found a DPLB match");
                 const venue =
@@ -583,7 +579,7 @@ const tryDBLP = async (paper) => {
 
 const tryPreprintMatch = async (paper) => {
     let note = "";
-    // note = await tryDBLP(paper);
+    note = await tryDBLP(paper);
     if (!note) {
         note = await tryCrossRef(paper);
     }
