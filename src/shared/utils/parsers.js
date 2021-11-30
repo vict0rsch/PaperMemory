@@ -500,7 +500,8 @@ const tryCrossRef = async (paper) => {
 
         info("Found a CrossRef match");
 
-        if (!son.message.items[0].event || !son.message.items[0].event.name) return "";
+        if (!json.message.items[0].event || !json.message.items[0].event.name)
+            return "";
 
         return `Accepted @ ${json.message.items[0].event.name.trim()} -- [crossref.org]`;
     } catch (error) {
