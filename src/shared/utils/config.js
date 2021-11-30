@@ -84,7 +84,7 @@ global.overridePMLRConfs = {
     "International Conference on Artificial Intelligence and Statistics": "AISTATS",
     "International Conference on Algorithmic Learning Theory": "ALT",
 };
-global.overrideDPLBVenues = {
+global.overrideDBLPVenues = {
     "J. Mach. Learn. Res.": "JMLR",
 };
 
