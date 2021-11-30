@@ -127,8 +127,14 @@ My approach with PaperMemory is to try and notify you that a publication likely 
   * The response *must* contain an `event` field with a `name` attribute. If it does not it'll be ignored. 
   * If it does, a note is added as: `Accepted @ ${items.event.name} -- [crossref.org]`
     * Try for instance [Attention-Guided Generative Adversarial Networks for Unsupervised Image-to-Image Translation](http://arxiv.org/pdf/1903.12296v3)
+* [dblp.org](https://dblp.org)
+  * A query is sent to their [api](https://dblp.org/faq/How+to+use+the+dblp+search+API.html) for an exact paper title match
+  * The oldest `hit` in the response which is not a preprint (`hit.venue !== "CoRR"`) is used 
+  * If such a match is found, a note is added as: `Accepted @ ${venue} ${year} -- [dblp.org]\n${dblpURL}`
+    * Try for instance [Domain-Adversarial Training of Neural Networks](http://arxiv.org/pdf/1505.07818v4)
+    * DBLP venues are weird, for instance `JMLR` is `J. Mach. Learn. Res.`. There's a per-venue fix in the code, [raise an issue](https://github.com/vict0rsch/PaperMemory/issues/new) to add another venue fix
 
-There's room for improvement here, please contact me (an issue will do) if you want to help
+There's room for improvement here^, please contact me (an issue will do) if you want to help
 
 ## Todo
 
