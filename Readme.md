@@ -30,7 +30,7 @@ This browser extension allows you to do automatically store research papers you 
 6. 📄 **Go back from a pdf to its abstract page**. For instance: from `https://arxiv.org/pdf/1703.06907.pdf` to `https://arxiv.org/abs/1703.06907` in a click.
 7. 🏛️ **Download your data** as a `.json` file or a `.bib` full BibTex export
 
-Supported venues:
+### Supported venues
 
 * Arxiv
 * BioRxiv
@@ -41,6 +41,10 @@ Supported venues:
 * [Add more](https://github.com/vict0rsch/PaperMemory/issues/13)
 
 [About finding published papers from preprints](#preprints)
+
+### Privacy
+
+All the data collected is stored locally on your computer and you can download it from the menu.
 
 ## Demo
 
