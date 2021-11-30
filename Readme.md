@@ -44,7 +44,7 @@ This browser extension allows you to do automatically store research papers you 
 
 ### Privacy
 
-All the data collected is stored locally on your computer and you can download it from the menu.
+All the data collected is stored locally on your computer and you can export it to `json` it from the menu.
 
 ## Demo
 
