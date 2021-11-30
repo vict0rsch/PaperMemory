@@ -477,19 +477,29 @@ const fetchCodes = async (paper) => {
 // --------------------------------------------
 // -----  Try CrossRef's API for a match  -----
 // --------------------------------------------
-
+/**
+ * Looks for a title in crossref's database, querying titles and looking for an exact match. If no
+ * exact match is found, it will return an empty note "". If a match is found and `item.event.name`
+ * exists, it will be used for a new note.
+ * @param {object} paper The paper to look for in crossref's database for an exact ttile match
+ * @returns {string} The note for the paper as `Accepted @ ${items.event.name} -- [crossref.org]`
+ */
 const tryCrossRef = async (paper) => {
     try {
+        // fetch crossref' api for the paper's title
         const title = encodeURI(paper.title);
         const api = `https://api.crossref.org/works?rows=1&mailto=schmidtv%40mila.quebec&select=event%2Ctitle&query.title=${title}`;
         const json = await fetch(api).then((response) => response.json());
 
+        // assert the response is valid
         if (json.status !== "ok") {
             console.log(`[PM][Crossref] ${api} returned ${json.message.status}`);
             return "";
         }
+        // assert there is a (loose) match
         if (json.message.items.length === 0) return "";
 
+        // compare matched item's title to the paper's title
         const crossTitle = json.message.items[0].title[0]
             .replaceAll("\n", " ")
             .replaceAll(/\s\s+/g, " ");
@@ -500,11 +510,14 @@ const tryCrossRef = async (paper) => {
 
         info("Found a CrossRef match");
 
+        // assert the matched item has an event with a name
+        // (this may be too restrictive for journals, to improve)
         if (!json.message.items[0].event || !json.message.items[0].event.name)
             return "";
-
+        // return the note
         return `Accepted @ ${json.message.items[0].event.name.trim()} -- [crossref.org]`;
     } catch (error) {
+        // something went wrong, log the error, return ""
         console.log("[PM][Crossref]", error);
         return "";
     }
