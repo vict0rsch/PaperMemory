@@ -559,9 +559,9 @@ const tryDBLP = async (paper) => {
                 .replaceAll(".", "")
                 .replaceAll(/\s\s+/g, " ");
             if (hitTitle === refTitle && hit.info.venue !== "CoRR") {
-                info("Found a DPLB match");
+                info("Found a DBLP match");
                 const venue =
-                    global.overrideDPLBVenues[hit.info.venue] || hit.info.venue;
+                    global.overrideDBLPVenues[hit.info.venue] || hit.info.venue;
                 const year = hit.info.year;
                 const url = hit.info.url;
                 const note = `Accepted @ ${venue.trim()} ${year} -- [dblp.org]\n${url}`;
@@ -572,7 +572,7 @@ const tryDBLP = async (paper) => {
         return "";
     } catch (error) {
         // something went wrong, log the error, return ""
-        console.log("[PM][DPLB]", error);
+        console.log("[PM][DBLP]", error);
         return "";
     }
 };
