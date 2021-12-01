@@ -122,6 +122,8 @@ Share ideas 💡 in [issues](https://github.com/vict0rsch/PaperMemory/issues) an
 
 ## Preprints
 
+(*Beta: upcoming in 3.4 -- install from source for early access*)
+
 There currently exists, to my knowledge, no centralized source for matching a preprint to its subsequent published article. This makes it really hard to try and implement best practices in terms of citing published papers rather than their preprint.
 
 My approach with PaperMemory is to try and notify you that a publication likely exists by utilizing the `note` field. You will occasionally notice `Accepted @ X` in a Paper's notes. This will be added automatically if you are on a known published venue's website (as PMLR or NeurIPS) but also from:
