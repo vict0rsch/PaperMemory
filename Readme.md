@@ -46,6 +46,10 @@ This browser extension allows you to do automatically store research papers you 
 
 All the data collected is stored locally on your computer and you can export it to `json` it from the menu.
 
+### Features
+
+I'm regularly adding feature ideas in the [issues](https://github.com/vict0rsch/PaperMemory/issues). Feel free to go upvote the ones you'd like to see happen or submit your own requests.
+
 ## Demo
 
 
