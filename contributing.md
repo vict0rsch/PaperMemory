@@ -38,7 +38,13 @@ In `popup.html` you will notice:
 
 Those `@` commands are meant for `gulp` (using the `preprocess` package) to choose whether to use raw, un-minified files for development (`$ gulp watch`) or concatenated and minified ones for production (`$ gulp build`)
 
-Note: the file loaded in the popup is `src/popup/min/popup.min.html`, *not* `src/popup/popup.html`
+Note: the file loaded in the popup is `src/popup/min/popup.min.html`, *not* `src/popup/popup.html` so you *have* to use `gulp watch` to see changes you make to `popup.html` reflected in the actual popup.
+
+### Refreshing the extension
+
+Once you load the local extension as an unpackaged extension, changes that affect the popup will directly take effect, no need to refresh anything. 
+
+**Content scripts** however, are loaded and not binded to the source so you _have to_ refresh the extension in the settings (and then any web page you want to see changes on) for those to be taken into account.
 
 
 ## Conventions
