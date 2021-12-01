@@ -2,7 +2,7 @@
 
 ## About
 
-PaperMemory is pure JS+HTML with minimal dependencies: not framework, (almost) no external dependencies. 
+PaperMemory is pure JS+HTML with minimal dependencies: no framework, (almost) no external dependencies so it's easy to help :) 
 
 The only external deps. are [`select2.js`](https://select2.org/) which requires `JQuery` and some of the latter here and there (but I'm working on getting rid of it, replacing it with a simple set of helper functions in `src/shared/utils/miniquery.js`).
 
