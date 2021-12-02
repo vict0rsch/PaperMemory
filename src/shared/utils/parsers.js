@@ -22,6 +22,13 @@ const extractAuthor = (bibtex) =>
         .map((a) => a.split(", ").reverse().join(" "))
         .join(" and ");
 
+const decodeHtml = (html) => {
+    // https://stackoverflow.com/questions/5796718/html-entity-decode
+    var txt = document.createElement("textarea");
+    txt.innerHTML = html;
+    return txt.value;
+};
+
 // -------------------
 // -----  Fetch  -----
 // -------------------
@@ -548,11 +555,13 @@ const tryDBLP = async (paper) => {
         );
 
         for (const hit of hits) {
-            const hitTitle = hit.info.title
-                .toLowerCase()
-                .replaceAll("\n", " ")
-                .replaceAll(".", "")
-                .replaceAll(/\s\s+/g, " ");
+            const hitTitle = decodeHtml(
+                hit.info.title
+                    .toLowerCase()
+                    .replaceAll("\n", " ")
+                    .replaceAll(".", "")
+                    .replaceAll(/\s\s+/g, " ")
+            );
             const refTitle = paper.title
                 .toLowerCase()
                 .replaceAll("\n", " ")
