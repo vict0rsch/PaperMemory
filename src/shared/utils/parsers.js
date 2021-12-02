@@ -699,10 +699,8 @@ const addOrUpdatePaper = async (url, is, checks) => {
             // display red slider feedback if the user did not disable it
             // from the menu
             checks && checks.checkFeedback && feedback("Added to your Memory!", paper);
-            console.log("note", paper.note);
             if (!paper.note) {
                 const note = await tryPreprintMatch(paper);
-                console.log("note: ", note);
                 if (note) {
                     console.log("[PM] Updating preprint note to", note);
                     paper.note = note;
