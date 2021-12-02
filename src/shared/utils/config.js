@@ -229,7 +229,8 @@ global.englishStopWords = new Set([
 ]);
 
 // https://www.openacessjournal.com/journal-abbreviation-list
-
+// Used for dblp matching
+// adapted with common initials as JMLR
 global.journalAbbreviations = {
     "infect dis poverty": "Infectious diseases of poverty",
     "emerg microbes infect": "Emerging microbes and infections",
@@ -551,7 +552,7 @@ global.journalAbbreviations = {
     softwarex: "SoftwareX",
     "j big data": "Journal of Big Data",
     "comput struct biotechnol j": "Computational and Structural Biotechnology Journal",
-    "j mach learn res": "Journal of machine learning research",
+    "j mach learn res": "JMLR",
     "peerj comput sci": "PeerJ Computer Science",
     "j comput des eng": "Journal of Computational Design and Engineering",
     "j ambient intell humaniz comput":
