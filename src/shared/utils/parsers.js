@@ -560,8 +560,8 @@ const tryDBLP = async (paper) => {
                 .replaceAll(/\s\s+/g, " ");
             if (hitTitle === refTitle && hit.info.venue !== "CoRR") {
                 info("Found a DBLP match");
-                const venue =
-                    global.overrideDBLPVenues[hit.info.venue] || hit.info.venue;
+                const abbr = hit.info.venue.toLowerCase().replaceAll(".", "").trim();
+                const venue = global.journalAbbreviations[abbr] || hit.info.venue;
                 const year = hit.info.year;
                 const url = hit.info.url;
                 const note = `Accepted @ ${venue.trim()} ${year} -- [dblp.org]\n${url}`;
