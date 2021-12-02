@@ -922,6 +922,10 @@ const validatePaper = (paper, log = true) => {
             type: "string",
             desc: "the link to the paper's pdf",
         },
+        venue: {
+            optional: true,
+            desc: "If the paper was published, what was the venue?",
+        },
         source: {
             type: "string",
             desc: "the paper's source i.e. where it was added to the memory from",
@@ -948,9 +952,11 @@ const validatePaper = (paper, log = true) => {
                 warns.push(message);
                 log && console.warn(message);
             } else {
-                throw Error(
-                    `Cannot continue, paper is corrupted. Missing mandatory attribute "${key}" in ${paper.id}`
-                );
+                if (!expectedKeys[key].optional) {
+                    throw Error(
+                        `Cannot continue, paper is corrupted. Missing mandatory attribute "${key}" in ${paper.id}`
+                    );
+                }
             }
         } else {
             const expectedType = expectedKeys[key].type;
