@@ -26,7 +26,7 @@ function popupJS() {
                 shouldMinify: (template) => true,
             })
         )
-        .pipe(uglify({ mangle: false }))
+        .pipe(uglify({ mangle: true }))
         .pipe(rename({ suffix: ".min" }))
         .pipe(dest("src/popup/min/"));
 }
@@ -48,7 +48,7 @@ function utilsJS() {
                     shouldMinify: (template) => true,
                 })
             )
-            .pipe(uglify({ mangle: false }))
+            .pipe(uglify({ mangle: true }))
             .pipe(rename({ suffix: ".min" }))
             .pipe(dest("src/shared/"))
     );
@@ -56,7 +56,7 @@ function utilsJS() {
 
 function themeJS() {
     return src(["src/popup/js/theme.js"])
-        .pipe(uglify({ mangle: false }))
+        .pipe(uglify({ mangle: true }))
         .pipe(rename({ suffix: ".min" }))
         .pipe(dest("src/popup/min/"));
 }

@@ -22,6 +22,13 @@ const extractAuthor = (bibtex) =>
         .map((a) => a.split(", ").reverse().join(" "))
         .join(" and ");
 
+const decodeHtml = (html) => {
+    // https://stackoverflow.com/questions/5796718/html-entity-decode
+    var txt = document.createElement("textarea");
+    txt.innerHTML = html;
+    return txt.value;
+};
+
 // -------------------
 // -----  Fetch  -----
 // -------------------
@@ -548,11 +555,13 @@ const tryDBLP = async (paper) => {
         );
 
         for (const hit of hits) {
-            const hitTitle = hit.info.title
-                .toLowerCase()
-                .replaceAll("\n", " ")
-                .replaceAll(".", "")
-                .replaceAll(/\s\s+/g, " ");
+            const hitTitle = decodeHtml(
+                hit.info.title
+                    .toLowerCase()
+                    .replaceAll("\n", " ")
+                    .replaceAll(".", "")
+                    .replaceAll(/\s\s+/g, " ")
+            );
             const refTitle = paper.title
                 .toLowerCase()
                 .replaceAll("\n", " ")
@@ -560,8 +569,8 @@ const tryDBLP = async (paper) => {
                 .replaceAll(/\s\s+/g, " ");
             if (hitTitle === refTitle && hit.info.venue !== "CoRR") {
                 info("Found a DBLP match");
-                const venue =
-                    global.overrideDBLPVenues[hit.info.venue] || hit.info.venue;
+                const abbr = hit.info.venue.toLowerCase().replaceAll(".", "").trim();
+                const venue = global.journalAbbreviations[abbr] || hit.info.venue;
                 const year = hit.info.year;
                 const url = hit.info.url;
                 const note = `Accepted @ ${venue.trim()} ${year} -- [dblp.org]\n${url}`;
@@ -699,10 +708,8 @@ const addOrUpdatePaper = async (url, is, checks) => {
             // display red slider feedback if the user did not disable it
             // from the menu
             checks && checks.checkFeedback && feedback("Added to your Memory!", paper);
-            console.log("note", paper.note);
             if (!paper.note) {
                 const note = await tryPreprintMatch(paper);
-                console.log("note: ", note);
                 if (note) {
                     console.log("[PM] Updating preprint note to", note);
                     paper.note = note;
