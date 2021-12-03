@@ -619,9 +619,40 @@ const initPaper = async (paper) => {
         }
     }
 
+    paper = await autoTagPaper(paper);
     validatePaper(paper);
 
     return paper;
+};
+
+const autoTagPaper = async (paper) => {
+    try {
+        const autoTags = await getStorage("autoTags");
+        if (!autoTags || !autoTags.length) return paper;
+        let tags = new Set();
+        for (const at of autoTags) {
+            if (!at.tags?.length) continue;
+            let matched = false;
+            if (at.title) {
+                matched |= new RegExp(at.title, "i").test(paper.title);
+            }
+            if (at.author) {
+                matched |= new RegExp(at.author, "i").test(paper.author);
+            }
+            if (matched) {
+                at.tags.forEach((t) => tags.add(t));
+            }
+        }
+        paper.tags = Array.from(tags).sort();
+        if (paper.tags.length) {
+            console.log("Automatically adding tags:", paper.tags);
+        }
+        return paper;
+    } catch (error) {
+        console.log("Error auto-tagging:", error);
+        console.log("Paper:", paper);
+        return paper;
+    }
 };
 
 const makePaper = async (is, url, id) => {
