@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>PaperMemory Options</title>
+    <style>
+        @import url("https://fonts.googleapis.com/css2?family=Yantramanav:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;1,600&display=swap");
+        @import url("https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;500;600;700&display=swap");
+    </style>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <link rel="stylesheet" type="text/css" href="../shared/css/vars.css">
+    <link rel="stylesheet" type="text/css" href="options.css">
+</head>
+
+<body>
+
+    <div id="header">
+        <div id="header-wrapper">
+            <h1>Paper Memory Options</h1>
+            <svg viewBox="0 0 24 24" class="tabler-icon ml-3" id="header-icon">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                <polyline points="13 3 13 10 19 10 11 21 11 14 5 14 13 3" />
+            </svg>
+        </div>
+    </div>
+    <div id="content">
+        <div class="section">
+            <h2>Auto-tagging</h2>
+            <p>Provide Regular Expressions to automatically add tags to papers based on their titles and authors.
+                Matching is <strong>not</strong> case-sensitive.</p>
+
+            <div id="auto-tags-container">
+                <div id="auto-tags-headers" class="row">
+                    <div class="col-3"><strong>Title RegEx</strong></div>
+                    <div class="col-3"><strong>Authors RegEx</strong></div>
+                    <div class="col-3"><strong>Tags to use</strong> (coma-seprated)</div>
+                    <div class="col-3"><span id="auto-tags-feedback"></span></div>
+                </div>
+                <div id="auto-tags-list"></div>
+                <div id="auto-tags-new" class="row">
+                    <div class="col-3">
+                        <input type="text" id="auto-tags-new-title" />
+                    </div>
+                    <div class="col-3">
+                        <input type="text" id="auto-tags-new-authors" />
+                    </div>
+                    <div class="col-3">
+                        <input type="text" id="auto-tags-new-tags" />
+                    </div>
+                    <div class="col-3">
+                        <div class="row">
+                            <div class="col-6 d-flex justify-content-evenly">
+                                <svg tabindex="0" style="stroke: #24f62a; width: 32px; height: 32px; cursor: pointer"
+                                    id="auto-tags-new-save" viewBox="0 0 24 24">
+                                    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                    <path d="M5 12l5 5l10 -10" />
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+    </div>
+
+    <script src="../shared/jquery.min.js"></script>
+    <script src="../shared/utils.min.js"></script>
+    <script src="options.js"></script>
+</body>
+
+</html>

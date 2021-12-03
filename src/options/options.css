@@ -1,0 +1,98 @@
+/*
+---------------------
+-----  Globals  -----
+---------------------
+*/
+:root {
+    --maxWidth: 1000px;
+}
+body {
+    margin: 0;
+    font-family: "Yantramanav";
+}
+
+svg {
+    stroke-width: 1.15;
+    stroke: #7c7f8b;
+    fill: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+code {
+    font-family: "Fira Code", monospace;
+    padding: 1px 4px;
+    vertical-align: text-top;
+    border-radius: var(--round);
+    background-color: rgb(238, 238, 238);
+}
+
+.tabler-icon {
+    height: 32px;
+    width: 32px;
+    color: var(--red);
+    stroke-width: 1px;
+}
+
+/*
+--------------------
+-----  Header  -----
+--------------------
+*/
+#header {
+    background-color: var(--red);
+    padding: 12px;
+    color: white;
+    display: flex;
+    justify-content: start;
+    align-items: center;
+    border-radius: 0 0 75% 0/50%;
+    box-shadow: 14px 30px 122px -30px rgba(0, 0, 0, 0.75);
+}
+#header-wrapper {
+    max-width: var(--maxWidth);
+    margin: auto;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+#header-wrapper h1 {
+    font-weight: 300;
+}
+#header-icon {
+    stroke: white;
+    margin-left: 1rem;
+}
+
+/*
+---------------------
+-----  Content  -----
+---------------------
+*/
+#content {
+    max-width: var(--maxWidth);
+    margin: auto;
+    padding: 32px;
+}
+
+.section {
+    margin-bottom: 2rem;
+}
+
+/*
+-----------------------
+-----  Auto Tags  -----
+-----------------------
+*/
+
+#auto-tags-headers {
+    margin-bottom: 1rem;
+}
+
+#auto-tags-container svg {
+    stroke-width: 2;
+}
+
+.auto-tags-item {
+    margin-bottom: 0.5rem;
+}
