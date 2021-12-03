@@ -62,7 +62,7 @@
         "src/content_scripts/content_script.js"
       ],
       "css": [
-        "src/shared/loader.css",
+        "src/shared/css/loader.css",
         "src/content_scripts/content_script.css"
       ]
     }
