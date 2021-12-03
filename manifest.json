@@ -27,6 +27,7 @@
       }
     }
   },
+  "options_page": "src/options/options.html",
   "permissions": [
     "https://arxiv.org/*",
     "*://api.biorxiv.org/*",
