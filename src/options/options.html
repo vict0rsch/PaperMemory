@@ -3,6 +3,7 @@
 
 <head>
     <title>PaperMemory Options</title>
+    <script src="../shared/min/theme.min.js"></script>
     <style>
         @import url("https://fonts.googleapis.com/css2?family=Yantramanav:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;1,600&display=swap");
         @import url("https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;500;600;700&display=swap");
@@ -27,9 +28,12 @@
     <div id="content">
         <div class="section">
             <h2>Auto-tagging</h2>
-            <p>Provide Regular Expressions to automatically add tags to papers based on their titles and authors. The
+            <p>Provide Javascript regular expressions to automatically add tags to papers based on their titles and
+                authors. The
                 two columns represent an <code>AND</code>. Use two different entries for an <code>OR</code>.
-                Matching is <strong>not</strong> case-sensitive.</p>
+                Matching is <strong>not</strong> case-sensitive. An empty input matches everything, it is equivalent to
+                <code>.*</code>.
+            </p>
 
             <div id="auto-tags-container">
                 <div id="auto-tags-headers" class="row">
@@ -67,8 +71,8 @@
     </div>
     </div>
 
-    <script src="../shared/jquery.min.js"></script>
-    <script src="../shared/utils.min.js"></script>
+    <script src="../shared/min/jquery.min.js"></script>
+    <script src="../shared/min/utils.min.js"></script>
     <script src="options.js"></script>
 </body>
 

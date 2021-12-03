@@ -20,7 +20,8 @@ svg {
 }
 
 code {
-    font-family: "Fira Code", monospace;
+    font-family: "Fira Code", monospace !important;
+    color: inherit !important;
     padding: 1px 4px;
     vertical-align: text-top;
     border-radius: var(--round);
