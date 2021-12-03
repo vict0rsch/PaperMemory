@@ -1,13 +1,3 @@
-:root {
-    --blue: #0276ff;
-    --red: #b31b1b;
-    --lightRed: #cc5050;
-    --round: 4px;
-    --rounder: 6px;
-    --outline: grey;
-    --color: black;
-}
-
 html {
     min-width: 450px;
     max-width: 450px;

@@ -78,6 +78,7 @@ function popupHTML() {
 
 function popupCSS() {
     return src([
+        "src/shared/vars.css",
         "src/popup/css/options.css",
         "src/popup/css/popup.css",
         "src/shared/loader.css",
@@ -97,7 +98,10 @@ function popupDarkCSS() {
 function watchFiles() {
     watch("src/popup/js/*.js", popupJS);
     watch("src/popup/theme.js", themeJS);
-    watch("src/popup/css/*.css", parallel(popupCSS, popupDarkCSS));
+    watch(
+        ["src/popup/css/*.css", "src/shared/vars.css"],
+        parallel(popupCSS, popupDarkCSS)
+    );
     watch("src/popup/popup.html", popupHTMLDev);
     watch("src/shared/utils/*", utilsJS);
 }
