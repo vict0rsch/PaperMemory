@@ -560,9 +560,10 @@ const getStorage = async (key) => {
     });
 };
 
-const setStorage = async (key, value) => {
+const setStorage = async (key, value, cb = () => {}) => {
     return new Promise((resolve, reject) => {
         chrome.storage.local.set({ [key]: value }, () => {
+            cb();
             resolve(true);
         });
     });
