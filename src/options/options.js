@@ -188,7 +188,7 @@ const handleCustomPDFFunctionSave = async () => {
     const examplePaper = await getExamplePaper();
     val("custom-title-example", examplePaper.title);
     if (errorMessage) {
-        const errorFeedback = /*html*/ `<span style="color: red">${error}</span>`;
+        const errorFeedback = /*html*/ `<span style="color: red">${errorMessage}</span>`;
         setHTML("custom-title-feedback", errorFeedback);
     } else {
         findEl("custom-title-result").innerText = titleFunction(examplePaper);
