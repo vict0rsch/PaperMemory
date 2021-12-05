@@ -97,7 +97,7 @@ global.defaultTitleFunctionCode = `
 (paper) => {\n
     title = paper.title.replaceAll("\\n", '');\n
     id = paper.id;\n
-    return \`\${title} - \${id}.pdf\`\n}`;
+    return \`\${title} - \${id}\`\n}`;
 
 /**
  * English words to ignore when creating an arxiv paper's BibTex key.

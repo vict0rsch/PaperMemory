@@ -234,7 +234,11 @@ const arxiv = async (checks) => {
                 });
                 downloadFile(pdfUrl, `${title}.pdf`);
             } else {
-                downloadFile(pdfUrl, stateTitleFunction(id));
+                let title = stateTitleFunction(id);
+                if (!title.endsWith(".pdf")) {
+                    title += ".pdf";
+                }
+                downloadFile(pdfUrl);
             }
         });
     }

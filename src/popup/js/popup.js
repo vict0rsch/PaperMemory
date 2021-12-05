@@ -228,11 +228,15 @@ const popupMain = async (url, isKnownPage, manualTrigger = false) => {
             copyAndConfirmMemoryItem(id, bibtex, "Bibtex citation copied!", true);
         });
         addListener(`popup-memory-item-download--${id}`, "click", () => {
-            let pdfTitle = stateTitleFunction(paper);
-            console.log({ pdfTitle });
+            let title = stateTitleFunction(paper);
+            console.log({ title });
+            if (!title.endsWith(".pdf")) {
+                title += ".pdf";
+            }
+            title = title.replaceAll(":", " ");
             chrome.downloads.download({
                 url: paper.pdfLink,
-                filename: pdfTitle.replaceAll(":", " "),
+                filename: title,
             });
         });
     } else {
