@@ -77,7 +77,45 @@ code {
 }
 
 .section {
-    margin-bottom: 2rem;
+    margin-bottom: 3rem;
+}
+
+textarea {
+    border-radius: var(--round);
+    border: 1px solid #aaaaaa;
+    font-family: "Yantramanav";
+    padding: 6px;
+}
+
+button,
+#file-upload-label {
+    border: 1px solid var(--red);
+    border-radius: var(--rounder);
+    padding: 4px 6px;
+    background-color: white;
+    transition: all ease 200ms;
+    cursor: pointer;
+}
+button:disabled,
+#file-upload-label:disabled {
+    cursor: not-allowed;
+    pointer-events: none;
+    border-color: #e7a9a9;
+}
+
+button:hover,
+#file-upload-label:hover {
+    border-color: var(--red);
+    background-color: rgb(253, 235, 235);
+}
+
+input {
+    border-radius: var(--round);
+    border: 1px solid #aaa;
+    margin-top: 8px;
+    line-height: 1.1rem;
+    padding: 6px;
+    margin-bottom: 4px;
 }
 
 /*

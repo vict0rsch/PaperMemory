@@ -27,7 +27,7 @@ body,
     color: var(--lighterColor);
 }
 
-#customPdfTitleTextarea {
+#custom-title-textarea {
     background: var(--lighterBackground);
     color: var(--color);
     border-color: var(--color);

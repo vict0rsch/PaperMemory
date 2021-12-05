@@ -178,6 +178,74 @@ const setupAutoTags = async () => {
     addAutoTagListeners(autoTags);
 };
 
+// -----------------------------------
+// -----  Custom title function  -----
+// -----------------------------------
+
+const handleCustomPDFFunctionSave = async () => {
+    const userCode = val("custom-title-textarea").trim();
+    const { titleFunction, code, errorMessage } = await getTitleFunction(userCode);
+    const examplePaper = await getExamplePaper();
+    val("custom-title-example", examplePaper.title);
+    if (errorMessage) {
+        const errorFeedback = /*html*/ `<span style="color: red">${error}</span>`;
+        setHTML("custom-title-feedback", errorFeedback);
+    } else {
+        findEl("custom-title-result").innerText = titleFunction(examplePaper);
+        // save function string
+        chrome.storage.local.set({ titleFunctionCode: code });
+        // no error so far: all good!
+        const savedFeedback = /*html*/ `<span style="color: green">Saved!</span>`;
+        setHTML("custom-title-feedback", savedFeedback);
+        setTimeout(() => {
+            setHTML("custom-title-feedback", "");
+        }, 1000);
+    }
+};
+
+const handleDefaultPDFFunctionClick = () => {
+    const code = global.defaultTitleFunctionCode;
+    console.log("global: ", global);
+    console.log("code: ", code);
+    chrome.storage.local.set({ titleFunctionCode: code });
+    val("custom-title-textarea", code);
+
+    const savedFeedback = /*html*/ `<span style="color: var(--green)"
+        >Saved!</span
+    >`;
+    setHTML("custom-title-feedback", savedFeedback);
+    setTimeout(() => {
+        setHTML("custom-title-feedback", "");
+    }, 1000);
+};
+
+/**
+ * Retrieve the custom pdf function, updates the associated textarea and adds and
+ * event listener for when the latter changes.
+ * @param {object} menu the user's menu options, especially including pdfTitleFn
+ */
+const setupTitleFunction = async () => {
+    // attempt to use the user's custom function
+    const { titleFunction, code } = await getTitleFunction();
+
+    // update the user's textarea
+    val("custom-title-textarea", code);
+    const examplePaper = await getExamplePaper();
+    findEl("custom-title-example").innerText = examplePaper.title;
+    findEl("custom-title-result").innerText = titleFunction(examplePaper);
+    setHTML(
+        "paper-available-keys",
+        Object.keys(examplePaper)
+            .map((k) => `<code>${k}</code>`)
+            .join(", ")
+    );
+    // listen to saving click
+    addListener("custom-title-save", "click", handleCustomPDFFunctionSave);
+    // listen to the event resetting the pdf title function
+    // to the built-in default
+    addListener("custom-title-default", "click", handleDefaultPDFFunctionClick);
+};
+
 // ----------------------------
 // -----  Document Ready  -----
 // ----------------------------
@@ -185,4 +253,5 @@ const setupAutoTags = async () => {
 (() => {
     setupAutoTags();
     setUpKeyboardListeners();
+    setupTitleFunction();
 })();

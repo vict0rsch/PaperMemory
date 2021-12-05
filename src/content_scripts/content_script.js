@@ -92,11 +92,6 @@ const contentScriptMain = async (url) => {
         menu[m] = storedMenu.hasOwnProperty(m) ? storedMenu[m] : true;
     }
 
-    menu.pdfTitleFn =
-        menu.pdfTitleFn && typeof menu.pdfTitleFn === "string"
-            ? getPdfFn(menu.pdfTitleFn)
-            : defaultPDFTitleFn;
-
     let is = isPaper(url);
 
     if (is.arxiv) {
@@ -108,11 +103,9 @@ const contentScriptMain = async (url) => {
 
         if (menu.checkPdfTitle) {
             const makeTitle = async (id, url) => {
-                let title = global.state.papers.hasOwnProperty(id)
-                    ? global.state.papers[id].title
-                    : "";
-                if (!title) return;
-                title = statePdfTitle(title, id);
+                if (!global.state.papers.hasOwnProperty(id)) return;
+                const paper = global.state.papers[id];
+                title = stateTitleFunction(paper);
                 window.document.title = title;
                 chrome.runtime.sendMessage({
                     type: "update-title",
@@ -196,11 +189,9 @@ const updatePaper = (papers, id) => {
     return papers;
 };
 
-const arxiv = (checks) => {
-    const { checkMd, checkBib, checkDownload, pdfTitleFn } = checks;
-    global.state.pdfTitleFn = pdfTitleFn;
-
-    // console.log({ checks })
+const arxiv = async (checks) => {
+    const { checkMd, checkBib, checkDownload } = checks;
+    global.state.titleFunction = (await getTitleFunction()).titleFunction;
 
     const url = window.location.href;
     const isArxivAbs = url.includes("https://arxiv.org/abs/");
@@ -235,12 +226,16 @@ const arxiv = (checks) => {
                 hasClass("arxiv-button", "downloaded") &&
                     removeClass("arxiv-button", "downloaded");
             }, 1500);
-            const title = await $.get(
-                `https://export.arxiv.org/api/query?id_list=${id.split("-")[1]}`
-            ).then((data) => {
-                return $($(data).find("entry title")[0]).text();
-            });
-            downloadFile(pdfUrl, statePdfTitle(title, id));
+            if (!global.state.papers.hasOwnProperty(id)) {
+                const title = await $.get(
+                    `https://export.arxiv.org/api/query?id_list=${id.split("-")[1]}`
+                ).then((data) => {
+                    return $($(data).find("entry title")[0]).text();
+                });
+                downloadFile(pdfUrl, `${title}.pdf`);
+            } else {
+                downloadFile(pdfUrl, stateTitleFunction(id));
+            }
         });
     }
     // ---------------------------

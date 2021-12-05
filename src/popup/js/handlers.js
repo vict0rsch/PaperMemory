@@ -521,50 +521,6 @@ const handleCancelOverwrite = (e) => {
     val("overwrite-arxivmemory-input", "");
 };
 
-const handleCustomPDFFunctionSave = () => {
-    const code = val("customPdfTitleTextarea").trim();
-    try {
-        // check code: it can be evaluated and it runs without error
-        const fn = eval(code);
-        const tested = fn("test", "1.2");
-        if (typeof tested !== "string") {
-            throw Error(
-                "Custom function returns the wrong type:",
-                typeof tested,
-                tested
-            );
-        }
-        // no error so far: all good!
-        const savedFeedback = /*html*/ `<span style="color: green">Saved!</span>`;
-        setHTML("customPdfFeedback", savedFeedback);
-        // save function string
-        chrome.storage.local.set({ pdfTitleFn: code });
-        global.state.pdfTitleFn = fn;
-        setTimeout(() => {
-            setHTML("customPdfFeedback", "");
-        }, 1000);
-    } catch (error) {
-        // something went wrong!
-        console.log("setAndHandleCustomPDFFunction error:");
-        const errorFeedback = /*html*/ `<span style="color: red">${error}</span>`;
-        savedFeedback("customPdfFeedback", errorFeedback);
-    }
-};
-
-const handleDefaultPDFFunctionClick = () => {
-    const code = defaultPDFTitleFn.toString();
-    const savedFeedback = /*html*/ `<span style="color: var(--green)"
-        >Saved!</span
-    >`;
-    chrome.storage.local.set({ pdfTitleFn: code });
-    global.state.pdfTitleFn = defaultPDFTitleFn;
-    val("customPdfTitleTextarea", code);
-    setHTML("customPdfFeedback", savedFeedback);
-    setTimeout(() => {
-        setHTML("customPdfFeedback", "");
-    }, 1000);
-};
-
 const handlePopupSaveEdits = (id) => () => {
     const { note, codeLink, favorite } = getPaperEdits(id, true);
     updatePaperTags(id, `#popup-item-tags--${id}`);

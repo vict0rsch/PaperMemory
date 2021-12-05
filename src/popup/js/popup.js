@@ -108,28 +108,6 @@ const setStandardPopupClicks = () => {
 };
 
 /**
- * Retrieve the custom pdf function, updates the associated textarea and adds and
- * event listener for when the latter changes.
- * @param {object} menu the user's menu options, especially including pdfTitleFn
- */
-const setAndHandleCustomPDFFunction = (menu) => {
-    // attempt to use the user's custom function
-    if (menu.pdfTitleFn && typeof menu.pdfTitleFn === "string") {
-        global.state.pdfTitleFn = getPdfFn(menu.pdfTitleFn);
-    }
-    // it may have failed but getPdfFn is guaranteed to return a working function
-    // so use that and update storage just in case.
-    chrome.storage.local.set({ pdfTitleFn: global.state.pdfTitleFn.toString() });
-    // update the user's textarea
-    val("customPdfTitleTextarea", global.state.pdfTitleFn.toString());
-    // listen to saving click
-    addListener("saveCustomPdf", "click", handleCustomPDFFunctionSave);
-    // listen to the event resetting the pdf title function
-    // to the built-in default
-    addListener("defaultCustomPdf", "click", handleDefaultPDFFunctionClick);
-};
-
-/**
  * Main function when opening the window:
  * + Display the appropriate html depending on whether the user is currently looking at a paper
  * + Add event listeners (clicks and keyboard)
@@ -163,7 +141,7 @@ const popupMain = async (url, isKnownPage, manualTrigger = false) => {
     getAndTrackPopupMenuChecks(menu, global.menuCheckNames);
 
     // Set PDF title function
-    setAndHandleCustomPDFFunction(menu);
+    // setAndHandleCustomPDFFunction(menu);
 
     // Display popup metadata
     if (isKnownPage) {
@@ -250,11 +228,11 @@ const popupMain = async (url, isKnownPage, manualTrigger = false) => {
             copyAndConfirmMemoryItem(id, bibtex, "Bibtex citation copied!", true);
         });
         addListener(`popup-memory-item-download--${id}`, "click", () => {
-            let pdfTitle = statePdfTitle(paper.title, paper.id);
+            let pdfTitle = stateTitleFunction(paper);
             console.log({ pdfTitle });
             chrome.downloads.download({
                 url: paper.pdfLink,
-                filename: pdfTitle.replaceAll(":", "_"),
+                filename: pdfTitle.replaceAll(":", " "),
             });
         });
     } else {

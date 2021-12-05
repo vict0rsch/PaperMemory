@@ -640,7 +640,7 @@ button.changed {
     justify-content: start;
 }
 
-#customPdfTitleTextarea {
+#custom-title-textarea {
     font-family: "Fira-code", monospace;
 }
 

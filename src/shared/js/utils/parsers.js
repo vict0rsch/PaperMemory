@@ -678,7 +678,7 @@ const makePaper = async (is, url, id) => {
         paper = await parsePMLRHTML(url);
         paper.source = "pmlr";
     } else {
-        throw Error("Unknown paper source: " + JSON.stringify({ is, url, id }));
+        throw new Error("Unknown paper source: " + JSON.stringify({ is, url, id }));
     }
 
     return await initPaper(paper);

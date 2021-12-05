@@ -390,35 +390,79 @@ const downloadFile = (fileURL, fileName) => {
     }
 };
 
+const getExamplePaper = async () => {
+    const papers = await getStorage("papers");
+    let paper =
+        papers[
+            Object.keys(papers)
+                .filter((k) => k.indexOf("__") === -1)
+                .reverse()[0]
+        ];
+    if (typeof paper === "undefined") {
+        paper = {
+            title: "Dummy title",
+            author: "Cool Author and Great Author and Complicated Name Àuthor",
+            year: 2021,
+            id: "NoneXiv-214324",
+            bibtex: "@Nonesense{}",
+            tags: ["t1", "t2"],
+            note: "Thispaperdoesnotexist.com",
+        };
+    }
+    return paper;
+};
+
 /**
  * Tries to parse the text input by the user to define the function that takes
- * a paper's title and ID in order to create the custom page title / pdf filename.
- * If there is an error, it uses the built-in function defaultPDFTitleFn.
+ * a paper in order to create the custom page title / pdf filename.
+ * If there is an error, it uses the built-in function from global.defaultTitleFunctionCode.
  * @param {string} code The string describing the code function.
  * @returns {function} Either the user's function if it runs without errors, or the built-in
  * formatting function
  */
-const getPdfFn = (code) => {
+const getTitleFunction = async (code = null) => {
+    let titleFunction;
+    if (!code) {
+        code = await getStorage("titleFunctionCode");
+    }
+    if (typeof code === "undefined") {
+        code = global.defaultTitleFunctionCode;
+    }
+
+    let errorMessage;
+
     try {
-        pdfTitleFn = eval(code);
+        titleFunction = eval(code);
     } catch (error) {
-        console.log("Error parsing pdf title function. Function string then error:");
+        errorMessage = `Error parsing the title function: ${error}`;
+        console.log("Error parsing the title function. Function string then error:");
         console.log(code);
         console.log(error);
-        pdfTitleFn = defaultPDFTitleFn;
+        titleFunction = eval(global.defaultTitleFunctionCode);
+        code = global.defaultTitleFunctionCode;
     }
     try {
-        pdfTitleFn("test", "1.2");
+        const examplePaper = await getExamplePaper();
+        const result = titleFunction(examplePaper);
+        if (typeof result !== "string") {
+            throw new Error(`Result ${result} is not a string`);
+        }
     } catch (error) {
+        errorMessage = `Error executing the title function: ${error}`;
         console.log(
-            "Error testing the user's pdf title function. Function string then error:"
+            "Error testing the user's title function. Function string then error:"
         );
         console.log(code);
         console.log(error);
-        pdfTitleFn = defaultPDFTitleFn;
+        titleFunction = eval(global.defaultTitleFunctionCode);
+        code = global.defaultTitleFunctionCode;
     }
 
-    return pdfTitleFn;
+    return {
+        titleFunction: titleFunction,
+        code: code.trim(),
+        errorMessage: errorMessage,
+    };
 };
 
 const migrateData = async (papers, manifestDataVersion, store = true) => {
@@ -611,13 +655,21 @@ const backupData = async (papers) => {
     });
 };
 
-const statePdfTitle = (title, id) => {
+const stateTitleFunction = (paperOrId) => {
+    let paper = paperOrId;
+    if (typeof paperOrId === "string") {
+        paper = global.state.papers[paperOrId];
+        if (typeof paper === "undefined") {
+            console.log("Error in stateTitleFunction: unknown id", paperOrId);
+            return "Unknown ID";
+        }
+    }
     let name;
     try {
-        name = global.state.pdfTitleFn(title, id);
+        name = global.state.titleFunction(paper);
     } catch (error) {
-        console.log("statePdfTitle error", error);
-        name = defaultPDFTitleFn(title, id);
+        console.log("Error in stateTitleFunction:", error);
+        name = eval(global.defaultTitleFunctionCode)(paper);
     }
 
     return name.replaceAll("\n", " ").replace(/\s\s+/g, " ");
@@ -652,7 +704,7 @@ const initState = async (papers, isContentScript) => {
     }
 
     global.state.dataVersion = getManifestDataVersion();
-    global.state.pdfTitleFn = defaultPDFTitleFn;
+    global.state.titleFunction = (await getTitleFunction()).titleFunction;
 
     const m = Date.now();
     const migration = await migrateData(papers, global.state.dataVersion);
@@ -757,7 +809,7 @@ const parseIdFromUrl = (url) => {
         const year = "20" + key.match(/\d+/)[0];
         return `PMLR-${year}-${key}`;
     } else {
-        throw Error("unknown paper url");
+        throw new Error("unknown paper url");
     }
 };
 
@@ -949,7 +1001,7 @@ const validatePaper = (paper, log = true) => {
                 warns.push(message);
                 log && console.warn(message);
             } else {
-                throw Error(
+                throw new Error(
                     `Cannot continue, paper is corrupted. Missing mandatory attribute "${key}" in ${paper.id}`
                 );
             }

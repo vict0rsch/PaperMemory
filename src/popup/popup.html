@@ -205,25 +205,6 @@
 			<div style="display: none;" id="overwriteFeedback"></div>
 		</div>
 
-		<h3 class="mt-4">⋗ Beta</h3>
-
-		<div class="flex-center-center" style="flex-direction: column;">
-			<p>
-				Beta feature: PDF file name parser -> enter a javascript function taking as input
-				<code style="margin: 0px; display: inline-block;">(title, id)</code> and returning a string.
-			</p>
-
-			<textarea id="customPdfTitleTextarea" class="w-100 mb-2" rows="4">
-(title, id) => {
-title = title.replaceAll("\n", '');
-return `${title} - ${id}.pdf`
-}</textarea>
-			<div class="flex-center-evenly mb-3" style="width: 60%">
-				<button id="saveCustomPdf">Save function</button>
-				<button id="defaultCustomPdf">Back to default</button>
-			</div>
-			<div id="customPdfFeedback"></div>
-		</div>
 	</div>
 
 	<div id="memory-spinner" class="arxivTools-container">

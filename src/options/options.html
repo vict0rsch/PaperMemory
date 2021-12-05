@@ -68,8 +68,40 @@
             </div>
         </div>
 
+        <div class="section">
+            <h2>Custom title function</h2>
+            <p>Provide a Javascript function code to produce a "title" from a <code>paper</code> object. This function
+                <em>must</em> return a <code>string</code> which will be used to 1/ Change the webpage titles 2/ Name
+                the pdf files you download with Paper Memory.
+            </p>
+            <p>For illustration, an example from your memory is displayed after the code input.</p>
+            <div class="row">
+
+                <div class="col-6">
+                    <textarea id="custom-title-textarea" style="font-family: 'Fira Code'; font-size: 0.8rem;"
+                        class="w-100 mb-2" rows="4"></textarea>
+                    <div class="flex-center-evenly mb-3" style="width: 60%">
+                        <button id="custom-title-save">Save function</button>
+                        <button id="custom-title-default">Back to default</button>
+                    </div>
+                    <div id="custom-title-feedback"></div>
+                </div>
+                <div class="col-6">
+                    Example paper :
+                    <code id="custom-title-example"></code>
+                    <br />
+                    <br />
+                    <span>Available keys:</span>
+                    <span id="paper-available-keys"></span>
+                </div>
+                <div class="col-12 mt-3">Result: <code id="custom-title-result"></code></div>
+
+            </div>
+
+        </div>
+
     </div>
-    </div>
+
 
     <script src="../shared/min/jquery.min.js"></script>
     <script src="../shared/min/utils.min.js"></script>

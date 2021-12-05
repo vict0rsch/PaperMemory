@@ -93,6 +93,12 @@ global.overrideDBLPVenues = {
  */
 global.fuzzyTitleMatchMinDist = 4;
 
+global.defaultTitleFunctionCode = `
+(paper) => {\n
+    title = paper.title.replaceAll("\\n", '');\n
+    id = paper.id;\n
+    return \`\${title} - \${id}.pdf\`\n}`;
+
 /**
  * English words to ignore when creating an arxiv paper's BibTex key.
  */
