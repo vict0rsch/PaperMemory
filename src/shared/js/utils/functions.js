@@ -478,7 +478,7 @@ const migrateData = async (papers, manifestDataVersion, store = true) => {
     let newPapers = { ...papers };
 
     try {
-        if (currentVersion === latestDataVersion) {
+        if (currentVersion >= latestDataVersion) {
             return { papers: papers, success: true };
         }
 
