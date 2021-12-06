@@ -151,7 +151,8 @@ button:not(.select2-selection__choice__remove):hover,
 
 .form-note-textarea,
 .popup-form-note-textarea,
-.form-code-input {
+.form-code-input,
+#auto-tags-container input {
     color: var(--color);
     background: var(--lighterBackground);
 }
