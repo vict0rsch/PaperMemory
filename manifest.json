@@ -27,7 +27,10 @@
       }
     }
   },
-  "options_page": "src/options/options.html",
+  "options_ui": {
+    "page": "src/options/options.html",
+    "open_in_tab": true
+  },
   "permissions": [
     "https://arxiv.org/*",
     "*://api.biorxiv.org/*",
