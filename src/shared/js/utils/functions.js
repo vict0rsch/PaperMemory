@@ -390,14 +390,15 @@ const downloadFile = (fileURL, fileName) => {
     }
 };
 
-const getExamplePaper = async () => {
+const getExamplePaper = async (idx) => {
     const papers = await getStorage("papers");
-    let paper =
-        papers[
-            Object.keys(papers)
-                .filter((k) => k.indexOf("__") === -1)
-                .reverse()[0]
-        ];
+    const keys = Object.keys(papers)
+        .filter((k) => k.indexOf("__") === -1)
+        .reverse();
+    if (typeof idx === "undefined") {
+        idx = getRandomInt(keys.length);
+    }
+    let paper = papers[keys[idx]];
     if (typeof paper === "undefined") {
         paper = {
             title: "Dummy title",
@@ -442,7 +443,7 @@ const getTitleFunction = async (code = null) => {
         code = global.defaultTitleFunctionCode;
     }
     try {
-        const examplePaper = await getExamplePaper();
+        const examplePaper = await getExamplePaper(0);
         const result = titleFunction(examplePaper);
         if (typeof result !== "string") {
             throw new Error(`Result ${result} is not a string`);

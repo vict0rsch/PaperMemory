@@ -1,6 +1,15 @@
 // TODO: data management: 1/ import css 2/ import functions 3/ remove from popup
 // TODO: fix biorxiv bibtex \t
 
+// -------------------------
+// -----  Local Utils  -----
+// -------------------------
+
+function getRandomInt(max) {
+    // https://developer.mozilla.org/fr/docs/Web/JavaScript/Reference/Global_Objects/Math/random
+    return Math.floor(Math.random() * max);
+}
+
 // ----------------------
 // -----  Keyboard  -----
 // ----------------------
@@ -188,8 +197,8 @@ const setupAutoTags = async () => {
 const handleCustomPDFFunctionSave = async () => {
     const userCode = val("custom-title-textarea").trim();
     const { titleFunction, code, errorMessage } = await getTitleFunction(userCode);
-    const examplePaper = await getExamplePaper();
-    val("custom-title-example", examplePaper.title);
+    const examplePaper = await getExamplePaper(0);
+    setHTML("custom-title-example", examplePaper.title);
     if (errorMessage) {
         const errorFeedback = /*html*/ `<span style="color: red">${errorMessage}</span>`;
         setHTML("custom-title-feedback", errorFeedback);
@@ -208,8 +217,6 @@ const handleCustomPDFFunctionSave = async () => {
 
 const handleDefaultPDFFunctionClick = () => {
     const code = global.defaultTitleFunctionCode;
-    console.log("global: ", global);
-    console.log("code: ", code);
     chrome.storage.local.set({ titleFunctionCode: code });
     val("custom-title-textarea", code);
 
@@ -220,6 +227,13 @@ const handleDefaultPDFFunctionClick = () => {
     setTimeout(() => {
         setHTML("custom-title-feedback", "");
     }, 1000);
+};
+
+const handleTryAnotherPaper = async () => {
+    const examplePaper = await getExamplePaper();
+    const { titleFunction } = await getTitleFunction();
+    setHTML("custom-title-example", examplePaper.title);
+    findEl("custom-title-result").innerText = titleFunction(examplePaper);
 };
 
 /**
@@ -233,7 +247,7 @@ const setupTitleFunction = async () => {
 
     // update the user's textarea
     val("custom-title-textarea", code);
-    const examplePaper = await getExamplePaper();
+    const examplePaper = await getExamplePaper(0);
     findEl("custom-title-example").innerText = examplePaper.title;
     findEl("custom-title-result").innerText = titleFunction(examplePaper);
     setHTML(
@@ -247,6 +261,8 @@ const setupTitleFunction = async () => {
     // listen to the event resetting the pdf title function
     // to the built-in default
     addListener("custom-title-default", "click", handleDefaultPDFFunctionClick);
+    // listen to the 'try another' paper button
+    addListener("another-paper", "click", handleTryAnotherPaper);
 };
 
 // -----------------------------

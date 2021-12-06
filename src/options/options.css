@@ -137,6 +137,20 @@ input {
 }
 
 /*
+-----------------------------------
+-----  Custom title function  -----
+-----------------------------------
+*/
+
+#another-paper {
+    font-size: 0.8rem;
+    color: rgb(36, 119, 197);
+    text-decoration: underline;
+    cursor: pointer;
+    margin-left: 0.5rem;
+}
+
+/*
 -----------------------------
 -----  Data Management  -----
 -----------------------------
