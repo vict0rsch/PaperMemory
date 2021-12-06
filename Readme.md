@@ -32,7 +32,7 @@ This browser extension allows you to do automatically store research papers you 
 
 ### Supported venues
 
-* Arxiv
+* Arxiv (PaperMemory will try to find if a pre-print has been published and create a corresponding `note` to the paper (see [preprints](#preprints)))
 * BioRxiv
 * NeurIPS
 * Open Review (ICLR etc.)
@@ -148,9 +148,7 @@ There's room for improvement here^, please contact me (an issue will do) if you 
 
 ## Todo
 
-* [ ] Update visuals
-* [ ] Document `:` being replaced by `_` when downloading a pdf ([OS requirements...](https://stackoverflow.com/questions/30960190/problematic-characters-for-filename-in-chrome-downloads-download))
-* [ ] Document backup and how to get it
+* [ ] Update visuals for 0.3.4
 * [ ] Improve `Contributing.md`
 * [ ] Tests (WIP => [Puppeteer + Mocha #26](https://github.com/vict0rsch/PaperMemory/pull/26))
 
