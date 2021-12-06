@@ -279,10 +279,10 @@ const handleDownloadMemoryClick = () => {
     const date = now.toLocaleDateString().replaceAll("/", ".");
     const time = now.toLocaleTimeString().replaceAll(":", ".");
     chrome.storage.local.get("papers", ({ papers }) => {
-        const version = versionToSemantic(papers.__dataVersion);
+        // const version = versionToSemantic(papers.__dataVersion);
         downloadTextFile(
             JSON.stringify(papers),
-            `memory-data-${version}-${date}-${time}.json`,
+            `PaperMemory-data-${date}-${time}.json`,
             "text/json"
         );
     });
@@ -293,7 +293,7 @@ const handleDownloadBibtexJsonClick = () => {
     const date = now.toLocaleDateString().replaceAll("/", ".");
     const time = now.toLocaleTimeString().replaceAll(":", ".");
     chrome.storage.local.get("papers", ({ papers }) => {
-        const version = versionToSemantic(papers.__dataVersion);
+        // const version = versionToSemantic(papers.__dataVersion);
         delete papers.__dataVersion;
         const bibtex = Object.keys(papers).reduce((obj, k) => {
             obj[k] = formatBibtext(papers[k].bibtex) || "";
@@ -301,7 +301,7 @@ const handleDownloadBibtexJsonClick = () => {
         }, {});
         downloadTextFile(
             JSON.stringify(bibtex),
-            `memory-bibtex-${version}-${date}-${time}.json`,
+            `PaperMemory-bibtex-${date}-${time}.json`,
             "text/json"
         );
     });
@@ -312,7 +312,7 @@ const handleDownloadBibtexPlainClick = () => {
     const date = now.toLocaleDateString().replaceAll("/", ".");
     const time = now.toLocaleTimeString().replaceAll(":", ".");
     chrome.storage.local.get("papers", ({ papers }) => {
-        const version = versionToSemantic(papers.__dataVersion);
+        // const version = versionToSemantic(papers.__dataVersion);
         delete papers.__dataVersion;
         const bibtex = Object.values(papers)
             .map((v, k) => {
@@ -326,7 +326,7 @@ const handleDownloadBibtexPlainClick = () => {
             .join("\n");
         downloadTextFile(
             JSON.stringify(bibtex),
-            `memory-bibtex-${version}-${date}-${time}.bib`,
+            `PaperMemory-bibtex-${date}-${time}.bib`,
             "text/plain"
         );
     });
