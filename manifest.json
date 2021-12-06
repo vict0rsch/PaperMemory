@@ -10,8 +10,8 @@
   "content_security_policy": "script-src 'self' 'unsafe-eval'; object-src 'self'",
   "background": {
     "scripts": [
-      "src/shared/jquery.min.js",
-      "src/shared/utils.min.js",
+      "src/shared/min/jquery.min.js",
+      "src/shared/min/utils.min.js",
       "src/background/background.js"
     ]
   },
@@ -57,8 +57,8 @@
       ],
       "run_at": "document_start",
       "js": [
-        "src/shared/jquery.min.js",
-        "src/shared/utils.min.js",
+        "src/shared/min/jquery.min.js",
+        "src/shared/min/utils.min.js",
         "src/content_scripts/content_script.js"
       ],
       "css": [
