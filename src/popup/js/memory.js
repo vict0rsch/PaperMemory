@@ -630,8 +630,6 @@ const makeMemoryHTML = async () => {
         `Search ${global.state.papersList.length} entries ...`
     );
 
-    const tdisplay = Date.now() / 1000;
-
     displayMemoryTable();
 
     // add input search delay if there are many papers:
@@ -644,7 +642,6 @@ const makeMemoryHTML = async () => {
     }
 
     const tevents = Date.now() / 1000;
-    console.log("Time to display table (s):" + (tevents - tdisplay));
 
     // search keypress events.
     // deprecated fix: https://stackoverflow.com/questions/49278648/alternative-for-events-deprecated-keyboardevent-which-property
@@ -663,8 +660,7 @@ const makeMemoryHTML = async () => {
     // listen to sorting direction change
     addListener("memory-sort-arrow", "click", handleMemorySortArrow);
     const tend = Date.now() / 1000;
-    console.log("Time to add events listeners (s):" + (tend - tevents));
-    console.log("Total time to make (async) (s):" + (tend - tstart));
+    console.log("Total time to make the memory HTML (async) (s):" + (tend - tstart));
 };
 
 const openMemory = () => {
