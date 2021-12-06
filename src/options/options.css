@@ -181,3 +181,24 @@ input {
 #overwrite-buttons {
     flex-direction: column;
 }
+
+/*
+--------------------
+-----  Footer  -----
+--------------------
+*/
+
+#footer {
+    border-top: 1px solid gray;
+    padding-top: 3rem;
+}
+
+.flex-center-evenly {
+    display: flex;
+    align-items: center;
+    justify-content: space-evenly;
+}
+
+#footer a {
+    font-weight: 800;
+}
