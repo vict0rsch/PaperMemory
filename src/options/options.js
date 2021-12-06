@@ -347,7 +347,7 @@ const handleConfirmOverwrite = (papersToWrite, warning) => (e) => {
                 }
             }
         }
-        // await setStorage("papers", papersToWrite);
+        await setStorage("papers", papersToWrite);
         setHTML(
             "overwriteFeedback",
             `<h4 style="margin: 1.5rem">Memory overwritten.</h4>`
