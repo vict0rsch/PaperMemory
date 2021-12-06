@@ -215,10 +215,15 @@ const handleCustomPDFFunctionSave = async () => {
     }
 };
 
-const handleDefaultPDFFunctionClick = () => {
+const handleDefaultPDFFunctionClick = async () => {
     const code = global.defaultTitleFunctionCode;
+    const titleFunction = eval(code);
     chrome.storage.local.set({ titleFunctionCode: code });
     val("custom-title-textarea", code);
+
+    const examplePaper = await getExamplePaper(0);
+    setHTML("custom-title-example", examplePaper.title);
+    findEl("custom-title-result").innerText = titleFunction(examplePaper);
 
     const savedFeedback = /*html*/ `<span style="color: var(--green)"
         >Saved!</span
