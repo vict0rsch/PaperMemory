@@ -64,14 +64,14 @@ const getAutoTagHTML = (at) => {
         </div>
         <div class="col-3">
             <div class="row">
-                <div class="col-6 d-flex justify-content-evenly">
+                <div class="col-6 d-flex justify-content-evenly" title="Update regexs & tags">
                     <svg style="stroke: #24f62a; width: 32px; height: 32px; cursor: pointer"
                         id="auto-tags-item-save--${id}" viewBox="0 0 24 24">
                         <path stroke="none" d="M0 0h24v24H0z" fill="none" />
                         <path d="M5 12l5 5l10 -10" />
                     </svg>
                 </div>
-                <div class="col-6 d-flex justify-content-evenly">
+                <div class="col-6 d-flex justify-content-evenly" title="Delete regexs & tags">
                     <svg tabindex="0" style="stroke:  var(--red); width: 32px; height: 32px; cursor: pointer; stroke-width: 1.5"
                         id="auto-tags-item-delete--${id}" viewBox="0 0 24 24">
                         <path stroke="none" d="M0 0h24v24H0z" fill="none" />
