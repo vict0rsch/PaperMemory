@@ -134,6 +134,11 @@ const popupMain = async (url, isKnownPage, manualTrigger = false) => {
     // Set checkboxes
     getAndTrackPopupMenuChecks(menu, global.menuCheckNames);
 
+    // Set options page link
+    addListener("advanced-configuration", "click", () => {
+        chrome.runtime.openOptionsPage();
+    });
+
     // Set PDF title function
     // setAndHandleCustomPDFFunction(menu);
 
