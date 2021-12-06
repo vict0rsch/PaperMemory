@@ -1,3 +1,6 @@
+// TODO: data management: 1/ import css 2/ import functions 3/ remove from popup
+// TODO: fix biorxiv bibtex \t
+
 // ----------------------
 // -----  Keyboard  -----
 // ----------------------
@@ -246,6 +249,174 @@ const setupTitleFunction = async () => {
     addListener("custom-title-default", "click", handleDefaultPDFFunctionClick);
 };
 
+// -----------------------------
+// -----  Data Management  -----
+// -----------------------------
+
+const handleDownloadMemoryClick = () => {
+    const now = new Date();
+    const date = now.toLocaleDateString().replaceAll("/", ".");
+    const time = now.toLocaleTimeString().replaceAll(":", ".");
+    chrome.storage.local.get("papers", ({ papers }) => {
+        const version = versionToSemantic(papers.__dataVersion);
+        downloadTextFile(
+            JSON.stringify(papers),
+            `memory-data-${version}-${date}-${time}.json`,
+            "text/json"
+        );
+    });
+};
+
+const handleDownloadBibtexJsonClick = () => {
+    const now = new Date();
+    const date = now.toLocaleDateString().replaceAll("/", ".");
+    const time = now.toLocaleTimeString().replaceAll(":", ".");
+    chrome.storage.local.get("papers", ({ papers }) => {
+        const version = versionToSemantic(papers.__dataVersion);
+        delete papers.__dataVersion;
+        const bibtex = Object.keys(papers).reduce((obj, k) => {
+            obj[k] = formatBibtext(papers[k].bibtex) || "";
+            return obj;
+        }, {});
+        downloadTextFile(
+            JSON.stringify(bibtex),
+            `memory-bibtex-${version}-${date}-${time}.json`,
+            "text/json"
+        );
+    });
+};
+
+const handleDownloadBibtexPlainClick = () => {
+    const now = new Date();
+    const date = now.toLocaleDateString().replaceAll("/", ".");
+    const time = now.toLocaleTimeString().replaceAll(":", ".");
+    chrome.storage.local.get("papers", ({ papers }) => {
+        const version = versionToSemantic(papers.__dataVersion);
+        delete papers.__dataVersion;
+        const bibtex = Object.values(papers)
+            .map((v, k) => {
+                let b = v.bibtex;
+                if (!b) {
+                    b = "";
+                    console.log(v);
+                }
+                return formatBibtext(b);
+            })
+            .join("\n");
+        downloadTextFile(
+            JSON.stringify(bibtex),
+            `memory-bibtex-${version}-${date}-${time}.bib`,
+            "text/plain"
+        );
+    });
+};
+
+const handleConfirmOverwrite = (papersToWrite, warning) => (e) => {
+    setHTML(
+        "overwriteFeedback",
+        `<div class="arxivTools-container"><div class="sk-folding-cube"><div class="sk-cube1 sk-cube"></div><div class="sk-cube2 sk-cube"></div><div class="sk-cube4 sk-cube"></div><div class="sk-cube3 sk-cube"></div></div></div>`
+    );
+    setTimeout(async () => {
+        if (warning) {
+            for (const id in papersToWrite) {
+                if (papersToWrite.hasOwnProperty(id) && !id.startsWith("__")) {
+                    const { paper, warnings } = validatePaper(papersToWrite[id], false);
+                    papersToWrite[id] = paper;
+                    console.log(warnings);
+                }
+            }
+        }
+        // await setStorage("papers", papersToWrite);
+        setHTML(
+            "overwriteFeedback",
+            `<h4 style="margin: 1.5rem">Memory overwritten.</h4>`
+        );
+        val("overwrite-arxivmemory-input", "");
+    }, 700);
+};
+
+const handleCancelOverwrite = (e) => {
+    hideId("overwriteFeedback");
+    setHTML("overwriteFeedback", ``);
+    val("overwrite-arxivmemory-input", "");
+};
+
+const handleOverwriteMemory = () => {
+    var file = document.getElementById("overwrite-arxivmemory-input").files;
+    console.log("file: ", file);
+    if (!file || file.length < 1) {
+        return;
+    }
+    file = file[0];
+    var reader = new FileReader();
+    reader.onload = function (e) {
+        try {
+            const overwritingPapers = JSON.parse(e.target.result);
+            showId("overwriteFeedback");
+            setHTML(
+                "overwriteFeedback",
+                `<div class="arxivTools-container"><div class="sk-folding-cube"><div class="sk-cube1 sk-cube"></div><div class="sk-cube2 sk-cube"></div><div class="sk-cube4 sk-cube"></div><div class="sk-cube3 sk-cube"></div></div></div>`
+            );
+            const confirm = `<button id="confirm-overwrite">Confirm</button>`;
+            const cancel = `<button id="cancel-overwrite">Cancel</button>`;
+            const title = `<h4 class="w-100 code-font" style="font-size: 0.9rem;">Be careful, you will not be able to revert this operation. Make sure you have downloaded a backup of your memory before overwriting it.</h4>`;
+            const overwriteDiv = `<div id="overwrite-buttons" class="flex-center-evenly pt-3 px-4"> ${title} <div class="flex-center-evenly w-100">${cancel} ${confirm}</div></div>`;
+            setTimeout(async () => {
+                const { success, message, warning, papersToWrite } =
+                    await overwriteMemory(overwritingPapers);
+                if (success) {
+                    if (warning) {
+                        const nWarnings = (warning.match(/<br\/>/g) || []).length;
+                        setHTML(
+                            "overwriteFeedback",
+                            `<h5 class="errorTitle">Done with ${nWarnings} warnings. Confirm overwrite?</h5>${warning}${overwriteDiv}`
+                        );
+                    } else {
+                        style("overwriteFeedback", "text-align", "center");
+                        setHTML(
+                            "overwriteFeedback",
+                            `<h5 class="mb-0 mt-2">Data seems valid. Confirm overwrite?</h5>${overwriteDiv}`
+                        );
+                    }
+                    addListener(
+                        "confirm-overwrite",
+                        "click",
+                        handleConfirmOverwrite(papersToWrite, warning)
+                    );
+                    addListener("cancel-overwrite", "click", handleCancelOverwrite);
+                } else {
+                    setHTML("overwriteFeedback", message);
+                }
+            }, 1500);
+        } catch (error) {
+            setHTML(
+                "overwriteFeedback",
+                `<br/><strong>Error:</strong><br/>${stringifyError(error)}`
+            );
+        }
+    };
+    reader.readAsText(file);
+};
+
+const handleSelectOverwriteFile = () => {
+    var file = document.getElementById("overwrite-arxivmemory-input").files;
+    if (!file || file.length < 1) {
+        return;
+    }
+    file = file[0];
+    setHTML("overwrite-file-name", file.name);
+    if (!file.name.endsWith(".json")) return;
+    findEl("overwrite-arxivmemory-button").disabled = false;
+};
+
+const setupDataManagement = () => {
+    addListener("download-arxivmemory", "click", handleDownloadMemoryClick);
+    addListener("download-bibtex-json", "click", handleDownloadBibtexJsonClick);
+    addListener("download-bibtex-plain", "click", handleDownloadBibtexPlainClick);
+    addListener("overwrite-arxivmemory-button", "click", handleOverwriteMemory);
+    addListener("overwrite-arxivmemory-input", "change", handleSelectOverwriteFile);
+};
+
 // ----------------------------
 // -----  Document Ready  -----
 // ----------------------------
@@ -254,4 +425,5 @@ const setupTitleFunction = async () => {
     setupAutoTags();
     setUpKeyboardListeners();
     setupTitleFunction();
+    setupDataManagement();
 })();

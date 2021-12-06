@@ -77,7 +77,7 @@ code {
 }
 
 .section {
-    margin-bottom: 3rem;
+    margin-bottom: 4rem;
 }
 
 textarea {
@@ -134,4 +134,36 @@ input {
 
 .auto-tags-item {
     margin-bottom: 0.5rem;
+}
+
+/*
+-----------------------------
+-----  Data Management  -----
+-----------------------------
+*/
+
+.flex-center-between {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+#overwrite-file-name {
+    max-width: 200px;
+    padding: 2px 8px;
+    word-break: break-all;
+}
+
+#overwriteFeedback {
+    margin-top: 1rem;
+    border: 1px solid grey;
+    border-radius: var(--round);
+    padding: 1.5rem 2rem;
+    font-size: 0.9rem;
+    overflow: scroll;
+    font-family: "Fira Code", monospace;
+}
+
+#overwrite-buttons {
+    flex-direction: column;
 }

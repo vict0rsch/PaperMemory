@@ -601,23 +601,6 @@ button.changed {
 .errorTitle {
     margin: 0px;
 }
-#overwriteFeedback {
-    margin-top: 12px;
-    border: 1px solid grey;
-    border-radius: var(--round);
-    padding: 8px 16px;
-    max-height: 150px;
-    overflow: scroll;
-    font-family: "Fira Code", monospace;
-}
-#overwrite-buttons {
-    flex-direction: column;
-}
-#overwrite-file-name {
-    max-width: 200px;
-    padding: 2px 8px;
-    word-break: break-all;
-}
 
 .flex-center-center {
     display: flex;

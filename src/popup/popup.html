@@ -146,65 +146,6 @@
 			<label for="checkDirectOpen">Directly open the Memory when not on a Paper's page</label><br><br>
 		</div>
 
-		<h3 class="mt-4 mb-0">⋗ Data Management</h3>
-
-		<div style="display: flex; align-items: center; margin: 16px 0px">
-			<p><strong>Download</strong> your complete Memory's data: </p>
-			<button class="ms-2 flex-center-between code-font" id="download-arxivmemory">
-				.json&nbsp;
-				<svg viewBox="0 0 24 24" style="height: 18px; width: 18px; color: black; stroke: black">
-					<path stroke="none" d="M0 0h24v24H0z" fill="none" />
-					<line x1="4" y1="20" x2="20" y2="20" />
-					<line x1="12" y1="14" x2="12" y2="4" />
-					<line x1="12" y1="14" x2="16" y2="10" />
-					<line x1="12" y1="14" x2="8" y2="10" />
-				</svg>
-			</button>
-		</div>
-
-		<div style="display: flex; align-items: center; margin: 16px 0px">
-			<p><strong>Download</strong> the Memory's BibTex: </p>
-			<button class="ms-2 flex-center-between code-font" id="download-bibtex-json">
-				.json&nbsp;
-				<svg viewBox="0 0 24 24" style="height: 18px; width: 18px; color: black; stroke: black">
-					<path stroke="none" d="M0 0h24v24H0z" fill="none" />
-					<line x1="4" y1="20" x2="20" y2="20" />
-					<line x1="12" y1="14" x2="12" y2="4" />
-					<line x1="12" y1="14" x2="16" y2="10" />
-					<line x1="12" y1="14" x2="8" y2="10" />
-				</svg>
-			</button>
-			<button class="ms-3 flex-center-between code-font" id="download-bibtex-plain">
-				.bib&nbsp;
-				<svg viewBox="0 0 24 24" style="height: 18px; width: 18px; color: black; stroke: black">
-					<path stroke="none" d="M0 0h24v24H0z" fill="none" />
-					<line x1="4" y1="20" x2="20" y2="20" />
-					<line x1="12" y1="14" x2="12" y2="4" />
-					<line x1="12" y1="14" x2="16" y2="10" />
-					<line x1="12" y1="14" x2="8" y2="10" />
-				</svg>
-			</button>
-		</div>
-
-		<div id="overwrite-container" style="margin: 16px 0px">
-			<p><strong>Overwrite</strong> your Memory: </p>
-			<div style="display: flex; align-items: center; ">
-				<label id="file-upload-label" for="overwrite-arxivmemory-input">Select
-					file</label><input type="file" id="overwrite-arxivmemory-input" style="display: none;"></input>
-				<span id="overwrite-file-name"></span>
-				<button id="overwrite-arxivmemory-button" disabled class="ms-2 flex-center-between code-font">
-					.json&nbsp;
-					<svg viewBox="0 0 24 24" style="height: 18px; width: 18px; color: black; stroke: black">
-						<path stroke="none" d="M0 0h24v24H0z" fill="none" />
-						<path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2 -2v-2" />
-						<polyline points="7 9 12 4 17 9" />
-						<line x1="12" y1="4" x2="12" y2="16" />
-					</svg>
-				</button>
-			</div>
-			<div style="display: none;" id="overwriteFeedback"></div>
-		</div>
-
 	</div>
 
 	<div id="memory-spinner" class="arxivTools-container">

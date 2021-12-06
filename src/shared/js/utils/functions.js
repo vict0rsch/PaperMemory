@@ -582,6 +582,7 @@ const migrateData = async (papers, manifestDataVersion, store = true) => {
             `Error migrating data from version ${currentVersion} to ${manifestDataVersion}: `
         );
         console.log(err);
+
         return { papers: newPapers, success: false, error: err };
     }
 };
