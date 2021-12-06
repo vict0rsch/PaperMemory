@@ -36,6 +36,10 @@
                 <code>.*</code>.
             </p>
 
+            <p>The Authors RegEx will be matched against a string which joins authors in a BibTex fashion, <em>e.g.</em>
+                <code>Abc Def and Ghi Jkl and Mno Pqr</code>.
+            </p>
+
             <div id="auto-tags-container">
                 <div id="auto-tags-headers" class="row">
                     <div class="col-3"><strong>Title RegEx</strong></div>
@@ -73,14 +77,18 @@
             <h2>Custom title function</h2>
             <p>Provide a Javascript function code to produce a "title" from a <code>paper</code> object. This function
                 <em>must</em> return a <code>string</code> which will be used to 1/ Change the webpage titles 2/ Name
-                the pdf files you download with Paper Memory.
+                the pdf files you download with Paper Memory. The <code>.pdf</code> extension will be added
+                automatically, you need not include it in the returned string.
             </p>
+            <p>Note that not all characters are usable for file names <a
+                    href="https://superuser.com/questions/358855/what-characters-are-safe-in-cross-platform-file-names-for-linux-windows-and-os">depending
+                    on your os</a>.</p>
             <p>For illustration, an example from your memory is displayed after the code input.</p>
             <div class="row">
 
                 <div class="col-6">
                     <textarea id="custom-title-textarea" style="font-family: 'Fira Code'; font-size: 0.8rem;"
-                        class="w-100 mb-2" rows="4"></textarea>
+                        class="w-100 mb-2" rows="7"></textarea>
                     <div class="flex-center-evenly mb-3">
                         <button id="custom-title-save">Save function</button>
                         <button id="custom-title-default">Back to default</button>
@@ -95,7 +103,7 @@
                     <span>Available keys:</span>
                     <span id="paper-available-keys"></span>
                 </div>
-                <div class="col-12 mt-3">Result: <code id="custom-title-result"></code></div>
+                <div class="col-12 mt-3">Result: <br /><code id="custom-title-result"></code></div>
 
             </div>
 
