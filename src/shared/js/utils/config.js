@@ -95,9 +95,11 @@ global.fuzzyTitleMatchMinDist = 4;
 
 global.defaultTitleFunctionCode = `
 (paper) => {\n
-    title = paper.title.replaceAll("\\n", '');\n
-    id = paper.id;\n
-    return \`\${title} - \${id}\`\n}`;
+    const title = paper.title.replaceAll("\\n", '');\n
+    const id = paper.id;\n
+    let name = \`\${title} - \${id}\`;\n
+    name = name.replaceAll(":", " ").replace(/\\s\\s+/g, " ");\n
+    return name\n};`;
 
 /**
  * English words to ignore when creating an arxiv paper's BibTex key.
