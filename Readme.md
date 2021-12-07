@@ -32,7 +32,7 @@ This browser extension allows you to do automatically store research papers you 
 
 ### Supported venues
 
-* Arxiv
+* Arxiv (PaperMemory will try to find if a pre-print has been published and create a corresponding `note` to the paper (see [preprints](#preprints)))
 * BioRxiv
 * NeurIPS
 * Open Review (ICLR etc.)
@@ -116,6 +116,18 @@ Share ideas 💡 in [issues](https://github.com/vict0rsch/PaperMemory/issues) an
 <img src="https://raw.github.com/vict0rsch/PaperMemory/master/extra/imgs/guide-memory.png?raw=true">
 </p>
 
+## Advanced
+
+In the extension's `options` (right click on the icon or in the popup's menu) you will find advanced customization features:
+
+* **Auto-tagging**: add tags to papers based on regexs matched on authors and titles
+* **Custom title function**: provide Javascript code to generate your own web page titles and pdf filenames based on a paper's attributes
+* **Data management**: export/load your memory data and export the bibliography as a `.bib` file
+
+<p align="center">
+<img src="https://raw.github.com/vict0rsch/PaperMemory/master/extra/imgs/options.png?raw=true">
+</p>
+
 ## Install from source (Brave & Chrome)
 
 * Download the repo
@@ -125,8 +137,6 @@ Share ideas 💡 in [issues](https://github.com/vict0rsch/PaperMemory/issues) an
 * Select the downloaded repo :)
 
 ## Preprints
-
-(*Beta: upcoming in 3.4 -- install from source for early access*)
 
 There currently exists, to my knowledge, no centralized source for matching a preprint to its subsequent published article. This makes it really hard to try and implement best practices in terms of citing published papers rather than their preprint.
 
@@ -148,11 +158,8 @@ There's room for improvement here^, please contact me (an issue will do) if you 
 
 ## Todo
 
-* [ ] Update visuals
-* [ ] Document `:` being replaced by `_` when downloading a pdf ([OS requirements...](https://stackoverflow.com/questions/30960190/problematic-characters-for-filename-in-chrome-downloads-download))
-* [ ] Document backup and how to get it
 * [ ] Improve `Contributing.md`
-* [ ] Tests (WIP => [Puppeteer + Mocha #26](https://github.com/vict0rsch/PaperMemory/pull/26))
+* [ ] Tests & Docs (WIP => [Puppeteer + Mocha #26](https://github.com/vict0rsch/PaperMemory/pull/26))
 
 ## Help
 

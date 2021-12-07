@@ -51,6 +51,7 @@ Once you load the local extension as an unpackaged extension, changes that affec
 
 ### File structure
 
+(slightly deprecated since some files have moved but names are unique enough for you to still understand I hope)
 
 ```tree
 ├── jsconfig.json ➤➤➤ vscode js config

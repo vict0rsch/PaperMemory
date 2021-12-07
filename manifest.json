@@ -1,6 +1,6 @@
 {
   "name": "Paper Memory",
-  "version": "0.3.4",
+  "version": "0.4.0",
   "manifest_version": 2,
   "description": "Automatically record papers you read from Arxiv, OpenReview & more! Organize your library with tags, links to code and quick notes.",
   "homepage_url": "https://github.com/vict0rsch/PaperMemory",
@@ -10,8 +10,8 @@
   "content_security_policy": "script-src 'self' 'unsafe-eval'; object-src 'self'",
   "background": {
     "scripts": [
-      "src/shared/jquery.min.js",
-      "src/shared/utils.min.js",
+      "src/shared/min/jquery.min.js",
+      "src/shared/min/utils.min.js",
       "src/background/background.js"
     ]
   },
@@ -26,6 +26,10 @@
         "default": "Ctrl+Shift+E"
       }
     }
+  },
+  "options_ui": {
+    "page": "src/options/options.html",
+    "open_in_tab": true
   },
   "permissions": [
     "https://arxiv.org/*",
@@ -56,12 +60,12 @@
       ],
       "run_at": "document_start",
       "js": [
-        "src/shared/jquery.min.js",
-        "src/shared/utils.min.js",
+        "src/shared/min/jquery.min.js",
+        "src/shared/min/utils.min.js",
         "src/content_scripts/content_script.js"
       ],
       "css": [
-        "src/shared/loader.css",
+        "src/shared/css/loader.css",
         "src/content_scripts/content_script.css"
       ]
     }

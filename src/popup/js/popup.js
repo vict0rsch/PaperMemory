@@ -99,34 +99,6 @@ const setStandardPopupClicks = () => {
     });
 
     addListener("memory-switch", "click", handleMemorySwitchClick);
-
-    addListener("download-arxivmemory", "click", handleDownloadMemoryClick);
-    addListener("download-bibtex-json", "click", handleDownloadBibtexJsonClick);
-    addListener("download-bibtex-plain", "click", handleDownloadBibtexPlainClick);
-    addListener("overwrite-arxivmemory-button", "click", handleOverwriteMemory);
-    addListener("overwrite-arxivmemory-input", "change", handleSelectOverwriteFile);
-};
-
-/**
- * Retrieve the custom pdf function, updates the associated textarea and adds and
- * event listener for when the latter changes.
- * @param {object} menu the user's menu options, especially including pdfTitleFn
- */
-const setAndHandleCustomPDFFunction = (menu) => {
-    // attempt to use the user's custom function
-    if (menu.pdfTitleFn && typeof menu.pdfTitleFn === "string") {
-        global.state.pdfTitleFn = getPdfFn(menu.pdfTitleFn);
-    }
-    // it may have failed but getPdfFn is guaranteed to return a working function
-    // so use that and update storage just in case.
-    chrome.storage.local.set({ pdfTitleFn: global.state.pdfTitleFn.toString() });
-    // update the user's textarea
-    val("customPdfTitleTextarea", global.state.pdfTitleFn.toString());
-    // listen to saving click
-    addListener("saveCustomPdf", "click", handleCustomPDFFunctionSave);
-    // listen to the event resetting the pdf title function
-    // to the built-in default
-    addListener("defaultCustomPdf", "click", handleDefaultPDFFunctionClick);
 };
 
 /**
@@ -162,8 +134,13 @@ const popupMain = async (url, isKnownPage, manualTrigger = false) => {
     // Set checkboxes
     getAndTrackPopupMenuChecks(menu, global.menuCheckNames);
 
+    // Set options page link
+    addListener("advanced-configuration", "click", () => {
+        chrome.runtime.openOptionsPage();
+    });
+
     // Set PDF title function
-    setAndHandleCustomPDFFunction(menu);
+    // setAndHandleCustomPDFFunction(menu);
 
     // Display popup metadata
     if (isKnownPage) {
@@ -250,11 +227,15 @@ const popupMain = async (url, isKnownPage, manualTrigger = false) => {
             copyAndConfirmMemoryItem(id, bibtex, "Bibtex citation copied!", true);
         });
         addListener(`popup-memory-item-download--${id}`, "click", () => {
-            let pdfTitle = statePdfTitle(paper.title, paper.id);
-            console.log({ pdfTitle });
+            let title = stateTitleFunction(paper);
+            console.log({ title });
+            if (!title.endsWith(".pdf")) {
+                title += ".pdf";
+            }
+            title = title.replaceAll(":", " ");
             chrome.downloads.download({
                 url: paper.pdfLink,
-                filename: pdfTitle.replaceAll(":", "_"),
+                filename: title,
             });
         });
     } else {

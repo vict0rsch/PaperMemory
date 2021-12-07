@@ -34,11 +34,11 @@ function popupJS() {
 function utilsJS() {
     return (
         src([
-            "src/shared/utils/miniquery.js",
-            "src/shared/utils/config.js",
-            "src/shared/utils/levenshtein.js",
-            "src/shared/utils/functions.js",
-            "src/shared/utils/parsers.js",
+            "src/shared/js/utils/miniquery.js",
+            "src/shared/js/utils/config.js",
+            "src/shared/js/utils/levenshtein.js",
+            "src/shared/js/utils/functions.js",
+            "src/shared/js/utils/parsers.js",
         ])
             // .pipe(debug())
             .pipe(concat("utils.js"))
@@ -50,15 +50,15 @@ function utilsJS() {
             )
             .pipe(uglify({ mangle: true }))
             .pipe(rename({ suffix: ".min" }))
-            .pipe(dest("src/shared/"))
+            .pipe(dest("src/shared/min"))
     );
 }
 
 function themeJS() {
-    return src(["src/popup/js/theme.js"])
+    return src(["src/shared/js/theme.js"])
         .pipe(uglify({ mangle: true }))
         .pipe(rename({ suffix: ".min" }))
-        .pipe(dest("src/popup/min/"));
+        .pipe(dest("src/shared/min"));
 }
 
 function popupHTMLDev() {
@@ -78,9 +78,10 @@ function popupHTML() {
 
 function popupCSS() {
     return src([
+        "src/shared/css/vars.css",
         "src/popup/css/options.css",
         "src/popup/css/popup.css",
-        "src/shared/loader.css",
+        "src/shared/css/loader.css",
     ])
         .pipe(concat("popup.css"))
         .pipe(cleanCss())
@@ -96,10 +97,13 @@ function popupDarkCSS() {
 
 function watchFiles() {
     watch("src/popup/js/*.js", popupJS);
-    watch("src/popup/theme.js", themeJS);
-    watch("src/popup/css/*.css", parallel(popupCSS, popupDarkCSS));
+    watch("src/shared/js/theme.js", themeJS);
+    watch(
+        ["src/popup/css/*.css", "src/shared/css/*.css"],
+        parallel(popupCSS, popupDarkCSS)
+    );
     watch("src/popup/popup.html", popupHTMLDev);
-    watch("src/shared/utils/*", utilsJS);
+    watch("src/shared/js/utils/*", utilsJS);
 }
 
 function createArchive(cb) {

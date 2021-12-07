@@ -1,0 +1,204 @@
+/*
+---------------------
+-----  Globals  -----
+---------------------
+*/
+:root {
+    --maxWidth: 1000px;
+}
+body {
+    margin: 0;
+    font-family: "Yantramanav";
+}
+
+svg {
+    stroke-width: 1.15;
+    stroke: #7c7f8b;
+    fill: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+code {
+    font-family: "Fira Code", monospace !important;
+    color: inherit !important;
+    padding: 1px 4px;
+    vertical-align: text-top;
+    border-radius: var(--round);
+    background-color: rgb(238, 238, 238);
+}
+
+.tabler-icon {
+    height: 32px;
+    width: 32px;
+    color: var(--red);
+    stroke-width: 1px;
+}
+
+/*
+--------------------
+-----  Header  -----
+--------------------
+*/
+#header {
+    background-color: var(--red);
+    padding: 12px;
+    color: white;
+    display: flex;
+    justify-content: start;
+    align-items: center;
+    border-radius: 0 0 75% 0/50%;
+    box-shadow: 14px 30px 122px -30px rgba(0, 0, 0, 0.75);
+}
+#header-wrapper {
+    max-width: var(--maxWidth);
+    margin: auto;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+#header-wrapper h1 {
+    font-weight: 300;
+}
+#header-icon {
+    stroke: white;
+    margin-left: 1rem;
+}
+
+/*
+---------------------
+-----  Content  -----
+---------------------
+*/
+#content {
+    max-width: var(--maxWidth);
+    margin: auto;
+    padding: 32px;
+}
+
+.section {
+    margin-bottom: 4rem;
+}
+
+textarea {
+    border-radius: var(--round);
+    border: 1px solid #aaaaaa;
+    font-family: "Yantramanav";
+    padding: 6px;
+}
+
+button,
+#file-upload-label {
+    border: 1px solid var(--red);
+    border-radius: var(--rounder);
+    padding: 4px 6px;
+    background-color: white;
+    transition: all ease 200ms;
+    cursor: pointer;
+}
+button:disabled,
+#file-upload-label:disabled {
+    cursor: not-allowed;
+    pointer-events: none;
+    border-color: #e7a9a9;
+}
+
+button:hover,
+#file-upload-label:hover {
+    border-color: var(--red);
+    background-color: rgb(253, 235, 235);
+}
+
+input {
+    border-radius: var(--round);
+    border: 1px solid #aaa;
+    margin-top: 8px;
+    line-height: 1.1rem;
+    padding: 6px;
+    margin-bottom: 4px;
+}
+
+/*
+-----------------------
+-----  Auto Tags  -----
+-----------------------
+*/
+
+#auto-tags-headers {
+    margin-bottom: 1rem;
+}
+
+#auto-tags-container svg {
+    stroke-width: 2;
+}
+
+.auto-tags-item {
+    margin-bottom: 0.5rem;
+}
+
+/*
+-----------------------------------
+-----  Custom title function  -----
+-----------------------------------
+*/
+
+#another-paper {
+    font-size: 0.8rem;
+    color: rgb(36, 119, 197);
+    text-decoration: underline;
+    cursor: pointer;
+    margin-left: 0.5rem;
+}
+
+/*
+-----------------------------
+-----  Data Management  -----
+-----------------------------
+*/
+
+.flex-center-between {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+#overwrite-file-name {
+    max-width: 200px;
+    padding: 2px 8px;
+    word-break: break-all;
+}
+
+#overwriteFeedback {
+    margin-top: 1rem;
+    border: 1px solid grey;
+    border-radius: var(--round);
+    padding: 1.5rem 2rem;
+    font-size: 0.9rem;
+    overflow: scroll;
+    font-family: "Fira Code", monospace;
+}
+
+#overwrite-buttons {
+    flex-direction: column;
+}
+
+/*
+--------------------
+-----  Footer  -----
+--------------------
+*/
+
+#footer {
+    border-top: 1px solid gray;
+    padding-top: 3rem;
+}
+
+.flex-center-evenly {
+    display: flex;
+    align-items: center;
+    justify-content: space-evenly;
+}
+
+#footer a {
+    font-weight: 800;
+}
