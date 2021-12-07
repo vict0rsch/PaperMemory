@@ -632,15 +632,16 @@ const autoTagPaper = async (paper) => {
         let tags = new Set();
         for (const at of autoTags) {
             if (!at.tags?.length) continue;
-            let matched = true;
-            if (at.title) {
-                matched &= new RegExp(at.title, "i").test(paper.title);
-            }
-            if (at.author) {
-                matched &= new RegExp(at.author, "i").test(paper.author);
-            }
-            console.log(at);
-            if (matched) {
+            if (!at.title && !at.author) continue;
+
+            const titleMatch = at.title
+                ? new RegExp(at.title, "i").test(paper.title)
+                : true;
+            const authorMatch = at.author
+                ? new RegExp(at.author, "i").test(paper.author)
+                : false;
+
+            if (titleMatch && authorMatch) {
                 at.tags.forEach((t) => tags.add(t));
             }
         }
