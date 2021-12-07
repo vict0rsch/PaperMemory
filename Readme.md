@@ -138,8 +138,6 @@ In the extension's `options` (right click on the icon or in the popup's menu) yo
 
 ## Preprints
 
-(*Beta: upcoming in 3.4 -- install from source for early access*)
-
 There currently exists, to my knowledge, no centralized source for matching a preprint to its subsequent published article. This makes it really hard to try and implement best practices in terms of citing published papers rather than their preprint.
 
 My approach with PaperMemory is to try and notify you that a publication likely exists by utilizing the `note` field. You will occasionally notice `Accepted @ X` in a Paper's notes. This will be added automatically if you are on a known published venue's website (as PMLR or NeurIPS) but also from:
@@ -160,9 +158,8 @@ There's room for improvement here^, please contact me (an issue will do) if you 
 
 ## Todo
 
-* [ ] Update visuals for 0.3.4
 * [ ] Improve `Contributing.md`
-* [ ] Tests (WIP => [Puppeteer + Mocha #26](https://github.com/vict0rsch/PaperMemory/pull/26))
+* [ ] Tests & Docs (WIP => [Puppeteer + Mocha #26](https://github.com/vict0rsch/PaperMemory/pull/26))
 
 ## Help
 
