@@ -99,6 +99,7 @@ TODO
   * will be used by `functions.js:isPaper()` to determine whether `content_script.js` should parse the current page into a paper with `addOrUpdatePaper()` (or update the existing one's visits count) and `popup.js` to display the current paper
 * update `content_script.js:makePaper()` to create a new entry
   * Typically, add a parser function in `parsers.js`  
+* update `functions:parseIdFromUrl()`
 * `memory.js:focusExistingOrCreateNewPaperTab()` -> update the `match` creation process to define the piece of a pdf's URL which should be matched to existing tabs in order to focus it.
 * Update `functions.js:paperToAbs()` and `functions.js:paperToPDF()` to enable to pdf<->webpage button
 * Update `manifest.json` to
