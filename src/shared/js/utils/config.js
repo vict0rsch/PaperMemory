@@ -70,6 +70,7 @@ global.knownPaperPages = {
     openreview: ["openreview.net/forum", "openreview.net/pdf"],
     biorxiv: ["biorxiv.org/content"],
     pmlr: ["proceedings.mlr.press/"],
+    acl: ["aclanthology.org/"],
 };
 
 global.overrideORConfs = {

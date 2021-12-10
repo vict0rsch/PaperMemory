@@ -81,7 +81,13 @@ const updatePopupPaperNoMemory = (url) => {
     if (navigator.userAgent.search("Firefox") > -1) {
         addListener("manual-firefox", "click", async () => {
             const is = isPaper(url);
-            const { paper } = await addOrUpdatePaper(url, is);
+            let paper;
+            const update = await addOrUpdatePaper(url, is);
+            if (update) {
+                paper = update.paper;
+            } else {
+                return;
+            }
             console.log("paper: ", paper);
             console.log("previousIsArxiv: ", previousIsArxiv);
             console.log("url: ", url);

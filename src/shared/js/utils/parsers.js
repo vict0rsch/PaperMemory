@@ -4,7 +4,6 @@
 
 const extractBibtexValue = (bibtex, key) => {
     const regex = new RegExp(`${key}\\s?=\\s?{(.+)},`, "gi");
-    console.log(regex);
     const match = regex.exec(bibtex);
     if (match) {
         const regex2 = new RegExp(`${key}\\s?=\\s?{`, "gi");
@@ -434,6 +433,53 @@ const parsePMLRHTML = async (url) => {
     return { author, bibtex, conf, id, key, note, pdfLink, title, year };
 };
 
+const findACLValue = (dom, key) => {
+    const dt = Array.from(dom.querySelectorAll("dt")).filter((v) =>
+        v.innerText.includes(key)
+    )[0];
+    return dt.nextElementSibling.innerText;
+};
+
+const parseACLHTML = async (url) => {
+    const htmlText = await fetch(url).then((r) => r.text());
+    const dom = new DOMParser().parseFromString(
+        htmlText.replaceAll("\n", ""),
+        "text/html"
+    );
+
+    const bibtexEl = dom.getElementById("citeBibtexContent");
+    if (!bibtexEl) return;
+
+    const bibtex = bibtexEl.innerText;
+
+    const bibtexData = bibtexToJson(bibtex)[0];
+    const entries = bibtexData.entryTags;
+
+    const year = entries.year;
+    const title = entries.title;
+    const author = entries.author
+        .replace(/\s+/g, " ")
+        .split(" and ")
+        .map((v) =>
+            v
+                .split(",")
+                .map((a) => a.trim())
+                .reverse()
+                .join(" ")
+        )
+        .join(" and ");
+    const key = bibtexData.citationKey;
+
+    const conf = findACLValue(dom, "Venue");
+    const pdfLink = findACLValue(dom, "PDF");
+    const aid = findACLValue(dom, "Anthology ID");
+
+    const id = `ACL-${conf}-${year}_${aid}`;
+    const note = `Accepted @ ${conf} ${year}`;
+
+    return { author, bibtex, conf, id, key, note, pdfLink, title, year };
+};
+
 // ----------------------------------------------
 // -----  Papers With Code: non functional  -----
 // ----------------------------------------------
@@ -679,8 +725,17 @@ const makePaper = async (is, url, id) => {
     } else if (is.pmlr) {
         paper = await parsePMLRHTML(url);
         paper.source = "pmlr";
+    } else if (is.acl) {
+        paper = await parseACLHTML(url);
+        if (paper) {
+            paper.source = "pmlr";
+        }
     } else {
         throw new Error("Unknown paper source: " + JSON.stringify({ is, url, id }));
+    }
+
+    if (typeof paper === "undefined") {
+        return;
     }
 
     return await initPaper(paper);
@@ -718,6 +773,9 @@ const addOrUpdatePaper = async (url, is, checks) => {
     } else {
         // Or create a new one if it does not
         paper = await makePaper(is, url, id);
+        if (!paper) {
+            return;
+        }
         const existingId = null; // findFuzzyPaperMatch(paper);
         if (existingId) {
             // Update paper as already it exists
