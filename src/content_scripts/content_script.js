@@ -278,7 +278,7 @@ const arxiv = async (checks) => {
 
         $.get(`https://export.arxiv.org/api/query?id_list=${id.split("-")[1]}`).then(
             async (data) => {
-                const paper = await parseArxivBibtex(id, data);
+                const paper = await makeArxivPaper(id, data);
 
                 const bibtexDiv = /*html*/ `
                     <div id="bibtexDiv">

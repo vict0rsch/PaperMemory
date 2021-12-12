@@ -100,13 +100,8 @@ const fetchOpenReviewForumJSON = async (url) => {
 // -----  Parse  -----
 // -------------------
 
-const parseArxivBibtex = async (memoryId) => {
-    let xmlData;
-    if (typeof data === "undefined") {
-        xmlData = await fetchArxivXML(memoryId);
-    } else {
-        xmlData = data;
-    }
+const makeArxivPaper = async (memoryId) => {
+    const xmlData = await fetchArxivXML(memoryId);
     var bib = $(xmlData);
     var authors = [];
     var key = "";
@@ -150,7 +145,7 @@ const parseArxivBibtex = async (memoryId) => {
     return { author, bibtex, conf, id, key, pdfLink, title, year };
 };
 
-const parseNeuripsHTML = async (url) => {
+const makeNeuripsPaper = async (url) => {
     const htmlText = await fetchNeuripsHTML(url);
     const dom = new DOMParser().parseFromString(
         htmlText.replaceAll("\n", ""),
@@ -195,7 +190,7 @@ const parseNeuripsHTML = async (url) => {
     return { author, bibtex, conf, id, key, note, pdfLink, title, year };
 };
 
-const parseCvfHTML = async (url) => {
+const makeCVFPaper = async (url) => {
     const htmlText = await fetchCvfHTML(url);
     const dom = new DOMParser().parseFromString(
         htmlText.replaceAll("\n", ""),
@@ -234,7 +229,7 @@ const parseCvfHTML = async (url) => {
     return { author, bibtex, conf, id, key, note, pdfLink, title, year };
 };
 
-makeOpenReviewBibTex = (paper, url) => {
+const makeOpenReviewBibTex = (paper, url) => {
     const title = paper.content.title;
     const author = paper.content.authors.join(" and ");
     const year = paper.cdate ? new Date(paper.cdate).getFullYear() : "0000";
@@ -257,7 +252,7 @@ makeOpenReviewBibTex = (paper, url) => {
     return bibtex;
 };
 
-const parseOpenReviewJSON = async (url) => {
+const makeOpenReviewPaper = async (url) => {
     const noteJson = await fetchOpenReviewNoteJSON(url);
     const forumJson = await fetchOpenReviewForumJSON(url);
 
@@ -337,7 +332,7 @@ const parseOpenReviewJSON = async (url) => {
     return { author, bibtex, conf, id, key, note, pdfLink, title, year };
 };
 
-const parseBiorxivJSON = async (url) => {
+const makeBioRxivPaper = async (url) => {
     const biorxivAPI = "https://api.biorxiv.org/";
     const pageURL = url.replace(".full.pdf", "");
     const biorxivID = url
@@ -378,7 +373,7 @@ const parseBiorxivJSON = async (url) => {
     return { author, bibtex, conf, id, key, note, pdfLink, title, year };
 };
 
-const parsePMLRHTML = async (url) => {
+const makePMLRPaper = async (url) => {
     const key = url.split("/").reverse()[0].split(".")[0];
     const id = parseIdFromUrl(url);
 
@@ -440,7 +435,7 @@ const findACLValue = (dom, key) => {
     return dt.nextElementSibling.innerText;
 };
 
-const parseACLHTML = async (url) => {
+const makeACLPaper = async (url) => {
     const htmlText = await fetch(url).then((r) => r.text());
     const dom = new DOMParser().parseFromString(
         htmlText.replaceAll("\n", ""),
@@ -706,27 +701,27 @@ const autoTagPaper = async (paper) => {
 const makePaper = async (is, url, id) => {
     let paper;
     if (is.arxiv) {
-        paper = await parseArxivBibtex(id);
+        paper = await makeArxivPaper(id);
         paper.source = "arxiv";
         // paper.codes = await fetchCodes(paper)
     } else if (is.neurips) {
-        paper = await parseNeuripsHTML(url);
+        paper = await makeNeuripsPaper(url);
         paper.source = "neurips";
         // paper.codes = await fetchCodes(paper);
     } else if (is.cvf) {
-        paper = await parseCvfHTML(url);
+        paper = await makeCVFPaper(url);
         paper.source = "cvf";
     } else if (is.openreview) {
-        paper = await parseOpenReviewJSON(url);
+        paper = await makeOpenReviewPaper(url);
         paper.source = "openreview";
     } else if (is.biorxiv) {
-        paper = await parseBiorxivJSON(url);
+        paper = await makeBioRxivPaper(url);
         paper.source = "biorxiv";
     } else if (is.pmlr) {
-        paper = await parsePMLRHTML(url);
+        paper = await makePMLRPaper(url);
         paper.source = "pmlr";
     } else if (is.acl) {
-        paper = await parseACLHTML(url);
+        paper = await makeACLPaper(url);
         if (paper) {
             paper.source = "pmlr";
         }
