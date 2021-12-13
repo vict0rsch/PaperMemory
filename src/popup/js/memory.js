@@ -410,7 +410,7 @@ const reverseMemory = () => {
  * @param {string} letters The user's string query.
  */
 const filterMemoryByString = (letters) => {
-    const words = letters.split(" ");
+    const words = letters.toLowerCase().split(" ");
     let papersList = [];
     for (const paper of global.state.sortedPapers) {
         const title = paper.title.toLowerCase();
