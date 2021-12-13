@@ -38,6 +38,8 @@ This browser extension allows you to do automatically store research papers you 
 * Open Review (ICLR etc.)
 * Computer Vision Foundation (I/ECCV, CVPR etc.)
 * Proceedings of Machine Learning Research (PMLR) (AISTATS, ICML, CoRL, CoLT, ALT, UAI etc.)
+* Association for Computational Linguistics (ACL) (EMNLP, ACL, CoNLL, NAACL etc.)
+* Proceedings of the National Academy of Sciences (PNAS)
 * [Add more](https://github.com/vict0rsch/PaperMemory/issues/13)
 
 [About finding published papers from preprints](#preprints)

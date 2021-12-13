@@ -99,9 +99,13 @@ const contentScriptMain = async (url) => {
     }
 
     if (Object.values(is).some((i) => i)) {
-        const { id } = await addOrUpdatePaper(url, is, menu);
+        const update = await addOrUpdatePaper(url, is, menu);
+        let id;
+        if (update) {
+            id = update.id;
+        }
 
-        if (menu.checkPdfTitle) {
+        if (id && menu.checkPdfTitle) {
             const makeTitle = async (id, url) => {
                 if (!global.state.papers.hasOwnProperty(id)) return;
                 const paper = global.state.papers[id];
@@ -274,7 +278,7 @@ const arxiv = async (checks) => {
 
         $.get(`https://export.arxiv.org/api/query?id_list=${id.split("-")[1]}`).then(
             async (data) => {
-                const paper = await parseArxivBibtex(id, data);
+                const paper = await makeArxivPaper(id, data);
 
                 const bibtexDiv = /*html*/ `
                     <div id="bibtexDiv">

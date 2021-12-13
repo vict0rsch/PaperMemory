@@ -4,7 +4,6 @@
 
 const extractBibtexValue = (bibtex, key) => {
     const regex = new RegExp(`${key}\\s?=\\s?{(.+)},`, "gi");
-    console.log(regex);
     const match = regex.exec(bibtex);
     if (match) {
         const regex2 = new RegExp(`${key}\\s?=\\s?{`, "gi");
@@ -101,13 +100,8 @@ const fetchOpenReviewForumJSON = async (url) => {
 // -----  Parse  -----
 // -------------------
 
-const parseArxivBibtex = async (memoryId) => {
-    let xmlData;
-    if (typeof data === "undefined") {
-        xmlData = await fetchArxivXML(memoryId);
-    } else {
-        xmlData = data;
-    }
+const makeArxivPaper = async (memoryId) => {
+    const xmlData = await fetchArxivXML(memoryId);
     var bib = $(xmlData);
     var authors = [];
     var key = "";
@@ -151,7 +145,7 @@ const parseArxivBibtex = async (memoryId) => {
     return { author, bibtex, conf, id, key, pdfLink, title, year };
 };
 
-const parseNeuripsHTML = async (url) => {
+const makeNeuripsPaper = async (url) => {
     const htmlText = await fetchNeuripsHTML(url);
     const dom = new DOMParser().parseFromString(
         htmlText.replaceAll("\n", ""),
@@ -196,7 +190,7 @@ const parseNeuripsHTML = async (url) => {
     return { author, bibtex, conf, id, key, note, pdfLink, title, year };
 };
 
-const parseCvfHTML = async (url) => {
+const makeCVFPaper = async (url) => {
     const htmlText = await fetchCvfHTML(url);
     const dom = new DOMParser().parseFromString(
         htmlText.replaceAll("\n", ""),
@@ -235,7 +229,7 @@ const parseCvfHTML = async (url) => {
     return { author, bibtex, conf, id, key, note, pdfLink, title, year };
 };
 
-makeOpenReviewBibTex = (paper, url) => {
+const makeOpenReviewBibTex = (paper, url) => {
     const title = paper.content.title;
     const author = paper.content.authors.join(" and ");
     const year = paper.cdate ? new Date(paper.cdate).getFullYear() : "0000";
@@ -258,7 +252,7 @@ makeOpenReviewBibTex = (paper, url) => {
     return bibtex;
 };
 
-const parseOpenReviewJSON = async (url) => {
+const makeOpenReviewPaper = async (url) => {
     const noteJson = await fetchOpenReviewNoteJSON(url);
     const forumJson = await fetchOpenReviewForumJSON(url);
 
@@ -338,7 +332,7 @@ const parseOpenReviewJSON = async (url) => {
     return { author, bibtex, conf, id, key, note, pdfLink, title, year };
 };
 
-const parseBiorxivJSON = async (url) => {
+const makeBioRxivPaper = async (url) => {
     const biorxivAPI = "https://api.biorxiv.org/";
     const pageURL = url.replace(".full.pdf", "");
     const biorxivID = url
@@ -379,7 +373,7 @@ const parseBiorxivJSON = async (url) => {
     return { author, bibtex, conf, id, key, note, pdfLink, title, year };
 };
 
-const parsePMLRHTML = async (url) => {
+const makePMLRPaper = async (url) => {
     const key = url.split("/").reverse()[0].split(".")[0];
     const id = parseIdFromUrl(url);
 
@@ -432,6 +426,100 @@ const parsePMLRHTML = async (url) => {
     }
 
     return { author, bibtex, conf, id, key, note, pdfLink, title, year };
+};
+
+const findACLValue = (dom, key) => {
+    const dt = Array.from(dom.querySelectorAll("dt")).filter((v) =>
+        v.innerText.includes(key)
+    )[0];
+    return dt.nextElementSibling.innerText;
+};
+
+const makeACLPaper = async (url) => {
+    const htmlText = await fetch(url).then((r) => r.text());
+    const dom = new DOMParser().parseFromString(
+        htmlText.replaceAll("\n", ""),
+        "text/html"
+    );
+
+    const bibtexEl = dom.getElementById("citeBibtexContent");
+    if (!bibtexEl) return;
+
+    const bibtex = bibtexEl.innerText;
+
+    const bibtexData = bibtexToJson(bibtex)[0];
+    const entries = bibtexData.entryTags;
+
+    const year = entries.year;
+    const title = entries.title;
+    const author = entries.author
+        .replace(/\s+/g, " ")
+        .split(" and ")
+        .map((v) =>
+            v
+                .split(",")
+                .map((a) => a.trim())
+                .reverse()
+                .join(" ")
+        )
+        .join(" and ");
+    const key = bibtexData.citationKey;
+
+    const conf = findACLValue(dom, "Venue");
+    const pdfLink = findACLValue(dom, "PDF");
+    const aid = findACLValue(dom, "Anthology ID");
+
+    const id = `ACL-${conf}-${year}_${aid}`;
+    const note = `Accepted @ ${conf} ${year}`;
+
+    return { author, bibtex, conf, id, key, note, pdfLink, title, year };
+};
+
+const makePNASPaper = async (url) => {
+    url = url.replace(".full.pdf", "");
+    const htmlText = await fetch(url).then((r) => r.text());
+    const dom = new DOMParser().parseFromString(
+        htmlText.replaceAll("\n", ""),
+        "text/html"
+    );
+    const citeUrl = dom
+        .getElementsByClassName("pane-jnl-pnas-cite-tool")[0]
+        .querySelector("a").href;
+
+    if (!citeUrl) return;
+
+    const bibtexUrl = citeUrl.replace("/download", "/bibtext");
+    console.log("bibtexUrl: ", bibtexUrl);
+    const bibtex = await fetch(bibtexUrl).then((r) => r.text());
+    console.log("bibtex: ", bibtex);
+    const bibtexData = bibtexToJson(bibtex)[0];
+    console.log("bibtexData: ", bibtexData);
+
+    const entries = bibtexData.entryTags;
+
+    const year = entries.year;
+    const title = entries.title;
+    const author = entries.author
+        .replace(/\s+/g, " ")
+        .split(" and ")
+        .map((v) =>
+            v
+                .split(",")
+                .map((a) => a.trim())
+                .reverse()
+                .join(" ")
+        )
+        .join(" and ");
+    const pdfLink = entries.eprint;
+    const key = bibtexData.citationKey;
+    const note = `Published @ PNAS (${year})`;
+    const pid = url.endsWith("/")
+        ? url.split("/").slice(-2)[0]
+        : url.split("/").slice(-1)[0];
+
+    const id = `PNAS-${year}_${pid}`;
+
+    return { author, bibtex, id, key, note, pdfLink, title, year };
 };
 
 // ----------------------------------------------
@@ -660,27 +748,41 @@ const autoTagPaper = async (paper) => {
 const makePaper = async (is, url, id) => {
     let paper;
     if (is.arxiv) {
-        paper = await parseArxivBibtex(id);
+        paper = await makeArxivPaper(id);
         paper.source = "arxiv";
         // paper.codes = await fetchCodes(paper)
     } else if (is.neurips) {
-        paper = await parseNeuripsHTML(url);
+        paper = await makeNeuripsPaper(url);
         paper.source = "neurips";
         // paper.codes = await fetchCodes(paper);
     } else if (is.cvf) {
-        paper = await parseCvfHTML(url);
+        paper = await makeCVFPaper(url);
         paper.source = "cvf";
     } else if (is.openreview) {
-        paper = await parseOpenReviewJSON(url);
+        paper = await makeOpenReviewPaper(url);
         paper.source = "openreview";
     } else if (is.biorxiv) {
-        paper = await parseBiorxivJSON(url);
+        paper = await makeBioRxivPaper(url);
         paper.source = "biorxiv";
     } else if (is.pmlr) {
-        paper = await parsePMLRHTML(url);
+        paper = await makePMLRPaper(url);
         paper.source = "pmlr";
+    } else if (is.acl) {
+        paper = await makeACLPaper(url);
+        if (paper) {
+            paper.source = "pmlr";
+        }
+    } else if (is.pnas) {
+        paper = await makePNASPaper(url);
+        if (paper) {
+            paper.source = "pnas";
+        }
     } else {
         throw new Error("Unknown paper source: " + JSON.stringify({ is, url, id }));
+    }
+
+    if (typeof paper === "undefined") {
+        return;
     }
 
     return await initPaper(paper);
@@ -718,6 +820,9 @@ const addOrUpdatePaper = async (url, is, checks) => {
     } else {
         // Or create a new one if it does not
         paper = await makePaper(is, url, id);
+        if (!paper) {
+            return;
+        }
         const existingId = null; // findFuzzyPaperMatch(paper);
         if (existingId) {
             // Update paper as already it exists
