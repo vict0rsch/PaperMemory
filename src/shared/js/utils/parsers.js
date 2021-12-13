@@ -475,6 +475,53 @@ const makeACLPaper = async (url) => {
     return { author, bibtex, conf, id, key, note, pdfLink, title, year };
 };
 
+const makePNASPaper = async (url) => {
+    url = url.replace(".full.pdf", "");
+    const htmlText = await fetch(url).then((r) => r.text());
+    const dom = new DOMParser().parseFromString(
+        htmlText.replaceAll("\n", ""),
+        "text/html"
+    );
+    const citeUrl = dom
+        .getElementsByClassName("pane-jnl-pnas-cite-tool")[0]
+        .querySelector("a").href;
+
+    if (!citeUrl) return;
+
+    const bibtexUrl = citeUrl.replace("/download", "/bibtext");
+    console.log("bibtexUrl: ", bibtexUrl);
+    const bibtex = await fetch(bibtexUrl).then((r) => r.text());
+    console.log("bibtex: ", bibtex);
+    const bibtexData = bibtexToJson(bibtex)[0];
+    console.log("bibtexData: ", bibtexData);
+
+    const entries = bibtexData.entryTags;
+
+    const year = entries.year;
+    const title = entries.title;
+    const author = entries.author
+        .replace(/\s+/g, " ")
+        .split(" and ")
+        .map((v) =>
+            v
+                .split(",")
+                .map((a) => a.trim())
+                .reverse()
+                .join(" ")
+        )
+        .join(" and ");
+    const pdfLink = entries.eprint;
+    const key = bibtexData.citationKey;
+    const note = `Published @ PNAS (${year})`;
+    const pid = url.endsWith("/")
+        ? url.split("/").slice(-2)[0]
+        : url.split("/").slice(-1)[0];
+
+    const id = `PNAS-${year}_${pid}`;
+
+    return { author, bibtex, id, key, note, pdfLink, title, year };
+};
+
 // ----------------------------------------------
 // -----  Papers With Code: non functional  -----
 // ----------------------------------------------
@@ -724,6 +771,11 @@ const makePaper = async (is, url, id) => {
         paper = await makeACLPaper(url);
         if (paper) {
             paper.source = "pmlr";
+        }
+    } else if (is.pnas) {
+        paper = await makePNASPaper(url);
+        if (paper) {
+            paper.source = "pnas";
         }
     } else {
         throw new Error("Unknown paper source: " + JSON.stringify({ is, url, id }));

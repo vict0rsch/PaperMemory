@@ -71,6 +71,7 @@ global.knownPaperPages = {
     biorxiv: ["biorxiv.org/content"],
     pmlr: ["proceedings.mlr.press/"],
     acl: ["aclanthology.org/"],
+    pnas: ["pnas.org/content/"],
 };
 
 global.overrideORConfs = {

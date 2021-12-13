@@ -153,7 +153,7 @@ const popupMain = async (url, isKnownPage, manualTrigger = false) => {
         const id = parseIdFromUrl(url);
         global.state.currentId = id;
 
-        if (!global.state.papers.hasOwnProperty(id)) {
+        if (!id || !global.state.papers.hasOwnProperty(id)) {
             // Unknown paper, probably deleted by the user
             console.log("Unknown id " + id);
             updatePopupPaperNoMemory(url);

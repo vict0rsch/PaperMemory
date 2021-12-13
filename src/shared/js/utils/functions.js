@@ -820,6 +820,16 @@ const parseIdFromUrl = (url) => {
             return p.id.includes("ACL-") && p.id.includes(key);
         })[0];
         return paper && paper.id;
+    } else if (is.pnas) {
+        url = url.replace(".full.pdf", "");
+        const pid = url.endsWith("/")
+            ? url.split("/").slice(-2)[0]
+            : url.split("/").slice(-1)[0];
+
+        const paper = Object.values(cleanPapers(global.state.papers)).filter((p) => {
+            return p.id.includes("PNAS-") && p.id.includes(pid);
+        })[0];
+        return paper && paper.id;
     } else {
         throw new Error("unknown paper url");
     }
@@ -858,6 +868,9 @@ const paperToAbs = (paper) => {
         case "acl":
             abs = pdf.replace(".pdf", "");
             break;
+        case "pnas":
+            abs = pdf.replace(".full.pdf", "");
+            break;
 
         default:
             abs = "https://xkcd.com/1969/";
@@ -895,6 +908,9 @@ const paperToPDF = (paper) => {
             break;
 
         case "acl":
+            break;
+
+        case "pnas":
             break;
 
         default:

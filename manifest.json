@@ -37,6 +37,7 @@
     "https://export.arxiv.org/*",
     "*://*.neurips.cc/*",
     "*://*.nips.cc/*",
+    "*://*.pnas.org/*",
     "*://proceedings.mlr.press/*",
     "*://aclanthology.org/*",
     "https://openaccess.thecvf.com/*",
@@ -56,6 +57,7 @@
         "*://proceedings.mlr.press/*",
         "*://*.neurips.cc/*",
         "*://*.nips.cc/*",
+        "*://*.pnas.org/content/*",
         "*://openaccess.thecvf.com/*",
         "*://openreview.net/*",
         "*://aclanthology.org/*"
