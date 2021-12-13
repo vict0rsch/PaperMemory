@@ -436,6 +436,7 @@ const findACLValue = (dom, key) => {
 };
 
 const makeACLPaper = async (url) => {
+    url = url.replace(".pdf", "");
     const htmlText = await fetch(url).then((r) => r.text());
     const dom = new DOMParser().parseFromString(
         htmlText.replaceAll("\n", ""),
