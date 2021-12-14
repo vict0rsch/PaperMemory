@@ -489,17 +489,14 @@ const makePNASPaper = async (url) => {
 
     if (!citeUrl) return;
 
+    const title = dom.getElementById("page-title").innerText;
     const bibtexUrl = citeUrl.replace("/download", "/bibtext");
-    console.log("bibtexUrl: ", bibtexUrl);
     const bibtex = await fetch(bibtexUrl).then((r) => r.text());
-    console.log("bibtex: ", bibtex);
     const bibtexData = bibtexToJson(bibtex)[0];
-    console.log("bibtexData: ", bibtexData);
 
     const entries = bibtexData.entryTags;
 
     const year = entries.year;
-    const title = entries.title;
     const author = entries.author
         .replace(/\s+/g, " ")
         .split(" and ")
