@@ -85,12 +85,8 @@ const svg = (name) => {
  * @param {object} checks The user's stored preferences regarding menu options
  */
 const contentScriptMain = async (url) => {
-    const storedMenu = await getStorage(global.menuStorageKeys);
     await initState(undefined, true);
-    let menu = {};
-    for (const m of global.menuCheckNames) {
-        menu[m] = storedMenu.hasOwnProperty(m) ? storedMenu[m] : true;
-    }
+    const menu = await getMenu();
 
     let is = isPaper(url);
 
