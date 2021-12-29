@@ -1,6 +1,8 @@
 /**
  * TODO: docstrings
  * TODO: miniquery for content_script.js
+ *
+ * TODO: add advanced option to customize storage folder
  */
 
 /**
@@ -223,6 +225,40 @@ const focusExistingOrCreateNewPaperTab = (paper) => {
                     chrome.tabs.update(tab.id, tabUpdateProperties);
                 }
             });
+        } else if (global.state.menu.checkStore) {
+            chrome.downloads.search(
+                {
+                    filenameRegex: "PaperMemoryStore/.*",
+                },
+                (files) => {
+                    var file;
+                    for (const candidate of files) {
+                        if (
+                            candidate.filename
+                                .toLowerCase()
+                                .includes(paper.title.toLowerCase())
+                        ) {
+                            file = candidate;
+                            break;
+                        } else {
+                            const cleanedUrl = paperToPDF({
+                                pdfLink: file.finalUrl,
+                                id: paper.id,
+                                source: paper.source,
+                            });
+                            if (cleanedUrl === paperToPDF(paper)) {
+                                file = candidate;
+                                break;
+                            }
+                        }
+                    }
+                    if (file) {
+                        chrome.downloads.open(file.id);
+                    } else {
+                        chrome.tabs.create({ url: paper.pdfLink });
+                    }
+                }
+            );
         } else {
             chrome.tabs.create({ url: paper.pdfLink });
         }
