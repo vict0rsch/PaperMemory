@@ -677,6 +677,15 @@ const stateTitleFunction = (paperOrId) => {
     return name.replaceAll("\n", " ").replace(/\s\s+/g, " ");
 };
 
+const getMenu = async () => {
+    const storedMenu = await getStorage(global.menuStorageKeys);
+    let menu = {};
+    for (const m of global.menuCheckNames) {
+        menu[m] = storedMenu.hasOwnProperty(m) ? storedMenu[m] : true;
+    }
+    return menu;
+};
+
 const getManifestDataVersion = () => {
     // ArxivTools version a.b.c => data version a * 10^4 + b * 10^2 + c
     // (with 10^2 and 10^1, 0.3.1 would be lower than 0.2.12)
@@ -705,6 +714,8 @@ const initState = async (papers, isContentScript) => {
         console.log("Time to retrieve stored papers (s): " + (Date.now() - s) / 1000);
     }
 
+    const menu = await getMenu();
+
     global.state.dataVersion = getManifestDataVersion();
     global.state.titleFunction = (await getTitleFunction()).titleFunction;
 
@@ -723,6 +734,7 @@ const initState = async (papers, isContentScript) => {
     global.state.papersList = Object.values(cleanPapers(papers));
     global.state.sortKey = "lastOpenDate";
     global.state.papersReady = true;
+    global.state.menu = menu;
     sortMemory();
     makeTags();
     console.log("State initialization duration (s): " + (Date.now() - s) / 1000);
