@@ -47,7 +47,8 @@
     "activeTab",
     "storage",
     "unlimitedStorage",
-    "downloads"
+    "downloads",
+    "downloads.open"
   ],
   "content_scripts": [
     {
