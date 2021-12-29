@@ -139,6 +139,10 @@ code {
     stroke-width: 1px;
 }
 
+#options label {
+    max-width: 330px;
+}
+
 #menu-switch-svg {
     color: rgb(43, 43, 61);
 }
