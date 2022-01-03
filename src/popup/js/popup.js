@@ -272,13 +272,13 @@ const popupMain = async (url, isKnownPage, manualTrigger = false) => {
 const query = { active: true, lastFocusedWindow: true };
 chrome.tabs.query(query, async (tabs) => {
     const url = tabs[0].url;
+    await initState();
 
     const is = isPaper(url);
     const isKnownPage = Object.values(is).some((i) => i);
 
     if (!isKnownPage) showId("notArxiv");
 
-    await initState();
     hideId("memory-spinner");
     showId("memory-switch");
     makeMemoryHTML();
