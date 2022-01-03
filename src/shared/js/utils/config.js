@@ -105,10 +105,10 @@ global.defaultTitleFunctionCode = `
     name = name.replaceAll(":", " ").replace(/\\s\\s+/g, " ");\n
     return name\n};`;
 global.storeReadme = `
-/!\ Warning: This folder has been created automatically by your PaperMemory browser extension.
-/!\ It has to stay in your downloads for PaperMemory to be able to access your papers.
-/!\ To be able to open files from this folder instead of re-downloading them, PaperMemory will match their titles and downloaded urls.
-/!\ If you change the default title function in the Advanced Options and do not include a paper's title in the file name, PaperMemory may not be able to open the file and will instead open the pdf url.
+/!\\ Warning: This folder has been created automatically by your PaperMemory browser extension.
+/!\\ It has to stay in your downloads for PaperMemory to be able to access your papers.
+/!\\ To be able to open files from this folder instead of re-downloading them, PaperMemory will match their titles and downloaded urls.
+/!\\ If you change the default title function in the Advanced Options and do not include a paper's title in the file name, PaperMemory may not be able to open the file and will instead open the pdf url.
 `;
 /**
  * English words to ignore when creating an arxiv paper's BibTex key.
