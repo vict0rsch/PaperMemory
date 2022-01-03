@@ -1,6 +1,6 @@
 {
   "name": "Paper Memory",
-  "version": "0.4.2.3",
+  "version": "0.4.3",
   "manifest_version": 2,
   "description": "Automatically record papers you read from Arxiv, OpenReview & more! Organize your library with tags, links to code and quick notes.",
   "homepage_url": "https://github.com/vict0rsch/PaperMemory",
@@ -61,7 +61,8 @@
         "*://*.pnas.org/content/*",
         "*://openaccess.thecvf.com/*",
         "*://openreview.net/*",
-        "*://aclanthology.org/*"
+        "*://aclanthology.org/*",
+        "*://scirate.com/arxiv/*"
       ],
       "run_at": "document_start",
       "js": [

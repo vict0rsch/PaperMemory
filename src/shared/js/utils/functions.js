@@ -735,8 +735,10 @@ const initState = async (papers, isContentScript) => {
     global.state.sortKey = "lastOpenDate";
     global.state.papersReady = true;
     global.state.menu = menu;
+
     sortMemory();
     makeTags();
+
     console.log("State initialization duration (s): " + (Date.now() - s) / 1000);
 };
 
@@ -1230,6 +1232,13 @@ const tablerSvg = (pathName, id, classNames) => {
             <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
             <path d="M10.325 4.317c.426 -1.756 2.924 -1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543 -.94 3.31 .826 2.37 2.37a1.724 1.724 0 0 0 1.065 2.572c1.756 .426 1.756 2.924 0 3.35a1.724 1.724 0 0 0 -1.066 2.573c.94 1.543 -.826 3.31 -2.37 2.37a1.724 1.724 0 0 0 -2.572 1.065c-.426 1.756 -2.924 1.756 -3.35 0a1.724 1.724 0 0 0 -2.573 -1.066c-1.543 .94 -3.31 -.826 -2.37 -2.37a1.724 1.724 0 0 0 -1.065 -2.572c-1.756 -.426 -1.756 -2.924 0 -3.35a1.724 1.724 0 0 0 1.066 -2.573c-.94 -1.543 .826 -3.31 2.37 -2.37c1 .608 2.296 .07 2.572 -1.065z" />
             <circle cx="12" cy="12" r="3" />
+            </svg>`;
+
+        case "messages":
+            return `<svg viewBox="0 0 24 24" ${id} ${classNames}>
+                <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                <path d="M21 14l-3 -3h-7a1 1 0 0 1 -1 -1v-6a1 1 0 0 1 1 -1h9a1 1 0 0 1 1 1v10" />
+                <path d="M14 15v2a1 1 0 0 1 -1 1h-7l-3 3v-10a1 1 0 0 1 1 -1h2" />
             </svg>`;
 
         case "external-link":
