@@ -279,7 +279,21 @@ const getPopupPaperIconsHTML = (paper, currentUrl) => {
     const id = paper.id;
     const name = paperToAbs(paper) === currentUrl ? "HTML" : "PDF";
 
-    return /*html*/ ` <div
+    let scirate = "";
+    if (global.state.menu.checkScirate && paper.source === "arxiv") {
+        scirate = /*html*/ `
+        <div
+            tabindex="0"
+            class="memory-item-svg-div"
+            id="popup-memory-item-scirate--${id}"
+            title="Open on SciRate"
+        >
+            ${tablerSvg("messages", "", ["popup-click-svg"])}
+        </div>`;
+    }
+
+    return /*html*/ `${scirate}
+        <div
             tabindex="0"
             class="memory-item-svg-div"
             id="popup-memory-item-link--${id}"
