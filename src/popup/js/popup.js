@@ -173,7 +173,7 @@ const popupMain = async (url, isKnownPage, manualTrigger = false) => {
         setTextId("popup-authors", paper.author.replaceAll(" and ", ", "));
         if (paper.codeLink) {
             showId("popup-code-link");
-            setTextId("popup-code-link", paper.codeLink);
+            setTextId("popup-code-link", paper.codeLink.replace(/^https?:\/\//, ""));
         }
 
         // ----------------------------------

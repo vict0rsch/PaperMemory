@@ -317,8 +317,9 @@ const saveCodeLink = (id, codeLink) => {
     global.state.papers[id].codeLink = codeLink;
     chrome.storage.local.set({ papers: global.state.papers }, () => {
         // console.log(`Updated the code for ${global.state.papers[id].title} to ${codeLink}`);
-        setHTML(findEl(id, "memory-code-link"), codeLink);
-        setHTML(`popup-code-link`, codeLink);
+        const displayLink = codeLink.replace(/^https?:\/\//, "");
+        setHTML(findEl(id, "memory-code-link"), displayLink);
+        setHTML(`popup-code-link`, displayLink);
         val(findEl(id, "form-code-input"), codeLink);
         codeLink ? showId("popup-code-link") : hideId("popup-code-link");
         const codeInput = findEl(`popup-form-codeLink--${id}`);
