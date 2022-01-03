@@ -232,6 +232,7 @@ const focusExistingOrCreateNewPaperTab = (paper) => {
                 },
                 (files) => {
                     var file;
+                    files = files.filter((f) => f.exists);
                     for (const candidate of files) {
                         if (
                             candidate.filename
@@ -241,9 +242,15 @@ const focusExistingOrCreateNewPaperTab = (paper) => {
                             file = candidate;
                             break;
                         } else {
+                            var id;
+                            try {
+                                id = parseIdFromUrl(candidate.finalUrl);
+                            } catch (error) {
+                                id = "";
+                            }
                             const cleanedUrl = paperToPDF({
-                                pdfLink: file.finalUrl,
-                                id: paper.id,
+                                pdfLink: candidate.finalUrl,
+                                id: id,
                                 source: paper.source,
                             });
                             if (cleanedUrl === paperToPDF(paper)) {
