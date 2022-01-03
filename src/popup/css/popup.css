@@ -507,6 +507,7 @@ code {
     color: rgb(22, 86, 184);
     cursor: pointer;
     margin-bottom: 16px;
+    word-break: break-all;
 }
 
 #popup-code-link {
