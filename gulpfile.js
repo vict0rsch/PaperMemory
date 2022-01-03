@@ -69,6 +69,7 @@ function popupHTMLDev() {
         .pipe(htmlmin({ collapseWhitespace: true, removeComments: true }))
         .pipe(dest("src/popup/min/"));
 }
+
 function popupHTML() {
     return src(["src/popup/popup.html"])
         .pipe(preprocess({ context: { DEV: false } }))
@@ -103,7 +104,7 @@ function watchFiles() {
         ["src/popup/css/*.css", "src/shared/css/*.css"],
         parallel(popupCSS, popupDarkCSS)
     );
-    watch("src/popup/popup.html", popupHTMLDev);
+    watch("src/popup/*.html", popupHTMLDev);
     watch("src/shared/js/utils/*", utilsJS);
 }
 

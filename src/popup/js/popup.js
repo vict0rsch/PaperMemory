@@ -228,6 +228,26 @@ const popupMain = async (url, isKnownPage, manualTrigger = false) => {
         });
         addListener(`popup-memory-item-download--${id}`, "click", () => {
             let title = stateTitleFunction(paper);
+            if (global.state.menu.checkStore) {
+                title = "PaperMemoryStore/" + title;
+                chrome.downloads.search(
+                    {
+                        filenameRegex: "PaperMemoryStore/.*",
+                    },
+                    (files) => {
+                        files = files.filter((f) => f.exists);
+                        if (files.length === 0) {
+                            chrome.downloads.download({
+                                url: URL.createObjectURL(
+                                    new Blob([global.storeReadme])
+                                ),
+                                filename: "PaperMemoryStore/IMPORTANT_README.txt",
+                                saveAs: false,
+                            });
+                        }
+                    }
+                );
+            }
             console.log({ title });
             if (!title.endsWith(".pdf")) {
                 title += ".pdf";
@@ -252,13 +272,13 @@ const popupMain = async (url, isKnownPage, manualTrigger = false) => {
 const query = { active: true, lastFocusedWindow: true };
 chrome.tabs.query(query, async (tabs) => {
     const url = tabs[0].url;
+    await initState();
 
     const is = isPaper(url);
     const isKnownPage = Object.values(is).some((i) => i);
 
     if (!isKnownPage) showId("notArxiv");
 
-    await initState();
     hideId("memory-spinner");
     showId("memory-switch");
     makeMemoryHTML();

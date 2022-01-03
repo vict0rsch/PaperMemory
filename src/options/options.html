@@ -203,6 +203,42 @@
 
         </div>
 
+        <div class="section">
+            <h2>Local file storage</h2>
+
+            <p>PaperMemory can store pdfs in your Downloads folder and use this file instead of re-downloading a pdf
+                from the internet.</p>
+
+            <p>How it works:</p>
+
+            <ol>
+                <li>Enable the feature from the popup's settings</li>
+                <li>Click on the Download button in the PaperMemory popup when reading a paper</li>
+                <li>The extension creates a <code>PaperMemoryStore</code> folder in your Downloads</li>
+                <li>PDFs are stored in there</li>
+                <li>When opening a paper from your Memory, if it is not already open in a tab, the extension will open a
+                    new tab to
+                    the local
+                    file instead of the paper's online pdf</li>
+            </ol>
+
+            <p><strong>Limitations</strong>:</p>
+
+            <ul>
+                <li>PaperMemory can <em>only access folders in your Downloads</em> so the storage <em>has</em> to happen
+                    there</li>
+                <li>It relies on <strong>title matching</strong> to 1/ Open a local file from the Memory 2/ Detect if a
+                    currently open
+                    file is
+                    a known paper
+                    to display the Popup. Make sure to have the title in your custom title function</li>
+                <li>If you move files or rename them altering the titles they will not be detected anymore</li>
+
+            </ul>
+
+
+        </div>
+
         <div class="section" id="footer">
 
             <p style="color: gray;"><em>If you like PaperMemory please consider sharing, starring on Github and rating

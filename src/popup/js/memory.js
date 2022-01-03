@@ -1,6 +1,8 @@
 /**
  * TODO: docstrings
  * TODO: miniquery for content_script.js
+ *
+ * TODO: add advanced option to customize storage folder
  */
 
 /**
@@ -223,6 +225,47 @@ const focusExistingOrCreateNewPaperTab = (paper) => {
                     chrome.tabs.update(tab.id, tabUpdateProperties);
                 }
             });
+        } else if (global.state.menu.checkStore) {
+            chrome.downloads.search(
+                {
+                    filenameRegex: "PaperMemoryStore/.*",
+                },
+                (files) => {
+                    var file;
+                    files = files.filter((f) => f.exists);
+                    for (const candidate of files) {
+                        if (
+                            candidate.filename
+                                .toLowerCase()
+                                .includes(paper.title.toLowerCase())
+                        ) {
+                            file = candidate;
+                            break;
+                        } else {
+                            var id;
+                            try {
+                                id = parseIdFromUrl(candidate.finalUrl);
+                            } catch (error) {
+                                id = "";
+                            }
+                            const cleanedUrl = paperToPDF({
+                                pdfLink: candidate.finalUrl,
+                                id: id,
+                                source: paper.source,
+                            });
+                            if (cleanedUrl === paperToPDF(paper)) {
+                                file = candidate;
+                                break;
+                            }
+                        }
+                    }
+                    if (file) {
+                        chrome.downloads.open(file.id);
+                    } else {
+                        chrome.tabs.create({ url: paper.pdfLink });
+                    }
+                }
+            );
         } else {
             chrome.tabs.create({ url: paper.pdfLink });
         }

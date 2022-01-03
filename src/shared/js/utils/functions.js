@@ -677,6 +677,15 @@ const stateTitleFunction = (paperOrId) => {
     return name.replaceAll("\n", " ").replace(/\s\s+/g, " ");
 };
 
+const getMenu = async () => {
+    const storedMenu = await getStorage(global.menuStorageKeys);
+    let menu = {};
+    for (const m of global.menuCheckNames) {
+        menu[m] = storedMenu.hasOwnProperty(m) ? storedMenu[m] : true;
+    }
+    return menu;
+};
+
 const getManifestDataVersion = () => {
     // ArxivTools version a.b.c => data version a * 10^4 + b * 10^2 + c
     // (with 10^2 and 10^1, 0.3.1 would be lower than 0.2.12)
@@ -705,6 +714,8 @@ const initState = async (papers, isContentScript) => {
         console.log("Time to retrieve stored papers (s): " + (Date.now() - s) / 1000);
     }
 
+    const menu = await getMenu();
+
     global.state.dataVersion = getManifestDataVersion();
     global.state.titleFunction = (await getTitleFunction()).titleFunction;
 
@@ -723,6 +734,7 @@ const initState = async (papers, isContentScript) => {
     global.state.papersList = Object.values(cleanPapers(papers));
     global.state.sortKey = "lastOpenDate";
     global.state.papersReady = true;
+    global.state.menu = menu;
     sortMemory();
     makeTags();
     console.log("State initialization duration (s): " + (Date.now() - s) / 1000);
@@ -758,8 +770,28 @@ const parseCVFUrl = (url) => {
     return { conf, year, id };
 };
 
+const isKnownLocalFile = (url) => {
+    console.log("url: ", url);
+    if (!url.startsWith("file://")) return false;
+    if (!url.endsWith(".pdf")) return false;
+
+    const filename = decodeURIComponent(url.split("/").reverse()[0])
+        .toLowerCase()
+        .replace(/\W/g, "");
+    console.log("filename: ", filename);
+    console.log("global.state.papers: ", global.state.papers);
+    const titles = Object.values(cleanPapers(global.state.papers))
+        .map((p) => {
+            return { title: p.title.toLowerCase().replace(/\W/g, ""), id: p.id };
+        })
+        .filter((t) => filename.includes(t.title));
+
+    if (titles.length === 0) return false;
+
+    return titles[0].id;
+};
+
 const isPaper = (url) => {
-    const a = parseUrl(url);
     let is = {};
     for (const source in global.knownPaperPages) {
         const paths = global.knownPaperPages[source];
@@ -770,7 +802,7 @@ const isPaper = (url) => {
             }
         }
     }
-
+    is.localFile = isKnownLocalFile(url);
     return is;
 };
 
@@ -830,6 +862,8 @@ const parseIdFromUrl = (url) => {
             return p.id.includes("PNAS-") && p.id.includes(pid);
         })[0];
         return paper && paper.id;
+    } else if (is.localFile) {
+        return is.localFile;
     } else {
         throw new Error("unknown paper url");
     }

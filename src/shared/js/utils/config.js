@@ -23,6 +23,7 @@ global.state = {
     sortedPapers: [],
     sortKey: "",
     papersReady: false,
+    menu: {},
 };
 
 global.descendingSortKeys = ["addDate", "count", "lastOpenDate", "favoriteDate"];
@@ -49,11 +50,12 @@ global.menuCheckNames = [
     "checkFeedback",
     "checkDarkMode",
     "checkDirectOpen",
+    "checkStore",
 ];
 /**
  * Menu check names which should not default to true but to false
  */
-global.menuCheckDefaultFalse = ["checkDarkMode", "checkDirectOpen"];
+global.menuCheckDefaultFalse = ["checkDarkMode", "checkDirectOpen", "checkStore"];
 /**
  * All keys to retrieve from the menu, the checkboxes + the custom pdf function
  */
@@ -102,7 +104,12 @@ global.defaultTitleFunctionCode = `
     let name = \`\${title} - \${id}\`;\n
     name = name.replaceAll(":", " ").replace(/\\s\\s+/g, " ");\n
     return name\n};`;
-
+global.storeReadme = `
+/!\\ Warning: This folder has been created automatically by your PaperMemory browser extension.
+/!\\ It has to stay in your downloads for PaperMemory to be able to access your papers.
+/!\\ To be able to open files from this folder instead of re-downloading them, PaperMemory will match their titles and downloaded urls.
+/!\\ If you change the default title function in the Advanced Options and do not include a paper's title in the file name, PaperMemory may not be able to open the file and will instead open the pdf url.
+`;
 /**
  * English words to ignore when creating an arxiv paper's BibTex key.
  */
