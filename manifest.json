@@ -61,7 +61,8 @@
         "*://*.pnas.org/content/*",
         "*://openaccess.thecvf.com/*",
         "*://openreview.net/*",
-        "*://aclanthology.org/*"
+        "*://aclanthology.org/*",
+        "*://scirate.com/arxiv/*"
       ],
       "run_at": "document_start",
       "js": [

@@ -72,7 +72,7 @@ global.menuStorageKeys = [...global.menuCheckNames, "pdfTitleFn"];
  * IMPORTANT: paper page before pdf (see background script)
  */
 global.knownPaperPages = {
-    arxiv: ["arxiv.org/abs/", "arxiv.org/pdf/"],
+    arxiv: ["arxiv.org/abs/", "arxiv.org/pdf/", "scirate.com/arxiv/"],
     neurips: ["neurips.cc/paper/", "nips.cc/paper/"],
     cvf: ["openaccess.thecvf.com/content"],
     openreview: ["openreview.net/forum", "openreview.net/pdf"],
