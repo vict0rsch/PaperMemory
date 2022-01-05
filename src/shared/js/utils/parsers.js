@@ -725,7 +725,7 @@ const autoTagPaper = async (paper) => {
                 : true;
             const authorMatch = at.author
                 ? new RegExp(at.author, "i").test(paper.author)
-                : false;
+                : true;
 
             if (titleMatch && authorMatch) {
                 at.tags.forEach((t) => tags.add(t));
