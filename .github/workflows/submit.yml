@@ -1,0 +1,23 @@
+name: Submit
+
+on:
+    workflow_dispatch:
+        inputs:
+            tag:
+                description: "Release tag to submit, i.e 0.4.3"
+                required: true
+
+jobs:
+    submit:
+        runs-on: ubuntu-latest
+        steps:
+            - name: Download Github Release Assets
+              uses: plasmo-corp/download-release-asset@v1.0.0
+              with:
+                  files: Archive-*
+                  tag: ${{ github.event.inputs.tag }}
+            - name: Browser Plugin Publish
+              uses: plasmo-corp/bpp@v1
+              with:
+                  artifact: "Archive-${{ github.event.inputs.tag }}.zip"
+                  keys: ${{ secrets.SUBMIT_KEYS }}
