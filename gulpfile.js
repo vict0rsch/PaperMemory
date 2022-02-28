@@ -39,6 +39,9 @@ function utilsJS() {
             "src/shared/js/utils/levenshtein.js",
             "src/shared/js/utils/bibtexParser.js",
             "src/shared/js/utils/functions.js",
+            "src/shared/js/utils/data.js",
+            "src/shared/js/utils/paper.js",
+            "src/shared/js/utils/state.js",
             "src/shared/js/utils/parsers.js",
         ])
             // .pipe(debug())
