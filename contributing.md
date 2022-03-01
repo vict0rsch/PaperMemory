@@ -81,12 +81,17 @@ Once you load the local extension as an unpackaged extension, changes that affec
     └── shared
         ├── jquery.min.js ➤➤➤ JQuery lib. Do not modify. 
         ├── utils ➤➤➤ Shared utility functions minified together in this order into utils.min.js
-        │   ├── miniquery.js ➤➤➤ Custom vanilla js replacement for JQuery (working towards removing that dependency)
-        │   ├── config.js ➤➤➤ Constants / State variables used throughout out the code
-        │   ├── functions.js ➤➤➤ Utility functions, relying on config.js
-        │   └── parsers.js ➤➤➤ Parsing functions to create papers
+        │   ├── bibtexParser.js ➤➤➤ Class to parse bibtex strings into objects
+        │   ├── config.js       ➤➤➤ Constants / State variables used throughout out the code
+        │   ├── data.js         ➤➤➤ Data/Memory manipulation (migrations, paper validation, overwrite etc.)
+        │   ├── functions.js    ➤➤➤ Utility functions, relying on config.js
+        │   ├── logTrace.js     ➤➤➤ Single var script to include the log stack trace in dev (gulp watch)
+        │   ├── miniquery.js    ➤➤➤ Custom vanilla js replacement for JQuery (working towards removing that dependency)
+        │   ├── parsers.js      ➤➤➤ Parsing functions to create papers
+        │   ├── paper.js        ➤➤➤ Single-paper-related functions (isPaper, paperToAbs, paperToPDF)
+        │   └── state.js        ➤➤➤ State-related functions (init, custom title function, addOrUpdatePaper etc.)
         ├── utils.min.js ➤➤➤ Concatenation and minification of all files in src/shared/utils/
-        └── loader.css ➤➤➤ the style for the loader before the BibTex entry is displayed on arxiv.org/abs/*
+        └── loader.css   ➤➤➤ the style for the loader before the BibTex entry is displayed on arxiv.org/abs/*
 ```
 
 ### Prettier
