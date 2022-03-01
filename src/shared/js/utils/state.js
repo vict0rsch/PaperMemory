@@ -19,7 +19,7 @@ const initState = async (papers, isContentScript) => {
     const s = Date.now();
     if (typeof papers === "undefined") {
         papers = await getStorage("papers");
-        console.log("Time to retrieve stored papers (s): " + (Date.now() - s) / 1000);
+        log("Time to retrieve stored papers (s): " + (Date.now() - s) / 1000);
     }
 
     global.state.dataVersion = getManifestDataVersion();
@@ -31,7 +31,7 @@ const initState = async (papers, isContentScript) => {
     global.state.papers = papers;
 
     if (isContentScript) {
-        console.log("State initialization duration (s): " + (Date.now() - s) / 1000);
+        log("State initialization duration (s): " + (Date.now() - s) / 1000);
         return;
     }
 
@@ -43,7 +43,7 @@ const initState = async (papers, isContentScript) => {
     sortMemory();
     makeTags();
 
-    console.log("State initialization duration (s): " + (Date.now() - s) / 1000);
+    log("State initialization duration (s): " + (Date.now() - s) / 1000);
 };
 
 /**
@@ -73,9 +73,9 @@ const getTitleFunction = async (code = null) => {
     } catch (error) {
         // there was an error evaluating the code: use the built-in function
         errorMessage = `Error parsing the title function: ${error}`;
-        console.log("Error parsing the title function. Function string then error:");
-        console.log(code);
-        console.log(error);
+        log("Error parsing the title function. Function string then error:");
+        log(code);
+        log(error);
         titleFunction = eval(global.defaultTitleFunctionCode);
         code = global.defaultTitleFunctionCode;
     }
@@ -91,11 +91,9 @@ const getTitleFunction = async (code = null) => {
     } catch (error) {
         // there was an error running the title function: use the built-in function
         errorMessage = `Error executing the title function: ${error}`;
-        console.log(
-            "Error testing the user's title function. Function string then error:"
-        );
-        console.log(code);
-        console.log(error);
+        log("Error testing the user's title function. Function string then error:");
+        log(code);
+        log(error);
         titleFunction = eval(global.defaultTitleFunctionCode);
         code = global.defaultTitleFunctionCode;
     }
@@ -120,7 +118,7 @@ const stateTitleFunction = (paperOrId) => {
         paper = global.state.papers[paperOrId];
         if (typeof paper === "undefined") {
             // no such paper
-            console.log("Error in stateTitleFunction: unknown id", paperOrId);
+            log("Error in stateTitleFunction: unknown id", paperOrId);
             return "Unknown ID";
         }
     }
@@ -130,7 +128,7 @@ const stateTitleFunction = (paperOrId) => {
         name = global.state.titleFunction(paper);
     } catch (error) {
         // there was an error: use the built-in function
-        console.log("Error in stateTitleFunction:", error);
+        log("Error in stateTitleFunction:", error);
         name = eval(global.defaultTitleFunctionCode)(paper);
     }
     // make sure there's no new line and no double spaces in the title

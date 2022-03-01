@@ -246,9 +246,9 @@ $.extend($.easing, {
  *
  */
 
-const log = (...args) => console.log("[PM] " + args.join(" "));
+const log = (...args) => log("[PM] " + args.join(" "));
 
-const info = (...args) => console.log("%c[PM] " + args.join(" "), "color: #328DD2");
+const info = (...args) => log("%c[PM] " + args.join(" "), "color: #328DD2");
 
 const getDisplayId = (id) => {
     id = id.split("_")[0].split(".")[0];
@@ -303,7 +303,7 @@ const fallbackCopyTextToClipboard = (text) => {
     try {
         var successful = document.execCommand("copy");
         var msg = successful ? "successful" : "unsuccessful";
-        console.log("Fallback: Copying text command was " + msg);
+        log("Fallback: Copying text command was " + msg);
     } catch (err) {
         console.error("Fallback: Oops, unable to copy", err);
     }
@@ -318,7 +318,7 @@ const copyTextToClipboard = (text) => {
     }
     navigator.clipboard.writeText(text).then(
         () => {
-            console.log("Async: Copying to clipboard was successful!");
+            log("Async: Copying to clipboard was successful!");
         },
         (err) => {
             console.error("Async: Could not copy text: ", err);

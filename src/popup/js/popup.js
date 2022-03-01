@@ -155,7 +155,7 @@ const popupMain = async (url, isKnownPage, manualTrigger = false) => {
 
         if (!id || !global.state.papers.hasOwnProperty(id)) {
             // Unknown paper, probably deleted by the user
-            console.log("Unknown id " + id);
+            log("Unknown id " + id);
             updatePopupPaperNoMemory(url);
             if (menu.checkDirectOpen) {
                 dispatchEvent("memory-switch", "click");
@@ -179,7 +179,7 @@ const popupMain = async (url, isKnownPage, manualTrigger = false) => {
         // ----------------------------------
         // -----  Customize Popup html  -----
         // ----------------------------------
-        console.log(paper);
+        log(paper);
         setHTML("popup-memory-edit", getPopupEditFormHTML(paper));
         setHTML("popup-copy-icons", getPopupPaperIconsHTML(paper, url));
         findEl(`checkFavorite--${id}`).checked = paper.favorite;
@@ -254,7 +254,7 @@ const popupMain = async (url, isKnownPage, manualTrigger = false) => {
                     }
                 );
             }
-            console.log({ title });
+            log({ title });
             if (!title.endsWith(".pdf")) {
                 title += ".pdf";
             }

@@ -245,7 +245,7 @@ const handleConfirmDeleteModalClick = (e) => {
         sortMemory();
         displayMemoryTable();
         hideId("confirm-modal");
-        console.log(`Successfully deleted "${title}" (${id}) from PaperMemory`);
+        log(`Successfully deleted "${title}" (${id}) from PaperMemory`);
         if (global.state.currentId === id) {
             updatePopupPaperNoMemory(url);
         }
@@ -365,7 +365,7 @@ const handleMenuCheckChange = (e) => {
     const key = e.target.id;
     const checked = findEl(key).checked;
     chrome.storage.local.set({ [key]: checked }, function () {
-        console.log(`Settings saved for ${key} (${checked})`);
+        log(`Settings saved for ${key} (${checked})`);
     });
 };
 

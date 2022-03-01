@@ -90,11 +90,11 @@ const updatePopupPaperNoMemory = (url) => {
             } else {
                 return;
             }
-            console.log("paper: ", paper);
-            console.log("previousIsArxiv: ", previousIsArxiv);
-            console.log("url: ", url);
+            log("paper: ", paper);
+            log("previousIsArxiv: ", previousIsArxiv);
+            log("url: ", url);
             const isKnownPage = Object.values(is).some((i) => i);
-            console.log("isKnownPage: ", isKnownPage);
+            log("isKnownPage: ", isKnownPage);
             if (paper) {
                 setHTML("isArxiv", previousIsArxiv);
                 popupMain(url, isKnownPage, true);
@@ -287,7 +287,7 @@ const saveNote = (id, note) => {
     note = note.trim();
     global.state.papers[id].note = note;
     chrome.storage.local.set({ papers: global.state.papers }, () => {
-        // console.log("Updated the note for " + global.state.papers[id].title);
+        // log("Updated the note for " + global.state.papers[id].title);
 
         setHTML(
             findEl(id, "memory-note-div"),
@@ -316,7 +316,7 @@ const saveCodeLink = (id, codeLink) => {
     codeLink = codeLink.trim();
     global.state.papers[id].codeLink = codeLink;
     chrome.storage.local.set({ papers: global.state.papers }, () => {
-        // console.log(`Updated the code for ${global.state.papers[id].title} to ${codeLink}`);
+        // log(`Updated the code for ${global.state.papers[id].title} to ${codeLink}`);
         const displayLink = codeLink.replace(/^https?:\/\//, "");
         setHTML(findEl(id, "memory-code-link"), displayLink);
         setHTML(`popup-code-link`, displayLink);
@@ -331,7 +331,7 @@ const saveFavoriteItem = (id, favorite) => {
     global.state.papers[id].favorite = favorite;
     global.state.papers[id].favoriteDate = new Date().toJSON();
     chrome.storage.local.set({ papers: global.state.papers }, () => {
-        // console.log(`${global.state.papers[id].title} is favorite: ${favorite}`);
+        // log(`${global.state.papers[id].title} is favorite: ${favorite}`);
         if (favorite) {
             addClass(`memory-container--${id}`, "favorite");
             addClass(
@@ -619,9 +619,9 @@ const displayMemoryTable = () => {
         try {
             table.push(getMemoryItemHTML(paper));
         } catch (error) {
-            console.log("displayMemoryTable error:");
-            console.log(error);
-            console.log(paper);
+            log("displayMemoryTable error:");
+            log(error);
+            log(paper);
         }
     }
     // https://stackoverflow.com/questions/18393981/append-vs-html-vs-innerhtml-performance
@@ -629,7 +629,7 @@ const displayMemoryTable = () => {
 
     const end = Date.now();
 
-    // console.log("[displayMemoryTable] Rendering duration (s): " + (end - start) / 1000);
+    // log("[displayMemoryTable] Rendering duration (s): " + (end - start) / 1000);
 
     // after a click on such a button, the focus returns to the
     // container to navigate with tab
@@ -664,7 +664,7 @@ const displayMemoryTable = () => {
     addEventToClass(".form-note", "submit", handleMemorySaveEdits);
     const end2 = Date.now();
 
-    // console.log("[displayMemoryTable] Listeners duration (s): " + (end2 - end) / 1000);
+    // log("[displayMemoryTable] Listeners duration (s): " + (end2 - end) / 1000);
 };
 
 /**
@@ -710,7 +710,7 @@ const makeMemoryHTML = async () => {
     // listen to sorting direction change
     addListener("memory-sort-arrow", "click", handleMemorySortArrow);
     const tend = Date.now() / 1000;
-    console.log("Total time to make the memory HTML (async) (s):" + (tend - tstart));
+    log("Total time to make the memory HTML (async) (s):" + (tend - tstart));
 };
 
 const openMemory = () => {

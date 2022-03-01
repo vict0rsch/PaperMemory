@@ -34,7 +34,7 @@ const migrateData = async (papers, manifestDataVersion, store = true) => {
                 // pre-0.2.8 and manifestDataVersion()
                 if (!papers[id].hasOwnProperty("bibtex")) {
                     papers[id].bibtex = "";
-                    console.log("Migrating bibtex for " + id);
+                    log("Migrating bibtex for " + id);
                 }
                 if (!papers[id].pdfLink.endsWith(".pdf")) {
                     papers[id].pdfLink = papers[id].pdfLink + ".pdf";
@@ -106,7 +106,7 @@ const migrateData = async (papers, manifestDataVersion, store = true) => {
 
         deleteIds.forEach((id, k) => {
             delete papers[id];
-            console.log("Deleting " + id);
+            log("Deleting " + id);
         });
 
         newPapers = { ...papers };
@@ -114,28 +114,28 @@ const migrateData = async (papers, manifestDataVersion, store = true) => {
 
         if (store) {
             chrome.storage.local.set({ papers: newPapers }, () => {
-                console.log("Migrated papers:");
-                console.log(newPapers);
-                console.log("Data version is now " + manifestDataVersion);
+                log("Migrated papers:");
+                log(newPapers);
+                log("Data version is now " + manifestDataVersion);
             });
         }
         return { papers: newPapers, success: true };
     } catch (err) {
-        console.log(
+        log(
             `Error migrating data from version ${currentVersion} to ${manifestDataVersion}: `
         );
-        console.log(err);
+        log(err);
 
         return { papers: newPapers, success: false, error: err };
     }
 };
 
 /**
- * @param {string} key The storage key to log (console.log)
+ * @param {string} key The storage key to log (log)
  */
 const logStorage = (key) => {
     chrome.storage.local.get(key, (data) => {
-        console.log(data[key]);
+        log(data[key]);
     });
 };
 
@@ -161,7 +161,7 @@ const getStorage = async (key) => {
 
 /**
  * A utility function to update the storage. Supports callbacks.
- * usage: setStorage("papers", {...}, () => {console.log("Done.")})
+ * usage: setStorage("papers", {...}, () => {log("Done.")})
  *
  * @param {string} key The storage key to update
  * @param {any} value The key's value to store
@@ -191,9 +191,9 @@ const deletePaperInStorage = async (id) => {
     }
     if (deleted) {
         setStorage("papers", papers);
-        console.log("Successfully deleted paper", id);
+        log("Successfully deleted paper", id);
     } else {
-        console.log("Error: no deletion");
+        log("Error: no deletion");
     }
 };
 
@@ -228,7 +228,7 @@ const backupData = async (papers) => {
         papersBackup[papers["__dataVersion"]] = papers;
 
         chrome.storage.local.set({ papersBackup }, () => {
-            console.log("Backed up data with version: " + papers["__dataVersion"]);
+            log("Backed up data with version: " + papers["__dataVersion"]);
         });
     });
 };
@@ -381,7 +381,7 @@ const validatePaper = (paper, log = true) => {
                 const defaultValue = expectedKeys[key].default(paper);
                 paper[key] = defaultValue;
                 message = `➤ Attribute "${key}" absent; will be set to "${defaultValue}" (${paper.id})`;
-                // stores the update message. If `log` is true, also console.log the message
+                // stores the update message. If `log` is true, also log the message
                 warns.push(message);
                 log && console.warn(message);
             } else {
@@ -496,7 +496,7 @@ const prepareOverwriteData = async (data) => {
         error = false;
     } catch (err) {
         // something went very wrong (eg: impossible paper validation or bug)
-        console.log("prepareOverwriteData error", err);
+        log("prepareOverwriteData error", err);
         message =
             `<h5 class="errorTitle"> /!\\ OverwriteMemoryError:</h5><br/>` +
             stringifyError(err);
