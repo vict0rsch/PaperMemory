@@ -47,6 +47,42 @@ const initState = async (papers, isContentScript) => {
 };
 
 /**
+ * Sample a paper from the memory. If `idx` is provided, the paper will
+ * be the `idx`-th paper in the memory (in the list of keys).
+ * Otherwise, a random paper will be drawn.
+ * If no paper exists in the memory a dummy paper object is returned.
+ *
+ * @param {number} idx Optional index of the sample paper.
+ * @returns {object} paper object to display in the options.
+ */
+const getExamplePaper = async (idx) => {
+    // all papers
+    const papers = await getStorage("papers");
+    // filter out the data version
+    const keys = Object.keys(papers)
+        .filter((k) => k.indexOf("__") === -1)
+        .reverse();
+    // no idx provided, sample a random paper
+    if (typeof idx === "undefined") {
+        idx = getRandomInt(keys.length);
+    }
+    let paper = papers[keys[idx]];
+    // there's no such paper (idx is wrong or memory is empty)
+    if (typeof paper === "undefined") {
+        paper = {
+            title: "Dummy title",
+            author: "Cool Author and Great Author and Complicated Name Àuthor",
+            year: 2021,
+            id: "NoneXiv-214324",
+            bibtex: "@Nonesense{}",
+            tags: ["t1", "t2"],
+            note: "Thispaperdoesnotexist.com",
+        };
+    }
+    return paper;
+};
+
+/**
  * Tries to parse the text input by the user to define the function that takes
  * a paper in order to create the custom page title / pdf filename.
  * If there is an error, it uses the built-in function from global.defaultTitleFunctionCode.
