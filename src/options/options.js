@@ -384,7 +384,7 @@ const handleOverwriteMemory = () => {
             const overwriteDiv = `<div id="overwrite-buttons" class="flex-center-evenly pt-3 px-4"> ${title} <div class="flex-center-evenly w-100">${cancel} ${confirm}</div></div>`;
             setTimeout(async () => {
                 const { success, message, warning, papersToWrite } =
-                    await overwriteMemory(overwritingPapers);
+                    await prepareOverwriteData(overwritingPapers);
                 if (success) {
                     if (warning) {
                         const nWarnings = (warning.match(/<br\/>/g) || []).length;
