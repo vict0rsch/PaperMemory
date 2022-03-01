@@ -246,7 +246,15 @@ $.extend($.easing, {
  *
  */
 
-const log = (...args) => log("[PM] " + args.join(" "));
+const logTrace = typeof LOGTRACE !== "undefined" && LOGTRACE;
+
+const log = (...args) => {
+    const stack = new Error().stack;
+    const debugMessage = logTrace
+        ? "\n\nLog trace:\n" + stack.split("\n").slice(2).join("\n")
+        : "";
+    console.log("[PM] ", ...args, debugMessage);
+};
 
 const info = (...args) => log("%c[PM] " + args.join(" "), "color: #328DD2");
 
