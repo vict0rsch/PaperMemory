@@ -520,53 +520,6 @@ const makePNASPaper = async (url) => {
     return { author, bibtex, id, key, note, pdfLink, title, year };
 };
 
-// ----------------------------------------------
-// -----  Papers With Code: non functional  -----
-// ----------------------------------------------
-
-const fetchOpts = {
-    headers: {
-        mode: "no-cors",
-    },
-};
-
-const fetchPWCId = async (arxiv_id, title) => {
-    let pwcPath = `https://paperswithcode.com/api/v1/papers/?`;
-    if (arxiv_id) {
-        pwcPath += new URLSearchParams({ arxiv_id });
-    } else if (title) {
-        pwcPath += new URLSearchParams({ title });
-    }
-    const json = await $.getJSON(pwcPath);
-    log({ json });
-
-    if (json["count"] !== 1) return;
-    return json["results"][0]["id"];
-};
-
-const fetchCodes = async (paper) => {
-    let arxiv_id, title;
-    if ((paper.source = "neurips")) {
-        title = paper.title;
-    } else {
-        arxiv_id = paper.id;
-    }
-
-    const pwcId = await fetchPWCId(arxiv_id, title);
-    if (!pwcId) return [];
-
-    let codePath = `https://paperswithcode.com/api/v1/papers/${pwcId}/repositories/?`;
-    codePath += new URLSearchParams({ page: 1, items_per_page: 10 });
-
-    const response = await fetch(codePath);
-    const json = await response.json();
-    if (json["count"] < 1) return;
-
-    let codes = json["results"];
-    codes.sort((a, b) => a.stars - b.stars);
-    return codes.slice(0, 5);
-};
-
 // --------------------------------------------
 // -----  Try CrossRef's API for a match  -----
 // --------------------------------------------

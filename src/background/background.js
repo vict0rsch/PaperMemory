@@ -10,12 +10,62 @@ const isPdf = (url) => {
     return url.endsWith(".pdf") || url.includes("openreview.net/pdf");
 };
 
+const fetchPWCId = async (arxivId, title) => {
+    let pwcPath = `https://paperswithcode.com/api/v1/papers/?`;
+    if (arxivId) {
+        pwcPath += new URLSearchParams({ arxiv_id: arxivId });
+    } else if (title) {
+        pwcPath += new URLSearchParams({ title });
+    }
+    const json = await $.getJSON(pwcPath);
+
+    if (json["count"] !== 1) return;
+    return json["results"][0]["id"];
+};
+
+const findCodesForPaper = async (request) => {
+    let arxivId, title;
+    if (request.paper.source === "arxiv") {
+        arxivId = request.paper.id.split("-").reverse()[0];
+    } else {
+        title = request.paper.title;
+    }
+    const pwcId = await fetchPWCId(arxivId, title);
+
+    if (!pwcId) return;
+
+    let codePath = `https://paperswithcode.com/api/v1/papers/${pwcId}/repositories/?`;
+    codePath += new URLSearchParams({ page: 1, items_per_page: 10 });
+
+    const response = await fetch(codePath);
+    const json = await response.json();
+
+    if (json["count"] < 1) return;
+
+    let codes = json["results"];
+    codes.sort((a, b) => b.stars - a.stars);
+    console.log("All codes for paper:", codes);
+    return codes[0];
+};
+
 chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
-    if (request.type == "update-title") {
+    if (request.type === "update-title") {
         console.log("Background message options:");
         console.log({ options: request.options });
         const { title, url } = request.options;
         paperTitles[url] = title.replaceAll('"', "'");
+    } else if (request.type === "tabID") {
+        sendResponse({ tabID: sender.tab.id, success: true });
+        return true;
+    } else if (request.type === "papersWithCode") {
+        findCodesForPaper(request).then((code) => {
+            console.log("Discovered code:", code);
+            sendResponse({
+                codeLink: code.url,
+                success: true,
+            });
+        });
+        return true;
     }
 });
 
