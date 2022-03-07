@@ -198,14 +198,24 @@ const handleMemorySearchKeyPress = (allowEmptySearch) => (e) => {
     // read input, return if empty (after trim)
     const query = val("memory-search").trim();
 
+    log(query);
+
     if (!query) {
         setTimeout(() => {
             style("memory-search-clear-icon", "visibility", "hidden");
         }, 0);
     }
 
-    if (!query && !allowEmptySearch && e.key !== "Backspace") {
-        return;
+    if (!query) {
+        if (global.state.papersList.length !== global.state.sortedPapers.length) {
+            // empty query but not all papers are displayed
+            global.state.papersList = global.state.sortedPapers;
+            displayMemoryTable();
+            return;
+        }
+        if (!allowEmptySearch && e.key !== "Backspace") {
+            return;
+        }
     }
     style("memory-search-clear-icon", "visibility", "visible");
     if (query.startsWith("t:")) {
@@ -229,6 +239,9 @@ const handleMemorySearchKeyUp = (e) => {
         backspaceEvent.key = "Backspace";
         dispatch("memory-search", backspaceEvent);
     }
+    if (e.target.id === "memory-search") {
+        dispatch("memory-search", "keypress");
+    }
 };
 
 const handleCancelModalClick = () => {
@@ -245,7 +258,7 @@ const handleConfirmDeleteModalClick = (e) => {
         sortMemory();
         displayMemoryTable();
         hideId("confirm-modal");
-        console.log(`Successfully deleted "${title}" (${id}) from PaperMemory`);
+        log(`Successfully deleted "${title}" (${id}) from PaperMemory`);
         if (global.state.currentId === id) {
             updatePopupPaperNoMemory(url);
         }
@@ -365,7 +378,7 @@ const handleMenuCheckChange = (e) => {
     const key = e.target.id;
     const checked = findEl(key).checked;
     chrome.storage.local.set({ [key]: checked }, function () {
-        console.log(`Settings saved for ${key} (${checked})`);
+        log(`Settings saved for ${key} (${checked})`);
     });
 };
 

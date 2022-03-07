@@ -156,7 +156,7 @@ const saveNewAutoTagItem = async () => {
         autoTagsFeedback("Saving error, contact developer", false);
         return;
     }
-    console.log("Saving new autoTag item: ", at);
+    log("Saving new autoTag item: ", at);
     autoTags.push(at);
     setStorage("autoTags", autoTags, () => {
         const items = findEl("auto-tags-list").getElementsByClassName("auto-tags-item");
@@ -319,7 +319,7 @@ const handleDownloadBibtexPlainClick = () => {
                 let b = v.bibtex;
                 if (!b) {
                     b = "";
-                    console.log(v);
+                    log(v);
                 }
                 return formatBibtext(b);
             })
@@ -343,7 +343,7 @@ const handleConfirmOverwrite = (papersToWrite, warning) => (e) => {
                 if (papersToWrite.hasOwnProperty(id) && !id.startsWith("__")) {
                     const { paper, warnings } = validatePaper(papersToWrite[id], false);
                     papersToWrite[id] = paper;
-                    console.log(warnings);
+                    log(warnings);
                 }
             }
         }
@@ -364,7 +364,7 @@ const handleCancelOverwrite = (e) => {
 
 const handleOverwriteMemory = () => {
     var file = document.getElementById("overwrite-arxivmemory-input").files;
-    console.log("file: ", file);
+    log("file: ", file);
     if (!file || file.length < 1) {
         return;
     }
@@ -384,7 +384,7 @@ const handleOverwriteMemory = () => {
             const overwriteDiv = `<div id="overwrite-buttons" class="flex-center-evenly pt-3 px-4"> ${title} <div class="flex-center-evenly w-100">${cancel} ${confirm}</div></div>`;
             setTimeout(async () => {
                 const { success, message, warning, papersToWrite } =
-                    await overwriteMemory(overwritingPapers);
+                    await prepareOverwriteData(overwritingPapers);
                 if (success) {
                     if (warning) {
                         const nWarnings = (warning.match(/<br\/>/g) || []).length;

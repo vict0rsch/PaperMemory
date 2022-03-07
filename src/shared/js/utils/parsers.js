@@ -234,7 +234,7 @@ const makeOpenReviewBibTex = (paper, url) => {
     const author = paper.content.authors.join(" and ");
     const year = paper.cdate ? new Date(paper.cdate).getFullYear() : "0000";
     if (!paper.cdate) {
-        console.log("makeOpenReviewBibTex: no cdate found in", paper);
+        log("makeOpenReviewBibTex: no cdate found in", paper);
     }
 
     let key = paper.content.authors[0].split(" ").reverse()[0];
@@ -257,9 +257,9 @@ const makeOpenReviewPaper = async (url) => {
     const forumJson = await fetchOpenReviewForumJSON(url);
 
     var paper = noteJson.notes[0];
-    console.log("paper: ", paper);
+    log("paper: ", paper);
     var forum = forumJson.notes;
-    console.log("forum: ", forum);
+    log("forum: ", forum);
 
     const title = paper.content.title;
     const author = paper.content.authors.join(" and ");
@@ -314,7 +314,7 @@ const makeOpenReviewPaper = async (url) => {
             ) > -1
         );
     });
-    console.log("forum: ", forum);
+    log("forum: ", forum);
     if (candidates && candidates.length > 0) {
         decision = candidates[0].content.decision
             .split(" ")
@@ -538,7 +538,7 @@ const fetchPWCId = async (arxiv_id, title) => {
         pwcPath += new URLSearchParams({ title });
     }
     const json = await $.getJSON(pwcPath);
-    console.log({ json });
+    log({ json });
 
     if (json["count"] !== 1) return;
     return json["results"][0]["id"];
@@ -586,7 +586,7 @@ const tryCrossRef = async (paper) => {
 
         // assert the response is valid
         if (json.status !== "ok") {
-            console.log(`[PM][Crossref] ${api} returned ${json.message.status}`);
+            log(`[PM][Crossref] ${api} returned ${json.message.status}`);
             return "";
         }
         // assert there is a (loose) match
@@ -615,7 +615,7 @@ const tryCrossRef = async (paper) => {
         return `Accepted @ ${json.message.items[0].event.name.trim()} -- [crossref.org]`;
     } catch (error) {
         // something went wrong, log the error, return ""
-        console.log("[PM][Crossref]", error);
+        log("[PM][Crossref]", error);
         return "";
     }
 };
@@ -632,7 +632,7 @@ const tryDBLP = async (paper) => {
             !json.result.hits.hit ||
             !json.result.hits.hit.length
         ) {
-            console.log("[PM][DBLP] No hits found");
+            log("[PM][DBLP] No hits found");
             return "";
         }
 
@@ -663,11 +663,11 @@ const tryDBLP = async (paper) => {
                 return note;
             }
         }
-        console.log("[PM][DBLP] No match found");
+        log("[PM][DBLP] No match found");
         return "";
     } catch (error) {
         // something went wrong, log the error, return ""
-        console.log("[PM][DBLP]", error);
+        log("[PM][DBLP]", error);
         return "";
     }
 };
@@ -733,12 +733,12 @@ const autoTagPaper = async (paper) => {
         }
         paper.tags = Array.from(tags).sort();
         if (paper.tags.length) {
-            console.log("Automatically adding tags:", paper.tags);
+            log("Automatically adding tags:", paper.tags);
         }
         return paper;
     } catch (error) {
-        console.log("Error auto-tagging:", error);
-        console.log("Paper:", paper);
+        log("Error auto-tagging:", error);
+        log("Paper:", paper);
         return paper;
     }
 };
@@ -801,62 +801,4 @@ const findFuzzyPaperMatch = (paper) => {
         }
     }
     return null;
-};
-
-const addOrUpdatePaper = async (url, is, checks) => {
-    let paper, isNew;
-
-    // Extract id from url
-    const id = parseIdFromUrl(url);
-    console.log("id: ", id);
-
-    if (id && global.state.papers.hasOwnProperty(id)) {
-        // Update paper if it exists
-        global.state.papers = updatePaper(global.state.papers, id);
-        paper = global.state.papers[id];
-        isNew = false;
-    } else {
-        // Or create a new one if it does not
-        paper = await makePaper(is, url, id);
-        if (!paper) {
-            return;
-        }
-        const existingId = null; // findFuzzyPaperMatch(paper);
-        if (existingId) {
-            // Update paper as already it exists
-            info(
-                `Found a fuzzy match for (${id}) ${paper.title}`,
-                global.state.papers[existingId]
-            );
-            global.state.papers = updatePaper(global.state.papers, existingId);
-            paper = global.state.papers[existingId];
-            isNew = false;
-        } else {
-            global.state.papers[paper.id] = paper;
-            isNew = true;
-        }
-    }
-
-    chrome.storage.local.set({ papers: global.state.papers }, async () => {
-        if (isNew) {
-            console.log("Added '" + paper.title + "' to your Memory");
-            console.log("paper: ", paper);
-            // display red slider feedback if the user did not disable it
-            // from the menu
-            checks && checks.checkFeedback && feedback("Added to your Memory!", paper);
-            if (!paper.note) {
-                const note = await tryPreprintMatch(paper);
-                if (note) {
-                    console.log("[PM] Updating preprint note to", note);
-                    paper.note = note;
-                    global.state.papers[paper.id] = paper;
-                    chrome.storage.local.set({ papers: global.state.papers });
-                }
-            }
-        } else {
-            console.log("Updated '" + paper.title + "' in your Memory");
-        }
-    });
-
-    return { paper, id };
 };
