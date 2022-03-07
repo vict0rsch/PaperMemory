@@ -180,7 +180,7 @@ const stateTitleFunction = (paperOrId) => {
  * @returns
  */
 const addOrUpdatePaper = async (url, is, checks) => {
-    let paper, isNew;
+    let paper, isNew, paperswithcodeLink;
 
     // Extract id from url
     const id = parseIdFromUrl(url);
@@ -217,24 +217,53 @@ const addOrUpdatePaper = async (url, is, checks) => {
         }
     }
 
+    if (!paper.codeLink) {
+        const backgroundResponse = await sendMessage({
+            type: "papersWithCode",
+            paper: paper,
+        });
+        paperswithcodeLink = backgroundResponse.codeLink;
+        if (paperswithcodeLink) {
+            console.log(
+                "Discovered a code repository from PapersWithCode:",
+                paperswithcodeLink
+            );
+            global.state.papers[paper.id].codeLink = paperswithcodeLink;
+        }
+    }
+
     chrome.storage.local.set({ papers: global.state.papers }, async () => {
-        if (isNew) {
-            log("Added '" + paper.title + "' to your Memory");
-            log("paper: ", paper);
-            // display red slider feedback if the user did not disable it
-            // from the menu
-            checks && checks.checkFeedback && feedback("Added to your Memory!", paper);
-            if (!paper.note) {
-                const note = await tryPreprintMatch(paper);
-                if (note) {
-                    log("[PM] Updating preprint note to", note);
-                    paper.note = note;
-                    global.state.papers[paper.id] = paper;
-                    chrome.storage.local.set({ papers: global.state.papers });
+        let notifText;
+        if (isNew || paperswithcodeLink) {
+            if (isNew) {
+                // new paper
+
+                log("Added '" + paper.title + "' to your Memory!");
+                log("paper: ", paper);
+                notifText = "Added to your Memory";
+                if (paperswithcodeLink) {
+                    notifText +=
+                        "<br/><div id='feedback-pwc'>(+ repo from PapersWithCode) </div>";
                 }
+                checks && checks.checkFeedback && feedback(notifText, paper);
+            } else {
+                // existing paper but new code repo
+
+                notifText = "Found a code repository on PapersWithCode!";
+                checks && checks.checkFeedback && feedback(notifText);
             }
         } else {
             log("Updated '" + paper.title + "' in your Memory");
+        }
+        // anyway: try and update note with actual publication
+        if (!paper.note) {
+            const note = await tryPreprintMatch(paper);
+            if (note) {
+                log("[PM] Updating preprint note to", note);
+                paper.note = note;
+                global.state.papers[paper.id] = paper;
+                chrome.storage.local.set({ papers: global.state.papers });
+            }
         }
     });
 
