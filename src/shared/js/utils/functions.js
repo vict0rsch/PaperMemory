@@ -725,3 +725,15 @@ const cutAuthors = (text, maxLen, separator) => {
     }
     return cutAuthors;
 };
+
+const sendMessage = (request) =>
+    new Promise((resolve, reject) => {
+        chrome.runtime.sendMessage(request, (response) => {
+            console.log("sendMessage response: ", response);
+            if (response.success) {
+                resolve(response);
+            } else {
+                reject(response);
+            }
+        });
+    });
