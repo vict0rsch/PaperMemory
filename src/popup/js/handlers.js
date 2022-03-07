@@ -198,14 +198,24 @@ const handleMemorySearchKeyPress = (allowEmptySearch) => (e) => {
     // read input, return if empty (after trim)
     const query = val("memory-search").trim();
 
+    log(query);
+
     if (!query) {
         setTimeout(() => {
             style("memory-search-clear-icon", "visibility", "hidden");
         }, 0);
     }
 
-    if (!query && !allowEmptySearch && e.key !== "Backspace") {
-        return;
+    if (!query) {
+        if (global.state.papersList.length !== global.state.sortedPapers.length) {
+            // empty query but not all papers are displayed
+            global.state.papersList = global.state.sortedPapers;
+            displayMemoryTable();
+            return;
+        }
+        if (!allowEmptySearch && e.key !== "Backspace") {
+            return;
+        }
     }
     style("memory-search-clear-icon", "visibility", "visible");
     if (query.startsWith("t:")) {
@@ -228,6 +238,9 @@ const handleMemorySearchKeyUp = (e) => {
         var backspaceEvent = new Event("keypress");
         backspaceEvent.key = "Backspace";
         dispatch("memory-search", backspaceEvent);
+    }
+    if (e.target.id === "memory-search") {
+        dispatch("memory-search", "keypress");
     }
 };
 

@@ -627,10 +627,7 @@ const displayMemoryTable = () => {
     // https://stackoverflow.com/questions/18393981/append-vs-html-vs-innerhtml-performance
     setHTML(memoryTable, table.join(""));
 
-    const end = Date.now();
-
-    // log("[displayMemoryTable] Rendering duration (s): " + (end - start) / 1000);
-
+    // Add events
     // after a click on such a button, the focus returns to the
     // container to navigate with tab
     addEventToClass(".back-to-focus", "click", handleBackToFocus);
@@ -662,9 +659,9 @@ const displayMemoryTable = () => {
     addEventToClass(".form-note-textarea", "focus", handleTextareaFocus);
     // Save fields on edits save (submit)
     addEventToClass(".form-note", "submit", handleMemorySaveEdits);
-    const end2 = Date.now();
+    const end = Date.now();
 
-    // log("[displayMemoryTable] Listeners duration (s): " + (end2 - end) / 1000);
+    log("[displayMemoryTable] Display duration (s): " + (end - start) / 1000);
 };
 
 /**
