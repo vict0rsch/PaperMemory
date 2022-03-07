@@ -33,6 +33,7 @@
   },
   "permissions": [
     "https://arxiv.org/*",
+    "https://paperswithcode.com/api/*",
     "*://api.biorxiv.org/*",
     "https://export.arxiv.org/*",
     "*://*.neurips.cc/*",
