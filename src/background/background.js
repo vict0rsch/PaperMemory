@@ -34,17 +34,22 @@ const findCodesForPaper = async (request) => {
 
     if (!pwcId) return;
 
-    let codePath = `https://paperswithcode.com/api/v1/papers/${pwcId}/repositories/?`;
-    codePath += new URLSearchParams({ page: 1, items_per_page: 10 });
+    const codePath = `https://paperswithcode.com/api/v1/papers/${pwcId}/repositories/`;
 
     const response = await fetch(codePath);
+    console.log("codePath: ", codePath);
     const json = await response.json();
 
     if (json["count"] < 1) return;
 
     let codes = json["results"];
-    codes.sort((a, b) => b.stars - a.stars);
+    const officials = codes.filter((c) => c["is_official"]);
     console.log("All codes for paper:", codes);
+    if (officials.length > 0) {
+        codes = officials;
+        console.log("Selecting official codes only:", codes);
+    }
+    codes.sort((a, b) => b.stars - a.stars);
     return codes[0];
 };
 
