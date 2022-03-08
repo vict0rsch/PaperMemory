@@ -308,6 +308,11 @@ const validatePaper = (paper, log = true) => {
             type: "string",
             desc: "BibTex citation with new lines (`\n`)",
         },
+        code: {
+            type: "object",
+            desc: "the paper's code object as returned by the PapersWithCode API",
+            default: (p) => {},
+        },
         codeLink: {
             type: "string",
             desc: "the paper's code link",
@@ -395,7 +400,7 @@ const validatePaper = (paper, log = true) => {
             // the paper has the attribute `key`
             const expectedType = expectedKeys[key].type;
             const keyType = typeof paper[key];
-            if (!expectedType.startsWith("array")) {
+            if (!expectedType.includes("array") && expectedType !== "object") {
                 // for non-array types, we can directly compare strings
                 if (keyType !== expectedType) {
                     // wrong type: store (and log?) warning.
@@ -405,26 +410,33 @@ const validatePaper = (paper, log = true) => {
                     log && console.warn(message);
                 }
             } else {
-                // expected values are arrays.
-                // find the expected type of the array's elements:
-                const subType = expectedType.split("[")[1].replace("]", "");
-                if (!Array.isArray(paper[key])) {
-                    // the attribute is not an array: warning
-                    message = `${key} should be an array (${paper.id})`;
+                if (expectedType.includes("array")) {
+                    if (Array.isArray(paper[key])) {
+                        // expected values are arrays.
+                        // find the expected type of the array's elements:
+                        const subType = expectedType.split("[")[1].replace("]", "");
+                        // the attribute is an array
+                        if (paper[key].length > 0) {
+                            // if it contains elements: check they are of the expected type
+                            const keyType = typeof paper[key][0];
+                            if (keyType !== subType) {
+                                // sub-type mismatch: warning
+                                message = `➤ ${key} should contain ${subType} not ${keyType} (${paper.id})`;
+                                warns.push(message);
+                                log && console.warn(message);
+                            }
+                        }
+                    } else {
+                        // the attribute is not an array: warning
+                        message = `${key} should be an array (${paper.id})`;
+                        warns.push(message);
+                        log && console.warn(message);
+                    }
+                } else if (Object(paper[key]) !== paper[key]) {
+                    // it should be an object
+                    message = `${key} should be an object (${paper.id})`;
                     warns.push(message);
                     log && console.warn(message);
-                } else {
-                    // the attribute is an array
-                    if (paper[key].length > 0) {
-                        // if it contains elements: check they are of the expected type
-                        const keyType = typeof paper[key][0];
-                        if (keyType !== subType) {
-                            // sub-type mismatch: warning
-                            message = `➤ ${key} should contain ${subType} not ${keyType} (${paper.id})`;
-                            warns.push(message);
-                            log && console.warn(message);
-                        }
-                    }
                 }
             }
         }
