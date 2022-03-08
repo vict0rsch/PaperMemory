@@ -141,6 +141,10 @@ const copyAndConfirmMemoryItem = (id, textToCopy, feedbackText, isPopup) => {
  * @param {string} codeLink URL of the code repository to open
  */
 const focusExistingOrCreateNewCodeTab = (codeLink) => {
+    codeLink = codeLink.replace("http://", "https://");
+    if (!codeLink.startsWith("https://")) {
+        codeLink = "https://" + codeLink;
+    }
     const { origin } = new URL(codeLink);
     chrome.tabs.query({ url: `${origin}/*` }, (tabs) => {
         for (const tab of tabs) {

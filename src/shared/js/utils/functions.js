@@ -266,6 +266,9 @@ const getDisplayId = (id) => {
     return id;
 };
 
+const isObject = (obj) =>
+    typeof obj === "object" && !Array.isArray(obj) && obj !== null;
+
 const delay = (fn, ms) => {
     // https://stackoverflow.com/questions/1909441/how-to-delay-the-keyup-handler-until-the-user-stops-typing
     let timer = 0;
@@ -725,3 +728,15 @@ const cutAuthors = (text, maxLen, separator) => {
     }
     return cutAuthors;
 };
+
+const sendMessage = (request) =>
+    new Promise((resolve, reject) => {
+        chrome.runtime.sendMessage(request, (response) => {
+            console.log("sendMessage response: ", response);
+            if (response.success) {
+                resolve(response);
+            } else {
+                reject(response);
+            }
+        });
+    });
