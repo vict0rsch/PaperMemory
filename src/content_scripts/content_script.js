@@ -202,10 +202,7 @@ const arxiv = async (checks) => {
     const arxivAbsCol = document.querySelector(
         ".extra-services .full-text h2"
     ).parentElement;
-    const pdfUrl =
-        "https://arxiv.org" +
-        document.querySelector(".abs-button.download-pdf").href +
-        ".pdf";
+    const pdfUrl = document.querySelector(".abs-button.download-pdf").href;
 
     // -----------------------------
     // -----  Download Button  -----

@@ -97,7 +97,6 @@ const migrateData = async (papers, manifestDataVersion, store = true) => {
                     delete papers[id].bibtext;
                 }
             }
-
             // need to fix https://github.com/vict0rsch/PaperMemory/issues/10
             // if (!papers[id].hasOwnProperty("codes")) {
             //     papers[id].codes = await fetchCodes(papers[id])
