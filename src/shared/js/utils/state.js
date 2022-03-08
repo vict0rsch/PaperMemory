@@ -180,7 +180,7 @@ const stateTitleFunction = (paperOrId) => {
  * @returns
  */
 const addOrUpdatePaper = async (url, is, checks) => {
-    let paper, isNew, paperswithcodeLink;
+    let paper, isNew, paperswithcodeLink, paperswithcodeNote;
 
     // Extract id from url
     const id = parseIdFromUrl(url);
@@ -218,17 +218,22 @@ const addOrUpdatePaper = async (url, is, checks) => {
     }
 
     if (!paper.codeLink) {
-        const backgroundResponse = await sendMessage({
-            type: "papersWithCode",
-            paper: paper,
-        });
-        paperswithcodeLink = backgroundResponse.codeLink;
+        const request = { type: "papersWithCode", paper: paper };
+        const backgroundResponse = await sendMessage(request);
+
+        paperswithcodeLink = backgroundResponse.code?.url;
+        paperswithcodeNote = backgroundResponse.code?.note;
+
         if (paperswithcodeLink) {
             console.log(
                 "Discovered a code repository from PapersWithCode:",
                 paperswithcodeLink
             );
             global.state.papers[paper.id].codeLink = paperswithcodeLink;
+            global.state.papers[paper.id].code = backgroundResponse.code;
+        }
+        if (!paper.note && paperswithcodeNote) {
+            global.state.papers[paper.id].note = paperswithcodeNote;
         }
     }
 
