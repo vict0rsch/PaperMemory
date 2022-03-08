@@ -10,7 +10,7 @@ const isPdf = (url) => {
     return url.endsWith(".pdf") || url.includes("openreview.net/pdf");
 };
 
-const fetchPWCId = async (arxivId, title) => {
+const fetchPWCData = async (arxivId, title) => {
     let pwcPath = `https://paperswithcode.com/api/v1/papers/?`;
     if (arxivId) {
         pwcPath += new URLSearchParams({ arxiv_id: arxivId });
@@ -20,27 +20,33 @@ const fetchPWCId = async (arxivId, title) => {
     const json = await $.getJSON(pwcPath);
 
     if (json["count"] !== 1) return;
-    return json["results"][0]["id"];
+    return json["results"][0];
 };
 
 const findCodesForPaper = async (request) => {
-    let arxivId, title;
+    let arxivId, title, code;
     if (request.paper.source === "arxiv") {
         arxivId = request.paper.id.split("-").reverse()[0];
     } else {
         title = request.paper.title;
     }
-    const pwcId = await fetchPWCId(arxivId, title);
+    const pwcData = await fetchPWCData(arxivId, title);
+    const { id, proceeding } = pwcData;
 
-    if (!pwcId) return;
+    if (proceeding) {
+        const conf = proceeding.split("-")[0].toUpperCase();
+        const year = proceeding.split("-")[1];
+        code = { note: `Accepted @ ${conf} ${year} -- [paperswithcode.com]` };
+    }
 
-    const codePath = `https://paperswithcode.com/api/v1/papers/${pwcId}/repositories/`;
+    if (!pwcData) return code;
+
+    const codePath = `https://paperswithcode.com/api/v1/papers/${id}/repositories/`;
 
     const response = await fetch(codePath);
-    console.log("codePath: ", codePath);
     const json = await response.json();
 
-    if (json["count"] < 1) return;
+    if (json["count"] < 1) return code;
 
     let codes = json["results"];
     const officials = codes.filter((c) => c["is_official"]);
@@ -50,28 +56,22 @@ const findCodesForPaper = async (request) => {
         console.log("Selecting official codes only:", codes);
     }
     codes.sort((a, b) => b.stars - a.stars);
-    return codes[0];
+    return { ...codes[0], ...code };
 };
 
 chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
     if (request.type === "update-title") {
-        console.log("Background message options:");
-        console.log({ options: request.options });
+        // console.log({ options: request.options });
         const { title, url } = request.options;
         paperTitles[url] = title.replaceAll('"', "'");
     } else if (request.type === "tabID") {
         sendResponse({ tabID: sender.tab.id, success: true });
-        return true;
     } else if (request.type === "papersWithCode") {
         findCodesForPaper(request).then((code) => {
-            console.log("Discovered code:", code);
-            sendResponse({
-                codeLink: code.url,
-                success: true,
-            });
+            sendResponse({ code: code, success: true });
         });
-        return true;
     }
+    return true;
 });
 
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
