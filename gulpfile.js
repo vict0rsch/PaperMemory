@@ -131,7 +131,7 @@ function createArchive(cb) {
             console.log("Creating zip: " + archiveFolder + archiveName);
         }
     }
-    return src(["./**", "!extra/**", "!node_modules/**", "!./.vscode/**"])
+    return src(["./**", "!extra/**", "!node_modules/**", "!./.vscode/**", "!keys.json"])
         .pipe(zip(archiveName))
         .pipe(dest(archiveFolder));
 }
