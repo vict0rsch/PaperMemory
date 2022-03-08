@@ -266,6 +266,9 @@ const getDisplayId = (id) => {
     return id;
 };
 
+const isObject = (obj) =>
+    typeof obj === "object" && !Array.isArray(obj) && obj !== null;
+
 const delay = (fn, ms) => {
     // https://stackoverflow.com/questions/1909441/how-to-delay-the-keyup-handler-until-the-user-stops-typing
     let timer = 0;
