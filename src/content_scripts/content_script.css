@@ -58,7 +58,7 @@
     background: #b31b1b;
     border-radius: 4px;
     position: fixed;
-    font-size: 0.9rem;
+    font-size: 14px;
     bottom: 64px;
     right: -200px;
     opacity: 0;
@@ -71,7 +71,7 @@
 
 #feedback-pwc {
     padding-top: 4px;
-    font-size: 0.8rem;
+    font-size: 13px;
     font-style: italic;
 }
 
