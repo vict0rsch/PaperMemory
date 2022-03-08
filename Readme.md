@@ -16,19 +16,20 @@
 
 <br/>
 
-An **automated**, web-based and minimalist reference manager.
+An **automated**, web-based and minimalist reference manager that also finds code repositories.
 
 It is not meant to replace, rather complete more standard reference managers as Zotero etc.
 
-This browser extension allows you to do automatically store research papers you read and much more:
+This browser extension allows you to do automatically store research papers you read, find a code repository and much more:
 
 1. 🏬 **Automatically record papers** you open, without clicking anywhere. You can then **search** them, **tag** them, **comment** them and link a code repository.
-2. 🎬 **Change a pdf's webpage title to the article's title**, because who cares about that saved bookmark `1812.10889.pdf` when it could be `InstaGAN Instance-aware Image-to-Image Translation.pdf`
-3. 🎫 **BibTex citation**, because citing papers should not be a hassle you can copy a BibTex citation to your clipboard or export the Memory itself as a `.bib` file
-4. 🔗 **Markdown link**, `[title](url)` because it's the little things that make sharing a paper easier (to be used in issues, PRs, Readme, HackMD.io etc.)
-5. 🗂 **Direct download button** with a nice name including the paper's title, so that you don't have to open the pdf's webpage and then download it from your browser.
-6. 📄 **Go back from a pdf to its abstract page**. For instance: from `https://arxiv.org/pdf/1703.06907.pdf` to `https://arxiv.org/abs/1703.06907` in a click.
-7. 🏛️ **Export your data** as a `.json` file or a `.bib` full BibTex export
+2. 💻 **Automatically find code** repositories using PapersWithCode's API
+3. 🎬 **Change a pdf's webpage title to the article's title**, because who cares about that saved bookmark `1812.10889.pdf` when it could be `InstaGAN Instance-aware Image-to-Image Translation.pdf`
+4. 🎫 **BibTex citation**, because citing papers should not be a hassle you can copy a BibTex citation to your clipboard or export the Memory itself as a `.bib` file
+5. 🔗 **Markdown link**, `[title](url)` because it's the little things that make sharing a paper easier (to be used in issues, PRs, Readme, HackMD.io etc.)
+6. 🗂 **Direct download button** with a nice name including the paper's title, so that you don't have to open the pdf's webpage and then download it from your browser.
+7. 📄 **Go back from a pdf to its abstract page**. For instance: from `https://arxiv.org/pdf/1703.06907.pdf` to `https://arxiv.org/abs/1703.06907` in a click.
+8. 🏛️ **Export your data** as a `.json` file or a `.bib` full BibTex export
 
 ### Supported venues
 
@@ -144,7 +145,10 @@ In the extension's `options` (right click on the icon or in the popup's menu) yo
 There currently exists, to my knowledge, no centralized source for matching a preprint to its subsequent published article. This makes it really hard to try and implement best practices in terms of citing published papers rather than their preprint.
 
 My approach with PaperMemory is to try and notify you that a publication likely exists by utilizing the `note` field. You will occasionally notice `Accepted @ X` in a Paper's notes. This will be added automatically if you are on a known published venue's website (as PMLR or NeurIPS) but also from:
-
+* [PapersWithCode.com](https://paperswithcode.com)(https://paperswithcode.com/api/v1/docs/)
+  * As PaperMemory retrieves code, it also looks for a `proceeding` field in PWC's response.
+  * If it exists and is not `null` then it is expected to look like `${conf}-${year}-${month}`.
+  * In this case a note is added to the paper: `Accepted @ ${conf} ${year} -- [paperswithcode.com]`  
 * [CrossRef.org](https://crossref.org)
   * A query is sent to their [api](https://api.crossref.org/swagger-ui/index.html) for an exact paper title match
   * The response *must* contain an `event` field with a `name` attribute. If it does not it'll be ignored. 
@@ -159,6 +163,69 @@ My approach with PaperMemory is to try and notify you that a publication likely 
 
 There's room for improvement here^, please contact me (an issue will do) if you want to help
 
+## Code
+
+PaperMemory uses the PapersWithCode API in order to discover code repositories. If the paper being added to the Memory is from Arxiv, PaperMemory will use PWC's `arxiv_id` search field. Otherwise it will query per title. PaperMemory then expects exactly `1` result from the API. Any different `count` in the response will make PaperMemory consider there is no match.
+
+If a match is found, the selected repo is the official (if it exists) one with the most stars.
+
+Here's an example return value from PWC's API
+
+```json
+"https://paperswithcode.com/api/v1/papers/?title=climategan"
+
+{
+  "count": 1,
+  "next": null,
+  "previous": null,
+  "results": [
+    {
+      "id": "climategan-raising-climate-change-awareness",
+      "arxiv_id": "2110.02871",
+      "nips_id": null,
+      "url_abs": "https://arxiv.org/abs/2110.02871v1",
+      "url_pdf": "https://arxiv.org/pdf/2110.02871v1.pdf",
+      "title": "ClimateGAN: Raising Climate Change Awareness by Generating Images of Floods",
+      "abstract": "...",
+      "authors": ["..."],
+      "published": "2021-10-06",
+      "conference": "climategan-raising-climate-change-awareness-1",
+      "conference_url_abs": "https://openreview.net/forum?id=EZNOb_uNpJk",
+      "conference_url_pdf": "https://openreview.net/pdf?id=EZNOb_uNpJk",
+      "proceeding": "iclr-2022-4"
+    }
+  ]
+}
+
+"https://paperswithcode.com/api/v1/papers/climategan-raising-climate-change-awareness/repositories/"
+
+{
+  "count": 2,
+  "next": null,
+  "previous": null,
+  "results": [
+    {
+      "url": "https://github.com/cc-ai/climategan",
+      "owner": "cc-ai",
+      "name": "climategan",
+      "description": "Code and pre-trained model for the algorithm generating visualisations of 3 climate change related events: floods, wildfires and smog. ",
+      "stars": 25,
+      "framework": "pytorch",
+      "is_official": true
+    },
+    {
+      "url": "https://github.com/cc-ai/mila-simulated-floods",
+      "owner": "cc-ai",
+      "name": "mila-simulated-floods",
+      "description": "",
+      "stars": 7,
+      "framework": "pytorch",
+      "is_official": true
+    }
+  ]
+}
+
+```
 ## Todo
 
 * [ ] Improve `Contributing.md`
@@ -168,5 +235,3 @@ There's room for improvement here^, please contact me (an issue will do) if you 
 
 * **Firefox**
   * Using Firefox? [#9](https://github.com/vict0rsch/PaperMemory/issues/9) 🚁
-* **Papers With Code**
-  * Wouldn't it be nice to automatically discover papers' repos!! see [#10](https://github.com/vict0rsch/PaperMemory/issues/10)
