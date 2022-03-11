@@ -357,7 +357,7 @@ $(() => {
 
     chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
         // listen for messages sent from background.js
-        if (request.message === "hello!") {
+        if (request.message === "tabUrlUpdate") {
             info("Running content_script for url update");
             console.log(request.url); // new url is now in content scripts!
             contentScriptMain(request.url);
