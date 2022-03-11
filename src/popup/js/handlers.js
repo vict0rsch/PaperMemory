@@ -58,21 +58,13 @@ const handleTextareaFocus = () => {
     textareaFocusEnd(that);
 };
 
-const handleMemorySaveEdits = (e) => {
-    e.preventDefault();
-
-    // Get content
-    const id = eventId(e);
+const handleMemorySaveEdits = (id) => {
     const { note, codeLink } = getPaperEdits(id);
 
     // Update metadata
     saveNote(id, note);
     saveCodeLink(id, codeLink);
     updatePaperTags(id, "memory-item-tags");
-
-    // Close edit form
-    dispatch(findEl(id, "memory-item-edit"), "click");
-    disable(findEl(id, "memory-item-save-edits"));
 };
 
 const handleCancelPaperEdit = (e) => {
@@ -82,7 +74,6 @@ const handleCancelPaperEdit = (e) => {
     val(findEl(id, "form-note-textarea"), paper.note);
     setHTML(findEl(id, "memory-item-tags"), getTagsOptions(paper));
     dispatch(findEl(id, "memory-item-edit"), "click");
-    disable(findEl(id, "memory-item-save-edits"));
 };
 
 const handleTogglePaperEdit = (e) => {
@@ -382,18 +373,12 @@ const handleMenuCheckChange = (e) => {
     });
 };
 
-const handlePopupSaveEdits = (id) => () => {
+const handlePopupSaveEdits = (id) => {
     const { note, codeLink, favorite } = getPaperEdits(id, true);
     updatePaperTags(id, `#popup-item-tags--${id}`);
     saveNote(id, note);
     saveCodeLink(id, codeLink);
     saveFavoriteItem(id, favorite);
-    setHTML("popup-feedback-copied", "Saved tags, code, note & favorite!");
-    fadeIn("popup-feedback-copied");
-    setTimeout(() => {
-        fadeOut("popup-feedback-copied");
-    }, 2000);
-    disable(`popup-save-edits--${id}`);
 };
 
 const handlePopupDeletePaper = (id) => () => {
