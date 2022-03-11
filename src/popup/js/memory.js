@@ -288,7 +288,6 @@ const focusExistingOrCreateNewPaperTab = (paper) => {
  * @param {string} note The content of the note
  */
 const saveNote = (id, note) => {
-    note = note.trim();
     global.state.papers[id].note = note;
     chrome.storage.local.set({ papers: global.state.papers }, () => {
         // log("Updated the note for " + global.state.papers[id].title);
@@ -662,7 +661,6 @@ const displayMemoryTable = () => {
     // (default puts the cursor at the beginning of the text)
     addEventToClass(".form-note-textarea", "focus", handleTextareaFocus);
     // Save fields on edits save (submit)
-    addEventToClass(".form-note", "submit", handleMemorySaveEdits);
     const end = Date.now();
 
     log("[displayMemoryTable] Display duration (s): " + (end - start) / 1000);

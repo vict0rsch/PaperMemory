@@ -145,15 +145,8 @@ ${note}</textarea
                             >
                         </div>
                         <div class="form-note-buttons">
-                            <button
-                                class="memory-item-save-edits"
-                                type="submit"
-                                disabled
-                            >
-                                Save
-                            </button>
                             <button class="cancel-note-form back-to-focus">
-                                Cancel
+                                Done
                             </button>
                         </div>
                     </form>
@@ -258,8 +251,7 @@ ${note}</textarea
                 </div>
                 <small id="popup-displayId"> ${displayId} </small>
                 <button
-                    style="padding: 6px 16px;"
-                    disabled
+                    hidden
                     class="back-to-focus"
                     id="popup-save-edits--${id}"
                 >
