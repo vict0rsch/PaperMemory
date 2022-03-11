@@ -652,17 +652,21 @@ const setFormChangeListener = (id, isPopup) => {
         refNote = `popup-form-note-textarea--${id}`;
         refFavorite = `checkFavorite--${id}`;
 
-        $(refTags).on("change", monitorPaperEdits(id, isPopup)); // select2 required
-        addListener(refCodeLink, "keyup", monitorPaperEdits(id, isPopup));
-        addListener(refNote, "keyup", monitorPaperEdits(id, isPopup));
-        addListener(refFavorite, "change", monitorPaperEdits(id, isPopup));
+        $(refTags).on("change", delay(monitorPaperEdits(id, isPopup), 300)); // select2 required
+        addListener(refCodeLink, "keyup", delay(monitorPaperEdits(id, isPopup), 300));
+        addListener(refNote, "keyup", delay(monitorPaperEdits(id, isPopup), 300));
+        addListener(refFavorite, "change", delay(monitorPaperEdits(id, isPopup), 300));
     } else {
         refTags = ".memory-item-tags";
         refCodeLink = ".form-code-input";
         refNote = ".form-note-textarea";
 
-        addEventToClass(refCodeLink, "keyup", monitorPaperEdits(id, isPopup));
-        addEventToClass(refNote, "keyup", monitorPaperEdits(id, isPopup));
+        addEventToClass(
+            refCodeLink,
+            "keyup",
+            delay(monitorPaperEdits(id, isPopup), 300)
+        );
+        addEventToClass(refNote, "keyup", delay(monitorPaperEdits(id, isPopup), 300));
     }
 };
 
