@@ -690,15 +690,14 @@ const monitorPaperEdits = (id, isPopup) => (e) => {
             }
         }
     }
-
-    let btn;
-    if (isPopup) {
-        btn = findEl(`popup-save-edits--${id}`);
-    } else {
-        btn = findEl(id, "memory-item-save-edits");
+    if (change) {
+        console.log("Updating", id, isPopup);
+        if (isPopup) {
+            handlePopupSaveEdits(id);
+        } else {
+            handleMemorySaveEdits(id);
+        }
     }
-
-    disable(btn, !change);
 };
 
 const cutAuthors = (text, maxLen, separator) => {
