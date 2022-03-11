@@ -82,14 +82,14 @@ const fetchCvfHTML = async (url) => {
 };
 
 const fetchOpenReviewNoteJSON = async (url) => {
-    const id = url.match(/id=\w+/)[0].replace("id=", "");
+    const id = url.match(/id=([\w-])+/)[0].replace("id=", "");
     const api = `https://api.openreview.net/notes?id=${id}`;
     return fetch(api).then((response) => {
         return response.json();
     });
 };
 const fetchOpenReviewForumJSON = async (url) => {
-    const id = url.match(/id=\w+/)[0].replace("id=", "");
+    const id = url.match(/id=([\w-])+/)[0].replace("id=", "");
     const api = `https://api.openreview.net/notes?forum=${id}`;
     return fetch(api).then((response) => {
         return response.json();
