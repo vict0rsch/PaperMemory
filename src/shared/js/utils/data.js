@@ -310,7 +310,9 @@ const validatePaper = (paper, log = true) => {
         code: {
             type: "object",
             desc: "the paper's code object as returned by the PapersWithCode API",
-            default: (p) => {},
+            default: (p) => {
+                return {};
+            },
         },
         codeLink: {
             type: "string",
@@ -384,7 +386,9 @@ const validatePaper = (paper, log = true) => {
                 // there's a default function fo the missing attribute
                 const defaultValue = expectedKeys[key].default(paper);
                 paper[key] = defaultValue;
-                message = `➤ Attribute "${key}" absent; will be set to "${defaultValue}" (${paper.id})`;
+                message = `➤ Attribute "${key}" absent; will be set to "${JSON.stringify(
+                    defaultValue
+                )}" (${paper.id})`;
                 // stores the update message. If `log` is true, also log the message
                 warns.push(message);
                 log && console.warn(message);
