@@ -128,9 +128,9 @@ const copyAndConfirmMemoryItem = (id, textToCopy, feedbackText, isPopup) => {
         : findEl(id, "memory-item-feedback");
     if (!element) return;
     element.innerText = feedbackText;
-    $(element).fadeIn();
+    fadeIn(element);
     setTimeout(() => {
-        $(element).fadeOut();
+        fadeOut(element);
     }, 2000);
 };
 
