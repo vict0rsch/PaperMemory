@@ -312,3 +312,20 @@ const bibtexToJson = (bibtex) => {
     b.bibtex();
     return b.entries;
 };
+
+const bibtexToString = (bibtex) => {
+    var b = new BibtexParser();
+    b.setInput(bibtex);
+    b.bibtex();
+    const data = b.entries[0];
+    let bstr = `@${data.entryType}{${data.citationKey},\n`;
+    const keyLen = Math.max(...Object.keys(data.entryTags).map((k) => k.length));
+    for (const key in data.entryTags) {
+        if (data.entryTags.hasOwnProperty(key)) {
+            const value = data.entryTags[key].replaceAll(/\s+/g, " ").trim();
+            bkey = key + " ".repeat(keyLen - key.length);
+            bstr += `\t${bkey} = {${value}},\n`;
+        }
+    }
+    return (bstr.slice(0, -2) + "\n}").replaceAll("\t", "  ");
+};
