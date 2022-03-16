@@ -183,22 +183,21 @@ const makeNeuripsPaper = async (url) => {
     bibtex += `    url={${url}},\n`;
     bibtex += `    year={${year}}\n`;
     bibtex += `}`;
+    bibtex = bibtexToString(bibtex);
 
     return { author, bibtex, conf, id, key, note, pdfLink, title, year };
 };
 
 const makeCVFPaper = async (url) => {
     const htmlText = await fetchCvfHTML(url);
-    const dom = new DOMParser().parseFromString(
+    const doc = new DOMParser().parseFromString(
         htmlText.replaceAll("\n", ""),
         "text/html"
     );
-    const doc = $(dom);
-
-    const title = doc.find("#papertitle").text().trim();
-    let author = doc.find("#authors i").first().text();
-    author = author
-        .split(",")
+    const title = doc.getElementById("papertitle").innerText.trim();
+    let author = doc
+        .querySelector("#authors i")
+        .innerText.split(",")
         .map((a) => a.trim())
         .join(" and ");
     const { year, id, conf } = parseCVFUrl(url);
@@ -206,21 +205,19 @@ const makeCVFPaper = async (url) => {
     if (url.endsWith(".pdf")) {
         pdfLink = url;
     } else {
-        doc.find("a").each((k, v) => {
-            if ($(v).text() === "pdf") {
-                let href = $(v).attr("href");
-                if (href.startsWith("../")) {
-                    href = href.replaceAll("../", "");
-                }
-                if (!href.startsWith("/")) {
-                    href = "/" + href;
-                }
-                pdfLink = "http://openaccess.thecvf.com" + href;
-            }
-        });
+        const href = Array.from(doc.getElementsByTagName("a"))
+            .filter((a) => a.innerText === "pdf")[0]
+            .getAttribute("href");
+        if (href.startsWith("../")) {
+            href = href.replaceAll("../", "");
+        }
+        if (!href.startsWith("/")) {
+            href = "/" + href;
+        }
+        pdfLink = "http://openaccess.thecvf.com" + href;
     }
     const note = `Accepted @ ${conf} ${year}`;
-    const bibtex = doc.find(".bibref").first().text();
+    const bibtex = bibtexToString(doc.querySelector(".bibref").innerText);
     const key = bibtex.split("{")[1].split(",")[0];
 
     return { author, bibtex, conf, id, key, note, pdfLink, title, year };
@@ -260,7 +257,9 @@ const makeOpenReviewPaper = async (url) => {
 
     const title = paper.content.title;
     const author = paper.content.authors.join(" and ");
-    const bibtex = paper.content._bibtex || makeOpenReviewBibTex(paper, url);
+    const bibtex = bibtexToString(
+        paper.content._bibtex || makeOpenReviewBibTex(paper, url)
+    );
     const key = bibtex.split("{")[1].split(",")[0].trim();
     const year = bibtex.split("year={")[1].split("}")[0];
 
@@ -355,7 +354,7 @@ const makeBioRxivPaper = async (url) => {
         "text/html"
     );
     const bibtextLink = dom.querySelector(".bibtext a").href;
-    const bibtex = await (await fetch(bibtextLink)).text();
+    const bibtex = bibtexToString(await (await fetch(bibtextLink)).text());
 
     const author = extractAuthor(bibtex);
 
@@ -404,6 +403,7 @@ const makePMLRPaper = async (url) => {
     if (bibtex.endsWith("}}")) {
         bibtex = bibtex.slice(0, -2) + "}\n}";
     }
+    bibtex = bibtexToString(bibtex);
 
     const author = extractAuthor(bibtex);
     const title = doc.getElementsByTagName("h1")[0].innerText;
@@ -444,7 +444,7 @@ const makeACLPaper = async (url) => {
     if (!bibtexEl) return;
 
     const title = dom.getElementById("title").innerText;
-    const bibtex = bibtexEl.innerText;
+    const bibtex = bibtexToString(bibtexEl.innerText);
 
     const bibtexData = bibtexToJson(bibtex)[0];
     const entries = bibtexData.entryTags;
