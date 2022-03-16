@@ -484,10 +484,15 @@ const cutAuthors = (text, maxLen, separator) => {
     return cutAuthors;
 };
 
-const sendMessage = (payload) =>
+/**
+ * Promise wrapper around content script => background script message passing
+ * @param {object} payload Data to transfer to the background script
+ * @returns Promise that resolves the response
+ */
+const sendMessageToBackground = (payload) =>
     new Promise((resolve, reject) => {
         chrome.runtime.sendMessage(payload, (response) => {
-            if (response.success) {
+            if (response?.success) {
                 resolve(response);
             } else {
                 reject(response);

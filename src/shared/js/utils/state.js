@@ -223,7 +223,7 @@ const addOrUpdatePaper = async (url, is, checks) => {
             paper: paper,
             officialReposOnly: checks.checkOfficialRepos,
         };
-        const backgroundResponse = await sendMessage(request);
+        const backgroundResponse = await sendMessageToBackground(request);
 
         paperswithcodeLink = backgroundResponse.code?.url;
         paperswithcodeNote = backgroundResponse.code?.note;
