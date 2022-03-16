@@ -228,7 +228,7 @@ const popupMain = async (url, isKnownPage, manualTrigger = false) => {
             copyAndConfirmMemoryItem(id, md, "MarkDown link copied!", true);
         });
         addListener(`popup-memory-item-bibtex--${id}`, "click", () => {
-            const bibtex = formatBibtext(global.state.papers[id].bibtex);
+            const bibtex = bibtexToString(global.state.papers[id].bibtex);
             copyAndConfirmMemoryItem(id, bibtex, "Bibtex citation copied!", true);
         });
         addListener(`popup-memory-item-download--${id}`, "click", () => {
