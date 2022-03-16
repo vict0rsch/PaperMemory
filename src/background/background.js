@@ -17,7 +17,8 @@ const fetchPWCData = async (arxivId, title) => {
     } else if (title) {
         pwcPath += new URLSearchParams({ title });
     }
-    const json = await $.getJSON(pwcPath);
+    const response = await fetch(pwcPath);
+    const json = await response.json();
 
     if (json["count"] !== 1) return;
     return json["results"][0];
@@ -63,15 +64,15 @@ const findCodesForPaper = async (request) => {
     return { ...codes[0], ...code };
 };
 
-chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
-    if (request.type === "update-title") {
-        // console.log({ options: request.options });
-        const { title, url } = request.options;
+chrome.runtime.onMessage.addListener(function (payload, sender, sendResponse) {
+    if (payload.type === "update-title") {
+        // console.log({ options: payload.options });
+        const { title, url } = payload.options;
         paperTitles[url] = title.replaceAll('"', "'");
-    } else if (request.type === "tabID") {
+    } else if (payload.type === "tabID") {
         sendResponse({ tabID: sender.tab.id, success: true });
-    } else if (request.type === "papersWithCode") {
-        findCodesForPaper(request).then((code) => {
+    } else if (payload.type === "papersWithCode") {
+        findCodesForPaper(payload).then((code) => {
             sendResponse({ code: code, success: true });
         });
     }
