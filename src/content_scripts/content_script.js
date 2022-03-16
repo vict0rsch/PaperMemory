@@ -94,26 +94,24 @@ const contentScriptMain = async (url) => {
         arxiv(menu);
     }
 
-    if (Object.values(is).some((i) => i)) {
-        const update = await addOrUpdatePaper(url, is, menu);
-        let id;
-        if (update) {
-            id = update.id;
-        }
+    const update = await addOrUpdatePaper(url, is, menu);
+    let id;
+    if (update) {
+        id = update.id;
+    }
 
-        if (id && menu.checkPdfTitle) {
-            const makeTitle = async (id, url) => {
-                if (!global.state.papers.hasOwnProperty(id)) return;
-                const paper = global.state.papers[id];
-                title = stateTitleFunction(paper);
-                window.document.title = title;
-                chrome.runtime.sendMessage({
-                    type: "update-title",
-                    options: { title, url },
-                });
-            };
-            makeTitle(id, url);
-        }
+    if (id && menu.checkPdfTitle) {
+        const makeTitle = async (id, url) => {
+            if (!global.state.papers.hasOwnProperty(id)) return;
+            const paper = global.state.papers[id];
+            title = stateTitleFunction(paper);
+            window.document.title = title;
+            chrome.runtime.sendMessage({
+                type: "update-title",
+                options: { title, url },
+            });
+        };
+        makeTitle(id, url);
     }
 };
 
@@ -344,12 +342,8 @@ const arxiv = async (checks) => {
 };
 
 $(() => {
-    if (
-        Object.values(global.knownPaperPages)
-            .reduce((a, b) => a.concat(b), [])
-            .some((d) => url.includes(d))
-    ) {
-        const url = window.location.href;
+    const url = window.location.href;
+    if (isKnownPage(url)) {
         info("Running PaperMemory's contentScriptMain for:", url);
         contentScriptMain(url);
     }

@@ -26,6 +26,14 @@ const isPaper = (url) => {
 };
 
 /**
+ * Tests wether a given url is a known paper source according to knownPaperPages
+ * and to local files.
+ * @param {string} url The url to test
+ * @returns {boolean}
+ */
+const isKnownPage = (url) => Object.values(isPaper(url)).some((i) => i);
+
+/**
  * Get the url to the paper's abstract / display page.
  * In other words: not not the pdf's.
  * eg: https://arxiv.org/abs/1901.01234 (not https://arxiv.org/pdf/1901.01234.pdf)
