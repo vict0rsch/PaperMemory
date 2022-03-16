@@ -296,7 +296,7 @@ const handleDownloadBibtexJsonClick = () => {
         // const version = versionToSemantic(papers.__dataVersion);
         delete papers.__dataVersion;
         const bibtex = Object.keys(papers).reduce((obj, k) => {
-            obj[k] = formatBibtext(papers[k].bibtex) || "";
+            obj[k] = bibtexToString(papers[k].bibtex);
             return obj;
         }, {});
         downloadTextFile(
@@ -321,11 +321,11 @@ const handleDownloadBibtexPlainClick = () => {
                     b = "";
                     log(v);
                 }
-                return formatBibtext(b);
+                return bibtexToString(b);
             })
             .join("\n");
         downloadTextFile(
-            JSON.stringify(bibtex),
+            bibtex,
             `PaperMemory-bibtex-${date}-${time}.bib`,
             "text/plain"
         );

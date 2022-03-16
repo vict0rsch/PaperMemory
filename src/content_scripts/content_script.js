@@ -525,9 +525,9 @@ const arxiv = async (checks) => {
                             <h3>BibTex:</h3>
                             ${svg("clipboard-default")} ${svg("clipboard-default-ok")}
                         </div>
-                        <div id="texTextarea" class="arxivTools-codify">${
+                        <div id="texTextarea" class="arxivTools-codify">${bibtexToString(
                             paper.bibtex
-                        }</div>
+                        ).replaceAll("\t", "  ")}</div>
                     </div>
                 `;
 
