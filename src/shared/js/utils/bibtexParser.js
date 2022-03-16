@@ -318,7 +318,7 @@ const bibtexToString = (bibtex) => {
     b.setInput(bibtex);
     b.bibtex();
     const data = b.entries[0];
-    let bstr = `@${data.entryType}{${data.citationKey},\n`;
+    let bstr = `@${data.entryType.toLowerCase()}{${data.citationKey},\n`;
     const keyLen = Math.max(...Object.keys(data.entryTags).map((k) => k.length));
     for (const key in data.entryTags) {
         if (data.entryTags.hasOwnProperty(key)) {
