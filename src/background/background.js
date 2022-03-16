@@ -109,9 +109,12 @@ chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
     // read changeInfo data and do something with it
     // like send the new url to contentscripts.js
     if (changeInfo.url) {
-        chrome.tabs.sendMessage(tabId, {
-            message: "tabUrlUpdate",
-            url: changeInfo.url,
-        });
+        const is = isPaper(changeInfo.url);
+        if (Object.values(is).some((i) => i)) {
+            chrome.tabs.sendMessage(tabId, {
+                message: "tabUrlUpdate",
+                url: changeInfo.url,
+            });
+        }
     }
 });
