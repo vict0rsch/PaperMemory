@@ -1,5 +1,6 @@
 var paperTitles = {};
 var titleUpdates = {};
+global.isBackground = true;
 
 const knownPageHasUrl = (url) => {
     const pdfPages = Object.values(global.knownPaperPages).map((v) => v.reverse()[0]);
@@ -10,6 +11,27 @@ const isPdf = (url) => {
     return url.endsWith(".pdf") || url.includes("openreview.net/pdf");
 };
 
+const injectFiles = async (tabId, scripts) => {
+    for (const file of scripts) {
+        if (file.endsWith("css")) {
+            await chrome.tabs.insertCSS(tabId, { file });
+        } else {
+            await chrome.tabs.executeScript(tabId, { file });
+        }
+    }
+};
+
+const injectArxiv = (tabId) => {
+    injectFiles(tabId, [
+        "/src/shared/css/loader.css",
+        "/src/content_scripts/content_script.css",
+        "/src/shared/min/jquery.min.js",
+        "/src/shared/min/utils.min.js",
+        "/src/background/svg.js",
+        "/src/background/arxiv.js",
+    ]);
+};
+
 const fetchPWCData = async (arxivId, title) => {
     let pwcPath = `https://paperswithcode.com/api/v1/papers/?`;
     if (arxivId) {
@@ -17,7 +39,8 @@ const fetchPWCData = async (arxivId, title) => {
     } else if (title) {
         pwcPath += new URLSearchParams({ title });
     }
-    const json = await $.getJSON(pwcPath);
+    const response = await fetch(pwcPath);
+    const json = await response.json();
 
     if (json["count"] !== 1) return;
     return json["results"][0];
@@ -54,26 +77,61 @@ const findCodesForPaper = async (request) => {
     if (officials.length > 0) {
         codes = officials;
         console.log("Selecting official codes only:", codes);
+    } else if (request.onlyOfficialRepos) {
+        return code;
     }
     codes.sort((a, b) => b.stars - a.stars);
     return { ...codes[0], ...code };
 };
 
-chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
-    if (request.type === "update-title") {
-        // console.log({ options: request.options });
-        const { title, url } = request.options;
-        paperTitles[url] = title.replaceAll('"', "'");
-    } else if (request.type === "tabID") {
-        sendResponse({ tabID: sender.tab.id, success: true });
-    } else if (request.type === "papersWithCode") {
+const monitorTab = async (tabId, is, url) => {
+    await initState(undefined, true);
+    const menu = await getMenu();
+
+    const update = await addOrUpdatePaper(url, is, menu, tabId);
+    let id;
+    if (update) {
+        id = update.id;
+    }
+
+    if (id && menu.checkPdfTitle) {
+        const makeTitle = async (id, url) => {
+            if (!global.state.papers.hasOwnProperty(id)) return;
+            const paper = global.state.papers[id];
+            title = stateTitleFunction(paper);
+            paperTitles[url] = title.replaceAll('"', "'");
+            chrome.tabs.executeScript(tabId, {
+                code: `window.document.title="${title}";`,
+            });
+        };
+        makeTitle(id, url);
+    }
+};
+
+chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
+    if (request.type === "papersWithCode") {
         findCodesForPaper(request).then((code) => {
             sendResponse({ code: code, success: true });
         });
+    } else if (request.type === "get-tabId") {
+        sendResponse({ tabId: sender.tab.id, success: true });
     }
     return true;
 });
 
+chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
+    console.log("changeInfo: ", changeInfo);
+    if (tab.url && changeInfo.url) {
+        if (tab?.url.includes("arxiv.org/abs/")) injectArxiv(tabId);
+        const is = isPaper(tab.url);
+        if (Object.values(is).some((v) => v)) {
+            monitorTab(tabId, is, tab.url);
+        }
+    }
+});
+
+// update window title based on paper title
+// a little messy due to some issues, cf SO question
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
     const paperTitle = paperTitles[tab.url];
     if (!titleUpdates.hasOwnProperty(tabId)) titleUpdates[tabId] = 0;
@@ -101,17 +159,5 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
             runAt: "document_start",
         });
         titleUpdates[tabId] += 1;
-    }
-});
-
-chrome.tabs.onUpdated.addListener(function (tabId, changeInfo, tab) {
-    // https://stackoverflow.com/a/50548409/3867406
-    // read changeInfo data and do something with it
-    // like send the new url to contentscripts.js
-    if (changeInfo.url) {
-        chrome.tabs.sendMessage(tabId, {
-            message: "tabUrlUpdate",
-            url: changeInfo.url,
-        });
     }
 });

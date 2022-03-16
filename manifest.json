@@ -10,7 +10,6 @@
   "content_security_policy": "script-src 'self' 'unsafe-eval'; object-src 'self'",
   "background": {
     "scripts": [
-      "src/shared/min/jquery.min.js",
       "src/shared/min/utils.min.js",
       "src/background/background.js"
     ]
@@ -32,49 +31,12 @@
     "open_in_tab": true
   },
   "permissions": [
-    "https://arxiv.org/*",
-    "https://paperswithcode.com/api/*",
-    "*://api.biorxiv.org/*",
-    "https://export.arxiv.org/*",
-    "*://*.neurips.cc/*",
-    "*://*.nips.cc/*",
-    "*://*.pnas.org/*",
-    "*://proceedings.mlr.press/*",
-    "*://aclanthology.org/*",
-    "https://openaccess.thecvf.com/*",
-    "https://openreview.net/*",
-    "https://api.openreview.net/*",
+    "<all_urls>",
     "tabs",
     "activeTab",
     "storage",
     "unlimitedStorage",
     "downloads",
     "downloads.open"
-  ],
-  "content_scripts": [
-    {
-      "matches": [
-        "*://arxiv.org/*",
-        "*://*.biorxiv.org/*",
-        "*://proceedings.mlr.press/*",
-        "*://*.neurips.cc/*",
-        "*://*.nips.cc/*",
-        "*://*.pnas.org/content/*",
-        "*://openaccess.thecvf.com/*",
-        "*://openreview.net/*",
-        "*://aclanthology.org/*",
-        "*://scirate.com/arxiv/*"
-      ],
-      "run_at": "document_start",
-      "js": [
-        "src/shared/min/jquery.min.js",
-        "src/shared/min/utils.min.js",
-        "src/content_scripts/content_script.js"
-      ],
-      "css": [
-        "src/shared/css/loader.css",
-        "src/content_scripts/content_script.css"
-      ]
-    }
   ]
 }

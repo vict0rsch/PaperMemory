@@ -22,6 +22,10 @@ const initState = async (papers, isContentScript) => {
         log("Time to retrieve stored papers (s): " + (Date.now() - s) / 1000);
     }
 
+    if (typeof global === "undefined") {
+        global = {};
+    }
+
     global.state.dataVersion = getManifestDataVersion();
     global.state.titleFunction = (await getTitleFunction()).titleFunction;
 
@@ -171,6 +175,38 @@ const stateTitleFunction = (paperOrId) => {
     return name.replaceAll("\n", " ").replace(/\s\s+/g, " ");
 };
 
+const updatePaper = (papers, id) => {
+    papers[id].count += 1;
+    papers[id].lastOpenDate = new Date().toJSON();
+    return papers;
+};
+
+const feedback = async (payload) => {
+    const { tabId, notifText, paper } = payload;
+    if (typeof tabId === "undefined") {
+        const response = await sendMessage({ type: "get-tabId" });
+        tabId = response.tabId;
+    }
+    const notifData = { paper, notifText };
+    chrome.tabs.executeScript(
+        tabId,
+        {
+            code:
+                "if(!window.paperMemory)window.paperMemory={};" +
+                `window.paperMemory.notifData=${JSON.stringify(notifData)};`,
+        },
+        () => {
+            injectFiles(tabId, [
+                "/src/shared/min/jquery.min.js",
+                "/src/shared/min/utils.min.js",
+                "/src/content_scripts/content_script.css",
+                "/src/background/svg.js",
+                "/src/background/notif.js",
+            ]);
+        }
+    );
+};
+
 /**
  *  Adds a new paper to the memory or updates the counts and open dates of an existing paper.
  *
@@ -179,8 +215,9 @@ const stateTitleFunction = (paperOrId) => {
  * @param {object} checks The user's preferences
  * @returns
  */
-const addOrUpdatePaper = async (url, is, checks) => {
+const addOrUpdatePaper = async (url, is, checks, tabId) => {
     let paper, isNew, paperswithcodeLink, paperswithcodeNote;
+    const isBackground = typeof tabId !== "undefined";
 
     // Extract id from url
     const id = parseIdFromUrl(url);
@@ -218,11 +255,23 @@ const addOrUpdatePaper = async (url, is, checks) => {
     }
 
     if (!paper.codeLink) {
-        const request = { type: "papersWithCode", paper: paper };
-        const backgroundResponse = await sendMessage(request);
+        const onlyOfficialRepos = checks.checkOnlyOfficialRepos;
+        const payload = {
+            type: "papersWithCode",
+            paper: paper,
+            onlyOfficialRepos: onlyOfficialRepos,
+        };
 
-        paperswithcodeLink = backgroundResponse.code?.url;
-        paperswithcodeNote = backgroundResponse.code?.note;
+        let code;
+        if (isBackground) {
+            code = await findCodesForPaper(payload);
+        } else {
+            backgroundResponse = await sendMessage(payload);
+            code = backgroundResponse.code;
+        }
+
+        paperswithcodeLink = code?.url;
+        paperswithcodeNote = code?.note;
 
         if (paperswithcodeLink) {
             console.log(
@@ -230,7 +279,7 @@ const addOrUpdatePaper = async (url, is, checks) => {
                 paperswithcodeLink
             );
             global.state.papers[paper.id].codeLink = paperswithcodeLink;
-            global.state.papers[paper.id].code = backgroundResponse.code;
+            global.state.papers[paper.id].code = code;
         }
         if (!paper.note && paperswithcodeNote) {
             global.state.papers[paper.id].note = paperswithcodeNote;
@@ -250,12 +299,18 @@ const addOrUpdatePaper = async (url, is, checks) => {
                     notifText +=
                         "<br/><div id='feedback-pwc'>(+ repo from PapersWithCode) </div>";
                 }
-                checks && checks.checkFeedback && feedback(notifText, paper);
+                isBackground &&
+                    checks &&
+                    checks.checkFeedback &&
+                    feedback({ tabId, notifText, paper });
             } else {
                 // existing paper but new code repo
 
                 notifText = "Found a code repository on PapersWithCode!";
-                checks && checks.checkFeedback && feedback(notifText);
+                isBackground &&
+                    checks &&
+                    checks.checkFeedback &&
+                    feedback({ tabId, notifText });
             }
         } else {
             log("Updated '" + paper.title + "' in your Memory");
