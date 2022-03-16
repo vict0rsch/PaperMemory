@@ -218,7 +218,11 @@ const addOrUpdatePaper = async (url, is, checks) => {
     }
 
     if (!paper.codeLink) {
-        const request = { type: "papersWithCode", paper: paper };
+        const request = {
+            type: "papersWithCode",
+            paper: paper,
+            officialReposOnly: checks.checkOfficialRepos,
+        };
         const backgroundResponse = await sendMessage(request);
 
         paperswithcodeLink = backgroundResponse.code?.url;

@@ -52,6 +52,7 @@ global.menuCheckNames = [
     "checkDirectOpen",
     "checkStore",
     "checkScirate",
+    "checkOfficialRepos",
 ];
 /**
  * Menu check names which should not default to true but to false
@@ -61,6 +62,7 @@ global.menuCheckDefaultFalse = [
     "checkDirectOpen",
     "checkStore",
     "checkScirate",
+    "checkOfficialRepos",
 ];
 /**
  * All keys to retrieve from the menu, the checkboxes + the custom pdf function

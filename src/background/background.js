@@ -54,6 +54,10 @@ const findCodesForPaper = async (request) => {
     if (officials.length > 0) {
         codes = officials;
         console.log("Selecting official codes only:", codes);
+    } else {
+        if (request.officialReposOnly) {
+            return code;
+        }
     }
     codes.sort((a, b) => b.stars - a.stars);
     return { ...codes[0], ...code };
