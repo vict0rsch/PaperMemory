@@ -145,19 +145,18 @@ const makeArxivPaper = async (memoryId) => {
 
 const makeNeuripsPaper = async (url) => {
     const htmlText = await fetchNeuripsHTML(url);
-    const dom = new DOMParser().parseFromString(
+    const doc = new DOMParser().parseFromString(
         htmlText.replaceAll("\n", ""),
         "text/html"
     );
-    const doc = $(dom);
 
-    const ps = doc.find(".container-fluid .col p");
+    const paragraphs = Array.from(doc.querySelectorAll(".container-fluid .col p"));
     const hash = url.split("/").slice(-1)[0].replace("-Paper.pdf", "");
 
-    const title = doc.find("h4").first().text();
-    const author = $(ps[1])
-        .text()
-        .split(", ")
+    const title = doc.getElementsByTagName("h4")[0].innerHTML;
+    const author = paragraphs[1]
+        .getElementsByTagName("i")[0]
+        .innerHTML.split(", ")
         .map((author, k) => {
             const parts = author.split(" ");
             const caps = parts.map((part, i) => {
@@ -167,7 +166,7 @@ const makeNeuripsPaper = async (url) => {
         })
         .join(" and ");
     const pdfLink = url;
-    const year = $(ps[0]).text().match(/\d{4}/)[0];
+    const year = paragraphs[0].innerHTML.match(/\d{4}/)[0];
     const key = `neurips${year}${hash.slice(0, 8)}`;
     const id = `NeurIPS-${year}_${hash.slice(0, 8)}`;
     const conf = `NeurIPS ${year}`;
