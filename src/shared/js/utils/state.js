@@ -25,6 +25,8 @@ const initState = async (papers, isContentScript) => {
     global.state.dataVersion = getManifestDataVersion();
     global.state.titleFunction = (await getTitleFunction()).titleFunction;
 
+    weeklyBackup();
+
     const migration = await migrateData(papers, global.state.dataVersion);
 
     papers = migration.papers;

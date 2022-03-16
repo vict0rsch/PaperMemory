@@ -232,6 +232,41 @@ const backupData = async (papers) => {
     });
 };
 
+function dateDiffInDays(a, b) {
+    // a and b are javascript Date objects
+    // Discard the time and time-zone information.
+    const _MS_PER_DAY = 1000 * 60 * 60 * 24;
+    const utc1 = Date.UTC(a.getFullYear(), a.getMonth(), a.getDate());
+    const utc2 = Date.UTC(b.getFullYear(), b.getMonth(), b.getDate());
+
+    return Math.floor((utc2 - utc1) / _MS_PER_DAY);
+}
+
+/**
+ * Create a weekly backup of the papers
+ */
+const weeklyBackup = async () => {
+    let backups = await getStorage("weeklyBackups");
+    if (!backups) {
+        backups = {};
+    }
+    const today = new Date();
+    const backupDates = Object.keys(backups)
+        .map((k) => new Date(k))
+        .sort();
+    if (backupDates.length > 0) {
+        const latestBackup = backupDates[backupDates.length - 1];
+        if (dateDiffInDays(latestBackup, today) < 7) return;
+    }
+
+    let newBackups = {};
+    for (const date of backupDates.reverse().slice(0, 5)) {
+        newBackups[date.toString()] = backups[date.toString()];
+    }
+    newBackups[today.toString()] = await getStorage("papers");
+    setStorage("weeklyBackups", newBackups);
+};
+
 /**
  * Retrieve the boolean preferences as defined in config.js/menuStorageKeys
  * @returns {object} The user's preferences as per the popup's sliders in the menu.
