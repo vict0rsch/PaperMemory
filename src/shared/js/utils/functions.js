@@ -487,7 +487,6 @@ const cutAuthors = (text, maxLen, separator) => {
 const sendMessage = (payload) =>
     new Promise((resolve, reject) => {
         chrome.runtime.sendMessage(payload, (response) => {
-            console.log("sendMessage response: ", response);
             if (response.success) {
                 resolve(response);
             } else {
