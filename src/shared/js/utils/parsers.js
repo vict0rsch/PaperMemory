@@ -34,7 +34,10 @@ const decodeHtml = (html) => {
 
 const fetchArxivXML = async (paperId) => {
     const arxivId = paperId.replace("Arxiv-", "");
-    return $.get(`https://export.arxiv.org/api/query`, { id_list: arxivId });
+    return fetch(
+        "https://export.arxiv.org/api/query?" +
+            new URLSearchParams({ id_list: arxivId })
+    );
 };
 
 const fetchNeuripsHTML = async (url) => {
@@ -101,35 +104,30 @@ const fetchOpenReviewForumJSON = async (url) => {
 // -------------------
 
 const makeArxivPaper = async (memoryId) => {
-    const xmlData = await fetchArxivXML(memoryId);
-    var bib = $(xmlData);
-    var authors = [];
-    var key = "";
-    bib.find("author name").each((k, v) => {
-        authors.push($(v).text());
-        if (k === 0) {
-            key += $(v)
-                .text()
-                .split(" ")
-                [$(v).text().split(" ").length - 1].toLowerCase();
-        }
-    });
-    var pdfLink = "";
-    bib.find("link").each((k, v) => {
-        const link = $(v).attr("href");
-        if (link && link.indexOf("arxiv.org/pdf/") >= 0) {
-            pdfLink = link;
-        }
-    });
+    const response = await fetchArxivXML(memoryId);
+    const xmlData = await response.text();
+    console.log("xmlData: ", xmlData);
+    var doc = new DOMParser().parseFromString(xmlData.replaceAll("\n", ""), "text/xml");
+
+    const authors = Array.from(doc.querySelectorAll("author name")).map(
+        (el) => el.innerHTML
+    );
+    const author = authors.join(" and ");
+
+    let pdfLink = Array.from(doc.getElementsByTagName("link"))
+        .map((l) => l.getAttribute("href"))
+        .filter((h) => h.includes("arxiv.org/pdf/"))[0];
     const pdfVersion = pdfLink.match(/v\d+\.pdf/gi);
     if (pdfVersion && pdfVersion.length > 0) {
         pdfLink = pdfLink.replace(pdfVersion[0], ".pdf");
     }
-    const author = authors.join(" and ");
-    const title = $(bib.find("entry title")[0]).text();
-    const year = $(bib.find("entry published")[0]).text().slice(0, 4);
-    key += year;
-    key += firstNonStopLowercase(title);
+
+    const title = doc.querySelector("entry title").innerHTML;
+    const year = doc.querySelector("entry published").innerHTML.slice(0, 4);
+    const key =
+        authors[0].split(" ").reverse()[0].toLowerCase() +
+        year +
+        firstNonStopLowercase(title);
 
     const id = memoryId;
     const conf = "arXiv";
