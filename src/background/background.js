@@ -32,6 +32,7 @@ const findCodesForPaper = async (request) => {
         title = request.paper.title;
     }
     const pwcData = await fetchPWCData(arxivId, title);
+    if (!pwcData) return code;
     const { id, proceeding } = pwcData;
 
     if (proceeding) {
@@ -40,7 +41,7 @@ const findCodesForPaper = async (request) => {
         code = { note: `Accepted @ ${conf} ${year} -- [paperswithcode.com]` };
     }
 
-    if (!pwcData) return code;
+    if (!id) return code;
 
     const codePath = `https://paperswithcode.com/api/v1/papers/${id}/repositories/`;
 
