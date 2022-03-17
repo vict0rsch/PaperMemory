@@ -474,45 +474,63 @@ const makeACLPaper = async (url) => {
 };
 
 const makePNASPaper = async (url) => {
-    url = url.replace(".full.pdf", "");
+    /*
+        https://www.pnas.org/doi/10.1073/pnas.2114679118
+        https://www.pnas.org/doi/epdf/10.1073/pnas.2114679118
+        https://www.pnas.org/doi/pdf/10.1073/pnas.2114679118
+    */
+
+    url = url.replace(".full.pdf", "").replace(/\/doi\/e?pdf\//, "/doi/abs/");
     const htmlText = await fetch(url).then((r) => r.text());
     const dom = new DOMParser().parseFromString(
         htmlText.replaceAll("\n", ""),
         "text/html"
     );
-    const citeUrl = dom
-        .getElementsByClassName("pane-jnl-pnas-cite-tool")[0]
-        .querySelector("a").href;
 
-    if (!citeUrl) return;
-
-    const title = dom.getElementById("page-title").innerText;
-    const bibtexUrl = citeUrl.replace("/download", "/bibtext");
-    const bibtex = await fetch(bibtexUrl).then((r) => r.text());
-    const bibtexData = bibtexToJson(bibtex)[0];
-
-    const entries = bibtexData.entryTags;
-
-    const year = entries.year;
-    const author = entries.author
-        .replace(/\s+/g, " ")
-        .split(" and ")
-        .map((v) =>
-            v
-                .split(",")
-                .map((a) => a.trim())
-                .reverse()
-                .join(" ")
+    const title = dom.getElementsByTagName("h1")[0].innerText;
+    const author = Array.from(
+        dom.querySelectorAll(
+            ".authors span[property='author'] a:not([property='email']):not(.orcid-id)"
         )
+    )
+        .filter((el) => !el.getAttribute("href").includes("mailto:"))
+        .map((el) => el.innerText)
         .join(" and ");
-    const pdfLink = entries.eprint;
-    const key = bibtexData.citationKey;
-    const note = `Published @ PNAS (${year})`;
+
+    const year = dom
+        .querySelector("span[property='datePublished']")
+        .innerText.match(/\d{4}/g)[0];
+
     const pid = url.endsWith("/")
         ? url.split("/").slice(-2)[0]
         : url.split("/").slice(-1)[0];
 
     const id = `PNAS-${year}_${pid}`;
+    const pdfLink =
+        url.includes("/doi/pdf/") || url.includes("/doi/epdf/")
+            ? url.replace("/doi/epdf/", "/doi/pdf/")
+            : url.replace("/doi/abs/", "/doi/pdf/").replace("/doi/full/", "/doi/pdf/");
+    const doi = Array.from(
+        dom.querySelector(".self-citation").getElementsByTagName("a")
+    )
+        .map((a) => a.getAttribute("href"))
+        .filter((a) => a.includes("https://doi.org"))[0]
+        .split("/")
+        .slice(-2)
+        .join("/");
+    const key = `doi:${doi}`;
+    const bibtex = bibtexToString(`
+    @article{${key},
+        author={${author}},
+        title={${title}},
+        journal = {Proceedings of the National Academy of Sciences},
+        year={${year}},
+        doi={${doi}},
+        eprint={${pdfLink}},
+        URL={${pdfLink.replace("/doi/pdf/", "/doi/abs/")}}
+    }`);
+
+    const note = `Published @ PNAS (${year})`;
 
     return { author, bibtex, id, key, note, pdfLink, title, year };
 };
@@ -648,6 +666,7 @@ const initPaper = async (paper) => {
     paper.addDate = new Date().toJSON();
     paper.lastOpenDate = paper.addDate;
     paper.count = 1;
+    paper.code = {};
 
     for (const k in paper) {
         if (paper.hasOwnProperty(k) && typeof paper[k] === "string") {
