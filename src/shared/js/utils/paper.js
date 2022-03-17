@@ -75,7 +75,7 @@ const paperToAbs = (paper) => {
             abs = pdf.replace(".pdf", "");
             break;
         case "pnas":
-            abs = pdf.replace(".full.pdf", "");
+            abs = pdf.replace(".full.pdf", "").replace("/doi/pdf/", "/doi/full/");
             break;
 
         default:
