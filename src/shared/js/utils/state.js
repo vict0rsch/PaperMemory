@@ -220,26 +220,31 @@ const addOrUpdatePaper = async (url, is, checks) => {
     }
 
     if (!paper.codeLink) {
-        const request = {
-            type: "papersWithCode",
-            paper: paper,
-            officialReposOnly: checks.checkOfficialRepos,
-        };
-        const backgroundResponse = await sendMessageToBackground(request);
+        try {
+            const request = {
+                type: "papersWithCode",
+                paper: paper,
+                officialReposOnly: checks.checkOfficialRepos,
+            };
+            const backgroundResponse = await sendMessageToBackground(request);
 
-        paperswithcodeLink = backgroundResponse.code?.url;
-        paperswithcodeNote = backgroundResponse.code?.note;
+            paperswithcodeLink = backgroundResponse.code?.url;
+            paperswithcodeNote = backgroundResponse.code?.note;
 
-        if (paperswithcodeLink) {
-            console.log(
-                "Discovered a code repository from PapersWithCode:",
-                paperswithcodeLink
-            );
-            global.state.papers[paper.id].codeLink = paperswithcodeLink;
-            global.state.papers[paper.id].code = backgroundResponse.code;
-        }
-        if (!paper.note && paperswithcodeNote) {
-            global.state.papers[paper.id].note = paperswithcodeNote;
+            if (paperswithcodeLink) {
+                console.log(
+                    "Discovered a code repository from PapersWithCode:",
+                    paperswithcodeLink
+                );
+                global.state.papers[paper.id].codeLink = paperswithcodeLink;
+                global.state.papers[paper.id].code = backgroundResponse.code;
+            }
+            if (!paper.note && paperswithcodeNote) {
+                global.state.papers[paper.id].note = paperswithcodeNote;
+            }
+        } catch (error) {
+            log("Error trying to discover a code repository:");
+            log(error);
         }
     }
 
