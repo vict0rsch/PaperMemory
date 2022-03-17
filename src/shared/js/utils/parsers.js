@@ -356,7 +356,7 @@ const makePMLRPaper = async (url) => {
 
     const absURL = url.includes(".html")
         ? url
-        : url.split("/").slice(0, -2).join("/") + `${key}.html`;
+        : url.split("/").slice(0, -2).join("/") + `/${key}.html`;
 
     const pdfLink = absURL.replace(".html", "") + `/${key}.pdf`;
 
