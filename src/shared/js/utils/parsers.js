@@ -2,25 +2,6 @@
 // -----  Utils  -----
 // -------------------
 
-const extractBibtexValue = (bibtex, key) => {
-    const regex = new RegExp(`${key}\\s?=\\s?{(.+)},`, "gi");
-    const match = regex.exec(bibtex);
-    if (match) {
-        const regex2 = new RegExp(`${key}\\s?=\\s?{`, "gi");
-        return match[0].replace(regex2, "").slice(0, -2);
-    }
-    return "";
-};
-
-const extractAuthor = (bibtex) =>
-    extractBibtexValue(bibtex, "author")
-        .replaceAll("{", "")
-        .replaceAll("}", "")
-        .replaceAll("\\", "")
-        .split(" and ")
-        .map((a) => a.split(", ").reverse().join(" "))
-        .join(" and ");
-
 const decodeHtml = (html) => {
     // https://stackoverflow.com/questions/5796718/html-entity-decode
     var txt = document.createElement("textarea");

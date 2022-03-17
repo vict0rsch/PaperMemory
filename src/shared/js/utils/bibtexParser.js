@@ -329,3 +329,23 @@ const bibtexToString = (bibtex) => {
     }
     return (bstr.slice(0, -2) + "\n}").replaceAll("\t", "  ");
 };
+
+const extractBibtexValue = (bibtex, key) => {
+    var b = new BibtexParser();
+    b.setInput(bibtex);
+    b.bibtex();
+    const data = b.entries[0];
+    if (key === "entryType") return data.entryType;
+    if (key === "citationKey") return data.citationKey;
+    if (data.entryTags.hasOwnProperty(key)) return data.entryTags[key];
+    return "";
+};
+
+const extractAuthor = (bibtex) =>
+    extractBibtexValue(bibtex, "author")
+        .replaceAll("{", "")
+        .replaceAll("}", "")
+        .replaceAll("\\", "")
+        .split(" and ")
+        .map((a) => a.split(", ").reverse().join(" "))
+        .join(" and ");
