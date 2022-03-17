@@ -463,6 +463,7 @@ const filterMemoryByString = (letters) => {
         const title = paper.title.toLowerCase();
         const author = paper.author.toLowerCase();
         const note = paper.note.toLowerCase();
+        const tags = paper.tags.join(" ").toLowerCase();
         const displayId = getDisplayId(paper.id).toLowerCase();
         if (
             words.every(
@@ -470,6 +471,7 @@ const filterMemoryByString = (letters) => {
                     title.includes(w) ||
                     author.includes(w) ||
                     note.includes(w) ||
+                    tags.includes(w) ||
                     displayId.includes(w)
             )
         ) {
