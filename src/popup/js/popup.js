@@ -107,7 +107,7 @@ const setStandardPopupClicks = () => {
  * + Add event listeners (clicks and keyboard)
  * @param {str} url Currently focused and active tab's url.
  */
-const popupMain = async (url, isKnownPage, manualTrigger = false) => {
+const popupMain = async (url, currentPageIsKnown, manualTrigger = false) => {
     addListener(document, "keydown", handlePopupKeydown);
 
     chrome.storage.local.get("whatsnew", ({ whatsnew }) => {
@@ -143,7 +143,7 @@ const popupMain = async (url, isKnownPage, manualTrigger = false) => {
     // setAndHandleCustomPDFFunction(menu);
 
     // Display popup metadata
-    if (isKnownPage) {
+    if (currentPageIsKnown) {
         setTimeout(() => {
             document.body.style.height = "auto";
             document.body.style.minHeight = "450px";
@@ -279,7 +279,7 @@ chrome.tabs.query(query, async (tabs) => {
     const url = tabs[0].url;
     await initState();
 
-    const isKnown = isKnownPage(url);
+    const isKnown = isKnownURL(url);
 
     if (!isKnown) showId("notArxiv");
 

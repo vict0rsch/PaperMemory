@@ -90,14 +90,9 @@ const updatePopupPaperNoMemory = (url) => {
             } else {
                 return;
             }
-            log("paper: ", paper);
-            log("previousIsArxiv: ", previousIsArxiv);
-            log("url: ", url);
-            const isKnownPage = Object.values(is).some((i) => i);
-            log("isKnownPage: ", isKnownPage);
             if (paper) {
                 setHTML("isArxiv", previousIsArxiv);
-                popupMain(url, isKnownPage, true);
+                popupMain(url, isKnownURL(url), true);
             }
         });
     }

@@ -591,7 +591,7 @@ const arxiv = async (checks) => {
 
 $(() => {
     const url = window.location.href;
-    if (isKnownPage(url)) {
+    if (isKnownURL(url)) {
         info("Running PaperMemory's contentScriptMain for:", url);
         contentScriptMain(url);
     }

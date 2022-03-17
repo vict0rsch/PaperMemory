@@ -31,7 +31,7 @@ const isPaper = (url) => {
  * @param {string} url The url to test
  * @returns {boolean}
  */
-const isKnownPage = (url) => Object.values(isPaper(url)).some((i) => i);
+const isKnownURL = (url) => Object.values(isPaper(url)).some((i) => i);
 
 /**
  * Get the url to the paper's abstract / display page.
