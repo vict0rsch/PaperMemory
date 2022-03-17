@@ -226,6 +226,16 @@ Here's an example return value from PWC's API
 }
 
 ```
+
+## FAQ
+
+<details>
+ <summary>Why does PaperMemory require access to all urls?</summary>
+
+Because Chrome & Brave will disable an extension by default when it auto-updates with new permissions. In this case, any new addition of a paper source will require new permissions to access the data necessary to parse the paper data and will therefore disable the extension until users re-enable it.
+
+</details>
+
 ## Todo
 
 * [ ] Improve `Contributing.md`
