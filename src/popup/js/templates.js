@@ -94,7 +94,7 @@ const getMemoryItemHTML = (paper) => {
                     class="memory-item-link memory-item-svg-div"
                     title=${titles.pdfLink}
                 >
-                    ${tablerSvg("file-symlink", "", ["memory-icon-svg"])}
+                    ${tablerSvg("external-link", "", ["memory-icon-svg"])}
                 </div>
 
                 <div
@@ -105,14 +105,14 @@ const getMemoryItemHTML = (paper) => {
                 </div>
 
                 <div class="memory-item-md memory-item-svg-div" title=${titles.copyMd}>
-                    ${tablerSvg("clipboard-list", "", ["memory-icon-svg"])}
+                    ${tablerSvg("markdown", "", ["memory-icon-svg"])}
                 </div>
 
                 <div
                     class="memory-item-bibtex memory-item-svg-div"
                     title=${titles.copyBibtext}
                 >
-                    ${tablerSvg("archive", "", ["memory-icon-svg"])}
+                    ${tablerSvg("math-function", "", ["memory-icon-svg"])}
                 </div>
 
                 <span style="display: none" class="memory-item-feedback"></span>
@@ -330,7 +330,7 @@ const getPopupPaperIconsHTML = (paper, currentUrl) => {
             id="popup-memory-item-md--${id}"
             title="Copy Markdown-formatted link"
         >
-            ${tablerSvg("clipboard-list", "", ["popup-click-svg"])}
+            ${tablerSvg("markdown", "", ["popup-click-svg"])}
         </div>
 
         <div
@@ -339,7 +339,7 @@ const getPopupPaperIconsHTML = (paper, currentUrl) => {
             id="popup-memory-item-bibtex--${id}"
             title="Copy Bibtex citation"
         >
-            ${tablerSvg("archive", "", ["popup-click-svg"])}
+            ${tablerSvg("math-function", "", ["popup-click-svg"])}
         </div>
 
         ${download}`;

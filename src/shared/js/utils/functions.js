@@ -338,8 +338,51 @@ const tablerSvg = (pathName, id, classNames) => {
                 <path d="M14 15v2a1 1 0 0 1 -1 1h-7l-3 3v-10a1 1 0 0 1 1 -1h2" />
             </svg>`;
 
-        case "external-link":
-            return ``;
+        case "vocabulary":
+            return `<svg viewBox="0 0 24 24" ${id} ${classNames}>
+                <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                <path d="M10 19h-6a1 1 0 0 1 -1 -1v-14a1 1 0 0 1 1 -1h6a2 2 0 0 1 2 2a2 2 0 0 1 2 -2h6a1 1 0 0 1 1 1v14a1 1 0 0 1 -1 1h-6a2 2 0 0 0 -2 2a2 2 0 0 0 -2 -2z" />
+                <path d="M12 5v16" />
+                <path d="M7 7h1" />
+                <path d="M7 11h1" />
+                <path d="M16 7h1" />
+                <path d="M16 11h1" />
+                <path d="M16 15h1" />
+            </svg>`;
+
+        case "database-export":
+            return `<svg viewBox="0 0 24 24" ${id} ${classNames}>
+                <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                <ellipse cx="12" cy="6" rx="8" ry="3" />
+                <path d="M4 6v6c0 1.657 3.582 3 8 3a19.84 19.84 0 0 0 3.302 -.267m4.698 -2.733v-6" />
+                <path d="M4 12v6c0 1.599 3.335 2.905 7.538 2.995m8.462 -6.995v-2m-6 7h7m-3 -3l3 3l-3 3" />
+            </svg>`;
+        case "eyeglass":
+            return `<svg viewBox="0 0 24 24" ${id} ${classNames}>
+                <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                <path d="M8 4h-2l-3 10" />
+                <path d="M16 4h2l3 10" />
+                <line x1="10" y1="16" x2="14" y2="16" />
+                <path d="M21 16.5a3.5 3.5 0 0 1 -7 0v-2.5h7v2.5" />
+                <path d="M10 16.5a3.5 3.5 0 0 1 -7 0v-2.5h7v2.5" />
+            </svg>`;
+
+        case "markdown":
+            return `<svg viewBox="0 0 24 24" ${id} ${classNames}>
+                <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                <rect x="3" y="5" width="18" height="14" rx="2" />
+                <path d="M7 15v-6l2 2l2 -2v6" />
+                <path d="M14 13l2 2l2 -2m-2 2v-6" />
+            </svg>`;
+
+        case "math-function":
+            return `<svg viewBox="0 0 24 24" ${id} ${classNames}>            
+                <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                <path d="M14 10h1c1 0 1 1 2.016 3.527c.984 2.473 .984 3.473 1.984 3.473h1" />
+                <path d="M13 17c1.5 0 3 -2 4 -3.5s2.5 -3.5 4 -3.5" />
+                <path d="M3 19c0 1.5 .5 2 2 2s2 -4 3 -9s1.5 -9 3 -9s2 .5 2 2" />
+                <line x1="5" y1="12" x2="11" y2="12" />
+            </svg>`;
 
         default:
             return "";
