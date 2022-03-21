@@ -578,6 +578,17 @@ const displayMemoryTable = () => {
     // Clear existing items
     var memoryTable = findEl("memory-table");
     setHTML(memoryTable, "");
+
+    // Define SVG hover titles:
+    const titles = {
+        edit: `"Edit paper details&#13;&#10;(or press 'e' when this paper is focused,&#13;&#10; i.e. when you navigated to it with 'tab')"`,
+        copyPdfLink: `"Copy pdf link"`,
+        copyMd: `"Copy Markdown-formatted link"`,
+        copyBibtext: `"Copy Bibtex citation"`,
+        visits: `"Number of times you have loaded&#13;&#10;the paper's Page or PDF"`,
+        openLocal: `"Open downloaded pdf"`,
+    };
+
     // Add relevant sorted papers (papersList may be smaller than sortedPapers
     // depending on the search query)
     let table = [];
