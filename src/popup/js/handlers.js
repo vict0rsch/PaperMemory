@@ -53,6 +53,14 @@ const handleAddItemToFavorites = (e) => {
     saveFavoriteItem(id, !isFavorite);
 };
 
+const handleMemoryOpenLocal = (e) => {
+    const id = eventId(e);
+    const file = global.state.idsToFiles[id];
+    if (file && (file.id || file.id === 0)) {
+        chrome.downloads.open(file.id);
+    }
+};
+
 const handleTextareaFocus = () => {
     var that = this;
     textareaFocusEnd(that);
