@@ -90,6 +90,10 @@
             <p>Note that not all characters are usable for file names <a
                     href="https://superuser.com/questions/358855/what-characters-are-safe-in-cross-platform-file-names-for-linux-windows-and-os">depending
                     on your os</a>.</p>
+            <p>In order for PaperMemory to know one of its items has been downloaded, it will match downloaded pdf file
+                names to in-memory paper titles. If you remove the title from the downloaded file names, PaperMemory
+                will
+                not be able to do this anymore and may miss stored papers.</p>
             <p>For illustration, an example from your memory is displayed after the code input.</p>
             <div class="row">
 
@@ -232,9 +236,18 @@
                     file is
                     a known paper
                     to display the Popup. Make sure to have the title in your custom title function</li>
-                <li>If you move files or rename them altering the titles they will not be detected anymore</li>
+                <li>If you move files or rename them altering the titles they may not be detected anymore<sup>*</sup>
+                </li>
 
             </ul>
+
+            <p><small><sup>*</sup>PaperMemory primarily relies on <a
+                        href="https://developer.chrome.com/docs/extensions/reference/downloads/#type-DownloadItem"
+                        target="_blank" rel="noopenner noreferrer"><code>file.finalUrl</code></a> to detect if a file
+                    corresponds to
+                    a known paper. If, for some reason this were to fail, the secondary matching strategy relies on
+                    said
+                    file name / paper title string matching.</small></p>
 
 
         </div>
