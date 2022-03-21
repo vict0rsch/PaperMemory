@@ -237,3 +237,19 @@ const matchPapersToFiles = async (papers, files) => {
     return matches;
 };
 
+const matchAllFilesToPapers = () => {
+    return new Promise((resolve, reject) => {
+        chrome.downloads.search(
+            {
+                filenameRegex: "PaperMemoryStore/.*",
+            },
+            async (files) => {
+                const matches = await matchPapersToFiles(
+                    cleanPapers(global.state.papers),
+                    files
+                );
+                resolve(matches);
+            }
+        );
+    });
+};
