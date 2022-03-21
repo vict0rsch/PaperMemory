@@ -91,7 +91,9 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
     if (titleUpdates[tabId] > 9) {
         if (titleUpdates[tabId] == 10) {
             console.log(
-                "WARNING: max number of title titleUpdates reached. This is a logic failure in PaperMemory. Please open an issue at https://github.com/vict0rsch/PaperMemory"
+                "WARNING: max number of title titleUpdates reached. " +
+                    "This is a logic failure in PaperMemory. " +
+                    "Please open an issue at https://github.com/vict0rsch/PaperMemory"
             );
             titleUpdates[tabId] += 1;
         }
