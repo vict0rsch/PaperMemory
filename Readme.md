@@ -230,9 +230,31 @@ Here's an example return value from PWC's API
 ## FAQ
 
 <details>
- <summary>Why does PaperMemory require access to all urls?</summary>
-
+ <summary><strong>Why does PaperMemory require access to all urls?</strong></summary>
+<br/>
 Because Chrome & Brave will disable an extension by default when it auto-updates with new permissions. In this case, any new addition of a paper source will require new permissions to access the data necessary to parse the paper data and will therefore disable the extension until users re-enable it.
+
+</details>
+
+
+<details>
+ <summary><strong>Where does PaperMemory store my data?</strong></summary>
+<br/>
+It's all stored locally in your browser's local storage. If you want to transfer data to a new browser/computer, use the export/import tools in the extension's options.
+
+</details>
+
+<details>
+ <summary><strong>How can I retrieve a backup?</strong></summary>
+<br/>
+There is no straightforward way to do this currently, it will require a little coding:
+
+1. Open the extension's options (either right clicking its icon, or from the extension's menu, at the bottom)
+2. On the options page, open the Javascript Console with `cmd/ctrl + alt + i` or `right click > Inspect`
+3. Do the following in the Javascript Console:
+4. `const backups = await getStorage("weeklyBackups")`
+5. `console.log(Object.keys(backups)) // this shows you available backup dates`
+6. `setStorage("papers", backups[<some key from above>]) // Careful! This will overwrite the current data with the backup data`
 
 </details>
 
