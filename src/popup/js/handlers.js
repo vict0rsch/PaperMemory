@@ -43,7 +43,7 @@ const handleCopyBibtex = (e) => {
 
 const handleCopyPDFLink = (e) => {
     const id = eventId(e);
-    const pdfLink = global.state.papers[id].pdfLink;
+    const pdfLink = paperToPDF(global.state.papers[id]);
     copyAndConfirmMemoryItem(id, pdfLink, "Pdf link copied!");
 };
 
@@ -51,14 +51,6 @@ const handleAddItemToFavorites = (e) => {
     const id = eventId(e);
     const isFavorite = hasClass(`memory-container--${id}`, "favorite");
     saveFavoriteItem(id, !isFavorite);
-};
-
-const handleMemoryOpenLocal = (e) => {
-    const id = eventId(e);
-    const file = global.state.idsToFiles[id];
-    if (file && (file.id || file.id === 0)) {
-        chrome.downloads.open(file.id);
-    }
 };
 
 const handleTextareaFocus = () => {
