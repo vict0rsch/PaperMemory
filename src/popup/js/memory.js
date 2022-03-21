@@ -92,7 +92,7 @@ const updatePopupPaperNoMemory = (url) => {
             }
             if (paper) {
                 setHTML("isArxiv", previousIsArxiv);
-                popupMain(url, isKnownURL(url), true);
+                popupMain(url, is, true);
             }
         });
     }

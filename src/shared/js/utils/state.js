@@ -293,8 +293,8 @@ const addOrUpdatePaper = async (url, is, checks) => {
  * @param {string} url The url to use in order to find a matching paper
  * @returns {string} The id of the paper found.
  */
-const parseIdFromUrl = (url) => {
-    const is = isPaper(url);
+const parseIdFromUrl = async (url) => {
+    const is = await isPaper(url, true);
     if (is.arxiv) {
         const arxivId = url.match(/\d{4}\.\d{4,5}/g)[0];
         return `Arxiv-${arxivId}`;

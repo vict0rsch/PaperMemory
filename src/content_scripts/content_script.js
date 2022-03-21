@@ -336,7 +336,7 @@ const contentScriptMain = async (url) => {
     await initState(undefined, true);
     const menu = await getMenu();
 
-    let is = isPaper(url);
+    let is = await isPaper(url, true);
 
     if (is.arxiv) {
         arxiv(menu);

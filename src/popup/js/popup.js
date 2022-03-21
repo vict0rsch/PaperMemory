@@ -279,14 +279,15 @@ chrome.tabs.query(query, async (tabs) => {
     const url = tabs[0].url;
     await initState();
 
-    const isKnown = isKnownURL(url);
+    const is = await isPaper(url);
+    const isKnown = Object.values(is).some((i) => i);
 
     if (!isKnown) showId("notArxiv");
 
     hideId("memory-spinner");
     showId("memory-switch");
     makeMemoryHTML();
-    popupMain(url, isKnown);
+    popupMain(url, is);
     if (navigator.userAgent.search("Firefox") > -1) {
         hideId("overwrite-container");
     }
