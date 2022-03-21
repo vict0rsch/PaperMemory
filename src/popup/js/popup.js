@@ -181,7 +181,7 @@ const popupMain = async (url, is, manualTrigger = false) => {
         // ----------------------------------
         log(paper);
         setHTML("popup-memory-edit", getPopupEditFormHTML(paper));
-        setHTML("popup-copy-icons", getPopupPaperIconsHTML(paper, url));
+        setHTML("popup-copy-icons", getPopupPaperIconsHTML(paper, url, is));
         findEl(`checkFavorite--${id}`).checked = paper.favorite;
 
         // --------------------------
@@ -230,6 +230,14 @@ const popupMain = async (url, is, manualTrigger = false) => {
         addListener(`popup-memory-item-bibtex--${id}`, "click", () => {
             const bibtex = bibtexToString(global.state.papers[id].bibtex);
             copyAndConfirmMemoryItem(id, bibtex, "Bibtex citation copied!", true);
+        });
+        addListener(`popup-memory-item-openLocal--${id}`, "click", async () => {
+            const file = await findLocalFile(paper);
+            if (file) {
+                chrome.downloads.open(file.id);
+            } else {
+                chrome.tabs.create({ url: paper.pdfLink });
+            }
         });
         addListener(`popup-memory-item-download--${id}`, "click", () => {
             let title = stateTitleFunction(paper);
