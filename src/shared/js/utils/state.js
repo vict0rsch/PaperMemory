@@ -185,7 +185,7 @@ const addOrUpdatePaper = async (url, is, checks) => {
     let paper, isNew, paperswithcodeLink, paperswithcodeNote;
 
     // Extract id from url
-    const id = parseIdFromUrl(url);
+    const id = await parseIdFromUrl(url);
     log("id:", id);
 
     if (id && global.state.papers.hasOwnProperty(id)) {
