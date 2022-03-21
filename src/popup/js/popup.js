@@ -107,7 +107,7 @@ const setStandardPopupClicks = () => {
  * + Add event listeners (clicks and keyboard)
  * @param {str} url Currently focused and active tab's url.
  */
-const popupMain = async (url, currentPageIsKnown, manualTrigger = false) => {
+const popupMain = async (url, is, manualTrigger = false) => {
     addListener(document, "keydown", handlePopupKeydown);
 
     chrome.storage.local.get("whatsnew", ({ whatsnew }) => {
@@ -143,14 +143,14 @@ const popupMain = async (url, currentPageIsKnown, manualTrigger = false) => {
     // setAndHandleCustomPDFFunction(menu);
 
     // Display popup metadata
-    if (currentPageIsKnown) {
+    if (Object.values(is).some((i) => i)) {
         setTimeout(() => {
             document.body.style.height = "auto";
             document.body.style.minHeight = "450px";
         }, 0);
         showId("isArxiv", "flex");
 
-        const id = parseIdFromUrl(url);
+        const id = await parseIdFromUrl(url);
         global.state.currentId = id;
 
         if (!id || !global.state.papers.hasOwnProperty(id)) {
