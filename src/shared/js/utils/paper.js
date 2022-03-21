@@ -135,3 +135,49 @@ const paperToPDF = (paper) => {
 
     return pdf.replace("http://", "https://");
 };
+
+/**
+ * Given a single paper or an url, find a matching file in the users'
+ * downloads/PaperMemoryStore/ folder.
+ * If a url is provided, it is first checked whether it is a known paper.
+ * If not, the promise will resolve to null.
+ * If it is, the promise will resolve to the file object as per the chrome.downloads.search API.
+ * @param {object || string} paperOrUrl The paper to match to local files
+ * @returns {Promise} Resolves a file object if exactly one is found, null otherwise
+ */
+const findLocalFile = async (paperOrUrl) => {
+    if (typeof paperOrUrl === "string") {
+        // paperOrUrl is an url: find its paper (if any)
+        let id;
+        try {
+            id = await parseIdFromUrl(paperOrUrl);
+        } catch (error) {
+            // no paper found
+            return new Promise((resolve) => resolve(null));
+        }
+        if (global.state.papers.hasOwnProperty(id)) {
+            paper = global.state.papers[id];
+        } else {
+            // The id found does not exist (parseIdFromUrl bug?)
+            return new Promise((resolve) => resolve(null));
+        }
+    } else {
+        // the paper is an actual paper object not a url
+        paper = paperOrUrl;
+    }
+    // Return a Promise searching PaperMemoryStore/.*
+    return new Promise((resolve, reject) => {
+        chrome.downloads.search(
+            {
+                filenameRegex: "PaperMemoryStore/.*",
+            },
+            async (files) => {
+                const matches = await matchPapersToFiles({ [paper.id]: paper }, files);
+                const localFile = Object.values(matches);
+                // resolve to a file object if exactly one is found otherwise to null
+                resolve(localFile.length === 1 ? localFile[0] : null);
+            }
+        );
+    });
+};
+
