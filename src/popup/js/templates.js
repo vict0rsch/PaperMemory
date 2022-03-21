@@ -284,6 +284,28 @@ const getPopupPaperIconsHTML = (paper, currentUrl) => {
         </div>`;
     }
 
+    const download =
+        global.state.menu.checkStore && (is.localFile || is.stored)
+            ? /*html*/ `
+        <div
+            tabindex="0"
+            class="memory-item-svg-div"
+            id="popup-memory-item-openLocal--${id}"
+            title="Open downloaded pdf"
+        >
+            ${tablerSvg("vocabulary", "", ["popup-click-svg"])}
+        </div>
+        `
+            : /*html*/ `
+        <div
+            tabindex="0"
+            class="memory-item-svg-div"
+            id="popup-memory-item-download--${id}"
+            title="Download pdf"
+        >
+            ${tablerSvg("file-download", "", ["popup-click-svg"])}
+        </div>
+    `;
     return /*html*/ `${scirate}
         <div
             tabindex="0"
@@ -320,12 +342,5 @@ const getPopupPaperIconsHTML = (paper, currentUrl) => {
             ${tablerSvg("archive", "", ["popup-click-svg"])}
         </div>
 
-        <div
-            tabindex="0"
-            class="memory-item-svg-div"
-            id="popup-memory-item-download--${id}"
-            title="Download pdf"
-        >
-            ${tablerSvg("file-download", "", ["popup-click-svg"])}
-        </div>`;
+        ${download}`;
 };
