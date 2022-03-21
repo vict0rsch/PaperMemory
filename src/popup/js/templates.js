@@ -3,7 +3,7 @@
  * @param {object} paper A paper object
  * @returns HTML string
  */
-const getMemoryItemHTML = (paper) => {
+const getMemoryItemHTML = (paper, titles, file) => {
     const addDate = new Date(paper.addDate).toLocaleString().replace(",", "");
     const lastOpenDate = new Date(paper.lastOpenDate).toLocaleString().replace(",", "");
     const displayId = getDisplayId(paper.id);
@@ -12,14 +12,8 @@ const getMemoryItemHTML = (paper) => {
     const tags = new Set(paper.tags);
     const tagOptions = getTagsOptions(paper);
     const favoriteClass = paper.favorite ? "favorite" : "";
-    const titles = {
-        edit: `"Edit paper details&#13;&#10;(or press 'e' when this paper is focused,&#13;&#10; i.e. when you navigated to it with 'tab')"`,
-        pdfLink: `"Open ${paper.pdfLink}"`,
-        copyPdfLink: `"Copy pdf link"`,
-        copyMd: `"Copy Markdown-formatted link"`,
-        copyBibtext: `"Copy Bibtex citation"`,
-        visits: `"Number of times you have loaded&#13;&#10;the paper's Page or PDF"`,
-    };
+    titles.pdfLink = `"Open ${paper.pdfLink}"`;
+
     let codeDiv = /*html*/ `
         <small class="memory-item-faded">
             <span class="memory-code-link"> ${paper.codeLink || ""} </span>

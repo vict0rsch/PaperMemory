@@ -594,7 +594,9 @@ const displayMemoryTable = () => {
     let table = [];
     for (const paper of global.state.papersList) {
         try {
-            table.push(getMemoryItemHTML(paper));
+            table.push(
+                getMemoryItemHTML(paper, titles, global.state.idsToFiles[paper.id])
+            );
         } catch (error) {
             log("displayMemoryTable error:");
             log(error);
