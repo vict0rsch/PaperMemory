@@ -594,9 +594,7 @@ const displayMemoryTable = () => {
     let table = [];
     for (const paper of global.state.papersList) {
         try {
-            table.push(
-                getMemoryItemHTML(paper, titles, global.state.idsToFiles[paper.id])
-            );
+            table.push(getMemoryItemHTML(paper, titles, global.state.files[paper.id]));
         } catch (error) {
             log("displayMemoryTable error:");
             log(error);
@@ -622,6 +620,8 @@ const displayMemoryTable = () => {
     addEventToClass(".memory-item-bibtex", "click", handleCopyBibtex);
     // Copy pdf link
     addEventToClass(".memory-item-copy-link", "click", handleCopyPDFLink);
+    // Copy pdf link
+    addEventToClass(".memory-item-openLocal", "click", handleMemoryOpenLocal);
     // Add to favorites
     addEventToClass(".memory-item-favorite", "click", handleAddItemToFavorites);
     // Cancel edits: bring previous values from global.state back
