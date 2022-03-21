@@ -7,7 +7,7 @@
  * @param {string} url the url to check
  * @returns {object} boolean map from sources.
  */
-const isPaper = (url) => {
+const isPaper = async (url, noStored = false) => {
     let is = {};
     for (const source in global.knownPaperPages) {
         const paths = global.knownPaperPages[source];
@@ -22,6 +22,7 @@ const isPaper = (url) => {
     }
     // is the url a local file in the memory?
     is.localFile = isKnownLocalFile(url);
+    is.stored = noStored ? false : await findLocalFile(url);
     return is;
 };
 
@@ -98,7 +99,12 @@ const paperToPDF = (paper) => {
     switch (paper.source) {
         case "arxiv":
             // remove potential version so it's to the latest
-            pdf = pdf.replace(/v\d+\.pdf/gi, ".pdf");
+            pdf = pdf
+                .replace("arxiv.org/abs/", "arxiv.org/pdf/")
+                .replace(/\.pdf$/, "")
+                .replace(/v\d+$/gi, "");
+            pdf += ".pdf";
+
             break;
 
         case "neurips":
