@@ -664,8 +664,6 @@ const makeMemoryHTML = async () => {
         delayTime = 150;
     }
 
-    const tevents = Date.now() / 1000;
-
     // search keypress events.
     // deprecated fix: https://stackoverflow.com/questions/49278648/alternative-for-events-deprecated-keyboardevent-which-property
     addListener(
