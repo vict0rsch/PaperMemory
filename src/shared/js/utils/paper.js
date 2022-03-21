@@ -97,7 +97,12 @@ const paperToPDF = (paper) => {
     switch (paper.source) {
         case "arxiv":
             // remove potential version so it's to the latest
-            pdf = pdf.replace(/v\d+\.pdf/gi, ".pdf");
+            pdf = pdf
+                .replace("arxiv.org/abs/", "arxiv.org/pdf/")
+                .replace(/\.pdf$/, "")
+                .replace(/v\d+$/gi, "");
+            pdf += ".pdf";
+
             break;
 
         case "neurips":
