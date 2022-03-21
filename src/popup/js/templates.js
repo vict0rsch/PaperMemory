@@ -29,6 +29,16 @@ const getMemoryItemHTML = (paper, titles, file) => {
         `;
     }
 
+    let openLocalDiv = file
+        ? /*html*/ `
+            <div
+                class="memory-item-openLocal memory-item-svg-div"
+                title=${titles.openLocal}
+            >
+                ${tablerSvg("vocabulary", "", ["memory-icon-svg"])}
+            </div>`
+        : ``;
+
     return /*html*/ `
         <div
             class="memory-container ${favoriteClass}"
@@ -90,6 +100,8 @@ const getMemoryItemHTML = (paper, titles, file) => {
                 >
                     ${tablerSvg("external-link", "", ["memory-icon-svg"])}
                 </div>
+
+                ${openLocalDiv}
 
                 <div
                     class="memory-item-copy-link memory-item-svg-div"
@@ -261,7 +273,7 @@ ${note}</textarea
  * @param {object} paper A paper object
  * @returns HTML string
  */
-const getPopupPaperIconsHTML = (paper, currentUrl) => {
+const getPopupPaperIconsHTML = (paper, currentUrl, is) => {
     const id = paper.id;
     const name = paperToAbs(paper) === currentUrl ? "HTML" : "PDF";
 
