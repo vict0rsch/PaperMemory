@@ -87,7 +87,6 @@ const fetchOpenReviewForumJSON = async (url) => {
 const makeArxivPaper = async (memoryId) => {
     const response = await fetchArxivXML(memoryId);
     const xmlData = await response.text();
-    console.log("xmlData: ", xmlData);
     var doc = new DOMParser().parseFromString(xmlData.replaceAll("\n", ""), "text/xml");
 
     const authors = Array.from(doc.querySelectorAll("author name")).map(
@@ -95,13 +94,10 @@ const makeArxivPaper = async (memoryId) => {
     );
     const author = authors.join(" and ");
 
-    let pdfLink = Array.from(doc.getElementsByTagName("link"))
+    const pdfLink = Array.from(doc.getElementsByTagName("link"))
         .map((l) => l.getAttribute("href"))
-        .filter((h) => h.includes("arxiv.org/pdf/"))[0];
-    const pdfVersion = pdfLink.match(/v\d+\.pdf/gi);
-    if (pdfVersion && pdfVersion.length > 0) {
-        pdfLink = pdfLink.replace(pdfVersion[0], ".pdf");
-    }
+        .filter((h) => h.includes("arxiv.org/pdf/"))[0]
+        .replace(/v\d+\.pdf$/gi, ".pdf");
 
     const title = doc.querySelector("entry title").innerHTML;
     const year = doc.querySelector("entry published").innerHTML.slice(0, 4);
@@ -340,7 +336,7 @@ const makeBioRxivPaper = async (url) => {
     const author = extractAuthor(bibtex);
 
     const conf = "BioRxiv";
-    const id = parseIdFromUrl(url);
+    const id = await parseIdFromUrl(url);
     const key = bibtex.split("\n")[0].split("{")[1].replace(",", "").trim();
     const note = "";
     const pdfLink = cleanBiorxivURL(url) + ".full.pdf";
@@ -352,7 +348,7 @@ const makeBioRxivPaper = async (url) => {
 
 const makePMLRPaper = async (url) => {
     const key = url.split("/").reverse()[0].split(".")[0];
-    const id = parseIdFromUrl(url);
+    const id = await parseIdFromUrl(url);
 
     const absURL = url.includes(".html")
         ? url
