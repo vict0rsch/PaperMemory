@@ -36,7 +36,7 @@ const initState = async (papers, isContentScript) => {
         log("State initialization duration (s): " + (Date.now() - s) / 1000);
         return;
     }
-
+    global.state.files = await matchAllFilesToPapers();
     global.state.papersList = Object.values(cleanPapers(papers));
     global.state.sortKey = "lastOpenDate";
     global.state.papersReady = true;

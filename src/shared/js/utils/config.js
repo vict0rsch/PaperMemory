@@ -24,6 +24,7 @@ global.state = {
     sortKey: "",
     papersReady: false,
     menu: {},
+    files: {},
 };
 
 global.descendingSortKeys = ["addDate", "count", "lastOpenDate", "favoriteDate"];
