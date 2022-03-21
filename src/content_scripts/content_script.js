@@ -444,7 +444,7 @@ const arxiv = async (checks) => {
 
     if (!isArxivAbs) return;
 
-    const id = parseIdFromUrl(url);
+    const id = await parseIdFromUrl(url);
     const arxivAbsCol = document.querySelector(
         ".extra-services .full-text h2"
     ).parentElement;
@@ -589,9 +589,9 @@ const arxiv = async (checks) => {
     }
 };
 
-$(() => {
+$(async () => {
     const url = window.location.href;
-    if (isKnownURL(url)) {
+    if (await isKnownURL(url, true)) {
         info("Running PaperMemory's contentScriptMain for:", url);
         contentScriptMain(url);
     }
