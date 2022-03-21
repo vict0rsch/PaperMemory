@@ -436,7 +436,7 @@ const updatePaper = (papers, id) => {
 };
 
 const arxiv = async (checks) => {
-    const { checkMd, checkBib, checkDownload } = checks;
+    const { checkMd, checkBib, checkDownload, checkStore } = checks;
     global.state.titleFunction = (await getTitleFunction()).titleFunction;
 
     const url = window.location.href;
@@ -459,9 +459,9 @@ const arxiv = async (checks) => {
                 <div id="arxiv-button">${svg("download")}</div>
             </div>
         `;
-        arxivAbsCol.innerHTML += button;
+        arxivAbsCol.insertAdjacentHTML("beforeend", button);
         var downloadTimeout;
-        $("#arxiv-button").on("click", async () => {
+        addListener("arxiv-button", "click", async () => {
             removeClass("arxiv-button", "downloaded");
             addClass("arxiv-button", "downloaded");
             downloadTimeout && clearTimeout(downloadTimeout);
@@ -470,7 +470,7 @@ const arxiv = async (checks) => {
                     removeClass("arxiv-button", "downloaded");
             }, 1500);
             if (!global.state.papers.hasOwnProperty(id)) {
-                const title = await $.get(
+                const title = await fetch(
                     `https://export.arxiv.org/api/query?id_list=${id.split("-")[1]}`
                 ).then((data) => {
                     return $($(data).find("entry title")[0]).text();
@@ -481,7 +481,13 @@ const arxiv = async (checks) => {
                 if (!title.endsWith(".pdf")) {
                     title += ".pdf";
                 }
-                downloadFile(pdfUrl);
+                checkStore
+                    ? sendMessageToBackground({
+                          type: "download-pdf-to-store",
+                          pdfUrl,
+                          title,
+                      })
+                    : downloadFile(pdfUrl, title);
             }
         });
     }
@@ -489,7 +495,8 @@ const arxiv = async (checks) => {
     // -----  Markdown Link  -----
     // ---------------------------
     if (checkMd) {
-        arxivAbsCol.innerHTML += /*html*/ ` <div id="markdown-container">
+        const mdHtml = /*html*/ `
+        <div id="markdown-container">
             <div id="markdown-header" class="arxivTools-header">
                 <h3>Markdown</h3>
                 ${svg("clipboard-default")} ${svg("clipboard-default-ok")}
@@ -501,10 +508,11 @@ const arxiv = async (checks) => {
             }](${pdfUrl})
             </div>
         </div>`;
+        arxivAbsCol.insertAdjacentHTML("beforeend", mdHtml);
     }
 
     if (checkBib) {
-        arxivAbsCol.innerHTML += /*html*/ `
+        const bibLoader = /*html*/ `
             <div id="loader-container" class="arxivTools-container">
                 <div class="sk-folding-cube">
                     <div class="sk-cube1 sk-cube"></div>
@@ -514,6 +522,7 @@ const arxiv = async (checks) => {
                 </div>
             </div>
         `;
+        arxivAbsCol.insertAdjacentHTML("beforeend", bibLoader);
 
         $.get(`https://export.arxiv.org/api/query?id_list=${id.split("-")[1]}`).then(
             async (data) => {
@@ -533,7 +542,7 @@ const arxiv = async (checks) => {
 
                 $("#loader-container").fadeOut(() => {
                     findEl("loader-container").remove();
-                    arxivAbsCol.innerHTML += bibtexDiv;
+                    arxivAbsCol.insertAdjacentHTML("beforeend", bibtexDiv);
                     addListener(
                         document.querySelector("#texHeader .copy-feedback"),
                         "click",

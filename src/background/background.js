@@ -76,6 +76,11 @@ chrome.runtime.onMessage.addListener(function (payload, sender, sendResponse) {
         findCodesForPaper(payload).then((code) => {
             sendResponse({ code: code, success: true });
         });
+    } else if (payload.type === "download-pdf-to-store") {
+        chrome.downloads.download({
+            url: payload.pdfUrl,
+            filename: "PaperMemoryStore/" + payload.title,
+        });
     }
     return true;
 });
