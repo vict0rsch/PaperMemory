@@ -181,3 +181,59 @@ const findLocalFile = async (paperOrUrl) => {
     });
 };
 
+/**
+ * For each file in the files array, check if there exists a paper such that:
+ *
+ * 1. the file's finalUrl matches a paper's id as per parseIdFromUrl(candidate.finalUrl)
+ * 2. if not, if there exists any paper such that the file's filename contains the paper's title
+ *
+ * [Note: title matching is done by first lowercasing then removing all non-alphanumeric characters]
+ *
+ * @param {object} papers An object mapping ids to papers, just like global.state.papers
+ * @param {array} files An array of file objects as per the chrome.downloads.search API
+ * @returns {object} An object mapping ids to files
+ */
+const matchPapersToFiles = async (papers, files) => {
+    // pre-compute paper's simplified titles
+    const titles = Object.fromEntries(
+        Object.values(papers).map((paper) => [
+            paper.id,
+            paper.title.toLowerCase().replace(/\W/g, ""),
+        ])
+    );
+    // filter non-existing file handles
+    files = files.filter((f) => f.exists);
+    // pre-compute file's simplified titles
+    const fileTitles = Object.fromEntries(
+        files.map((f) => [f.id, f.filename.toLowerCase().replace(/\W/g, "")])
+    );
+
+    // matching object to return
+    let matches = {};
+
+    for (const candidate of files) {
+        let id;
+
+        try {
+            // find the file's id from its finalUrl
+            id = await parseIdFromUrl(candidate.finalUrl);
+            // if an id is found and it is in the papers requested for matching
+            if (id && papers.hasOwnProperty(id)) matches[id] = candidate;
+        } catch (error) {
+            id = null;
+        }
+        if (!id) {
+            // no id was found, try to match titles.
+            // This is expensive so it should be rare.
+            const candidateTitle = fileTitles[candidate.id];
+            const match = Object.entries(titles).filter(([id, title]) =>
+                title.includes(candidateTitle)
+            );
+            if (match.length === 1) {
+                matches[match[0][0]] = candidate;
+            }
+        }
+    }
+    return matches;
+};
+
