@@ -17,10 +17,6 @@ const knownPageHasUrl = (url) => {
     return pdfPages.some((p) => url.includes(p));
 };
 
-const isPdf = (url) => {
-    return url.endsWith(".pdf") || url.includes("openreview.net/pdf");
-};
-
 const fetchPWCData = async (arxivId, title) => {
     let pwcPath = `https://paperswithcode.com/api/v1/papers/?`;
     if (arxivId) {
@@ -123,7 +119,7 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
         changeInfo.title && // change is about title
         !knownPageHasUrl(changeInfo.title) && // ignore event triggered by `document.title=''` which sets title to url
         changeInfo.title !== paperTitle && // there is a new title
-        isPdf(tab.url) // only valid for pdfs
+        isPdfUrl(tab.url) // only valid for pdfs
     ) {
         console.log(`Updating pdf file name to "${paperTitle}"`);
 
