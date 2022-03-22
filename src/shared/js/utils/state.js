@@ -342,6 +342,13 @@ const parseIdFromUrl = async (url) => {
             return p.id.includes("PNAS-") && p.id.includes(pid);
         })[0];
         return paper && paper.id;
+    } else if (is.nature) {
+        url = url.replace(".pdf", "").split("#")[0];
+        const hash = url.split("/").reverse()[0];
+        const paper = Object.values(cleanPapers(global.state.papers)).filter((p) => {
+            return p.id.includes("Nature_") && p.id.includes(hash);
+        })[0];
+        return paper && paper.id;
     } else if (is.localFile) {
         return is.localFile;
     } else {

@@ -11,9 +11,23 @@ const log = (...args) => {
 const info = (...args) => log("%c[PM] " + args.join(" "), "color: #328DD2");
 
 const getDisplayId = (id) => {
+    const baseId = id;
     id = id.split("_")[0].split(".")[0];
     if (!id.startsWith("OR-")) {
         id = id.split("-").slice(0, 2).join("-");
+    }
+    if (global.state.papers.hasOwnProperty(baseId)) {
+        const paper = global.state.papers[baseId];
+        if (paper.source === "nature") {
+            if (paper.note.match(/^Published\ @.+\(\d+\)$/)) {
+                const journal = paper.note.split("@")[1].split("(")[0].trim();
+                id += `-${journal
+                    .split(" ")
+                    .map((j) => j[0].toUpperCase())
+                    .join("")}`;
+            }
+            id += `-${paper.year}`;
+        }
     }
     return id;
 };

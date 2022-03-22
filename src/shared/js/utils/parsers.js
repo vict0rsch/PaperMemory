@@ -512,6 +512,49 @@ const makePNASPaper = async (url) => {
     return { author, bibtex, id, key, note, pdfLink, title, year };
 };
 
+const makeNaturePaper = async (url) => {
+    url = url.replace(".pdf", "").split("#")[0];
+    const pdfLink = url + ".pdf";
+    const hash = url.split("/").reverse()[0];
+
+    const htmlText = await fetch(url).then((r) => r.text());
+    const dom = new DOMParser().parseFromString(
+        htmlText.replaceAll("\n", ""),
+        "text/html"
+    );
+    const title = dom.querySelector("h1.c-article-title").innerText;
+    const author = Array.from(dom.querySelectorAll("ul.c-article-author-list li"))
+        .map((a) =>
+            a.innerText
+                .replace(/(\ ?,)|&|…|\d/g, "")
+                .split(/orcid/i)[0]
+                .trim()
+        )
+        .filter((a) => a.length > 0)
+        .join(" and ");
+    const year = dom
+        .querySelector(".c-article-info-details")
+        .innerText.match(/\(\d{4}\)/)[0]
+        .replace(/\(|\)/g, "");
+    const journal = dom.querySelector(".c-article-info-details [data-test]").innerText;
+    const id = `Nature_${hash}`;
+    const doi = document
+        .querySelector(".c-bibliographic-information__citation")
+        .innerText.split("https://doi.org/")[1];
+    const bibURL = `https://doi.org/${doi}`;
+    const key = `${author.split(" ")[1]}${year}${firstNonStopLowercase(title)}`;
+    const bibtex = bibtexToString(`@article{${key},
+        author={${author}},
+        title={${title}},
+        journal = {${journal}},
+        year={${year}},
+        doi={${doi}},
+        url={${bibURL}}
+    }`);
+    const note = `Published @ ${journal} (${year})`;
+    return { author, bibtex, id, key, note, pdfLink, title, year };
+};
+
 // --------------------------------------------
 // -----  Try CrossRef's API for a match  -----
 // --------------------------------------------
@@ -720,6 +763,11 @@ const makePaper = async (is, url, id) => {
         paper = await makePNASPaper(url);
         if (paper) {
             paper.source = "pnas";
+        }
+    } else if (is.nature) {
+        paper = await makeNaturePaper(url);
+        if (paper) {
+            paper.source = "nature";
         }
     } else {
         throw new Error("Unknown paper source: " + JSON.stringify({ is, url, id }));

@@ -79,6 +79,9 @@ const paperToAbs = (paper) => {
         case "pnas":
             abs = pdf.replace(".full.pdf", "").replace("/doi/pdf/", "/doi/full/");
             break;
+        case "nature":
+            abs = pdf.replace(".pdf", "");
+            break;
 
         default:
             abs = "https://xkcd.com/1969/";
@@ -132,6 +135,10 @@ const paperToPDF = (paper) => {
             break;
 
         case "pnas":
+            break;
+
+        case "nature":
+            if (!pdf.endsWith(".pdf")) pdf += ".pdf";
             break;
 
         default:

@@ -83,6 +83,7 @@ global.knownPaperPages = {
     pmlr: ["proceedings.mlr.press/"],
     acl: ["aclanthology.org/"],
     pnas: ["pnas.org/content/", "pnas.org/doi/"],
+    nature: ["nature.com/articles/"],
 };
 
 global.overrideORConfs = {
