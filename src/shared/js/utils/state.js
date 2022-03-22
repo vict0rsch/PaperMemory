@@ -182,7 +182,7 @@ const stateTitleFunction = (paperOrId) => {
  * @returns
  */
 const addOrUpdatePaper = async (url, is, checks) => {
-    let paper, isNew, paperswithcodeLink, paperswithcodeNote;
+    let paper, isNew, pwcUrl, pwcNote;
 
     // Extract id from url
     const id = await parseIdFromUrl(url);
@@ -221,26 +221,27 @@ const addOrUpdatePaper = async (url, is, checks) => {
 
     if (!paper.codeLink) {
         try {
-            const request = {
+            const payload = {
                 type: "papersWithCode",
                 paper: paper,
                 officialReposOnly: checks.checkOfficialRepos,
             };
-            const backgroundResponse = await sendMessageToBackground(request);
+            const pwc = await sendMessageToBackground(payload);
 
-            paperswithcodeLink = backgroundResponse.code?.url;
-            paperswithcodeNote = backgroundResponse.code?.note;
+            pwcUrl = pwc?.url;
+            pwcNote = pwc?.note;
 
-            if (paperswithcodeLink) {
+            if (pwcUrl) {
                 console.log(
                     "Discovered a code repository from PapersWithCode:",
-                    paperswithcodeLink
+                    pwcUrl
                 );
-                global.state.papers[paper.id].codeLink = paperswithcodeLink;
-                global.state.papers[paper.id].code = backgroundResponse.code;
+                global.state.papers[paper.id].codeLink = pwcUrl;
+                if (pwc.hasOwnProperty("note")) delete pwc.note;
+                global.state.papers[paper.id].code = pwc;
             }
-            if (!paper.note && paperswithcodeNote) {
-                global.state.papers[paper.id].note = paperswithcodeNote;
+            if (!paper.note && pwcNote) {
+                global.state.papers[paper.id].note = pwcNote;
             }
         } catch (error) {
             log("Error trying to discover a code repository:");
@@ -250,14 +251,14 @@ const addOrUpdatePaper = async (url, is, checks) => {
 
     chrome.storage.local.set({ papers: global.state.papers }, async () => {
         let notifText;
-        if (isNew || paperswithcodeLink) {
+        if (isNew || pwcUrl) {
             if (isNew) {
                 // new paper
 
                 log("Added '" + paper.title + "' to your Memory!");
                 log("paper: ", paper);
                 notifText = "Added to your Memory";
-                if (paperswithcodeLink) {
+                if (pwcUrl) {
                     notifText +=
                         "<br/><div id='feedback-pwc'>(+ repo from PapersWithCode) </div>";
                 }
