@@ -167,72 +167,73 @@ const focusExistingOrCreateNewCodeTab = (codeLink) => {
 };
 
 /**
- * Looks for an open tab to the paper: either its pdf or html page.
- * If both a pdf and an html page exist, focus the pdf.
- * If none exist, create a new tab.
+ * Looks for an open tab to the paper: either its local or online pdf, or html page.
+ * If both a local pdf tab exists, focus it.
+ * Otherwise, if a remote pdf tab exists, focus it.
+ * Otherwise, if an html page exist, focus the it.
+ * If none exist, create a new tab to the local file if it exists, to the online pdf otherwise.
  * @param {object} paper The paper whose pdf should be opened
  */
 const focusExistingOrCreateNewPaperTab = (paper) => {
-    const hostname = parseUrl(paper.pdfLink).hostname;
+    chrome.tabs.query({}, async (tabs) => {
+        let paperTabs = []; // tabs to the paper
+        for (const tab of tabs) {
+            let tabPaperId;
+            try {
+                // try and parse a paper id
+                tabPaperId = tab.url && (await parseIdFromUrl(tab.url));
+            } catch (error) {}
 
-    // create the match string to look for in existing tabs
-    // as ~ : focusTab = url.contains(match)
-    let match = paper.pdfLink
-        .split("/") // split on parts of the path
-        .reverse()[0] // get the last one (all)
-        .replace("-Paper.pdf", "") // (neurips)
-        .replace(".pdf", "") // remove .pdf (cvf)
-        .split("?") // remove get args if any
-        .reverse()[0]; // find id (openreview)
-    if (paper.source === "biorxiv") {
-        match = cleanBiorxivURL(paper.pdfLink);
-    }
-    if (match.match(/\d{5}v\d+$/) && paper.source === "arxiv") {
-        // remove potential pdf version on arxiv
-        match = match.split("v")[0];
-    }
-
-    chrome.tabs.query({ url: `*://${hostname}/*` }, async (tabs) => {
-        let validTabsIds = [];
-        let pdfTabsIds = [];
-        const urls = tabs.map((t) => t.url);
-        let idx = 0;
-        for (const u of urls) {
-            if (u.indexOf(match) >= 0) {
-                validTabsIds.push(idx);
-                if (u.endsWith(".pdf")) {
-                    pdfTabsIds.push(idx);
-                }
+            if (tabPaperId && tabPaperId === paper.id) {
+                // an id is found and its the paper's: store the tab
+                paperTabs.push(tab);
             }
-            idx += 1;
         }
-        if (validTabsIds.length > 0) {
-            let tab;
-            if (pdfTabsIds.length > 0) {
-                tab = tabs[pdfTabsIds[0]];
+
+        let tabToFocus;
+        // favor tabs to pdfs
+        const pdfTabs = paperTabs.filter((tab) => tab.url && isPdfUrl(tab.url));
+        if (pdfTabs.length > 0) {
+            // favor tabs to local files
+            const fileTabs = paperTabs.filter((tab) => tab.url.startsWith("file://"));
+            if (fileTabs.length > 0) {
+                tabToFocus = fileTabs[0];
             } else {
-                tab = tabs[validTabsIds[0]];
+                tabToFocus = pdfTabs[0];
             }
-            const tabUpdateProperties = { active: true };
-            const windowUpdateProperties = { focused: true };
+        } else if (paperTabs.length > 0) {
+            // no pdf tab: go to abs url
+            tabToFocus = paperTabs[0];
+        }
+
+        if (tabToFocus) {
+            // a tab was found: focus it by starting to focus its window
             chrome.windows.getCurrent((w) => {
-                if (w.id !== tab.windowId) {
-                    chrome.windows.update(tab.windowId, windowUpdateProperties, () => {
-                        chrome.tabs.update(tab.id, tabUpdateProperties);
-                    });
+                if (w.id !== tabToFocus.windowId) {
+                    // tab is in a different window: focus the window
+                    chrome.windows.update(
+                        tabToFocus.windowId,
+                        { focused: true },
+                        () => {
+                            // focus the tab
+                            chrome.tabs.update(tabToFocus.id, { active: true });
+                        }
+                    );
                 } else {
-                    chrome.tabs.update(tab.id, tabUpdateProperties);
+                    // tab is in the same window: focus the tab
+                    chrome.tabs.update(tabToFocus.id, { active: true });
                 }
             });
-        } else if (global.state.menu.checkStore) {
-            const file = await findLocalFile(paper);
-            if (file) {
-                chrome.downloads.open(file.id);
-            } else {
-                chrome.tabs.create({ url: paper.pdfLink });
-            }
         } else {
-            chrome.tabs.create({ url: paper.pdfLink });
+            // no tab was found
+            const hasFile = global.state.files.hasOwnProperty(paper.id);
+            if (hasFile) {
+                // this paper has a local file
+                chrome.downloads.open(global.state.files[paper.id].id);
+            } else {
+                // no tab open or local file: open a new tab to the paper's pdf
+                chrome.tabs.create({ url: paperToPDF(paper) });
+            }
         }
 
         global.state.papers[paper.id].count += 1;
