@@ -361,6 +361,16 @@ const isKnownLocalFile = (url) => {
     if (!url.startsWith("file://")) return false;
     if (!url.endsWith(".pdf")) return false;
 
+    const filePath = decodeURIComponent(url).replace("file://", "");
+    const storedPaths = Object.entries(global.state.files).filter(
+        ([id, file]) => file.filename === filePath
+    );
+
+    if (storedPaths.length > 0) {
+        console.log("Found stored");
+        return storedPaths[0][0];
+    }
+
     const filename = decodeURIComponent(url.split("/").reverse()[0])
         .toLowerCase()
         .replace(/\W/g, "");
