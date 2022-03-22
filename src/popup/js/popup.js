@@ -243,23 +243,14 @@ const popupMain = async (url, is, manualTrigger = false) => {
             let title = stateTitleFunction(paper);
             if (global.state.menu.checkStore) {
                 title = "PaperMemoryStore/" + title;
-                chrome.downloads.search(
-                    {
-                        filenameRegex: "PaperMemoryStore/.*",
-                    },
-                    (files) => {
-                        files = files.filter((f) => f.exists);
-                        if (files.length === 0) {
-                            chrome.downloads.download({
-                                url: URL.createObjectURL(
-                                    new Blob([global.storeReadme])
-                                ),
-                                filename: "PaperMemoryStore/IMPORTANT_README.txt",
-                                saveAs: false,
-                            });
-                        }
-                    }
-                );
+                const storedFiles = await getStoredFiles();
+                if (storedFiles.length === 0) {
+                    chrome.downloads.download({
+                        url: URL.createObjectURL(new Blob([global.storeReadme])),
+                        filename: "PaperMemoryStore/IMPORTANT_README.txt",
+                        saveAs: false,
+                    });
+                }
             }
             log({ title });
             if (!title.endsWith(".pdf")) {

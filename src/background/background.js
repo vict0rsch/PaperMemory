@@ -77,9 +77,19 @@ chrome.runtime.onMessage.addListener(function (payload, sender, sendResponse) {
             sendResponse({ code: code, success: true });
         });
     } else if (payload.type === "download-pdf-to-store") {
-        chrome.downloads.download({
-            url: payload.pdfUrl,
-            filename: "PaperMemoryStore/" + payload.title,
+        getStoredFiles().then((storedFiles) => {
+            if (storedFiles.length === 0) {
+                chrome.downloads.download({
+                    url: URL.createObjectURL(new Blob([global.storeReadme])),
+                    filename: "PaperMemoryStore/IMPORTANT_README.txt",
+                    saveAs: false,
+                });
+            }
+            chrome.downloads.download({
+                url: payload.pdfUrl,
+                filename: "PaperMemoryStore/" + payload.title,
+            });
+            sendResponse(true);
         });
     }
     return true;

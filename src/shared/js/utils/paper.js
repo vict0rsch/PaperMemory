@@ -172,19 +172,11 @@ const findLocalFile = async (paperOrUrl) => {
         paper = paperOrUrl;
     }
     // Return a Promise searching PaperMemoryStore/.*
-    return new Promise((resolve, reject) => {
-        chrome.downloads.search(
-            {
-                filenameRegex: "PaperMemoryStore/.*",
-            },
-            async (files) => {
-                const matches = await matchPapersToFiles({ [paper.id]: paper }, files);
-                const localFile = Object.values(matches);
-                // resolve to a file object if exactly one is found otherwise to null
-                resolve(localFile.length === 1 ? localFile[0] : null);
-            }
-        );
-    });
+    const storedFiles = await getStoredFiles();
+    const matches = await matchPapersToFiles({ [paper.id]: paper }, storedFiles);
+    const localFile = Object.values(matches);
+    // resolve to a file object if exactly one is found otherwise to null
+    return localFile.length === 1 ? localFile[0] : null;
 };
 
 /**

@@ -541,4 +541,13 @@ const sendMessageToBackground = (payload) =>
                 reject(response);
             }
         });
+
+const getStoredFiles = () =>
+    new Promise((resolve) => {
+        chrome.downloads.search(
+            {
+                filenameRegex: "PaperMemoryStore/.*",
+            },
+            (files) => resolve(files.filter((f) => f.exists && f.state === "complete"))
+        );
     });
