@@ -353,11 +353,15 @@ const contentScriptMain = async (url) => {
             if (!global.state.papers.hasOwnProperty(id)) return;
             const paper = global.state.papers[id];
             title = stateTitleFunction(paper);
-            window.document.title = title;
-            chrome.runtime.sendMessage({
-                type: "update-title",
-                options: { title, url },
-            });
+            chrome.runtime.sendMessage(
+                {
+                    type: "update-title",
+                    options: { title, url },
+                },
+                () => {
+                    window.document.title = title;
+                }
+            );
         };
         makeTitle(id, url);
     }
