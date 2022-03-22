@@ -239,7 +239,7 @@ const popupMain = async (url, is, manualTrigger = false) => {
                 chrome.tabs.create({ url: paper.pdfLink });
             }
         });
-        addListener(`popup-memory-item-download--${id}`, "click", () => {
+        addListener(`popup-memory-item-download--${id}`, "click", async () => {
             let title = stateTitleFunction(paper);
             if (global.state.menu.checkStore) {
                 title = "PaperMemoryStore/" + title;
