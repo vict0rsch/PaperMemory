@@ -220,7 +220,7 @@ const popupMain = async (url, is, manualTrigger = false) => {
             }
         });
         addListener(`popup-memory-item-copy-link--${id}`, "click", () => {
-            const pdfLink = global.state.papers[id].pdfLink;
+            const pdfLink = paperToPDF(global.state.papers[id]);
             copyAndConfirmMemoryItem(id, pdfLink, "Pdf link copied!", true);
         });
         addListener(`popup-memory-item-md--${id}`, "click", () => {
