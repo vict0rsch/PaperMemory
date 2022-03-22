@@ -332,8 +332,8 @@ const svg = (name) => {
  * Also, if the current website is a known paper source (isPaper), adds or updates the current paper
  * @param {object} checks The user's stored preferences regarding menu options
  */
-const contentScriptMain = async (url) => {
-    await initState(undefined, true);
+const contentScriptMain = async (url, stateIsReady) => {
+    if (!stateIsReady) await initState(undefined, true);
     const menu = await getMenu();
 
     let is = await isPaper(url, true);
@@ -604,9 +604,14 @@ const arxiv = async (checks) => {
 
 $(async () => {
     const url = window.location.href;
+    let stateIsReady = false;
+    if (url.startsWith("file://")) {
+        await initState(undefined, true);
+        stateIsReady = true;
+    }
     if (await isKnownURL(url, true)) {
         info("Running PaperMemory's contentScriptMain for:", url);
-        contentScriptMain(url);
+        contentScriptMain(url, stateIsReady);
     }
 
     chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
