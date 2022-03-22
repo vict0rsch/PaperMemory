@@ -65,9 +65,8 @@ const findCodesForPaper = async (request) => {
     return { ...codes[0], ...code };
 };
 
-chrome.runtime.onMessage.addListener(function (payload, sender, sendResponse) {
+chrome.runtime.onMessage.addListener((payload, sender, sendResponse) => {
     if (payload.type === "update-title") {
-        // console.log({ options: payload.options });
         const { title, url } = payload.options;
         paperTitles[url] = title.replaceAll('"', "'");
     } else if (payload.type === "tabID") {
