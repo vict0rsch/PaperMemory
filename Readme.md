@@ -42,6 +42,7 @@ This browser extension allows you to do automatically store research papers you 
 * Association for Computational Linguistics (ACL) (EMNLP, ACL, CoNLL, NAACL etc.)
 * Proceedings of the National Academy of Sciences (PNAS)
 * SciRate
+* Nature (Nature, Nature Communications, Nature Machine Intelligence etc.)
 * [Add more](https://github.com/vict0rsch/PaperMemory/issues/13)
 
 [About finding published papers from preprints](#preprints)
