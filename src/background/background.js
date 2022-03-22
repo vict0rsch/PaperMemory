@@ -84,7 +84,7 @@ chrome.runtime.onMessage.addListener((payload, sender, sendResponse) => {
     } else if (payload.type === "tabID") {
         sendResponse(sender.tab.id);
     } else if (payload.type === "papersWithCode") {
-        findCodesForPaper(payload).then((code) => sendResponse(code));
+        findCodesForPaper(payload).then(sendResponse);
     } else if (payload.type === "download-pdf-to-store") {
         getStoredFiles().then((storedFiles) => {
             if (storedFiles.length === 0) {
