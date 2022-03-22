@@ -533,14 +533,11 @@ const cutAuthors = (text, maxLen, separator) => {
  * @returns Promise that resolves the response
  */
 const sendMessageToBackground = (payload) =>
-    new Promise((resolve, reject) => {
+    new Promise((resolve) => {
         chrome.runtime.sendMessage(payload, (response) => {
-            if (response?.success) {
-                resolve(response);
-            } else {
-                reject(response);
-            }
+            resolve(response);
         });
+    });
 
 const getStoredFiles = () =>
     new Promise((resolve) => {
