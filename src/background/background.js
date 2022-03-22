@@ -69,12 +69,11 @@ chrome.runtime.onMessage.addListener((payload, sender, sendResponse) => {
     if (payload.type === "update-title") {
         const { title, url } = payload.options;
         paperTitles[url] = title.replaceAll('"', "'");
+        sendResponse(true);
     } else if (payload.type === "tabID") {
-        sendResponse({ tabID: sender.tab.id, success: true });
+        sendResponse(sender.tab.id);
     } else if (payload.type === "papersWithCode") {
-        findCodesForPaper(payload).then((code) => {
-            sendResponse({ code: code, success: true });
-        });
+        findCodesForPaper(payload).then((code) => sendResponse(code));
     } else if (payload.type === "download-pdf-to-store") {
         getStoredFiles().then((storedFiles) => {
             if (storedFiles.length === 0) {
