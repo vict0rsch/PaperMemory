@@ -117,7 +117,9 @@ const makeArxivPaper = async (memoryId) => {
     bibtex += `    journal={arXiv preprint arXiv: ${id}}\n`;
     bibtex += `}`;
 
-    return { author, bibtex, conf, id, key, pdfLink, title, year };
+    const venue = "";
+
+    return { author, bibtex, conf, id, key, pdfLink, title, venue, year };
 };
 
 const makeNeuripsPaper = async (url) => {
@@ -162,7 +164,9 @@ const makeNeuripsPaper = async (url) => {
     bibtex += `}`;
     bibtex = bibtexToString(bibtex);
 
-    return { author, bibtex, conf, id, key, note, pdfLink, title, year };
+    const venue = "NeurIPS";
+
+    return { author, bibtex, conf, id, key, note, pdfLink, title, venue, year };
 };
 
 const makeCVFPaper = async (url) => {
@@ -196,8 +200,9 @@ const makeCVFPaper = async (url) => {
     const note = `Accepted @ ${conf} ${year}`;
     const bibtex = bibtexToString(doc.querySelector(".bibref").innerText);
     const key = bibtex.split("{")[1].split(",")[0];
+    const venue = conf;
 
-    return { author, bibtex, conf, id, key, note, pdfLink, title, year };
+    return { author, bibtex, conf, id, key, note, pdfLink, title, venue, year };
 };
 
 const makeOpenReviewBibTex = (paper, url) => {
@@ -228,17 +233,16 @@ const makeOpenReviewPaper = async (url) => {
     const forumJson = await fetchOpenReviewForumJSON(url);
 
     var paper = noteJson.notes[0];
-    log("paper: ", paper);
     var forum = forumJson.notes;
-    log("forum: ", forum);
 
     const title = paper.content.title;
     const author = paper.content.authors.join(" and ");
     const bibtex = bibtexToString(
         paper.content._bibtex || makeOpenReviewBibTex(paper, url)
     );
-    const key = bibtex.split("{")[1].split(",")[0].trim();
-    const year = bibtex.split("year={")[1].split("}")[0];
+    const obj = bibtexToObject(bibtex);
+    const key = obj.citationKey;
+    const year = obj.year;
 
     let pdfLink;
     if (paper.pdf) {
@@ -287,7 +291,7 @@ const makeOpenReviewPaper = async (url) => {
             ) > -1
         );
     });
-    log("forum: ", forum);
+    let venue = "";
     if (candidates && candidates.length > 0) {
         decision = candidates[0].content.decision
             .split(" ")
@@ -296,13 +300,16 @@ const makeOpenReviewPaper = async (url) => {
             })
             .join(" ");
         note = `${decision} @ ${conf} ${year}`;
+        if (decision.toLowerCase().indexOf("rejected") < 0) {
+            venue = conf;
+        }
     }
 
     if (author === "Anonymous") {
         note = `Under review @ ${conf} ${year} (${new Date().toLocaleDateString()})`;
     }
 
-    return { author, bibtex, conf, id, key, note, pdfLink, title, year };
+    return { author, bibtex, conf, id, key, note, pdfLink, title, venue, year };
 };
 
 const makeBioRxivPaper = async (url) => {
@@ -342,8 +349,9 @@ const makeBioRxivPaper = async (url) => {
     const pdfLink = cleanBiorxivURL(url) + ".full.pdf";
     const title = paper.title;
     const year = paper.date.split("-")[0];
+    const venue = "";
 
-    return { author, bibtex, conf, id, key, note, pdfLink, title, year };
+    return { author, bibtex, conf, id, key, note, pdfLink, title, venue, year };
 };
 
 const makePMLRPaper = async (url) => {
@@ -390,16 +398,18 @@ const makePMLRPaper = async (url) => {
         "Proceedings of the",
         ""
     );
+    let venue = conf;
     note = "Accepted @ " + conf + ` (${year})`;
     for (const long in global.overridePMLRConfs) {
         if (conf.includes(long)) {
-            conf = global.overridePMLRConfs[long] + " " + year;
+            venue = global.overridePMLRConfs[long];
+            conf = venue + " " + year;
             note = "Accepted @ " + conf;
             break;
         }
     }
 
-    return { author, bibtex, conf, id, key, note, pdfLink, title, year };
+    return { author, bibtex, conf, id, key, note, pdfLink, title, venue, year };
 };
 
 const findACLValue = (dom, key) => {
@@ -446,8 +456,9 @@ const makeACLPaper = async (url) => {
 
     const id = `ACL-${conf}-${year}_${aid}`;
     const note = `Accepted @ ${conf} ${year}`;
+    const venue = conf;
 
-    return { author, bibtex, conf, id, key, note, pdfLink, title, year };
+    return { author, bibtex, conf, id, key, note, pdfLink, title, venue, year };
 };
 
 const makePNASPaper = async (url) => {
@@ -506,10 +517,11 @@ const makePNASPaper = async (url) => {
         eprint={${pdfLink}},
         URL={${pdfLink.replace("/doi/pdf/", "/doi/abs/")}}
     }`);
+    const venue = "PNAS";
 
     const note = `Published @ PNAS (${year})`;
 
-    return { author, bibtex, id, key, note, pdfLink, title, year };
+    return { author, bibtex, id, key, note, pdfLink, title, venue, year };
 };
 
 const makeNaturePaper = async (url) => {
@@ -552,6 +564,9 @@ const makeNaturePaper = async (url) => {
         url={${bibURL}}
     }`);
     const note = `Published @ ${journal} (${year})`;
+    const venue = journal;
+    return { author, bibtex, id, key, note, pdfLink, title, venue, year };
+};
 
 const makeACSPaper = async (url) => {
     url = url.replace("pubs.acs.org/doi/pdf/", "pubs.acs.org/doi/").split("?")[0];
@@ -593,10 +608,10 @@ const tryCrossRef = async (paper) => {
         // assert the response is valid
         if (json.status !== "ok") {
             log(`[PM][Crossref] ${api} returned ${json.message.status}`);
-            return "";
+            return { note: null };
         }
         // assert there is a (loose) match
-        if (json.message.items.length === 0) return "";
+        if (json.message.items.length === 0) return { note: null };
 
         // compare matched item's title to the paper's title
         const crossTitle = json.message.items[0].title[0]
@@ -608,21 +623,24 @@ const tryCrossRef = async (paper) => {
             .replaceAll("\n", " ")
             .replaceAll(/\s\s+/g, " ");
         if (crossTitle !== refTitle) {
-            return "";
+            return { note: null };
         }
 
         // assert the matched item has an event with a name
         // (this may be too restrictive for journals, to improve)
-        if (!json.message.items[0].event || !json.message.items[0].event.name)
-            return "";
+        if (!json.message.items[0].event || !json.message.items[0].event.name) {
+            return { note: null };
+        }
 
         // return the note
         info("Found a CrossRef match");
-        return `Accepted @ ${json.message.items[0].event.name.trim()} -- [crossref.org]`;
+        const venue = json.message.items[0].event.name.trim();
+        const note = `Accepted @ ${venue} -- [crossref.org]`;
+        return { venue, note };
     } catch (error) {
-        // something went wrong, log the error, return ""
+        // something went wrong, log the error, return {note: null}
         log("[PM][Crossref]", error);
-        return "";
+        return { note: null };
     }
 };
 
@@ -639,7 +657,7 @@ const tryDBLP = async (paper) => {
             !json.result.hits.hit.length
         ) {
             log("[PM][DBLP] No hits found");
-            return "";
+            return { note: null };
         }
 
         const hits = json.result.hits.hit.sort(
@@ -662,29 +680,36 @@ const tryDBLP = async (paper) => {
             if (hitTitle === refTitle && hit.info.venue !== "CoRR") {
                 info("Found a DBLP match");
                 const abbr = hit.info.venue.toLowerCase().replaceAll(".", "").trim();
-                const venue = global.journalAbbreviations[abbr] || hit.info.venue;
+                const venue = (
+                    global.journalAbbreviations[abbr] || hit.info.venue
+                ).trim();
                 const year = hit.info.year;
                 const url = hit.info.url;
-                const note = `Accepted @ ${venue.trim()} ${year} -- [dblp.org]\n${url}`;
-                return note;
+                const note = `Accepted @ ${venue} ${year} -- [dblp.org]\n${url}`;
+                return { venue, note };
             }
         }
         log("[PM][DBLP] No match found");
-        return "";
+        return { note: null };
     } catch (error) {
-        // something went wrong, log the error, return ""
+        // something went wrong, log the error, return {note: null}
         log("[PM][DBLP]", error);
-        return "";
+        return { note: null };
     }
 };
 
 const tryPreprintMatch = async (paper) => {
     let note = "";
-    note = await tryDBLP(paper);
+    let venue = "";
+    dblpMatch = await tryDBLP(paper);
+    note = dblpMatch.note;
+    venue = dblpMatch.venue;
     if (!note) {
-        note = await tryCrossRef(paper);
+        crossRefMatch = await tryCrossRef(paper);
+        note = crossRefMatch.note;
+        venue = crossRefMatch.venue;
     }
-    return note;
+    return { note, venue };
 };
 
 // -----------------------------
@@ -786,6 +811,11 @@ const makePaper = async (is, url, id) => {
         paper = await makeNaturePaper(url);
         if (paper) {
             paper.source = "nature";
+        }
+    } else if (is.acs) {
+        paper = await makeACSPaper(url);
+        if (paper) {
+            paper.source = "acs";
         }
     } else {
         throw new Error("Unknown paper source: " + JSON.stringify({ is, url, id }));

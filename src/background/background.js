@@ -45,7 +45,10 @@ const findCodesForPaper = async (request) => {
     if (proceeding) {
         const conf = proceeding.split("-")[0].toUpperCase();
         const year = proceeding.split("-")[1];
-        code = { note: `Accepted @ ${conf} ${year} -- [paperswithcode.com]` };
+        code = {
+            note: `Accepted @ ${conf} ${year} -- [paperswithcode.com]`,
+            venue: conf,
+        };
     }
 
     if (!id) return code;

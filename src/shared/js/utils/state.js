@@ -219,7 +219,7 @@ const addOrUpdatePaper = async (url, is, checks) => {
         }
     }
 
-    if (!paper.codeLink) {
+    if (!paper.codeLink || !paper.venue) {
         try {
             const payload = {
                 type: "papersWithCode",
@@ -230,6 +230,7 @@ const addOrUpdatePaper = async (url, is, checks) => {
 
             pwcUrl = pwc?.url;
             pwcNote = pwc?.note;
+            pwcVenue = pwc?.venue;
 
             if (pwcUrl) {
                 console.log(
@@ -242,6 +243,9 @@ const addOrUpdatePaper = async (url, is, checks) => {
             }
             if (!paper.note && pwcNote) {
                 global.state.papers[paper.id].note = pwcNote;
+            }
+            if (!paper.venue && pwcVenue) {
+                global.state.papers[paper.id].venue = pwcVenue;
             }
         } catch (error) {
             log("Error trying to discover a code repository:");
@@ -273,11 +277,17 @@ const addOrUpdatePaper = async (url, is, checks) => {
             log("Updated '" + paper.title + "' in your Memory");
         }
         // anyway: try and update note with actual publication
-        if (!paper.note) {
-            const note = await tryPreprintMatch(paper);
-            if (note) {
-                log("[PM] Updating preprint note to", note);
-                paper.note = note;
+        if (!paper.note || !paper.venue) {
+            const { note, venue } = await tryPreprintMatch(paper);
+            if (note || venue) {
+                if (note && !paper.note) {
+                    log("[PM] Updating preprint note to", note);
+                    paper.note = note;
+                }
+                if (venue && !paper.venue) {
+                    log("[PM] Updating preprint venue to", venue);
+                    paper.venue = venue;
+                }
                 global.state.papers[paper.id] = paper;
                 chrome.storage.local.set({ papers: global.state.papers });
             }

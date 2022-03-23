@@ -406,6 +406,12 @@ const validatePaper = (paper, log = true) => {
             desc: "the user's tags for this paper",
             default: (p) => [],
         },
+        venue: {
+            type: "string",
+            desc: "the paper's publication venue",
+            default: (p) => "",
+        },
+
         year: {
             type: "string",
             desc: "year of publication",
