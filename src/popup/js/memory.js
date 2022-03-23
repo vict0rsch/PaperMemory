@@ -177,7 +177,7 @@ const focusExistingOrCreateNewCodeTab = (codeLink) => {
 const focusExistingOrCreateNewPaperTab = (paper, fromMemoryItem) => {
     chrome.tabs.query({}, async (tabs) => {
         // find user's preferences
-        const menu = await getMenu();
+        const menu = global.state.menu;
 
         let paperTabs = []; // tabs to the paper
         for (const tab of tabs) {
@@ -592,13 +592,13 @@ const displayMemoryTable = () => {
     setHTML(memoryTable, "");
 
     // Define SVG hover titles:
+    // titles behave differently in build/watch mode. This works in build
     const titles = {
-        edit: `"Edit paper details&#13;&#10;(or press 'e' when this paper is focused,&#13;&#10; i.e. when you navigated to it with 'tab')"`,
-        copyPdfLink: `"Copy pdf link"`,
-        copyMd: `"Copy Markdown-formatted link"`,
-        copyBibtext: `"Copy Bibtex citation"`,
-        visits: `"Number of times you have loaded&#13;&#10;the paper's Page or PDF"`,
-        openLocal: `"Open downloaded pdf"`,
+        edit: "Edit paper details",
+        copyMd: "Copy Markdown-formatted link",
+        copyBibtext: "Copy Bibtex citation",
+        visits: "Number of times you have opened this paper",
+        openLocal: "Open downloaded pdf",
     };
 
     // Add relevant sorted papers (papersList may be smaller than sortedPapers
@@ -606,7 +606,7 @@ const displayMemoryTable = () => {
     let table = [];
     for (const paper of global.state.papersList) {
         try {
-            table.push(getMemoryItemHTML(paper, titles, global.state.files[paper.id]));
+            table.push(getMemoryItemHTML(paper, titles));
         } catch (error) {
             log("displayMemoryTable error:");
             log(error);

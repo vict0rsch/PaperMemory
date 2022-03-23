@@ -3,7 +3,7 @@
  * @param {object} paper A paper object
  * @returns HTML string
  */
-const getMemoryItemHTML = (paper, titles, file) => {
+const getMemoryItemHTML = (paper, titles) => {
     const addDate = new Date(paper.addDate).toLocaleString().replace(",", "");
     const lastOpenDate = new Date(paper.lastOpenDate).toLocaleString().replace(",", "");
     const displayId = getDisplayId(paper.id);
@@ -12,7 +12,11 @@ const getMemoryItemHTML = (paper, titles, file) => {
     const tags = new Set(paper.tags);
     const tagOptions = getTagsOptions(paper);
     const favoriteClass = paper.favorite ? "favorite" : "";
-    titles.pdfLink = `"Open link to ${paper.title}"`;
+    // titles behave differently in build/watch mode. This works in build
+    titles.pdfLink = `Open link to ${paper.title}`;
+    titles.copyLink = `Open link to the paper's ${
+        global.state.menu.checkPreferPdf ? "PDF" : "abstract"
+    }`;
 
     let codeDiv = /*html*/ `
         <small class="memory-item-faded">
@@ -29,7 +33,7 @@ const getMemoryItemHTML = (paper, titles, file) => {
         `;
     }
 
-    let openLocalDiv = file
+    let openLocalDiv = global.state.files.hasOwnProperty(paper.id)
         ? /*html*/ `
             <div
                 class="memory-item-openLocal memory-item-svg-div"
@@ -105,7 +109,7 @@ const getMemoryItemHTML = (paper, titles, file) => {
 
                 <div
                     class="memory-item-copy-link memory-item-svg-div"
-                    title=${titles.copyPdfLink}
+                    title=${titles.copyLink}
                 >
                     ${tablerSvg("link", "", ["memory-icon-svg"])}
                 </div>
@@ -325,7 +329,7 @@ const getPopupPaperIconsHTML = (paper, currentUrl, is) => {
             tabindex="0"
             class="memory-item-svg-div"
             id="popup-memory-item-copy-link--${id}"
-            title="Copy pdf link"
+            title="Copy link to paper"
         >
             ${tablerSvg("link", "", ["popup-click-svg"])}
         </div>
