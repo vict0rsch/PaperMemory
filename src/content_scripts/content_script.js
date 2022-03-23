@@ -334,7 +334,7 @@ const svg = (name) => {
  */
 const contentScriptMain = async (url, stateIsReady) => {
     if (!stateIsReady) await initState(undefined, true);
-    const menu = await getMenu();
+    const menu = global.state.menu;
 
     let is = await isPaper(url, true);
 

@@ -31,7 +31,7 @@ const handleOpenItemCodeLink = (e) => {
 
 const handleCopyMarkdownLink = async (e) => {
     const id = eventId(e);
-    const menu = await getMenu();
+    const menu = global.state.menu;
     const paper = global.state.papers[id];
     const link = menu.checkPreferPdf ? paperToPDF(paper) : paperToAbs(paper);
     const text = menu.checkPreferPdf ? "PDF" : "Abstract";
@@ -47,7 +47,7 @@ const handleCopyBibtex = (e) => {
 
 const handleCopyPDFLink = async (e) => {
     const id = eventId(e);
-    const menu = await getMenu();
+    const menu = global.state.menu;
     const paper = global.state.papers[id];
     const link = menu.checkPreferPdf ? paperToPDF(paper) : paperToAbs(paper);
     const text = menu.checkPreferPdf ? "PDF" : "Abstract";
@@ -385,6 +385,7 @@ const handleMenuCheckChange = (e) => {
     const checked = findEl(key).checked;
     chrome.storage.local.set({ [key]: checked }, function () {
         log(`Settings saved for ${key} (${checked})`);
+        global.state?.menu[key] = checked;
     });
 };
 
