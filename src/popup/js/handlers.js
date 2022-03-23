@@ -20,7 +20,7 @@ const handleDeleteItem = (e) => {
 
 const handleOpenItemLink = (e) => {
     const id = eventId(e);
-    focusExistingOrCreateNewPaperTab(global.state.papers[id]);
+    focusExistingOrCreateNewPaperTab(global.state.papers[id], true);
 };
 
 const handleOpenItemCodeLink = (e) => {
@@ -29,10 +29,14 @@ const handleOpenItemCodeLink = (e) => {
     focusExistingOrCreateNewCodeTab(url);
 };
 
-const handleCopyMarkdownLink = (e) => {
+const handleCopyMarkdownLink = async (e) => {
     const id = eventId(e);
-    const md = global.state.papers[id].md;
-    copyAndConfirmMemoryItem(id, md, "Markdown link copied!");
+    const menu = await getMenu();
+    const paper = global.state.papers[id];
+    const link = menu.checkPreferPdf ? paperToPDF(paper) : paperToAbs(paper);
+    const text = menu.checkPreferPdf ? "PDF" : "Abstract";
+    const md = `[${paper.title}](${link})`;
+    copyAndConfirmMemoryItem(id, md, `Markdown ${text} link copied!`);
 };
 
 const handleCopyBibtex = (e) => {
@@ -41,10 +45,13 @@ const handleCopyBibtex = (e) => {
     copyAndConfirmMemoryItem(id, bibtexToString(bibtex), "Bibtex copied!");
 };
 
-const handleCopyPDFLink = (e) => {
+const handleCopyPDFLink = async (e) => {
     const id = eventId(e);
-    const pdfLink = paperToPDF(global.state.papers[id]);
-    copyAndConfirmMemoryItem(id, pdfLink, "Pdf link copied!");
+    const menu = await getMenu();
+    const paper = global.state.papers[id];
+    const link = menu.checkPreferPdf ? paperToPDF(paper) : paperToAbs(paper);
+    const text = menu.checkPreferPdf ? "PDF" : "Abstract";
+    copyAndConfirmMemoryItem(id, link, `${text} link copied!`);
 };
 
 const handleAddItemToFavorites = (e) => {

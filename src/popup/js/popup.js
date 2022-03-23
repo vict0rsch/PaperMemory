@@ -220,12 +220,15 @@ const popupMain = async (url, is, manualTrigger = false) => {
             }
         });
         addListener(`popup-memory-item-copy-link--${id}`, "click", () => {
-            const pdfLink = paperToPDF(global.state.papers[id]);
-            copyAndConfirmMemoryItem(id, pdfLink, "Pdf link copied!", true);
+            const link = menu.checkPreferPdf ? paperToPDF(paper) : paperToAbs(paper);
+            const text = menu.checkPreferPdf ? "PDF" : "Abstract";
+            copyAndConfirmMemoryItem(id, link, `${text} link copied!`, true);
         });
         addListener(`popup-memory-item-md--${id}`, "click", () => {
-            const md = global.state.papers[id].md;
-            copyAndConfirmMemoryItem(id, md, "MarkDown link copied!", true);
+            const link = menu.checkPreferPdf ? paperToPDF(paper) : paperToAbs(paper);
+            const text = menu.checkPreferPdf ? "PDF" : "Abstract";
+            const md = `[${paper.title}](${link})`;
+            copyAndConfirmMemoryItem(id, md, `Markdown link to ${text} copied!`, true);
         });
         addListener(`popup-memory-item-bibtex--${id}`, "click", () => {
             const bibtex = bibtexToString(global.state.papers[id].bibtex);

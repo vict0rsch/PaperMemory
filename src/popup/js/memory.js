@@ -174,8 +174,11 @@ const focusExistingOrCreateNewCodeTab = (codeLink) => {
  * If none exist, create a new tab to the local file if it exists, to the online pdf otherwise.
  * @param {object} paper The paper whose pdf should be opened
  */
-const focusExistingOrCreateNewPaperTab = (paper) => {
+const focusExistingOrCreateNewPaperTab = (paper, fromMemoryItem) => {
     chrome.tabs.query({}, async (tabs) => {
+        // find user's preferences
+        const menu = await getMenu();
+
         let paperTabs = []; // tabs to the paper
         for (const tab of tabs) {
             let tabPaperId;
@@ -191,15 +194,21 @@ const focusExistingOrCreateNewPaperTab = (paper) => {
         }
 
         let tabToFocus;
-        // favor tabs to pdfs
-        const pdfTabs = paperTabs.filter((tab) => tab.url && isPdfUrl(tab.url));
-        if (pdfTabs.length > 0) {
+        // choose favorite tabs
+        const favoriteTabs = menu.checkPreferPdf
+            ? paperTabs.filter((tab) => tab.url && isPdfUrl(tab.url))
+            : paperTabs.filter((tab) => tab.url && !isPdfUrl(tab.url));
+
+        if (favoriteTabs.length > 0) {
             // favor tabs to local files
-            const fileTabs = paperTabs.filter((tab) => tab.url.startsWith("file://"));
+            const fileTabs =
+                fromMemoryItem && global.state.files.hasOwnProperty(paper.id)
+                    ? []
+                    : paperTabs.filter((tab) => tab.url.startsWith("file://"));
             if (fileTabs.length > 0) {
                 tabToFocus = fileTabs[0];
             } else {
-                tabToFocus = pdfTabs[0];
+                tabToFocus = favoriteTabs[0];
             }
         } else if (paperTabs.length > 0) {
             // no pdf tab: go to abs url
@@ -227,12 +236,14 @@ const focusExistingOrCreateNewPaperTab = (paper) => {
         } else {
             // no tab was found
             const hasFile = global.state.files.hasOwnProperty(paper.id);
-            if (hasFile) {
+            if (hasFile && !fromMemoryItem) {
                 // this paper has a local file
                 chrome.downloads.open(global.state.files[paper.id].id);
             } else {
                 // no tab open or local file: open a new tab to the paper's pdf
-                chrome.tabs.create({ url: paperToPDF(paper) });
+                chrome.tabs.create({
+                    url: menu.checkPreferPdf ? paperToPDF(paper) : paperToAbs(paper),
+                });
             }
         }
 

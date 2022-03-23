@@ -12,7 +12,7 @@ const getMemoryItemHTML = (paper, titles, file) => {
     const tags = new Set(paper.tags);
     const tagOptions = getTagsOptions(paper);
     const favoriteClass = paper.favorite ? "favorite" : "";
-    titles.pdfLink = `"Open ${paper.pdfLink}"`;
+    titles.pdfLink = `"Open link to ${paper.title}"`;
 
     let codeDiv = /*html*/ `
         <small class="memory-item-faded">
