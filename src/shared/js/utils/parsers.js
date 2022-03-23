@@ -21,21 +21,6 @@ const fetchArxivXML = async (paperId) => {
     );
 };
 
-const fetchNeuripsHTML = async (url) => {
-    let paperPage;
-    if (url.endsWith(".pdf")) {
-        paperPage = url
-            .replace("/file/", "/hash/")
-            .replace("-Paper.pdf", "-Abstract.html");
-    } else {
-        paperPage = url;
-    }
-
-    return fetch(paperPage).then((response) => {
-        return response.text();
-    });
-};
-
 const fetchCvfHTML = async (url) => {
     let paperPage, text;
     if (url.endsWith(".pdf")) {
@@ -78,6 +63,13 @@ const fetchOpenReviewForumJSON = async (url) => {
     return fetch(api).then((response) => {
         return response.json();
     });
+};
+
+const fetchDom = async (url) => {
+    const html = await fetch(url).then((response) =>
+        response.ok ? response.text() : ""
+    );
+    return new DOMParser().parseFromString(html.replaceAll("\n", ""), "text/html");
 };
 
 // -------------------
@@ -123,16 +115,16 @@ const makeArxivPaper = async (memoryId) => {
 };
 
 const makeNeuripsPaper = async (url) => {
-    const htmlText = await fetchNeuripsHTML(url);
-    const doc = new DOMParser().parseFromString(
-        htmlText.replaceAll("\n", ""),
-        "text/html"
-    );
+    if (url.endsWith(".pdf")) {
+        url = url.replace("/file/", "/hash/").replace("-Paper.pdf", "-Abstract.html");
+    }
 
-    const paragraphs = Array.from(doc.querySelectorAll(".container-fluid .col p"));
+    const dom = await fetchDom(url);
+
+    const paragraphs = Array.from(dom.querySelectorAll(".container-fluid .col p"));
     const hash = url.split("/").slice(-1)[0].replace("-Paper.pdf", "");
 
-    const title = doc.getElementsByTagName("h4")[0].innerHTML;
+    const title = dom.getElementsByTagName("h4")[0].innerHTML;
     const author = paragraphs[1]
         .getElementsByTagName("i")[0]
         .innerHTML.split(", ")
@@ -171,12 +163,12 @@ const makeNeuripsPaper = async (url) => {
 
 const makeCVFPaper = async (url) => {
     const htmlText = await fetchCvfHTML(url);
-    const doc = new DOMParser().parseFromString(
+    const dom = new DOMParser().parseFromString(
         htmlText.replaceAll("\n", ""),
         "text/html"
     );
-    const title = doc.getElementById("papertitle").innerText.trim();
-    let author = doc
+    const title = dom.getElementById("papertitle").innerText.trim();
+    let author = dom
         .querySelector("#authors i")
         .innerText.split(",")
         .map((a) => a.trim())
@@ -186,7 +178,7 @@ const makeCVFPaper = async (url) => {
     if (url.endsWith(".pdf")) {
         pdfLink = url;
     } else {
-        const href = Array.from(doc.getElementsByTagName("a"))
+        const href = Array.from(dom.getElementsByTagName("a"))
             .filter((a) => a.innerText === "pdf")[0]
             .getAttribute("href");
         if (href.startsWith("../")) {
@@ -198,7 +190,7 @@ const makeCVFPaper = async (url) => {
         pdfLink = "http://openaccess.thecvf.com" + href;
     }
     const note = `Accepted @ ${conf} ${year}`;
-    const bibtex = bibtexToString(doc.querySelector(".bibref").innerText);
+    const bibtex = bibtexToString(dom.querySelector(".bibref").innerText);
     const key = bibtex.split("{")[1].split(",")[0];
     const venue = conf;
 
@@ -337,7 +329,7 @@ const makeBioRxivPaper = async (url) => {
         pageText.replaceAll("\n", ""),
         "text/html"
     );
-    const bibtextLink = dom.querySelector(".bibtext a").href;
+    const bibtextLink = dom.querySelector(".bibtext a").getAttribute("href");
     const bibtex = bibtexToString(await (await fetch(bibtextLink)).text());
 
     const author = extractAuthor(bibtex);
@@ -364,16 +356,13 @@ const makePMLRPaper = async (url) => {
 
     const pdfLink = absURL.replace(".html", "") + `/${key}.pdf`;
 
-    const doc = new DOMParser().parseFromString(
-        (await (await fetch(absURL)).text()).replaceAll("\n", ""),
-        "text/html"
-    );
+    const dom = await fetchDom(absURL);
 
-    const bibURL = doc
+    const bibURL = dom
         .getElementById("button-bibtex1")
         .getAttribute("onclick")
         .match(/https.+\.bib/)[0];
-    const bibtexRaw = doc
+    const bibtexRaw = dom
         .getElementById("bibtex")
         .innerText.replaceAll("\t", " ")
         .replaceAll(/\s\s+/g, " ");
@@ -391,7 +380,7 @@ const makePMLRPaper = async (url) => {
     bibtex = bibtexToString(bibtex);
 
     const author = extractAuthor(bibtex);
-    const title = doc.getElementsByTagName("h1")[0].innerText;
+    const title = dom.getElementsByTagName("h1")[0].innerText;
     const year = extractBibtexValue(bibtex, "year");
 
     let conf = extractBibtexValue(bibtex, "booktitle").replaceAll(
@@ -421,11 +410,7 @@ const findACLValue = (dom, key) => {
 
 const makeACLPaper = async (url) => {
     url = url.replace(".pdf", "");
-    const htmlText = await fetch(url).then((r) => r.text());
-    const dom = new DOMParser().parseFromString(
-        htmlText.replaceAll("\n", ""),
-        "text/html"
-    );
+    const dom = await fetchDom(url);
 
     const bibtexEl = dom.getElementById("citeBibtexContent");
     if (!bibtexEl) return;
@@ -469,11 +454,7 @@ const makePNASPaper = async (url) => {
     */
 
     url = url.replace(".full.pdf", "").replace(/\/doi\/e?pdf\//, "/doi/abs/");
-    const htmlText = await fetch(url).then((r) => r.text());
-    const dom = new DOMParser().parseFromString(
-        htmlText.replaceAll("\n", ""),
-        "text/html"
-    );
+    const dom = await fetchDom(url);
 
     const title = dom.getElementsByTagName("h1")[0].innerText;
     const author = Array.from(
@@ -529,11 +510,8 @@ const makeNaturePaper = async (url) => {
     const pdfLink = url + ".pdf";
     const hash = url.split("/").reverse()[0];
 
-    const htmlText = await fetch(url).then((r) => r.text());
-    const dom = new DOMParser().parseFromString(
-        htmlText.replaceAll("\n", ""),
-        "text/html"
-    );
+    const dom = await fetchDom(url);
+
     const title = dom.querySelector("h1.c-article-title").innerText;
     const author = Array.from(dom.querySelectorAll("ul.c-article-author-list li"))
         .map((a) =>
