@@ -43,6 +43,8 @@ This browser extension allows you to do automatically store research papers you 
 * Proceedings of the National Academy of Sciences (PNAS)
 * SciRate
 * Nature (Nature, Nature Communications, Nature Machine Intelligence etc.)
+* American Chemical Society (ACS)
+* IOPscience
 * [Add more](https://github.com/vict0rsch/PaperMemory/issues/13)
 
 [About finding published papers from preprints](#preprints)
