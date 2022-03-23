@@ -306,23 +306,31 @@ function BibtexParser() {
     };
 }
 
-const bibtexToJson = (bibtex) => {
+const bibtexToObject = (bibtex) => {
     var b = new BibtexParser();
     b.setInput(bibtex);
     b.bibtex();
-    return b.entries;
+    const entry = b.getEntries()[0];
+    const obj = {
+        ...entry.entryTags,
+        entryType: entry.entryType,
+        citationKey: entry.citationKey,
+    };
+    return obj;
 };
 
 const bibtexToString = (bibtex) => {
-    var b = new BibtexParser();
-    b.setInput(bibtex);
-    b.bibtex();
-    const data = b.entries[0];
-    let bstr = `@${data.entryType.toLowerCase()}{${data.citationKey},\n`;
-    const keyLen = Math.max(...Object.keys(data.entryTags).map((k) => k.length));
-    for (const key in data.entryTags) {
-        if (data.entryTags.hasOwnProperty(key)) {
-            const value = data.entryTags[key].replaceAll(/\s+/g, " ").trim();
+    if (typeof bibtex === "string") {
+        bibtex = bibtexToObject(bibtex);
+    }
+
+    let bstr = `@${bibtex.entryType.toLowerCase()}{${bibtex.citationKey},\n`;
+    delete bibtex.entryType;
+    delete bibtex.citationKey;
+    const keyLen = Math.max(...Object.keys(bibtex).map((k) => k.length));
+    for (const key in bibtex) {
+        if (bibtex.hasOwnProperty(key)) {
+            const value = bibtex[key].replaceAll(/\s+/g, " ").trim();
             bkey = key + " ".repeat(keyLen - key.length);
             bstr += `\t${bkey} = {${value}},\n`;
         }
@@ -331,13 +339,8 @@ const bibtexToString = (bibtex) => {
 };
 
 const extractBibtexValue = (bibtex, key) => {
-    var b = new BibtexParser();
-    b.setInput(bibtex);
-    b.bibtex();
-    const data = b.entries[0];
-    if (key === "entryType") return data.entryType;
-    if (key === "citationKey") return data.citationKey;
-    if (data.entryTags.hasOwnProperty(key)) return data.entryTags[key];
+    const b = bibtexToObject(bibtex);
+    if (b.hasOwnProperty(key)) return b[key];
     return "";
 };
 
