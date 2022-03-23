@@ -31,6 +31,9 @@ const getDisplayId = (id) => {
         if (paper.source === "acs") {
             id += `-${paper.year}`;
         }
+        if (paper.source === "iop") {
+            id += `-${paper.year}`;
+        }
     }
     return id;
 };

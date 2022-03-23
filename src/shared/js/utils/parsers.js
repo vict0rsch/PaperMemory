@@ -566,6 +566,28 @@ const makeACSPaper = async (url) => {
     return { author, bibtex, id, key, note, pdfLink, title, venue, year };
 };
 
+const makeIOPPaper = async (url) => {
+    url = url.split("#")[0];
+    if (url.endsWith("/pdf")) url = url.slice(0, -4);
+    const dom = await fetchDom(url);
+    const bibtexPath = Array.from(dom.querySelectorAll(".btn-multi-block a"))
+        .filter((a) => a.innerText === "BibTeX")
+        .map((a) => a.getAttribute("href"))[0];
+    const bibtexUrl = `https://${parseUrl(url).host}${bibtexPath}`;
+    const bibtex = (await (await fetch(bibtexUrl)).text()).trim();
+    const data = bibtexToObject(bibtex);
+    const author = data.author.replaceAll("\n", "").trim();
+    const title = data.title.trim();
+    const year = data.year.trim();
+    const key = data.citationKey.trim();
+    const pdfLink = url + "/pdf";
+    const venue = data.journal;
+    const note = `Published @ ${venue} (${year})`;
+    const doi = url.split("/article/").reverse()[0];
+    const id = `IOPscience_${doi.replaceAll(".", "").replaceAll("/", "")}`;
+    return { author, bibtex, id, key, note, pdfLink, title, venue, year };
+};
+
 // --------------------------------------------
 // -----  Try CrossRef's API for a match  -----
 // --------------------------------------------
@@ -794,6 +816,11 @@ const makePaper = async (is, url, id) => {
         paper = await makeACSPaper(url);
         if (paper) {
             paper.source = "acs";
+        }
+    } else if (is.iop) {
+        paper = await makeIOPPaper(url);
+        if (paper) {
+            paper.source = "iop";
         }
     } else {
         throw new Error("Unknown paper source: " + JSON.stringify({ is, url, id }));

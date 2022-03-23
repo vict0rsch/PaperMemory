@@ -355,17 +355,15 @@ const parseIdFromUrl = async (url) => {
     } else if (is.nature) {
         url = url.replace(".pdf", "").split("#")[0];
         const hash = url.split("/").reverse()[0];
-        const paper = Object.values(cleanPapers(global.state.papers)).filter((p) => {
-            return p.id.includes("Nature_") && p.id.includes(hash);
-        })[0];
-        return paper && paper.id;
+        return `Nature_${hash}`;
     } else if (is.acs) {
         url = url.replace("pubs.acs.org/doi/pdf/", "pubs.acs.org/doi/").split("?")[0];
         const doi = url.split("/doi/")[1].replaceAll(".", "").replaceAll("/", "");
-        const paper = Object.values(cleanPapers(global.state.papers)).filter((p) => {
-            return p.id.includes("ACS_") && p.id.includes(doi);
-        })[0];
-        return paper && paper.id;
+        return `ACS_${doi}`;
+    } else if (is.iop) {
+        url = url.split("#")[0].replace(/\/pdf$/, "");
+        const doi = url.split("/article/")[1].replaceAll(".", "").replaceAll("/", "");
+        return `IOPscience_${doi}`;
     } else if (is.localFile) {
         return is.localFile;
     } else {

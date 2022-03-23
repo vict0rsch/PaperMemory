@@ -54,6 +54,7 @@ global.menuCheckNames = [
     "checkStore",
     "checkScirate",
     "checkOfficialRepos",
+    "checkPreferPdf",
 ];
 /**
  * Menu check names which should not default to true but to false
@@ -85,6 +86,7 @@ global.knownPaperPages = {
     pnas: ["pnas.org/content/", "pnas.org/doi/"],
     nature: ["nature.com/articles/"],
     acs: ["https://pubs.acs.org/doi/"],
+    iop: ["iopscience.iop.org/article/"],
 };
 
 global.overrideORConfs = {

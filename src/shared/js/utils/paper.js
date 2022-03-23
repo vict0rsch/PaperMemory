@@ -87,6 +87,9 @@ const paperToAbs = (paper) => {
                 .replace("pubs.acs.org/doi/pdf/", "pubs.acs.org/doi/")
                 .split("?")[0];
             break;
+        case "iop":
+            abs = pdf.split("#")[0].replace(/\/pdf$/, "");
+            break;
 
         default:
             abs = "https://xkcd.com/1969/";
@@ -144,6 +147,9 @@ const paperToPDF = (paper) => {
 
         case "nature":
             if (!pdf.endsWith(".pdf")) pdf += ".pdf";
+            break;
+        case "iop":
+            if (!pdf.endsWith("/pdf")) pdf += "/pdf";
             break;
 
         case "acs":
@@ -311,6 +317,9 @@ const makeVenue = async (paper) => {
             if (!venue) {
                 venue = paper.venue;
             }
+            break;
+        case "iop":
+            venue = paper.venue;
             break;
         case "acs":
             venue = paper.venue;
