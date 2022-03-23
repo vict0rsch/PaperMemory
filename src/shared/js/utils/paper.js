@@ -266,3 +266,57 @@ const matchAllFilesToPapers = () => {
         );
     });
 };
+
+const makeVenue = async (paper) => {
+    let venue = "";
+    if (paper.note && paper.note.match(/(accepted|published)\ @\ .+\(?\d{4}\)?/i)) {
+        venue = paper.note
+            .split("@")[1]
+            .trim()
+            .replace(/\(?\d{4}\)?/, "")
+            .split("--")[0]
+            .trim();
+    }
+    if (venue) {
+        if (venue.toLowerCase() === "neurips") venue = "NeurIPS";
+    }
+    switch (paper.source) {
+        case "arxiv":
+            break;
+        case "neurips":
+            venue = "NeurIPS";
+            break;
+        case "cvf":
+            if (!venue) {
+                venue = (await makeCVFPaper(paper.pdfLink)).venue;
+            }
+            break;
+        case "openreview":
+            if (!venue) {
+                venue = (await makeOpenReviewPaper(paper.pdfLink)).venue;
+            }
+            break;
+        case "biorxiv":
+            break;
+        case "pmlr":
+            venue = paper.conf.split(/\d{4}/)[0];
+            break;
+        case "acl":
+            venue = paper.conf;
+            break;
+        case "pnas":
+            venue = "PNAS";
+            break;
+        case "nature":
+            if (!venue) {
+                venue = paper.venue;
+            }
+            break;
+        case "acs":
+            venue = paper.venue;
+            break;
+        default:
+            break;
+    }
+    return venue;
+};

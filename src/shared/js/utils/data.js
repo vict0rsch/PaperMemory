@@ -15,7 +15,7 @@ const migrateData = async (papers, manifestDataVersion, store = true) => {
     }
     const currentVersion = papers["__dataVersion"] || -1;
     var deleteIds = [];
-    const latestDataVersion = 210;
+    const latestDataVersion = 450;
 
     let newPapers = { ...papers };
 
@@ -97,10 +97,12 @@ const migrateData = async (papers, manifestDataVersion, store = true) => {
                     delete papers[id].bibtext;
                 }
             }
-            // need to fix https://github.com/vict0rsch/PaperMemory/issues/10
-            // if (!papers[id].hasOwnProperty("codes")) {
-            //     papers[id].codes = await fetchCodes(papers[id])
-            // }
+            if (currentVersion < 450) {
+                info("Applying migration 0.4.5");
+                if (!papers[id].hasOwnProperty("venue")) {
+                    papers[id].venue = await makeVenue(papers[id]);
+                }
+            }
         }
 
         deleteIds.forEach((id, k) => {
