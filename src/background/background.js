@@ -135,7 +135,7 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
 chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
     // https://stackoverflow.com/a/50548409/3867406
     // read changeInfo data and do something with it
-    // like send the new url to contentscripts.js
+    // like send the new url to content_scripts.js
     if (changeInfo.url) {
         if (await isKnownURL(changeInfo.url)) {
             chrome.tabs.sendMessage(tabId, {
