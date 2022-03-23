@@ -82,6 +82,11 @@ const paperToAbs = (paper) => {
         case "nature":
             abs = pdf.replace(".pdf", "");
             break;
+        case "acs":
+            abs = pdf
+                .replace("pubs.acs.org/doi/pdf/", "pubs.acs.org/doi/")
+                .split("?")[0];
+            break;
 
         default:
             abs = "https://xkcd.com/1969/";
@@ -139,6 +144,9 @@ const paperToPDF = (paper) => {
 
         case "nature":
             if (!pdf.endsWith(".pdf")) pdf += ".pdf";
+            break;
+
+        case "acs":
             break;
 
         default:

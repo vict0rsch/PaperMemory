@@ -84,6 +84,7 @@ global.knownPaperPages = {
     acl: ["aclanthology.org/"],
     pnas: ["pnas.org/content/", "pnas.org/doi/"],
     nature: ["nature.com/articles/"],
+    acs: ["https://pubs.acs.org/doi/"],
 };
 
 global.overrideORConfs = {

@@ -552,7 +552,25 @@ const makeNaturePaper = async (url) => {
         url={${bibURL}}
     }`);
     const note = `Published @ ${journal} (${year})`;
-    return { author, bibtex, id, key, note, pdfLink, title, year };
+
+const makeACSPaper = async (url) => {
+    url = url.replace("pubs.acs.org/doi/pdf/", "pubs.acs.org/doi/").split("?")[0];
+    const doi = url.split("/doi/")[1];
+    const citeUrl = `https://pubs.acs.org/action/downloadCitation?doi=${encodeURIComponent(
+        doi
+    )}&include=cit&format=bibtex&direct=true`;
+    const bibtex = (await (await fetch(citeUrl)).text()).trim();
+    const data = bibtexToObject(bibtex);
+    const author = data.author.replaceAll("\n", "").trim();
+    const title = data.title.trim();
+    const year = data.year.trim();
+    const key = data.citationKey.trim();
+    const pdfLink = url.replace("/doi/", "/doi/pdf/");
+    const note = `Published @ ${data.journal} (${data.year})`;
+    const id = `ACS_${doi.replaceAll(".", "").replaceAll("/", "")}`;
+    const venue = data.journal;
+
+    return { author, bibtex, id, key, note, pdfLink, title, venue, year };
 };
 
 // --------------------------------------------

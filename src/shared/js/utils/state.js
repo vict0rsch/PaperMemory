@@ -349,6 +349,13 @@ const parseIdFromUrl = async (url) => {
             return p.id.includes("Nature_") && p.id.includes(hash);
         })[0];
         return paper && paper.id;
+    } else if (is.acs) {
+        url = url.replace("pubs.acs.org/doi/pdf/", "pubs.acs.org/doi/").split("?")[0];
+        const doi = url.split("/doi/")[1].replaceAll(".", "").replaceAll("/", "");
+        const paper = Object.values(cleanPapers(global.state.papers)).filter((p) => {
+            return p.id.includes("ACS_") && p.id.includes(doi);
+        })[0];
+        return paper && paper.id;
     } else if (is.localFile) {
         return is.localFile;
     } else {
