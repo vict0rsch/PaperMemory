@@ -49,6 +49,7 @@
 
 #feedback-notif {
     padding: 1em;
+    z-index: 1000;
     display: flex;
     align-items: center;
     justify-content: center;
