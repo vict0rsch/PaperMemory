@@ -1,5 +1,6 @@
 var paperTitles = {};
 var titleUpdates = {};
+var MAX_TITLE_UPDATES = 100;
 
 const setFaviconCode = `
 if (window.location.href.startsWith("file://")){
@@ -106,8 +107,8 @@ chrome.runtime.onMessage.addListener((payload, sender, sendResponse) => {
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
     const paperTitle = paperTitles[tab.url];
     if (!titleUpdates.hasOwnProperty(tabId)) titleUpdates[tabId] = 0;
-    if (titleUpdates[tabId] > 9) {
-        if (titleUpdates[tabId] == 10) {
+    if (titleUpdates[tabId] > MAX_TITLE_UPDATES - 1) {
+        if (titleUpdates[tabId] == MAX_TITLE_UPDATES) {
             console.log(
                 "WARNING: max number of title titleUpdates reached. " +
                     "This is a logic failure in PaperMemory. " +
