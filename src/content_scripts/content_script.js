@@ -391,8 +391,10 @@ const feedback = (text, paper = null) => {
                 <div>${text}</div>
             </div>`;
     }
-
-    $("body").append(/*html*/ ` <div id="feedback-notif">${text}</div> `);
+    document.body.insertAdjacentHTML(
+        "beforeend",
+        /*html*/ ` <div id="feedback-notif">${text}</div> `
+    );
     style("feedback-notif", "padding", "0px");
     $("#feedback-notif").animate(
         {
