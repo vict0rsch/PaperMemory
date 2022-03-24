@@ -244,6 +244,7 @@ Because Chrome & Brave will disable an extension by default when it auto-updates
 <details>
  <summary><strong>How do yoy match Arxiv.org pre-prints to actual publications?</strong></summary>
 <br/>
+    
 It's all there: [preprints](#preprints) 😃
 
 Contributions and ideas on how to improve the process and potentially add publication sources from titles or arxiv `id` are welcome!
@@ -266,11 +267,13 @@ There is no straightforward way to do this currently, it will require a little c
 1. Open the extension's options (either right clicking its icon, or from the extension's menu, at the bottom)
 2. On the options page, open the Javascript Console with `cmd/ctrl + alt + i` or `right click > Inspect`
 3. Do the following in the Javascript Console:
-4. `const backups = await getStorage("weeklyBackups")`
-5. `console.log(Object.keys(backups)) // this shows you available backup dates`
-6. `const overwrite = backups["<some key from above>"]`
-7. `console.log(overwrite) // inspect this and make sure it is what you want`
-8. `setStorage("papers", overwrite) // Careful! This will overwrite the current data with the backup data`
+    ```javascript
+    const backups = await getStorage("weeklyBackups")
+    console.log(Object.keys(backups)) // this shows you available backup dates
+    const overwrite = backups["<some key from above>"]
+    console.log(overwrite) // inspect this and make sure it is what you want
+    setStorage("papers", overwrite) // Careful! This will overwrite the current data with the backup data
+    ```
 
 </details>
 
