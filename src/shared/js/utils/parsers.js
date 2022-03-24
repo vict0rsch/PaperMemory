@@ -9,6 +9,10 @@ const decodeHtml = (html) => {
     return txt.value;
 };
 
+const flipAuthor = (author) => author.split(", ").reverse().join(" ");
+const flipAndAuthors = (authors) =>
+    authors.split(" and ").map(flipAuthor).join(" and ");
+
 // -------------------
 // -----  Fetch  -----
 // -------------------
@@ -129,46 +133,59 @@ const makeNeuripsPaper = async (url) => {
     if (url.endsWith(".pdf")) {
         url = url.replace("/file/", "/hash/").replace("-Paper.pdf", "-Abstract.html");
     }
+    const hash = url.split("/").slice(-1)[0].replace("-Paper.pdf", "");
 
     const dom = await fetchDom(url);
 
-    const paragraphs = Array.from(dom.querySelectorAll(".container-fluid .col p"));
-    const hash = url.split("/").slice(-1)[0].replace("-Paper.pdf", "");
+    const citeUrl = Array.from(dom.getElementsByTagName("a"))
+        .filter((a) => a.innerText === "Bibtex")[0]
+        ?.getAttribute("href");
 
-    const title = dom.getElementsByTagName("h4")[0].innerHTML;
-    const h4Authors = Array.from(document.querySelectorAll("h4")).filter(
-        (h) => h.innerText === "Authors"
-    )[0];
+    let bibtex, author, title, year, key;
 
-    const author = h4Authors.nextElementSibling.innerText
-        .split(", ")
-        .map((author, k) => {
-            const parts = author.split(" ");
-            const caps = parts.map((part, i) => {
-                return capitalize(part);
-            });
-            return caps.join(" ");
-        })
-        .join(" and ");
+    if (citeUrl) {
+        bibtex = await fetchText(`${parseUrl(url).host}${citeUrl}`);
+        ({ author, citationKey, title, year } = bibtexToObject(bibtex));
+        author = flipAndAuthors(author);
+        key = citationKey;
+    } else {
+        const paragraphs = Array.from(dom.querySelectorAll(".container-fluid .col p"));
+
+        title = dom.getElementsByTagName("h4")[0].innerHTML;
+        const h4Authors = Array.from(document.querySelectorAll("h4")).filter(
+            (h) => h.innerText === "Authors"
+        )[0];
+
+        author = h4Authors.nextElementSibling.innerText
+            .split(", ")
+            .map((author, k) => {
+                const parts = author.split(" ");
+                const caps = parts.map((part, i) => {
+                    return capitalize(part);
+                });
+                return caps.join(" ");
+            })
+            .join(" and ");
+        year = paragraphs[0].innerHTML.match(/\d{4}/)[0];
+        key = `neurips${year}${hash.slice(0, 8)}`;
+
+        bibtex = "";
+        bibtex += `@inproceedings{NEURIPS${year}_${hash.slice(0, 8)},\n`;
+        bibtex += `    author={${author}},\n`;
+        bibtex += `    booktitle={Advances in Neural Information Processing Systems},\n`;
+        bibtex += `    editor={H.Larochelle and M.Ranzato and R.Hadsell and M.F.Balcan and H.Lin},\n`;
+        bibtex += `    publisher={Curran Associates, Inc.},\n`;
+        bibtex += `    title={${title}},\n`;
+        bibtex += `    url={${url}},\n`;
+        bibtex += `    year={${year}}\n`;
+        bibtex += `}`;
+        bibtex = bibtexToString(bibtex);
+    }
+
     const pdfLink = url;
-    const year = paragraphs[0].innerHTML.match(/\d{4}/)[0];
-    const key = `neurips${year}${hash.slice(0, 8)}`;
     const id = `NeurIPS-${year}_${hash.slice(0, 8)}`;
     const conf = `NeurIPS ${year}`;
     const note = `Accepted @ ${conf}`;
-
-    let bibtex = "";
-
-    bibtex += `@inproceedings{NEURIPS${year}_${hash.slice(0, 8)},\n`;
-    bibtex += `    author={${author}},\n`;
-    bibtex += `    booktitle={Advances in Neural Information Processing Systems},\n`;
-    bibtex += `    editor={H.Larochelle and M.Ranzato and R.Hadsell and M.F.Balcan and H.Lin},\n`;
-    bibtex += `    publisher={Curran Associates, Inc.},\n`;
-    bibtex += `    title={${title}},\n`;
-    bibtex += `    url={${url}},\n`;
-    bibtex += `    year={${year}}\n`;
-    bibtex += `}`;
-    bibtex = bibtexToString(bibtex);
 
     const venue = "NeurIPS";
 
