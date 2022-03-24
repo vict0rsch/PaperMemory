@@ -24,12 +24,13 @@ This browser extension allows you to do automatically store research papers you 
 
 1. 🏬 **Automatically record papers** you open, without clicking anywhere. You can then **search** them, **tag** them, **comment** them and link a code repository.
 2. 💻 **Automatically find code** repositories using PapersWithCode's API
-3. 🎬 **Change a pdf's webpage title to the article's title**, because who cares about that saved bookmark `1812.10889.pdf` when it could be `InstaGAN Instance-aware Image-to-Image Translation.pdf`
-4. 🎫 **BibTex citation**, because citing papers should not be a hassle you can copy a BibTex citation to your clipboard or export the Memory itself as a `.bib` file
-5. 🔗 **Markdown link**, `[title](url)` because it's the little things that make sharing a paper easier (to be used in issues, PRs, Readme, HackMD.io etc.)
-6. 🗂 **Direct download button** with a nice name including the paper's title, so that you don't have to open the pdf's webpage and then download it from your browser.
-7. 📄 **Go back from a pdf to its abstract page**. For instance: from `https://arxiv.org/pdf/1703.06907.pdf` to `https://arxiv.org/abs/1703.06907` in a click.
-8. 🏛️ **Export your data** as a `.json` file or a `.bib` full BibTex export
+3. 🤝 **Match pre-prints to publications** using 3 different databases
+4. 🎬 **Change a pdf's webpage title to the article's title**, because who cares about that saved bookmark `1812.10889.pdf` when it could be `InstaGAN Instance-aware Image-to-Image Translation.pdf`
+5. 🎫 **BibTex citation**, because citing papers should not be a hassle you can copy a BibTex citation to your clipboard or export the Memory itself as a `.bib` file
+6. 🔗 **Markdown link**, `[title](url)` because it's the little things that make sharing a paper easier (to be used in issues, PRs, Readme, HackMD.io etc.)
+7. 🗂 **Direct download button** with a nice name including the paper's title, so that you don't have to open the pdf's webpage and then download it from your browser.
+8. 📄 **Go back from a pdf to its abstract page**. For instance: from `https://arxiv.org/pdf/1703.06907.pdf` to `https://arxiv.org/abs/1703.06907` in a click.
+9. 🏛️ **Export your data** as a `.json` file or a `.bib` full BibTex export
 
 ### Supported venues
 
@@ -147,22 +148,23 @@ In the extension's `options` (right click on the icon or in the popup's menu) yo
 
 There currently exists, to my knowledge, no centralized source for matching a preprint to its subsequent published article. This makes it really hard to try and implement best practices in terms of citing published papers rather than their preprint.
 
-My approach with PaperMemory is to try and notify you that a publication likely exists by utilizing the `note` field. You will occasionally notice `Accepted @ X` in a Paper's notes. This will be added automatically if you are on a known published venue's website (as PMLR or NeurIPS) but also from:
+My approach with PaperMemory is to try and notify you that a publication likely exists by utilizing the `note` field. You will occasionally notice `Accepted @ X` in a Paper's notes. This will be added automatically if you are on a known published venue's website (as Nature, PMLR or NeurIPS) but also from:
 * [PapersWithCode.com](https://paperswithcode.com)(https://paperswithcode.com/api/v1/docs/)
   * As PaperMemory retrieves code, it also looks for a `proceeding` field in PWC's response.
   * If it exists and is not `null` then it is expected to look like `${conf}-${year}-${month}`.
   * In this case a note is added to the paper: `Accepted @ ${conf} ${year} -- [paperswithcode.com]`  
 * [CrossRef.org](https://crossref.org)
   * A query is sent to their [api](https://api.crossref.org/swagger-ui/index.html) for an exact paper title match
-  * The response *must* contain an `event` field with a `name` attribute. If it does not it'll be ignored. 
+  * The response *must* contain an `event` field with a `name` attribute. If it does not it'll be ignored.
   * If it does, a note is added as: `Accepted @ ${items.event.name} -- [crossref.org]`
     * Try for instance [Attention-Guided Generative Adversarial Networks for Unsupervised Image-to-Image Translation](http://arxiv.org/pdf/1903.12296v3)
 * [dblp.org](https://dblp.org)
   * A query is sent to their [api](https://dblp.org/faq/How+to+use+the+dblp+search+API.html) for an exact paper title match
   * The oldest `hit` in the response which is not a preprint (`hit.venue !== "CoRR"`) is used 
-  * If such a match is found, a note is added as: `Accepted @ ${venue} ${year} -- [dblp.org]\n${dblpURL}`
+  * If such a match is found, a note is added as: `Accepted @ ${venue} ${year} -- [dblp.org]`
+    * In this case, **the original Arxiv bibtex data is overwritten to use DBLP's** 
     * Try for instance [Domain-Adversarial Training of Neural Networks](http://arxiv.org/pdf/1505.07818v4)
-    * DBLP venues are weird, for instance `JMLR` is `J. Mach. Learn. Res.`. There's a per-venue fix in the code, [raise an issue](https://github.com/vict0rsch/PaperMemory/issues/new) to add another venue fix
+    * Note that DBLP journals may use ISO4 abbreviations
 
 There's room for improvement here^, please contact me (an issue will do) if you want to help
 
@@ -239,6 +241,15 @@ Because Chrome & Brave will disable an extension by default when it auto-updates
 
 </details>
 
+<details>
+ <summary><strong>How do yoy match Arxiv.org pre-prints to actual publications?</strong></summary>
+<br/>
+It's all there: [preprints](#preprints) 😃
+
+Contributions and ideas on how to improve the process and potentially add publication sources from titles or arxiv `id` are welcome!
+
+</details>
+
 
 <details>
  <summary><strong>Where does PaperMemory store my data?</strong></summary>
@@ -257,7 +268,9 @@ There is no straightforward way to do this currently, it will require a little c
 3. Do the following in the Javascript Console:
 4. `const backups = await getStorage("weeklyBackups")`
 5. `console.log(Object.keys(backups)) // this shows you available backup dates`
-6. `setStorage("papers", backups[<some key from above>]) // Careful! This will overwrite the current data with the backup data`
+6. `const overwrite = backups["<some key from above>"]`
+7. `console.log(overwrite) // inspect this and make sure it is what you want`
+8. `setStorage("papers", overwrite) // Careful! This will overwrite the current data with the backup data`
 
 </details>
 
