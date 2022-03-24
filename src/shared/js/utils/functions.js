@@ -483,38 +483,45 @@ const setFormChangeListener = (id, isPopup) => {
         addEventToClass(
             refCodeLink,
             "keyup",
-            delay(monitorPaperEdits(id, isPopup), 300)
+            delay(monitorPaperEdits(undefined, isPopup), 300)
         );
-        addEventToClass(refNote, "keyup", delay(monitorPaperEdits(id, isPopup), 300));
+        addEventToClass(
+            refNote,
+            "keyup",
+            delay(monitorPaperEdits(undefined, isPopup), 300)
+        );
     }
 };
 
 const monitorPaperEdits = (id, isPopup) => (e) => {
+    let paperId;
     if (typeof id === "undefined") {
-        id = eventId(e);
+        paperId = eventId(e);
+    } else {
+        paperId = id;
     }
-    const edits = getPaperEdits(id, isPopup);
-    const paper = global.state.papers[id];
+    const edits = getPaperEdits(paperId, isPopup);
+    const paper = global.state.papers[paperId];
     let change = false;
     let refs = {};
     for (const key in edits) {
         const ref = paper[key];
         refs[key] = ref;
         const value = edits[key];
-        if (key === "tags" && !arraysIdentical(ref, value)) {
-            change = true;
-        } else if (key !== "tags") {
+        if (key === "tags") {
+            if (!arraysIdentical(ref, value)) change = true;
+        } else {
             if (ref !== value) {
                 change = true;
             }
         }
     }
     if (change) {
-        console.log("Updating", id, isPopup);
+        console.log("Updating meta data for", paperId);
         if (isPopup) {
-            handlePopupSaveEdits(id);
+            handlePopupSaveEdits(paperId);
         } else {
-            handleMemorySaveEdits(id);
+            handleMemorySaveEdits(paperId);
         }
     }
 };
