@@ -3,14 +3,15 @@ var titleUpdates = {};
 var MAX_TITLE_UPDATES = 100;
 
 const setFaviconCode = `
+var link;
 if (window.location.href.startsWith("file://")){
-    var link = document.querySelector("link[rel~='icon']");
+    link = document.querySelector("link[rel~='icon']");
     if (!link) {
         link = document.createElement('link');
         link.rel = 'icon';
         document.getElementsByTagName('head')[0].appendChild(link);
     }
-    link.href = "https://github.com/vict0rsch/PaperMemory/blob/master/icons/favicon-192x192.png?raw=true";
+    setTimeout( () => {link.href = "https://github.com/vict0rsch/PaperMemory/blob/master/icons/favicon-192x192.png?raw=true"}, 50);
 }`;
 
 const knownPageHasUrl = (url) => {
