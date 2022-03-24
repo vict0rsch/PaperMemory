@@ -385,7 +385,9 @@ const handleMenuCheckChange = (e) => {
     const checked = findEl(key).checked;
     chrome.storage.local.set({ [key]: checked }, function () {
         log(`Settings saved for ${key} (${checked})`);
-        global.state?.menu[key] = checked;
+        if (global.state && global.state.menu) {
+            global.state.menu[key] = checked;
+        }
     });
 };
 
