@@ -136,9 +136,12 @@ const makeNeuripsPaper = async (url) => {
     const hash = url.split("/").slice(-1)[0].replace("-Paper.pdf", "");
 
     const title = dom.getElementsByTagName("h4")[0].innerHTML;
-    const author = paragraphs[1]
-        .getElementsByTagName("i")[0]
-        .innerHTML.split(", ")
+    const h4Authors = Array.from(document.querySelectorAll("h4")).filter(
+        (h) => h.innerText === "Authors"
+    )[0];
+
+    const author = h4Authors.nextElementSibling.innerText
+        .split(", ")
         .map((author, k) => {
             const parts = author.split(" ");
             const caps = parts.map((part, i) => {
