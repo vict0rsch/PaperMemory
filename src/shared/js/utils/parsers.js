@@ -182,7 +182,9 @@ const makeNeuripsPaper = async (url) => {
         bibtex = bibtexToString(bibtex);
     }
 
-    const pdfLink = url;
+    const pdfLink = url
+        .replace("/hash/", "/file/")
+        .replace("-Abstract.html", "-Paper.pdf");
     const id = `NeurIPS-${year}_${hash.slice(0, 8)}`;
     const conf = `NeurIPS ${year}`;
     const note = `Accepted @ ${conf}`;
