@@ -72,6 +72,17 @@ const fetchDom = async (url) => {
     return new DOMParser().parseFromString(html.replaceAll("\n", ""), "text/html");
 };
 
+const fetchText = async (url) => {
+    try {
+        const response = await fetch(url);
+        const text = response.ok ? await response.text() : "";
+        return text.trim();
+    } catch (error) {
+        console.log("fetchText error:", error);
+        return "";
+    }
+};
+
 // -------------------
 // -----  Parse  -----
 // -------------------
@@ -323,8 +334,8 @@ const makeBioRxivPaper = async (url) => {
 
     const paper = data.collection.reverse()[0];
 
-    const pageData = await fetch(pageURL);
-    const pageText = await pageData.text();
+    const pageText = await fetchText(pageURL);
+
     const dom = new DOMParser().parseFromString(
         pageText.replaceAll("\n", ""),
         "text/html"
@@ -552,7 +563,7 @@ const makeACSPaper = async (url) => {
     const citeUrl = `https://pubs.acs.org/action/downloadCitation?doi=${encodeURIComponent(
         doi
     )}&include=cit&format=bibtex&direct=true`;
-    const bibtex = (await (await fetch(citeUrl)).text()).trim();
+    const bibtex = await fetchText(citeUrl);
     const data = bibtexToObject(bibtex);
     const author = data.author.replaceAll("\n", "").trim();
     const title = data.title.trim();
@@ -573,8 +584,8 @@ const makeIOPPaper = async (url) => {
     const bibtexPath = Array.from(dom.querySelectorAll(".btn-multi-block a"))
         .filter((a) => a.innerText === "BibTeX")
         .map((a) => a.getAttribute("href"))[0];
-    const bibtexUrl = `https://${parseUrl(url).host}${bibtexPath}`;
-    const bibtex = (await (await fetch(bibtexUrl)).text()).trim();
+    const citeUrl = `https://${parseUrl(url).host}${bibtexPath}`;
+    const bibtex = await fetchText(citeUrl);
     const data = bibtexToObject(bibtex);
     const author = data.author.replaceAll("\n", "").trim();
     const title = data.title.trim();
@@ -679,14 +690,15 @@ const tryDBLP = async (paper) => {
                 .replaceAll(/\s\s+/g, " ");
             if (hitTitle === refTitle && hit.info.venue !== "CoRR") {
                 info("Found a DBLP match");
+                const bibtex = await fetchText(hit.info.url + ".bib");
                 const abbr = hit.info.venue.toLowerCase().replaceAll(".", "").trim();
                 const venue = (
                     global.journalAbbreviations[abbr] || hit.info.venue
                 ).trim();
                 const year = hit.info.year;
                 const url = hit.info.url;
-                const note = `Accepted @ ${venue} ${year} -- [dblp.org]\n${url}`;
-                return { venue, note };
+                const note = `Accepted @ ${venue} ${year} -- [dblp.org]`;
+                return { venue, note, bibtex };
             }
         }
         log("[PM][DBLP] No match found");
