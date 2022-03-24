@@ -179,7 +179,7 @@ const popupMain = async (url, is, manualTrigger = false) => {
         // ----------------------------------
         // -----  Customize Popup html  -----
         // ----------------------------------
-        log(paper);
+        log("Popup paper:", paper);
         setHTML("popup-memory-edit", getPopupEditFormHTML(paper));
         setHTML("popup-copy-icons", getPopupPaperIconsHTML(paper, url, is));
         findEl(`checkFavorite--${id}`).checked = paper.favorite;

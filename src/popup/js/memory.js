@@ -660,7 +660,6 @@ const displayMemoryTable = () => {
  * + closes the menu if it is open (should not be)
  */
 const makeMemoryHTML = async () => {
-    const tstart = Date.now() / 1000;
     // Fill-in input placeholder
     setPlaceholder(
         "memory-search",
@@ -694,8 +693,6 @@ const makeMemoryHTML = async () => {
     addListener("memory-select", "change", handleMemorySelectChange);
     // listen to sorting direction change
     addListener("memory-sort-arrow", "click", handleMemorySortArrow);
-    const tend = Date.now() / 1000;
-    log("Total time to make the memory HTML (async) (s):" + (tend - tstart));
 };
 
 const openMemory = () => {
