@@ -261,7 +261,7 @@ const popupMain = async (url, is, manualTrigger = false) => {
             }
             title = title.replaceAll(":", " ");
             chrome.downloads.download({
-                url: paper.pdfLink,
+                url: paperToPDF(paper),
                 filename: title,
             });
         });
