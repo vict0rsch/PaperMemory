@@ -373,6 +373,7 @@ const contentScriptMain = async (url, stateIsReady) => {
  * @param {string} text the text to display in the slider div
  */
 const feedback = (text, paper = null) => {
+    const notifTime = 3000;
     try {
         clearTimeout(timeout);
         findEl("feedback-notif").remove();
@@ -414,7 +415,7 @@ const feedback = (text, paper = null) => {
                 prevent = false;
             }
         );
-    }, 3000);
+    }, notifTime);
     addListener("notif-cancel", "click", () => {
         clearTimeout(timeout);
         delete global.state.papers[paper.id];
@@ -429,7 +430,7 @@ const feedback = (text, paper = null) => {
                         prevent = false;
                     }
                 );
-            }, 1500);
+            }, notifTime);
             setHTML("notif-text", "<div>Removed from memory</div>");
         });
     });
