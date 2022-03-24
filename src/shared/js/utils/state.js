@@ -181,8 +181,8 @@ const stateTitleFunction = (paperOrId) => {
  * @param {object} checks The user's preferences
  * @returns
  */
-const addOrUpdatePaper = async (url, is, checks) => {
-    let paper, isNew, pwcUrl, pwcNote;
+const addOrUpdatePaper = async (url, is, menu) => {
+    let paper, isNew, pwcUrl, pwcNote, pwcVenue;
 
     // Extract id from url
     const id = await parseIdFromUrl(url);
@@ -224,7 +224,7 @@ const addOrUpdatePaper = async (url, is, checks) => {
             const payload = {
                 type: "papersWithCode",
                 paper: paper,
-                officialReposOnly: checks.checkOfficialRepos,
+                officialReposOnly: menu.checkOfficialRepos,
             };
             const pwc = await sendMessageToBackground(payload);
 
@@ -241,12 +241,6 @@ const addOrUpdatePaper = async (url, is, checks) => {
                 if (pwc.hasOwnProperty("note")) delete pwc.note;
                 global.state.papers[paper.id].code = pwc;
             }
-            if (!paper.note && pwcNote) {
-                global.state.papers[paper.id].note = pwcNote;
-            }
-            if (!paper.venue && pwcVenue) {
-                global.state.papers[paper.id].venue = pwcVenue;
-            }
         } catch (error) {
             log("Error trying to discover a code repository:");
             log(error);
@@ -255,6 +249,8 @@ const addOrUpdatePaper = async (url, is, checks) => {
 
     chrome.storage.local.set({ papers: global.state.papers }, async () => {
         let notifText;
+        console.log("isNew: ", isNew);
+        console.log("menu: ", menu);
         if (isNew || pwcUrl) {
             if (isNew) {
                 // new paper
@@ -266,27 +262,41 @@ const addOrUpdatePaper = async (url, is, checks) => {
                     notifText +=
                         "<br/><div id='feedback-pwc'>(+ repo from PapersWithCode) </div>";
                 }
-                checks && checks.checkFeedback && feedback(notifText, paper);
+                menu && menu.checkFeedback && feedback(notifText, paper);
             } else {
                 // existing paper but new code repo
 
                 notifText = "Found a code repository on PapersWithCode!";
-                checks && checks.checkFeedback && feedback(notifText);
+                menu && menu.checkFeedback && feedback(notifText);
             }
         } else {
             log("Updated '" + paper.title + "' in your Memory");
         }
         // anyway: try and update note with actual publication
         if (!paper.note || !paper.venue) {
-            const { note, venue } = await tryPreprintMatch(paper);
-            if (note || venue) {
-                if (note && !paper.note) {
-                    log("[PM] Updating preprint note to", note);
-                    paper.note = note;
+            const { note, venue, bibtex } = await tryPreprintMatch(paper);
+            if (note || venue || bibtex) {
+                if (!paper.note) {
+                    if (note) {
+                        log("[PM] Updating preprint note to", note);
+                        paper.note = note;
+                    } else if (pwcNote) {
+                        log("[PM] Updating preprint note to", pwcNote);
+                        paper.note = pwcNote;
+                    }
                 }
-                if (venue && !paper.venue) {
-                    log("[PM] Updating preprint venue to", venue);
-                    paper.venue = venue;
+                if (!paper.venue) {
+                    if (venue) {
+                        log("[PM] Updating preprint venue to", venue);
+                        paper.venue = venue;
+                    } else if (pwcVenue) {
+                        log("[PM] Updating preprint venue to", pwcVenue);
+                        paper.venue = pwcVenue;
+                    }
+                }
+                if (bibtex) {
+                    log("[PM] Updating preprint bibtex to", bibtex);
+                    paper.bibtex = bibtex;
                 }
                 global.state.papers[paper.id] = paper;
                 chrome.storage.local.set({ papers: global.state.papers });

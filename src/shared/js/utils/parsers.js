@@ -711,17 +711,18 @@ const tryDBLP = async (paper) => {
 };
 
 const tryPreprintMatch = async (paper) => {
-    let note = "";
-    let venue = "";
+    let note, venue, bibtex;
+
     dblpMatch = await tryDBLP(paper);
     note = dblpMatch.note;
     venue = dblpMatch.venue;
+    bibtex = dblpMatch.bibtex;
     if (!note) {
         crossRefMatch = await tryCrossRef(paper);
         note = crossRefMatch.note;
         venue = crossRefMatch.venue;
     }
-    return { note, venue };
+    return { note, venue, bibtex };
 };
 
 // -----------------------------
