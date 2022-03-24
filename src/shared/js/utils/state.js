@@ -31,6 +31,7 @@ const initState = async (papers, isContentScript) => {
 
     papers = migration.papers;
     global.state.papers = papers;
+    global.state.menu = await getMenu();
 
     if (isContentScript) {
         log("State initialization duration (s): " + (Date.now() - s) / 1000);
@@ -40,7 +41,6 @@ const initState = async (papers, isContentScript) => {
     global.state.papersList = Object.values(cleanPapers(papers));
     global.state.sortKey = "lastOpenDate";
     global.state.papersReady = true;
-    global.state.menu = await getMenu();
 
     sortMemory();
     makeTags();
