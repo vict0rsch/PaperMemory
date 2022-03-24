@@ -249,8 +249,6 @@ const addOrUpdatePaper = async (url, is, menu) => {
 
     chrome.storage.local.set({ papers: global.state.papers }, async () => {
         let notifText;
-        console.log("isNew: ", isNew);
-        console.log("menu: ", menu);
         if (isNew || pwcUrl) {
             if (isNew) {
                 // new paper
