@@ -1,14 +1,46 @@
 const logTrace = typeof LOGTRACE !== "undefined" && LOGTRACE;
 
 const log = (...args) => {
-    const stack = new Error().stack;
-    const debugMessage = logTrace
-        ? "\n\nLog trace:\n" + stack.split("\n").slice(2).join("\n")
-        : "";
-    console.log("[PM] ", ...args, debugMessage);
+    if (logTrace) {
+        const stack = new Error().stack;
+        args.push("\n\nLog trace:\n" + stack.split("\n").slice(2).join("\n"));
+    }
+    let messageConfig = "%c%s   ";
+
+    let isInfo = false;
+    if (args[0] === "%c") {
+        isInfo = true;
+        args = args.slice(1);
+    }
+    // https://stackoverflow.com/questions/55643825/how-to-apply-colors-to-console-log-when-using-multiple-arguments
+    args.forEach((argument) => {
+        const type = typeof argument;
+        switch (type) {
+            case "bigint":
+            case "number":
+            case "boolean":
+                messageConfig += "%d   ";
+                break;
+
+            case "string":
+                messageConfig += "%s   ";
+                break;
+
+            case "object":
+            case "undefined":
+            default:
+                messageConfig += "%o   ";
+        }
+    });
+    console.log(
+        messageConfig,
+        `color: ${isInfo ? "deepskyblue; font-weight:bold;" : "tan"}`,
+        "[PM]",
+        ...args
+    );
 };
 
-const info = (...args) => log("%c[PM] " + args.join(" "), "color: #328DD2");
+const info = (...args) => log(...["%c", ...args]);
 
 const getDisplayId = (id) => {
     const baseId = id;

@@ -19,7 +19,7 @@ const initState = async (papers, isContentScript) => {
     const s = Date.now();
     if (typeof papers === "undefined") {
         papers = await getStorage("papers");
-        log("Time to retrieve stored papers (s): " + (Date.now() - s) / 1000);
+        info("Time to retrieve stored papers (s): " + (Date.now() - s) / 1000);
     }
 
     global.state.dataVersion = getManifestDataVersion();
@@ -34,7 +34,7 @@ const initState = async (papers, isContentScript) => {
     global.state.menu = await getMenu();
 
     if (isContentScript) {
-        log("State initialization duration (s): " + (Date.now() - s) / 1000);
+        info("State initialization duration (s): " + (Date.now() - s) / 1000);
         return;
     }
     global.state.files = await matchAllFilesToPapers();
@@ -45,7 +45,7 @@ const initState = async (papers, isContentScript) => {
     sortMemory();
     makeTags();
 
-    log("State initialization duration (s): " + (Date.now() - s) / 1000);
+    info("State initialization duration (s): " + (Date.now() - s) / 1000);
 };
 
 /**
@@ -228,9 +228,9 @@ const addOrUpdatePaper = async (url, is, menu) => {
             };
             const pwc = await sendMessageToBackground(payload);
 
-            pwcUrl = pwc?.url;
+            pwcUrl = !paper.codeLink && pwc?.url;
             pwcNote = pwc?.note;
-            pwcVenue = pwc?.venue;
+            pwcVenue = !paper.venue && pwc?.venue;
 
             if (pwcUrl) {
                 console.log(
@@ -253,7 +253,7 @@ const addOrUpdatePaper = async (url, is, menu) => {
             if (isNew) {
                 // new paper
 
-                log("Added '" + paper.title + "' to your Memory!");
+                info("Added '" + paper.title + "' to your Memory!");
                 log("paper: ", paper);
                 notifText = "Added to your Memory";
                 if (pwcUrl) {
@@ -268,32 +268,37 @@ const addOrUpdatePaper = async (url, is, menu) => {
                 menu && menu.checkFeedback && feedback(notifText);
             }
         } else {
-            log("Updated '" + paper.title + "' in your Memory");
+            info("Updated '" + paper.title + "' in your Memory");
         }
+
+        if (!paper.venue && !pwcVenue) {
+            log("[PapersWithCode] No publication found");
+        }
+
         // anyway: try and update note with actual publication
         if (!paper.note || !paper.venue) {
             const { note, venue, bibtex } = await tryPreprintMatch(paper);
             if (note || venue || bibtex) {
                 if (!paper.note) {
                     if (note) {
-                        log("[PM] Updating preprint note to", note);
+                        log("Updating preprint note to", note);
                         paper.note = note;
                     } else if (pwcNote) {
-                        log("[PM] Updating preprint note to", pwcNote);
+                        log("Updating preprint note to", pwcNote);
                         paper.note = pwcNote;
                     }
                 }
                 if (!paper.venue) {
                     if (venue) {
-                        log("[PM] Updating preprint venue to", venue);
+                        log("Updating preprint venue to", venue);
                         paper.venue = venue;
                     } else if (pwcVenue) {
-                        log("[PM] Updating preprint venue to", pwcVenue);
+                        log("Updating preprint venue to", pwcVenue);
                         paper.venue = pwcVenue;
                     }
                 }
                 if (bibtex) {
-                    log("[PM] Updating preprint bibtex to", bibtex);
+                    log("Updating preprint bibtex to", bibtex);
                     paper.bibtex = bibtex;
                 }
                 global.state.papers[paper.id] = paper;

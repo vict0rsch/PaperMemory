@@ -613,7 +613,7 @@ $(async () => {
         stateIsReady = true;
     }
     if (await isKnownURL(url, true)) {
-        info("Running PaperMemory's contentScriptMain for:", url);
+        info("Running PaperMemory's content script");
         contentScriptMain(url, stateIsReady);
     }
 

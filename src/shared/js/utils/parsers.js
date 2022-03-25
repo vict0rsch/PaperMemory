@@ -712,7 +712,6 @@ const tryDBLP = async (paper) => {
             !json.result.hits.hit ||
             !json.result.hits.hit.length
         ) {
-            log("[PM][DBLP] No hits found");
             return { note: null };
         }
 
@@ -746,7 +745,6 @@ const tryDBLP = async (paper) => {
                 return { venue, note, bibtex };
             }
         }
-        log("[PM][DBLP] No match found");
         return { note: null };
     } catch (error) {
         // something went wrong, log the error, return {note: null}
@@ -763,9 +761,13 @@ const tryPreprintMatch = async (paper) => {
     venue = dblpMatch.venue;
     bibtex = dblpMatch.bibtex;
     if (!note) {
+        log("[DBLP] No publication found");
         crossRefMatch = await tryCrossRef(paper);
         note = crossRefMatch.note;
         venue = crossRefMatch.venue;
+    }
+    if (!note) {
+        log("[CrossRef] No publication found");
     }
     return { note, venue, bibtex };
 };

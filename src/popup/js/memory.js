@@ -263,8 +263,6 @@ const focusExistingOrCreateNewPaperTab = (paper, fromMemoryItem) => {
 const saveNote = (id, note) => {
     global.state.papers[id].note = note;
     chrome.storage.local.set({ papers: global.state.papers }, () => {
-        // log("Updated the note for " + global.state.papers[id].title);
-
         setHTML(
             findEl(id, "memory-note-div"),
             note
@@ -292,7 +290,6 @@ const saveCodeLink = (id, codeLink) => {
     codeLink = codeLink.trim();
     global.state.papers[id].codeLink = codeLink;
     chrome.storage.local.set({ papers: global.state.papers }, () => {
-        // log(`Updated the code for ${global.state.papers[id].title} to ${codeLink}`);
         const displayLink = codeLink.replace(/^https?:\/\//, "");
         setHTML(findEl(id, "memory-code-link"), displayLink);
         setHTML(`popup-code-link`, displayLink);
@@ -651,7 +648,7 @@ const displayMemoryTable = () => {
     // Save fields on edits save (submit)
     const end = Date.now();
 
-    log("[displayMemoryTable] Display duration (s): " + (end - start) / 1000);
+    info("Display duration (s): " + (end - start) / 1000);
 };
 
 /**
