@@ -201,6 +201,12 @@ const parseCVFUrl = (url) => {
     return { conf, year, id };
 };
 
+/**
+ * Cleans-up a biorxiv url: no pdf ref and no trailing section refs:
+ * eg:
+ * @param {string} url The url to a biorxiv paper to clean up
+ * @returns {string}
+ */
 const cleanBiorxivURL = (url) => {
     url = url.replace(".full.pdf", "");
     if (!url.match(/\d$/)) {
@@ -209,33 +215,23 @@ const cleanBiorxivURL = (url) => {
     return url;
 };
 
+/**
+ * Sets the cursor at the end of a text area on focus
+ * @param {HTMLElement} element The textarea to focus
+ */
 const textareaFocusEnd = (element) => {
     setTimeout(() => {
         element.selectionStart = element.selectionEnd = 10000;
     }, 0);
 };
 
-const formatBibtext = (text) => {
-    let bib = text.trim().split("\n").join("").replace(/\s+=/g, " =");
-    const spaceMatches = bib.match(/\ \w+\ ?=\ ?{/g) || [];
-    const commaMatches = bib.match(/,\w+\ ?=\ ?{/g) || [];
-    if (spaceMatches && spaceMatches.length > 0) {
-        for (const m of spaceMatches) {
-            bib = bib.replace(m, `\n ${m}`);
-        }
-    }
-    if (commaMatches && commaMatches.length > 0) {
-        for (const m of commaMatches) {
-            const key = m.replace(",", "");
-            bib = bib.replace(m, `,\n  ${key}`);
-        }
-    }
-    if (bib.slice(-2) === "}}") {
-        bib = bib.slice(0, -1) + "\n}";
-    }
-    return bib.replaceAll("{ ", "{").replaceAll(" }", "}").replaceAll(" = ", "=");
-};
-
+/**
+ * Get the html string of an svg icon with id and classes
+ * @param {string} pathName The name of the svg to return
+ * @param {string} id Optional html id for the svg tag
+ * @param {arrat} classNames An optional array of classNames to add to the svg tag
+ * @returns {string} A string of html for the svg tag
+ */
 const tablerSvg = (pathName, id, classNames) => {
     if (typeof id === "undefined") {
         id = "";
@@ -413,6 +409,11 @@ const tablerSvg = (pathName, id, classNames) => {
     }
 };
 
+/**
+ * Turns an Error object into an informative string
+ * @param {object} e Error to stringify
+ * @returns {string}
+ */
 const stringifyError = (e) => {
     const extId = chrome.runtime.id;
     return e.stack
@@ -426,6 +427,12 @@ const stringifyError = (e) => {
         .join("<br/>");
 };
 
+/**
+ * Are `a` and `b` identical arrays?
+ * @param {array} a
+ * @param {array} b
+ * @returns {boolean}
+ */
 const arraysIdentical = (a, b) => {
     var i = a.length;
     if (i != b.length) return false;
@@ -435,12 +442,24 @@ const arraysIdentical = (a, b) => {
     return true;
 };
 
+/**
+ * Parses an element's `selectedOptions` into a sorted array of tags
+ * @param {HTMLElement} el the dom element to read tags from (`el.selectedOptions`)
+ * @returns
+ */
 const parseTags = (el) => {
     let tags = Array.from(el.selectedOptions, (e) => e.value.trim()).filter((e) => e);
     tags.sort();
     return tags;
 };
 
+/**
+ * Gets the current state of the 4 user inputs for a given paper and returns it as an object:
+ * {note, codeLink, tags, favorite}
+ * @param {string} id The paper to find the form values for, either in the popup or the memory
+ * @param {boolean} isPopup Whether the paper to monitor is in the popup or the memory
+ * @returns {object} {note, codeLink, tags, favorite}
+ */
 const getPaperEdits = (id, isPopup) => {
     let note, tags, codeLink, favorite;
 
@@ -463,6 +482,11 @@ const getPaperEdits = (id, isPopup) => {
     return { note, tags, codeLink, favorite };
 };
 
+/**
+ * Sets the form edit listeners on the 4 inputs: tags, code, note, favorite
+ * @param {string} id Optional id (for the popup's paper)
+ * @param {*} isPopup Is the function called from the popup?
+ */
 const setFormChangeListener = (id, isPopup) => {
     let refTags, refNote, refCodeLink, refFavorite;
     if (isPopup) {
@@ -476,6 +500,7 @@ const setFormChangeListener = (id, isPopup) => {
         addListener(refNote, "keyup", delay(monitorPaperEdits(id, isPopup), 300));
         addListener(refFavorite, "change", delay(monitorPaperEdits(id, isPopup), 300));
     } else {
+        // tags listeners is set in handleTogglePaperEdit
         refTags = ".memory-item-tags";
         refCodeLink = ".form-code-input";
         refNote = ".form-note-textarea";
@@ -493,6 +518,15 @@ const setFormChangeListener = (id, isPopup) => {
     }
 };
 
+/**
+ * Monitors the popup's paper edits or the memory's table of papers' edits.
+ * Triggers `handleMemorySaveEdits` or `handlePopupSaveEdits` (depending on `isPopup`)
+ * if a change is detected.
+ *
+ * @param {string} id Optional id of the paper to monitor (when called for the popup edit form)
+ * @param {boolean} isPopup Whether the function is called to monitor the single
+ * popup edit form or the set of memory-items' forms
+ */
 const monitorPaperEdits = (id, isPopup) => (e) => {
     let paperId;
     if (typeof id === "undefined") {
@@ -525,7 +559,23 @@ const monitorPaperEdits = (id, isPopup) => (e) => {
         }
     }
 };
-
+/**
+ * Replaces authors with `...` such that:
+ * 1/ the resulting string is <= maxLen
+ * 2/ the last author is still there
+ *
+ * eg:
+ * "Oliver E. J. Wing and William Lehman and Paul D. Bates and Christopher C. Sampson
+ *   and Niall Quinn and Andrew M. Smith and Jeffrey C. Neal
+ *   and Jeremy R. Porter and Carolyn Kousky"
+ * -> "Oliver E. J. Wing, William Lehman, Paul D. Bates, Christopher C. Sampson,
+ *   Niall Quinn, Andrew M. Smith, Jeffrey C. Neal ... Carolyn Kousky"
+ *
+ * @param {string} text The string of authors to split on " and "
+ * @param {number} maxLen The maximum length of the resulting string (defaults to 140)
+ * @param {string} separator The separator to use between authors (defaults to ", ")
+ * @returns {string} The author string with "..." if it was too long, keeping the last author
+ */
 const cutAuthors = (text, maxLen, separator) => {
     if (typeof maxLen === "undefined") {
         maxLen = 140;
