@@ -34,7 +34,7 @@ const log = (...args) => {
     });
     console.log(
         messageConfig,
-        `color: ${isInfo ? "deepskyblue; font-weight:bold;" : "tan"}`,
+        `color: ${isInfo ? "#8BB4F7; font-weight:bold;" : "tan"}`,
         "[PM]",
         ...args
     );
