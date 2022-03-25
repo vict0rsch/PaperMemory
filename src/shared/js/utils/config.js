@@ -87,6 +87,7 @@ global.knownPaperPages = {
     nature: ["nature.com/articles/"],
     acs: ["https://pubs.acs.org/doi/"],
     iop: ["iopscience.iop.org/article/"],
+    jmlr: ["jmlr.org/papers/v", (url) => !url.endsWith("/")],
 };
 
 global.overrideORConfs = {

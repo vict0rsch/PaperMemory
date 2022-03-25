@@ -14,9 +14,13 @@ const isPaper = async (url, noStored = false) => {
         // default source status: false
         is[source] = false;
         for (const path of paths) {
-            if (url.includes(path)) {
-                // known path: store as true
-                is[source] = true;
+            if (typeof path === "string") {
+                if (url.includes(path)) {
+                    // known path: store as true
+                    is[source] = true;
+                }
+            } else if (typeof path === "function") {
+                is[source] = path(url);
             }
         }
     }
@@ -90,6 +94,14 @@ const paperToAbs = (paper) => {
         case "iop":
             abs = pdf.split("#")[0].replace(/\/pdf$/, "");
             break;
+        case "jmlr":
+            abs =
+                pdf
+                    .split("/")
+                    .slice(0, -1)
+                    .join("/")
+                    .replace("/papers/volume", "/papers/v") + ".html";
+            break;
 
         default:
             abs = "https://xkcd.com/1969/";
@@ -153,6 +165,9 @@ const paperToPDF = (paper) => {
             break;
 
         case "acs":
+            break;
+
+        case "jmlr":
             break;
 
         default:

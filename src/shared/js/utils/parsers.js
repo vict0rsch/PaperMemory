@@ -621,6 +621,29 @@ const makeIOPPaper = async (url) => {
     return { author, bibtex, id, key, note, pdfLink, title, venue, year };
 };
 
+const makeJMLRPaper = async (url) => {
+    if (url.includes("/papers/volume")) {
+        url = url.replace("/papers/volume", "/papers/v");
+    }
+    if (url.endsWith(".pdf")) {
+        url = url.split("/").slice(0, -1).join("/");
+    }
+    url = url.replace(".html", "");
+    const jid = url.split("/").reverse()[0];
+    const citeUrl = url + ".bib";
+    const bibtex = await fetchText(citeUrl);
+    const data = bibtexToObject(bibtex);
+
+    const { author, year, title, citationKey } = data;
+    const key = citationKey.trim();
+    const id = `JMLR-${year}_${jid}`;
+    const note = `Published @ JMLR (${year})`;
+    const pdfLink = url.replace("/papers/v", "/papers/volume") + `/${jid}.pdf`;
+    const venue = "JMLR";
+
+    return { author, bibtex, id, key, note, pdfLink, title, venue, year };
+};
+
 // --------------------------------------------
 // -----  Try CrossRef's API for a match  -----
 // --------------------------------------------
@@ -856,6 +879,11 @@ const makePaper = async (is, url, id) => {
         paper = await makeIOPPaper(url);
         if (paper) {
             paper.source = "iop";
+        }
+    } else if (is.jmlr) {
+        paper = await makeJMLRPaper(url);
+        if (paper) {
+            paper.source = "jmlr";
         }
     } else {
         throw new Error("Unknown paper source: " + JSON.stringify({ is, url, id }));

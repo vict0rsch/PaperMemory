@@ -15,7 +15,9 @@ if (window.location.href.startsWith("file://")){
 }`;
 
 const knownPageHasUrl = (url) => {
-    const pdfPages = Object.values(global.knownPaperPages).map((v) => v.reverse()[0]);
+    const pdfPages = Object.values(global.knownPaperPages).map(
+        (v) => v.filter((u) => typeof u === "string").reverse()[0]
+    );
     return pdfPages.some((p) => url.includes(p));
 };
 

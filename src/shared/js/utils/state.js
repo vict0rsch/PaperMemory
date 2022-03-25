@@ -372,6 +372,14 @@ const parseIdFromUrl = async (url) => {
         url = url.split("#")[0].replace(/\/pdf$/, "");
         const doi = url.split("/article/")[1].replaceAll(".", "").replaceAll("/", "");
         return `IOPscience_${doi}`;
+    } else if (is.jmlr) {
+        if (url.endsWith(".pdf")) {
+            url = url.split("/").slice(0, -1).join("/");
+        }
+        url = url.replace(".html", "");
+        const jid = url.split("/").reverse()[0];
+        const year = `20${jid.match(/\d+/)[0]}`;
+        return `JMLR-${year}_${jid}`;
     } else if (is.localFile) {
         return is.localFile;
     } else {
