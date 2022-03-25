@@ -100,7 +100,7 @@ TODO
 
 ## Adding a paper source
 
-* update `config.js:global.knownPaperPages` with `source: [array of url matches to trigger paper parsing]`
+* update `config.js:global.knownPaperPages` with `source: [array of url matches to trigger paper parsing, or boolean functions taking it as input]`
   * will be used by `paper.js:isPaper()` to determine whether `content_script.js` should parse the current page into a paper with `addOrUpdatePaper()` (or update the existing one's visits count) and `popup.js` to display the current paper
 * update `parsers.js:makePaper()` to create a new entry
   * Typically, add a parser function in `parsers.js`  
