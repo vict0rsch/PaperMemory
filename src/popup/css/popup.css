@@ -688,6 +688,9 @@ button.changed {
     margin-top: 16px;
     display: inline-block;
 }
+#modal-whatsnew-content code {
+    font-size: 0.8rem;
+}
 
 /*
 ----------------------------
