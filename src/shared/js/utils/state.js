@@ -237,15 +237,18 @@ const addOrUpdatePaper = async (url, is, menu) => {
                     "Discovered a code repository from PapersWithCode:",
                     pwcUrl
                 );
-                global.state.papers[paper.id].codeLink = pwcUrl;
+                paper.codeLink = pwcUrl;
                 if (pwc.hasOwnProperty("note")) delete pwc.note;
-                global.state.papers[paper.id].code = pwc;
+                paper.code = pwc;
             }
         } catch (error) {
             log("Error trying to discover a code repository:");
             log(error);
         }
     }
+
+    global.state.papers = await getStorage("papers");
+    global.state.papers[paper.id] = paper;
 
     chrome.storage.local.set({ papers: global.state.papers }, async () => {
         let notifText;
@@ -301,6 +304,7 @@ const addOrUpdatePaper = async (url, is, menu) => {
                     log("Updating preprint bibtex to", bibtex);
                     paper.bibtex = bibtex;
                 }
+                global.state.papers = await getStorage("papers");
                 global.state.papers[paper.id] = paper;
                 chrome.storage.local.set({ papers: global.state.papers });
             }
