@@ -125,7 +125,6 @@ Share ideas 💡 in [issues](https://github.com/vict0rsch/PaperMemory/issues) an
     * `t: gan tim` will look for _all papers whose tag-list contains (at least 1 tag containing "gan") AND (at least 1 tag containing "tim")_
 * **Export** your memory as json file (in the extension's Menu)
 
-
 ## Guides
 
 <p align="center">
