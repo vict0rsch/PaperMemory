@@ -14,6 +14,8 @@
         link.href = chrome.runtime.getURL("src/popup/min/dark.min.css");
         link.type = "text/css";
         link.rel = "stylesheet";
-        document.head.appendChild(link);
+        setTimeout(() => {
+            document.head.appendChild(link);
+        }, 1);
     }
 })();
