@@ -365,8 +365,10 @@
 							href="https://github.com/vict0rsch/PaperMemory/releases/tag/0.4.5">0.4.5</a>
 						<em>(2022-03-23)</em>
 						<ul>
-							<li>[feature] In an effort to use as few as possible Arxiv.org references, PaperMemory will
-								use dblp.org bibtex data whenever possible for your papers' citations</li>
+							<li>[feature] In an effort to use as few as possible arxiv.org references, PaperMemory will
+								use dblp.org and crossref.org bibtex data whenever possible for your published papers'
+								citations. In other words it tries to discover published versions of you pre-prints and
+								this will be effective when copying/exporting bibtex data</li>
 							<li>[feature] New configuration option to only store official repositories when discovering
 								code with PapersWithCode</li>
 							<li>[feature] New configuration option to prefer using links to abstract pages vs pdfs
@@ -378,7 +380,11 @@
 								in a fill-size and dedicated tab.
 							<li>[feature] New advanced options to filter out default paper sources.
 							</li>
-							<li>[feature] Weekly backup (up to 6 weeks) in case of a bug/user mistake (see Readme on
+							<li>[feature] Search papers by year (<code>y: 18,19</code>), including before/after
+								a date (<code>y: &lt;2019</code>, <code>y: &gt;2018</code>).
+							</li>
+							<li>[feature] Weekly local backups (up to 6 weeks) in case of a bug/user mistake (see Readme
+								on
 								Github)</li>
 							<br />
 							<li>[new source] Add Nature papers parsing</li>
