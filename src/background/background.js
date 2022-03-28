@@ -11,7 +11,7 @@ if (window.location.href.startsWith("file://")){
         link.rel = 'icon';
         document.getElementsByTagName('head')[0].appendChild(link);
     }
-    setTimeout( () => {link.href = "https://github.com/vict0rsch/PaperMemory/blob/master/icons/favicon-192x192.png?raw=true"}, 50);
+    setTimeout( () => {link.href = "https://github.com/vict0rsch/PaperMemory/blob/master/icons/favicon-192x192.png?raw=true"}, 350);
 }`;
 
 const knownPageHasUrl = (url) => {
