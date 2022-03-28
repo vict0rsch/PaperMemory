@@ -26,6 +26,7 @@ global.state = {
     menu: {},
     files: {},
     ignoreSources: {},
+    lastRefresh: new Date(),
 };
 
 global.descendingSortKeys = ["addDate", "count", "lastOpenDate", "favoriteDate"];
