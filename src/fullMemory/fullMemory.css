@@ -36,3 +36,8 @@ body {
 #memory-table {
     padding-top: 132px;
 }
+
+#confirm-modal {
+    backdrop-filter: blur(10px) !important;
+    background-color: rgba(34, 42, 53, 0.8) !important;
+}
