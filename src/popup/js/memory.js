@@ -472,7 +472,7 @@ const searchMemoryByYear = (letters) => {
         .replace("y:", "")
         .replace(/(<|>)/g, "")
         .toLowerCase()
-        .replaceAll(",", "")
+        .replaceAll(",", " ")
         .split(" ")
         .filter((y) => y.length > 0)
         .map((y) => (y.length === 4 ? y : "20" + y))
