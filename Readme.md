@@ -114,11 +114,17 @@ Share ideas 💡 in [issues](https://github.com/vict0rsch/PaperMemory/issues) an
     * Split queries on spaces: `gan im` will look for: _all papers whose (title OR author) contain ("gan" AND "im")_
   * In a paper's code link
     * Start the search query with `c:` to only search code links
-  * In a paper's tags
+  * Paper years
+    * Start the search query with `y: ${year}`, optionally with `,` separating requested years or starting with `>` or `<` to filter paper published after/before a given year (stricly)
+      * `y: 20,21,22` will display papers published in `2020 OR 2021 OR 2022`
+      * `y: <2015` will display papers published before (strictly) `2015`
+      * `y: >19` will display papers published after (strictly) `2019`
+  * Paper tags
     * Start the search query with `t:` to filter by tags
     * `t: gan` will look for _all papers whose tag-list contains at least 1 tag containing "gan"_
     * `t: gan tim` will look for _all papers whose tag-list contains (at least 1 tag containing "gan") AND (at least 1 tag containing "tim")_
 * **Export** your memory as json file (in the extension's Menu)
+
 
 ## Guides
 
@@ -262,6 +268,20 @@ Contributions and ideas on how to improve the process and potentially add public
  <summary><strong>Where does PaperMemory store my data?</strong></summary>
 <br/>
 It's all stored locally in your browser's local storage. If you want to transfer data to a new browser/computer, use the export/import tools in the extension's options.
+
+</details>
+
+<details>
+ <summary><strong>Can I access the memory full-screen?</strong></summary>
+<br/>
+Sure! In the extension popup's menu, there's a link at the bottom to the full-page memory. You can also just click this link: [chrome-extension://ehchlpggdaffcncbeopdopnndhdjelbc/src/fullMemory/fullMemory.html](chrome-extension://ehchlpggdaffcncbeopdopnndhdjelbc/src/fullMemory/fullMemory.html) (Thanks @kaixin96!)
+
+</details>
+
+<details>
+ <summary><strong>Can I exclude a paper source?</strong></summary>
+<br/>
+Yep. In the extension popup's advanced options page: right-click the extension's icon and click on `Options`. Or click on the link at the bottom of the popup menu. Or click here [chrome-extension://ehchlpggdaffcncbeopdopnndhdjelbc/src/options/options.html](chrome-extension://ehchlpggdaffcncbeopdopnndhdjelbc/src/options/options.html) (Thanks @kaixin96!)
 
 </details>
 
