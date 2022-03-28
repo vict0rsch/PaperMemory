@@ -457,6 +457,42 @@ const filterMemoryByString = (letters) => {
 };
 
 /**
+ * Filters the sortedPapers into papersList, keeping papers published in a list of years
+ * e.g.: "y:21, 22" or "y: <2012"
+ * @param {string} letters The string representing the tags query, deleting "t:" and splitting on " "
+ */
+const filterMemoryByYear = (letters) => {
+    const condition = letters.includes("<")
+        ? "smaller"
+        : letters.includes(">")
+        ? "greater"
+        : "";
+    const searchYears = letters
+        .replace("y:", "")
+        .replace(/(<|>)/g, "")
+        .toLowerCase()
+        .replaceAll(",", "")
+        .split(" ")
+        .filter((y) => y.length > 0)
+        .map((y) => (y.length === 4 ? y : "20" + y))
+        .map((y) => parseInt(y, 10));
+    console.log("searchYears: ", searchYears);
+    let papersList = [];
+    let compare = (y, yp) => y === paperYear;
+    if (condition === "smaller") {
+        compare = (y, yp) => y > paperYear;
+    } else if (condition === "greater") {
+        compare = (y, yp) => y < paperYear;
+    }
+    for (const paper of global.state.sortedPapers) {
+        const paperYear = parseInt(paper.year, 10);
+        if (searchYears.some((y) => compare(y, paperYear))) {
+            papersList.push(paper);
+        }
+    }
+    global.state.papersList = papersList;
+};
+/**
  * Filters the sortedPapers into papersList, keeping papers whose tags match the query: all
  * papers whose tags contain all words in the query. Triggered when a query starts with "t: ".
  * e.g.: "cli ga" will look for all papers which have at least 1 tag containing the substring "cli"

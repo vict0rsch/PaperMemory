@@ -230,6 +230,9 @@ const handleMemorySearchKeyPress = (allowEmptySearch) => (e) => {
     } else if (query.startsWith("c:")) {
         // look into code links
         filterMemoryByCode(query);
+    } else if (query.startsWith("y:")) {
+        // look into publication year
+        filterMemoryByYear(query);
     } else {
         // look into title & authors & notes & conf
         filterMemoryByString(query);
