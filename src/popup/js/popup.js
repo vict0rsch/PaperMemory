@@ -138,6 +138,12 @@ const popupMain = async (url, is, manualTrigger = false) => {
     addListener("advanced-configuration", "click", () => {
         chrome.runtime.openOptionsPage();
     });
+    // Set fullMemory page link
+    addListener("full-memory", "click", () => {
+        chrome.tabs.create({
+            url: chrome.extension.getURL("src/fullMemory/fullMemory.html"),
+        });
+    });
 
     // Set PDF title function
     // setAndHandleCustomPDFFunction(menu);
@@ -277,20 +283,22 @@ const popupMain = async (url, is, manualTrigger = false) => {
 // ------------------------------
 
 const query = { active: true, lastFocusedWindow: true };
-chrome.tabs.query(query, async (tabs) => {
-    const url = tabs[0].url;
-    await initState();
+if (window.location.href.includes("popup")) {
+    chrome.tabs.query(query, async (tabs) => {
+        const url = tabs[0].url;
+        await initState();
 
-    const is = await isPaper(url);
-    const isKnown = Object.values(is).some((i) => i);
+        const is = await isPaper(url);
+        const isKnown = Object.values(is).some((i) => i);
 
-    if (!isKnown) showId("notArxiv");
+        if (!isKnown) showId("notArxiv");
 
-    hideId("memory-spinner");
-    showId("memory-switch");
-    makeMemoryHTML();
-    popupMain(url, is);
-    if (navigator.userAgent.search("Firefox") > -1) {
-        hideId("overwrite-container");
-    }
-});
+        hideId("memory-spinner");
+        showId("memory-switch");
+        makeMemoryHTML();
+        popupMain(url, is);
+        if (navigator.userAgent.search("Firefox") > -1) {
+            hideId("overwrite-container");
+        }
+    });
+}
