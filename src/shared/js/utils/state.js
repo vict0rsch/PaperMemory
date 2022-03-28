@@ -32,6 +32,7 @@ const initState = async (papers, isContentScript) => {
     papers = migration.papers;
     global.state.papers = papers;
     global.state.menu = await getMenu();
+    global.state.ignoreSources = (await getStorage("ignoreSources")) || {};
 
     if (isContentScript) {
         info("State initialization duration (s): " + (Date.now() - s) / 1000);

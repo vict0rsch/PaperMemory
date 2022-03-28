@@ -327,6 +327,16 @@ const svg = (name) => {
     }
 };
 
+const ignorePaper = (is, ignoreSources) => {
+    const sources = Object.entries(ignoreSources)
+        .filter(([name, ignore]) => ignore)
+        .map(([name, ignore]) => name);
+    const papers = Object.entries(is)
+        .filter(([source, isSource]) => isSource)
+        .map(([name, isSource]) => name);
+    return papers.some((paper) => sources.includes(paper));
+};
+
 /**
  * Adds markdown link, bibtex citation and download button on arxiv.
  * Also, if the current website is a known paper source (isPaper), adds or updates the current paper
@@ -341,8 +351,12 @@ const contentScriptMain = async (url, stateIsReady) => {
     if (is.arxiv) {
         arxiv(menu);
     }
+    let ignoreSources = await getStorage("ignoreSources");
 
-    const update = await addOrUpdatePaper(url, is, menu);
+    let update;
+    if (!ignorePaper(is, ignoreSources)) {
+        update = await addOrUpdatePaper(url, is, menu);
+    }
     let id;
     if (update) {
         id = update.id;

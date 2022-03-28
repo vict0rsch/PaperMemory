@@ -25,6 +25,7 @@ global.state = {
     papersReady: false,
     menu: {},
     files: {},
+    ignoreSources: {},
 };
 
 global.descendingSortKeys = ["addDate", "count", "lastOpenDate", "favoriteDate"];
@@ -89,6 +90,20 @@ global.knownPaperPages = {
     iop: ["iopscience.iop.org/article/"],
     jmlr: [(url) => url.includes("jmlr.org/papers/v") && !url.endsWith("/")],
 };
+
+global.sourcesNames = {
+    arxiv: "ArXiv",
+    neurips: "NeurIPS",
+    cvf: "Computer Vision Foundation (CVF)",
+    openreview: "OpenReview",
+    biorxiv: "BioRxiv",
+    pmlr: "Proceedings of Machine Learning Research (PMLR)",
+    acl: "Association for Computational Linguistics (ACL)",
+    pnas: "Proceedings of the National Academy of Sciences (PNAS)",
+    nature: "Nature",
+    acs: "American Chemical Society (ACS)",
+    iop: "Institute Of Physics (IOP)",
+    jmlr: "Journal of Machine Learning Research (JMLR)",
 };
 
 global.overrideORConfs = {
