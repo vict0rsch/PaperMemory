@@ -74,7 +74,11 @@ const isObject = (obj) =>
     typeof obj === "object" && !Array.isArray(obj) && obj !== null;
 
 const isPdfUrl = (url) => {
-    return url.endsWith(".pdf") || url.includes("openreview.net/pdf");
+    return (
+        url.endsWith(".pdf") ||
+        url.includes("openreview.net/pdf") ||
+        url.includes("arxiv.org/pdf/")
+    );
 };
 
 const delay = (fn, ms) => {

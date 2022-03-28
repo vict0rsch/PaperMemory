@@ -43,9 +43,12 @@ const updatePopupPaperNoMemory = (url) => {
             This paper is not in your memory
         </div>
         <ul>
-            It can be for one of 5 reasons:
+            It can be for one of many reasons:
             <li style="margin-top: 4px">
-                You disabled this paper source in PaperMemory's options page
+                You disabled paper recording from non-pdf pages in the menu
+            </li>
+            <li style="margin-top: 4px">
+                You disabled this paper source in the options page
             </li>
             <li style="margin-top: 4px">
             You deleted the paper (refresh the page to add it back)
@@ -54,21 +57,19 @@ const updatePopupPaperNoMemory = (url) => {
             There was an error parsing the paper's data (you can check the console
                 if you think this is an issue)
                 </li>
-                <li style="margin-top: 4px">
-                    On Firefox, content scripts are not triggered on pdfs.
-                    <ul>
-                        <li>
-                            This is not something I can do anything about, it's a known
-                            issue but a design choice by Firefox's developers.
-                        </li>
-                        <li>
-                            The extension would work on the paper's <i>page</i> (for
-                            instance arxiv.org/<strong>abs</strong>/1106.0245)
-                        </li>
-                    </ul>
-                </li>
             <li style="margin-top: 4px">
-                You are actually not on a paper page but the extension made a mistake
+                On Firefox, content scripts are not triggered on pdfs.
+                <ul>
+                    <li>
+                        This is not something I can do anything about, it's a design choice by Firefox developers.
+                    </li>
+                    <li>
+                        The extension would work on the paper's <i>abstract</i>
+                    </li>
+                </ul>
+            </li>
+            <li style="margin-top: 4px">
+                You are actually not on a paper page but the extension made a mistake thinking so, just ignore this.
             </li>
             <p style="font-size: 0.9rem">
                 Open an issue on

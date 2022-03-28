@@ -354,7 +354,7 @@ const contentScriptMain = async (url, stateIsReady) => {
     let ignoreSources = await getStorage("ignoreSources");
 
     let update;
-    if (!ignorePaper(is, ignoreSources)) {
+    if (!ignorePaper(is, ignoreSources) && !(menu.checkPdfOnly && !isPdfUrl(url))) {
         update = await addOrUpdatePaper(url, is, menu);
     }
     let id;

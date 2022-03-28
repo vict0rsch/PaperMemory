@@ -141,9 +141,8 @@
 
 			<input class="switch" type="checkbox" id="checkBib" name="checkBib" value="checkBib">
 			<label for="checkBib"> Add BibTex citation section</label><br><br>
-			<h5>Customization</h5>
-			<input class="switch" type="checkbox" id="checkPdfTitle" name="checkPdfTitle" value="checkPdfTitle">
-			<label for="checkPdfTitle"> Change paper tab titles</label><br><br>
+
+			<h5>User Interface</h5>
 
 			<input class="switch" type="checkbox" id="checkFeedback" name="checkFeedback" value="checkFeedback">
 			<label for="checkFeedback"> Display notification when a paper is added</label><br><br>
@@ -154,21 +153,26 @@
 			<input class="switch" type="checkbox" id="checkDirectOpen" name="checkDirectOpen" value="checkDirectOpen">
 			<label for="checkDirectOpen">Directly open the Memory when not on a Paper's page</label><br><br>
 
+			<input class="switch" type="checkbox" id="checkPdfTitle" name="checkPdfTitle" value="checkPdfTitle">
+			<label for="checkPdfTitle"> Change paper tab titles</label><br><br>
+
+			<input class="switch" type="checkbox" id="checkScirate" name="checkScirate" value="checkScirate">
+			<label for="checkScirate">Add a link to SciRate in the popup</label><br><br>
+
+			<h5>Functionalities</h5>
+
 			<input class="switch" type="checkbox" id="checkPreferPdf" name="checkPreferPdf" value="checkPreferPdf">
 			<label for="checkPreferPdf">Favor PDFs for paper links (otherwise, links will point to a paper's
 				abstract
 				page)</label><br><br>
 
 			<input class="switch" type="checkbox" id="checkPdfOnly" name="checkPdfOnly" value="checkPdfOnly">
-			<label for="checkPdfOnly">Only store papers on their pdf pages, not from their abstracts</label><br><br>
+			<label for="checkPdfOnly">Only record papers on their pdf pages, not from their abstracts</label><br><br>
 
 			<input class="switch" type="checkbox" id="checkOfficialRepos" name="checkOfficialRepos"
 				value="checkOfficialRepos">
 			<label for="checkOfficialRepos">Only store official code repositories discovered on
 				PapersWithCode</label><br><br>
-
-			<input class="switch" type="checkbox" id="checkScirate" name="checkScirate" value="checkScirate">
-			<label for="checkScirate">Add a link to SciRate in the popup</label><br><br>
 
 			<input class="switch" type="checkbox" id="checkStore" name="checkStore" value="checkStore">
 			<label for="checkStore">Download pdfs to PaperMemory's folder in your Downloads to be able to open them
@@ -177,7 +181,8 @@
 
 		<h3 class="mt-4">⋗ Advanced</h3>
 
-		<p>Open your <a href="#" id="full-memory">full-page memory</a> to access explore papers more easily.</p>
+		<p>Open your <a href="#" id="full-memory">full-page memory</a> to explore papers more easily, in a dedicated
+			tab.</p>
 
 		<p>Open the <a href="#" id="advanced-configuration">options page</a> to access advanced customization features:
 		</p>
@@ -191,6 +196,9 @@
 			</li>
 			<li>
 				<p>Manage your data (export/load)</p>
+			</li>
+			<li>
+				<p>Ignore some paper sources</p>
 			</li>
 		</ul>
 
