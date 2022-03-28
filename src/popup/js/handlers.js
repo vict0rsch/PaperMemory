@@ -226,16 +226,16 @@ const handleMemorySearchKeyPress = (allowEmptySearch) => (e) => {
     style("memory-search-clear-icon", "visibility", "visible");
     if (query.startsWith("t:")) {
         // look into tags
-        filterMemoryByTags(query);
+        searchMemoryByTags(query);
     } else if (query.startsWith("c:")) {
         // look into code links
-        filterMemoryByCode(query);
+        searchMemoryByCode(query);
     } else if (query.startsWith("y:")) {
         // look into publication year
-        filterMemoryByYear(query);
+        searchMemoryByYear(query);
     } else {
         // look into title & authors & notes & conf
-        filterMemoryByString(query);
+        searchMemory(query);
     }
     // display filtered papers
     displayMemoryTable();

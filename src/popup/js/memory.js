@@ -429,7 +429,7 @@ const reverseMemory = () => {
  *        contains both the strings "cli" and "ga".
  * @param {string} letters The user's string query.
  */
-const filterMemoryByString = (letters) => {
+const searchMemory = (letters) => {
     const words = letters.toLowerCase().split(" ");
     let papersList = [];
     for (const paper of global.state.sortedPapers) {
@@ -461,7 +461,7 @@ const filterMemoryByString = (letters) => {
  * e.g.: "y:21, 22" or "y: <2012"
  * @param {string} letters The string representing the tags query, deleting "t:" and splitting on " "
  */
-const filterMemoryByYear = (letters) => {
+const searchMemoryByYear = (letters) => {
     const condition = letters.includes("<")
         ? "smaller"
         : letters.includes(">")
@@ -499,7 +499,7 @@ const filterMemoryByYear = (letters) => {
  *        AND at least 1 tag containing the substring "ga"
  * @param {string} letters The string representing the tags query, deleting "t:" and splitting on " "
  */
-const filterMemoryByTags = (letters) => {
+const searchMemoryByTags = (letters) => {
     const tags = letters.replace("t:", "").toLowerCase().split(" ");
     let papersList = [];
     for (const paper of global.state.sortedPapers) {
@@ -515,10 +515,10 @@ const filterMemoryByTags = (letters) => {
 
 /**
  * Filters the sortedPapers into papersList, keeping papers whose code matches the query. Similar
- * to filterMemoryByString but looks into the codeLink attribute. Triggered when a query starts with "c: ".
+ * to searchMemory but looks into the codeLink attribute. Triggered when a query starts with "c: ".
  * @param {string} letters The string representing the code query, deleting "c:" and splitting on " "
  */
-const filterMemoryByCode = (letters) => {
+const searchMemoryByCode = (letters) => {
     const words = letters.replace("c:", "").toLowerCase().split(" ");
     let papersList = [];
     for (const paper of global.state.sortedPapers) {
