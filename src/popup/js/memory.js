@@ -478,15 +478,15 @@ const filterMemoryByYear = (letters) => {
         .map((y) => parseInt(y, 10));
     console.log("searchYears: ", searchYears);
     let papersList = [];
-    let compare = (y, yp) => y === paperYear;
+    let compare = (y, py) => y === py;
     if (condition === "smaller") {
-        compare = (y, yp) => y > paperYear;
+        compare = (y, py) => y > py;
     } else if (condition === "greater") {
-        compare = (y, yp) => y < paperYear;
+        compare = (y, py) => y < py;
     }
     for (const paper of global.state.sortedPapers) {
         const paperYear = parseInt(paper.year, 10);
-        if (searchYears.some((y) => compare(y, paperYear))) {
+        if (searchYears.some((year) => compare(year, paperYear))) {
             papersList.push(paper);
         }
     }
