@@ -134,11 +134,11 @@ In the extension's `options` (right click on the icon or in the popup's menu) yo
 
 ## Install from source (Brave & Chrome)
 
-* Download the repo
+* Download/clone the repo
 * Go to Chrome/Brave's extension manager
 * Enable developer mode
 * Click on "load unpackaged extension"
-* Select the downloaded repo :)
+* Select the downloaded folder :)
 
 ## Preprints
 
