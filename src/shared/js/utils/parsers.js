@@ -581,10 +581,9 @@ const makeNaturePaper = async (url) => {
 
 const makeACSPaper = async (url) => {
     url = url.replace("pubs.acs.org/doi/pdf/", "pubs.acs.org/doi/").split("?")[0];
-    const doi = url.split("/doi/")[1];
-    const citeUrl = `https://pubs.acs.org/action/downloadCitation?doi=${encodeURIComponent(
-        doi
-    )}&include=cit&format=bibtex&direct=true`;
+    const doi = url.replace("/abs/", "/").split("/doi/")[1];
+    console.log("doi: ", doi);
+    const citeUrl = `https://pubs.acs.org/action/downloadCitation?doi=${doi}&include=cit&format=bibtex&direct=true`;
     const bibtex = await fetchText(citeUrl);
     const data = bibtexToObject(bibtex);
     const author = data.author.replaceAll("\n", "").trim();

@@ -375,7 +375,10 @@ const parseIdFromUrl = async (url) => {
         const hash = url.split("/").reverse()[0];
         return `Nature_${hash}`;
     } else if (is.acs) {
-        url = url.replace("pubs.acs.org/doi/pdf/", "pubs.acs.org/doi/").split("?")[0];
+        url = url
+            .replace("pubs.acs.org/doi/pdf/", "/doi/")
+            .replace("pubs.acs.org/doi/abs/", "/doi/")
+            .split("?")[0];
         const doi = url.split("/doi/")[1].replaceAll(".", "").replaceAll("/", "");
         return `ACS_${doi}`;
     } else if (is.iop) {
