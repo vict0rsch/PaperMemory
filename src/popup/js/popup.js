@@ -216,7 +216,7 @@ const popupMain = async (url, is, manualTrigger = false) => {
         addListener(`popup-memory-item-link--${id}`, "click", () => {
             const pdfURL = paperToPDF(paper);
             const absURL = paperToAbs(paper);
-            chrome.tabs.update({ url: absURL === url ? pdfURL : absURL });
+            chrome.tabs.update({ url: isPdfUrl(url) ? absURL : pdfURL });
             window.close();
         });
         addListener(`popup-code-link`, "click", () => {

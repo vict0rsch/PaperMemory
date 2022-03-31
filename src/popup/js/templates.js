@@ -279,7 +279,7 @@ ${note}</textarea
  */
 const getPopupPaperIconsHTML = (paper, currentUrl, is) => {
     const id = paper.id;
-    const name = paperToAbs(paper) === currentUrl ? "HTML" : "PDF";
+    const name = isPdfUrl(currentUrl) ? "HTML" : "PDF";
 
     let scirate = "";
     if (global.state.menu.checkScirate && paper.source === "arxiv") {
