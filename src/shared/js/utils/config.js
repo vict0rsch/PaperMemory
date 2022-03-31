@@ -29,7 +29,13 @@ global.state = {
     lastRefresh: new Date(),
 };
 
-global.descendingSortKeys = ["addDate", "count", "lastOpenDate", "favoriteDate"];
+global.descendingSortKeys = [
+    "addDate",
+    "count",
+    "lastOpenDate",
+    "favoriteDate",
+    "year",
+];
 
 /**
  * Shared configuration for the Tags' select2 inputs
