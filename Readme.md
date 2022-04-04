@@ -74,9 +74,17 @@ Customize features in the menu:
 
 <p align="center">
   <img width="400" src="https://github.com/vict0rsch/PaperMemory/blob/master/extra/imgs/menu0.png?raw=true">
+</p>
+<p align="center">
   <img width="400" src="https://github.com/vict0rsch/PaperMemory/blob/master/extra/imgs/menu1.png?raw=true">
+</p>
+<p align="center">
   <img width="400" src="https://github.com/vict0rsch/PaperMemory/blob/master/extra/imgs/menu2.png?raw=true">
+</p>
+<p align="center">
   <img width="400" src="https://github.com/vict0rsch/PaperMemory/blob/master/extra/imgs/menu3.png?raw=true">
+</p>
+<p align="center">
   <img width="400" src="https://github.com/vict0rsch/PaperMemory/blob/master/extra/imgs/menu4.png?raw=true">
 </p>
 
