@@ -73,19 +73,7 @@ Customize features in the menu:
 
 
 <p align="center">
-  <img width="400" src="https://github.com/vict0rsch/PaperMemory/blob/master/extra/imgs/menu0.png?raw=true">
-</p>
-<p align="center">
-  <img width="400" src="https://github.com/vict0rsch/PaperMemory/blob/master/extra/imgs/menu1.png?raw=true">
-</p>
-<p align="center">
-  <img width="400" src="https://github.com/vict0rsch/PaperMemory/blob/master/extra/imgs/menu2.png?raw=true">
-</p>
-<p align="center">
-  <img width="400" src="https://github.com/vict0rsch/PaperMemory/blob/master/extra/imgs/menu3.png?raw=true">
-</p>
-<p align="center">
-  <img width="400" src="https://github.com/vict0rsch/PaperMemory/blob/master/extra/imgs/menu4.png?raw=true">
+  <img width="400" src="https://github.com/vict0rsch/PaperMemory/blob/master/extra/imgs/menu_concat.png?raw=true">
 </p>
 
 Switch between Light and Dark mode
@@ -158,9 +146,7 @@ In the extension's `options` (right click on the icon or in the popup's menu) yo
 * **Data management**: export/load your memory data and export the bibliography as a `.bib` file
 
 <p align="center">
-  <img src="https://raw.github.com/vict0rsch/PaperMemory/master/extra/imgs/opt1.png?raw=true">
-  <img src="https://raw.github.com/vict0rsch/PaperMemory/master/extra/imgs/opt2.png?raw=true">
-  <img src="https://raw.github.com/vict0rsch/PaperMemory/master/extra/imgs/opt3.png?raw=true">
+  <img src="https://raw.github.com/vict0rsch/PaperMemory/master/extra/imgs/opt_concat.png?raw=true">
 </p>
 
 ## Install from source (Brave & Chrome)
