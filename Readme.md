@@ -140,11 +140,14 @@ Share ideas 💡 in [issues](https://github.com/vict0rsch/PaperMemory/issues) an
 In the extension's `options` (right click on the icon or in the popup's menu) you will find advanced customization features:
 
 * **Auto-tagging**: add tags to papers based on regexs matched on authors and titles
+* **Source filtering**: filter out some paper soruces you don't want to record papers from
 * **Custom title function**: provide Javascript code to generate your own web page titles and pdf filenames based on a paper's attributes
 * **Data management**: export/load your memory data and export the bibliography as a `.bib` file
 
 <p align="center">
-<img src="https://raw.github.com/vict0rsch/PaperMemory/master/extra/imgs/options.png?raw=true">
+  <img src="https://raw.github.com/vict0rsch/PaperMemory/master/extra/imgs/opt1.png?raw=true">
+  <img src="https://raw.github.com/vict0rsch/PaperMemory/master/extra/imgs/opt2.png?raw=true">
+  <img src="https://raw.github.com/vict0rsch/PaperMemory/master/extra/imgs/opt3.png?raw=true">
 </p>
 
 ## Install from source (Brave & Chrome)
