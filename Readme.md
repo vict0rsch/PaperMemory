@@ -254,7 +254,7 @@ Because Chrome & Brave will disable an extension by default when it auto-updates
 </details>
 
 <details>
-<summary><strong>How do yoy match Arxiv.org pre-prints to actual publications?</strong></summary>
+<summary><strong>How do you match Arxiv.org pre-prints to actual publications?</strong></summary>
 <br/>
 
 It's all there: [preprints](#preprints) 😃
