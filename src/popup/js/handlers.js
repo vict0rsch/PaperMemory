@@ -20,7 +20,7 @@ const handleDeleteItem = (e) => {
 
 const handleOpenItemLink = (e) => {
     const id = eventId(e);
-    focusExistingOrCreateNewPaperTab(global.state.papers[id]);
+    focusExistingOrCreateNewPaperTab(global.state.papers[id], true);
 };
 
 const handleOpenItemCodeLink = (e) => {
@@ -29,28 +29,43 @@ const handleOpenItemCodeLink = (e) => {
     focusExistingOrCreateNewCodeTab(url);
 };
 
-const handleCopyMarkdownLink = (e) => {
+const handleCopyMarkdownLink = async (e) => {
     const id = eventId(e);
-    const md = global.state.papers[id].md;
-    copyAndConfirmMemoryItem(id, md, "Markdown link copied!");
+    const menu = global.state.menu;
+    const paper = global.state.papers[id];
+    const link = menu.checkPreferPdf ? paperToPDF(paper) : paperToAbs(paper);
+    const text = menu.checkPreferPdf ? "PDF" : "Abstract";
+    const md = `[${paper.title}](${link})`;
+    copyAndConfirmMemoryItem(id, md, `Markdown ${text} link copied!`);
 };
 
 const handleCopyBibtex = (e) => {
     const id = eventId(e);
     const bibtex = global.state.papers[id].bibtex;
-    copyAndConfirmMemoryItem(id, formatBibtext(bibtex), "Bibtex copied!");
+    copyAndConfirmMemoryItem(id, bibtexToString(bibtex), "Bibtex copied!");
 };
 
-const handleCopyPDFLink = (e) => {
+const handleCopyPDFLink = async (e) => {
     const id = eventId(e);
-    const pdfLink = global.state.papers[id].pdfLink;
-    copyAndConfirmMemoryItem(id, pdfLink, "Pdf link copied!");
+    const menu = global.state.menu;
+    const paper = global.state.papers[id];
+    const link = menu.checkPreferPdf ? paperToPDF(paper) : paperToAbs(paper);
+    const text = menu.checkPreferPdf ? "PDF" : "Abstract";
+    copyAndConfirmMemoryItem(id, link, `${text} link copied!`);
 };
 
 const handleAddItemToFavorites = (e) => {
     const id = eventId(e);
     const isFavorite = hasClass(`memory-container--${id}`, "favorite");
     saveFavoriteItem(id, !isFavorite);
+};
+
+const handleMemoryOpenLocal = (e) => {
+    const id = eventId(e);
+    const file = global.state.files[id];
+    if (file && (file.id || file.id === 0)) {
+        chrome.downloads.open(file.id);
+    }
 };
 
 const handleTextareaFocus = () => {
@@ -211,13 +226,16 @@ const handleMemorySearchKeyPress = (allowEmptySearch) => (e) => {
     style("memory-search-clear-icon", "visibility", "visible");
     if (query.startsWith("t:")) {
         // look into tags
-        filterMemoryByTags(query);
+        searchMemoryByTags(query);
     } else if (query.startsWith("c:")) {
         // look into code links
-        filterMemoryByCode(query);
+        searchMemoryByCode(query);
+    } else if (query.startsWith("y:")) {
+        // look into publication year
+        searchMemoryByYear(query);
     } else {
         // look into title & authors & notes & conf
-        filterMemoryByString(query);
+        searchMemory(query);
     }
     // display filtered papers
     displayMemoryTable();
@@ -370,6 +388,9 @@ const handleMenuCheckChange = (e) => {
     const checked = findEl(key).checked;
     chrome.storage.local.set({ [key]: checked }, function () {
         log(`Settings saved for ${key} (${checked})`);
+        if (global.state && global.state.menu) {
+            global.state.menu[key] = checked;
+        }
     });
 };
 

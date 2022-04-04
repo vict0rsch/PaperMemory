@@ -1,3 +1,251 @@
+/*
+ * jQuery Easing v1.3 - http://gsgd.co.uk/sandbox/jquery/easing/
+ *
+ * Uses the built in easing capabilities added In jQuery 1.1
+ * to offer multiple easing options
+ *
+ * TERMS OF USE - jQuery Easing
+ *
+ * Open source under the BSD License.
+ *
+ * Copyright 2008 George McGinley Smith
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without modification,
+ * are permitted provided that the following conditions are met:
+ *
+ * Redistributions of source code must retain the above copyright notice, this list of
+ * conditions and the following disclaimer.
+ * Redistributions in binary form must reproduce the above copyright notice, this list
+ * of conditions and the following disclaimer in the documentation and/or other materials
+ * provided with the distribution.
+ *
+ * Neither the name of the author nor the names of contributors may be used to endorse
+ * or promote products derived from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY
+ * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+ * COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+ * AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+ * OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ */
+
+// t: current time, b: begInnIng value, c: change In value, d: duration
+$.easing.jswing = $.easing.swing;
+
+$.extend($.easing, {
+    def: "easeOutQuad",
+    swing: (x, t, b, c, d) => {
+        //alert($.easing.default);
+        return $.easing[$.easing.def](x, t, b, c, d);
+    },
+    easeInQuad: (x, t, b, c, d) => {
+        return c * (t /= d) * t + b;
+    },
+    easeOutQuad: (x, t, b, c, d) => {
+        return -c * (t /= d) * (t - 2) + b;
+    },
+    easeInOutQuad: (x, t, b, c, d) => {
+        if ((t /= d / 2) < 1) return (c / 2) * t * t + b;
+        return (-c / 2) * (--t * (t - 2) - 1) + b;
+    },
+    easeInCubic: (x, t, b, c, d) => {
+        return c * (t /= d) * t * t + b;
+    },
+    easeOutCubic: (x, t, b, c, d) => {
+        return c * ((t = t / d - 1) * t * t + 1) + b;
+    },
+    easeInOutCubic: (x, t, b, c, d) => {
+        if ((t /= d / 2) < 1) return (c / 2) * t * t * t + b;
+        return (c / 2) * ((t -= 2) * t * t + 2) + b;
+    },
+    easeInQuart: (x, t, b, c, d) => {
+        return c * (t /= d) * t * t * t + b;
+    },
+    easeOutQuart: (x, t, b, c, d) => {
+        return -c * ((t = t / d - 1) * t * t * t - 1) + b;
+    },
+    easeInOutQuart: (x, t, b, c, d) => {
+        if ((t /= d / 2) < 1) return (c / 2) * t * t * t * t + b;
+        return (-c / 2) * ((t -= 2) * t * t * t - 2) + b;
+    },
+    easeInQuint: (x, t, b, c, d) => {
+        return c * (t /= d) * t * t * t * t + b;
+    },
+    easeOutQuint: (x, t, b, c, d) => {
+        return c * ((t = t / d - 1) * t * t * t * t + 1) + b;
+    },
+    easeInOutQuint: (x, t, b, c, d) => {
+        if ((t /= d / 2) < 1) return (c / 2) * t * t * t * t * t + b;
+        return (c / 2) * ((t -= 2) * t * t * t * t + 2) + b;
+    },
+    easeInSine: (x, t, b, c, d) => {
+        return -c * Math.cos((t / d) * (Math.PI / 2)) + c + b;
+    },
+    easeOutSine: (x, t, b, c, d) => {
+        return c * Math.sin((t / d) * (Math.PI / 2)) + b;
+    },
+    easeInOutSine: (x, t, b, c, d) => {
+        return (-c / 2) * (Math.cos((Math.PI * t) / d) - 1) + b;
+    },
+    easeInExpo: (x, t, b, c, d) => {
+        return t == 0 ? b : c * Math.pow(2, 10 * (t / d - 1)) + b;
+    },
+    easeOutExpo: (x, t, b, c, d) => {
+        return t == d ? b + c : c * (-Math.pow(2, (-10 * t) / d) + 1) + b;
+    },
+    easeInOutExpo: (x, t, b, c, d) => {
+        if (t == 0) return b;
+        if (t == d) return b + c;
+        if ((t /= d / 2) < 1) return (c / 2) * Math.pow(2, 10 * (t - 1)) + b;
+        return (c / 2) * (-Math.pow(2, -10 * --t) + 2) + b;
+    },
+    easeInCirc: (x, t, b, c, d) => {
+        return -c * (Math.sqrt(1 - (t /= d) * t) - 1) + b;
+    },
+    easeOutCirc: (x, t, b, c, d) => {
+        return c * Math.sqrt(1 - (t = t / d - 1) * t) + b;
+    },
+    easeInOutCirc: (x, t, b, c, d) => {
+        if ((t /= d / 2) < 1) return (-c / 2) * (Math.sqrt(1 - t * t) - 1) + b;
+        return (c / 2) * (Math.sqrt(1 - (t -= 2) * t) + 1) + b;
+    },
+    easeInElastic: (x, t, b, c, d) => {
+        var s = 1.70158;
+        var p = 0;
+        var a = c;
+        if (t == 0) return b;
+        if ((t /= d) == 1) return b + c;
+        if (!p) p = d * 0.3;
+        if (a < Math.abs(c)) {
+            a = c;
+            var s = p / 4;
+        } else var s = (p / (2 * Math.PI)) * Math.asin(c / a);
+        return (
+            -(
+                a *
+                Math.pow(2, 10 * (t -= 1)) *
+                Math.sin(((t * d - s) * (2 * Math.PI)) / p)
+            ) + b
+        );
+    },
+    easeOutElastic: (x, t, b, c, d) => {
+        var s = 1.70158;
+        var p = 0;
+        var a = c;
+        if (t == 0) return b;
+        if ((t /= d) == 1) return b + c;
+        if (!p) p = d * 0.3;
+        if (a < Math.abs(c)) {
+            a = c;
+            var s = p / 4;
+        } else var s = (p / (2 * Math.PI)) * Math.asin(c / a);
+        return (
+            a * Math.pow(2, -10 * t) * Math.sin(((t * d - s) * (2 * Math.PI)) / p) +
+            c +
+            b
+        );
+    },
+    easeInOutElastic: (x, t, b, c, d) => {
+        var s = 1.70158;
+        var p = 0;
+        var a = c;
+        if (t == 0) return b;
+        if ((t /= d / 2) == 2) return b + c;
+        if (!p) p = d * (0.3 * 1.5);
+        if (a < Math.abs(c)) {
+            a = c;
+            var s = p / 4;
+        } else var s = (p / (2 * Math.PI)) * Math.asin(c / a);
+        if (t < 1)
+            return (
+                -0.5 *
+                    (a *
+                        Math.pow(2, 10 * (t -= 1)) *
+                        Math.sin(((t * d - s) * (2 * Math.PI)) / p)) +
+                b
+            );
+        return (
+            a *
+                Math.pow(2, -10 * (t -= 1)) *
+                Math.sin(((t * d - s) * (2 * Math.PI)) / p) *
+                0.5 +
+            c +
+            b
+        );
+    },
+    easeInBack: (x, t, b, c, d, s) => {
+        if (s == undefined) s = 1.70158;
+        return c * (t /= d) * t * ((s + 1) * t - s) + b;
+    },
+    easeOutBack: (x, t, b, c, d, s) => {
+        if (s == undefined) s = 1.70158;
+        return c * ((t = t / d - 1) * t * ((s + 1) * t + s) + 1) + b;
+    },
+    easeInOutBack: (x, t, b, c, d, s) => {
+        if (s == undefined) s = 1.70158;
+        if ((t /= d / 2) < 1)
+            return (c / 2) * (t * t * (((s *= 1.525) + 1) * t - s)) + b;
+        return (c / 2) * ((t -= 2) * t * (((s *= 1.525) + 1) * t + s) + 2) + b;
+    },
+    easeInBounce: (x, t, b, c, d) => {
+        return c - $.easing.easeOutBounce(x, d - t, 0, c, d) + b;
+    },
+    easeOutBounce: (x, t, b, c, d) => {
+        if ((t /= d) < 1 / 2.75) {
+            return c * (7.5625 * t * t) + b;
+        } else if (t < 2 / 2.75) {
+            return c * (7.5625 * (t -= 1.5 / 2.75) * t + 0.75) + b;
+        } else if (t < 2.5 / 2.75) {
+            return c * (7.5625 * (t -= 2.25 / 2.75) * t + 0.9375) + b;
+        } else {
+            return c * (7.5625 * (t -= 2.625 / 2.75) * t + 0.984375) + b;
+        }
+    },
+    easeInOutBounce: (x, t, b, c, d) => {
+        if (t < d / 2) return $.easing.easeInBounce(x, t * 2, 0, c, d) * 0.5 + b;
+        return $.easing.easeOutBounce(x, t * 2 - d, 0, c, d) * 0.5 + c * 0.5 + b;
+    },
+});
+
+/*
+ *
+ * TERMS OF USE - EASING EQUATIONS
+ *
+ * Open source under the BSD License.
+ *
+ * Copyright 2001 Robert Penner
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without modification,
+ * are permitted provided that the following conditions are met:
+ *
+ * Redistributions of source code must retain the above copyright notice, this list of
+ * conditions and the following disclaimer.
+ * Redistributions in binary form must reproduce the above copyright notice, this list
+ * of conditions and the following disclaimer in the documentation and/or other materials
+ * provided with the distribution.
+ *
+ * Neither the name of the author nor the names of contributors may be used to endorse
+ * or promote products derived from this software without specific prior written permission.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY
+ * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+ * COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
+ * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+ * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+ * AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+ * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
+ * OF THE POSSIBILITY OF SUCH DAMAGE.
+ *
+ */
+
 var timeout = null;
 var prevent = false;
 
@@ -79,41 +327,57 @@ const svg = (name) => {
     }
 };
 
+const ignorePaper = (is, ignoreSources) => {
+    const sources = Object.entries(ignoreSources)
+        .filter(([name, ignore]) => ignore)
+        .map(([name, ignore]) => name);
+    const papers = Object.entries(is)
+        .filter(([source, isSource]) => isSource)
+        .map(([name, isSource]) => name);
+    return papers.some((paper) => sources.includes(paper));
+};
+
 /**
  * Adds markdown link, bibtex citation and download button on arxiv.
  * Also, if the current website is a known paper source (isPaper), adds or updates the current paper
  * @param {object} checks The user's stored preferences regarding menu options
  */
-const contentScriptMain = async (url) => {
-    await initState(undefined, true);
-    const menu = await getMenu();
+const contentScriptMain = async (url, stateIsReady) => {
+    if (!stateIsReady) await initState(undefined, true);
+    const menu = global.state.menu;
 
-    let is = isPaper(url);
+    let is = await isPaper(url, true);
 
     if (is.arxiv) {
         arxiv(menu);
     }
+    let ignoreSources = await getStorage("ignoreSources");
 
-    if (Object.values(is).some((i) => i)) {
-        const update = await addOrUpdatePaper(url, is, menu);
-        let id;
-        if (update) {
-            id = update.id;
-        }
+    let update;
+    if (!ignorePaper(is, ignoreSources) && !(menu.checkPdfOnly && !isPdfUrl(url))) {
+        update = await addOrUpdatePaper(url, is, menu);
+    }
+    let id;
+    if (update) {
+        id = update.id;
+    }
 
-        if (id && menu.checkPdfTitle) {
-            const makeTitle = async (id, url) => {
-                if (!global.state.papers.hasOwnProperty(id)) return;
-                const paper = global.state.papers[id];
-                title = stateTitleFunction(paper);
-                window.document.title = title;
-                chrome.runtime.sendMessage({
+    if (id && menu.checkPdfTitle) {
+        const makeTitle = async (id, url) => {
+            if (!global.state.papers.hasOwnProperty(id)) return;
+            const paper = global.state.papers[id];
+            title = stateTitleFunction(paper);
+            chrome.runtime.sendMessage(
+                {
                     type: "update-title",
                     options: { title, url },
-                });
-            };
-            makeTitle(id, url);
-        }
+                },
+                () => {
+                    window.document.title = title;
+                }
+            );
+        };
+        makeTitle(id, url);
     }
 };
 
@@ -123,6 +387,7 @@ const contentScriptMain = async (url) => {
  * @param {string} text the text to display in the slider div
  */
 const feedback = (text, paper = null) => {
+    const notifTime = 3000;
     try {
         clearTimeout(timeout);
         findEl("feedback-notif").remove();
@@ -141,8 +406,10 @@ const feedback = (text, paper = null) => {
                 <div>${text}</div>
             </div>`;
     }
-
-    $("body").append(/*html*/ ` <div id="feedback-notif">${text}</div> `);
+    document.body.insertAdjacentHTML(
+        "beforeend",
+        /*html*/ ` <div id="feedback-notif">${text}</div> `
+    );
     style("feedback-notif", "padding", "0px");
     $("#feedback-notif").animate(
         {
@@ -162,7 +429,7 @@ const feedback = (text, paper = null) => {
                 prevent = false;
             }
         );
-    }, 3000);
+    }, notifTime);
     addListener("notif-cancel", "click", () => {
         clearTimeout(timeout);
         delete global.state.papers[paper.id];
@@ -177,7 +444,7 @@ const feedback = (text, paper = null) => {
                         prevent = false;
                     }
                 );
-            }, 1500);
+            }, notifTime);
             setHTML("notif-text", "<div>Removed from memory</div>");
         });
     });
@@ -190,7 +457,7 @@ const updatePaper = (papers, id) => {
 };
 
 const arxiv = async (checks) => {
-    const { checkMd, checkBib, checkDownload } = checks;
+    const { checkMd, checkBib, checkDownload, checkStore } = checks;
     global.state.titleFunction = (await getTitleFunction()).titleFunction;
 
     const url = window.location.href;
@@ -198,7 +465,7 @@ const arxiv = async (checks) => {
 
     if (!isArxivAbs) return;
 
-    const id = parseIdFromUrl(url);
+    const id = await parseIdFromUrl(url);
     const arxivAbsCol = document.querySelector(
         ".extra-services .full-text h2"
     ).parentElement;
@@ -213,9 +480,9 @@ const arxiv = async (checks) => {
                 <div id="arxiv-button">${svg("download")}</div>
             </div>
         `;
-        arxivAbsCol.innerHTML += button;
+        arxivAbsCol.insertAdjacentHTML("beforeend", button);
         var downloadTimeout;
-        $("#arxiv-button").on("click", async () => {
+        addListener("arxiv-button", "click", async () => {
             removeClass("arxiv-button", "downloaded");
             addClass("arxiv-button", "downloaded");
             downloadTimeout && clearTimeout(downloadTimeout);
@@ -224,7 +491,7 @@ const arxiv = async (checks) => {
                     removeClass("arxiv-button", "downloaded");
             }, 1500);
             if (!global.state.papers.hasOwnProperty(id)) {
-                const title = await $.get(
+                const title = await fetch(
                     `https://export.arxiv.org/api/query?id_list=${id.split("-")[1]}`
                 ).then((data) => {
                     return $($(data).find("entry title")[0]).text();
@@ -235,7 +502,13 @@ const arxiv = async (checks) => {
                 if (!title.endsWith(".pdf")) {
                     title += ".pdf";
                 }
-                downloadFile(pdfUrl);
+                checkStore
+                    ? sendMessageToBackground({
+                          type: "download-pdf-to-store",
+                          pdfUrl,
+                          title,
+                      })
+                    : downloadFile(pdfUrl, title);
             }
         });
     }
@@ -243,7 +516,8 @@ const arxiv = async (checks) => {
     // -----  Markdown Link  -----
     // ---------------------------
     if (checkMd) {
-        arxivAbsCol.innerHTML += /*html*/ ` <div id="markdown-container">
+        const mdHtml = /*html*/ `
+        <div id="markdown-container">
             <div id="markdown-header" class="arxivTools-header">
                 <h3>Markdown</h3>
                 ${svg("clipboard-default")} ${svg("clipboard-default-ok")}
@@ -255,10 +529,11 @@ const arxiv = async (checks) => {
             }](${pdfUrl})
             </div>
         </div>`;
+        arxivAbsCol.insertAdjacentHTML("beforeend", mdHtml);
     }
 
     if (checkBib) {
-        arxivAbsCol.innerHTML += /*html*/ `
+        const bibLoader = /*html*/ `
             <div id="loader-container" class="arxivTools-container">
                 <div class="sk-folding-cube">
                     <div class="sk-cube1 sk-cube"></div>
@@ -268,6 +543,7 @@ const arxiv = async (checks) => {
                 </div>
             </div>
         `;
+        arxivAbsCol.insertAdjacentHTML("beforeend", bibLoader);
 
         $.get(`https://export.arxiv.org/api/query?id_list=${id.split("-")[1]}`).then(
             async (data) => {
@@ -279,15 +555,15 @@ const arxiv = async (checks) => {
                             <h3>BibTex:</h3>
                             ${svg("clipboard-default")} ${svg("clipboard-default-ok")}
                         </div>
-                        <div id="texTextarea" class="arxivTools-codify">${
+                        <div id="texTextarea" class="arxivTools-codify">${bibtexToString(
                             paper.bibtex
-                        }</div>
+                        ).replaceAll("\t", "  ")}</div>
                     </div>
                 `;
 
                 $("#loader-container").fadeOut(() => {
                     findEl("loader-container").remove();
-                    arxivAbsCol.innerHTML += bibtexDiv;
+                    arxivAbsCol.insertAdjacentHTML("beforeend", bibtexDiv);
                     addListener(
                         document.querySelector("#texHeader .copy-feedback"),
                         "click",
@@ -343,23 +619,25 @@ const arxiv = async (checks) => {
     }
 };
 
-$(() => {
+$(async () => {
     const url = window.location.href;
-    info("Executing Paper Memory content script");
-    if (
-        Object.values(global.knownPaperPages)
-            .reduce((a, b) => a.concat(b), [])
-            .some((d) => url.includes(d))
-    ) {
-        info("Running contentScriptMain for", url);
-        contentScriptMain(url);
+    let stateIsReady = false;
+    if (url.startsWith("file://")) {
+        await initState(undefined, true);
+        stateIsReady = true;
+    }
+    if (await isKnownURL(url, true)) {
+        info("Running PaperMemory's content script");
+        contentScriptMain(url, stateIsReady);
     }
 
     chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
         // listen for messages sent from background.js
-        if (request.message === "hello!") {
-            info("Running content_script for url update");
-            console.log(request.url); // new url is now in content scripts!
+        if (request.message === "tabUrlUpdate") {
+            info(
+                "Running PaperMemory's contentScriptMain for url update:",
+                request.url
+            );
             contentScriptMain(request.url);
         }
     });

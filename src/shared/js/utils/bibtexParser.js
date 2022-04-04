@@ -306,9 +306,49 @@ function BibtexParser() {
     };
 }
 
-const bibtexToJson = (bibtex) => {
+const bibtexToObject = (bibtex) => {
     var b = new BibtexParser();
     b.setInput(bibtex);
     b.bibtex();
-    return b.entries;
+    const entry = b.getEntries()[0];
+    const obj = {
+        ...entry.entryTags,
+        entryType: entry.entryType,
+        citationKey: entry.citationKey,
+    };
+    return obj;
 };
+
+const bibtexToString = (bibtex) => {
+    if (typeof bibtex === "string") {
+        bibtex = bibtexToObject(bibtex);
+    }
+
+    let bstr = `@${bibtex.entryType.toLowerCase()}{${bibtex.citationKey},\n`;
+    delete bibtex.entryType;
+    delete bibtex.citationKey;
+    const keyLen = Math.max(...Object.keys(bibtex).map((k) => k.length));
+    for (const key in bibtex) {
+        if (bibtex.hasOwnProperty(key)) {
+            const value = bibtex[key].replaceAll(/\s+/g, " ").trim();
+            bkey = key + " ".repeat(keyLen - key.length);
+            bstr += `\t${bkey} = {${value}},\n`;
+        }
+    }
+    return (bstr.slice(0, -2) + "\n}").replaceAll("\t", "  ");
+};
+
+const extractBibtexValue = (bibtex, key) => {
+    const b = bibtexToObject(bibtex);
+    if (b.hasOwnProperty(key)) return b[key];
+    return "";
+};
+
+const extractAuthor = (bibtex) =>
+    extractBibtexValue(bibtex, "author")
+        .replaceAll("{", "")
+        .replaceAll("}", "")
+        .replaceAll("\\", "")
+        .split(" and ")
+        .map((a) => a.split(", ").reverse().join(" "))
+        .join(" and ");

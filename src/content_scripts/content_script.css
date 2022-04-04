@@ -49,6 +49,7 @@
 
 #feedback-notif {
     padding: 1em;
+    z-index: 1000;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -96,7 +97,7 @@
     padding: 8px;
     word-break: break-word;
     overflow: hidden;
-    font-size: 0.9rem;
+    font-size: 0.75rem;
 }
 
 .arxivTools-card {

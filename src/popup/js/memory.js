@@ -43,29 +43,33 @@ const updatePopupPaperNoMemory = (url) => {
             This paper is not in your memory
         </div>
         <ul>
-            It can be for one of 4 reasons:
+            It can be for one of many reasons:
+            <li style="margin-top: 4px">
+                You disabled paper recording from non-pdf pages in the menu
+            </li>
+            <li style="margin-top: 4px">
+                You disabled this paper source in the options page
+            </li>
+            <li style="margin-top: 4px">
+            You deleted the paper (refresh the page to add it back)
+            </li>
+            <li style="margin-top: 4px">
+            There was an error parsing the paper's data (you can check the console
+                if you think this is an issue)
+                </li>
             <li style="margin-top: 4px">
                 On Firefox, content scripts are not triggered on pdfs.
                 <ul>
                     <li>
-                        This is not something I can do anything about, it's a known
-                        issue but a design choice by Firefox's developers.
+                        This is not something I can do anything about, it's a design choice by Firefox developers.
                     </li>
                     <li>
-                        The extension would work on the paper's <i>page</i> (for
-                        instance arxiv.org/<strong>abs</strong>/1106.0245)
+                        The extension would work on the paper's <i>abstract</i>
                     </li>
                 </ul>
             </li>
             <li style="margin-top: 4px">
-                You deleted the paper (refresh the page to add it back)
-            </li>
-            <li style="margin-top: 4px">
-                There was an error parsing the paper's data (you can check the console
-                if you think this is an issue)
-            </li>
-            <li style="margin-top: 4px">
-                You are actually not on a paper page but the extension made a mistake
+                You are actually not on a paper page but the extension made a mistake thinking so, just ignore this.
             </li>
             <p style="font-size: 0.9rem">
                 Open an issue on
@@ -82,7 +86,7 @@ const updatePopupPaperNoMemory = (url) => {
 
     if (navigator.userAgent.search("Firefox") > -1) {
         addListener("manual-firefox", "click", async () => {
-            const is = isPaper(url);
+            const is = await isPaper(url);
             let paper;
             const update = await addOrUpdatePaper(url, is);
             if (update) {
@@ -90,14 +94,9 @@ const updatePopupPaperNoMemory = (url) => {
             } else {
                 return;
             }
-            log("paper: ", paper);
-            log("previousIsArxiv: ", previousIsArxiv);
-            log("url: ", url);
-            const isKnownPage = Object.values(is).some((i) => i);
-            log("isKnownPage: ", isKnownPage);
             if (paper) {
                 setHTML("isArxiv", previousIsArxiv);
-                popupMain(url, isKnownPage, true);
+                popupMain(url, is, true);
             }
         });
     }
@@ -128,9 +127,9 @@ const copyAndConfirmMemoryItem = (id, textToCopy, feedbackText, isPopup) => {
         : findEl(id, "memory-item-feedback");
     if (!element) return;
     element.innerText = feedbackText;
-    $(element).fadeIn();
+    fadeIn(element);
     setTimeout(() => {
-        $(element).fadeOut();
+        fadeOut(element);
     }, 2000);
 };
 
@@ -172,106 +171,84 @@ const focusExistingOrCreateNewCodeTab = (codeLink) => {
 };
 
 /**
- * Looks for an open tab to the paper: either its pdf or html page.
- * If both a pdf and an html page exist, focus the pdf.
- * If none exist, create a new tab.
+ * Looks for an open tab to the paper: either its local or online pdf, or html page.
+ * If both a local pdf tab exists, focus it.
+ * Otherwise, if a remote pdf tab exists, focus it.
+ * Otherwise, if an html page exist, focus the it.
+ * If none exist, create a new tab to the local file if it exists, to the online pdf otherwise.
  * @param {object} paper The paper whose pdf should be opened
  */
-const focusExistingOrCreateNewPaperTab = (paper) => {
-    const hostname = parseUrl(paper.pdfLink).hostname;
+const focusExistingOrCreateNewPaperTab = (paper, fromMemoryItem) => {
+    chrome.tabs.query({}, async (tabs) => {
+        // find user's preferences
+        const menu = global.state.menu;
 
-    // create the match string to look for in existing tabs
-    // as ~ : focusTab = url.contains(match)
-    let match = paper.pdfLink
-        .split("/") // split on parts of the path
-        .reverse()[0] // get the last one (all)
-        .replace("-Paper.pdf", "") // (neurips)
-        .replace(".pdf", "") // remove .pdf (cvf)
-        .split("?") // remove get args if any
-        .reverse()[0]; // find id (openreview)
-    if (paper.source === "biorxiv") {
-        match = cleanBiorxivURL(paper.pdfLink);
-    }
-    if (match.match(/\d{5}v\d+$/) && paper.source === "arxiv") {
-        // remove potential pdf version on arxiv
-        match = match.split("v")[0];
-    }
+        let paperTabs = []; // tabs to the paper
+        for (const tab of tabs) {
+            let tabPaperId;
+            try {
+                // try and parse a paper id
+                tabPaperId = tab.url && (await parseIdFromUrl(tab.url));
+            } catch (error) {}
 
-    chrome.tabs.query({ url: `*://${hostname}/*` }, (tabs) => {
-        let validTabsIds = [];
-        let pdfTabsIds = [];
-        const urls = tabs.map((t) => t.url);
-        let idx = 0;
-        for (const u of urls) {
-            if (u.indexOf(match) >= 0) {
-                validTabsIds.push(idx);
-                if (u.endsWith(".pdf")) {
-                    pdfTabsIds.push(idx);
-                }
+            if (tabPaperId && tabPaperId === paper.id) {
+                // an id is found and its the paper's: store the tab
+                paperTabs.push(tab);
             }
-            idx += 1;
         }
-        if (validTabsIds.length > 0) {
-            let tab;
-            if (pdfTabsIds.length > 0) {
-                tab = tabs[pdfTabsIds[0]];
+
+        let tabToFocus;
+        // choose favorite tabs
+        const favoriteTabs = menu.checkPreferPdf
+            ? paperTabs.filter((tab) => tab.url && isPdfUrl(tab.url))
+            : paperTabs.filter((tab) => tab.url && !isPdfUrl(tab.url));
+
+        if (favoriteTabs.length > 0) {
+            // favor tabs to local files
+            const fileTabs =
+                fromMemoryItem && global.state.files.hasOwnProperty(paper.id)
+                    ? []
+                    : paperTabs.filter((tab) => tab.url.startsWith("file://"));
+            if (fileTabs.length > 0) {
+                tabToFocus = fileTabs[0];
             } else {
-                tab = tabs[validTabsIds[0]];
+                tabToFocus = favoriteTabs[0];
             }
-            const tabUpdateProperties = { active: true };
-            const windowUpdateProperties = { focused: true };
+        } else if (paperTabs.length > 0) {
+            // no pdf tab: go to abs url
+            tabToFocus = paperTabs[0];
+        }
+
+        if (tabToFocus) {
+            // a tab was found: focus it by starting to focus its window
             chrome.windows.getCurrent((w) => {
-                if (w.id !== tab.windowId) {
-                    chrome.windows.update(tab.windowId, windowUpdateProperties, () => {
-                        chrome.tabs.update(tab.id, tabUpdateProperties);
-                    });
+                if (w.id !== tabToFocus.windowId) {
+                    // tab is in a different window: focus the window
+                    chrome.windows.update(
+                        tabToFocus.windowId,
+                        { focused: true },
+                        () => {
+                            // focus the tab
+                            chrome.tabs.update(tabToFocus.id, { active: true });
+                        }
+                    );
                 } else {
-                    chrome.tabs.update(tab.id, tabUpdateProperties);
+                    // tab is in the same window: focus the tab
+                    chrome.tabs.update(tabToFocus.id, { active: true });
                 }
             });
-        } else if (global.state.menu.checkStore) {
-            chrome.downloads.search(
-                {
-                    filenameRegex: "PaperMemoryStore/.*",
-                },
-                (files) => {
-                    var file;
-                    files = files.filter((f) => f.exists);
-                    for (const candidate of files) {
-                        if (
-                            candidate.filename
-                                .toLowerCase()
-                                .includes(paper.title.toLowerCase())
-                        ) {
-                            file = candidate;
-                            break;
-                        } else {
-                            var id;
-                            try {
-                                id = parseIdFromUrl(candidate.finalUrl);
-                            } catch (error) {
-                                id = "";
-                            }
-                            const cleanedUrl = paperToPDF({
-                                pdfLink: candidate.finalUrl,
-                                id: id,
-                                source: paper.source,
-                            });
-                            if (cleanedUrl === paperToPDF(paper)) {
-                                file = candidate;
-                                break;
-                            }
-                        }
-                    }
-                    if (file) {
-                        chrome.downloads.open(file.id);
-                    } else {
-                        chrome.tabs.create({ url: paper.pdfLink });
-                    }
-                }
-            );
         } else {
-            chrome.tabs.create({ url: paper.pdfLink });
+            // no tab was found
+            const hasFile = global.state.files.hasOwnProperty(paper.id);
+            if (hasFile && !fromMemoryItem) {
+                // this paper has a local file
+                chrome.downloads.open(global.state.files[paper.id].id);
+            } else {
+                // no tab open or local file: open a new tab to the paper's pdf
+                chrome.tabs.create({
+                    url: menu.checkPreferPdf ? paperToPDF(paper) : paperToAbs(paper),
+                });
+            }
         }
 
         global.state.papers[paper.id].count += 1;
@@ -290,8 +267,6 @@ const focusExistingOrCreateNewPaperTab = (paper) => {
 const saveNote = (id, note) => {
     global.state.papers[id].note = note;
     chrome.storage.local.set({ papers: global.state.papers }, () => {
-        // log("Updated the note for " + global.state.papers[id].title);
-
         setHTML(
             findEl(id, "memory-note-div"),
             note
@@ -319,7 +294,6 @@ const saveCodeLink = (id, codeLink) => {
     codeLink = codeLink.trim();
     global.state.papers[id].codeLink = codeLink;
     chrome.storage.local.set({ papers: global.state.papers }, () => {
-        // log(`Updated the code for ${global.state.papers[id].title} to ${codeLink}`);
         const displayLink = codeLink.replace(/^https?:\/\//, "");
         setHTML(findEl(id, "memory-code-link"), displayLink);
         setHTML(`popup-code-link`, displayLink);
@@ -456,13 +430,14 @@ const reverseMemory = () => {
  *        contains both the strings "cli" and "ga".
  * @param {string} letters The user's string query.
  */
-const filterMemoryByString = (letters) => {
+const searchMemory = (letters) => {
     const words = letters.toLowerCase().split(" ");
     let papersList = [];
     for (const paper of global.state.sortedPapers) {
         const title = paper.title.toLowerCase();
         const author = paper.author.toLowerCase();
         const note = paper.note.toLowerCase();
+        const tags = paper.tags.join(" ").toLowerCase();
         const displayId = getDisplayId(paper.id).toLowerCase();
         if (
             words.every(
@@ -470,6 +445,7 @@ const filterMemoryByString = (letters) => {
                     title.includes(w) ||
                     author.includes(w) ||
                     note.includes(w) ||
+                    tags.includes(w) ||
                     displayId.includes(w)
             )
         ) {
@@ -482,13 +458,49 @@ const filterMemoryByString = (letters) => {
 };
 
 /**
+ * Filters the sortedPapers into papersList, keeping papers published in a list of years
+ * e.g.: "y:21, 22" or "y: <2012"
+ * @param {string} letters The string representing the tags query, deleting "t:" and splitting on " "
+ */
+const searchMemoryByYear = (letters) => {
+    const condition = letters.includes("<")
+        ? "smaller"
+        : letters.includes(">")
+        ? "greater"
+        : "";
+    const searchYears = letters
+        .replace("y:", "")
+        .replace(/(<|>)/g, "")
+        .toLowerCase()
+        .replaceAll(",", " ")
+        .split(" ")
+        .filter((y) => y.length > 0)
+        .map((y) => (y.length === 4 ? y : "20" + y))
+        .map((y) => parseInt(y, 10));
+    console.log("searchYears: ", searchYears);
+    let papersList = [];
+    let compare = (y, py) => y === py;
+    if (condition === "smaller") {
+        compare = (y, py) => y > py;
+    } else if (condition === "greater") {
+        compare = (y, py) => y < py;
+    }
+    for (const paper of global.state.sortedPapers) {
+        const paperYear = parseInt(paper.year, 10);
+        if (searchYears.some((year) => compare(year, paperYear))) {
+            papersList.push(paper);
+        }
+    }
+    global.state.papersList = papersList;
+};
+/**
  * Filters the sortedPapers into papersList, keeping papers whose tags match the query: all
  * papers whose tags contain all words in the query. Triggered when a query starts with "t: ".
  * e.g.: "cli ga" will look for all papers which have at least 1 tag containing the substring "cli"
  *        AND at least 1 tag containing the substring "ga"
  * @param {string} letters The string representing the tags query, deleting "t:" and splitting on " "
  */
-const filterMemoryByTags = (letters) => {
+const searchMemoryByTags = (letters) => {
     const tags = letters.replace("t:", "").toLowerCase().split(" ");
     let papersList = [];
     for (const paper of global.state.sortedPapers) {
@@ -504,10 +516,10 @@ const filterMemoryByTags = (letters) => {
 
 /**
  * Filters the sortedPapers into papersList, keeping papers whose code matches the query. Similar
- * to filterMemoryByString but looks into the codeLink attribute. Triggered when a query starts with "c: ".
+ * to searchMemory but looks into the codeLink attribute. Triggered when a query starts with "c: ".
  * @param {string} letters The string representing the code query, deleting "c:" and splitting on " "
  */
-const filterMemoryByCode = (letters) => {
+const searchMemoryByCode = (letters) => {
     const words = letters.replace("c:", "").toLowerCase().split(" ");
     let papersList = [];
     for (const paper of global.state.sortedPapers) {
@@ -615,12 +627,23 @@ const displayMemoryTable = () => {
     // Clear existing items
     var memoryTable = findEl("memory-table");
     setHTML(memoryTable, "");
+
+    // Define SVG hover titles:
+    // titles behave differently in build/watch mode. This works in build
+    const titles = {
+        edit: "Edit paper details",
+        copyMd: "Copy Markdown-formatted link",
+        copyBibtext: "Copy Bibtex citation",
+        visits: "Number of times you have opened this paper",
+        openLocal: "Open downloaded pdf",
+    };
+
     // Add relevant sorted papers (papersList may be smaller than sortedPapers
     // depending on the search query)
     let table = [];
     for (const paper of global.state.papersList) {
         try {
-            table.push(getMemoryItemHTML(paper));
+            table.push(getMemoryItemHTML(paper, titles));
         } catch (error) {
             log("displayMemoryTable error:");
             log(error);
@@ -646,6 +669,8 @@ const displayMemoryTable = () => {
     addEventToClass(".memory-item-bibtex", "click", handleCopyBibtex);
     // Copy pdf link
     addEventToClass(".memory-item-copy-link", "click", handleCopyPDFLink);
+    // Copy pdf link
+    addEventToClass(".memory-item-openLocal", "click", handleMemoryOpenLocal);
     // Add to favorites
     addEventToClass(".memory-item-favorite", "click", handleAddItemToFavorites);
     // Cancel edits: bring previous values from global.state back
@@ -663,7 +688,7 @@ const displayMemoryTable = () => {
     // Save fields on edits save (submit)
     const end = Date.now();
 
-    log("[displayMemoryTable] Display duration (s): " + (end - start) / 1000);
+    info("Display duration (s): " + (end - start) / 1000);
 };
 
 /**
@@ -672,7 +697,6 @@ const displayMemoryTable = () => {
  * + closes the menu if it is open (should not be)
  */
 const makeMemoryHTML = async () => {
-    const tstart = Date.now() / 1000;
     // Fill-in input placeholder
     setPlaceholder(
         "memory-search",
@@ -690,8 +714,6 @@ const makeMemoryHTML = async () => {
         delayTime = 150;
     }
 
-    const tevents = Date.now() / 1000;
-
     // search keypress events.
     // deprecated fix: https://stackoverflow.com/questions/49278648/alternative-for-events-deprecated-keyboardevent-which-property
     addListener(
@@ -708,8 +730,6 @@ const makeMemoryHTML = async () => {
     addListener("memory-select", "change", handleMemorySelectChange);
     // listen to sorting direction change
     addListener("memory-sort-arrow", "click", handleMemorySortArrow);
-    const tend = Date.now() / 1000;
-    log("Total time to make the memory HTML (async) (s):" + (tend - tstart));
 };
 
 const openMemory = () => {

@@ -3,7 +3,7 @@
  * @param {object} paper A paper object
  * @returns HTML string
  */
-const getMemoryItemHTML = (paper) => {
+const getMemoryItemHTML = (paper, titles) => {
     const addDate = new Date(paper.addDate).toLocaleString().replace(",", "");
     const lastOpenDate = new Date(paper.lastOpenDate).toLocaleString().replace(",", "");
     const displayId = getDisplayId(paper.id);
@@ -12,14 +12,12 @@ const getMemoryItemHTML = (paper) => {
     const tags = new Set(paper.tags);
     const tagOptions = getTagsOptions(paper);
     const favoriteClass = paper.favorite ? "favorite" : "";
-    const titles = {
-        edit: `"Edit paper details&#13;&#10;(or press 'e' when this paper is focused,&#13;&#10; i.e. when you navigated to it with 'tab')"`,
-        pdfLink: `"Open ${paper.pdfLink}"`,
-        copyPdfLink: `"Copy pdf link"`,
-        copyMd: `"Copy Markdown-formatted link"`,
-        copyBibtext: `"Copy Bibtex citation"`,
-        visits: `"Number of times you have loaded&#13;&#10;the paper's Page or PDF"`,
-    };
+    // titles behave differently in build/watch mode. This works in build
+    titles.pdfLink = `Open link to ${paper.title}`;
+    titles.copyLink = `Open link to the paper's ${
+        global.state.menu.checkPreferPdf ? "PDF" : "abstract"
+    }`;
+
     let codeDiv = /*html*/ `
         <small class="memory-item-faded">
             <span class="memory-code-link"> ${paper.codeLink || ""} </span>
@@ -34,6 +32,16 @@ const getMemoryItemHTML = (paper) => {
             </div>
         `;
     }
+
+    let openLocalDiv = global.state.files.hasOwnProperty(paper.id)
+        ? /*html*/ `
+            <div
+                class="memory-item-openLocal memory-item-svg-div"
+                title=${titles.openLocal}
+            >
+                ${tablerSvg("vocabulary", "", ["memory-icon-svg"])}
+            </div>`
+        : ``;
 
     return /*html*/ `
         <div
@@ -94,25 +102,27 @@ const getMemoryItemHTML = (paper) => {
                     class="memory-item-link memory-item-svg-div"
                     title=${titles.pdfLink}
                 >
-                    ${tablerSvg("file-symlink", "", ["memory-icon-svg"])}
+                    ${tablerSvg("external-link", "", ["memory-icon-svg"])}
                 </div>
+
+                ${openLocalDiv}
 
                 <div
                     class="memory-item-copy-link memory-item-svg-div"
-                    title=${titles.copyPdfLink}
+                    title=${titles.copyLink}
                 >
                     ${tablerSvg("link", "", ["memory-icon-svg"])}
                 </div>
 
                 <div class="memory-item-md memory-item-svg-div" title=${titles.copyMd}>
-                    ${tablerSvg("clipboard-list", "", ["memory-icon-svg"])}
+                    ${tablerSvg("markdown", "", ["memory-icon-svg"])}
                 </div>
 
                 <div
                     class="memory-item-bibtex memory-item-svg-div"
                     title=${titles.copyBibtext}
                 >
-                    ${tablerSvg("archive", "", ["memory-icon-svg"])}
+                    ${tablerSvg("math-function", "", ["memory-icon-svg"])}
                 </div>
 
                 <span style="display: none" class="memory-item-feedback"></span>
@@ -267,9 +277,9 @@ ${note}</textarea
  * @param {object} paper A paper object
  * @returns HTML string
  */
-const getPopupPaperIconsHTML = (paper, currentUrl) => {
+const getPopupPaperIconsHTML = (paper, currentUrl, is) => {
     const id = paper.id;
-    const name = paperToAbs(paper) === currentUrl ? "HTML" : "PDF";
+    const name = isPdfUrl(currentUrl) ? "HTML" : "PDF";
 
     let scirate = "";
     if (global.state.menu.checkScirate && paper.source === "arxiv") {
@@ -284,6 +294,28 @@ const getPopupPaperIconsHTML = (paper, currentUrl) => {
         </div>`;
     }
 
+    const download =
+        global.state.menu.checkStore && (is.localFile || is.stored)
+            ? /*html*/ `
+        <div
+            tabindex="0"
+            class="memory-item-svg-div"
+            id="popup-memory-item-openLocal--${id}"
+            title="Open downloaded pdf"
+        >
+            ${tablerSvg("vocabulary", "", ["popup-click-svg"])}
+        </div>
+        `
+            : /*html*/ `
+        <div
+            tabindex="0"
+            class="memory-item-svg-div"
+            id="popup-memory-item-download--${id}"
+            title="Download pdf"
+        >
+            ${tablerSvg("file-download", "", ["popup-click-svg"])}
+        </div>
+    `;
     return /*html*/ `${scirate}
         <div
             tabindex="0"
@@ -297,7 +329,7 @@ const getPopupPaperIconsHTML = (paper, currentUrl) => {
             tabindex="0"
             class="memory-item-svg-div"
             id="popup-memory-item-copy-link--${id}"
-            title="Copy pdf link"
+            title="Copy link to paper"
         >
             ${tablerSvg("link", "", ["popup-click-svg"])}
         </div>
@@ -308,7 +340,7 @@ const getPopupPaperIconsHTML = (paper, currentUrl) => {
             id="popup-memory-item-md--${id}"
             title="Copy Markdown-formatted link"
         >
-            ${tablerSvg("clipboard-list", "", ["popup-click-svg"])}
+            ${tablerSvg("markdown", "", ["popup-click-svg"])}
         </div>
 
         <div
@@ -317,15 +349,8 @@ const getPopupPaperIconsHTML = (paper, currentUrl) => {
             id="popup-memory-item-bibtex--${id}"
             title="Copy Bibtex citation"
         >
-            ${tablerSvg("archive", "", ["popup-click-svg"])}
+            ${tablerSvg("math-function", "", ["popup-click-svg"])}
         </div>
 
-        <div
-            tabindex="0"
-            class="memory-item-svg-div"
-            id="popup-memory-item-download--${id}"
-            title="Download pdf"
-        >
-            ${tablerSvg("file-download", "", ["popup-click-svg"])}
-        </div>`;
+        ${download}`;
 };

@@ -1,6 +1,6 @@
 {
   "name": "Paper Memory",
-  "version": "0.4.5",
+  "version": "0.5.0",
   "manifest_version": 2,
   "description": "Automatically record papers you read from Arxiv, OpenReview & more! Organize your library with tags, links to code and quick notes.",
   "homepage_url": "https://github.com/vict0rsch/PaperMemory",
@@ -10,7 +10,6 @@
   "content_security_policy": "script-src 'self' 'unsafe-eval'; object-src 'self'",
   "background": {
     "scripts": [
-      "src/shared/min/jquery.min.js",
       "src/shared/min/utils.min.js",
       "src/background/background.js"
     ]
@@ -32,19 +31,7 @@
     "open_in_tab": true
   },
   "permissions": [
-    "https://arxiv.org/*",
-    "https://paperswithcode.com/api/*",
-    "*://api.biorxiv.org/*",
-    "https://export.arxiv.org/*",
-    "*://*.neurips.cc/*",
-    "*://*.nips.cc/*",
-    "*://*.pnas.org/*",
-    "*://proceedings.mlr.press/*",
-    "*://aclanthology.org/*",
-    "https://openaccess.thecvf.com/*",
-    "https://openreview.net/*",
-    "https://api.openreview.net/*",
-    "tabs",
+    "<all_urls>",
     "activeTab",
     "storage",
     "unlimitedStorage",
@@ -54,16 +41,7 @@
   "content_scripts": [
     {
       "matches": [
-        "*://arxiv.org/*",
-        "*://*.biorxiv.org/*",
-        "*://proceedings.mlr.press/*",
-        "*://*.neurips.cc/*",
-        "*://*.nips.cc/*",
-        "*://*.pnas.org/content/*",
-        "*://openaccess.thecvf.com/*",
-        "*://openreview.net/*",
-        "*://aclanthology.org/*",
-        "*://scirate.com/arxiv/*"
+        "<all_urls>"
       ],
       "run_at": "document_start",
       "js": [

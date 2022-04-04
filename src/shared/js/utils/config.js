@@ -24,9 +24,18 @@ global.state = {
     sortKey: "",
     papersReady: false,
     menu: {},
+    files: {},
+    ignoreSources: {},
+    lastRefresh: new Date(),
 };
 
-global.descendingSortKeys = ["addDate", "count", "lastOpenDate", "favoriteDate"];
+global.descendingSortKeys = [
+    "addDate",
+    "count",
+    "lastOpenDate",
+    "favoriteDate",
+    "year",
+];
 
 /**
  * Shared configuration for the Tags' select2 inputs
@@ -52,6 +61,9 @@ global.menuCheckNames = [
     "checkDirectOpen",
     "checkStore",
     "checkScirate",
+    "checkOfficialRepos",
+    "checkPreferPdf",
+    "checkPdfOnly",
 ];
 /**
  * Menu check names which should not default to true but to false
@@ -61,6 +73,8 @@ global.menuCheckDefaultFalse = [
     "checkDirectOpen",
     "checkStore",
     "checkScirate",
+    "checkOfficialRepos",
+    "checkPdfOnly",
 ];
 /**
  * All keys to retrieve from the menu, the checkboxes + the custom pdf function
@@ -79,7 +93,26 @@ global.knownPaperPages = {
     biorxiv: ["biorxiv.org/content"],
     pmlr: ["proceedings.mlr.press/"],
     acl: ["aclanthology.org/"],
-    pnas: ["pnas.org/content/"],
+    pnas: ["pnas.org/content/", "pnas.org/doi/"],
+    nature: ["nature.com/articles/"],
+    acs: ["https://pubs.acs.org/doi/"],
+    iop: ["iopscience.iop.org/article/"],
+    jmlr: [(url) => url.includes("jmlr.org/papers/v") && !url.endsWith("/")],
+};
+
+global.sourcesNames = {
+    arxiv: "ArXiv",
+    neurips: "NeurIPS",
+    cvf: "Computer Vision Foundation (CVF)",
+    openreview: "OpenReview",
+    biorxiv: "BioRxiv",
+    pmlr: "Proceedings of Machine Learning Research (PMLR)",
+    acl: "Association for Computational Linguistics (ACL)",
+    pnas: "Proceedings of the National Academy of Sciences (PNAS)",
+    nature: "Nature",
+    acs: "American Chemical Society (ACS)",
+    iop: "Institute Of Physics (IOP)",
+    jmlr: "Journal of Machine Learning Research (JMLR)",
 };
 
 global.overrideORConfs = {

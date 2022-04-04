@@ -296,7 +296,7 @@ const handleDownloadBibtexJsonClick = () => {
         // const version = versionToSemantic(papers.__dataVersion);
         delete papers.__dataVersion;
         const bibtex = Object.keys(papers).reduce((obj, k) => {
-            obj[k] = formatBibtext(papers[k].bibtex) || "";
+            obj[k] = bibtexToString(papers[k].bibtex);
             return obj;
         }, {});
         downloadTextFile(
@@ -321,11 +321,11 @@ const handleDownloadBibtexPlainClick = () => {
                     b = "";
                     log(v);
                 }
-                return formatBibtext(b);
+                return bibtexToString(b);
             })
             .join("\n");
         downloadTextFile(
-            JSON.stringify(bibtex),
+            bibtex,
             `PaperMemory-bibtex-${date}-${time}.bib`,
             "text/plain"
         );
@@ -439,12 +439,60 @@ const setupDataManagement = () => {
 };
 
 // ----------------------------
+// -----  Select Sources  -----
+// ----------------------------
+
+const makeSource = ([key, name], idx) => {
+    return /*html*/ `
+    <div class="source-container">
+        <div class="source-wrapper">
+            <input class="switch source-switch" type="checkbox" id="source-${key}" name="${key}" value="${key}">
+            <label for="${key}">${name}</label><br><br>
+        </div>
+    </div>`;
+};
+
+const setupSourcesSelection = async () => {
+    const sources = global.sourcesNames;
+    const table = Object.entries(sources).map(makeSource).join("");
+    setHTML("select-sources", table);
+
+    let ignoreSources = await getStorage("ignoreSources");
+    if (typeof ignoreSources === "undefined") {
+        ignoreSources = {};
+    }
+
+    for (const key of Object.keys(sources)) {
+        ignoreSources[key] = ignoreSources.hasOwnProperty(key)
+            ? ignoreSources[key]
+            : false;
+        const el = findEl(`source-${key}`);
+        if (el) {
+            el.checked = !ignoreSources[key];
+        }
+    }
+    setStorage("ignoreSources", ignoreSources);
+
+    for (const key of Object.keys(sources)) {
+        addListener(`source-${key}`, "change", async (e) => {
+            const key = e.target.id.replace("source-", "");
+            let ignoreSources = (await getStorage("ignoreSources")) || {};
+            const el = findEl(e.target.id);
+            ignoreSources[key] = !el.checked;
+            console.log("Updating source", key, "to", ignoreSources[key]);
+            setStorage("ignoreSources", ignoreSources);
+        });
+    }
+};
+
+// ----------------------------
 // -----  Document Ready  -----
 // ----------------------------
 
 (() => {
     setupAutoTags();
     setUpKeyboardListeners();
+    setupSourcesSelection();
     setupTitleFunction();
     setupDataManagement();
 })();

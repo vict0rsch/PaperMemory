@@ -1,273 +1,85 @@
-/*
- * jQuery Easing v1.3 - http://gsgd.co.uk/sandbox/jquery/easing/
- *
- * Uses the built in easing capabilities added In jQuery 1.1
- * to offer multiple easing options
- *
- * TERMS OF USE - jQuery Easing
- *
- * Open source under the BSD License.
- *
- * Copyright 2008 George McGinley Smith
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without modification,
- * are permitted provided that the following conditions are met:
- *
- * Redistributions of source code must retain the above copyright notice, this list of
- * conditions and the following disclaimer.
- * Redistributions in binary form must reproduce the above copyright notice, this list
- * of conditions and the following disclaimer in the documentation and/or other materials
- * provided with the distribution.
- *
- * Neither the name of the author nor the names of contributors may be used to endorse
- * or promote products derived from this software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY
- * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
- * COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
- * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
- * AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
- * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
- * OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- */
-
-// t: current time, b: begInnIng value, c: change In value, d: duration
-$.easing.jswing = $.easing.swing;
-
-$.extend($.easing, {
-    def: "easeOutQuad",
-    swing: (x, t, b, c, d) => {
-        //alert($.easing.default);
-        return $.easing[$.easing.def](x, t, b, c, d);
-    },
-    easeInQuad: (x, t, b, c, d) => {
-        return c * (t /= d) * t + b;
-    },
-    easeOutQuad: (x, t, b, c, d) => {
-        return -c * (t /= d) * (t - 2) + b;
-    },
-    easeInOutQuad: (x, t, b, c, d) => {
-        if ((t /= d / 2) < 1) return (c / 2) * t * t + b;
-        return (-c / 2) * (--t * (t - 2) - 1) + b;
-    },
-    easeInCubic: (x, t, b, c, d) => {
-        return c * (t /= d) * t * t + b;
-    },
-    easeOutCubic: (x, t, b, c, d) => {
-        return c * ((t = t / d - 1) * t * t + 1) + b;
-    },
-    easeInOutCubic: (x, t, b, c, d) => {
-        if ((t /= d / 2) < 1) return (c / 2) * t * t * t + b;
-        return (c / 2) * ((t -= 2) * t * t + 2) + b;
-    },
-    easeInQuart: (x, t, b, c, d) => {
-        return c * (t /= d) * t * t * t + b;
-    },
-    easeOutQuart: (x, t, b, c, d) => {
-        return -c * ((t = t / d - 1) * t * t * t - 1) + b;
-    },
-    easeInOutQuart: (x, t, b, c, d) => {
-        if ((t /= d / 2) < 1) return (c / 2) * t * t * t * t + b;
-        return (-c / 2) * ((t -= 2) * t * t * t - 2) + b;
-    },
-    easeInQuint: (x, t, b, c, d) => {
-        return c * (t /= d) * t * t * t * t + b;
-    },
-    easeOutQuint: (x, t, b, c, d) => {
-        return c * ((t = t / d - 1) * t * t * t * t + 1) + b;
-    },
-    easeInOutQuint: (x, t, b, c, d) => {
-        if ((t /= d / 2) < 1) return (c / 2) * t * t * t * t * t + b;
-        return (c / 2) * ((t -= 2) * t * t * t * t + 2) + b;
-    },
-    easeInSine: (x, t, b, c, d) => {
-        return -c * Math.cos((t / d) * (Math.PI / 2)) + c + b;
-    },
-    easeOutSine: (x, t, b, c, d) => {
-        return c * Math.sin((t / d) * (Math.PI / 2)) + b;
-    },
-    easeInOutSine: (x, t, b, c, d) => {
-        return (-c / 2) * (Math.cos((Math.PI * t) / d) - 1) + b;
-    },
-    easeInExpo: (x, t, b, c, d) => {
-        return t == 0 ? b : c * Math.pow(2, 10 * (t / d - 1)) + b;
-    },
-    easeOutExpo: (x, t, b, c, d) => {
-        return t == d ? b + c : c * (-Math.pow(2, (-10 * t) / d) + 1) + b;
-    },
-    easeInOutExpo: (x, t, b, c, d) => {
-        if (t == 0) return b;
-        if (t == d) return b + c;
-        if ((t /= d / 2) < 1) return (c / 2) * Math.pow(2, 10 * (t - 1)) + b;
-        return (c / 2) * (-Math.pow(2, -10 * --t) + 2) + b;
-    },
-    easeInCirc: (x, t, b, c, d) => {
-        return -c * (Math.sqrt(1 - (t /= d) * t) - 1) + b;
-    },
-    easeOutCirc: (x, t, b, c, d) => {
-        return c * Math.sqrt(1 - (t = t / d - 1) * t) + b;
-    },
-    easeInOutCirc: (x, t, b, c, d) => {
-        if ((t /= d / 2) < 1) return (-c / 2) * (Math.sqrt(1 - t * t) - 1) + b;
-        return (c / 2) * (Math.sqrt(1 - (t -= 2) * t) + 1) + b;
-    },
-    easeInElastic: (x, t, b, c, d) => {
-        var s = 1.70158;
-        var p = 0;
-        var a = c;
-        if (t == 0) return b;
-        if ((t /= d) == 1) return b + c;
-        if (!p) p = d * 0.3;
-        if (a < Math.abs(c)) {
-            a = c;
-            var s = p / 4;
-        } else var s = (p / (2 * Math.PI)) * Math.asin(c / a);
-        return (
-            -(
-                a *
-                Math.pow(2, 10 * (t -= 1)) *
-                Math.sin(((t * d - s) * (2 * Math.PI)) / p)
-            ) + b
-        );
-    },
-    easeOutElastic: (x, t, b, c, d) => {
-        var s = 1.70158;
-        var p = 0;
-        var a = c;
-        if (t == 0) return b;
-        if ((t /= d) == 1) return b + c;
-        if (!p) p = d * 0.3;
-        if (a < Math.abs(c)) {
-            a = c;
-            var s = p / 4;
-        } else var s = (p / (2 * Math.PI)) * Math.asin(c / a);
-        return (
-            a * Math.pow(2, -10 * t) * Math.sin(((t * d - s) * (2 * Math.PI)) / p) +
-            c +
-            b
-        );
-    },
-    easeInOutElastic: (x, t, b, c, d) => {
-        var s = 1.70158;
-        var p = 0;
-        var a = c;
-        if (t == 0) return b;
-        if ((t /= d / 2) == 2) return b + c;
-        if (!p) p = d * (0.3 * 1.5);
-        if (a < Math.abs(c)) {
-            a = c;
-            var s = p / 4;
-        } else var s = (p / (2 * Math.PI)) * Math.asin(c / a);
-        if (t < 1)
-            return (
-                -0.5 *
-                    (a *
-                        Math.pow(2, 10 * (t -= 1)) *
-                        Math.sin(((t * d - s) * (2 * Math.PI)) / p)) +
-                b
-            );
-        return (
-            a *
-                Math.pow(2, -10 * (t -= 1)) *
-                Math.sin(((t * d - s) * (2 * Math.PI)) / p) *
-                0.5 +
-            c +
-            b
-        );
-    },
-    easeInBack: (x, t, b, c, d, s) => {
-        if (s == undefined) s = 1.70158;
-        return c * (t /= d) * t * ((s + 1) * t - s) + b;
-    },
-    easeOutBack: (x, t, b, c, d, s) => {
-        if (s == undefined) s = 1.70158;
-        return c * ((t = t / d - 1) * t * ((s + 1) * t + s) + 1) + b;
-    },
-    easeInOutBack: (x, t, b, c, d, s) => {
-        if (s == undefined) s = 1.70158;
-        if ((t /= d / 2) < 1)
-            return (c / 2) * (t * t * (((s *= 1.525) + 1) * t - s)) + b;
-        return (c / 2) * ((t -= 2) * t * (((s *= 1.525) + 1) * t + s) + 2) + b;
-    },
-    easeInBounce: (x, t, b, c, d) => {
-        return c - $.easing.easeOutBounce(x, d - t, 0, c, d) + b;
-    },
-    easeOutBounce: (x, t, b, c, d) => {
-        if ((t /= d) < 1 / 2.75) {
-            return c * (7.5625 * t * t) + b;
-        } else if (t < 2 / 2.75) {
-            return c * (7.5625 * (t -= 1.5 / 2.75) * t + 0.75) + b;
-        } else if (t < 2.5 / 2.75) {
-            return c * (7.5625 * (t -= 2.25 / 2.75) * t + 0.9375) + b;
-        } else {
-            return c * (7.5625 * (t -= 2.625 / 2.75) * t + 0.984375) + b;
-        }
-    },
-    easeInOutBounce: (x, t, b, c, d) => {
-        if (t < d / 2) return $.easing.easeInBounce(x, t * 2, 0, c, d) * 0.5 + b;
-        return $.easing.easeOutBounce(x, t * 2 - d, 0, c, d) * 0.5 + c * 0.5 + b;
-    },
-});
-
-/*
- *
- * TERMS OF USE - EASING EQUATIONS
- *
- * Open source under the BSD License.
- *
- * Copyright 2001 Robert Penner
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without modification,
- * are permitted provided that the following conditions are met:
- *
- * Redistributions of source code must retain the above copyright notice, this list of
- * conditions and the following disclaimer.
- * Redistributions in binary form must reproduce the above copyright notice, this list
- * of conditions and the following disclaimer in the documentation and/or other materials
- * provided with the distribution.
- *
- * Neither the name of the author nor the names of contributors may be used to endorse
- * or promote products derived from this software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY
- * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
- * COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
- * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
- * AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
- * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
- * OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- */
-
 const logTrace = typeof LOGTRACE !== "undefined" && LOGTRACE;
 
 const log = (...args) => {
-    const stack = new Error().stack;
-    const debugMessage = logTrace
-        ? "\n\nLog trace:\n" + stack.split("\n").slice(2).join("\n")
-        : "";
-    console.log("[PM] ", ...args, debugMessage);
+    if (logTrace) {
+        const stack = new Error().stack;
+        args.push("\n\nLog trace:\n" + stack.split("\n").slice(2).join("\n"));
+    }
+    let messageConfig = "%c%s   ";
+
+    let isInfo = false;
+    if (args[0] === "%c") {
+        isInfo = true;
+        args = args.slice(1);
+    }
+    // https://stackoverflow.com/questions/55643825/how-to-apply-colors-to-console-log-when-using-multiple-arguments
+    args.forEach((argument) => {
+        const type = typeof argument;
+        switch (type) {
+            case "bigint":
+            case "number":
+            case "boolean":
+                messageConfig += "%d   ";
+                break;
+
+            case "string":
+                messageConfig += "%s   ";
+                break;
+
+            case "object":
+            case "undefined":
+            default:
+                messageConfig += "%o   ";
+        }
+    });
+    console.log(
+        messageConfig,
+        `color: ${isInfo ? "#8BB4F7; font-weight:bold;" : "tan"}`,
+        "[PM]",
+        ...args
+    );
 };
 
-const info = (...args) => log("%c[PM] " + args.join(" "), "color: #328DD2");
+const info = (...args) => log(...["%c", ...args]);
 
 const getDisplayId = (id) => {
+    const baseId = id;
     id = id.split("_")[0].split(".")[0];
     if (!id.startsWith("OR-")) {
         id = id.split("-").slice(0, 2).join("-");
+    }
+    if (global.state.papers.hasOwnProperty(baseId)) {
+        const paper = global.state.papers[baseId];
+        if (paper.source === "nature") {
+            if (paper.note.match(/^Published\ @.+\(\d+\)$/)) {
+                const journal = paper.note.split("@")[1].split("(")[0].trim();
+                id += `-${journal
+                    .split(" ")
+                    .map((j) => j[0].toUpperCase())
+                    .join("")}`;
+            }
+            id += `-${paper.year}`;
+        }
+        if (paper.source === "acs") {
+            id += `-${paper.year}`;
+        }
+        if (paper.source === "iop") {
+            id += `-${paper.year}`;
+        }
     }
     return id;
 };
 
 const isObject = (obj) =>
     typeof obj === "object" && !Array.isArray(obj) && obj !== null;
+
+const isPdfUrl = (url) => {
+    return (
+        url.endsWith(".pdf") ||
+        url.includes("openreview.net/pdf") ||
+        url.includes("arxiv.org/pdf/")
+    );
+};
 
 const delay = (fn, ms) => {
     // https://stackoverflow.com/questions/1909441/how-to-delay-the-keyup-handler-until-the-user-stops-typing
@@ -425,6 +237,12 @@ const parseCVFUrl = (url) => {
     return { conf, year, id };
 };
 
+/**
+ * Cleans-up a biorxiv url: no pdf ref and no trailing section refs:
+ * eg:
+ * @param {string} url The url to a biorxiv paper to clean up
+ * @returns {string}
+ */
 const cleanBiorxivURL = (url) => {
     url = url.replace(".full.pdf", "");
     if (!url.match(/\d$/)) {
@@ -433,33 +251,23 @@ const cleanBiorxivURL = (url) => {
     return url;
 };
 
+/**
+ * Sets the cursor at the end of a text area on focus
+ * @param {HTMLElement} element The textarea to focus
+ */
 const textareaFocusEnd = (element) => {
     setTimeout(() => {
         element.selectionStart = element.selectionEnd = 10000;
     }, 0);
 };
 
-const formatBibtext = (text) => {
-    let bib = text.trim().split("\n").join("").replace(/\s+=/g, " =");
-    const spaceMatches = bib.match(/\ \w+\ ?=\ ?{/g) || [];
-    const commaMatches = bib.match(/,\w+\ ?=\ ?{/g) || [];
-    if (spaceMatches && spaceMatches.length > 0) {
-        for (const m of spaceMatches) {
-            bib = bib.replace(m, `\n ${m}`);
-        }
-    }
-    if (commaMatches && commaMatches.length > 0) {
-        for (const m of commaMatches) {
-            const key = m.replace(",", "");
-            bib = bib.replace(m, `,\n  ${key}`);
-        }
-    }
-    if (bib.slice(-2) === "}}") {
-        bib = bib.slice(0, -1) + "\n}";
-    }
-    return bib.replaceAll("{ ", "{").replaceAll(" }", "}").replaceAll(" = ", "=");
-};
-
+/**
+ * Get the html string of an svg icon with id and classes
+ * @param {string} pathName The name of the svg to return
+ * @param {string} id Optional html id for the svg tag
+ * @param {arrat} classNames An optional array of classNames to add to the svg tag
+ * @returns {string} A string of html for the svg tag
+ */
 const tablerSvg = (pathName, id, classNames) => {
     if (typeof id === "undefined") {
         id = "";
@@ -586,14 +394,62 @@ const tablerSvg = (pathName, id, classNames) => {
                 <path d="M14 15v2a1 1 0 0 1 -1 1h-7l-3 3v-10a1 1 0 0 1 1 -1h2" />
             </svg>`;
 
-        case "external-link":
-            return ``;
+        case "vocabulary":
+            return `<svg viewBox="0 0 24 24" ${id} ${classNames}>
+                <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                <path d="M10 19h-6a1 1 0 0 1 -1 -1v-14a1 1 0 0 1 1 -1h6a2 2 0 0 1 2 2a2 2 0 0 1 2 -2h6a1 1 0 0 1 1 1v14a1 1 0 0 1 -1 1h-6a2 2 0 0 0 -2 2a2 2 0 0 0 -2 -2z" />
+                <path d="M12 5v16" />
+                <path d="M7 7h1" />
+                <path d="M7 11h1" />
+                <path d="M16 7h1" />
+                <path d="M16 11h1" />
+                <path d="M16 15h1" />
+            </svg>`;
+
+        case "database-export":
+            return `<svg viewBox="0 0 24 24" ${id} ${classNames}>
+                <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                <ellipse cx="12" cy="6" rx="8" ry="3" />
+                <path d="M4 6v6c0 1.657 3.582 3 8 3a19.84 19.84 0 0 0 3.302 -.267m4.698 -2.733v-6" />
+                <path d="M4 12v6c0 1.599 3.335 2.905 7.538 2.995m8.462 -6.995v-2m-6 7h7m-3 -3l3 3l-3 3" />
+            </svg>`;
+        case "eyeglass":
+            return `<svg viewBox="0 0 24 24" ${id} ${classNames}>
+                <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                <path d="M8 4h-2l-3 10" />
+                <path d="M16 4h2l3 10" />
+                <line x1="10" y1="16" x2="14" y2="16" />
+                <path d="M21 16.5a3.5 3.5 0 0 1 -7 0v-2.5h7v2.5" />
+                <path d="M10 16.5a3.5 3.5 0 0 1 -7 0v-2.5h7v2.5" />
+            </svg>`;
+
+        case "markdown":
+            return `<svg viewBox="0 0 24 24" ${id} ${classNames}>
+                <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                <rect x="3" y="5" width="18" height="14" rx="2" />
+                <path d="M7 15v-6l2 2l2 -2v6" />
+                <path d="M14 13l2 2l2 -2m-2 2v-6" />
+            </svg>`;
+
+        case "math-function":
+            return `<svg viewBox="0 0 24 24" ${id} ${classNames}>            
+                <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                <path d="M14 10h1c1 0 1 1 2.016 3.527c.984 2.473 .984 3.473 1.984 3.473h1" />
+                <path d="M13 17c1.5 0 3 -2 4 -3.5s2.5 -3.5 4 -3.5" />
+                <path d="M3 19c0 1.5 .5 2 2 2s2 -4 3 -9s1.5 -9 3 -9s2 .5 2 2" />
+                <line x1="5" y1="12" x2="11" y2="12" />
+            </svg>`;
 
         default:
             return "";
     }
 };
 
+/**
+ * Turns an Error object into an informative string
+ * @param {object} e Error to stringify
+ * @returns {string}
+ */
 const stringifyError = (e) => {
     const extId = chrome.runtime.id;
     return e.stack
@@ -607,6 +463,12 @@ const stringifyError = (e) => {
         .join("<br/>");
 };
 
+/**
+ * Are `a` and `b` identical arrays?
+ * @param {array} a
+ * @param {array} b
+ * @returns {boolean}
+ */
 const arraysIdentical = (a, b) => {
     var i = a.length;
     if (i != b.length) return false;
@@ -616,12 +478,24 @@ const arraysIdentical = (a, b) => {
     return true;
 };
 
+/**
+ * Parses an element's `selectedOptions` into a sorted array of tags
+ * @param {HTMLElement} el the dom element to read tags from (`el.selectedOptions`)
+ * @returns
+ */
 const parseTags = (el) => {
     let tags = Array.from(el.selectedOptions, (e) => e.value.trim()).filter((e) => e);
     tags.sort();
     return tags;
 };
 
+/**
+ * Gets the current state of the 4 user inputs for a given paper and returns it as an object:
+ * {note, codeLink, tags, favorite}
+ * @param {string} id The paper to find the form values for, either in the popup or the memory
+ * @param {boolean} isPopup Whether the paper to monitor is in the popup or the memory
+ * @returns {object} {note, codeLink, tags, favorite}
+ */
 const getPaperEdits = (id, isPopup) => {
     let note, tags, codeLink, favorite;
 
@@ -644,6 +518,11 @@ const getPaperEdits = (id, isPopup) => {
     return { note, tags, codeLink, favorite };
 };
 
+/**
+ * Sets the form edit listeners on the 4 inputs: tags, code, note, favorite
+ * @param {string} id Optional id (for the popup's paper)
+ * @param {*} isPopup Is the function called from the popup?
+ */
 const setFormChangeListener = (id, isPopup) => {
     let refTags, refNote, refCodeLink, refFavorite;
     if (isPopup) {
@@ -657,6 +536,7 @@ const setFormChangeListener = (id, isPopup) => {
         addListener(refNote, "keyup", delay(monitorPaperEdits(id, isPopup), 300));
         addListener(refFavorite, "change", delay(monitorPaperEdits(id, isPopup), 300));
     } else {
+        // tags listeners is set in handleTogglePaperEdit
         refTags = ".memory-item-tags";
         refCodeLink = ".form-code-input";
         refNote = ".form-note-textarea";
@@ -664,42 +544,74 @@ const setFormChangeListener = (id, isPopup) => {
         addEventToClass(
             refCodeLink,
             "keyup",
-            delay(monitorPaperEdits(id, isPopup), 300)
+            delay(monitorPaperEdits(undefined, isPopup), 300)
         );
-        addEventToClass(refNote, "keyup", delay(monitorPaperEdits(id, isPopup), 300));
+        addEventToClass(
+            refNote,
+            "keyup",
+            delay(monitorPaperEdits(undefined, isPopup), 300)
+        );
     }
 };
 
+/**
+ * Monitors the popup's paper edits or the memory's table of papers' edits.
+ * Triggers `handleMemorySaveEdits` or `handlePopupSaveEdits` (depending on `isPopup`)
+ * if a change is detected.
+ *
+ * @param {string} id Optional id of the paper to monitor (when called for the popup edit form)
+ * @param {boolean} isPopup Whether the function is called to monitor the single
+ * popup edit form or the set of memory-items' forms
+ */
 const monitorPaperEdits = (id, isPopup) => (e) => {
+    let paperId;
     if (typeof id === "undefined") {
-        id = eventId(e);
+        paperId = eventId(e);
+    } else {
+        paperId = id;
     }
-    const edits = getPaperEdits(id, isPopup);
-    const paper = global.state.papers[id];
+    const edits = getPaperEdits(paperId, isPopup);
+    const paper = global.state.papers[paperId];
     let change = false;
     let refs = {};
     for (const key in edits) {
         const ref = paper[key];
         refs[key] = ref;
         const value = edits[key];
-        if (key === "tags" && !arraysIdentical(ref, value)) {
-            change = true;
-        } else if (key !== "tags") {
+        if (key === "tags") {
+            if (!arraysIdentical(ref, value)) change = true;
+        } else {
             if (ref !== value) {
                 change = true;
             }
         }
     }
     if (change) {
-        console.log("Updating", id, isPopup);
+        console.log("Updating meta data for", paperId);
         if (isPopup) {
-            handlePopupSaveEdits(id);
+            handlePopupSaveEdits(paperId);
         } else {
-            handleMemorySaveEdits(id);
+            handleMemorySaveEdits(paperId);
         }
     }
 };
-
+/**
+ * Replaces authors with `...` such that:
+ * 1/ the resulting string is <= maxLen
+ * 2/ the last author is still there
+ *
+ * eg:
+ * "Oliver E. J. Wing and William Lehman and Paul D. Bates and Christopher C. Sampson
+ *   and Niall Quinn and Andrew M. Smith and Jeffrey C. Neal
+ *   and Jeremy R. Porter and Carolyn Kousky"
+ * -> "Oliver E. J. Wing, William Lehman, Paul D. Bates, Christopher C. Sampson,
+ *   Niall Quinn, Andrew M. Smith, Jeffrey C. Neal ... Carolyn Kousky"
+ *
+ * @param {string} text The string of authors to split on " and "
+ * @param {number} maxLen The maximum length of the resulting string (defaults to 140)
+ * @param {string} separator The separator to use between authors (defaults to ", ")
+ * @returns {string} The author string with "..." if it was too long, keeping the last author
+ */
 const cutAuthors = (text, maxLen, separator) => {
     if (typeof maxLen === "undefined") {
         maxLen = 140;
@@ -732,14 +644,24 @@ const cutAuthors = (text, maxLen, separator) => {
     return cutAuthors;
 };
 
-const sendMessage = (request) =>
-    new Promise((resolve, reject) => {
-        chrome.runtime.sendMessage(request, (response) => {
-            console.log("sendMessage response: ", response);
-            if (response.success) {
-                resolve(response);
-            } else {
-                reject(response);
-            }
+/**
+ * Promise wrapper around content script => background script message passing
+ * @param {object} payload Data to transfer to the background script
+ * @returns Promise that resolves the response
+ */
+const sendMessageToBackground = (payload) =>
+    new Promise((resolve) => {
+        chrome.runtime.sendMessage(payload, (response) => {
+            resolve(response);
         });
+    });
+
+const getStoredFiles = () =>
+    new Promise((resolve) => {
+        chrome.downloads.search(
+            {
+                filenameRegex: "PaperMemoryStore/.*",
+            },
+            (files) => resolve(files.filter((f) => f.exists && f.state === "complete"))
+        );
     });

@@ -15,7 +15,7 @@ const migrateData = async (papers, manifestDataVersion, store = true) => {
     }
     const currentVersion = papers["__dataVersion"] || -1;
     var deleteIds = [];
-    const latestDataVersion = 210;
+    const latestDataVersion = 405;
 
     let newPapers = { ...papers };
 
@@ -97,10 +97,12 @@ const migrateData = async (papers, manifestDataVersion, store = true) => {
                     delete papers[id].bibtext;
                 }
             }
-            // need to fix https://github.com/vict0rsch/PaperMemory/issues/10
-            // if (!papers[id].hasOwnProperty("codes")) {
-            //     papers[id].codes = await fetchCodes(papers[id])
-            // }
+            if (currentVersion < 450) {
+                info("Applying migration 0.4.5");
+                if (!papers[id].hasOwnProperty("venue")) {
+                    papers[id].venue = await makeVenue(papers[id]);
+                }
+            }
         }
 
         deleteIds.forEach((id, k) => {
@@ -230,6 +232,41 @@ const backupData = async (papers) => {
             log("Backed up data with version: " + papers["__dataVersion"]);
         });
     });
+};
+
+function dateDiffInDays(a, b) {
+    // a and b are javascript Date objects
+    // Discard the time and time-zone information.
+    const _MS_PER_DAY = 1000 * 60 * 60 * 24;
+    const utc1 = Date.UTC(a.getFullYear(), a.getMonth(), a.getDate());
+    const utc2 = Date.UTC(b.getFullYear(), b.getMonth(), b.getDate());
+
+    return Math.floor((utc2 - utc1) / _MS_PER_DAY);
+}
+
+/**
+ * Create a weekly backup of the papers
+ */
+const weeklyBackup = async () => {
+    let backups = await getStorage("weeklyBackups");
+    if (!backups) {
+        backups = {};
+    }
+    const today = new Date();
+    const backupDates = Object.keys(backups)
+        .map((k) => new Date(k))
+        .sort();
+    if (backupDates.length > 0) {
+        const latestBackup = backupDates[backupDates.length - 1];
+        if (dateDiffInDays(latestBackup, today) < 7) return;
+    }
+
+    let newBackups = {};
+    for (const date of backupDates.reverse().slice(0, 5)) {
+        newBackups[date.toString()] = backups[date.toString()];
+    }
+    newBackups[today.toString()] = await getStorage("papers");
+    setStorage("weeklyBackups", newBackups);
 };
 
 /**
@@ -371,6 +408,12 @@ const validatePaper = (paper, log = true) => {
             desc: "the user's tags for this paper",
             default: (p) => [],
         },
+        venue: {
+            type: "string",
+            desc: "the paper's publication venue",
+            default: (p) => "",
+        },
+
         year: {
             type: "string",
             desc: "year of publication",

@@ -28,7 +28,8 @@
     </div>
     <div id="content">
         <p><em>These customization options are complementary to those available in the popup such as Dark Theme or
-                Notifications.</em>
+                Notifications. You can also access your full-screen memory <a target="_blank"
+                    href="chrome-extension://ehchlpggdaffcncbeopdopnndhdjelbc/src/fullMemory/fullMemory.html">here</a></em>.
         </p>
         <div class="section">
             <h2>Auto-tagging</h2>
@@ -80,6 +81,20 @@
             </div>
         </div>
 
+
+        <div class="section">
+            <h2>Select Sources</h2>
+            <p>If you don't want to track papers from <emph>all</emph> the sources PaperMemory can handle, you can
+                disable them
+                here.
+            </p>
+            <p>Note that you can only disable per <strong>source</strong> not exact venue. For instance you cannot
+                distinguish between Nature Communications and Nature Climate Change (both <code>nature</code> venues) or
+                between CVPR and ICCV (both <code>cvf</code> venues).</p>
+            <p>Sources to parse papers from:</p>
+            <div id="select-sources"></div>
+        </div>
+
         <div class="section">
             <h2>Custom title function</h2>
             <p>Provide a Javascript function code to produce a "title" from a <code>paper</code> object. This function
@@ -90,6 +105,10 @@
             <p>Note that not all characters are usable for file names <a
                     href="https://superuser.com/questions/358855/what-characters-are-safe-in-cross-platform-file-names-for-linux-windows-and-os">depending
                     on your os</a>.</p>
+            <p>In order for PaperMemory to know one of its items has been downloaded, it will match downloaded pdf file
+                names to in-memory paper titles. If you remove the title from the downloaded file names, PaperMemory
+                will
+                not be able to do this anymore and may miss stored papers.</p>
             <p>For illustration, an example from your memory is displayed after the code input.</p>
             <div class="row">
 
@@ -232,9 +251,18 @@
                     file is
                     a known paper
                     to display the Popup. Make sure to have the title in your custom title function</li>
-                <li>If you move files or rename them altering the titles they will not be detected anymore</li>
+                <li>If you move files or rename them altering the titles they may not be detected anymore<sup>*</sup>
+                </li>
 
             </ul>
+
+            <p><small><sup>*</sup>PaperMemory primarily relies on <a
+                        href="https://developer.chrome.com/docs/extensions/reference/downloads/#type-DownloadItem"
+                        target="_blank" rel="noopenner noreferrer"><code>file.finalUrl</code></a> to detect if a file
+                    corresponds to
+                    a known paper. If, for some reason this were to fail, the secondary matching strategy relies on
+                    said
+                    file name / paper title string matching.</small></p>
 
 
         </div>
@@ -259,7 +287,6 @@
         </div>
 
     </div>
-
 
     <script src="../shared/min/jquery.min.js"></script>
     <script src="../shared/min/utils.min.js"></script>

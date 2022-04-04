@@ -131,6 +131,7 @@
 		<h3 class="mt-4">⋗ Configuration</h3>
 
 		<div id="options">
+			<h5>Arxiv.org enhancement</h5>
 			<input class="switch" type="checkbox" id="checkDownload" name="checkDownload" value="checkDownload">
 			<label for="checkDownload">Add PDF direct download
 				button</label><br><br>
@@ -141,11 +142,10 @@
 			<input class="switch" type="checkbox" id="checkBib" name="checkBib" value="checkBib">
 			<label for="checkBib"> Add BibTex citation section</label><br><br>
 
-			<input class="switch" type="checkbox" id="checkPdfTitle" name="checkPdfTitle" value="checkPdfTitle">
-			<label for="checkPdfTitle"> Change Arxiv tab titles</label><br><br>
+			<h5>User Interface</h5>
 
 			<input class="switch" type="checkbox" id="checkFeedback" name="checkFeedback" value="checkFeedback">
-			<label for="checkFeedback"> Display feedback slider when a paper is added</label><br><br>
+			<label for="checkFeedback"> Display notification when a paper is added</label><br><br>
 
 			<input class="switch" type="checkbox" id="checkDarkMode" name="checkDarkMode" value="checkDarkMode">
 			<label for="checkDarkMode">Use Dark Mode</label><br><br>
@@ -153,8 +153,26 @@
 			<input class="switch" type="checkbox" id="checkDirectOpen" name="checkDirectOpen" value="checkDirectOpen">
 			<label for="checkDirectOpen">Directly open the Memory when not on a Paper's page</label><br><br>
 
+			<input class="switch" type="checkbox" id="checkPdfTitle" name="checkPdfTitle" value="checkPdfTitle">
+			<label for="checkPdfTitle"> Change paper tab titles</label><br><br>
+
 			<input class="switch" type="checkbox" id="checkScirate" name="checkScirate" value="checkScirate">
 			<label for="checkScirate">Add a link to SciRate in the popup</label><br><br>
+
+			<h5>Functionalities</h5>
+
+			<input class="switch" type="checkbox" id="checkPreferPdf" name="checkPreferPdf" value="checkPreferPdf">
+			<label for="checkPreferPdf">Favor PDFs for paper links (otherwise, links will point to a paper's
+				abstract
+				page)</label><br><br>
+
+			<input class="switch" type="checkbox" id="checkPdfOnly" name="checkPdfOnly" value="checkPdfOnly">
+			<label for="checkPdfOnly">Only record papers on their pdf pages, not from their abstracts</label><br><br>
+
+			<input class="switch" type="checkbox" id="checkOfficialRepos" name="checkOfficialRepos"
+				value="checkOfficialRepos">
+			<label for="checkOfficialRepos">Only store official code repositories discovered on
+				PapersWithCode</label><br><br>
 
 			<input class="switch" type="checkbox" id="checkStore" name="checkStore" value="checkStore">
 			<label for="checkStore">Download pdfs to PaperMemory's folder in your Downloads to be able to open them
@@ -162,6 +180,9 @@
 		</div>
 
 		<h3 class="mt-4">⋗ Advanced</h3>
+
+		<p>Open your <a href="#" id="full-memory">full-page memory</a> to explore papers more easily, in a dedicated
+			tab.</p>
 
 		<p>Open the <a href="#" id="advanced-configuration">options page</a> to access advanced customization features:
 		</p>
@@ -175,6 +196,9 @@
 			</li>
 			<li>
 				<p>Manage your data (export/load)</p>
+			</li>
+			<li>
+				<p>Ignore some paper sources</p>
 			</li>
 		</ul>
 
@@ -234,6 +258,7 @@
 			<select style="width: 30%;" id="memory-select">
 				<option value="lastOpenDate">Last Open</option>
 				<option value="addDate">Last Added</option>
+				<option value="year">Year</option>
 				<option value="title">Title</option>
 				<option value="count"># Visits</option>
 				<option value="id">ID</option>
@@ -338,7 +363,53 @@
 				<h3 style="margin-bottom: 0px;">What's new</h3>
 				<ul>
 					<li><strong>Current: </strong><a
-							href="https://github.com/vict0rsch/PaperMemory/releases/tag/0.4.4.1">0.4.4.1</a>
+							href="https://github.com/vict0rsch/PaperMemory/releases/tag/0.5.0">0.5.0</a>
+						<em>(2022-03-23)</em>
+						<ul>
+							<li>[feature] In an effort to use as few as possible arxiv.org references, PaperMemory will
+								use dblp.org and crossref.org bibtex data whenever possible for your published papers'
+								citations. In other words it tries to discover published versions of you pre-prints and
+								this will be effective when copying/exporting bibtex data</li>
+							<li>[feature] New configuration option to only store official repositories when discovering
+								code with PapersWithCode</li>
+							<li>[feature] New configuration option to prefer using links to abstract pages vs pdfs
+							</li>
+							<li>[feature] New configuration option to only record paper from pdfs, not their online
+								pages/abstracts
+							</li>
+							<li>[feature] New full-page memory (link at the bottom of the menu) to explore your memory
+								in a fill-size and dedicated tab.
+							<li>[feature] New advanced options to filter out default paper sources.
+							</li>
+							<li>[feature] You can now also sort your memory by paper upload/publication year
+							</li>
+							<li>[feature] You can now search papers by year (<code>y: 18,19</code>), including
+								before/after
+								a date (<code>y: &lt;2019</code>, <code>y: &gt;2018</code>).
+							</li>
+							<li>[feature] Weekly local backups (up to 6 weeks) in case of a bug/user mistake (see Readme
+								on
+								Github)</li>
+							<br />
+							<li>[new source] Add Nature papers parsing</li>
+							<li>[new source] Add ACS papers parsing</li>
+							<li>[new source] Add IOPscience papers parsing</li>
+							<li>[new source] Add JMLR papers parsing</li>
+							<br />
+							<li>[dev] New permission to monitor all urls. This is necessary because otherwise every
+								new paper source will be associated with a new permission, disabling the extension until
+								you re-enable it manually.</li>
+
+							<li>[dev] Performance improvements, notably a step towards losing the JQuery dependency</li>
+							<li>[dev] Improve & standardize Bibtex parsing, formatting and exporting</li>
+							<li>[dev] Fix PNAS paper parsing (due to website update)</li>
+							<li>[dev] Improve search to include tags (still <code>t:tagName</code> to search tags only)
+							</li>
+							<li>[dev] Various refactors and small bug fixes</li>
+
+						</ul>
+					</li>
+					<li><a href="https://github.com/vict0rsch/PaperMemory/releases/tag/0.4.4.1">0.4.4.1</a>
 						<em>(2022-03-08)</em>
 						<ul>
 							<li>[dev] Fix Arxiv markdown link </li>
@@ -361,11 +432,13 @@
 					<li><a href="https://github.com/vict0rsch/PaperMemory/releases/tag/0.4.3">0.4.3</a>
 						<em>(2022-01-03)</em>
 						<ul>
-							<li>[dev] Hotfix: Improve long codelinks display</li>
 							<li>[feature] Add a direct link to SciRate in the popup</li>
-							<li>[new source] Parse papers from scirate.com/arxiv/ as Arxiv papers into your Memory</li>
 							<li>[feature][beta] Download pdfs in a dedicated folder to open those local files instead of
 								re-downloading pdfs all the time</li>
+							<br />
+							<li>[new source] Parse papers from scirate.com/arxiv/ as Arxiv papers into your Memory</li>
+							<br />
+							<li>[dev] Hotfix: Improve long codelinks display</li>
 						</ul>
 					</li>
 					<li><a href="https://github.com/vict0rsch/PaperMemory/releases/tag/0.4.2.3">0.4.2.3</a>

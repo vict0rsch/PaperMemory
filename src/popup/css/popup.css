@@ -380,6 +380,7 @@ code {
     border-radius: var(--rounder);
 }
 .memory-item-feedback {
+    font-size: 0.75rem;
     color: green;
 }
 #popup-feedback-copied {
@@ -390,6 +391,7 @@ code {
     bottom: -25px;
     width: 280px;
     text-align: center;
+    font-size: 0.75rem;
 }
 
 #memory-search {
@@ -537,6 +539,10 @@ code {
     border-radius: var(--round);
     cursor: pointer;
 }
+.memory-display-id,
+.memory-visits {
+    font-size: 0.7rem;
+}
 
 #popup-copy-icons .memory-item-svg-div {
     transition: all ease 250ms;
@@ -681,6 +687,9 @@ button.changed {
 #modal-whatsnew-content a {
     margin-top: 16px;
     display: inline-block;
+}
+#modal-whatsnew-content code {
+    font-size: 0.8rem;
 }
 
 /*

@@ -2,25 +2,6 @@
 // -----  Utils  -----
 // -------------------
 
-const extractBibtexValue = (bibtex, key) => {
-    const regex = new RegExp(`${key}\\s?=\\s?{(.+)},`, "gi");
-    const match = regex.exec(bibtex);
-    if (match) {
-        const regex2 = new RegExp(`${key}\\s?=\\s?{`, "gi");
-        return match[0].replace(regex2, "").slice(0, -2);
-    }
-    return "";
-};
-
-const extractAuthor = (bibtex) =>
-    extractBibtexValue(bibtex, "author")
-        .replaceAll("{", "")
-        .replaceAll("}", "")
-        .replaceAll("\\", "")
-        .split(" and ")
-        .map((a) => a.split(", ").reverse().join(" "))
-        .join(" and ");
-
 const decodeHtml = (html) => {
     // https://stackoverflow.com/questions/5796718/html-entity-decode
     var txt = document.createElement("textarea");
@@ -28,28 +9,20 @@ const decodeHtml = (html) => {
     return txt.value;
 };
 
+const flipAuthor = (author) => author.split(", ").reverse().join(" ");
+const flipAndAuthors = (authors) =>
+    authors.split(" and ").map(flipAuthor).join(" and ");
+
 // -------------------
 // -----  Fetch  -----
 // -------------------
 
 const fetchArxivXML = async (paperId) => {
     const arxivId = paperId.replace("Arxiv-", "");
-    return $.get(`https://export.arxiv.org/api/query`, { id_list: arxivId });
-};
-
-const fetchNeuripsHTML = async (url) => {
-    let paperPage;
-    if (url.endsWith(".pdf")) {
-        paperPage = url
-            .replace("/file/", "/hash/")
-            .replace("-Paper.pdf", "-Abstract.html");
-    } else {
-        paperPage = url;
-    }
-
-    return fetch(paperPage).then((response) => {
-        return response.text();
-    });
+    return fetch(
+        "https://export.arxiv.org/api/query?" +
+            new URLSearchParams({ id_list: arxivId })
+    );
 };
 
 const fetchCvfHTML = async (url) => {
@@ -96,40 +69,49 @@ const fetchOpenReviewForumJSON = async (url) => {
     });
 };
 
+const fetchDom = async (url) => {
+    const html = await fetch(url).then((response) =>
+        response.ok ? response.text() : ""
+    );
+    return new DOMParser().parseFromString(html.replaceAll("\n", ""), "text/html");
+};
+
+const fetchText = async (url) => {
+    try {
+        const response = await fetch(url);
+        const text = response.ok ? await response.text() : "";
+        return text.trim();
+    } catch (error) {
+        console.log("fetchText error:", error);
+        return "";
+    }
+};
+
 // -------------------
 // -----  Parse  -----
 // -------------------
 
 const makeArxivPaper = async (memoryId) => {
-    const xmlData = await fetchArxivXML(memoryId);
-    var bib = $(xmlData);
-    var authors = [];
-    var key = "";
-    bib.find("author name").each((k, v) => {
-        authors.push($(v).text());
-        if (k === 0) {
-            key += $(v)
-                .text()
-                .split(" ")
-                [$(v).text().split(" ").length - 1].toLowerCase();
-        }
-    });
-    var pdfLink = "";
-    bib.find("link").each((k, v) => {
-        const link = $(v).attr("href");
-        if (link && link.indexOf("arxiv.org/pdf/") >= 0) {
-            pdfLink = link;
-        }
-    });
-    const pdfVersion = pdfLink.match(/v\d+\.pdf/gi);
-    if (pdfVersion && pdfVersion.length > 0) {
-        pdfLink = pdfLink.replace(pdfVersion[0], ".pdf");
-    }
+    const response = await fetchArxivXML(memoryId);
+    const xmlData = await response.text();
+    var doc = new DOMParser().parseFromString(xmlData.replaceAll("\n", ""), "text/xml");
+
+    const authors = Array.from(doc.querySelectorAll("author name")).map(
+        (el) => el.innerHTML
+    );
     const author = authors.join(" and ");
-    const title = $(bib.find("entry title")[0]).text();
-    const year = $(bib.find("entry published")[0]).text().slice(0, 4);
-    key += year;
-    key += firstNonStopLowercase(title);
+
+    const pdfLink = Array.from(doc.getElementsByTagName("link"))
+        .map((l) => l.getAttribute("href"))
+        .filter((h) => h.includes("arxiv.org/pdf/"))[0]
+        .replace(/v\d+\.pdf$/gi, ".pdf");
+
+    const title = doc.querySelector("entry title").innerHTML;
+    const year = doc.querySelector("entry published").innerHTML.slice(0, 4);
+    const key =
+        authors[0].split(" ").reverse()[0].toLowerCase() +
+        year +
+        firstNonStopLowercase(title);
 
     const id = memoryId;
     const conf = "arXiv";
@@ -142,52 +124,74 @@ const makeArxivPaper = async (memoryId) => {
     bibtex += `    journal={arXiv preprint arXiv: ${id}}\n`;
     bibtex += `}`;
 
-    return { author, bibtex, conf, id, key, pdfLink, title, year };
+    const venue = "";
+
+    return { author, bibtex, conf, id, key, pdfLink, title, venue, year };
 };
 
 const makeNeuripsPaper = async (url) => {
-    const htmlText = await fetchNeuripsHTML(url);
-    const dom = new DOMParser().parseFromString(
-        htmlText.replaceAll("\n", ""),
-        "text/html"
-    );
-    const doc = $(dom);
-
-    const ps = doc.find(".container-fluid .col p");
+    if (url.endsWith(".pdf")) {
+        url = url.replace("/file/", "/hash/").replace("-Paper.pdf", "-Abstract.html");
+    }
     const hash = url.split("/").slice(-1)[0].replace("-Paper.pdf", "");
 
-    const title = doc.find("h4").first().text();
-    const author = $(ps[1])
-        .text()
-        .split(", ")
-        .map((author, k) => {
-            const parts = author.split(" ");
-            const caps = parts.map((part, i) => {
-                return capitalize(part);
-            });
-            return caps.join(" ");
-        })
-        .join(" and ");
-    const pdfLink = url;
-    const year = $(ps[0]).text().match(/\d{4}/)[0];
-    const key = `neurips${year}${hash.slice(0, 8)}`;
+    const dom = await fetchDom(url);
+
+    const citeUrl = Array.from(dom.getElementsByTagName("a"))
+        .filter((a) => a.innerText === "Bibtex")[0]
+        ?.getAttribute("href");
+
+    let bibtex, author, title, year, key;
+
+    if (citeUrl) {
+        bibtex = await fetchText(`${parseUrl(url).host}${citeUrl}`);
+        ({ author, citationKey, title, year } = bibtexToObject(bibtex));
+        author = flipAndAuthors(author);
+        key = citationKey;
+    } else {
+        const paragraphs = Array.from(dom.querySelectorAll(".container-fluid .col p"));
+
+        title = dom.getElementsByTagName("h4")[0].innerHTML;
+        const h4Authors = Array.from(document.querySelectorAll("h4")).filter(
+            (h) => h.innerText === "Authors"
+        )[0];
+
+        author = h4Authors.nextElementSibling.innerText
+            .split(", ")
+            .map((author, k) => {
+                const parts = author.split(" ");
+                const caps = parts.map((part, i) => {
+                    return capitalize(part);
+                });
+                return caps.join(" ");
+            })
+            .join(" and ");
+        year = paragraphs[0].innerHTML.match(/\d{4}/)[0];
+        key = `neurips${year}${hash.slice(0, 8)}`;
+
+        bibtex = "";
+        bibtex += `@inproceedings{NEURIPS${year}_${hash.slice(0, 8)},\n`;
+        bibtex += `    author={${author}},\n`;
+        bibtex += `    booktitle={Advances in Neural Information Processing Systems},\n`;
+        bibtex += `    editor={H.Larochelle and M.Ranzato and R.Hadsell and M.F.Balcan and H.Lin},\n`;
+        bibtex += `    publisher={Curran Associates, Inc.},\n`;
+        bibtex += `    title={${title}},\n`;
+        bibtex += `    url={${url}},\n`;
+        bibtex += `    year={${year}}\n`;
+        bibtex += `}`;
+        bibtex = bibtexToString(bibtex);
+    }
+
+    const pdfLink = url
+        .replace("/hash/", "/file/")
+        .replace("-Abstract.html", "-Paper.pdf");
     const id = `NeurIPS-${year}_${hash.slice(0, 8)}`;
     const conf = `NeurIPS ${year}`;
     const note = `Accepted @ ${conf}`;
 
-    let bibtex = "";
+    const venue = "NeurIPS";
 
-    bibtex += `@inproceedings{NEURIPS${year}_${hash.slice(0, 8)},\n`;
-    bibtex += `    author={${author}},\n`;
-    bibtex += `    booktitle={Advances in Neural Information Processing Systems},\n`;
-    bibtex += `    editor={H.Larochelle and M.Ranzato and R.Hadsell and M.F.Balcan and H.Lin},\n`;
-    bibtex += `    publisher={Curran Associates, Inc.},\n`;
-    bibtex += `    title={${title}},\n`;
-    bibtex += `    url={${url}},\n`;
-    bibtex += `    year={${year}}\n`;
-    bibtex += `}`;
-
-    return { author, bibtex, conf, id, key, note, pdfLink, title, year };
+    return { author, bibtex, conf, id, key, note, pdfLink, title, venue, year };
 };
 
 const makeCVFPaper = async (url) => {
@@ -196,12 +200,10 @@ const makeCVFPaper = async (url) => {
         htmlText.replaceAll("\n", ""),
         "text/html"
     );
-    const doc = $(dom);
-
-    const title = doc.find("#papertitle").text().trim();
-    let author = doc.find("#authors i").first().text();
-    author = author
-        .split(",")
+    const title = dom.getElementById("papertitle").innerText.trim();
+    let author = dom
+        .querySelector("#authors i")
+        .innerText.split(",")
         .map((a) => a.trim())
         .join(" and ");
     const { year, id, conf } = parseCVFUrl(url);
@@ -209,24 +211,23 @@ const makeCVFPaper = async (url) => {
     if (url.endsWith(".pdf")) {
         pdfLink = url;
     } else {
-        doc.find("a").each((k, v) => {
-            if ($(v).text() === "pdf") {
-                let href = $(v).attr("href");
-                if (href.startsWith("../")) {
-                    href = href.replaceAll("../", "");
-                }
-                if (!href.startsWith("/")) {
-                    href = "/" + href;
-                }
-                pdfLink = "http://openaccess.thecvf.com" + href;
-            }
-        });
+        const href = Array.from(dom.getElementsByTagName("a"))
+            .filter((a) => a.innerText === "pdf")[0]
+            .getAttribute("href");
+        if (href.startsWith("../")) {
+            href = href.replaceAll("../", "");
+        }
+        if (!href.startsWith("/")) {
+            href = "/" + href;
+        }
+        pdfLink = "http://openaccess.thecvf.com" + href;
     }
     const note = `Accepted @ ${conf} ${year}`;
-    const bibtex = doc.find(".bibref").first().text();
+    const bibtex = bibtexToString(dom.querySelector(".bibref").innerText);
     const key = bibtex.split("{")[1].split(",")[0];
+    const venue = conf;
 
-    return { author, bibtex, conf, id, key, note, pdfLink, title, year };
+    return { author, bibtex, conf, id, key, note, pdfLink, title, venue, year };
 };
 
 const makeOpenReviewBibTex = (paper, url) => {
@@ -257,15 +258,16 @@ const makeOpenReviewPaper = async (url) => {
     const forumJson = await fetchOpenReviewForumJSON(url);
 
     var paper = noteJson.notes[0];
-    log("paper: ", paper);
     var forum = forumJson.notes;
-    log("forum: ", forum);
 
     const title = paper.content.title;
     const author = paper.content.authors.join(" and ");
-    const bibtex = paper.content._bibtex || makeOpenReviewBibTex(paper, url);
-    const key = bibtex.split("{")[1].split(",")[0].trim();
-    const year = bibtex.split("year={")[1].split("}")[0];
+    const bibtex = bibtexToString(
+        paper.content._bibtex || makeOpenReviewBibTex(paper, url)
+    );
+    const obj = bibtexToObject(bibtex);
+    const key = obj.citationKey;
+    const year = obj.year;
 
     let pdfLink;
     if (paper.pdf) {
@@ -314,7 +316,7 @@ const makeOpenReviewPaper = async (url) => {
             ) > -1
         );
     });
-    log("forum: ", forum);
+    let venue = "";
     if (candidates && candidates.length > 0) {
         decision = candidates[0].content.decision
             .split(" ")
@@ -323,13 +325,16 @@ const makeOpenReviewPaper = async (url) => {
             })
             .join(" ");
         note = `${decision} @ ${conf} ${year}`;
+        if (decision.toLowerCase().indexOf("rejected") < 0) {
+            venue = conf;
+        }
     }
 
     if (author === "Anonymous") {
         note = `Under review @ ${conf} ${year} (${new Date().toLocaleDateString()})`;
     }
 
-    return { author, bibtex, conf, id, key, note, pdfLink, title, year };
+    return { author, bibtex, conf, id, key, note, pdfLink, title, venue, year };
 };
 
 const makeBioRxivPaper = async (url) => {
@@ -351,48 +356,46 @@ const makeBioRxivPaper = async (url) => {
 
     const paper = data.collection.reverse()[0];
 
-    const pageData = await fetch(pageURL);
-    const pageText = await pageData.text();
+    const pageText = await fetchText(pageURL);
+
     const dom = new DOMParser().parseFromString(
         pageText.replaceAll("\n", ""),
         "text/html"
     );
-    const bibtextLink = dom.querySelector(".bibtext a").href;
-    const bibtex = await (await fetch(bibtextLink)).text();
+    const bibtextLink = dom.querySelector(".bibtext a").getAttribute("href");
+    const bibtex = bibtexToString(await (await fetch(bibtextLink)).text());
 
     const author = extractAuthor(bibtex);
 
     const conf = "BioRxiv";
-    const id = parseIdFromUrl(url);
+    const id = await parseIdFromUrl(url);
     const key = bibtex.split("\n")[0].split("{")[1].replace(",", "").trim();
     const note = "";
     const pdfLink = cleanBiorxivURL(url) + ".full.pdf";
     const title = paper.title;
     const year = paper.date.split("-")[0];
+    const venue = "";
 
-    return { author, bibtex, conf, id, key, note, pdfLink, title, year };
+    return { author, bibtex, conf, id, key, note, pdfLink, title, venue, year };
 };
 
 const makePMLRPaper = async (url) => {
     const key = url.split("/").reverse()[0].split(".")[0];
-    const id = parseIdFromUrl(url);
+    const id = await parseIdFromUrl(url);
 
     const absURL = url.includes(".html")
         ? url
-        : url.split("/").slice(0, -2).join("/") + `${key}.html`;
+        : url.split("/").slice(0, -2).join("/") + `/${key}.html`;
 
     const pdfLink = absURL.replace(".html", "") + `/${key}.pdf`;
 
-    const doc = new DOMParser().parseFromString(
-        (await (await fetch(absURL)).text()).replaceAll("\n", ""),
-        "text/html"
-    );
+    const dom = await fetchDom(absURL);
 
-    const bibURL = doc
+    const bibURL = dom
         .getElementById("button-bibtex1")
         .getAttribute("onclick")
         .match(/https.+\.bib/)[0];
-    const bibtexRaw = doc
+    const bibtexRaw = dom
         .getElementById("bibtex")
         .innerText.replaceAll("\t", " ")
         .replaceAll(/\s\s+/g, " ");
@@ -407,25 +410,28 @@ const makePMLRPaper = async (url) => {
     if (bibtex.endsWith("}}")) {
         bibtex = bibtex.slice(0, -2) + "}\n}";
     }
+    bibtex = bibtexToString(bibtex);
 
     const author = extractAuthor(bibtex);
-    const title = doc.getElementsByTagName("h1")[0].innerText;
+    const title = dom.getElementsByTagName("h1")[0].innerText;
     const year = extractBibtexValue(bibtex, "year");
 
     let conf = extractBibtexValue(bibtex, "booktitle").replaceAll(
         "Proceedings of the",
         ""
     );
+    let venue = conf;
     note = "Accepted @ " + conf + ` (${year})`;
     for (const long in global.overridePMLRConfs) {
         if (conf.includes(long)) {
-            conf = global.overridePMLRConfs[long] + " " + year;
+            venue = global.overridePMLRConfs[long];
+            conf = venue + " " + year;
             note = "Accepted @ " + conf;
             break;
         }
     }
 
-    return { author, bibtex, conf, id, key, note, pdfLink, title, year };
+    return { author, bibtex, conf, id, key, note, pdfLink, title, venue, year };
 };
 
 const findACLValue = (dom, key) => {
@@ -437,17 +443,13 @@ const findACLValue = (dom, key) => {
 
 const makeACLPaper = async (url) => {
     url = url.replace(".pdf", "");
-    const htmlText = await fetch(url).then((r) => r.text());
-    const dom = new DOMParser().parseFromString(
-        htmlText.replaceAll("\n", ""),
-        "text/html"
-    );
+    const dom = await fetchDom(url);
 
     const bibtexEl = dom.getElementById("citeBibtexContent");
     if (!bibtexEl) return;
 
     const title = dom.getElementById("title").innerText;
-    const bibtex = bibtexEl.innerText;
+    const bibtex = bibtexToString(bibtexEl.innerText);
 
     const bibtexData = bibtexToJson(bibtex)[0];
     const entries = bibtexData.entryTags;
@@ -472,52 +474,173 @@ const makeACLPaper = async (url) => {
 
     const id = `ACL-${conf}-${year}_${aid}`;
     const note = `Accepted @ ${conf} ${year}`;
+    const venue = conf;
 
-    return { author, bibtex, conf, id, key, note, pdfLink, title, year };
+    return { author, bibtex, conf, id, key, note, pdfLink, title, venue, year };
 };
 
 const makePNASPaper = async (url) => {
-    url = url.replace(".full.pdf", "");
-    const htmlText = await fetch(url).then((r) => r.text());
-    const dom = new DOMParser().parseFromString(
-        htmlText.replaceAll("\n", ""),
-        "text/html"
-    );
-    const citeUrl = dom
-        .getElementsByClassName("pane-jnl-pnas-cite-tool")[0]
-        .querySelector("a").href;
+    /*
+        https://www.pnas.org/doi/10.1073/pnas.2114679118
+        https://www.pnas.org/doi/epdf/10.1073/pnas.2114679118
+        https://www.pnas.org/doi/pdf/10.1073/pnas.2114679118
+    */
 
-    if (!citeUrl) return;
+    url = url.replace(".full.pdf", "").replace(/\/doi\/e?pdf\//, "/doi/abs/");
+    const dom = await fetchDom(url);
 
-    const title = dom.getElementById("page-title").innerText;
-    const bibtexUrl = citeUrl.replace("/download", "/bibtext");
-    const bibtex = await fetch(bibtexUrl).then((r) => r.text());
-    const bibtexData = bibtexToJson(bibtex)[0];
-
-    const entries = bibtexData.entryTags;
-
-    const year = entries.year;
-    const author = entries.author
-        .replace(/\s+/g, " ")
-        .split(" and ")
-        .map((v) =>
-            v
-                .split(",")
-                .map((a) => a.trim())
-                .reverse()
-                .join(" ")
+    const title = dom.getElementsByTagName("h1")[0].innerText;
+    const author = Array.from(
+        dom.querySelectorAll(
+            ".authors span[property='author'] a:not([property='email']):not(.orcid-id)"
         )
+    )
+        .filter((el) => !el.getAttribute("href").includes("mailto:"))
+        .map((el) => el.innerText)
         .join(" and ");
-    const pdfLink = entries.eprint;
-    const key = bibtexData.citationKey;
-    const note = `Published @ PNAS (${year})`;
+
+    const year = dom
+        .querySelector("span[property='datePublished']")
+        .innerText.match(/\d{4}/g)[0];
+
     const pid = url.endsWith("/")
         ? url.split("/").slice(-2)[0]
         : url.split("/").slice(-1)[0];
 
     const id = `PNAS-${year}_${pid}`;
+    const pdfLink =
+        url.includes("/doi/pdf/") || url.includes("/doi/epdf/")
+            ? url.replace("/doi/epdf/", "/doi/pdf/")
+            : url.replace("/doi/abs/", "/doi/pdf/").replace("/doi/full/", "/doi/pdf/");
+    const doi = Array.from(
+        dom.querySelector(".self-citation").getElementsByTagName("a")
+    )
+        .map((a) => a.getAttribute("href"))
+        .filter((a) => a.includes("https://doi.org"))[0]
+        .split("/")
+        .slice(-2)
+        .join("/");
+    const key = `doi:${doi}`;
+    const bibtex = bibtexToString(`
+    @article{${key},
+        author={${author}},
+        title={${title}},
+        journal = {Proceedings of the National Academy of Sciences},
+        year={${year}},
+        doi={${doi}},
+        eprint={${pdfLink}},
+        URL={${pdfLink.replace("/doi/pdf/", "/doi/abs/")}}
+    }`);
+    const venue = "PNAS";
 
-    return { author, bibtex, id, key, note, pdfLink, title, year };
+    const note = `Published @ PNAS (${year})`;
+
+    return { author, bibtex, id, key, note, pdfLink, title, venue, year };
+};
+
+const makeNaturePaper = async (url) => {
+    url = url.replace(".pdf", "").split("#")[0];
+    const pdfLink = url + ".pdf";
+    const hash = url.split("/").reverse()[0];
+
+    const dom = await fetchDom(url);
+
+    const title = dom.querySelector("h1.c-article-title").innerText;
+    const author = Array.from(dom.querySelectorAll("ul.c-article-author-list li"))
+        .map((a) =>
+            a.innerText
+                .replace(/(\ ?,)|&|…|\d/g, "")
+                .split(/orcid/i)[0]
+                .trim()
+        )
+        .filter((a) => a.length > 0)
+        .join(" and ");
+    const year = dom
+        .querySelector(".c-article-info-details")
+        .innerText.match(/\(\d{4}\)/)[0]
+        .replace(/\(|\)/g, "");
+    const journal = dom.querySelector(".c-article-info-details [data-test]").innerText;
+    const id = `Nature_${hash}`;
+    const doi = document
+        .querySelector(".c-bibliographic-information__citation")
+        .innerText.split("https://doi.org/")[1];
+    const bibURL = `https://doi.org/${doi}`;
+    const key = `${author.split(" ")[1]}${year}${firstNonStopLowercase(title)}`;
+    const bibtex = bibtexToString(`@article{${key},
+        author={${author}},
+        title={${title}},
+        journal = {${journal}},
+        year={${year}},
+        doi={${doi}},
+        url={${bibURL}}
+    }`);
+    const note = `Published @ ${journal} (${year})`;
+    const venue = journal;
+    return { author, bibtex, id, key, note, pdfLink, title, venue, year };
+};
+
+const makeACSPaper = async (url) => {
+    url = url.replace("pubs.acs.org/doi/pdf/", "pubs.acs.org/doi/").split("?")[0];
+    const doi = url.replace("/abs/", "/").split("/doi/")[1];
+    console.log("doi: ", doi);
+    const citeUrl = `https://pubs.acs.org/action/downloadCitation?doi=${doi}&include=cit&format=bibtex&direct=true`;
+    const bibtex = await fetchText(citeUrl);
+    const data = bibtexToObject(bibtex);
+    const author = data.author.replaceAll("\n", "").trim();
+    const title = data.title.trim();
+    const year = data.year.trim();
+    const key = data.citationKey.trim();
+    const pdfLink = url.replace("/doi/", "/doi/pdf/");
+    const note = `Published @ ${data.journal} (${data.year})`;
+    const id = `ACS_${doi.replaceAll(".", "").replaceAll("/", "")}`;
+    const venue = data.journal;
+
+    return { author, bibtex, id, key, note, pdfLink, title, venue, year };
+};
+
+const makeIOPPaper = async (url) => {
+    url = url.split("#")[0];
+    if (url.endsWith("/pdf")) url = url.slice(0, -4);
+    const dom = await fetchDom(url);
+    const bibtexPath = Array.from(dom.querySelectorAll(".btn-multi-block a"))
+        .filter((a) => a.innerText === "BibTeX")
+        .map((a) => a.getAttribute("href"))[0];
+    const citeUrl = `https://${parseUrl(url).host}${bibtexPath}`;
+    const bibtex = await fetchText(citeUrl);
+    const data = bibtexToObject(bibtex);
+    const author = data.author.replaceAll("\n", "").trim();
+    const title = data.title.trim();
+    const year = data.year.trim();
+    const key = data.citationKey.trim();
+    const pdfLink = url + "/pdf";
+    const venue = data.journal;
+    const note = `Published @ ${venue} (${year})`;
+    const doi = url.split("/article/").reverse()[0];
+    const id = `IOPscience_${doi.replaceAll(".", "").replaceAll("/", "")}`;
+    return { author, bibtex, id, key, note, pdfLink, title, venue, year };
+};
+
+const makeJMLRPaper = async (url) => {
+    if (url.includes("/papers/volume")) {
+        url = url.replace("/papers/volume", "/papers/v");
+    }
+    if (url.endsWith(".pdf")) {
+        url = url.split("/").slice(0, -1).join("/");
+    }
+    url = url.replace(".html", "");
+    const jid = url.split("/").reverse()[0];
+    const citeUrl = url + ".bib";
+    const bibtex = await fetchText(citeUrl);
+    const data = bibtexToObject(bibtex);
+
+    const { author, year, title, citationKey } = data;
+    const key = citationKey.trim();
+    const id = `JMLR-${year}_${jid}`;
+    const note = `Published @ JMLR (${year})`;
+    const pdfLink = url.replace("/papers/v", "/papers/volume") + `/${jid}.pdf`;
+    const venue = "JMLR";
+
+    return { author, bibtex, id, key, note, pdfLink, title, venue, year };
 };
 
 // --------------------------------------------
@@ -540,10 +663,10 @@ const tryCrossRef = async (paper) => {
         // assert the response is valid
         if (json.status !== "ok") {
             log(`[PM][Crossref] ${api} returned ${json.message.status}`);
-            return "";
+            return { note: null };
         }
         // assert there is a (loose) match
-        if (json.message.items.length === 0) return "";
+        if (json.message.items.length === 0) return { note: null };
 
         // compare matched item's title to the paper's title
         const crossTitle = json.message.items[0].title[0]
@@ -555,21 +678,24 @@ const tryCrossRef = async (paper) => {
             .replaceAll("\n", " ")
             .replaceAll(/\s\s+/g, " ");
         if (crossTitle !== refTitle) {
-            return "";
+            return { note: null };
         }
 
         // assert the matched item has an event with a name
         // (this may be too restrictive for journals, to improve)
-        if (!json.message.items[0].event || !json.message.items[0].event.name)
-            return "";
+        if (!json.message.items[0].event || !json.message.items[0].event.name) {
+            return { note: null };
+        }
 
         // return the note
         info("Found a CrossRef match");
-        return `Accepted @ ${json.message.items[0].event.name.trim()} -- [crossref.org]`;
+        const venue = json.message.items[0].event.name.trim();
+        const note = `Accepted @ ${venue} -- [crossref.org]`;
+        return { venue, note };
     } catch (error) {
-        // something went wrong, log the error, return ""
+        // something went wrong, log the error, return {note: null}
         log("[PM][Crossref]", error);
-        return "";
+        return { note: null };
     }
 };
 
@@ -585,8 +711,7 @@ const tryDBLP = async (paper) => {
             !json.result.hits.hit ||
             !json.result.hits.hit.length
         ) {
-            log("[PM][DBLP] No hits found");
-            return "";
+            return { note: null };
         }
 
         const hits = json.result.hits.hit.sort(
@@ -608,30 +733,42 @@ const tryDBLP = async (paper) => {
                 .replaceAll(/\s\s+/g, " ");
             if (hitTitle === refTitle && hit.info.venue !== "CoRR") {
                 info("Found a DBLP match");
+                const bibtex = await fetchText(hit.info.url + ".bib");
                 const abbr = hit.info.venue.toLowerCase().replaceAll(".", "").trim();
-                const venue = global.journalAbbreviations[abbr] || hit.info.venue;
+                const venue = (
+                    global.journalAbbreviations[abbr] || hit.info.venue
+                ).trim();
                 const year = hit.info.year;
                 const url = hit.info.url;
-                const note = `Accepted @ ${venue.trim()} ${year} -- [dblp.org]\n${url}`;
-                return note;
+                const note = `Accepted @ ${venue} ${year} -- [dblp.org]`;
+                return { venue, note, bibtex };
             }
         }
-        log("[PM][DBLP] No match found");
-        return "";
+        return { note: null };
     } catch (error) {
-        // something went wrong, log the error, return ""
+        // something went wrong, log the error, return {note: null}
         log("[PM][DBLP]", error);
-        return "";
+        return { note: null };
     }
 };
 
 const tryPreprintMatch = async (paper) => {
-    let note = "";
-    note = await tryDBLP(paper);
+    let note, venue, bibtex;
+
+    dblpMatch = await tryDBLP(paper);
+    note = dblpMatch.note;
+    venue = dblpMatch.venue;
+    bibtex = dblpMatch.bibtex;
     if (!note) {
-        note = await tryCrossRef(paper);
+        log("[DBLP] No publication found");
+        crossRefMatch = await tryCrossRef(paper);
+        note = crossRefMatch.note;
+        venue = crossRefMatch.venue;
     }
-    return note;
+    if (!note) {
+        log("[CrossRef] No publication found");
+    }
+    return { note, venue, bibtex };
 };
 
 // -----------------------------
@@ -651,6 +788,7 @@ const initPaper = async (paper) => {
     paper.addDate = new Date().toJSON();
     paper.lastOpenDate = paper.addDate;
     paper.count = 1;
+    paper.code = {};
 
     for (const k in paper) {
         if (paper.hasOwnProperty(k) && typeof paper[k] === "string") {
@@ -727,6 +865,26 @@ const makePaper = async (is, url, id) => {
         paper = await makePNASPaper(url);
         if (paper) {
             paper.source = "pnas";
+        }
+    } else if (is.nature) {
+        paper = await makeNaturePaper(url);
+        if (paper) {
+            paper.source = "nature";
+        }
+    } else if (is.acs) {
+        paper = await makeACSPaper(url);
+        if (paper) {
+            paper.source = "acs";
+        }
+    } else if (is.iop) {
+        paper = await makeIOPPaper(url);
+        if (paper) {
+            paper.source = "iop";
+        }
+    } else if (is.jmlr) {
+        paper = await makeJMLRPaper(url);
+        if (paper) {
+            paper.source = "jmlr";
         }
     } else {
         throw new Error("Unknown paper source: " + JSON.stringify({ is, url, id }));

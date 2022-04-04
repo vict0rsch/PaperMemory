@@ -19,31 +19,34 @@ const initState = async (papers, isContentScript) => {
     const s = Date.now();
     if (typeof papers === "undefined") {
         papers = await getStorage("papers");
-        log("Time to retrieve stored papers (s): " + (Date.now() - s) / 1000);
+        info("Time to retrieve stored papers (s): " + (Date.now() - s) / 1000);
     }
 
     global.state.dataVersion = getManifestDataVersion();
     global.state.titleFunction = (await getTitleFunction()).titleFunction;
 
+    weeklyBackup();
+
     const migration = await migrateData(papers, global.state.dataVersion);
 
     papers = migration.papers;
     global.state.papers = papers;
+    global.state.menu = await getMenu();
+    global.state.ignoreSources = (await getStorage("ignoreSources")) || {};
 
     if (isContentScript) {
-        log("State initialization duration (s): " + (Date.now() - s) / 1000);
+        info("State initialization duration (s): " + (Date.now() - s) / 1000);
         return;
     }
-
+    global.state.files = await matchAllFilesToPapers();
     global.state.papersList = Object.values(cleanPapers(papers));
     global.state.sortKey = "lastOpenDate";
     global.state.papersReady = true;
-    global.state.menu = await getMenu();
 
     sortMemory();
     makeTags();
 
-    log("State initialization duration (s): " + (Date.now() - s) / 1000);
+    info("State initialization duration (s): " + (Date.now() - s) / 1000);
 };
 
 /**
@@ -179,11 +182,11 @@ const stateTitleFunction = (paperOrId) => {
  * @param {object} checks The user's preferences
  * @returns
  */
-const addOrUpdatePaper = async (url, is, checks) => {
-    let paper, isNew, paperswithcodeLink, paperswithcodeNote;
+const addOrUpdatePaper = async (url, is, menu) => {
+    let paper, isNew, pwcUrl, pwcNote, pwcVenue;
 
     // Extract id from url
-    const id = parseIdFromUrl(url);
+    const id = await parseIdFromUrl(url);
     log("id:", id);
 
     if (id && global.state.papers.hasOwnProperty(id)) {
@@ -217,55 +220,92 @@ const addOrUpdatePaper = async (url, is, checks) => {
         }
     }
 
-    if (!paper.codeLink) {
-        const request = { type: "papersWithCode", paper: paper };
-        const backgroundResponse = await sendMessage(request);
+    if (!paper.codeLink || !paper.venue) {
+        try {
+            const payload = {
+                type: "papersWithCode",
+                paper: paper,
+                officialReposOnly: menu.checkOfficialRepos,
+            };
+            const pwc = await sendMessageToBackground(payload);
 
-        paperswithcodeLink = backgroundResponse.code?.url;
-        paperswithcodeNote = backgroundResponse.code?.note;
+            pwcUrl = !paper.codeLink && pwc?.url;
+            pwcNote = pwc?.note;
+            pwcVenue = !paper.venue && pwc?.venue;
 
-        if (paperswithcodeLink) {
-            console.log(
-                "Discovered a code repository from PapersWithCode:",
-                paperswithcodeLink
-            );
-            global.state.papers[paper.id].codeLink = paperswithcodeLink;
-            global.state.papers[paper.id].code = backgroundResponse.code;
-        }
-        if (!paper.note && paperswithcodeNote) {
-            global.state.papers[paper.id].note = paperswithcodeNote;
+            if (pwcUrl) {
+                console.log(
+                    "Discovered a code repository from PapersWithCode:",
+                    pwcUrl
+                );
+                paper.codeLink = pwcUrl;
+                if (pwc.hasOwnProperty("note")) delete pwc.note;
+                paper.code = pwc;
+            }
+        } catch (error) {
+            log("Error trying to discover a code repository:");
+            log(error);
         }
     }
 
+    global.state.papers = await getStorage("papers");
+    global.state.papers[paper.id] = paper;
+
     chrome.storage.local.set({ papers: global.state.papers }, async () => {
         let notifText;
-        if (isNew || paperswithcodeLink) {
+        if (isNew || pwcUrl) {
             if (isNew) {
                 // new paper
 
-                log("Added '" + paper.title + "' to your Memory!");
+                info("Added '" + paper.title + "' to your Memory!");
                 log("paper: ", paper);
                 notifText = "Added to your Memory";
-                if (paperswithcodeLink) {
+                if (pwcUrl) {
                     notifText +=
                         "<br/><div id='feedback-pwc'>(+ repo from PapersWithCode) </div>";
                 }
-                checks && checks.checkFeedback && feedback(notifText, paper);
+                menu && menu.checkFeedback && feedback(notifText, paper);
             } else {
                 // existing paper but new code repo
 
                 notifText = "Found a code repository on PapersWithCode!";
-                checks && checks.checkFeedback && feedback(notifText);
+                menu && menu.checkFeedback && feedback(notifText);
             }
         } else {
-            log("Updated '" + paper.title + "' in your Memory");
+            info("Updated '" + paper.title + "' in your Memory");
         }
+
+        if (!paper.venue && !pwcVenue) {
+            log("[PapersWithCode] No publication found");
+        }
+
         // anyway: try and update note with actual publication
-        if (!paper.note) {
-            const note = await tryPreprintMatch(paper);
-            if (note) {
-                log("[PM] Updating preprint note to", note);
-                paper.note = note;
+        if (!paper.note || !paper.venue) {
+            const { note, venue, bibtex } = await tryPreprintMatch(paper);
+            if (note || venue || bibtex) {
+                if (!paper.note) {
+                    if (note) {
+                        log("Updating preprint note to", note);
+                        paper.note = note;
+                    } else if (pwcNote) {
+                        log("Updating preprint note to", pwcNote);
+                        paper.note = pwcNote;
+                    }
+                }
+                if (!paper.venue) {
+                    if (venue) {
+                        log("Updating preprint venue to", venue);
+                        paper.venue = venue;
+                    } else if (pwcVenue) {
+                        log("Updating preprint venue to", pwcVenue);
+                        paper.venue = pwcVenue;
+                    }
+                }
+                if (bibtex) {
+                    log("Updating preprint bibtex to", bibtex);
+                    paper.bibtex = bibtex;
+                }
+                global.state.papers = await getStorage("papers");
                 global.state.papers[paper.id] = paper;
                 chrome.storage.local.set({ papers: global.state.papers });
             }
@@ -282,8 +322,8 @@ const addOrUpdatePaper = async (url, is, checks) => {
  * @param {string} url The url to use in order to find a matching paper
  * @returns {string} The id of the paper found.
  */
-const parseIdFromUrl = (url) => {
-    const is = isPaper(url);
+const parseIdFromUrl = async (url) => {
+    const is = await isPaper(url, true);
     if (is.arxiv) {
         const arxivId = url.match(/\d{4}\.\d{4,5}/g)[0];
         return `Arxiv-${arxivId}`;
@@ -330,6 +370,29 @@ const parseIdFromUrl = (url) => {
             return p.id.includes("PNAS-") && p.id.includes(pid);
         })[0];
         return paper && paper.id;
+    } else if (is.nature) {
+        url = url.replace(".pdf", "").split("#")[0];
+        const hash = url.split("/").reverse()[0];
+        return `Nature_${hash}`;
+    } else if (is.acs) {
+        url = url
+            .replace("pubs.acs.org/doi/pdf/", "/doi/")
+            .replace("pubs.acs.org/doi/abs/", "/doi/")
+            .split("?")[0];
+        const doi = url.split("/doi/")[1].replaceAll(".", "").replaceAll("/", "");
+        return `ACS_${doi}`;
+    } else if (is.iop) {
+        url = url.split("#")[0].replace(/\/pdf$/, "");
+        const doi = url.split("/article/")[1].replaceAll(".", "").replaceAll("/", "");
+        return `IOPscience_${doi}`;
+    } else if (is.jmlr) {
+        if (url.endsWith(".pdf")) {
+            url = url.split("/").slice(0, -1).join("/");
+        }
+        url = url.replace(".html", "");
+        const jid = url.split("/").reverse()[0];
+        const year = `20${jid.match(/\d+/)[0]}`;
+        return `JMLR-${year}_${jid}`;
     } else if (is.localFile) {
         return is.localFile;
     } else {
@@ -348,6 +411,16 @@ const parseIdFromUrl = (url) => {
 const isKnownLocalFile = (url) => {
     if (!url.startsWith("file://")) return false;
     if (!url.endsWith(".pdf")) return false;
+
+    const filePath = decodeURIComponent(url).replace("file://", "");
+    const storedPaths = Object.entries(global.state.files).filter(
+        ([id, file]) => file.filename === filePath
+    );
+
+    if (storedPaths.length > 0) {
+        console.log("Found stored");
+        return storedPaths[0][0];
+    }
 
     const filename = decodeURIComponent(url.split("/").reverse()[0])
         .toLowerCase()
