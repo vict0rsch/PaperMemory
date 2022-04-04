@@ -248,46 +248,48 @@ Here's an example return value from PWC's API
 ## FAQ
 
 <details>
- <summary><strong>Why does PaperMemory require access to all urls?</strong></summary>
+<summary><strong>Why does PaperMemory require access to all urls?</strong></summary>
 <br/>
 Because Chrome & Brave will disable an extension by default when it auto-updates with new permissions. In this case, any new addition of a paper source will require new permissions to access the data necessary to parse the paper data and will therefore disable the extension until users re-enable it.
-
 </details>
 
 <details>
- <summary><strong>How do yoy match Arxiv.org pre-prints to actual publications?</strong></summary>
+<summary><strong>How do yoy match Arxiv.org pre-prints to actual publications?</strong></summary>
 <br/>
-    
+
 It's all there: [preprints](#preprints) 😃
 
 Contributions and ideas on how to improve the process and potentially add publication sources from titles or arxiv `id` are welcome!
-
 </details>
 
-
 <details>
- <summary><strong>Where does PaperMemory store my data?</strong></summary>
+<summary><strong>Where does PaperMemory store my data?</strong></summary>
 <br/>
 It's all stored locally in your browser's local storage. If you want to transfer data to a new browser/computer, use the export/import tools in the extension's options.
-
 </details>
 
 <details>
- <summary><strong>Can I access the memory full-screen?</strong></summary>
+<summary><strong>Can I access the memory full-screen?</strong></summary>
 <br/>
-Sure! In the extension popup's menu, there's a link at the bottom to the full-page memory. You can also just click this link: [chrome-extension://ehchlpggdaffcncbeopdopnndhdjelbc/src/fullMemory/fullMemory.html](chrome-extension://ehchlpggdaffcncbeopdopnndhdjelbc/src/fullMemory/fullMemory.html) (Thanks @kaixin96!)
+Sure! In the extension popup's menu, there's a link at the bottom to the full-page memory. You can also just go to this url (Thanks @kaixin96!): 
 
+```
+chrome-extension://ehchlpggdaffcncbeopdopnndhdjelbc/src/fullMemory/fullMemory.html
+```
 </details>
 
 <details>
- <summary><strong>Can I exclude a paper source?</strong></summary>
+<summary><strong>Can I exclude a paper source?</strong></summary>
 <br/>
-Yep. In the extension popup's advanced options page: right-click the extension's icon and click on `Options`. Or click on the link at the bottom of the popup menu. Or click here [chrome-extension://ehchlpggdaffcncbeopdopnndhdjelbc/src/options/options.html](chrome-extension://ehchlpggdaffcncbeopdopnndhdjelbc/src/options/options.html) (Thanks @kaixin96!)
+Yep. In the extension popup's advanced options page: right-click the extension's icon and click on `Options`. Or click on the link at the bottom of the popup menu. Or go to this url (Thanks @kaixin96!):  
 
+```
+chrome-extension://ehchlpggdaffcncbeopdopnndhdjelbc/src/options/options.html
+```
 </details>
 
 <details>
- <summary><strong>How can I retrieve a backup?</strong></summary>
+<summary><strong>How can I retrieve a backup?</strong></summary>
 <br/>
 There is no straightforward way to do this currently, it will require a little coding:
 
@@ -301,7 +303,6 @@ There is no straightforward way to do this currently, it will require a little c
     console.log(overwrite) // inspect this and make sure it is what you want
     setStorage("papers", overwrite) // Careful! This will overwrite the current data with the backup data
     ```
-
 </details>
 
 ## Todo
