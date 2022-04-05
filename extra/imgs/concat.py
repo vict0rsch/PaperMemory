@@ -59,9 +59,9 @@ def crop(img, min_h, min_w):
     return img[:, start_w:end_w]
 
 
-def to_rgb(img):
+def to_rgba(img):
     """
-    Convert RGBA image to RGB.
+    Convert RGB image to RGBA.
 
     Args:
         img (np.array): image
@@ -69,8 +69,10 @@ def to_rgb(img):
     Returns:
         np.array: RGBA image
     """
-    if img.shape[-1] == 4:
-        return img[..., :3]
+    if img.shape[-1] == 3:
+        return np.concatenate(
+            [img, np.full((img.shape[:-1], 1), 255, dtype=np.uint8)], axis=-1
+        )
 
     return img
 
@@ -94,19 +96,12 @@ def concat(imgs, axis, margin):
         pad = np.zeros((margin, imgs[0].shape[1], 4), dtype=np.uint8)
     else:
         pad = np.zeros((imgs[0].shape[0], margin, 4), dtype=np.uint8)
-    pad += np.array([0, 0, 0, 255], dtype=np.uint8)[None, None, :]
-
-    # padding will be transparent so images must be RGBA
-    ims = [
-        np.concatenate([i, np.ones((*i.shape[:2], 1), dtype=np.uint8) * 255], axis=-1)
-        for i in imgs
-    ]
 
     padded = []
-    for i in ims[:-1]:
+    for i in imgs[:-1]:
         padded.append(i)
         padded.append(pad)
-    padded.append(ims[-1])
+    padded.append(imgs[-1])
 
     return np.concatenate(padded, axis=axis)
 
@@ -144,7 +139,7 @@ if __name__ == "__main__":
     h, w = common_shape(imgs, axis)
     # Crop images
     print("Cropping images...")
-    imgs = [to_rgb(crop(img, h, w)) for img in imgs]
+    imgs = [to_rgba(crop(img, h, w)) for img in imgs]
     # Concatenate images
     imgs = concat(imgs, axis, margin)
     # Save output image
