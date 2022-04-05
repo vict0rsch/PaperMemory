@@ -634,10 +634,7 @@ $(async () => {
     chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
         // listen for messages sent from background.js
         if (request.message === "tabUrlUpdate") {
-            info(
-                "Running PaperMemory's contentScriptMain for url update:",
-                request.url
-            );
+            info("Running PaperMemory's content script for url update");
             contentScriptMain(request.url);
         }
     });
