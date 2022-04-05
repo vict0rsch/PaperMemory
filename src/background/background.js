@@ -106,10 +106,9 @@ chrome.runtime.onMessage.addListener((payload, sender, sendResponse) => {
                     saveAs: false,
                 });
             }
-            chrome.downloads.download({
-                url: payload.pdfUrl,
-                filename: "PaperMemoryStore/" + payload.title,
-            });
+            let filename = "PaperMemoryStore/" + payload.title;
+            filename = filename.replaceAll("?", "").replaceAll(":", "");
+            chrome.downloads.download({ url: payload.pdfUrl, filename });
             sendResponse(true);
         });
     }
