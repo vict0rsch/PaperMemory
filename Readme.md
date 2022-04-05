@@ -80,7 +80,7 @@ Switch between Light and Dark mode
 
 
 <p align="center">
-<img src="https://github.com/vict0rsch/PaperMemory/blob/master/extra/imgs/dm.png?raw=true">
+<img src="https://github.com/vict0rsch/PaperMemory/blob/master/extra/imgs/lightdark.png?raw=true">
 </p>
 
 
