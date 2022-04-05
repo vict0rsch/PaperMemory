@@ -75,13 +75,52 @@ def to_rgb(img):
     return img
 
 
+def concat(imgs, axis, margin):
+    """
+    Concatenate images along `axis`.
+
+    Args:
+        imgs (list[np.array]): list of images
+        axis (int): axis images will be concatenated along
+        margin (int): margin between images
+
+    Returns:
+        np.array: concatenated image
+    """
+    if margin == 0:
+        return np.concatenate(imgs, axis=axis)
+
+    if axis == 0:
+        pad = np.zeros((margin, imgs[0].shape[1], 4), dtype=np.uint8)
+    else:
+        pad = np.zeros((imgs[0].shape[0], margin, 4), dtype=np.uint8)
+    pad += np.array([0, 0, 0, 255], dtype=np.uint8)[None, None, :]
+
+    # padding will be transparent so images must be RGBA
+    ims = [
+        np.concatenate([i, np.ones((*i.shape[:2], 1), dtype=np.uint8) * 255], axis=-1)
+        for i in imgs
+    ]
+
+    padded = []
+    for i in ims[:-1]:
+        padded.append(i)
+        padded.append(pad)
+    padded.append(ims[-1])
+
+    return np.concatenate(padded, axis=axis)
+
+
 if __name__ == "__main__":
     # Get arguments
     args = resolved_args()
     files = args.files
     print("Looking for", files)
+
     out = args.out
     axis = args.axis or 0
+    margin = args.margin or 0
+
     if not out.endswith(".png"):
         out += ".png"
     if isinstance(files, str):
@@ -93,6 +132,8 @@ if __name__ == "__main__":
             )
         else:
             files = [files]
+    else:
+        files = [Path(f) for f in files]
     print("Reading", len(files), "images...")
     # Find files
     files = [Path(f).resolve() for f in files if f.exists()]
@@ -105,7 +146,7 @@ if __name__ == "__main__":
     print("Cropping images...")
     imgs = [to_rgb(crop(img, h, w)) for img in imgs]
     # Concatenate images
-    imgs = np.concatenate(imgs, axis=axis)
+    imgs = concat(imgs, axis, margin)
     # Save output image
     print(f"Writing {out} with shape {imgs.shape}...")
 
