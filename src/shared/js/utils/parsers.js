@@ -662,7 +662,7 @@ const tryCrossRef = async (paper) => {
 
         // assert the response is valid
         if (json.status !== "ok") {
-            log(`[PM][Crossref] ${api} returned ${json.message.status}`);
+            log(`[Crossref] ${api} returned ${json.message.status}`);
             return { note: null };
         }
         // assert there is a (loose) match
@@ -694,7 +694,7 @@ const tryCrossRef = async (paper) => {
         return { venue, note };
     } catch (error) {
         // something went wrong, log the error, return {note: null}
-        log("[PM][Crossref]", error);
+        log("[Crossref]", error);
         return { note: null };
     }
 };
@@ -747,7 +747,7 @@ const tryDBLP = async (paper) => {
         return { note: null };
     } catch (error) {
         // something went wrong, log the error, return {note: null}
-        log("[PM][DBLP]", error);
+        log("[DBLP]", error);
         return { note: null };
     }
 };
