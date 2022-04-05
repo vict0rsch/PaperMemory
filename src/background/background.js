@@ -1,6 +1,6 @@
 var paperTitles = {};
-var titleUpdates = {};
 var MAX_TITLE_UPDATES = 100;
+var tabStatuses = {};
 
 const setFaviconCode = `
 var link;
@@ -14,7 +14,16 @@ if (window.location.href.startsWith("file://")){
     setTimeout( () => {link.href = "https://github.com/vict0rsch/PaperMemory/blob/master/icons/favicon-192x192.png?raw=true"}, 350);
 }`;
 
-const knownPageHasUrl = (url) => {
+const setTitleCode = (title) => `
+target = "${title}";
+document.querySelector("title").innerHTML = "";
+setTimeout(() => {
+    document.querySelector("title").innerHTML = target;
+}, 10)
+`;
+
+const urlIsAKnownPdfSource = (url) => {
+    if (!url) return false;
     const pdfPages = Object.values(global.knownPaperPages).map(
         (v) => v.filter((u) => typeof u === "string").reverse()[0]
     );
@@ -107,35 +116,30 @@ chrome.runtime.onMessage.addListener((payload, sender, sendResponse) => {
     return true;
 });
 
-chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
-    const paperTitle = paperTitles[tab.url];
-    if (!titleUpdates.hasOwnProperty(tabId)) titleUpdates[tabId] = 0;
-    if (titleUpdates[tabId] > MAX_TITLE_UPDATES - 1) {
-        if (titleUpdates[tabId] == MAX_TITLE_UPDATES) {
-            console.log(
-                "WARNING: max number of title titleUpdates reached. " +
-                    "This is a logic failure in PaperMemory. " +
-                    "Please open an issue at https://github.com/vict0rsch/PaperMemory"
-            );
-            titleUpdates[tabId] += 1;
+chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
+    if (changeInfo.status) {
+        if (changeInfo.status === "loading") {
+            tabStatuses[tabId] = "loading";
+        } else if (changeInfo.status === "complete") {
+            tabStatuses[tabId] = "complete";
         }
-        return; // in case of logic failure on different browsers, prevent infinite loop
-    }
-    if (
-        paperTitle && // title from content_script message is set
-        changeInfo.title && // change is about title
-        !knownPageHasUrl(changeInfo.title) && // ignore event triggered by `document.title=''` which sets title to url
-        changeInfo.title !== paperTitle && // there is a new title
-        isPdfUrl(tab.url) // only valid for pdfs
-    ) {
-        console.log(`Updating pdf file name to "${paperTitle}"`);
-
-        // https://stackoverflow.com/questions/69406482/window-title-is-not-changed-after-pdf-is-loaded
-        chrome.tabs.executeScript(tabId, {
-            code: `window.document.title='';window.document.title="${paperTitle}";${setFaviconCode}`,
-            runAt: "document_start",
-        });
-        titleUpdates[tabId] += 1;
+    } else {
+        tab = await new Promise((resolve) =>
+            chrome.tabs.get(tabId, (tab) => resolve(tab))
+        );
+        if (tabStatuses.hasOwnProperty(tabId) && tabStatuses[tabId] === "complete") {
+            const paperTitle = paperTitles[tab.url];
+            if (paperTitle && tab.title !== paperTitle) {
+                console.log(">>> Setting tab title to :", paperTitle);
+                chrome.tabs.executeScript(tabId, {
+                    code: `
+                        ${setTitleCode(paperTitle)};
+                        ${setFaviconCode};
+                    `,
+                    runAt: "document_start",
+                });
+            }
+        }
     }
 });
 
