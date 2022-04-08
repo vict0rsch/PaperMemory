@@ -11,15 +11,22 @@ if (window.location.href.startsWith("file://")){
         link.rel = 'icon';
         document.getElementsByTagName('head')[0].appendChild(link);
     }
-    setTimeout( () => {link.href = "https://github.com/vict0rsch/PaperMemory/blob/master/icons/favicon-192x192.png?raw=true"}, 350);
+    setTimeout(() => {
+        link.href = "https://github.com/vict0rsch/PaperMemory/blob/master/icons/favicon-192x192.png?raw=true"
+    }, 350);
 }`;
 
 const setTitleCode = (title) => `
-target = "${title}";
-document.querySelector("title").innerHTML = "";
-setTimeout(() => {
-    document.querySelector("title").innerHTML = target;
-}, 10)
+try {
+    target = "${title}";
+    document.title = "";
+    const qtitle = document.querySelector("title");
+    qtitle && (qtitle.innerHTML = "");
+    setTimeout(() => {
+        document.title = target;
+        qtitle && (qtitle.innerHTML = target);
+    }, 10)
+} catch (e) {}
 `;
 
 const urlIsAKnownPdfSource = (url) => {
