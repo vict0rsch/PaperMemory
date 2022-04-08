@@ -662,6 +662,14 @@ const getStoredFiles = () =>
             {
                 filenameRegex: "PaperMemoryStore/.*",
             },
-            (files) => resolve(files.filter((f) => f.exists && f.state === "complete"))
+            (files) =>
+                resolve(
+                    files.filter(
+                        (f) =>
+                            f.exists &&
+                            f.state === "complete" &&
+                            !f.filename.toLowerCase().includes("readme.txt")
+                    )
+                )
         );
     });

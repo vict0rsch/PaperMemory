@@ -236,7 +236,12 @@ const matchPapersToFiles = async (papers, files) => {
         ])
     );
     // filter non-existing file handles
-    files = files.filter((f) => f.exists && f.state === "complete");
+    files = files.filter(
+        (f) =>
+            f.exists &&
+            f.state === "complete" &&
+            !f.filename.toLowerCase().includes("readme.txt")
+    );
     // pre-compute file's simplified titles
     const fileTitles = Object.fromEntries(
         files.map((f) => [f.id, f.filename.toLowerCase().replace(/\W/g, "")])
