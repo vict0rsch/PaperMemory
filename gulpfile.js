@@ -136,10 +136,8 @@ function createArchive(cb) {
         .pipe(dest(archiveFolder));
 }
 
-exports.build = series(
-    parallel(popupJS, themeJS, utilsJS, popupCSS, popupDarkCSS, popupHTML),
-    createArchive
-);
+exports.build = parallel(popupJS, themeJS, utilsJS, popupCSS, popupDarkCSS, popupHTML);
 exports.dev = parallel(popupJS, themeJS, utilsJS, popupCSS, popupDarkCSS, popupHTMLDev);
-exports.watch = series(popupHTMLDev, watchFiles);
-exports.archive = createArchive;
+exports.watch = series(exports.dev, watchFiles);
+exports.archive = series(exports.build, createArchive);
+exports.html = series(popupHTMLDev);
