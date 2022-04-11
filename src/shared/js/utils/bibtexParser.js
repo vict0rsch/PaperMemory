@@ -329,7 +329,7 @@ const bibtexToString = (bibtex) => {
     delete bibtex.citationKey;
     const keyLen = Math.max(...Object.keys(bibtex).map((k) => k.length));
     for (const key in bibtex) {
-        if (bibtex.hasOwnProperty(key)) {
+        if (bibtex.hasOwnProperty(key) && bibtex[key]) {
             const value = bibtex[key].replaceAll(/\s+/g, " ").trim();
             bkey = key + " ".repeat(keyLen - key.length);
             bstr += `\t${bkey} = {${value}},\n`;
