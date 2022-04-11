@@ -643,50 +643,6 @@ const makeJMLRPaper = async (url) => {
     return { author, bibtex, id, key, note, pdfLink, title, venue, year };
 };
 
-const makePubMedPaper = async (url) => {
-    const dom = await fetchDom(url);
-    const metas = Array.from(dom.getElementsByTagName("meta")).filter((el) =>
-        el.getAttribute("name")?.includes("citation_")
-    );
-    const data = Object.fromEntries(
-        metas.map((el) => [
-            el.getAttribute("name").replace("citation_", ""),
-            el.getAttribute("content"),
-        ])
-    );
-    const author = document
-        .querySelector("div.authors-list")
-        .innerText.replace(/\d/gi, "")
-        .split(",")
-        .map((a) => a.trim())
-        .join(" and ");
-
-    const title = data.title;
-    const venue = data.journal_title;
-    const year = data.date.split("/")[2];
-    const id = `PubMed-${year}_${data.pmid}`;
-    const key = `${author
-        .split(" and ")[0]
-        .split(" ")
-        .last()}${year}${firstNonStopLowercase(data.title)}`;
-
-    const bibtexObj = {
-        entryType: "article",
-        citationKey: key,
-        publisher: data.publisher,
-        doi: data.doi,
-        issn: data.issn,
-        journal: venue,
-        year,
-        author,
-    };
-    const bibtex = bibtexToString(bibtexObj);
-    const note = `Accepted @ ${journal} (${year})`;
-    const pdfLink = "";
-
-    return { author, bibtex, id, key, note, pdfLink, title, venue, year };
-};
-
 // --------------------------------------------
 // -----  Try CrossRef's API for a match  -----
 // --------------------------------------------
