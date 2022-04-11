@@ -102,6 +102,10 @@ const paperToAbs = (paper) => {
                     .join("/")
                     .replace("/papers/volume", "/papers/v") + ".html";
             break;
+        case "pmc":
+            const pmcid = pdf.match(/PMC\d+/)[0];
+            abs = pdf.split(pmcid)[0] + `PMC${pmcid}`;
+            break;
 
         default:
             abs = "https://xkcd.com/1969/";
@@ -168,6 +172,9 @@ const paperToPDF = (paper) => {
             break;
 
         case "jmlr":
+            break;
+
+        case "pmc":
             break;
 
         default:

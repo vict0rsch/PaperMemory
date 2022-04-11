@@ -158,13 +158,12 @@ const makeNeuripsPaper = async (url) => {
 
         author = h4Authors.nextElementSibling.innerText
             .split(", ")
-            .map((author, k) => {
-                const parts = author.split(" ");
-                const caps = parts.map((part, i) => {
-                    return capitalize(part);
-                });
-                return caps.join(" ");
-            })
+            .map((author) =>
+                author
+                    .split(" ")
+                    .map((p) => p.capitalize())
+                    .join(" ")
+            )
             .join(" and ");
         year = paragraphs[0].innerHTML.match(/\d{4}/)[0];
         key = `neurips${year}${hash.slice(0, 8)}`;
@@ -643,6 +642,98 @@ const makeJMLRPaper = async (url) => {
     return { author, bibtex, id, key, note, pdfLink, title, venue, year };
 };
 
+const makePMCPaper = async (url) => {
+    const pmcid = url.match(/PMC\d+/)[0].replace("PMC", "");
+    const absUrl = url.split(`PMC${pmcid}`)[0] + `PMC${pmcid}`;
+    // https://api.ncbi.nlm.nih.gov/lit/ctxp/v1/pmc/?format=csl&id=7537588&download=true
+    const api = "https://api.ncbi.nlm.nih.gov/lit/ctxp/v1/pmc/?format=csl&id=";
+    const data = await (await fetch(`${api}${pmcid}&download=true`)).json();
+    const year = data["epub-date"]
+        ? data["epub-date"]["date-parts"][0][0]
+        : data.issued["date-parts"][0][0];
+    const author = data.author.map((a) => `${a.given} ${a.family}`).join(" and ");
+    const venue = data["container-title"]
+        .split(" ")
+        .map((p) => p.capitalize())
+        .join(" ");
+    const title = data.title;
+    const id = `PMC-${year}_${pmcid}`;
+    const key = `${data.author[0].family}${year}${firstNonStopLowercase(title)}`;
+    const bibtex = bibtexToString({
+        entryType: "article",
+        citationKey: key,
+        journal: venue,
+        issn: data["ISSN"],
+        volume: data.volume,
+        page: data.page,
+        doi: data.DOI,
+        PMID: data.PMID,
+        PMCID: data.PMCID,
+        publisher: data.publisher,
+        author,
+        title,
+    });
+
+    let pdfLink;
+    if (isPdfUrl(url)) {
+        pdfLink = url;
+    } else {
+        const doiParts = data.DOI.split("/")[1].split("-");
+        const did = doiParts[0].match(/\d+/)[0];
+        const yid = doiParts[1].replace(doiParts[1].match(/^0*/)[0], "");
+        const did2 = doiParts[2].replace(doiParts[2].match(/^0*/)[0], "");
+        pdfLink = absUrl + `/pdf/${did}_${yid}_Article_${did2}.pdf`;
+    }
+
+    const note = `Published @ ${venue} (${year})`;
+
+    return { author, bibtex, id, key, note, pdfLink, title, venue, year };
+};
+
+const makePubMedPaper = async (url) => {
+    const dom = await fetchDom(url.split("?")[0]);
+    const metas = Array.from(dom.getElementsByTagName("meta")).filter((el) =>
+        el.getAttribute("name")?.includes("citation_")
+    );
+    const data = Object.fromEntries(
+        metas.map((el) => [
+            el.getAttribute("name").replace("citation_", ""),
+            el.getAttribute("content"),
+        ])
+    );
+    const author = document
+        .querySelector("div.authors-list")
+        .innerText.replace(/\d/gi, "")
+        .split(",")
+        .map((a) => a.trim())
+        .join(" and ");
+
+    const title = data.title;
+    const venue = data.journal_title;
+    const year = data.date.split("/")[2];
+    const id = `PubMed-${year}_${data.pmid}`;
+    const key = `${author
+        .split(" and ")[0]
+        .split(" ")
+        .last()}${year}${firstNonStopLowercase(data.title)}`;
+
+    const bibtexObj = {
+        entryType: "article",
+        citationKey: key,
+        publisher: data.publisher,
+        doi: data.doi,
+        issn: data.issn,
+        journal: venue,
+        year,
+        author,
+    };
+    const bibtex = bibtexToString(bibtexObj);
+    const note = `Accepted @ ${journal} (${year})`;
+    const pdfLink = "";
+
+    return { author, bibtex, id, key, note, pdfLink, title, venue, year };
+};
+
 // --------------------------------------------
 // -----  Try CrossRef's API for a match  -----
 // --------------------------------------------
@@ -885,6 +976,11 @@ const makePaper = async (is, url, id) => {
         paper = await makeJMLRPaper(url);
         if (paper) {
             paper.source = "jmlr";
+        }
+    } else if (is.pmc) {
+        paper = await makePMCPaper(url);
+        if (paper) {
+            paper.source = "pmc";
         }
     } else {
         throw new Error("Unknown paper source: " + JSON.stringify({ is, url, id }));

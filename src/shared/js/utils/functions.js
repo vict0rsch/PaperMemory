@@ -96,10 +96,6 @@ const cleanPapers = (papers) => {
     return cleaned;
 };
 
-const capitalize = (s) => {
-    return s.charAt(0).toUpperCase() + s.slice(1);
-};
-
 const firstNonStopLowercase = (title) => {
     let t = title.toLowerCase();
     let words = t.split(" ").map((w) => w.replace(/[^0-9a-z]/gi, ""));
