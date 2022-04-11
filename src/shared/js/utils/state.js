@@ -393,6 +393,12 @@ const parseIdFromUrl = async (url) => {
         const jid = url.split("/").last();
         const year = `20${jid.match(/\d+/)[0]}`;
         return `JMLR-${year}_${jid}`;
+    } else if (is.pmc) {
+        const pmcid = url.match(/PMC\d+/g)[0].replace("PMC", "");
+        const paper = Object.values(cleanPapers(global.state.papers)).filter((p) => {
+            return p.source === "pmc" && p.id.includes(pmcid);
+        })[0];
+        return paper && paper.id;
     } else if (is.localFile) {
         return is.localFile;
     } else {
