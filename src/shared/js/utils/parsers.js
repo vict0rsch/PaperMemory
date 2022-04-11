@@ -158,13 +158,12 @@ const makeNeuripsPaper = async (url) => {
 
         author = h4Authors.nextElementSibling.innerText
             .split(", ")
-            .map((author, k) => {
-                const parts = author.split(" ");
-                const caps = parts.map((part, i) => {
-                    return capitalize(part);
-                });
-                return caps.join(" ");
-            })
+            .map((author) =>
+                author
+                    .split(" ")
+                    .map((p) => p.capitalize())
+                    .join(" ")
+            )
             .join(" and ");
         year = paragraphs[0].innerHTML.match(/\d{4}/)[0];
         key = `neurips${year}${hash.slice(0, 8)}`;
