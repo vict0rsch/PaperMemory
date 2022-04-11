@@ -329,7 +329,7 @@ const parseIdFromUrl = async (url) => {
         return `Arxiv-${arxivId}`;
     } else if (is.neurips) {
         const year = url.split("/paper/")[1].split("/")[0];
-        const hash = url.split("/").reverse()[0].split("-")[0].slice(0, 8);
+        const hash = url.split("/").last().split("-")[0].slice(0, 8);
         return `NeurIPS-${year}_${hash}`;
     } else if (is.cvf) {
         return parseCVFUrl(url).id;
@@ -341,13 +341,13 @@ const parseIdFromUrl = async (url) => {
         return paper && paper.id;
     } else if (is.biorxiv) {
         url = cleanBiorxivURL(url);
-        let id = url.split("/").reverse()[0];
+        let id = url.split("/").last();
         if (id.match(/v\d+$/)) {
             id = id.split("v")[0];
         }
         return `Biorxiv-${id}`;
     } else if (is.pmlr) {
-        const key = url.split("/").reverse()[0].split(".")[0];
+        const key = url.split("/").last().split(".")[0];
         const year = "20" + key.match(/\d+/)[0];
         return `PMLR-${year}-${key}`;
     } else if (is.acl) {
@@ -355,7 +355,7 @@ const parseIdFromUrl = async (url) => {
         if (url.endsWith("/")) {
             url = url.slice(0, -1);
         }
-        const key = url.split("/").reverse()[0];
+        const key = url.split("/").last();
         const paper = Object.values(cleanPapers(global.state.papers)).filter((p) => {
             return p.id.includes("ACL-") && p.id.includes(key);
         })[0];
@@ -372,7 +372,7 @@ const parseIdFromUrl = async (url) => {
         return paper && paper.id;
     } else if (is.nature) {
         url = url.replace(".pdf", "").split("#")[0];
-        const hash = url.split("/").reverse()[0];
+        const hash = url.split("/").last();
         return `Nature_${hash}`;
     } else if (is.acs) {
         url = url
@@ -390,7 +390,7 @@ const parseIdFromUrl = async (url) => {
             url = url.split("/").slice(0, -1).join("/");
         }
         url = url.replace(".html", "");
-        const jid = url.split("/").reverse()[0];
+        const jid = url.split("/").last();
         const year = `20${jid.match(/\d+/)[0]}`;
         return `JMLR-${year}_${jid}`;
     } else if (is.localFile) {
@@ -422,7 +422,7 @@ const isKnownLocalFile = (url) => {
         return storedPaths[0][0];
     }
 
-    const filename = decodeURIComponent(url.split("/").reverse()[0])
+    const filename = decodeURIComponent(url.split("/").last())
         .toLowerCase()
         .replace(/\W/g, "");
     const titles = Object.values(cleanPapers(global.state.papers))
