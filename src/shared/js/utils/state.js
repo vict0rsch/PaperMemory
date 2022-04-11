@@ -357,7 +357,7 @@ const parseIdFromUrl = async (url) => {
         }
         const key = url.split("/").last();
         const paper = Object.values(cleanPapers(global.state.papers)).filter((p) => {
-            return p.id.includes("ACL-") && p.id.includes(key);
+            return p.source === "acl" && p.id.includes(key);
         })[0];
         return paper && paper.id;
     } else if (is.pnas) {
@@ -367,7 +367,7 @@ const parseIdFromUrl = async (url) => {
             : url.split("/").slice(-1)[0];
 
         const paper = Object.values(cleanPapers(global.state.papers)).filter((p) => {
-            return p.id.includes("PNAS-") && p.id.includes(pid);
+            return p.source === "pnas" && p.id.includes(pid);
         })[0];
         return paper && paper.id;
     } else if (is.nature) {
