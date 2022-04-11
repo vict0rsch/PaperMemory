@@ -97,7 +97,7 @@ const addAutoTagListeners = (autoTags) => {
 };
 
 const updateAutoTagHandler = async (e) => {
-    const i = e.target.id.split("--").reverse()[0];
+    const i = e.target.id.split("--").last();
     let at = {};
     at.title = val(`auto-tags-item-title--${i}`).trim();
     at.authors = val(`auto-tags-item-authors--${i}`).trim();
@@ -118,7 +118,7 @@ const updateAutoTagHandler = async (e) => {
 };
 
 const deleteAutoTagHandler = async (e) => {
-    const i = e.target.id.split("--").reverse()[0];
+    const i = e.target.id.split("--").last();
     let newAT = await getStorage("autoTags");
     if (confirm("Confirm AutoTag item deletion?")) {
         newAT = newAT.filter((t) => t.id !== parseInt(i));
@@ -160,7 +160,7 @@ const saveNewAutoTagItem = async () => {
     autoTags.push(at);
     setStorage("autoTags", autoTags, () => {
         const items = findEl("auto-tags-list").getElementsByClassName("auto-tags-item");
-        const last = Array.from(items).reverse()[0];
+        const last = Array.from(items).last();
         last.insertAdjacentHTML("afterend", getAutoTagHTML(at));
         addListener(`auto-tags-item-save--${at.id}`, "click", updateAutoTagHandler);
         addListener(`auto-tags-item-delete--${at.id}`, "click", deleteAutoTagHandler);

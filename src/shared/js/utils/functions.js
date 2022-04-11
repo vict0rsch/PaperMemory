@@ -230,7 +230,7 @@ const parseCVFUrl = (url) => {
         conf = confAndYear[0].toUpperCase();
         year = confAndYear[1];
     }
-    const titleUrl = url.split("/").reverse()[0].split(".")[0];
+    const titleUrl = url.split("/").last().split(".")[0];
     const hash = (hashCode(titleUrl) + "").replace("-", "").slice(0, 8);
     const id = `${conf}-${year}_${hash}`;
 
@@ -457,7 +457,7 @@ const stringifyError = (e) => {
         .map((line) =>
             line
                 .split(" ")
-                .map((word) => word.split(extId).reverse()[0])
+                .map((word) => word.split(extId).last())
                 .join(" ")
         )
         .join("<br/>");

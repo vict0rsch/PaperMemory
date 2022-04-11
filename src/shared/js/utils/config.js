@@ -1,4 +1,14 @@
 /**
+ * Prototypes
+ */
+
+Object.defineProperty(Array.prototype, "last", {
+    value: function (i = 0) {
+        return this.reverse()[i];
+    },
+});
+
+/**
  * Global variable & constants are stored in this file to be used by
  * other files such as functions.js, parsers.js, memory.js, popup.js
  */

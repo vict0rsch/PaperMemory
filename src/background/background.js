@@ -31,8 +31,8 @@ try {
 
 const urlIsAKnownPdfSource = (url) => {
     if (!url) return false;
-    const pdfPages = Object.values(global.knownPaperPages).map(
-        (v) => v.filter((u) => typeof u === "string").reverse()[0]
+    const pdfPages = Object.values(global.knownPaperPages).map((v) =>
+        v.filter((u) => typeof u === "string").last()
     );
     return pdfPages.some((p) => url.includes(p));
 };
@@ -54,7 +54,7 @@ const fetchPWCData = async (arxivId, title) => {
 const findCodesForPaper = async (request) => {
     let arxivId, title, code;
     if (request.paper.source === "arxiv") {
-        arxivId = request.paper.id.split("-").reverse()[0];
+        arxivId = request.paper.id.split("-").last();
     } else {
         title = request.paper.title;
     }

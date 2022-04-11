@@ -109,7 +109,7 @@ const makeArxivPaper = async (memoryId) => {
     const title = doc.querySelector("entry title").innerHTML;
     const year = doc.querySelector("entry published").innerHTML.slice(0, 4);
     const key =
-        authors[0].split(" ").reverse()[0].toLowerCase() +
+        authors[0].split(" ").last().toLowerCase() +
         year +
         firstNonStopLowercase(title);
 
@@ -238,7 +238,7 @@ const makeOpenReviewBibTex = (paper, url) => {
         log("makeOpenReviewBibTex: no cdate found in", paper);
     }
 
-    let key = paper.content.authors[0].split(" ").reverse()[0];
+    let key = paper.content.authors[0].split(" ").last();
     key += year;
     key += firstNonStopLowercase(title);
 
@@ -354,7 +354,7 @@ const makeBioRxivPaper = async (url) => {
     if (data.messages[0].status !== "ok")
         throw new Error(`${api} returned ${data.messages[0].status}`);
 
-    const paper = data.collection.reverse()[0];
+    const paper = data.collection.last();
 
     const pageText = await fetchText(pageURL);
 
@@ -380,7 +380,7 @@ const makeBioRxivPaper = async (url) => {
 };
 
 const makePMLRPaper = async (url) => {
-    const key = url.split("/").reverse()[0].split(".")[0];
+    const key = url.split("/").last().split(".")[0];
     const id = await parseIdFromUrl(url);
 
     const absURL = url.includes(".html")
@@ -541,7 +541,7 @@ const makePNASPaper = async (url) => {
 const makeNaturePaper = async (url) => {
     url = url.replace(".pdf", "").split("#")[0];
     const pdfLink = url + ".pdf";
-    const hash = url.split("/").reverse()[0];
+    const hash = url.split("/").last();
 
     const dom = await fetchDom(url);
 
@@ -615,7 +615,7 @@ const makeIOPPaper = async (url) => {
     const pdfLink = url + "/pdf";
     const venue = data.journal;
     const note = `Published @ ${venue} (${year})`;
-    const doi = url.split("/article/").reverse()[0];
+    const doi = url.split("/article/").last();
     const id = `IOPscience_${doi.replaceAll(".", "").replaceAll("/", "")}`;
     return { author, bibtex, id, key, note, pdfLink, title, venue, year };
 };
@@ -628,7 +628,7 @@ const makeJMLRPaper = async (url) => {
         url = url.split("/").slice(0, -1).join("/");
     }
     url = url.replace(".html", "");
-    const jid = url.split("/").reverse()[0];
+    const jid = url.split("/").last();
     const citeUrl = url + ".bib";
     const bibtex = await fetchText(citeUrl);
     const data = bibtexToObject(bibtex);

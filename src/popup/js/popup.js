@@ -208,7 +208,7 @@ const popupMain = async (url, is, manualTrigger = false) => {
         // -----  SVG clicks  -----
         // ------------------------
         addListener(`popup-memory-item-scirate--${id}`, "click", () => {
-            const arxivId = paper.id.split("-").reverse()[0];
+            const arxivId = paper.id.split("-").last();
             const scirateURL = `https://scirate.com/arxiv/${arxivId}`;
             chrome.tabs.update({ url: scirateURL });
             window.close();
