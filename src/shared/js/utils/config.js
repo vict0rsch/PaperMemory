@@ -8,6 +8,12 @@ Object.defineProperty(Array.prototype, "last", {
     },
 });
 
+Object.defineProperty(String.prototype, "capitalize", {
+    value: function () {
+        return this.charAt(0).toUpperCase() + this.slice(1);
+    },
+});
+
 /**
  * Global variable & constants are stored in this file to be used by
  * other files such as functions.js, parsers.js, memory.js, popup.js
@@ -108,6 +114,7 @@ global.knownPaperPages = {
     acs: ["https://pubs.acs.org/doi/"],
     iop: ["iopscience.iop.org/article/"],
     jmlr: [(url) => url.includes("jmlr.org/papers/v") && !url.endsWith("/")],
+    pmc: ["ncbi.nlm.nih.gov/pmc/articles/PMC"],
 };
 
 global.sourcesNames = {
@@ -123,6 +130,7 @@ global.sourcesNames = {
     acs: "American Chemical Society (ACS)",
     iop: "Institute Of Physics (IOP)",
     jmlr: "Journal of Machine Learning Research (JMLR)",
+    pmc: "PubMed Central",
 };
 
 global.overrideORConfs = {
