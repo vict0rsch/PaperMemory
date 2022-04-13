@@ -53,6 +53,8 @@ This browser extension allows you to do automatically store research papers you 
 * American Chemical Society (ACS)
 * IOPscience
 * PubMed Central
+* International Joint Conferences on Artificial Intelligence (IJCAI)
+* Association for Computing Machinery (ACM)
 * [Add more](https://github.com/vict0rsch/PaperMemory/issues/13)
 
 [About finding published papers from preprints](#preprints)

@@ -768,6 +768,43 @@ const makeIJCAIPaper = async (url) => {
     return { author, bibtex, id, key, note, pdfLink, title, venue, year };
 };
 
+const makeACMPaper = async (url) => {
+    let pdfLink;
+    if (isPdfUrl(url)) {
+        pdfLink = url;
+    } else {
+        pdfLink = url.replace("/doi/", "/doi/pdf/");
+    }
+    const dom = await fetchDom(url.replace("/doi/pdf/", "/doi/"));
+    const title = dom.querySelector(".citation__title").innerText;
+    const author = Array.from(
+        dom.querySelectorAll("ul[ariaa-label='authors'] li.loa__item .loa__author-name")
+    )
+        .map((el) => el.innerText.replace(",", "").trim())
+        .join(" and ");
+    const publication = dom.querySelector(".issue-item__detail a").innerText;
+    const venue = publication.split("'")[0].trim();
+    const year = "20" + publication.split("'")[1].split(":")[0].trim();
+    const doi = pdfLink.split("/doi/pdf/")[1];
+
+    const note = `Accepted @ ${venue} (${year})`;
+    const key = doi;
+    const bibtex = bibtexToString({
+        entryType: "article",
+        citationKey: doi,
+        journal: venue,
+        author,
+        title,
+        year,
+        publisher: "Association for Computing Machinery",
+        address: "New York, NY, USA",
+        url: url.replace("/doi/pdf/", "/doi/"),
+    });
+    const id = `ACM-${year}_${doi.replaceAll(/(\.|\/)/gi, "")}`;
+
+    return { author, bibtex, id, key, note, pdfLink, title, venue, year };
+};
+
 // --------------------------------------------
 // -----  Try CrossRef's API for a match  -----
 // --------------------------------------------
@@ -1020,6 +1057,11 @@ const makePaper = async (is, url, id) => {
         paper = await makeIJCAIPaper(url);
         if (paper) {
             paper.source = "ijcai";
+        }
+    } else if (is.acm) {
+        paper = await makeACMPaper(url);
+        if (paper) {
+            paper.source = "acm";
         }
     } else {
         throw new Error("Unknown paper source: " + JSON.stringify({ is, url, id }));
