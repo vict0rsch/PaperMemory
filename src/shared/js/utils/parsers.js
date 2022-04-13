@@ -734,6 +734,40 @@ const makePubMedPaper = async (url) => {
     return { author, bibtex, id, key, note, pdfLink, title, venue, year };
 };
 
+const makeIJCAIPaper = async (url) => {
+    const procId = url.endsWith(".pdf")
+        ? url
+              .replace(".pdf", "")
+              .split("/")
+              .last()
+              .match(/[1-9]\d*/)
+        : url.split("/").last();
+
+    const year = url.match(/proceedings\/\d+/gi)[0].split("/")[1];
+
+    // ijcai bibtexs have issues with note = {NOTE}\n with a missing ","
+    const bibtex = (
+        await fetchText(`https://www.ijcai.org/proceedings/${year}/bibtex/${procId}`)
+    ).replace(/}\n/gi, "},\n");
+    const data = bibtexToObject(
+        bibtex
+            .split("\n")
+            .filter((line) => !/note\s+=/gi.test(line))
+            .join("\n")
+    );
+
+    const key = data.citationKey;
+    const title = data.title;
+    const author = flipAndAuthors(data.author);
+    const id = `IJCAI-${year}_${procId}`;
+    const note = `Accepted @ IJCAI (${year})`;
+    const venue = "IJCAI";
+    const pdfId = procId.padStart(4, 0);
+    const pdfLink = `https://www.ijcai.org/proceedings/${year}/${pdfId}.pdf`;
+
+    return { author, bibtex, id, key, note, pdfLink, title, venue, year };
+};
+
 // --------------------------------------------
 // -----  Try CrossRef's API for a match  -----
 // --------------------------------------------
@@ -981,6 +1015,11 @@ const makePaper = async (is, url, id) => {
         paper = await makePMCPaper(url);
         if (paper) {
             paper.source = "pmc";
+        }
+    } else if (is.ijcai) {
+        paper = await makeIJCAIPaper(url);
+        if (paper) {
+            paper.source = "ijcai";
         }
     } else {
         throw new Error("Unknown paper source: " + JSON.stringify({ is, url, id }));
