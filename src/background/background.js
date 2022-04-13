@@ -40,14 +40,20 @@ const urlIsAKnownPdfSource = (url) => {
 const fetchPWCData = async (arxivId, title) => {
     let pwcPath = `https://paperswithcode.com/api/v1/papers/?`;
     if (arxivId) {
+        log("Fetching PWC data for arxivId:", arxivId);
         pwcPath += new URLSearchParams({ arxiv_id: arxivId });
     } else if (title) {
+        log("Fetching PWC data for paper:", title);
         pwcPath += new URLSearchParams({ title });
     }
     const response = await fetch(pwcPath);
     const json = await response.json();
 
-    if (json["count"] !== 1) return;
+    if (json["count"] !== 1) {
+        log("No PWC entry match.");
+        return;
+    }
+    log("PWC entry match:", json["results"][0]["id"]);
     return json["results"][0];
 };
 
@@ -65,6 +71,7 @@ const findCodesForPaper = async (request) => {
     if (proceeding) {
         const conf = proceeding.split("-")[0].toUpperCase();
         const year = proceeding.split("-")[1];
+        info("Found a PWC proceeding paper:", conf, year);
         code = {
             note: `Accepted @ ${conf} ${year} -- [paperswithcode.com]`,
             venue: conf,
@@ -78,20 +85,25 @@ const findCodesForPaper = async (request) => {
     const response = await fetch(codePath);
     const json = await response.json();
 
-    if (json["count"] < 1) return code;
+    if (json["count"] < 1) {
+        log("No code found for paper.");
+        return code;
+    }
 
     let codes = json["results"];
     const officials = codes.filter((c) => c["is_official"]);
     console.log("All codes for paper:", codes);
     if (officials.length > 0) {
         codes = officials;
-        console.log("Selecting official codes only:", codes);
+        log("Selecting official codes only:", codes);
     } else {
         if (request.officialReposOnly) {
+            log("No official code found for paper.");
             return code;
         }
     }
     codes.sort((a, b) => b.stars - a.stars);
+    info("Found PWC repository:", codes[0]["url"]);
     return { ...codes[0], ...code };
 };
 
