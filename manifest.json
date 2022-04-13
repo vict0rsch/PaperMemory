@@ -2,7 +2,7 @@
   "name": "Paper Memory",
   "version": "0.5.1",
   "manifest_version": 2,
-  "description": "Automatically record papers you read and discover their code from Arxiv, OpenReview & more! Organize your library with tags, links and quick notes.",
+  "description": "Automatically record papers and their codes from Arxiv, OpenReview & more! Organize your library with tags, links and quick notes.",
   "homepage_url": "https://github.com/vict0rsch/PaperMemory",
   "icons": {
     "192": "icons/favicon-192x192.png"
