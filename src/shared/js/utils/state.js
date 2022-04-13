@@ -19,7 +19,7 @@ const initState = async (papers, isContentScript) => {
     const s = Date.now();
     if (typeof papers === "undefined") {
         papers = await getStorage("papers");
-        info("Time to retrieve stored papers (s): " + (Date.now() - s) / 1000);
+        log("Time to retrieve stored papers (s): " + (Date.now() - s) / 1000);
     }
 
     global.state.dataVersion = getManifestDataVersion();
@@ -35,7 +35,7 @@ const initState = async (papers, isContentScript) => {
     global.state.ignoreSources = (await getStorage("ignoreSources")) || {};
 
     if (isContentScript) {
-        info("State initialization duration (s): " + (Date.now() - s) / 1000);
+        log("State initialization duration (s): " + (Date.now() - s) / 1000);
         return;
     }
     global.state.files = await matchAllFilesToPapers();
@@ -234,13 +234,14 @@ const addOrUpdatePaper = async (url, is, menu) => {
             pwcVenue = !paper.venue && pwc?.venue;
 
             if (pwcUrl) {
-                console.log(
-                    "Discovered a code repository from PapersWithCode:",
-                    pwcUrl
-                );
+                log("Discovered a code repository from PapersWithCode:", pwcUrl);
                 paper.codeLink = pwcUrl;
                 if (pwc.hasOwnProperty("note")) delete pwc.note;
                 paper.code = pwc;
+            } else {
+                if (!paper.codeLink) {
+                    log("No code repository found from PapersWithCode");
+                }
             }
         } catch (error) {
             log("Error trying to discover a code repository:");
@@ -399,6 +400,16 @@ const parseIdFromUrl = async (url) => {
             return p.source === "pmc" && p.id.includes(pmcid);
         })[0];
         return paper && paper.id;
+    } else if (is.ijcai) {
+        const procId = url.endsWith(".pdf")
+            ? url
+                  .replace(".pdf", "")
+                  .split("/")
+                  .last()
+                  .match(/[1-9]\d*/)
+            : url.split("/").last();
+        const year = url.match(/proceedings\/\d+/gi)[0].split("/")[1];
+        return `IJCAI-${year}_${procId}`;
     } else if (is.localFile) {
         return is.localFile;
     } else {

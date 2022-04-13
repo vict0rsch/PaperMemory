@@ -107,6 +107,16 @@ const paperToAbs = (paper) => {
             abs = pdf.split(pmcid)[0] + `PMC${pmcid}`;
             break;
 
+        case "ijcai":
+            const procId = pdf
+                .replace(".pdf", "")
+                .split("/")
+                .last()
+                .match(/[1-9]\d*/);
+            const year = pdf.match(/proceedings\/\d+/gi)[0].split("/")[1];
+            abs = `https://www.ijcai.org/proceedings/${year}/${procId}`;
+            break;
+
         default:
             abs = "https://xkcd.com/1969/";
             break;
@@ -175,6 +185,9 @@ const paperToPDF = (paper) => {
             break;
 
         case "pmc":
+            break;
+
+        case "ijcai":
             break;
 
         default:

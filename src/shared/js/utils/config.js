@@ -100,6 +100,9 @@ global.menuStorageKeys = [...global.menuCheckNames, "pdfTitleFn"];
 /**
  * Map of known data sources to the associated paper urls: pdf urls and web-pages urls.
  * IMPORTANT: paper page before pdf (see background script)
+ * Notes:
+ *  ijcai -> papers < 2015 will not be parsed due to website changes
+ *           (open an issue if that's problematic)
  */
 global.knownPaperPages = {
     acl: ["aclanthology.org/"],
@@ -107,6 +110,7 @@ global.knownPaperPages = {
     arxiv: ["arxiv.org/abs/", "arxiv.org/pdf/", "scirate.com/arxiv/"],
     biorxiv: ["biorxiv.org/content"],
     cvf: ["openaccess.thecvf.com/content"],
+    ijcai: [(url) => /ijcai\.org\/proceedings\/\d{4}\/\d+/gi.test(url)],
     iop: ["iopscience.iop.org/article/"],
     jmlr: [(url) => url.includes("jmlr.org/papers/v") && !url.endsWith("/")],
     nature: ["nature.com/articles/"],
@@ -123,6 +127,7 @@ global.sourcesNames = {
     arxiv: "ArXiv",
     biorxiv: "BioRxiv",
     cvf: "Computer Vision Foundation (CVF)",
+    ijcai: "International Joint Conferences on Artificial Intelligence (IJCAI)",
     iop: "Institute Of Physics (IOP)",
     jmlr: "Journal of Machine Learning Research (JMLR)",
     nature: "Nature",
