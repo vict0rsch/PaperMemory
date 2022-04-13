@@ -102,35 +102,35 @@ global.menuStorageKeys = [...global.menuCheckNames, "pdfTitleFn"];
  * IMPORTANT: paper page before pdf (see background script)
  */
 global.knownPaperPages = {
-    arxiv: ["arxiv.org/abs/", "arxiv.org/pdf/", "scirate.com/arxiv/"],
-    neurips: ["neurips.cc/paper/", "nips.cc/paper/"],
-    cvf: ["openaccess.thecvf.com/content"],
-    openreview: ["openreview.net/forum", "openreview.net/pdf"],
-    biorxiv: ["biorxiv.org/content"],
-    pmlr: ["proceedings.mlr.press/"],
     acl: ["aclanthology.org/"],
-    pnas: ["pnas.org/content/", "pnas.org/doi/"],
-    nature: ["nature.com/articles/"],
     acs: ["https://pubs.acs.org/doi/"],
+    arxiv: ["arxiv.org/abs/", "arxiv.org/pdf/", "scirate.com/arxiv/"],
+    biorxiv: ["biorxiv.org/content"],
+    cvf: ["openaccess.thecvf.com/content"],
     iop: ["iopscience.iop.org/article/"],
     jmlr: [(url) => url.includes("jmlr.org/papers/v") && !url.endsWith("/")],
+    nature: ["nature.com/articles/"],
+    neurips: ["neurips.cc/paper/", "nips.cc/paper/"],
+    openreview: ["openreview.net/forum", "openreview.net/pdf"],
     pmc: ["ncbi.nlm.nih.gov/pmc/articles/PMC"],
+    pmlr: ["proceedings.mlr.press/"],
+    pnas: ["pnas.org/content/", "pnas.org/doi/"],
 };
 
 global.sourcesNames = {
-    arxiv: "ArXiv",
-    neurips: "NeurIPS",
-    cvf: "Computer Vision Foundation (CVF)",
-    openreview: "OpenReview",
-    biorxiv: "BioRxiv",
-    pmlr: "Proceedings of Machine Learning Research (PMLR)",
     acl: "Association for Computational Linguistics (ACL)",
-    pnas: "Proceedings of the National Academy of Sciences (PNAS)",
-    nature: "Nature",
     acs: "American Chemical Society (ACS)",
+    arxiv: "ArXiv",
+    biorxiv: "BioRxiv",
+    cvf: "Computer Vision Foundation (CVF)",
     iop: "Institute Of Physics (IOP)",
     jmlr: "Journal of Machine Learning Research (JMLR)",
+    nature: "Nature",
+    neurips: "NeurIPS",
+    openreview: "OpenReview",
     pmc: "PubMed Central",
+    pmlr: "Proceedings of Machine Learning Research (PMLR)",
+    pnas: "Proceedings of the National Academy of Sciences (PNAS)",
 };
 
 global.overrideORConfs = {
