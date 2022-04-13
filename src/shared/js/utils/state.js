@@ -410,6 +410,15 @@ const parseIdFromUrl = async (url) => {
             : url.split("/").last();
         const year = url.match(/proceedings\/\d+/gi)[0].split("/")[1];
         return `IJCAI-${year}_${procId}`;
+    } else if (is.acm) {
+        const doi = url
+            .replace("/doi/pdf/", "/doi/")
+            .split("/doi/")[1]
+            .replaceAll(/(\.|\/)/gi, "");
+        const paper = Object.values(cleanPapers(global.state.papers)).filter((p) => {
+            return p.source === "acm" && p.id.includes(doi);
+        })[0];
+        return paper && paper.id;
     } else if (is.localFile) {
         return is.localFile;
     } else {

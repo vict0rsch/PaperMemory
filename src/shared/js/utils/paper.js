@@ -116,6 +116,9 @@ const paperToAbs = (paper) => {
             const year = pdf.match(/proceedings\/\d+/gi)[0].split("/")[1];
             abs = `https://www.ijcai.org/proceedings/${year}/${procId}`;
             break;
+        case "acm":
+            abs = pdf.replace("/doi/pdf/", "/doi/");
+            break;
 
         default:
             abs = "https://xkcd.com/1969/";
@@ -188,6 +191,9 @@ const paperToPDF = (paper) => {
             break;
 
         case "ijcai":
+            break;
+
+        case "acm":
             break;
 
         default:

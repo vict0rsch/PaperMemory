@@ -77,7 +77,8 @@ const isPdfUrl = (url) => {
     return (
         url.endsWith(".pdf") ||
         url.includes("openreview.net/pdf") ||
-        url.includes("arxiv.org/pdf/")
+        url.includes("arxiv.org/pdf/") ||
+        url.includes("dl.acm.org/doi/pdf/")
     );
 };
 

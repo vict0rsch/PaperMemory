@@ -106,7 +106,8 @@ global.menuStorageKeys = [...global.menuCheckNames, "pdfTitleFn"];
  */
 global.knownPaperPages = {
     acl: ["aclanthology.org/"],
-    acs: ["https://pubs.acs.org/doi/"],
+    acm: ["dl.acm.org/doi/"],
+    acs: ["pubs.acs.org/doi/"],
     arxiv: ["arxiv.org/abs/", "arxiv.org/pdf/", "scirate.com/arxiv/"],
     biorxiv: ["biorxiv.org/content"],
     cvf: ["openaccess.thecvf.com/content"],
@@ -123,6 +124,7 @@ global.knownPaperPages = {
 
 global.sourcesNames = {
     acl: "Association for Computational Linguistics (ACL)",
+    acm: "Association for Computing Machinery (ACM)",
     acs: "American Chemical Society (ACS)",
     arxiv: "ArXiv",
     biorxiv: "BioRxiv",
