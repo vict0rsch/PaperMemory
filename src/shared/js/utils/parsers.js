@@ -144,7 +144,7 @@ const makeNeuripsPaper = async (url) => {
     let bibtex, author, title, year, key;
 
     if (citeUrl) {
-        bibtex = await fetchText(`${parseUrl(url).host}${citeUrl}`);
+        bibtex = await fetchText(`https://${parseUrl(url).host}${citeUrl}`);
         ({ author, citationKey, title, year } = bibtexToObject(bibtex));
         author = flipAndAuthors(author);
         key = citationKey;
