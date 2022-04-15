@@ -91,19 +91,33 @@ const findCodesForPaper = async (request) => {
     }
 
     let codes = json["results"];
+
+    const { pwcPrefs } = request;
+    const official = pwcPrefs.hasOwnProperty("official") ? pwcPrefs.official : false;
+    const framework = pwcPrefs.hasOwnProperty("framework")
+        ? pwcPrefs.framework
+        : "none";
+
     const officials = codes.filter((c) => c["is_official"]);
-    console.log("All codes for paper:", codes);
+    log("All codes for paper:", codes);
     if (officials.length > 0) {
         codes = officials;
         log("Selecting official codes only:", codes);
     } else {
-        if (request.officialReposOnly) {
+        if (official) {
             log("No official code found for paper.");
             return code;
         }
     }
+    if (framework !== "none") {
+        const implems = codes.filter((c) => c["framework"] === framework);
+        if (implems.length > 0) {
+            log(`Selecting framework '${framework}':`, implems);
+            codes = implems;
+        }
+    }
     codes.sort((a, b) => b.stars - a.stars);
-    info("Found PWC repository:", codes[0]["url"]);
+    info(`Found PWC repository: ${codes[0]["url"]} (${codes[0]["stars"]} stars)`);
     return { ...codes[0], ...code };
 };
 
