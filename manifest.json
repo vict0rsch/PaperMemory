@@ -1,8 +1,8 @@
 {
   "name": "Paper Memory",
-  "version": "0.3.4",
+  "version": "0.5.1",
   "manifest_version": 2,
-  "description": "Automatically record papers you read from Arxiv, OpenReview & more! Organize your library with tags, links to code and quick notes.",
+  "description": "Automatically record papers and their codes from Arxiv, OpenReview & more! Organize your library with tags, links and quick notes.",
   "homepage_url": "https://github.com/vict0rsch/PaperMemory",
   "icons": {
     "192": "icons/favicon-192x192.png"
@@ -10,8 +10,7 @@
   "content_security_policy": "script-src 'self' 'unsafe-eval'; object-src 'self'",
   "background": {
     "scripts": [
-      "src/shared/jquery.min.js",
-      "src/shared/utils.min.js",
+      "src/shared/min/utils.min.js",
       "src/background/background.js"
     ]
   },
@@ -27,41 +26,31 @@
       }
     }
   },
+  "options_ui": {
+    "page": "src/options/options.html",
+    "open_in_tab": true
+  },
   "permissions": [
-    "https://arxiv.org/*",
-    "*://api.biorxiv.org/*",
-    "https://export.arxiv.org/*",
-    "*://*.neurips.cc/*",
-    "*://*.nips.cc/*",
-    "*://proceedings.mlr.press/*",
-    "https://openaccess.thecvf.com/*",
-    "https://openreview.net/*",
-    "https://api.openreview.net/*",
-    "tabs",
+    "<all_urls>",
     "activeTab",
     "storage",
     "unlimitedStorage",
-    "downloads"
+    "downloads",
+    "downloads.open"
   ],
   "content_scripts": [
     {
       "matches": [
-        "*://arxiv.org/*",
-        "*://*.biorxiv.org/*",
-        "*://proceedings.mlr.press/*",
-        "*://*.neurips.cc/*",
-        "*://*.nips.cc/*",
-        "*://openaccess.thecvf.com/*",
-        "*://openreview.net/*"
+        "<all_urls>"
       ],
       "run_at": "document_start",
       "js": [
-        "src/shared/jquery.min.js",
-        "src/shared/utils.min.js",
+        "src/shared/min/jquery.min.js",
+        "src/shared/min/utils.min.js",
         "src/content_scripts/content_script.js"
       ],
       "css": [
-        "src/shared/loader.css",
+        "src/shared/css/loader.css",
         "src/content_scripts/content_script.css"
       ]
     }

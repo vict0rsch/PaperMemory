@@ -1,17 +1,17 @@
 <!doctype html>
 <html>
 
-<!--
----------------------------------------------------------------------------
------  NOTE: relative paths should be relative to min/popup.min.html  -----
------        not to popup.html                                        -----
----------------------------------------------------------------------------
--->
 
 <head>
 	<meta charset='utf-8'>
+	<!--
+	---------------------------------------------------------------------------
+	-----  NOTE: relative paths should be relative to min/popup.min.html  -----
+	-----        not to popup.html                                        -----
+	---------------------------------------------------------------------------
+	-->
 
-	<script src="./theme.min.js"></script>
+	<script src="../../shared/min/theme.min.js"></script>
 
 	<style>
 		@import url("https://fonts.googleapis.com/css2?family=Yantramanav:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;1,600&display=swap");
@@ -19,23 +19,29 @@
 	</style>
 
 	<link rel="stylesheet" type="text/css" href="../css/select2.min.css">
-	<link rel="stylesheet" type="text/css" href="../css/bootstrap-utilities.min.css">
+	<link rel="stylesheet" type="text/css" href="../../shared/css/bootstrap-utilities.min.css">
 	<link rel="stylesheet" type="text/css" href="popup.min.css">
 
-	<script defer src="../../shared/jquery.min.js"></script>
+	<script defer src="../../shared/min/jquery.min.js"></script>
 	<script defer src="../js/select2.min.js"></script>
 
 	<!-- @if DEV -->
-	<script defer src="../../shared/utils/miniquery.js"></script>
-	<script defer src="../../shared/utils/config.js"></script>
-	<script defer src="../../shared/utils/functions.js"></script>
-	<script defer src="../../shared/utils/parsers.js"></script>
+
+	<script defer src="../../shared/js/utils/logTrace.js"></script>
+	<script defer src="../../shared/js/utils/miniquery.js"></script>
+	<script defer src="../../shared/js/utils/config.js"></script>
+	<script defer src="../../shared/js/utils/functions.js"></script>
+	<script defer src="../../shared/js/utils/data.js"></script>
+	<script defer src="../../shared/js/utils/paper.js"></script>
+	<script defer src="../../shared/js/utils/state.js"></script>
+	<script defer src="../../shared/js/utils/bibtexParser.js"></script>
+	<script defer src="../../shared/js/utils/parsers.js"></script>
 	<script defer src="../js/handlers.js"></script>
 	<script defer src="../js/templates.js"></script>
 	<script defer src="../js/memory.js"></script>
 	<script defer src="../js/popup.js"></script>
 	<!-- @else -->
-	<script defer src="../../shared/utils.min.js"></script>
+	<script defer src="../../shared/min/utils.min.js"></script>
 	<script defer src="popup.min.js"></script>
 	<!-- @endif -->
 </head>
@@ -56,8 +62,9 @@
 			<p>Keep track of your readings with <strong>PaperMemory!</strong> It automatically and locally stores
 				papers you open in your browser</p>
 			<p>When opening a paper (its web page or pdf), a reference to that paper will be stored in your
-				Memory. Supports Arxiv, Open Review, NeurIPS, CVPR, I/ECCV, PMLR (ICML, AISTATS, CoRL, CoLT etc.)! Ask
-				for more on Github
+				Memory. Supports Arxiv, Open Review, NeurIPS, CVPR, I/ECCV, PMLR, PNAS, ACL,
+				SciRate and more! Ask
+				for new venues on Github.
 			</p>
 
 			<p>Click on the Memory button below <svg xmlns="http://www.w3.org/2000/svg"
@@ -124,6 +131,7 @@
 		<h3 class="mt-4">⋗ Configuration</h3>
 
 		<div id="options">
+			<h5>Arxiv.org enhancement</h5>
 			<input class="switch" type="checkbox" id="checkDownload" name="checkDownload" value="checkDownload">
 			<label for="checkDownload">Add PDF direct download
 				button</label><br><br>
@@ -134,96 +142,61 @@
 			<input class="switch" type="checkbox" id="checkBib" name="checkBib" value="checkBib">
 			<label for="checkBib"> Add BibTex citation section</label><br><br>
 
-			<input class="switch" type="checkbox" id="checkPdfTitle" name="checkPdfTitle" value="checkPdfTitle">
-			<label for="checkPdfTitle"> Change Arxiv tab titles</label><br><br>
+			<h5>User Interface</h5>
 
 			<input class="switch" type="checkbox" id="checkFeedback" name="checkFeedback" value="checkFeedback">
-			<label for="checkFeedback"> Display feedback slider when a paper is added</label><br><br>
+			<label for="checkFeedback"> Display notification when a paper is added</label><br><br>
 
 			<input class="switch" type="checkbox" id="checkDarkMode" name="checkDarkMode" value="checkDarkMode">
 			<label for="checkDarkMode">Use Dark Mode</label><br><br>
+
 			<input class="switch" type="checkbox" id="checkDirectOpen" name="checkDirectOpen" value="checkDirectOpen">
 			<label for="checkDirectOpen">Directly open the Memory when not on a Paper's page</label><br><br>
+
+			<input class="switch" type="checkbox" id="checkPdfTitle" name="checkPdfTitle" value="checkPdfTitle">
+			<label for="checkPdfTitle"> Change paper tab titles</label><br><br>
+
+			<input class="switch" type="checkbox" id="checkScirate" name="checkScirate" value="checkScirate">
+			<label for="checkScirate">Add a link to SciRate in the popup</label><br><br>
+
+			<h5>Functionalities</h5>
+
+			<input class="switch" type="checkbox" id="checkPreferPdf" name="checkPreferPdf" value="checkPreferPdf">
+			<label for="checkPreferPdf">Favor PDFs for paper links (otherwise, links will point to a paper's
+				abstract
+				page)</label><br><br>
+
+			<input class="switch" type="checkbox" id="checkPdfOnly" name="checkPdfOnly" value="checkPdfOnly">
+			<label for="checkPdfOnly">Only record papers on their pdf pages, not from their abstracts</label><br><br>
+
+			<input class="switch" type="checkbox" id="checkStore" name="checkStore" value="checkStore">
+			<label for="checkStore">Download pdfs to PaperMemory's folder in your Downloads to be able to open them
+				instead of re-downloading. More about this in the options page (see below)</label><br><br>
 		</div>
 
-		<h3 class="mt-4 mb-0">⋗ Data Management</h3>
+		<h3 class="mt-4">⋗ Advanced</h3>
 
-		<div style="display: flex; align-items: center; margin: 16px 0px">
-			<p><strong>Download</strong> your complete Memory's data: </p>
-			<button class="ms-2 flex-center-between code-font" id="download-arxivmemory">
-				.json&nbsp;
-				<svg viewBox="0 0 24 24" style="height: 18px; width: 18px; color: black; stroke: black">
-					<path stroke="none" d="M0 0h24v24H0z" fill="none" />
-					<line x1="4" y1="20" x2="20" y2="20" />
-					<line x1="12" y1="14" x2="12" y2="4" />
-					<line x1="12" y1="14" x2="16" y2="10" />
-					<line x1="12" y1="14" x2="8" y2="10" />
-				</svg>
-			</button>
-		</div>
+		<p>Open your <a href="#" id="full-memory">full-page memory</a> to explore papers more easily, in a dedicated
+			tab.</p>
 
-		<div style="display: flex; align-items: center; margin: 16px 0px">
-			<p><strong>Download</strong> the Memory's BibTex: </p>
-			<button class="ms-2 flex-center-between code-font" id="download-bibtex-json">
-				.json&nbsp;
-				<svg viewBox="0 0 24 24" style="height: 18px; width: 18px; color: black; stroke: black">
-					<path stroke="none" d="M0 0h24v24H0z" fill="none" />
-					<line x1="4" y1="20" x2="20" y2="20" />
-					<line x1="12" y1="14" x2="12" y2="4" />
-					<line x1="12" y1="14" x2="16" y2="10" />
-					<line x1="12" y1="14" x2="8" y2="10" />
-				</svg>
-			</button>
-			<button class="ms-3 flex-center-between code-font" id="download-bibtex-plain">
-				.bib&nbsp;
-				<svg viewBox="0 0 24 24" style="height: 18px; width: 18px; color: black; stroke: black">
-					<path stroke="none" d="M0 0h24v24H0z" fill="none" />
-					<line x1="4" y1="20" x2="20" y2="20" />
-					<line x1="12" y1="14" x2="12" y2="4" />
-					<line x1="12" y1="14" x2="16" y2="10" />
-					<line x1="12" y1="14" x2="8" y2="10" />
-				</svg>
-			</button>
-		</div>
+		<p>Open the <a href="#" id="advanced-configuration">options page</a> to access advanced customization features:
+		</p>
 
-		<div id="overwrite-container" style="margin: 16px 0px">
-			<p><strong>Overwrite</strong> your Memory: </p>
-			<div style="display: flex; align-items: center; ">
-				<label id="file-upload-label" for="overwrite-arxivmemory-input">Select
-					file</label><input type="file" id="overwrite-arxivmemory-input" style="display: none;"></input>
-				<span id="overwrite-file-name"></span>
-				<button id="overwrite-arxivmemory-button" disabled class="ms-2 flex-center-between code-font">
-					.json&nbsp;
-					<svg viewBox="0 0 24 24" style="height: 18px; width: 18px; color: black; stroke: black">
-						<path stroke="none" d="M0 0h24v24H0z" fill="none" />
-						<path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2 -2v-2" />
-						<polyline points="7 9 12 4 17 9" />
-						<line x1="12" y1="4" x2="12" y2="16" />
-					</svg>
-				</button>
-			</div>
-			<div style="display: none;" id="overwriteFeedback"></div>
-		</div>
+		<ul>
+			<li>
+				<p>Auto tagging papers from regex</p>
+			</li>
+			<li>
+				<p>Customize title function</p>
+			</li>
+			<li>
+				<p>Manage your data (export/load)</p>
+			</li>
+			<li>
+				<p>Ignore some paper sources</p>
+			</li>
+		</ul>
 
-		<h3 class="mt-4">⋗ Beta</h3>
-
-		<div class="flex-center-center" style="flex-direction: column;">
-			<p>
-				Beta feature: PDF file name parser -> enter a javascript function taking as input
-				<code style="margin: 0px; display: inline-block;">(title, id)</code> and returning a string.
-			</p>
-
-			<textarea id="customPdfTitleTextarea" class="w-100 mb-2" rows="4">
-(title, id) => {
-title = title.replaceAll("\n", '');
-return `${title} - ${id}.pdf`
-}</textarea>
-			<div class="flex-center-evenly mb-3" style="width: 60%">
-				<button id="saveCustomPdf">Save function</button>
-				<button id="defaultCustomPdf">Back to default</button>
-			</div>
-			<div id="customPdfFeedback"></div>
-		</div>
 	</div>
 
 	<div id="memory-spinner" class="arxivTools-container">
@@ -280,6 +253,7 @@ return `${title} - ${id}.pdf`
 			<select style="width: 30%;" id="memory-select">
 				<option value="lastOpenDate">Last Open</option>
 				<option value="addDate">Last Added</option>
+				<option value="year">Year</option>
 				<option value="title">Title</option>
 				<option value="count"># Visits</option>
 				<option value="id">ID</option>
@@ -384,7 +358,137 @@ return `${title} - ${id}.pdf`
 				<h3 style="margin-bottom: 0px;">What's new</h3>
 				<ul>
 					<li><strong>Current: </strong><a
-							href="https://github.com/vict0rsch/PaperMemory/releases/tag/0.3.3">0.3.3</a>
+							href="https://github.com/vict0rsch/PaperMemory/releases/tag/0.5.1">0.5.1</a>
+						<em>(2022-04-13)</em>
+						<ul>
+							<li>[new source] Add PubMed Central papers parsing</li>
+							<li>[new source] Add IJCAI papers parsing</li>
+							<li>[new source] Add ACM papers parsing</li>
+							<li>[dev] Improve developper console logs</li>
+							<li>[dev] Minor code improvements</li>
+						</ul>
+					</li>
+					<li><a href="https://github.com/vict0rsch/PaperMemory/releases/tag/0.5.0">0.5.0</a>
+						<em>(2022-03-23)</em>
+						<ul>
+							<li>[feature] In an effort to use as few as possible arxiv.org references, PaperMemory will
+								use dblp.org and crossref.org bibtex data whenever possible for your published papers'
+								citations. In other words it tries to discover published versions of you pre-prints and
+								this will be effective when copying/exporting bibtex data</li>
+							<li>[feature] New configuration option to only store official repositories when discovering
+								code with PapersWithCode</li>
+							<li>[feature] New configuration option to prefer using links to abstract pages vs pdfs
+							</li>
+							<li>[feature] New configuration option to only record paper from pdfs, not their online
+								pages/abstracts
+							</li>
+							<li>[feature] New full-page memory (link at the bottom of the menu) to explore your memory
+								in a fill-size and dedicated tab.
+							<li>[feature] New advanced options to filter out default paper sources.
+							</li>
+							<li>[feature] You can now also sort your memory by paper upload/publication year
+							</li>
+							<li>[feature] You can now search papers by year (<code>y: 18,19</code>), including
+								before/after
+								a date (<code>y: &lt;2019</code>, <code>y: &gt;2018</code>).
+							</li>
+							<li>[feature] Weekly local backups (up to 6 weeks) in case of a bug/user mistake (see Readme
+								on
+								Github)</li>
+							<br />
+							<li>[new source] Add Nature papers parsing</li>
+							<li>[new source] Add ACS papers parsing</li>
+							<li>[new source] Add IOPscience papers parsing</li>
+							<li>[new source] Add JMLR papers parsing</li>
+							<br />
+							<li>[dev] New permission to monitor all urls. This is necessary because otherwise every
+								new paper source will be associated with a new permission, disabling the extension until
+								you re-enable it manually.</li>
+
+							<li>[dev] Performance improvements, notably a step towards losing the JQuery dependency</li>
+							<li>[dev] Improve & standardize Bibtex parsing, formatting and exporting</li>
+							<li>[dev] Fix PNAS paper parsing (due to website update)</li>
+							<li>[dev] Improve search to include tags (still <code>t:tagName</code> to search tags only)
+							</li>
+							<li>[dev] Various refactors and small bug fixes</li>
+
+						</ul>
+					</li>
+					<li><a href="https://github.com/vict0rsch/PaperMemory/releases/tag/0.4.4.1">0.4.4.1</a>
+						<em>(2022-03-08)</em>
+						<ul>
+							<li>[dev] Fix Arxiv markdown link </li>
+						</ul>
+					</li>
+					<li><a href="https://github.com/vict0rsch/PaperMemory/releases/tag/0.4.4">0.4.4</a>
+						<em>(2022-03-07)</em>
+						<ul>
+							<li>[feature] Automatically discover code repositories using PapersWithCode!</li>
+							<li>[dev] Improve Memory search triggers (especially on paste and clear)</li>
+							<li>[refactor] Improve utilities files structure</li>
+						</ul>
+					</li>
+					<li><a href="https://github.com/vict0rsch/PaperMemory/releases/tag/0.4.3.1">0.4.3.1</a>
+						<em>(2022-01-05)</em>
+						<ul>
+							<li>[dev] Hotfix: Auto-tagging issue when the Author Regex is empty</li>
+						</ul>
+					</li>
+					<li><a href="https://github.com/vict0rsch/PaperMemory/releases/tag/0.4.3">0.4.3</a>
+						<em>(2022-01-03)</em>
+						<ul>
+							<li>[feature] Add a direct link to SciRate in the popup</li>
+							<li>[feature][beta] Download pdfs in a dedicated folder to open those local files instead of
+								re-downloading pdfs all the time</li>
+							<br />
+							<li>[new source] Parse papers from scirate.com/arxiv/ as Arxiv papers into your Memory</li>
+							<br />
+							<li>[dev] Hotfix: Improve long codelinks display</li>
+						</ul>
+					</li>
+					<li><a href="https://github.com/vict0rsch/PaperMemory/releases/tag/0.4.2.3">0.4.2.3</a>
+						<em>(2021-12-13)</em>
+						<ul>
+							<li>[dev] Hotfix: match ACL pdf webpages</li>
+						</ul>
+					</li>
+					<li><a href="https://github.com/vict0rsch/PaperMemory/releases/tag/0.4.2.2">0.4.2.2</a>
+						<em>(2021-12-13)</em>
+						<ul>
+							<li>[dev] Hotfix: fix lower case Memory search</li>
+						</ul>
+					</li>
+					<li><a href="https://github.com/vict0rsch/PaperMemory/releases/tag/0.4.2.1">0.4.2.1</a>
+						<em>(2021-12-13)</em>
+						<ul>
+							<li>[dev] Hotfix: improve ACL titles</li>
+						</ul>
+					</li>
+					<li><a href="https://github.com/vict0rsch/PaperMemory/releases/tag/0.4.2">0.4.2</a>
+						<em>(2021-12-13)</em>
+						<ul>
+							<li>[new source] Add ACL (aclanthology.org)</li>
+							<li>[new source] Add Proceedings of the National Academy of Sciences (pnas.org)</li>
+						</ul>
+					</li>
+					<li><a href="https://github.com/vict0rsch/PaperMemory/releases/tag/0.4.1">0.4.1</a>
+						<em>(2021-12-09)</em>
+						<ul>
+							<li>[dev] Minor bug fixes and text improvements</li>
+						</ul>
+					</li>
+					<li><a href="https://github.com/vict0rsch/PaperMemory/releases/tag/0.4.0">0.4.0</a>
+						<em>(2021-12-07)</em>
+						<ul>
+							<li>[refactor] Move data management and pdf title function to Options</li>
+							<li>[feature] Custom title function out of Beta</li>
+							<li>[feature] Add auto-tagging from regexs</li>
+							<li>[feature] Find published versions of pre-prints on dblp.org and crossref.org</li>
+							<li>[dev] Add Gulp as build tool</li>
+							<li>[dev] Improve contribution guidelines</li>
+						</ul>
+					</li>
+					<li><a href="https://github.com/vict0rsch/PaperMemory/releases/tag/0.3.3">0.3.3</a>
 						<em>(2021-11-24)</em>
 						<ul>
 							<li>[feature] Add manual trigger button on Firefox (as content scripts are not triggered on

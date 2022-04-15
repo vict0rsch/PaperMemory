@@ -99,34 +99,6 @@ const setStandardPopupClicks = () => {
     });
 
     addListener("memory-switch", "click", handleMemorySwitchClick);
-
-    addListener("download-arxivmemory", "click", handleDownloadMemoryClick);
-    addListener("download-bibtex-json", "click", handleDownloadBibtexJsonClick);
-    addListener("download-bibtex-plain", "click", handleDownloadBibtexPlainClick);
-    addListener("overwrite-arxivmemory-button", "click", handleOverwriteMemory);
-    addListener("overwrite-arxivmemory-input", "change", handleSelectOverwriteFile);
-};
-
-/**
- * Retrieve the custom pdf function, updates the associated textarea and adds and
- * event listener for when the latter changes.
- * @param {object} menu the user's menu options, especially including pdfTitleFn
- */
-const setAndHandleCustomPDFFunction = (menu) => {
-    // attempt to use the user's custom function
-    if (menu.pdfTitleFn && typeof menu.pdfTitleFn === "string") {
-        global.state.pdfTitleFn = getPdfFn(menu.pdfTitleFn);
-    }
-    // it may have failed but getPdfFn is guaranteed to return a working function
-    // so use that and update storage just in case.
-    chrome.storage.local.set({ pdfTitleFn: global.state.pdfTitleFn.toString() });
-    // update the user's textarea
-    val("customPdfTitleTextarea", global.state.pdfTitleFn.toString());
-    // listen to saving click
-    addListener("saveCustomPdf", "click", handleCustomPDFFunctionSave);
-    // listen to the event resetting the pdf title function
-    // to the built-in default
-    addListener("defaultCustomPdf", "click", handleDefaultPDFFunctionClick);
 };
 
 /**
@@ -135,10 +107,10 @@ const setAndHandleCustomPDFFunction = (menu) => {
  * + Add event listeners (clicks and keyboard)
  * @param {str} url Currently focused and active tab's url.
  */
-const popupMain = async (url, isKnownPage, manualTrigger = false) => {
+const popupMain = async (url, is, manualTrigger = false) => {
     console.log(navigator.userAgent);
     if (navigator.userAgent === "PuppeteerAgent") {
-        console.log("Is puppet");
+        info("Is puppet");
         style(document.body, "min-width", "500px");
         style(document.body, "max-width", "500px");
         style(document.body, "width", "500px");
@@ -173,23 +145,34 @@ const popupMain = async (url, isKnownPage, manualTrigger = false) => {
     // Set checkboxes
     getAndTrackPopupMenuChecks(menu, global.menuCheckNames);
 
+    // Set options page link
+    addListener("advanced-configuration", "click", () => {
+        chrome.runtime.openOptionsPage();
+    });
+    // Set fullMemory page link
+    addListener("full-memory", "click", () => {
+        chrome.tabs.create({
+            url: chrome.extension.getURL("src/fullMemory/fullMemory.html"),
+        });
+    });
+
     // Set PDF title function
-    setAndHandleCustomPDFFunction(menu);
+    // setAndHandleCustomPDFFunction(menu);
 
     // Display popup metadata
-    if (isKnownPage) {
+    if (Object.values(is).some((i) => i)) {
         setTimeout(() => {
             document.body.style.height = "auto";
             document.body.style.minHeight = "450px";
         }, 0);
         showId("isArxiv", "flex");
 
-        const id = parseIdFromUrl(url);
+        const id = await parseIdFromUrl(url);
         global.state.currentId = id;
 
-        if (!global.state.papers.hasOwnProperty(id)) {
+        if (!id || !global.state.papers.hasOwnProperty(id)) {
             // Unknown paper, probably deleted by the user
-            console.log("Unknown id " + id);
+            log("Unknown id " + id);
             updatePopupPaperNoMemory(url);
             if (menu.checkDirectOpen) {
                 dispatchEvent("memory-switch", "click");
@@ -204,18 +187,18 @@ const popupMain = async (url, isKnownPage, manualTrigger = false) => {
         // -----  Fill Paper Data  -----
         // -----------------------------
         setTextId("popup-paper-title", paper.title.replaceAll("\n", ""));
-        setTextId("popup-authors", paper.author.replaceAll(" and ", ", "));
+        setTextId("popup-authors", cutAuthors(paper.author, 350));
         if (paper.codeLink) {
             showId("popup-code-link");
-            setTextId("popup-code-link", paper.codeLink);
+            setTextId("popup-code-link", paper.codeLink.replace(/^https?:\/\//, ""));
         }
 
         // ----------------------------------
         // -----  Customize Popup html  -----
         // ----------------------------------
-        console.log(paper);
+        log("Popup paper:", paper);
         setHTML("popup-memory-edit", getPopupEditFormHTML(paper));
-        setHTML("popup-copy-icons", getPopupPaperIconsHTML(paper, url));
+        setHTML("popup-copy-icons", getPopupPaperIconsHTML(paper, url, is));
         findEl(`checkFavorite--${id}`).checked = paper.favorite;
 
         // --------------------------
@@ -230,16 +213,21 @@ const popupMain = async (url, isKnownPage, manualTrigger = false) => {
             textareaFocusEnd(that);
         });
         setFormChangeListener(id, true);
-        addListener(`popup-save-edits--${id}`, "click", handlePopupSaveEdits(id));
         addListener("popup-delete-paper", "click", handlePopupDeletePaper(id));
 
         // ------------------------
         // -----  SVG clicks  -----
         // ------------------------
+        addListener(`popup-memory-item-scirate--${id}`, "click", () => {
+            const arxivId = paper.id.split("-").last();
+            const scirateURL = `https://scirate.com/arxiv/${arxivId}`;
+            chrome.tabs.update({ url: scirateURL });
+            window.close();
+        });
         addListener(`popup-memory-item-link--${id}`, "click", () => {
-            chrome.tabs.update({
-                url: paperToPDF(paper) === url ? paperToAbs(paper) : paperToPDF(paper),
-            });
+            const pdfURL = paperToPDF(paper);
+            const absURL = paperToAbs(paper);
+            chrome.tabs.update({ url: isPdfUrl(url) ? absURL : pdfURL });
             window.close();
         });
         addListener(`popup-code-link`, "click", () => {
@@ -249,23 +237,49 @@ const popupMain = async (url, isKnownPage, manualTrigger = false) => {
             }
         });
         addListener(`popup-memory-item-copy-link--${id}`, "click", () => {
-            const pdfLink = global.state.papers[id].pdfLink;
-            copyAndConfirmMemoryItem(id, pdfLink, "Pdf link copied!", true);
+            const link = menu.checkPreferPdf ? paperToPDF(paper) : paperToAbs(paper);
+            const text = menu.checkPreferPdf ? "PDF" : "Abstract";
+            copyAndConfirmMemoryItem(id, link, `${text} link copied!`, true);
         });
         addListener(`popup-memory-item-md--${id}`, "click", () => {
-            const md = global.state.papers[id].md;
-            copyAndConfirmMemoryItem(id, md, "MarkDown link copied!", true);
+            const link = menu.checkPreferPdf ? paperToPDF(paper) : paperToAbs(paper);
+            const text = menu.checkPreferPdf ? "PDF" : "Abstract";
+            const md = `[${paper.title}](${link})`;
+            copyAndConfirmMemoryItem(id, md, `Markdown link to ${text} copied!`, true);
         });
         addListener(`popup-memory-item-bibtex--${id}`, "click", () => {
-            const bibtex = formatBibtext(global.state.papers[id].bibtex);
+            const bibtex = bibtexToString(global.state.papers[id].bibtex);
             copyAndConfirmMemoryItem(id, bibtex, "Bibtex citation copied!", true);
         });
-        addListener(`popup-memory-item-download--${id}`, "click", () => {
-            let pdfTitle = statePdfTitle(paper.title, paper.id);
-            console.log({ pdfTitle });
+        addListener(`popup-memory-item-openLocal--${id}`, "click", async () => {
+            const file = await findLocalFile(paper);
+            if (file) {
+                chrome.downloads.open(file.id);
+            } else {
+                chrome.tabs.create({ url: paper.pdfLink });
+            }
+        });
+        addListener(`popup-memory-item-download--${id}`, "click", async () => {
+            let title = stateTitleFunction(paper);
+            if (global.state.menu.checkStore) {
+                title = "PaperMemoryStore/" + title;
+                const storedFiles = await getStoredFiles();
+                if (storedFiles.length === 0) {
+                    chrome.downloads.download({
+                        url: URL.createObjectURL(new Blob([global.storeReadme])),
+                        filename: "PaperMemoryStore/IMPORTANT_README.txt",
+                        saveAs: false,
+                    });
+                }
+            }
+            log({ title });
+            if (!title.endsWith(".pdf")) {
+                title += ".pdf";
+            }
+            title = title.replaceAll(":", " ");
             chrome.downloads.download({
-                url: paper.pdfLink,
-                filename: pdfTitle.replaceAll(":", "_"),
+                url: paperToPDF(paper),
+                filename: title,
             });
         });
     } else {
@@ -280,20 +294,22 @@ const popupMain = async (url, isKnownPage, manualTrigger = false) => {
 // ------------------------------
 
 const query = { active: true, lastFocusedWindow: true };
-chrome.tabs.query(query, async (tabs) => {
-    const url = tabs[0].url;
+if (window.location.href.includes("popup")) {
+    chrome.tabs.query(query, async (tabs) => {
+        const url = tabs[0].url;
+        await initState();
 
-    const is = isPaper(url);
-    const isKnownPage = Object.values(is).some((i) => i);
+        const is = await isPaper(url);
+        const isKnown = Object.values(is).some((i) => i);
 
-    if (!isKnownPage) showId("notArxiv");
+        if (!isKnown) showId("notArxiv");
 
-    await initState();
-    hideId("memory-spinner");
-    showId("memory-switch");
-    makeMemoryHTML();
-    popupMain(url, isKnownPage);
-    if (navigator.userAgent.search("Firefox") > -1) {
-        hideId("overwrite-container");
-    }
-});
+        hideId("memory-spinner");
+        showId("memory-switch");
+        makeMemoryHTML();
+        popupMain(url, is);
+        if (navigator.userAgent.search("Firefox") > -1) {
+            hideId("overwrite-container");
+        }
+    });
+}

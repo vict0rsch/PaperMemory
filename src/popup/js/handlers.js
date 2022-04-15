@@ -20,7 +20,7 @@ const handleDeleteItem = (e) => {
 
 const handleOpenItemLink = (e) => {
     const id = eventId(e);
-    focusExistingOrCreateNewPaperTab(global.state.papers[id]);
+    focusExistingOrCreateNewPaperTab(global.state.papers[id], true);
 };
 
 const handleOpenItemCodeLink = (e) => {
@@ -29,22 +29,29 @@ const handleOpenItemCodeLink = (e) => {
     focusExistingOrCreateNewCodeTab(url);
 };
 
-const handleCopyMarkdownLink = (e) => {
+const handleCopyMarkdownLink = async (e) => {
     const id = eventId(e);
-    const md = global.state.papers[id].md;
-    copyAndConfirmMemoryItem(id, md, "Markdown link copied!");
+    const menu = global.state.menu;
+    const paper = global.state.papers[id];
+    const link = menu.checkPreferPdf ? paperToPDF(paper) : paperToAbs(paper);
+    const text = menu.checkPreferPdf ? "PDF" : "Abstract";
+    const md = `[${paper.title}](${link})`;
+    copyAndConfirmMemoryItem(id, md, `Markdown ${text} link copied!`);
 };
 
 const handleCopyBibtex = (e) => {
     const id = eventId(e);
     const bibtex = global.state.papers[id].bibtex;
-    copyAndConfirmMemoryItem(id, formatBibtext(bibtex), "Bibtex copied!");
+    copyAndConfirmMemoryItem(id, bibtexToString(bibtex), "Bibtex copied!");
 };
 
-const handleCopyPDFLink = (e) => {
+const handleCopyPDFLink = async (e) => {
     const id = eventId(e);
-    const pdfLink = global.state.papers[id].pdfLink;
-    copyAndConfirmMemoryItem(id, pdfLink, "Pdf link copied!");
+    const menu = global.state.menu;
+    const paper = global.state.papers[id];
+    const link = menu.checkPreferPdf ? paperToPDF(paper) : paperToAbs(paper);
+    const text = menu.checkPreferPdf ? "PDF" : "Abstract";
+    copyAndConfirmMemoryItem(id, link, `${text} link copied!`);
 };
 
 const handleAddItemToFavorites = (e) => {
@@ -53,26 +60,26 @@ const handleAddItemToFavorites = (e) => {
     saveFavoriteItem(id, !isFavorite);
 };
 
+const handleMemoryOpenLocal = (e) => {
+    const id = eventId(e);
+    const file = global.state.files[id];
+    if (file && (file.id || file.id === 0)) {
+        chrome.downloads.open(file.id);
+    }
+};
+
 const handleTextareaFocus = () => {
     var that = this;
     textareaFocusEnd(that);
 };
 
-const handleMemorySaveEdits = (e) => {
-    e.preventDefault();
-
-    // Get content
-    const id = eventId(e);
+const handleMemorySaveEdits = (id) => {
     const { note, codeLink } = getPaperEdits(id);
 
     // Update metadata
     saveNote(id, note);
     saveCodeLink(id, codeLink);
     updatePaperTags(id, "memory-item-tags");
-
-    // Close edit form
-    dispatch(findEl(id, "memory-item-edit"), "click");
-    disable(findEl(id, "memory-item-save-edits"));
 };
 
 const handleCancelPaperEdit = (e) => {
@@ -82,7 +89,6 @@ const handleCancelPaperEdit = (e) => {
     val(findEl(id, "form-note-textarea"), paper.note);
     setHTML(findEl(id, "memory-item-tags"), getTagsOptions(paper));
     dispatch(findEl(id, "memory-item-edit"), "click");
-    disable(findEl(id, "memory-item-save-edits"));
 };
 
 const handleTogglePaperEdit = (e) => {
@@ -198,25 +204,38 @@ const handleMemorySearchKeyPress = (allowEmptySearch) => (e) => {
     // read input, return if empty (after trim)
     const query = val("memory-search").trim();
 
+    log(query);
+
     if (!query) {
         setTimeout(() => {
             style("memory-search-clear-icon", "visibility", "hidden");
         }, 0);
     }
 
-    if (!query && !allowEmptySearch && e.key !== "Backspace") {
-        return;
+    if (!query) {
+        if (global.state.papersList.length !== global.state.sortedPapers.length) {
+            // empty query but not all papers are displayed
+            global.state.papersList = global.state.sortedPapers;
+            displayMemoryTable();
+            return;
+        }
+        if (!allowEmptySearch && e.key !== "Backspace") {
+            return;
+        }
     }
     style("memory-search-clear-icon", "visibility", "visible");
     if (query.startsWith("t:")) {
         // look into tags
-        filterMemoryByTags(query);
+        searchMemoryByTags(query);
     } else if (query.startsWith("c:")) {
         // look into code links
-        filterMemoryByCode(query);
+        searchMemoryByCode(query);
+    } else if (query.startsWith("y:")) {
+        // look into publication year
+        searchMemoryByYear(query);
     } else {
         // look into title & authors & notes & conf
-        filterMemoryByString(query);
+        searchMemory(query);
     }
     // display filtered papers
     displayMemoryTable();
@@ -228,6 +247,9 @@ const handleMemorySearchKeyUp = (e) => {
         var backspaceEvent = new Event("keypress");
         backspaceEvent.key = "Backspace";
         dispatch("memory-search", backspaceEvent);
+    }
+    if (e.target.id === "memory-search") {
+        dispatch("memory-search", "keypress");
     }
 };
 
@@ -245,7 +267,7 @@ const handleConfirmDeleteModalClick = (e) => {
         sortMemory();
         displayMemoryTable();
         hideId("confirm-modal");
-        console.log(`Successfully deleted "${title}" (${id}) from PaperMemory`);
+        log(`Successfully deleted "${title}" (${id}) from PaperMemory`);
         if (global.state.currentId === id) {
             updatePopupPaperNoMemory(url);
         }
@@ -365,218 +387,19 @@ const handleMenuCheckChange = (e) => {
     const key = e.target.id;
     const checked = findEl(key).checked;
     chrome.storage.local.set({ [key]: checked }, function () {
-        console.log(`Settings saved for ${key} (${checked})`);
-    });
-};
-
-const handleDownloadMemoryClick = () => {
-    const now = new Date();
-    const date = now.toLocaleDateString().replaceAll("/", ".");
-    const time = now.toLocaleTimeString().replaceAll(":", ".");
-    chrome.storage.local.get("papers", ({ papers }) => {
-        const version = versionToSemantic(papers.__dataVersion);
-        downloadTextFile(
-            JSON.stringify(papers),
-            `memory-data-${version}-${date}-${time}.json`,
-            "text/json"
-        );
-    });
-};
-const handleDownloadBibtexJsonClick = () => {
-    const now = new Date();
-    const date = now.toLocaleDateString().replaceAll("/", ".");
-    const time = now.toLocaleTimeString().replaceAll(":", ".");
-    chrome.storage.local.get("papers", ({ papers }) => {
-        const version = versionToSemantic(papers.__dataVersion);
-        delete papers.__dataVersion;
-        const bibtex = Object.keys(papers).reduce((obj, k) => {
-            obj[k] = formatBibtext(papers[k].bibtex) || "";
-            return obj;
-        }, {});
-        downloadTextFile(
-            JSON.stringify(bibtex),
-            `memory-bibtex-${version}-${date}-${time}.json`,
-            "text/json"
-        );
-    });
-};
-const handleDownloadBibtexPlainClick = () => {
-    const now = new Date();
-    const date = now.toLocaleDateString().replaceAll("/", ".");
-    const time = now.toLocaleTimeString().replaceAll(":", ".");
-    chrome.storage.local.get("papers", ({ papers }) => {
-        const version = versionToSemantic(papers.__dataVersion);
-        delete papers.__dataVersion;
-        const bibtex = Object.values(papers)
-            .map((v, k) => {
-                let b = v.bibtex;
-                if (!b) {
-                    b = "";
-                    console.log(v);
-                }
-                return formatBibtext(b);
-            })
-            .join("\n");
-        downloadTextFile(
-            JSON.stringify(bibtex),
-            `memory-bibtex-${version}-${date}-${time}.bib`,
-            "text/plain"
-        );
-    });
-};
-
-const handleSelectOverwriteFile = () => {
-    var file = document.getElementById("overwrite-arxivmemory-input").files;
-    if (!file || file.length < 1) {
-        return;
-    }
-    file = file[0];
-    setHTML("overwrite-file-name", file.name);
-    if (!file.name.endsWith(".json")) return;
-    findEl("overwrite-arxivmemory-button").disabled = false;
-};
-
-const handleOverwriteMemory = () => {
-    var file = document.getElementById("overwrite-arxivmemory-input").files;
-    if (!file || file.length < 1) {
-        return;
-    }
-    file = file[0];
-    var reader = new FileReader();
-    reader.onload = function (e) {
-        try {
-            const overwritingPapers = JSON.parse(e.target.result);
-            showId("overwriteFeedback");
-            setHTML(
-                "overwriteFeedback",
-                `<div class="arxivTools-container"><div class="sk-folding-cube"><div class="sk-cube1 sk-cube"></div><div class="sk-cube2 sk-cube"></div><div class="sk-cube4 sk-cube"></div><div class="sk-cube3 sk-cube"></div></div></div>`
-            );
-            const confirm = `<button id="confirm-overwrite">Confirm</button>`;
-            const cancel = `<button id="cancel-overwrite">Cancel</button>`;
-            const title = `<h4 class="w-100 code-font" style="font-size: 0.9rem;">Be careful, you will not be able to revert this operation. Make sure you have downloaded a backup of your memory before overwriting it.</h4>`;
-            const overwriteDiv = `<div id="overwrite-buttons" class="flex-center-evenly py-3 px-4"> ${title} <div class="flex-center-evenly w-100">${cancel} ${confirm}</div></div>`;
-            setTimeout(async () => {
-                const { success, message, warning, papersToWrite } =
-                    await overwriteMemory(overwritingPapers);
-                if (success) {
-                    if (warning) {
-                        const nWarnings = (warning.match(/<br\/>/g) || []).length;
-                        setHTML(
-                            "overwriteFeedback",
-                            `<h5 class="errorTitle">Done with ${nWarnings} warnings. Confirm overwrite?</h5>${warning}${overwriteDiv}`
-                        );
-                    } else {
-                        style("overwriteFeedback", "text-align", "center");
-                        setHTML(
-                            "overwriteFeedback",
-                            `<h5 class="mb-0">Data seems valid. Confirm overwrite?</h5>${overwriteDiv}`
-                        );
-                    }
-                    addListener(
-                        "confirm-overwrite",
-                        "click",
-                        handleConfirmOverwrite(papersToWrite, warning)
-                    );
-                    addListener("cancel-overwrite", "click", handleCancelOverwrite);
-                } else {
-                    setHTML("overwriteFeedback", message);
-                }
-            }, 1500);
-        } catch (error) {
-            setHTML(
-                "overwriteFeedback",
-                `<br/><strong>Error:</strong><br/>${stringifyError(error)}`
-            );
+        log(`Settings saved for ${key} (${checked})`);
+        if (global.state && global.state.menu) {
+            global.state.menu[key] = checked;
         }
-    };
-    reader.readAsText(file);
+    });
 };
 
-const handleConfirmOverwrite = (papersToWrite, warning) => (e) => {
-    setHTML(
-        "overwriteFeedback",
-        `<div class="arxivTools-container"><div class="sk-folding-cube"><div class="sk-cube1 sk-cube"></div><div class="sk-cube2 sk-cube"></div><div class="sk-cube4 sk-cube"></div><div class="sk-cube3 sk-cube"></div></div></div>`
-    );
-    setTimeout(async () => {
-        if (warning) {
-            for (const id in papersToWrite) {
-                if (papersToWrite.hasOwnProperty(id) && !id.startsWith("__")) {
-                    const { paper, warnings } = validatePaper(papersToWrite[id], false);
-                    papersToWrite[id] = paper;
-                    console.log(warnings);
-                }
-            }
-        }
-        await setStorage("papers", papersToWrite);
-        setHTML(
-            "overwriteFeedback",
-            `<h4>Memory overwritten. Close & Re-open the extension for the update to be effective.</h4>`
-        );
-        val("overwrite-arxivmemory-input", "");
-    }, 700);
-};
-const handleCancelOverwrite = (e) => {
-    hideId("overwriteFeedback");
-    setHTML("overwriteFeedback", ``);
-    val("overwrite-arxivmemory-input", "");
-};
-
-const handleCustomPDFFunctionSave = () => {
-    const code = val("customPdfTitleTextarea").trim();
-    try {
-        // check code: it can be evaluated and it runs without error
-        const fn = eval(code);
-        const tested = fn("test", "1.2");
-        if (typeof tested !== "string") {
-            throw Error(
-                "Custom function returns the wrong type:",
-                typeof tested,
-                tested
-            );
-        }
-        // no error so far: all good!
-        const savedFeedback = /*html*/ `<span style="color: green">Saved!</span>`;
-        setHTML("customPdfFeedback", savedFeedback);
-        // save function string
-        chrome.storage.local.set({ pdfTitleFn: code });
-        global.state.pdfTitleFn = fn;
-        setTimeout(() => {
-            setHTML("customPdfFeedback", "");
-        }, 1000);
-    } catch (error) {
-        // something went wrong!
-        console.log("setAndHandleCustomPDFFunction error:");
-        const errorFeedback = /*html*/ `<span style="color: red">${error}</span>`;
-        savedFeedback("customPdfFeedback", errorFeedback);
-    }
-};
-
-const handleDefaultPDFFunctionClick = () => {
-    const code = defaultPDFTitleFn.toString();
-    const savedFeedback = /*html*/ `<span style="color: var(--green)"
-        >Saved!</span
-    >`;
-    chrome.storage.local.set({ pdfTitleFn: code });
-    global.state.pdfTitleFn = defaultPDFTitleFn;
-    val("customPdfTitleTextarea", code);
-    setHTML("customPdfFeedback", savedFeedback);
-    setTimeout(() => {
-        setHTML("customPdfFeedback", "");
-    }, 1000);
-};
-
-const handlePopupSaveEdits = (id) => () => {
+const handlePopupSaveEdits = (id) => {
     const { note, codeLink, favorite } = getPaperEdits(id, true);
     updatePaperTags(id, `#popup-item-tags--${id}`);
     saveNote(id, note);
     saveCodeLink(id, codeLink);
     saveFavoriteItem(id, favorite);
-    setHTML("popup-feedback-copied", "Saved tags, code, note & favorite!");
-    fadeIn("popup-feedback-copied");
-    setTimeout(() => {
-        fadeOut("popup-feedback-copied");
-    }, 2000);
-    disable(`popup-save-edits--${id}`);
 };
 
 const handlePopupDeletePaper = (id) => () => {

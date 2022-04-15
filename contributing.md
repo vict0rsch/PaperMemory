@@ -1,5 +1,13 @@
 # Contributing
 
+## About
+
+PaperMemory is pure JS+HTML with minimal dependencies: no framework, (almost) no external dependencies so it's easy to help :) 
+
+The only external deps. are [`select2.js`](https://select2.org/) which requires `JQuery` and some of the latter here and there (but I'm working on getting rid of it, replacing it with a simple set of helper functions in `src/shared/utils/miniquery.js`).
+
+`npm` and `gulp` are here to make the dev+release lifecycle easier, if you don't want to set it up there still are a lot of things you can help with in the raw source code (just don't bother with the `min` files)
+
 ## Set-up
 
 1. [Install `npm`](https://www.npmjs.com/get-npm): Node's package manager
@@ -30,13 +38,20 @@ In `popup.html` you will notice:
 
 Those `@` commands are meant for `gulp` (using the `preprocess` package) to choose whether to use raw, un-minified files for development (`$ gulp watch`) or concatenated and minified ones for production (`$ gulp build`)
 
-Note: the file loaded in the popup is `src/popup/min/popup.min.html`, *not* `src/popup/popup.html`
+Note: the file loaded in the popup is `src/popup/min/popup.min.html`, *not* `src/popup/popup.html` so you *have* to use `gulp watch` to see changes you make to `popup.html` reflected in the actual popup.
+
+### Refreshing the extension
+
+Once you load the local extension as an unpackaged extension, changes that affect the popup will directly take effect, no need to refresh anything. 
+
+**Content scripts** however, are loaded and not binded to the source so you _have to_ refresh the extension in the settings (and then any web page you want to see changes on) for those to be taken into account.
 
 
 ## Conventions
 
 ### File structure
 
+(slightly deprecated since some files have moved but names are unique enough for you to still understand I hope)
 
 ```tree
 ├── jsconfig.json ➤➤➤ vscode js config
@@ -66,12 +81,17 @@ Note: the file loaded in the popup is `src/popup/min/popup.min.html`, *not* `src
     └── shared
         ├── jquery.min.js ➤➤➤ JQuery lib. Do not modify. 
         ├── utils ➤➤➤ Shared utility functions minified together in this order into utils.min.js
-        │   ├── miniquery.js ➤➤➤ Custom vanilla js replacement for JQuery (working towards removing that dependency)
-        │   ├── config.js ➤➤➤ Constants / State variables used throughout out the code
-        │   ├── functions.js ➤➤➤ Utility functions, relying on config.js
-        │   └── parsers.js ➤➤➤ Parsing functions to create papers
+        │   ├── bibtexParser.js ➤➤➤ Class to parse bibtex strings into objects
+        │   ├── config.js       ➤➤➤ Constants / State variables used throughout out the code
+        │   ├── data.js         ➤➤➤ Data/Memory manipulation (migrations, paper validation, overwrite etc.)
+        │   ├── functions.js    ➤➤➤ Utility functions, relying on config.js
+        │   ├── logTrace.js     ➤➤➤ Single var script to include the log stack trace in dev (gulp watch)
+        │   ├── miniquery.js    ➤➤➤ Custom vanilla js replacement for JQuery (working towards removing that dependency)
+        │   ├── parsers.js      ➤➤➤ Parsing functions to create papers
+        │   ├── paper.js        ➤➤➤ Single-paper-related functions (isPaper, paperToAbs, paperToPDF)
+        │   └── state.js        ➤➤➤ State-related functions (init, custom title function, addOrUpdatePaper etc.)
         ├── utils.min.js ➤➤➤ Concatenation and minification of all files in src/shared/utils/
-        └── loader.css ➤➤➤ the style for the loader before the BibTex entry is displayed on arxiv.org/abs/*
+        └── loader.css   ➤➤➤ the style for the loader before the BibTex entry is displayed on arxiv.org/abs/*
 ```
 
 ### Prettier
@@ -80,20 +100,18 @@ TODO
 
 ## Adding a paper source
 
-* update `config.js:global.knownPaperPages` with `source: [array of url matches to trigger paper parsing]`
-  * will be used by `functions.js:isPaper()` to determine whether `content_script.js` should parse the current page into a paper with `addOrUpdatePaper()` (or update the existing one's visits count) and `popup.js` to display the current paper
-* update `content_script.js:makePaper()` to create a new entry
+* update `config.js:global.knownPaperPages` with `source: [array of url matches to trigger paper parsing, or boolean functions taking it as input]`
+  * will be used by `paper.js:isPaper()` to determine whether `content_script.js` should parse the current page into a paper with `addOrUpdatePaper()` (or update the existing one's visits count) and `popup.js` to display the current paper
+* update `parsers.js:makePaper()` to create a new entry
   * Typically, add a parser function in `parsers.js`  
-* `memory.js:focusExistingOrCreateNewPaperTab()` -> update the `match` creation process to define the piece of a pdf's URL which should be matched to existing tabs in order to focus it.
-* Update `functions.js:paperToAbs()` and `functions.js:paperToPDF()` to enable to pdf<->webpage button
-* Update `manifest.json` to
-  * trigger `content_script.js` in the correct domains
-  * enable your parsing function to fetch/query the data you need
+* update `state:parseIdFromUrl()`
+* Update `paper.js:paperToAbs()` and `paper.js:paperToPDF()` to enable to pdf<->webpage button
+* Update `functions.js:getDisplayId()`
 
 ## Creating a new paper attribute
 
-1. Add an entry in `functions.js:validatePaper`
-2. Add a default value to other papers in `functions.js:migrateData`
+1. Add an entry in `data.js:validatePaper`
+2. Add a default value to other papers in `data.js:migrateData`
 
 ## Release process
 
@@ -118,13 +136,13 @@ TODO
     5. Notable edge case: modifying a paper when on its page:
         1. Changes in the memory should be reflected in the popup and vice-versa
 2. Document functions (docstrings & comments)
-3. Bumb version
-4. Update the `What's new` section in `popup.html`
-    1. Add an item describing changes in this new version
-    2. Move the `current` reference
-5. Run `gulp build`
-6. Create a Github
+3. Bump version
+4. Run `gulp build`
+5. Create a Github Release
     1. At least use the auto-complete release feature from PRs
     2. Add the Archive generated by `gulp build`
-7. Upload the new package to Chrome & Firefox web stores
+6. Upload the new package to Chrome & Firefox web stores
+    7. There's now a [Github action](https://github.com/vict0rsch/PaperMemory/actions/workflows/submit.yml) for that thanks to @louisgv in [#51](https://github.com/vict0rsch/PaperMemory/pull/51)
 8. If necessary update Github and stores visuals
+
+I'm working on adding tests in [#26](https://github.com/vict0rsch/PaperMemory/pull/26)

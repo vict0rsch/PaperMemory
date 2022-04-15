@@ -1,13 +1,3 @@
-:root {
-    --blue: #0276ff;
-    --red: #b31b1b;
-    --lightRed: #cc5050;
-    --round: 4px;
-    --rounder: 6px;
-    --outline: grey;
-    --color: black;
-}
-
 html {
     min-width: 450px;
     max-width: 450px;
@@ -148,6 +138,10 @@ code {
     width: 32px;
     color: var(--red);
     stroke-width: 1px;
+}
+
+#options label {
+    max-width: 330px;
 }
 
 #menu-switch-svg {
@@ -387,6 +381,7 @@ code {
     border-radius: var(--rounder);
 }
 .memory-item-feedback {
+    font-size: 0.75rem;
     color: green;
 }
 #popup-feedback-copied {
@@ -397,6 +392,7 @@ code {
     bottom: -25px;
     width: 280px;
     text-align: center;
+    font-size: 0.75rem;
 }
 
 #memory-search {
@@ -514,6 +510,7 @@ code {
     color: rgb(22, 86, 184);
     cursor: pointer;
     margin-bottom: 16px;
+    word-break: break-all;
 }
 
 #popup-code-link {
@@ -542,6 +539,10 @@ code {
     margin-right: 8px;
     border-radius: var(--round);
     cursor: pointer;
+}
+.memory-display-id,
+.memory-visits {
+    font-size: 0.7rem;
 }
 
 #popup-copy-icons .memory-item-svg-div {
@@ -612,23 +613,6 @@ button.changed {
 .errorTitle {
     margin: 0px;
 }
-#overwriteFeedback {
-    margin-top: 12px;
-    border: 1px solid grey;
-    border-radius: var(--round);
-    padding: 8px 16px;
-    max-height: 150px;
-    overflow: scroll;
-    font-family: "Fira Code", monospace;
-}
-#overwrite-buttons {
-    flex-direction: column;
-}
-#overwrite-file-name {
-    max-width: 200px;
-    padding: 2px 8px;
-    word-break: break-all;
-}
 
 .flex-center-center {
     display: flex;
@@ -651,7 +635,7 @@ button.changed {
     justify-content: start;
 }
 
-#customPdfTitleTextarea {
+#custom-title-textarea {
     font-family: "Fira-code", monospace;
 }
 
@@ -704,6 +688,9 @@ button.changed {
 #modal-whatsnew-content a {
     margin-top: 16px;
     display: inline-block;
+}
+#modal-whatsnew-content code {
+    font-size: 0.8rem;
 }
 
 /*

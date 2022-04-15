@@ -10,6 +10,7 @@ const readlineSync = require("readline-sync");
 const fs = require("fs");
 const zip = require("gulp-zip");
 const { v4: uuidv4 } = require("uuid");
+const debug = require("gulp-debug");
 
 function popupJS() {
     return src([
@@ -25,35 +26,43 @@ function popupJS() {
                 shouldMinify: (template) => true,
             })
         )
-        .pipe(uglify({ mangle: false }))
+        .pipe(uglify({ mangle: true }))
         .pipe(rename({ suffix: ".min" }))
         .pipe(dest("src/popup/min/"));
 }
 
 function utilsJS() {
-    return src([
-        "src/shared/utils/miniquery.js",
-        "src/shared/utils/config.js",
-        "src/shared/utils/functions.js",
-        "src/shared/utils/parsers.js",
-    ])
-        .pipe(concat("utils.js"))
-        .pipe(
-            minifyJSTemplate({
-                minifyOptions: { minifyCSS: false, collapseWhitespace: true },
-                shouldMinify: (template) => true,
-            })
-        )
-        .pipe(uglify({ mangle: false }))
-        .pipe(rename({ suffix: ".min" }))
-        .pipe(dest("src/shared/"));
+    return (
+        src([
+            "src/shared/js/utils/miniquery.js",
+            "src/shared/js/utils/config.js",
+            "src/shared/js/utils/levenshtein.js",
+            "src/shared/js/utils/bibtexParser.js",
+            "src/shared/js/utils/functions.js",
+            "src/shared/js/utils/data.js",
+            "src/shared/js/utils/paper.js",
+            "src/shared/js/utils/state.js",
+            "src/shared/js/utils/parsers.js",
+        ])
+            // .pipe(debug())
+            .pipe(concat("utils.js"))
+            .pipe(
+                minifyJSTemplate({
+                    minifyOptions: { minifyCSS: false, collapseWhitespace: true },
+                    shouldMinify: (template) => true,
+                })
+            )
+            .pipe(uglify({ mangle: true }))
+            .pipe(rename({ suffix: ".min" }))
+            .pipe(dest("src/shared/min"))
+    );
 }
 
 function themeJS() {
-    return src(["src/popup/js/theme.js"])
-        .pipe(uglify({ mangle: false }))
+    return src(["src/shared/js/theme.js"])
+        .pipe(uglify({ mangle: true }))
         .pipe(rename({ suffix: ".min" }))
-        .pipe(dest("src/popup/min/"));
+        .pipe(dest("src/shared/min"));
 }
 
 function popupHTMLDev() {
@@ -63,6 +72,7 @@ function popupHTMLDev() {
         .pipe(htmlmin({ collapseWhitespace: true, removeComments: true }))
         .pipe(dest("src/popup/min/"));
 }
+
 function popupHTML() {
     return src(["src/popup/popup.html"])
         .pipe(preprocess({ context: { DEV: false } }))
@@ -73,9 +83,10 @@ function popupHTML() {
 
 function popupCSS() {
     return src([
+        "src/shared/css/vars.css",
         "src/popup/css/options.css",
         "src/popup/css/popup.css",
-        "src/shared/loader.css",
+        "src/shared/css/loader.css",
     ])
         .pipe(concat("popup.css"))
         .pipe(cleanCss())
@@ -91,10 +102,13 @@ function popupDarkCSS() {
 
 function watchFiles() {
     watch("src/popup/js/*.js", popupJS);
-    watch("src/popup/theme.js", themeJS);
-    watch("src/popup/css/*.css", parallel(popupCSS, popupDarkCSS));
-    watch("src/popup/popup.html", popupHTMLDev);
-    watch("src/shared/utils/*.js", utilsJS);
+    watch("src/shared/js/theme.js", themeJS);
+    watch(
+        ["src/popup/css/*.css", "src/shared/css/*.css"],
+        parallel(popupCSS, popupDarkCSS)
+    );
+    watch("src/popup/*.html", popupHTMLDev);
+    watch("src/shared/js/utils/*", utilsJS);
 }
 
 function createArchive(cb) {
@@ -117,15 +131,13 @@ function createArchive(cb) {
             console.log("Creating zip: " + archiveFolder + archiveName);
         }
     }
-    return src(["./**", "!extra/**", "!node_modules/**", "!./.vscode/**"])
+    return src(["./**", "!extra/**", "!node_modules/**", "!./.vscode/**", "!keys.json"])
         .pipe(zip(archiveName))
         .pipe(dest(archiveFolder));
 }
 
-exports.build = series(
-    parallel(popupJS, themeJS, utilsJS, popupCSS, popupDarkCSS, popupHTML),
-    createArchive
-);
+exports.build = parallel(popupJS, themeJS, utilsJS, popupCSS, popupDarkCSS, popupHTML);
 exports.dev = parallel(popupJS, themeJS, utilsJS, popupCSS, popupDarkCSS, popupHTMLDev);
-exports.watch = series(popupHTMLDev, watchFiles);
-exports.archive = createArchive;
+exports.watch = series(exports.dev, watchFiles);
+exports.archive = series(exports.build, createArchive);
+exports.html = series(popupHTMLDev);

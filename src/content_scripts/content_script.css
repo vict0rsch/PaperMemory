@@ -49,6 +49,7 @@
 
 #feedback-notif {
     padding: 1em;
+    z-index: 1000;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -58,6 +59,7 @@
     background: #b31b1b;
     border-radius: 4px;
     position: fixed;
+    font-size: 14px;
     bottom: 64px;
     right: -200px;
     opacity: 0;
@@ -66,6 +68,12 @@
     -moz-box-shadow: 14px 30px 122px -30px rgba(0, 0, 0, 0.75);
     box-shadow: 14px 30px 122px -30px rgba(0, 0, 0, 0.75);
     font-family: Mukta, Arial, sans-serif, Helvetica;
+}
+
+#feedback-pwc {
+    padding-top: 4px;
+    font-size: 13px;
+    font-style: italic;
 }
 
 .tabler-icon {
@@ -89,7 +97,7 @@
     padding: 8px;
     word-break: break-word;
     overflow: hidden;
-    font-size: 0.9rem;
+    font-size: 0.75rem;
 }
 
 .arxivTools-card {
