@@ -29,6 +29,39 @@ const setUpKeyboardListeners = () => {
     });
 };
 
+// ------------------------------
+// -----  PWC Preferences  -----
+// ------------------------------
+
+const setupPWCPrefs = async () => {
+    let pwcPrefs = await getStorage("pwcPrefs");
+    if (!pwcPrefs) pwcPrefs = {};
+
+    const official = pwcPrefs.hasOwnProperty("official") ? pwcPrefs.official : false;
+    const framework = pwcPrefs.hasOwnProperty("framework")
+        ? pwcPrefs.framework
+        : "none";
+
+    findEl("official-repo").checked = official;
+    findEl("framework-select").value = framework;
+    findEl("choose-repo-select").value = order;
+
+    addListener("official-repo", "change", async (e) => {
+        const newValue = findEl("official-repo").checked;
+        let prefs = await getStorage("pwcPrefs");
+        if (!prefs) prefs = {};
+        prefs.official = newValue;
+        setStorage("pwcPrefs", prefs);
+    });
+    addListener("framework-select", "change", async (e) => {
+        const newValue = findEl("framework-select").value;
+        let prefs = await getStorage("pwcPrefs");
+        if (!prefs) prefs = {};
+        prefs.framework = newValue;
+        setStorage("pwcPrefs", prefs);
+    });
+};
+
 // --------------------------
 // -----  Auto Tagging  -----
 // --------------------------
@@ -490,6 +523,7 @@ const setupSourcesSelection = async () => {
 // ----------------------------
 
 (() => {
+    setupPWCPrefs();
     setupAutoTags();
     setUpKeyboardListeners();
     setupSourcesSelection();
