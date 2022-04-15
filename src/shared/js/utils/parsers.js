@@ -589,7 +589,7 @@ const makeACSPaper = async (url) => {
     const title = data.title.trim();
     const year = data.year.trim();
     const key = data.citationKey.trim();
-    const pdfLink = url.replace("/doi/", "/doi/pdf/");
+    const pdfLink = `https://pubs.acs.org/doi/pdf/${doi}`;
     const note = `Published @ ${data.journal} (${data.year})`;
     const id = `ACS_${doi.replaceAll(".", "").replaceAll("/", "")}`;
     const venue = data.journal;
