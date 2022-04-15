@@ -15,7 +15,7 @@ const migrateData = async (papers, manifestDataVersion, store = true) => {
     }
     const currentVersion = papers["__dataVersion"] || -1;
     var deleteIds = [];
-    const latestDataVersion = 405;
+    const latestDataVersion = 520;
 
     let newPapers = { ...papers };
 
@@ -101,6 +101,12 @@ const migrateData = async (papers, manifestDataVersion, store = true) => {
                 info("Applying migration 0.4.5");
                 if (!papers[id].hasOwnProperty("venue")) {
                     papers[id].venue = await makeVenue(papers[id]);
+                }
+            }
+            if (currentVersion < 520) {
+                info("Applying migration 0.5.2");
+                if (id.startsWith("ACL-") && papers[id].source !== "acl") {
+                    papers[id].source = "acl";
                 }
             }
         }

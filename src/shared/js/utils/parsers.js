@@ -1021,7 +1021,7 @@ const makePaper = async (is, url, id) => {
     } else if (is.acl) {
         paper = await makeACLPaper(url);
         if (paper) {
-            paper.source = "pmlr";
+            paper.source = "acl";
         }
     } else if (is.pnas) {
         paper = await makePNASPaper(url);
