@@ -108,6 +108,13 @@ const migrateData = async (papers, manifestDataVersion, store = true) => {
                 if (id.startsWith("ACL-") && papers[id].source !== "acl") {
                     papers[id].source = "acl";
                 }
+                if (papers[id].source === "acs") {
+                    console.log("papers[id]: ", papers[id]);
+                    papers[id].pdfLink = papers[id].pdfLink.replace(
+                        "/doi/pdf/abs/",
+                        "/doi/pdf/"
+                    );
+                }
             }
         }
 
