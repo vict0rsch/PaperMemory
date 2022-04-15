@@ -104,7 +104,7 @@ const paperToAbs = (paper) => {
             break;
         case "pmc":
             const pmcid = pdf.match(/PMC\d+/)[0];
-            abs = pdf.split(pmcid)[0] + `PMC${pmcid}`;
+            abs = pdf.split(pmcid)[0] + pmcid;
             break;
 
         case "ijcai":
