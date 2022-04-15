@@ -277,8 +277,19 @@ const getMenu = async () => {
     const storedMenu = await getStorage(global.menuStorageKeys);
     let menu = {};
     for (const m of global.menuCheckNames) {
-        menu[m] = storedMenu.hasOwnProperty(m) ? storedMenu[m] : true;
+        menu[m] = storedMenu.hasOwnProperty(m)
+            ? storedMenu[m]
+            : global.menuCheckDefaultFalse.indexOf(m) >= 0
+            ? false
+            : true;
     }
+
+    if (menu.checkOfficialRepos) {
+        setStorage("pwcPrefs", { official: true });
+        delete menu.checkOfficialRepos;
+        setStorage("menu", menu);
+    }
+
     return menu;
 };
 
