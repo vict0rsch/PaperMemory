@@ -8,13 +8,16 @@
         "https://dl.acm.org/doi/pdf/10.5555/3491440.3491756",
         {
             "code": true,
-            "conf": "ijcai",
-            "year": 2020
+            "venue": "ijcai"
         }
     ],
     "acs": [
-        "",
-        ""
+        "https://pubs.acs.org/doi/10.1021/acs.jpca.9b00311",
+        "https://pubs.acs.org/doi/pdf/10.1021/acs.jpca.9b00311",
+        {
+            "code": true,
+            "venue": "The Journal of Physical Chemistry A"
+        }
     ],
     "arxiv": [
         "https://arxiv.org/abs/1703.10593",
@@ -26,23 +29,35 @@
     ],
     "cvf": [
         "https://openaccess.thecvf.com/content_CVPR_2020/html/Bhattacharjee_DUNIT_Detection-Based_Unsupervised_Image-to-Image_Translation_CVPR_2020_paper.html",
-        "https://openaccess.thecvf.com/content_CVPR_2020/papers/Bhattacharjee_DUNIT_Detection-Based_Unsupervised_Image-to-Image_Translation_CVPR_2020_paper.pdf"
+        "https://openaccess.thecvf.com/content_CVPR_2020/papers/Bhattacharjee_DUNIT_Detection-Based_Unsupervised_Image-to-Image_Translation_CVPR_2020_paper.pdf",
+        {
+            "venue": "cvpr"
+        }
     ],
     "ijcai": [
-        "",
-        ""
+        "https://www.ijcai.org/proceedings/2020/1",
+        "https://www.ijcai.org/proceedings/2020/0001.pdf",
+        {
+            "venue": "ijcai"
+        }
     ],
     "iop": [
-        "",
-        ""
+        "https://iopscience.iop.org/article/10.1149/2.1051908jes",
+        "https://iopscience.iop.org/article/10.1149/2.1051908jes/pdf",
+        {
+            "venue": "Journal of The Electrochemical Society"
+        }
     ],
     "jmlr": [
-        "",
-        ""
+        "https://www.jmlr.org/papers/v13/bergstra12a.html",
+        "https://www.jmlr.org/papers/volume13/bergstra12a/bergstra12a.pdf"
     ],
     "nature": [
-        "",
-        ""
+        "https://www.nature.com/articles/s41467-018-07210-0",
+        "https://www.nature.com/articles/s41467-018-07210-0.pdf",
+        {
+            "venue": "nature communications"
+        }
     ],
     "neurips": [
         "https://proceedings.neurips.cc/paper/2019/hash/0118a063b4aae95277f0bc1752c75abf-Abstract.html",
@@ -50,7 +65,11 @@
     ],
     "openreview": [
         "https://openreview.net/forum?id=EZNOb_uNpJk",
-        "https://openreview.net/pdf?id=EZNOb_uNpJk"
+        "https://openreview.net/pdf?id=EZNOb_uNpJk",
+        {
+            "code": true,
+            "venue": "iclr"
+        }
     ],
     "pmc": [
         "",
