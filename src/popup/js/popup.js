@@ -130,7 +130,7 @@ const popupMain = async (url, is, manualTrigger = false) => {
         // Set click events (regardless of paper)
         setStandardPopupClicks();
     }
-    const menu = await getStorage(global.menuStorageKeys);
+    const menu = (await getStorage(global.menuStorageKeys)) ?? {};
     // Set checkboxes
     getAndTrackPopupMenuChecks(menu, global.menuCheckNames);
 
