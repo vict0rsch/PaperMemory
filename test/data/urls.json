@@ -1,7 +1,10 @@
 {
     "acl": [
         "https://aclanthology.org/2020.acl-main.405/",
-        "https://aclanthology.org/2020.acl-main.405.pdf"
+        "https://aclanthology.org/2020.acl-main.405.pdf",
+        {
+            "venue": "acl"
+        }
     ],
     "acm": [
         "https://dl.acm.org/doi/10.5555/3491440.3491756",
@@ -21,7 +24,10 @@
     ],
     "arxiv": [
         "https://arxiv.org/abs/1703.10593",
-        "https://arxiv.org/pdf/1703.10593v7.pdf"
+        "https://arxiv.org/pdf/1703.10593v7.pdf",
+        {
+            "venue": "iccv"
+        }
     ],
     "biorxiv": [
         "https://www.biorxiv.org/content/10.1101/2021.11.08.467690v2",

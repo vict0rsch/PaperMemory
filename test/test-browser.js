@@ -1,3 +1,5 @@
+// ❯ env MAX_SOURCES=2 PAGE_TIMEOUT_S=8 npm run test
+
 const expect = require("expect");
 const fs = require("fs");
 const { isRegExp } = require("util/types");
@@ -5,21 +7,24 @@ const { isRegExp } = require("util/types");
 const { makeBrowser, getMemoryData, extensionURL } = require("./browser");
 const { allIds, allValues } = require("./processMemory");
 
-describe("Tests v1", function () {
-    it("v1.a", function () {
-        console.log("v1.a");
-    });
-    it("v1.b", function () {
-        console.log("v1.a");
-    });
-});
+const paperForSource = (source, memoryData) => {
+    return Object.values(memoryData).filter((p) => p.source === source)[0];
+};
+
+const maxSources = process.env.MAX_SOURCES ?? 1e10;
+const pageTimeout = process.env.PAGE_TIMEOUT_S * 1000 ?? 6 * 1000;
+
+console.log("Test params:");
+console.log("    pageTimeout: ", pageTimeout);
+console.log("    maxSources:  ", maxSources);
+console.log("--------------------------");
 
 describe("Test paper detection and storage", function () {
     var browser, page, memoryData, dataVersion, urls;
 
     before(async function () {
+        this.timeout(4 * 1000);
         browser = await makeBrowser();
-        page = await browser.newPage();
     });
 
     describe("Batch visits", function () {
@@ -27,33 +32,38 @@ describe("Test paper detection and storage", function () {
         // don't use arrow functions they don't have `this`
 
         urls = JSON.parse(fs.readFileSync("./data/urls.json"));
-        const pageTimeout = 400000;
         const timeout = (Object.keys(urls).length + 1) * 4 * pageTimeout;
-        console.log("timeout: ", timeout);
         this.timeout(timeout);
         this.slow(timeout);
 
         before(async function () {
-            let s = 0;
-            for (const source in { ...urls }) {
-                if (s > 2) {
+            const total = Math.min(maxSources, Object.keys(urls).length);
+            for (const [idx, [source, targets]] of Object.entries(urls).entries()) {
+                if (idx >= maxSources) {
                     delete urls[source]; // dev: testing page loop but stopping here for now
                 } else {
-                    const targets = urls[source].filter((u) => typeof u === "string");
-                    for (const target of targets) {
-                        console.log("Going to: ", target);
-                        await page.goto(target, { waitUntil: "load" });
-                        await page.waitForTimeout(pageTimeout);
+                    for (const [t, target] of targets
+                        .filter((u) => typeof u === "string")
+                        .entries()) {
+                        const prefix = `${" ".repeat(8)}(${idx * 2 + t}/${total})`;
+                        console.log(`${prefix}Going to: ${target}`);
+                        const p = await browser.newPage();
+                        await p.goto(target, { waitUntil: "load" });
+                        await p.waitForTimeout(500);
                     }
                 }
-                s += 1;
             }
 
-            await page.goto(extensionURL);
-            await page.waitForTimeout(pageTimeout);
+            await new Promise((resolve) => setTimeout(resolve, pageTimeout));
 
+            const page = await browser.newPage();
+            await page.goto(extensionURL);
+            await page.waitForTimeout(1000);
             memoryData = await getMemoryData(page);
-            console.log("memoryData: ", memoryData);
+            fs.writeFileSync(
+                `./tmp/memory-${new Date()}.json`,
+                JSON.stringify(memoryData, null, 2)
+            );
             dataVersion = memoryData["__dataVersion"];
             delete memoryData["__dataVersion"];
             // const pdfs = allValues(memoryData, "pdfLink");
@@ -63,98 +73,77 @@ describe("Test paper detection and storage", function () {
             // const targetPdfs = Object.values(urls).flat();
         });
 
-        it("Adds all sources uniquely to the Memory", async function () {
-            const ids = allIds(memoryData);
-            expect(ids.length).toBe(Object.keys(urls).length);
+        describe("Global memory inspection", function () {
+            it("Adds all sources uniquely to the Memory", async function () {
+                const ids = allIds(memoryData);
+                expect(ids.length).toBe(Object.keys(urls).length);
+            });
+
+            it("Pdf and Abstract are matched to the same Memory item", async function () {
+                const counts = allValues(memoryData, "count");
+                expect(counts.every((m) => m === 2)).toBe(true);
+            });
+
+            it("No undefined keys", async function () {
+                expect(
+                    Object.values(memoryData).every((item) =>
+                        Object.values(item).every(
+                            (v) => typeof v !== "undefined" && v !== "undefined"
+                        )
+                    )
+                ).toBe(true);
+            });
         });
 
-        //     it("Pdf and Abstract are matched to the same Memory item", async function () {
-        //         const counts = allValues(memoryData, "count");
-        //         expect(counts.every((m) => m === 2)).toBe(true);
-        //     });
+        describe("Per source specifics", function () {
+            Object.keys(urls)
+                .slice(0, maxSources)
+                .map((source) => {
+                    describe(source.toLocaleUpperCase(), function () {
+                        it("1 paper per source", function () {
+                            const papers = Object.values(memoryData).filter(
+                                (p) => p.source === source
+                            );
+                            expect(papers.length).toBe(1);
+                        });
 
-        //     it("No undefined keys", async function () {
-        //         expect(
-        //             Object.values(memoryData).every((item) =>
-        //                 Object.values(item).every(
-        //                     (v) => typeof v !== "undefined" && v !== "undefined"
-        //                 )
-        //             )
-        //         ).toBe(true);
-        //     });
-        // });
-
-        // describe("Per source specifics", function () {
-        //     beforeEach(async function () {
-        //         await page.evaluate(async () => {
-        //             await setStorage("papers", {});
-        //         });
-        //     });
-
-        //     for (const source in urls) {
-        //         context(source.toLocaleUpperCase(), function () {
-        //             it("Exactly 1 paper per source", function () {
-        //                 let paper = Object.values(memoryData).filter(
-        //                     (p) => p.source === "arxiv"
-        //                 );
-        //                 expect(paper.length).toBe(1);
-        //             });
-        //             if (urls[source].length === 3) {
-        //                 const additionalTest = urls[source][2];
-        //                 let paper = Object.values(memoryData).filter(
-        //                     (p) => p.source === "arxiv"
-        //                 )[0];
-        //                 if (additionalTest["code"]) {
-        //                     it("Check it has a codeLink", function () {
-        //                         expect(typeof paper.codeLink === "string").toBe(
-        //                             true,
-        //                             `${source}: code link should not be ${typeof paper.codeLink}${
-        //                                 paper.codeLink
-        //                             }`
-        //                         );
-        //                     });
-        //                 }
-        //                 it("Check venue is a string", function () {
-        //                     expect(typeof paper.venue).toMatch("string");
-        //                 });
-        //                 it("Check venue value", function () {
-        //                     if (additionalTest["venue"]) {
-        //                         expect(
-        //                             paper.venue.toLowerCase().replace(/\s/gi, "")
-        //                         ).toMatch(
-        //                             additionalTest["venue"]
-        //                                 .toLowerCase()
-        //                                 .replace(/\s/gi, "")
-        //                         );
-        //                     } else {
-        //                         expect(
-        //                             paper.venue.toLowerCase().replace(/\s/gi, "")
-        //                         ).toMatch(source.toLowerCase().replace(/\s/gi, ""));
-        //                     }
-        //                 });
-        //             }
-        //         });
-        //     }
-
-        // context("Arxiv",function () {
-        //     it("Arxiv test1", function () {
-        //         paper = paper[0];
-        //     });
-        //     it("Arxiv test2");
-        // });
-
-        // context("NeurIPS",function () {
-        //     it("NeurIPS test1");
-        //     it("NeurIPS test2");
-        // });
-        // context("PMLR",function () {
-        //     it("PMLR test1");
-        //     it("PMLR test2");
-        // });
-        // context("BioRxiv",function () {
-        //     it("BioRxiv test1");
-        //     it("BioRxiv test2");
-        // });
+                        if (urls[source].length === 3) {
+                            const additionalTest = urls[source][2];
+                            if (additionalTest["code"]) {
+                                it("#codeLink", function () {
+                                    const paper = paperForSource(source, memoryData);
+                                    expect(typeof paper.codeLink === "string").toBe(
+                                        true,
+                                        `${source}: code link should not be ${typeof paper.codeLink}${
+                                            paper.codeLink
+                                        }`
+                                    );
+                                });
+                            }
+                            it("#venue is a string", function () {
+                                const paper = paperForSource(source, memoryData);
+                                expect(typeof paper.venue).toMatch("string");
+                            });
+                            it("#venue value", function () {
+                                const paper = paperForSource(source, memoryData);
+                                if (additionalTest["venue"]) {
+                                    expect(
+                                        paper.venue.toLowerCase().replace(/\s/gi, "")
+                                    ).toMatch(
+                                        additionalTest["venue"]
+                                            .toLowerCase()
+                                            .replace(/\s/gi, "")
+                                    );
+                                } else {
+                                    expect(
+                                        paper.venue.toLowerCase().replace(/\s/gi, "")
+                                    ).toMatch(source.toLowerCase().replace(/\s/gi, ""));
+                                }
+                            });
+                        }
+                    });
+                });
+        });
     });
 
     after(async () => {
