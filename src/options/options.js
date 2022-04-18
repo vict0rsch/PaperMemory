@@ -43,7 +43,6 @@ const setupPWCPrefs = async () => {
 
     findEl("official-repo").checked = official;
     findEl("framework-select").value = framework;
-    findEl("choose-repo-select").value = order;
 
     addListener("official-repo", "change", async (e) => {
         const newValue = findEl("official-repo").checked;

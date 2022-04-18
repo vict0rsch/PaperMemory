@@ -42,7 +42,7 @@ describe("Test paper detection and storage", function () {
                     const targets = urls[source].filter((u) => typeof u === "string");
                     for (const target of targets) {
                         console.log("Going to: ", target);
-                        await page.goto(target);
+                        await page.goto(target, { waitUntil: "load" });
                         await page.waitForTimeout(pageTimeout);
                     }
                 }

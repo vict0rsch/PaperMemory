@@ -630,7 +630,10 @@ $(async () => {
         info("Running PaperMemory's content script");
         contentScriptMain(url, stateIsReady);
     }
-
+    const backgroundIsHere =
+        (await sendMessageToBackground({ type: "hello" })) ??
+        "Cannot connect to background script";
+    log(backgroundIsHere);
     chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
         // listen for messages sent from background.js
         if (request.message === "tabUrlUpdate") {
