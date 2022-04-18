@@ -5,3 +5,4 @@ extra/archives/
 node_modules/
 keys.json
 test/tmp/
+*.lock
