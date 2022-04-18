@@ -2,7 +2,7 @@ exports.allIds = (memory) => {
     return Object.keys(memory);
 };
 
-exports.allValues = (memory, key, asObj = false) => {
+exports.allAttributes = (memory, key, asObj = false) => {
     if (!asObj) {
         return Object.values(memory).map((item) => item[key]);
     }
