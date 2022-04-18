@@ -222,10 +222,11 @@ const addOrUpdatePaper = async (url, is, menu) => {
 
     if (!paper.codeLink || !paper.venue) {
         try {
+            const pwcPrefs = (await getStorage("pwcPrefs")) ?? {};
             const payload = {
                 type: "papersWithCode",
+                pwcPrefs,
                 paper: paper,
-                officialReposOnly: menu.checkOfficialRepos,
             };
             const pwc = await sendMessageToBackground(payload);
 
