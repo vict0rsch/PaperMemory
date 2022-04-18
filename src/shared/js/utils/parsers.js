@@ -450,11 +450,10 @@ const makeACLPaper = async (url) => {
     const title = dom.getElementById("title").innerText;
     const bibtex = bibtexToString(bibtexEl.innerText);
 
-    const bibtexData = bibtexToJson(bibtex)[0];
-    const entries = bibtexData.entryTags;
+    const bibtexData = bibtexToObject(bibtex);
 
-    const year = entries.year;
-    const author = entries.author
+    const year = bibtexData.year;
+    const author = bibtexData.author
         .replace(/\s+/g, " ")
         .split(" and ")
         .map((v) =>
