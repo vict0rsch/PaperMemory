@@ -198,7 +198,7 @@ const setStorage = async (key, value, cb = () => {}) => {
  * @param {string} id Paper id to delete. Must be exact.
  */
 const deletePaperInStorage = async (id) => {
-    const papers = await getStorage("papers");
+    const papers = (await getStorage("papers")) ?? {};
     let deleted = false;
     if (papers.hasOwnProperty(id)) {
         deleted = delete papers[id];
@@ -261,10 +261,8 @@ function dateDiffInDays(a, b) {
  * Create a weekly backup of the papers
  */
 const weeklyBackup = async () => {
-    let backups = await getStorage("weeklyBackups");
-    if (!backups) {
-        backups = {};
-    }
+    let backups = (await getStorage("weeklyBackups")) ?? {};
+
     const today = new Date();
     const backupDates = Object.keys(backups)
         .map((k) => new Date(k))
@@ -278,7 +276,7 @@ const weeklyBackup = async () => {
     for (const date of backupDates.reverse().slice(0, 5)) {
         newBackups[date.toString()] = backups[date.toString()];
     }
-    newBackups[today.toString()] = await getStorage("papers");
+    newBackups[today.toString()] = (await getStorage("papers")) ?? {};
     setStorage("weeklyBackups", newBackups);
 };
 
@@ -287,7 +285,7 @@ const weeklyBackup = async () => {
  * @returns {object} The user's preferences as per the popup's sliders in the menu.
  */
 const getMenu = async () => {
-    const storedMenu = await getStorage(global.menuStorageKeys);
+    const storedMenu = (await getStorage(global.menuStorageKeys)) ?? {};
     let menu = {};
     for (const m of global.menuCheckNames) {
         menu[m] = storedMenu.hasOwnProperty(m)
@@ -572,7 +570,7 @@ const prepareOverwriteData = async (data) => {
             // there were warnings in the validation: store current memory
             // as `uploadBackup` key to be safe in case the user regrets
             // confirming the overwrite
-            const prevPapers = await getStorage("papers");
+            const prevPapers = (await getStorage("papers")) ?? {};
             setStorage("uploadBackup", prevPapers);
         }
         error = false;

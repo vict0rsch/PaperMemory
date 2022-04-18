@@ -34,8 +34,7 @@ const setUpKeyboardListeners = () => {
 // ------------------------------
 
 const setupPWCPrefs = async () => {
-    let pwcPrefs = await getStorage("pwcPrefs");
-    if (!pwcPrefs) pwcPrefs = {};
+    const pwcPrefs = (await getStorage("pwcPrefs")) ?? {};
 
     const official = pwcPrefs.hasOwnProperty("official") ? pwcPrefs.official : false;
     const framework = pwcPrefs.hasOwnProperty("framework")
@@ -48,15 +47,13 @@ const setupPWCPrefs = async () => {
 
     addListener("official-repo", "change", async (e) => {
         const newValue = findEl("official-repo").checked;
-        let prefs = await getStorage("pwcPrefs");
-        if (!prefs) prefs = {};
+        const prefs = (await getStorage("pwcPrefs")) ?? {};
         prefs.official = newValue;
         setStorage("pwcPrefs", prefs);
     });
     addListener("framework-select", "change", async (e) => {
         const newValue = findEl("framework-select").value;
-        let prefs = await getStorage("pwcPrefs");
-        if (!prefs) prefs = {};
+        let prefs = (await getStorage("pwcPrefs")) ?? {};
         prefs.framework = newValue;
         setStorage("pwcPrefs", prefs);
     });
@@ -81,7 +78,7 @@ const autoTagsMaxIndex = (autoTags) => {
 const getAutoTagHTML = (at) => {
     const title = at.title || "";
     const authors = at.authors || "";
-    const tags = (at.tags || []).join(", ");
+    const tags = (at.tags ?? []).join(", ");
     const id = at.id;
 
     return /*html*/ `
@@ -138,7 +135,7 @@ const updateAutoTagHandler = async (e) => {
     at.tags = at.tags ? at.tags.split(",").map((t) => t.trim()) : [];
     at.id = parseInt(i);
 
-    let autoTags = await getStorage("autoTags");
+    let autoTags = (await getStorage("autoTags")) ?? [];
     const idx = autoTags.findIndex((a) => a.id === at.id);
     if (!Number.isInteger(idx)) {
         autoTagsFeedback("Update error", false);
@@ -152,7 +149,7 @@ const updateAutoTagHandler = async (e) => {
 
 const deleteAutoTagHandler = async (e) => {
     const i = e.target.id.split("--").last();
-    let newAT = await getStorage("autoTags");
+    let newAT = (await getStorage("autoTags")) ?? [];
     if (confirm("Confirm AutoTag item deletion?")) {
         newAT = newAT.filter((t) => t.id !== parseInt(i));
         setStorage("autoTags", newAT);
@@ -204,7 +201,7 @@ const saveNewAutoTagItem = async () => {
 };
 
 const setupAutoTags = async () => {
-    let autoTags = await getStorage("autoTags");
+    let autoTags = (await getStorage("autoTags")) ?? [];
     if (typeof autoTags === "undefined") {
         autoTags = [
             {
@@ -420,7 +417,7 @@ const handleOverwriteMemory = () => {
                     await prepareOverwriteData(overwritingPapers);
                 if (success) {
                     if (warning) {
-                        const nWarnings = (warning.match(/<br\/>/g) || []).length;
+                        const nWarnings = (warning.match(/<br\/>/g) ?? []).length;
                         setHTML(
                             "overwriteFeedback",
                             `<h5 class="errorTitle">Done with ${nWarnings} warnings. Confirm overwrite?</h5>${warning}${overwriteDiv}`
@@ -490,10 +487,7 @@ const setupSourcesSelection = async () => {
     const table = Object.entries(sources).map(makeSource).join("");
     setHTML("select-sources", table);
 
-    let ignoreSources = await getStorage("ignoreSources");
-    if (typeof ignoreSources === "undefined") {
-        ignoreSources = {};
-    }
+    let ignoreSources = (await getStorage("ignoreSources")) ?? {};
 
     for (const key of Object.keys(sources)) {
         ignoreSources[key] = ignoreSources.hasOwnProperty(key)
@@ -509,7 +503,7 @@ const setupSourcesSelection = async () => {
     for (const key of Object.keys(sources)) {
         addListener(`source-${key}`, "change", async (e) => {
             const key = e.target.id.replace("source-", "");
-            let ignoreSources = (await getStorage("ignoreSources")) || {};
+            let ignoreSources = (await getStorage("ignoreSources")) ?? {};
             const el = findEl(e.target.id);
             ignoreSources[key] = !el.checked;
             console.log("Updating source", key, "to", ignoreSources[key]);

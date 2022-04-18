@@ -569,7 +569,7 @@ const setStorage = (key, value) => {
 };
 
 const deletePaperInStorage = async (id) => {
-    const papers = await getStorage("papers");
+    const papers = (await getStorage("papers")) ?? {};
     let deleted = false;
     if (papers.hasOwnProperty(id)) {
         deleted = delete papers[id];
@@ -646,7 +646,7 @@ const versionToSemantic = (dataVersionInt) => {
 const initState = async (papers, isContentScript) => {
     const s = Date.now();
     if (typeof papers === "undefined") {
-        papers = await getStorage("papers");
+        papers = (await getStorage("papers")) ?? {};
         console.log("Time to retrieve stored papers (s): " + (Date.now() - s) / 1000);
     }
 
@@ -841,8 +841,8 @@ const textareaFocusEnd = (element) => {
 
 const formatBibtext = (text) => {
     let bib = text.trim().split("\n").join("").replace(/\s+=/g, " =");
-    const spaceMatches = bib.match(/\ \w+\ ?=\ ?{/g) || [];
-    const commaMatches = bib.match(/,\w+\ ?=\ ?{/g) || [];
+    const spaceMatches = bib.match(/\ \w+\ ?=\ ?{/g) ?? [];
+    const commaMatches = bib.match(/,\w+\ ?=\ ?{/g) ?? [];
     if (spaceMatches && spaceMatches.length > 0) {
         for (const m of spaceMatches) {
             bib = bib.replace(m, `\n ${m}`);
@@ -1161,7 +1161,7 @@ const overwriteMemory = async (data) => {
             }
         }
         if (warning) {
-            const prevPapers = await getStorage("papers");
+            const prevPapers = (await getStorage("papers")) ?? {};
             setStorage("uploadBackup", prevPapers);
         }
         error = false;

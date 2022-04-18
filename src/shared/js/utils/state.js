@@ -18,7 +18,7 @@
 const initState = async (papers, isContentScript) => {
     const s = Date.now();
     if (typeof papers === "undefined") {
-        papers = await getStorage("papers");
+        papers = (await getStorage("papers")) ?? {};
         log("Time to retrieve stored papers (s): " + (Date.now() - s) / 1000);
     }
 
@@ -32,7 +32,7 @@ const initState = async (papers, isContentScript) => {
     papers = migration.papers;
     global.state.papers = papers;
     global.state.menu = await getMenu();
-    global.state.ignoreSources = (await getStorage("ignoreSources")) || {};
+    global.state.ignoreSources = (await getStorage("ignoreSources")) ?? {};
 
     if (isContentScript) {
         log("State initialization duration (s): " + (Date.now() - s) / 1000);
@@ -60,7 +60,7 @@ const initState = async (papers, isContentScript) => {
  */
 const getExamplePaper = async (idx) => {
     // all papers
-    const papers = await getStorage("papers");
+    const papers = (await getStorage("papers")) ?? {};
     // filter out the data version
     const keys = Object.keys(papers)
         .filter((k) => k.indexOf("__") === -1)
@@ -249,7 +249,7 @@ const addOrUpdatePaper = async (url, is, menu) => {
         }
     }
 
-    global.state.papers = await getStorage("papers");
+    global.state.papers = (await getStorage("papers")) ?? {};
     global.state.papers[paper.id] = paper;
 
     chrome.storage.local.set({ papers: global.state.papers }, async () => {
@@ -306,7 +306,7 @@ const addOrUpdatePaper = async (url, is, menu) => {
                     log("Updating preprint bibtex to", bibtex);
                     paper.bibtex = bibtex;
                 }
-                global.state.papers = await getStorage("papers");
+                global.state.papers = (await getStorage("papers")) ?? {};
                 global.state.papers[paper.id] = paper;
                 chrome.storage.local.set({ papers: global.state.papers });
             }
