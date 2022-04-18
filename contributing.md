@@ -10,9 +10,9 @@ The only external deps. are [`select2.js`](https://select2.org/) which requires 
 
 ## Set-up
 
-1. [Install `npm`](https://www.npmjs.com/get-npm): Node's package manager
+1. [Install `yarn`](https://classic.yarnpkg.com/lang/en/docs/install): Node's package manager
 2. [Install `gulp`](https://gulpjs.com/): a build tool
-3. Install dependencies: from the root of this repo `$ npm install`
+3. Install dependencies: from the root of this repo `$ yarn install`
 4. Watch file changes: `$ gulp watch`
 5. Edit files!
 
@@ -146,3 +146,13 @@ TODO
 8. If necessary update Github and stores visuals
 
 I'm working on adding tests in [#26](https://github.com/vict0rsch/PaperMemory/pull/26)
+
+
+## Tests
+
+Testing is WIP and relies on Puppeteer to a large extent.
+Run tests with
+
+```bash
+npm run tests
+```
