@@ -210,7 +210,7 @@ const makeCVFPaper = async (url) => {
     if (url.endsWith(".pdf")) {
         pdfLink = url;
     } else {
-        const href = Array.from(dom.getElementsByTagName("a"))
+        let href = Array.from(dom.getElementsByTagName("a"))
             .filter((a) => a.innerText === "pdf")[0]
             .getAttribute("href");
         if (href.startsWith("../")) {
