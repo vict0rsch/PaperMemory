@@ -811,7 +811,7 @@ const makeACMPaper = async (url) => {
  * Looks for a title in crossref's database, querying titles and looking for an exact match. If no
  * exact match is found, it will return an empty note "". If a match is found and `item.event.name`
  * exists, it will be used for a new note.
- * @param {object} paper The paper to look for in crossref's database for an exact ttile match
+ * @param {object} paper The paper to look for in crossref's database for an exact title match
  * @returns {string} The note for the paper as `Accepted @ ${items.event.name} -- [crossref.org]`
  */
 const tryCrossRef = async (paper) => {
