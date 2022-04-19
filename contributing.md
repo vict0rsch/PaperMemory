@@ -164,3 +164,5 @@ env keep_browser=true max_sources=3 npm run test
 ```
 
 Currently, tests **only** check that a pre-defined set of papers (`tests/data/urls.json`) are correctly parsed to memory once the browser visits a given url. Much more testing can be done: testing functions (most of them are pure, it's easier), user options, UI etc.
+
+Help wanted: [Puppeteer in Github Actions](https://stackoverflow.com/questions/62228154/puppeteer-fails-to-initiate-in-github-actions)
