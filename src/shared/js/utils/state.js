@@ -183,6 +183,7 @@ const stateTitleFunction = (paperOrId) => {
  * @returns
  */
 const addOrUpdatePaper = async (url, is, menu) => {
+    const aouStart = Date.now();
     let paper, isNew, pwcUrl, pwcNote, pwcVenue;
 
     // Extract id from url
@@ -193,8 +194,7 @@ const addOrUpdatePaper = async (url, is, menu) => {
 
     if (id && paperExists) {
         // Update paper if it exists
-        global.state.papers = updatePaper(global.state.papers, id);
-        paper = global.state.papers[id];
+        paper = updatePaper(global.state.papers[id]);
         isNew = false;
     } else {
         // Or create a new one if it does not
@@ -215,8 +215,6 @@ const addOrUpdatePaper = async (url, is, menu) => {
             paper = global.state.papers[existingId];
             isNew = false;
         } else {
-            // store the new paper in the global state
-            global.state.papers[paper.id] = paper;
             // set isNew to True for the storage setter
             isNew = true;
         }
@@ -254,7 +252,7 @@ const addOrUpdatePaper = async (url, is, menu) => {
 
     global.state.papers = (await getStorage("papers")) ?? {};
     if (isNew && global.state.papers.hasOwnProperty(paper.id)) {
-        log("Paper has been created by another page: merging papers.");
+        warn("Paper has been created by another page: merging papers.");
         paper = mergePapers(global.state.papers[paper.id], paper, {
             incrementCount: true,
         });
@@ -317,16 +315,17 @@ const addOrUpdatePaper = async (url, is, menu) => {
                     paper.bibtex = bibtex;
                 }
                 global.state.papers = (await getStorage("papers")) ?? {};
-                if (isNew && global.state.papers.hasOwnProperty(paper.id)) {
-                    log("Paper has been created by another page: merging papers.");
+                if (isNew && global.state.papers[paper.id].count > 1) {
+                    warn("Paper has been created by another page: merging papers.");
                     paper = mergePapers(global.state.papers[paper.id], paper, {
-                        incrementCount: true,
+                        incrementCount: false,
                     });
                 }
                 global.state.papers[paper.id] = paper;
                 chrome.storage.local.set({ papers: global.state.papers });
             }
         }
+        info(`Done processing paper (${(Date.now() - aouStart) / 1000}s).`);
     });
 
     return { paper, id };
