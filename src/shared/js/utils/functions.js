@@ -5,11 +5,15 @@ const log = (...args) => {
         const stack = new Error().stack;
         args.push("\n\nLog trace:\n" + stack.split("\n").slice(2).join("\n"));
     }
-    let messageConfig = "%c%s   ";
+    let messageConfig = "%c%s ";
 
     let isInfo = false;
-    if (args[0] === "%c") {
+    let isWarn = false;
+    if (args[0] === "[info]") {
         isInfo = true;
+        args = args.slice(1);
+    } else if (args[0] === "[warn]") {
+        isWarn = true;
         args = args.slice(1);
     }
     // https://stackoverflow.com/questions/55643825/how-to-apply-colors-to-console-log-when-using-multiple-arguments
@@ -18,7 +22,6 @@ const log = (...args) => {
         switch (type) {
             case "bigint":
             case "number":
-            case "boolean":
                 messageConfig += "%d   ";
                 break;
 
@@ -28,19 +31,28 @@ const log = (...args) => {
 
             case "object":
             case "undefined":
+            case "boolean":
             default:
                 messageConfig += "%o   ";
         }
     });
     console.log(
         messageConfig,
-        `color: ${isInfo ? "#8BB4F7; font-weight:bold;" : "tan"}`,
+        `color: ${
+            isInfo
+                ? "#8BB4F7; font-weight:bold;"
+                : isWarn
+                ? "#f3bd1e; font-weight:bold;"
+                : "tan"
+        }`,
         "[PM]",
         ...args
     );
 };
 
-const info = (...args) => log(...["%c", ...args]);
+const info = (...args) => log(...["[info]", ...args]);
+
+const warn = (...args) => log(...["[warn]", ...args]);
 
 const getDisplayId = (id) => {
     const baseId = id;
