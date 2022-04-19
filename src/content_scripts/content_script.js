@@ -450,10 +450,11 @@ const feedback = (text, paper = null) => {
     });
 };
 
-const updatePaper = (papers, id) => {
-    papers[id].count += 1;
-    papers[id].lastOpenDate = new Date().toJSON();
-    return papers;
+const updatePaper = (paper) => {
+    paper.count += 1;
+    paper.lastOpenDate = new Date().toJSON();
+    info("Updating paper:", paper);
+    return paper;
 };
 
 const arxiv = async (checks) => {
