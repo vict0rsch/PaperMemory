@@ -16,8 +16,9 @@ const sleep = async (duration) => {
 };
 
 // global constants to parametrize the tests
+const loadSecs = parseFloat(process.env.LOAD_SECS ?? 10);
 const maxSources = process.env.MAX_SOURCES ?? -1;
-const pageTimeout = parseFloat(process.env.PAGE_TIMEOUT ?? 500);
+const pageTimeout = parseFloat(process.env.PAGE_TIMEOUT ?? 1000);
 const singleSource = process.env.SINGLE_SOURCE?.toLowerCase() ?? false;
 
 if (maxSources > 0 && singleSource) {
@@ -25,6 +26,7 @@ if (maxSources > 0 && singleSource) {
 }
 
 console.log("Test params:");
+console.log("    loadSecs:     ", loadSecs);
 console.log("    pageTimeout:  ", pageTimeout);
 console.log("    maxSources:   ", maxSources);
 console.log("    singleSource: ", singleSource);
@@ -60,7 +62,7 @@ describe("Test paper detection and storage", function () {
 
     var sources = Object.keys(urls);
 
-    const timeout = (sources.length + 1) * 20 * pageTimeout;
+    const timeout = (sources.length + 1) * 20 * pageTimeout + loadSecs * 1000;
     this.timeout(timeout);
     this.slow(timeout);
 
@@ -96,11 +98,11 @@ describe("Test paper detection and storage", function () {
                 // wait for 1s to give this page a heads up
                 // (if 2 pages for the same source are loaded too fast, one of them
                 // will overwrite the other instead of taking it into account)
-                await sleep(1000);
+                await sleep(pageTimeout);
             }
         }
 
-        const sleepSecs = 10 + (nUrls * pageTimeout) / 1000;
+        const sleepSecs = loadSecs + (nUrls * pageTimeout) / 1000;
         console.log(" ".repeat(4) + `Waiting for pages to load (${sleepSecs}s)`);
         // wait for all pages to load
         await sleep(sleepSecs * 1000);
