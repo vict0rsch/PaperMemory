@@ -163,4 +163,4 @@ You can adjust testing condition with `env` variables (see `tests/test-storage.j
 env keep_browser=true max_sources=3 npm run test
 ```
 
-Currently, tests **only** check that a pre-defined set of papers (`tests/data/urls.json`) are correcty parserd to memory once the browser visits a given url. Much more testing can be done: testing functions (most of them are pure, it's easier), UI etc.
+Currently, tests **only** check that a pre-defined set of papers (`tests/data/urls.json`) are correctly parsed to memory once the browser visits a given url. Much more testing can be done: testing functions (most of them are pure, it's easier), user options, UI etc.
