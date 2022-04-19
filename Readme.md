@@ -311,7 +311,7 @@ There is no straightforward way to do this currently, it will require a little c
 ## Todo
 
 * [ ] Improve `Contributing.md`
-* [ ] Tests & Docs (WIP => [Puppeteer + Mocha #26](https://github.com/vict0rsch/PaperMemory/pull/26))
+* [ ] Write many more tests! **Help is wanted** (it's not so hard to write unittests 😄) (see `Contributing.md`)
 
 ## Help
 

@@ -156,3 +156,11 @@ Run tests with
 ```bash
 npm run tests
 ```
+
+You can adjust testing condition with `env` variables (see `tests/test-storage.js`)
+
+```bash
+env keep_browser=true max_sources=3 npm run test
+```
+
+Currently, tests **only** check that a pre-defined set of papers (`tests/data/urls.json`) are correcty parserd to memory once the browser visits a given url. Much more testing can be done: testing functions (most of them are pure, it's easier), UI etc.
