@@ -4,7 +4,7 @@
   "description": "<br/>",
   "main": "gulpfile.js",
   "scripts": {
-    "test": "cd test/ && ../node_modules/mocha/bin/mocha test*.js"
+    "test": "gulp build && cd test/ && ../node_modules/mocha/bin/mocha test*.js"
   },
   "repository": {
     "type": "git",
