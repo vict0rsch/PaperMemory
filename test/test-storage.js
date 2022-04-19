@@ -17,11 +17,17 @@ const sleep = async (duration) => {
 
 // global constants to parametrize the tests
 const maxSources = process.env.MAX_SOURCES ?? -1;
-const pageTimeout = process.env.PAGE_TIMEOUT ?? 500;
+const pageTimeout = parseFloat(process.env.PAGE_TIMEOUT ?? 500);
+const singleSource = process.env.SINGLE_SOURCE?.toLowerCase() ?? false;
+
+if (maxSources > 0 && singleSource) {
+    throw new Error("Please specify either MAX_SOURCES xor SINGLE_SOURCE");
+}
 
 console.log("Test params:");
-console.log("    pageTimeout: ", pageTimeout);
-console.log("    maxSources:  ", maxSources);
+console.log("    pageTimeout:  ", pageTimeout);
+console.log("    maxSources:   ", maxSources);
+console.log("    singleSource: ", singleSource);
 console.log("--------------------------");
 
 // --------------------------------
@@ -36,7 +42,22 @@ describe("Test paper detection and storage", function () {
     var urls = JSON.parse(fs.readFileSync("./data/urls.json"));
     if (maxSources > 0) {
         urls = Object.fromEntries(Object.entries(urls).slice(0, maxSources));
+    } else if (singleSource) {
+        urls = { [singleSource]: urls[singleSource] };
     }
+
+    for (const source in urls) {
+        const targets = urls[source];
+        if (targets.length === 3 && targets[2].botPrevention) {
+            console.log(
+                `\n>>> Skipping test for ${source} because its website ` +
+                    `prevents automated browsing`
+            );
+            delete urls[source];
+        }
+    }
+    console.log();
+
     var sources = Object.keys(urls);
 
     const timeout = (sources.length + 1) * 20 * pageTimeout;
@@ -55,13 +76,15 @@ describe("Test paper detection and storage", function () {
         const nUrls = sources.length;
 
         // visit all relevant urls
-        for (const [idx, [source, targets]] of Object.entries(urls).entries()) {
-            // for each target url (abstract, pdf), visit the url
-            // and wait a little for it to load
+        // all abstracts then all pdfs
+        for (const t of [0, 1]) {
+            for (const [idx, targets] of Object.values(urls).entries()) {
+                // for each target url (abstract, pdf), visit the url
+                // and wait a little for it to load
 
-            // filter out the additional test configs
-            const targetUrls = targets.filter((u) => typeof u === "string");
-            for (const [t, target] of targetUrls.entries()) {
+                // filter out the additional test configs
+                const targetUrls = targets.filter((u) => typeof u === "string");
+                const target = targetUrls[t];
                 // log prefix
                 const prefix = `${" ".repeat(4)}(${idx * 2 + t + 1}/${nUrls * 2})`;
                 console.log(`${prefix} Going to: ${target}`);

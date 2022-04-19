@@ -51,7 +51,8 @@
         "https://iopscience.iop.org/article/10.1149/2.1051908jes",
         "https://iopscience.iop.org/article/10.1149/2.1051908jes/pdf",
         {
-            "venue": "Journal of The Electrochemical Society"
+            "venue": "Journal of The Electrochemical Society",
+            "botPrevention": true
         }
     ],
     "jmlr": [
