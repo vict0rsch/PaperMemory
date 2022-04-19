@@ -183,16 +183,18 @@ const stateTitleFunction = (paperOrId) => {
  * @returns
  */
 const addOrUpdatePaper = async (url, is, menu) => {
+    const aouStart = Date.now();
     let paper, isNew, pwcUrl, pwcNote, pwcVenue;
 
     // Extract id from url
+    global.state.papers = (await getStorage("papers")) ?? {};
     const id = await parseIdFromUrl(url);
-    log("id:", id);
+    const paperExists = global.state.papers.hasOwnProperty(id);
+    log("ID for url:", id, "--", "paperExists:", Boolean(paperExists));
 
-    if (id && global.state.papers.hasOwnProperty(id)) {
+    if (id && paperExists) {
         // Update paper if it exists
-        global.state.papers = updatePaper(global.state.papers, id);
-        paper = global.state.papers[id];
+        paper = updatePaper(global.state.papers[id]);
         isNew = false;
     } else {
         // Or create a new one if it does not
@@ -213,8 +215,6 @@ const addOrUpdatePaper = async (url, is, menu) => {
             paper = global.state.papers[existingId];
             isNew = false;
         } else {
-            // store the new paper in the global state
-            global.state.papers[paper.id] = paper;
             // set isNew to True for the storage setter
             isNew = true;
         }
@@ -222,10 +222,11 @@ const addOrUpdatePaper = async (url, is, menu) => {
 
     if (!paper.codeLink || !paper.venue) {
         try {
+            const pwcPrefs = (await getStorage("pwcPrefs")) ?? {};
             const payload = {
                 type: "papersWithCode",
+                pwcPrefs,
                 paper: paper,
-                officialReposOnly: menu.checkOfficialRepos,
             };
             const pwc = await sendMessageToBackground(payload);
 
@@ -250,6 +251,13 @@ const addOrUpdatePaper = async (url, is, menu) => {
     }
 
     global.state.papers = (await getStorage("papers")) ?? {};
+    if (isNew && global.state.papers.hasOwnProperty(paper.id)) {
+        warn("Paper has been created by another page: merging papers.");
+        paper = mergePapers(global.state.papers[paper.id], paper, {
+            incrementCount: true,
+        });
+        isNew = false;
+    }
     global.state.papers[paper.id] = paper;
 
     chrome.storage.local.set({ papers: global.state.papers }, async () => {
@@ -307,10 +315,17 @@ const addOrUpdatePaper = async (url, is, menu) => {
                     paper.bibtex = bibtex;
                 }
                 global.state.papers = (await getStorage("papers")) ?? {};
+                if (isNew && global.state.papers[paper.id].count > 1) {
+                    warn("Paper has been created by another page: merging papers.");
+                    paper = mergePapers(global.state.papers[paper.id], paper, {
+                        incrementCount: false,
+                    });
+                }
                 global.state.papers[paper.id] = paper;
                 chrome.storage.local.set({ papers: global.state.papers });
             }
         }
+        info(`Done processing paper (${(Date.now() - aouStart) / 1000}s).`);
     });
 
     return { paper, id };

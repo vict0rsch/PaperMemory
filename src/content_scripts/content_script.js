@@ -450,10 +450,11 @@ const feedback = (text, paper = null) => {
     });
 };
 
-const updatePaper = (papers, id) => {
-    papers[id].count += 1;
-    papers[id].lastOpenDate = new Date().toJSON();
-    return papers;
+const updatePaper = (paper) => {
+    paper.count += 1;
+    paper.lastOpenDate = new Date().toJSON();
+    info("Updating paper:", paper);
+    return paper;
 };
 
 const arxiv = async (checks) => {
@@ -630,7 +631,10 @@ $(async () => {
         info("Running PaperMemory's content script");
         contentScriptMain(url, stateIsReady);
     }
-
+    const backgroundIsHere =
+        (await sendMessageToBackground({ type: "hello" })) ??
+        "Cannot connect to background script";
+    log(backgroundIsHere);
     chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
         // listen for messages sent from background.js
         if (request.message === "tabUrlUpdate") {

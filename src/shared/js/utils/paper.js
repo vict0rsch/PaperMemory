@@ -9,6 +9,7 @@
  */
 const isPaper = async (url, noStored = false) => {
     let is = {};
+    if (!url) return is;
     for (const source in global.knownPaperPages) {
         const paths = global.knownPaperPages[source];
         // default source status: false
@@ -374,4 +375,31 @@ const makeVenue = async (paper) => {
             break;
     }
     return venue;
+};
+
+const mergePapers = (newPaper, oldPaper, extra = {}) => {
+    let mergedPaper = { ...oldPaper };
+
+    const defaults = {
+        overwrites: ["lastOpenDate"],
+        incrementCount: false,
+    };
+
+    const opts = { ...defaults, ...extra };
+
+    for (const attribute in newPaper) {
+        if (!oldPaper.hasOwnProperty(attribute)) {
+            mergedPaper[attribute] = newPaper[attribute];
+        } else if (newPaper[attribute] && !oldPaper[attribute]) {
+            mergedPaper[attribute] = newPaper[attribute];
+        }
+    }
+    if (opts.incrementCount && mergedPaper.count === 1) {
+        mergedPaper.count += 1;
+    }
+    for (const attribute of opts.overwrites) {
+        mergedPaper[attribute] = newPaper[attribute];
+    }
+
+    return mergedPaper;
 };

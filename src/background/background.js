@@ -144,6 +144,8 @@ chrome.runtime.onMessage.addListener((payload, sender, sendResponse) => {
             chrome.downloads.download({ url: payload.pdfUrl, filename });
             sendResponse(true);
         });
+    } else if (payload.type === "hello") {
+        sendResponse("Connection to background script established.");
     }
     return true;
 });

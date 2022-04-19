@@ -10,9 +10,9 @@ The only external deps. are [`select2.js`](https://select2.org/) which requires 
 
 ## Set-up
 
-1. [Install `npm`](https://www.npmjs.com/get-npm): Node's package manager
+1. [Install `yarn`](https://classic.yarnpkg.com/lang/en/docs/install): Node's package manager
 2. [Install `gulp`](https://gulpjs.com/): a build tool
-3. Install dependencies: from the root of this repo `$ npm install`
+3. Install dependencies: from the root of this repo `$ yarn install`
 4. Watch file changes: `$ gulp watch`
 5. Edit files!
 
@@ -136,7 +136,7 @@ TODO
     5. Notable edge case: modifying a paper when on its page:
         1. Changes in the memory should be reflected in the popup and vice-versa
 2. Document functions (docstrings & comments)
-3. Bumb version
+3. Bump version
 4. Run `gulp build`
 5. Create a Github Release
     1. At least use the auto-complete release feature from PRs
@@ -146,3 +146,23 @@ TODO
 8. If necessary update Github and stores visuals
 
 I'm working on adding tests in [#26](https://github.com/vict0rsch/PaperMemory/pull/26)
+
+
+## Tests
+
+Testing is WIP and relies on Puppeteer to a large extent.
+Run tests with
+
+```bash
+npm run tests
+```
+
+You can adjust testing condition with `env` variables (see `tests/test-storage.js`)
+
+```bash
+env keep_browser=true max_sources=3 npm run test
+```
+
+Currently, tests **only** check that a pre-defined set of papers (`tests/data/urls.json`) are correctly parsed to memory once the browser visits a given url. Much more testing can be done: testing functions (most of them are pure, it's easier), user options, UI etc.
+
+Help wanted: [Puppeteer in Github Actions](https://stackoverflow.com/questions/62228154/puppeteer-fails-to-initiate-in-github-actions)

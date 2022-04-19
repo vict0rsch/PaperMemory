@@ -1,0 +1,43 @@
+{
+    "Arxiv-1703.10593": {
+        "addDate": "2021-11-25T19:05:43.515Z",
+        "author": "Jun-Yan Zhu and Taesung Park and Phillip Isola and Alexei A. Efros",
+        "bibtex": "@article{zhu2017unpaired,\ntitle={Unpaired Image-to-Image Translation using Cycle-Consistent Adversarial\n  Networks },\nauthor={Jun-Yan Zhu and Taesung Park and Phillip Isola and Alexei A. Efros },\nyear={2017},\njournal={arXiv preprint arXiv: Arxiv-1703.10593}\n}",
+        "codeLink": "",
+        "conf": "arXiv",
+        "count": 2,
+        "favorite": false,
+        "favoriteDate": "",
+        "id": "Arxiv-1703.10593",
+        "key": "zhu2017unpaired",
+        "lastOpenDate": "2021-11-25T19:05:46.162Z",
+        "md": "[Unpaired Image-to-Image Translation using Cycle-Consistent Adversarial\n  Networks](http://arxiv.org/pdf/1703.10593v7)",
+        "note": "",
+        "pdfLink": "http://arxiv.org/pdf/1703.10593v7",
+        "source": "arxiv",
+        "tags": [],
+        "title": "Unpaired Image-to-Image Translation using Cycle-Consistent Adversarial\n  Networks",
+        "year": "2017"
+    },
+    "OR-ICLR-2022_EZNOb_uNpJk": {
+        "addDate": "2021-11-25T19:05:49.810Z",
+        "author": "Anonymous",
+        "bibtex": "@inproceedings{\nanonymous2022climategan,\ntitle={Climate{GAN}: Raising Climate Change Awareness by Generating Images of Floods},\nauthor={Anonymous},\nbooktitle={Submitted to The Tenth International Conference on Learning Representations },\nyear={2022},\nurl={https://openreview.net/forum?id=EZNOb_uNpJk},\nnote={under review}\n}",
+        "codeLink": "",
+        "conf": "ICLR",
+        "count": 2,
+        "favorite": false,
+        "favoriteDate": "",
+        "id": "OR-ICLR-2022_EZNOb_uNpJk",
+        "key": "anonymous2022climategan",
+        "lastOpenDate": "2021-11-25T19:05:52.167Z",
+        "md": "[ClimateGAN: Raising Climate Change Awareness by Generating Images of Floods](https://openreview.net/pdf?id=EZNOb_uNpJk)",
+        "note": "Under review @ ICLR  2022 (25/11/2021)",
+        "pdfLink": "https://openreview.net/pdf?id=EZNOb_uNpJk",
+        "source": "openreview",
+        "tags": [],
+        "title": "ClimateGAN: Raising Climate Change Awareness by Generating Images of Floods",
+        "year": "2022"
+    },
+    "__dataVersion": 304
+}

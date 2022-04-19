@@ -210,7 +210,7 @@ const makeCVFPaper = async (url) => {
     if (url.endsWith(".pdf")) {
         pdfLink = url;
     } else {
-        const href = Array.from(dom.getElementsByTagName("a"))
+        let href = Array.from(dom.getElementsByTagName("a"))
             .filter((a) => a.innerText === "pdf")[0]
             .getAttribute("href");
         if (href.startsWith("../")) {
@@ -450,11 +450,10 @@ const makeACLPaper = async (url) => {
     const title = dom.getElementById("title").innerText;
     const bibtex = bibtexToString(bibtexEl.innerText);
 
-    const bibtexData = bibtexToJson(bibtex)[0];
-    const entries = bibtexData.entryTags;
+    const bibtexData = bibtexToObject(bibtex);
 
-    const year = entries.year;
-    const author = entries.author
+    const year = bibtexData.year;
+    const author = bibtexData.author
         .replace(/\s+/g, " ")
         .split(" and ")
         .map((v) =>
@@ -812,7 +811,7 @@ const makeACMPaper = async (url) => {
  * Looks for a title in crossref's database, querying titles and looking for an exact match. If no
  * exact match is found, it will return an empty note "". If a match is found and `item.event.name`
  * exists, it will be used for a new note.
- * @param {object} paper The paper to look for in crossref's database for an exact ttile match
+ * @param {object} paper The paper to look for in crossref's database for an exact title match
  * @returns {string} The note for the paper as `Accepted @ ${items.event.name} -- [crossref.org]`
  */
 const tryCrossRef = async (paper) => {
