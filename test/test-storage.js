@@ -16,10 +16,12 @@ const sleep = async (duration) => {
 };
 
 // global constants to parametrize the tests
-const loadSecs = parseFloat(process.env.LOAD_SECS ?? 10);
-const maxSources = process.env.MAX_SOURCES ?? -1;
-const pageTimeout = parseFloat(process.env.PAGE_TIMEOUT ?? 1000);
-const singleSource = process.env.SINGLE_SOURCE?.toLowerCase() ?? false;
+const loadSecs = parseFloat(process.env.load_secs ?? 10);
+const maxSources = process.env.max_sources ?? -1;
+const pageTimeout = parseFloat(process.env.page_timeout ?? 5000);
+const singleSource = process.env.single_source?.toLowerCase() ?? false;
+const keepBrowser = process.env.keep_browser ?? false;
+const dumpMemory = process.env.dump_memory ?? false;
 
 if (maxSources > 0 && singleSource) {
     throw new Error("Please specify either MAX_SOURCES xor SINGLE_SOURCE");
@@ -30,6 +32,8 @@ console.log("    loadSecs:     ", loadSecs);
 console.log("    pageTimeout:  ", pageTimeout);
 console.log("    maxSources:   ", maxSources);
 console.log("    singleSource: ", singleSource);
+console.log("    keepBrowser:  ", keepBrowser);
+console.log("    dumpMemory:   ", dumpMemory);
 console.log("--------------------------");
 
 // --------------------------------
@@ -58,7 +62,6 @@ describe("Test paper detection and storage", function () {
             delete urls[source];
         }
     }
-    console.log();
 
     var sources = Object.keys(urls);
 
@@ -88,24 +91,33 @@ describe("Test paper detection and storage", function () {
                 const targetUrls = targets.filter((u) => typeof u === "string");
                 const target = targetUrls[t];
                 // log prefix
-                const prefix = `${" ".repeat(4)}(${idx * 2 + t + 1}/${nUrls * 2})`;
+                const prefix = `${" ".repeat(4)}(${idx + t * nUrls + 1}/${nUrls * 2})`;
                 console.log(`${prefix} Going to: ${target}`);
 
                 // create page
                 const p = await browser.newPage();
+                const paperIsStored = new Promise((resolve) => {
+                    p.on(
+                        "console",
+                        (msg) =>
+                            msg.text().match(/\[PM\]\s*Done processing paper/) &&
+                            resolve()
+                    );
+                    setTimeout(resolve, pageTimeout);
+                });
                 // asynchronously go to url
                 p.goto(target);
-                // wait for 1s to give this page a heads up
-                // (if 2 pages for the same source are loaded too fast, one of them
-                // will overwrite the other instead of taking it into account)
-                await sleep(pageTimeout);
+                const pageIsLoaded = new Promise((resolve) => {
+                    p.once("load", resolve);
+                    setTimeout(resolve, pageTimeout);
+                });
+                await pageIsLoaded;
+                await paperIsStored;
             }
         }
 
-        const sleepSecs = loadSecs + (nUrls * pageTimeout) / 1000;
-        console.log(" ".repeat(4) + `Waiting for pages to load (${sleepSecs}s)`);
         // wait for all pages to load
-        await sleep(sleepSecs * 1000);
+        await sleep(pageTimeout);
 
         // go to the extension's popup url
         const page = await browser.newPage();
@@ -115,9 +127,11 @@ describe("Test paper detection and storage", function () {
         // retrieve the data parsed by PaperMemory
         memoryData = await getMemoryData(page);
 
-        // dump this data for human analysis
-        const fname = `./tmp/memory-${new Date()}.json`;
-        fs.writeFileSync(fname, JSON.stringify(memoryData, null, 2));
+        if (dumpMemory) {
+            // dump this data for human analysis
+            const fname = `./tmp/memory-${new Date()}.json`;
+            fs.writeFileSync(fname, JSON.stringify(memoryData, null, 2));
+        }
 
         // remove data version key
         dataVersion = memoryData["__dataVersion"];
@@ -129,7 +143,7 @@ describe("Test paper detection and storage", function () {
     // --------------------------------------
 
     describe("Global memory inspection", function () {
-        it("Adds all sources (uniquely) to the Memory", async function () {
+        it("All sources are detected", async function () {
             const memorySources = allAttributes(memoryData, "source").sort();
             const refSources = sources.sort();
             expect(memorySources).toEqual(refSources);
@@ -167,11 +181,16 @@ describe("Test paper detection and storage", function () {
         // execute shared tests for all sources
         sources.map((source) => {
             describe(source.toLocaleUpperCase(), function () {
-                it("1 paper per source", function () {
+                it("1 paper for source", function () {
                     const papers = Object.values(memoryData).filter(
                         (p) => p.source === source
                     );
                     expect(papers.length).toBe(1);
+                });
+
+                it("#count is 2", function () {
+                    const paper = paperForSource(source, memoryData);
+                    expect(paper.count).toEqual(2);
                 });
 
                 // more tests parameterized in the 3rd item in the list for this source
@@ -218,6 +237,6 @@ describe("Test paper detection and storage", function () {
     });
 
     after(async () => {
-        await browser.close();
+        !keepBrowser && (await browser.close());
     });
 });
