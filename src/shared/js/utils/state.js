@@ -186,10 +186,12 @@ const addOrUpdatePaper = async (url, is, menu) => {
     let paper, isNew, pwcUrl, pwcNote, pwcVenue;
 
     // Extract id from url
+    global.state.papers = (await getStorage("papers")) ?? {};
     const id = await parseIdFromUrl(url);
-    log("id:", id);
+    const paperExists = global.state.papers.hasOwnProperty(id);
+    log("ID for url:", id, "--", "paperExists:", Boolean(paperExists));
 
-    if (id && global.state.papers.hasOwnProperty(id)) {
+    if (id && paperExists) {
         // Update paper if it exists
         global.state.papers = updatePaper(global.state.papers, id);
         paper = global.state.papers[id];
@@ -251,6 +253,13 @@ const addOrUpdatePaper = async (url, is, menu) => {
     }
 
     global.state.papers = (await getStorage("papers")) ?? {};
+    if (isNew && global.state.papers.hasOwnProperty(paper.id)) {
+        log("Paper has been created by another page: merging papers.");
+        paper = mergePapers(global.state.papers[paper.id], paper, {
+            incrementCount: true,
+        });
+        isNew = false;
+    }
     global.state.papers[paper.id] = paper;
 
     chrome.storage.local.set({ papers: global.state.papers }, async () => {
@@ -308,6 +317,12 @@ const addOrUpdatePaper = async (url, is, menu) => {
                     paper.bibtex = bibtex;
                 }
                 global.state.papers = (await getStorage("papers")) ?? {};
+                if (isNew && global.state.papers.hasOwnProperty(paper.id)) {
+                    log("Paper has been created by another page: merging papers.");
+                    paper = mergePapers(global.state.papers[paper.id], paper, {
+                        incrementCount: true,
+                    });
+                }
                 global.state.papers[paper.id] = paper;
                 chrome.storage.local.set({ papers: global.state.papers });
             }

@@ -375,3 +375,30 @@ const makeVenue = async (paper) => {
     }
     return venue;
 };
+
+const mergePapers = (oldPaper, newPaper, extra = {}) => {
+    let mergedPaper = { ...oldPaper };
+
+    const defaults = {
+        overwrites: ["lastOpenDate"],
+        incrementCount: false,
+    };
+
+    const opts = { ...defaults, ...extra };
+
+    for (const attribute in newPaper) {
+        if (!oldPaper.hasOwnProperty(attribute)) {
+            mergedPaper[attribute] = newPaper[attribute];
+        } else if (newPaper[attribute] && !newPaper[oldPaper]) {
+            mergedPaper[attribute] = newPaper[attribute];
+        }
+    }
+    if (opts.incrementCount) {
+        mergedPaper.count += 1;
+    }
+    for (const attribute of opts.overwrites) {
+        mergedPaper[attribute] = newPaper[attribute];
+    }
+
+    return mergedPaper;
+};
