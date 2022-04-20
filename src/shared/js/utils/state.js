@@ -476,3 +476,18 @@ const isKnownLocalFile = (url) => {
 
     return titles[0].id;
 };
+
+// ----------------------------------------------------
+// -----  TESTS: modules for node.js environment  -----
+// ----------------------------------------------------
+if (typeof module !== "undefined" && module.exports != null) {
+    module.exports = {
+        initState,
+        getExamplePaper,
+        getTitleFunction,
+        stateTitleFunction,
+        addOrUpdatePaper,
+        parseIdFromUrl,
+        isKnownLocalFile,
+    };
+}

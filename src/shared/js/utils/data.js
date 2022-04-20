@@ -589,3 +589,21 @@ const prepareOverwriteData = async (data) => {
         papersToWrite: papersToWrite,
     };
 };
+
+if (typeof module !== "undefined" && module.exports != null) {
+    module.exports = {
+        migrateData,
+        logStorage,
+        getStorage,
+        setStorage,
+        deletePaperInStorage,
+        getTheme,
+        backupData,
+        weeklyBackup,
+        getMenu,
+        getManifestDataVersion,
+        versionToSemantic,
+        validatePaper,
+        prepareOverwriteData,
+    };
+}

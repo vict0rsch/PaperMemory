@@ -1089,3 +1089,45 @@ const findFuzzyPaperMatch = (paper) => {
     }
     return null;
 };
+
+// ----------------------------------------------------
+// -----  TESTS: modules for node.js environment  -----
+// ----------------------------------------------------
+if (typeof module !== "undefined" && module.exports != null) {
+    module.exports = {
+        decodeHtml,
+        flipAuthor,
+        flipAndAuthors,
+        fetchArxivXML,
+        fetchCvfHTML,
+        fetchOpenReviewNoteJSON,
+        fetchOpenReviewForumJSON,
+        fetchDom,
+        fetchText,
+        makeArxivPaper,
+        makeNeuripsPaper,
+        makeCVFPaper,
+        makeOpenReviewBibTex,
+        makeOpenReviewPaper,
+        makeBioRxivPaper,
+        makePMLRPaper,
+        findACLValue,
+        makeACLPaper,
+        makePNASPaper,
+        makeNaturePaper,
+        makeACSPaper,
+        makeIOPPaper,
+        makeJMLRPaper,
+        makePMCPaper,
+        makePubMedPaper,
+        makeIJCAIPaper,
+        makeACMPaper,
+        tryCrossRef,
+        tryDBLP,
+        tryPreprintMatch,
+        initPaper,
+        autoTagPaper,
+        makePaper,
+        findFuzzyPaperMatch,
+    };
+}

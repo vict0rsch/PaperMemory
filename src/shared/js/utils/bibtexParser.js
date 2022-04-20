@@ -354,38 +354,11 @@ const extractAuthor = (bibtex) =>
         .map((a) => a.split(", ").reverse().join(" "))
         .join(" and ");
 
-const pubmedToObject = (pubmed) => {
-    const data = pubmed.split("\n").map((line) =>
-        line
-            .replace("-", "|||||")
-            .split("|||||")
-            .map((s) => s.trim())
-    );
-    const obj = {};
-    obj.author = [];
-    for (const [key, value] of data) {
-        switch (key) {
-            case "PMID":
-                obj.pmid = value;
-                break;
-            case "DP":
-                obj.year = value.split(" ")[0];
-                break;
-            case "TI":
-                obj.title = value;
-                break;
-            case "FAU":
-                obj.author.push(value);
-                break;
-            case "JT":
-                obj.journal = value;
-                break;
-            case "PMID":
-                obj.pmid = value;
-                break;
-
-            default:
-                break;
-        }
-    }
-};
+if (typeof module !== "undefined" && module.exports != null) {
+    module.exports = {
+        bibtexToObject,
+        bibtexToString,
+        extractBibtexValue,
+        extractAuthor,
+    };
+}

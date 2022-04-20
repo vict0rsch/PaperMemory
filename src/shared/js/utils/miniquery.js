@@ -234,3 +234,30 @@ const slideToggle = (el, duration = 500, complete = () => {}) => {
         return slideUp(el, duration, complete);
     }
 };
+
+// ----------------------------------------------------
+// -----  TESTS: modules for node.js environment  -----
+// ----------------------------------------------------
+if (typeof module !== "undefined" && module.exports != null) {
+    module.exports = {
+        findEl,
+        fadeOut,
+        fadeIn,
+        val,
+        showId,
+        hideId,
+        setTextId,
+        setHTML,
+        dispatch,
+        hasClass,
+        addClass,
+        removeClass,
+        addListener,
+        setPlaceholder,
+        style,
+        disable,
+        slideUp,
+        slideDown,
+        slideToggle,
+    };
+}

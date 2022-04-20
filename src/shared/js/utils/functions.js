@@ -682,3 +682,36 @@ const getStoredFiles = () =>
                 )
         );
     });
+if (typeof module !== "undefined" && module.exports != null) {
+    module.exports = {
+        log,
+        info,
+        warn,
+        getDisplayId,
+        isObject,
+        isPdfUrl,
+        delay,
+        cleanPapers,
+        firstNonStopLowercase,
+        fallbackCopyTextToClipboard,
+        copyTextToClipboard,
+        parseUrl,
+        downloadTextFile,
+        eventId,
+        downloadFile,
+        hashCode,
+        parseCVFUrl,
+        cleanBiorxivURL,
+        textareaFocusEnd,
+        tablerSvg,
+        stringifyError,
+        arraysIdentical,
+        parseTags,
+        getPaperEdits,
+        setFormChangeListener,
+        monitorPaperEdits,
+        cutAuthors,
+        sendMessageToBackground,
+        getStoredFiles,
+    };
+}

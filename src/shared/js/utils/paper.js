@@ -403,3 +403,20 @@ const mergePapers = (newPaper, oldPaper, extra = {}) => {
 
     return mergedPaper;
 };
+
+// ----------------------------------------------------
+// -----  TESTS: modules for node.js environment  -----
+// ----------------------------------------------------
+if (typeof module !== "undefined" && module.exports != null) {
+    module.exports = {
+        isPaper,
+        isKnownURL,
+        paperToAbs,
+        paperToPDF,
+        findLocalFile,
+        matchPapersToFiles,
+        matchAllFilesToPapers,
+        makeVenue,
+        mergePapers,
+    };
+}
