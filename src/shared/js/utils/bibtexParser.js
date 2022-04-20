@@ -324,6 +324,7 @@ const bibtexToString = (bibtex) => {
         bibtex = bibtexToObject(bibtex);
     }
 
+    bibtex = { ...bibtex };
     let bstr = `@${bibtex.entryType.toLowerCase()}{${bibtex.citationKey},\n`;
     delete bibtex.entryType;
     delete bibtex.citationKey;
