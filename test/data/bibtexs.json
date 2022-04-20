@@ -1,0 +1,63 @@
+{
+    "strings": [
+        "@article{Buteau_2019,\n  doi       = {10.1149/2.1051908jes},\n  url       = {https://doi.org/10.1149/2.1051908jes},\n  year      = {2019},\n  publisher = {The Electrochemical Society},\n  volume    = {166},\n  number    = {8},\n  pages     = {A1611--A1622},\n  author    = {Sam Buteau and J. R. Dahn},\n  title     = {Analysis of Thousands of Electrochemical Impedance Spectra of Lithium-Ion Cells through a Machine Learning Inverse Model},\n  journal   = {Journal of The Electrochemical Society},\n  abstract  = {Electrochemical impedance spectra of lithium-ion cells can be collected periodically at various cycle numbers and various state of charges,}\n}",
+        "@article{huang2021informationtheoretic,\n  title   = {Information-theoretic bounds on quantum advantage in machine learning},\n  author  = {Hsin-Yuan Huang and Richard Kueng and John Preskill},\n  year    = {2021},\n  journal = {arXiv preprint arXiv: Arxiv-2101.02464}\n}",
+        "@inproceedings{ijcai2020-1,\n  title     = {An Algorithm for Multi-Attribute Diverse Matching},\n  author    = {Ahmadi, Saba and Ahmed, Faez and Dickerson, John P. and Fuge, Mark and Khuller, Samir},\n  booktitle = {Proceedings of the Twenty-Ninth International Joint Conference on Artificial Intelligence, {IJCAI-20}},\n  publisher = {International Joint Conferences on Artificial Intelligence Organization},\n  editor    = {Christian Bessiere},\n  pages     = {3--9},\n  year      = {2020},\n  month     = {7},\n  note      = {Main track},\n  doi       = {10.24963/ijcai.2020/1},\n  url       = {https://doi.org/10.24963/ijcai.2020/1}\n}",
+        "@inproceedings{DBLP:conf/iccv/ZhuPIE17,\n  author    = {Jun{-}Yan Zhu and Taesung Park and Phillip Isola and Alexei A. Efros},\n  title     = {Unpaired Image-to-Image Translation Using Cycle-Consistent Adversarial Networks},\n  booktitle = {{IEEE} International Conference on Computer Vision, {ICCV} 2017, Venice, Italy, October 22-29, 2017},\n  pages     = {2242--2251},\n  publisher = {{IEEE} Computer Society},\n  year      = {2017},\n  url       = {https://doi.org/10.1109/ICCV.2017.244},\n  doi       = {10.1109/ICCV.2017.244},\n  timestamp = {Wed, 16 Oct 2019 14:14:51 +0200},\n  biburl    = {https://dblp.org/rec/conf/iccv/ZhuPIE17.bib},\n  bibsource = {dblp computer science bibliography, https://dblp.org}\n}"
+    ],
+    "objects": [
+        {
+            "doi": "10.1149/2.1051908jes",
+            "url": "https://doi.org/10.1149/2.1051908jes",
+            "year": "2019",
+            "publisher": "The Electrochemical Society",
+            "volume": "166",
+            "number": "8",
+            "pages": "A1611--A1622",
+            "author": "Sam Buteau and J. R. Dahn",
+            "title": "Analysis of Thousands of Electrochemical Impedance Spectra of Lithium-Ion Cells through a Machine Learning Inverse Model",
+            "journal": "Journal of The Electrochemical Society",
+            "abstract": "Electrochemical impedance spectra of lithium-ion cells can be collected periodically at various cycle numbers and various state of charges,",
+            "entryType": "article",
+            "citationKey": "Buteau_2019"
+        },
+        {
+            "title": "Information-theoretic bounds on quantum advantage in machine learning",
+            "author": "Hsin-Yuan Huang and Richard Kueng and John Preskill",
+            "year": "2021",
+            "journal": "arXiv preprint arXiv: Arxiv-2101.02464",
+            "entryType": "article",
+            "citationKey": "huang2021informationtheoretic"
+        },
+        {
+            "title": "An Algorithm for Multi-Attribute Diverse Matching",
+            "author": "Ahmadi, Saba and Ahmed, Faez and Dickerson, John P. and Fuge, Mark and Khuller, Samir",
+            "booktitle": "Proceedings of the Twenty-Ninth International Joint Conference on Artificial Intelligence, {IJCAI-20}",
+            "publisher": "International Joint Conferences on Artificial Intelligence Organization",
+            "editor": "Christian Bessiere",
+            "pages": "3--9",
+            "year": "2020",
+            "month": "7",
+            "note": "Main track",
+            "doi": "10.24963/ijcai.2020/1",
+            "url": "https://doi.org/10.24963/ijcai.2020/1",
+            "entryType": "inproceedings",
+            "citationKey": "ijcai2020-1"
+        },
+        {
+            "author": "Jun{-}Yan Zhu and Taesung Park and Phillip Isola and Alexei A. Efros",
+            "title": "Unpaired Image-to-Image Translation Using Cycle-Consistent Adversarial Networks",
+            "booktitle": "{IEEE} International Conference on Computer Vision, {ICCV} 2017, Venice, Italy, October 22-29, 2017",
+            "pages": "2242--2251",
+            "publisher": "{IEEE} Computer Society",
+            "year": "2017",
+            "url": "https://doi.org/10.1109/ICCV.2017.244",
+            "doi": "10.1109/ICCV.2017.244",
+            "timestamp": "Wed, 16 Oct 2019 14:14:51 +0200",
+            "biburl": "https://dblp.org/rec/conf/iccv/ZhuPIE17.bib",
+            "bibsource": "dblp computer science bibliography, https://dblp.org",
+            "entryType": "inproceedings",
+            "citationKey": "DBLP:conf/iccv/ZhuPIE17"
+        }
+    ]
+}
