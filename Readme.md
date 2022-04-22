@@ -257,6 +257,16 @@ Because Chrome & Brave will disable an extension by default when it auto-updates
 </details>
 
 <details>
+<summary><strong>The button to go from an abstract to its pdf does not work</strong></summary>
+<br/>
+In general there can be 2 reasons:
+
+1. It's a bug, it can happen, I'm sorry about this: you should raise an issue, and ideally even provide a fix in a Pull Resquest
+2. More likely, the pdf is behind a paywall and the standard `abstract -> pdf` path was redirected by the venue's website
+
+</details>
+
+<details>
 <summary><strong>How do you match Arxiv.org pre-prints to actual publications?</strong></summary>
 <br/>
 
