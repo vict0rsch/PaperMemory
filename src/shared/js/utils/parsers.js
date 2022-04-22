@@ -756,7 +756,7 @@ const makeIJCAIPaper = async (url) => {
               .replace(".pdf", "")
               .split("/")
               .last()
-              .match(/[1-9]\d*/)
+              .match(/[1-9]\d*/)[0]
         : url.split("/").last();
 
     const year = url.match(/proceedings\/\d+/gi)[0].split("/")[1];
