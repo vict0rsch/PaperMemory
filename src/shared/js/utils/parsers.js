@@ -805,6 +805,13 @@ const makeACMPaper = async (url) => {
 };
 
 const makeIEEEPaper = async (url) => {
+    if (isPdfUrl(url)) {
+        const articleId = url
+            .split("/stamp/stamp.jsp?tp=&arnumber=")[1]
+            .match(/\d+/)[0];
+        url = `https://ieeexplore.ieee.org/document/${articleId}/`;
+        console.log("url: ", url);
+    }
     const dom = await fetchDom(url);
     const metadata = JSON.parse(
         Array.from(dom.getElementsByTagName("script"))
