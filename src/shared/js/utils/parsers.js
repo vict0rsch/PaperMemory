@@ -558,20 +558,37 @@ const makeNaturePaper = async (url) => {
         .innerText.match(/\(\d{4}\)/)[0]
         .replace(/\(|\)/g, "");
     const journal = dom.querySelector(".c-article-info-details [data-test]").innerText;
-    const id = `Nature_${hash}`;
-    const doi = document
-        .querySelector(".c-bibliographic-information__citation")
-        .innerText.split("https://doi.org/")[1];
-    const bibURL = `https://doi.org/${doi}`;
+    const id = `Nature-${year}_${hash}`;
+
+    const doiClasses = [
+        ".c-bibliographic-information__citation",
+        ".c-bibliographic-information__value",
+    ];
+    let doi;
+    for (const doiClass of doiClasses) {
+        doi = document.querySelector(doiClass)?.innerText.split("https://doi.org/")[1];
+        if (doi) break;
+    }
+    if (!doi) {
+        doi = Array.from(dom.getElementsByTagName("span"))
+            .map((a) => a.innerText)
+            .filter((a) => a.includes("https://doi.org"))[0];
+    }
+
     const key = `${author.split(" ")[1]}${year}${firstNonStopLowercase(title)}`;
-    const bibtex = bibtexToString(`@article{${key},
-        author={${author}},
-        title={${title}},
-        journal = {${journal}},
-        year={${year}},
-        doi={${doi}},
-        url={${bibURL}}
-    }`);
+    let bibData = {
+        citationKey: key,
+        entryType: "article",
+        author,
+        title,
+        journal,
+        year,
+    };
+    if (doi) {
+        bibData.doi = doi;
+        bibData.url = `https://doi.org/${doi}`;
+    }
+    const bibtex = bibtexToString(bibData);
     const note = `Published @ ${journal} (${year})`;
     const venue = journal;
     return { author, bibtex, id, key, note, pdfLink, title, venue, year };
