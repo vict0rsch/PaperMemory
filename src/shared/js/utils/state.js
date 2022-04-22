@@ -53,7 +53,7 @@ const initState = async (papers, isContentScript) => {
     times.unshift(Date.now());
 
     if (isContentScript) {
-        log("State initialization duration (s): " + (Date.now() - s) / 1000);
+        info("State init duration (s): " + (Date.now() - times.last()) / 1000);
         return;
     }
 
@@ -73,9 +73,7 @@ const initState = async (papers, isContentScript) => {
     log("Time to make tags (s): " + (Date.now() - times[0]) / 1000);
     times.unshift(Date.now());
 
-    info(
-        "State initialization duration (s): " + (Date.now() - times.reverse()[0]) / 1000
-    );
+    info("State init duration (s): " + (Date.now() - times.last()) / 1000);
 };
 
 /**
