@@ -57,12 +57,12 @@ code {
 input[type="checkbox"].switch:not(:checked) {
     background: bottom;
 }
-.user-guide-modal-content {
+.popup-modal-contents {
     background-color: var(--lighterBackground);
     color: var(--color);
 }
-#close-user-guide-modal:hover,
-#close-user-guide-modal:focus {
+#close-popup-modal:hover,
+#close-popup-modal:focus {
     color: var(--color);
 }
 

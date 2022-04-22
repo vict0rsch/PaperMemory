@@ -46,6 +46,12 @@ const getAndTrackPopupMenuChecks = (menu, menuCheckNames) => {
     }
 };
 
+const showPopupModal = (name) => {
+    document.querySelectorAll(".popup-modal-content").forEach(hideId);
+    showId(`modal-${name}-content`, "contents");
+    style("popup-modal-wrapper", "display", "flex");
+};
+
 /**
  * Creates click events on the popup
  */
@@ -57,8 +63,6 @@ const setStandardPopupClicks = () => {
     });
 
     addListener("whats-new-container", "click", () => {
-        hideId("modal-keyboard-content");
-        showId("modal-whatsnew-content", "contents");
         chrome.storage.local.get("whatsnew", ({ whatsnew }) => {
             const version = chrome.runtime.getManifest().version;
             if (typeof whatsnew === "undefined") {
@@ -70,27 +74,25 @@ const setStandardPopupClicks = () => {
             chrome.storage.local.set({
                 whatsnew: { ...whatsnew, [version]: true },
             });
-            style("user-guide-modal", "display", "flex");
+            showPopupModal("whatsnew");
         });
     });
     addListener("keyboardShortcuts", "click", () => {
-        hideId("modal-whatsnew-content");
-        showId("modal-keyboard-content", "contents");
-        style("user-guide-modal", "display", "flex");
+        // button on the home page when not on a known source
+        showPopupModal("keyboard");
     });
     addListener("keyboardShortcutsMenu", "click", () => {
-        hideId("modal-whatsnew-content");
-        showId("modal-keyboard-content", "contents");
-        style("user-guide-modal", "display", "flex");
+        // button in the menu
+        showPopupModal("keyboard");
     });
-    addListener("close-user-guide-modal", "click", () => {
-        style("user-guide-modal", "display", "none");
+    addListener("close-popup-modal", "click", () => {
+        style("popup-modal-wrapper", "display", "none");
     });
 
     // When the user clicks anywhere outside of the modal, close it
     addListener(window, "click", (event) => {
-        if (event.target === findEl("user-guide-modal")) {
-            style("user-guide-modal", "display", "none");
+        if (event.target === findEl("popup-modal-wrapper")) {
+            style("popup-modal-wrapper", "display", "none");
         }
     });
 
@@ -114,9 +116,9 @@ const popupMain = async (url, is, manualTrigger = false) => {
         style(document.body, "min-width", "500px");
         style(document.body, "max-width", "500px");
         style(document.body, "width", "500px");
-        style("user-guide-modal", "min-width", "500px");
-        style("user-guide-modal", "max-width", "500px");
-        style("user-guide-modal", "width", "500px");
+        style("popup-modal-wrapper", "min-width", "500px");
+        style("popup-modal-wrapper", "max-width", "500px");
+        style("popup-modal-wrapper", "width", "500px");
     }
 
     addListener(document, "keydown", handlePopupKeydown);
@@ -174,8 +176,8 @@ const popupMain = async (url, is, manualTrigger = false) => {
             // Unknown paper, probably deleted by the user
             log("Unknown id " + id);
             updatePopupPaperNoMemory(url);
-            if (menu.checkDirectOpen) {
-                dispatchEvent("memory-switch", "click");
+            if (menu.checkDirectOpen && !menu.checkNoAuto) {
+                dispatch("memory-switch", "click");
             }
             return;
         }
