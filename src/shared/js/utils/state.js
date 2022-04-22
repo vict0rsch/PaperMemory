@@ -416,7 +416,10 @@ const parseIdFromUrl = async (url) => {
     } else if (is.nature) {
         url = url.replace(".pdf", "").split("#")[0];
         const hash = url.split("/").last();
-        return `Nature_${hash}`;
+        const paper = Object.values(cleanPapers(global.state.papers)).filter((p) => {
+            return p.source === "nature" && p.id.includes(hash);
+        })[0];
+        return paper && paper.id;
     } else if (is.acs) {
         url = url
             .replace("pubs.acs.org/doi/pdf/", "/doi/")
