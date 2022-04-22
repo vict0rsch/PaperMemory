@@ -16,37 +16,66 @@
  * @param {boolean} isContentScript Whether the call is from a content_script or the popup
  */
 const initState = async (papers, isContentScript) => {
-    const s = Date.now();
+    const times = [];
+    times.unshift(Date.now());
+
     if (typeof papers === "undefined") {
         papers = (await getStorage("papers")) ?? {};
-        log("Time to retrieve stored papers (s): " + (Date.now() - s) / 1000);
+        log("Time to retrieve stored papers (s): " + (Date.now() - times[0]) / 1000);
     }
+    times.unshift(Date.now());
 
     global.state.dataVersion = getManifestDataVersion();
+    log("Time to parse data version (s): " + (Date.now() - times[0]) / 1000);
+    times.unshift(Date.now());
+
     global.state.titleFunction = (await getTitleFunction()).titleFunction;
+    log("Time to make title function (s): " + (Date.now() - times[0]) / 1000);
+    times.unshift(Date.now());
 
     weeklyBackup();
+    log("Time to backup papers (weekly) (s): " + (Date.now() - times[0]) / 1000);
+    times.unshift(Date.now());
 
     const migration = await migrateData(papers, global.state.dataVersion);
+    log("Time to migrate data (s): " + (Date.now() - times[0]) / 1000);
+    times.unshift(Date.now());
 
     papers = migration.papers;
     global.state.papers = papers;
+
     global.state.menu = await getMenu();
+    log("Time to parse user preferences (s): " + (Date.now() - times[0]) / 1000);
+    times.unshift(Date.now());
+
     global.state.ignoreSources = (await getStorage("ignoreSources")) ?? {};
+    log("Time to read sources to ignore (s): " + (Date.now() - times[0]) / 1000);
+    times.unshift(Date.now());
 
     if (isContentScript) {
         log("State initialization duration (s): " + (Date.now() - s) / 1000);
         return;
     }
+
     global.state.files = await matchAllFilesToPapers();
+    log("Time to match all local files (s): " + (Date.now() - times[0]) / 1000);
+    times.unshift(Date.now());
+
     global.state.papersList = Object.values(cleanPapers(papers));
     global.state.sortKey = "lastOpenDate";
     global.state.papersReady = true;
 
     sortMemory();
-    makeTags();
+    log("Time to sort memory (s): " + (Date.now() - times[0]) / 1000);
+    times.unshift(Date.now());
 
-    info("State initialization duration (s): " + (Date.now() - s) / 1000);
+    makeTags();
+    log("Time to make tags (s): " + (Date.now() - times[0]) / 1000);
+    times.unshift(Date.now());
+
+    info(
+        "State initialization duration (s): " + (Date.now() - times.reverse()[0]) / 1000
+    );
 };
 
 /**
