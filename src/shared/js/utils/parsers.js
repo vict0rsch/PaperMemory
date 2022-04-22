@@ -804,6 +804,39 @@ const makeACMPaper = async (url) => {
     return { author, bibtex, id, key, note, pdfLink, title, venue, year };
 };
 
+const makeIEEEPaper = async (url) => {
+    const dom = await fetchDom(url);
+    const metadata = JSON.parse(
+        Array.from(dom.getElementsByTagName("script"))
+            .filter((s) => s.innerHTML?.includes("metadata="))[0]
+            .innerHTML.split("metadata=")[1]
+            .trim()
+            .replace(/;$/, "")
+    );
+
+    const title = metadata.title;
+    const author = metadata.authors.map((a) => a.name).join(" and ");
+    const year = metadata.publicationYear;
+    const pdfLink = `${parseUrl(url).origin}${metadata.pdfUrl}`;
+    const venue = metadata.publicationTitle;
+    const key = metadata.articleId;
+    const bibtex = bibtexToString({
+        entryType: "article",
+        citationKey: key,
+        journal: venue,
+        volume: metadata.volume,
+        pages: `${metadata.startPage}-${metadata.endPage}`,
+        doi: metadata.doi,
+        title,
+        year,
+        author,
+    });
+    const id = `IEEE-${year}_${key}`;
+    const note = `Accepted @ ${venue} (${year})`;
+
+    return { author, bibtex, id, key, note, pdfLink, title, venue, year };
+};
+
 // --------------------------------------------
 // -----  Try CrossRef's API for a match  -----
 // --------------------------------------------
@@ -1062,6 +1095,11 @@ const makePaper = async (is, url, id) => {
         if (paper) {
             paper.source = "acm";
         }
+    } else if (is.ieee) {
+        paper = await makeIEEEPaper(url);
+        if (paper) {
+            paper.source = "ieee";
+        }
     } else {
         throw new Error("Unknown paper source: " + JSON.stringify({ is, url, id }));
     }
@@ -1122,6 +1160,7 @@ if (typeof module !== "undefined" && module.exports != null) {
         makePubMedPaper,
         makeIJCAIPaper,
         makeACMPaper,
+        makeIEEEPaper,
         tryCrossRef,
         tryDBLP,
         tryPreprintMatch,

@@ -434,6 +434,14 @@ const parseIdFromUrl = async (url) => {
             return p.source === "acm" && p.id.includes(doi);
         })[0];
         return paper && paper.id;
+    } else if (is.ieee) {
+        const articleId = url.includes("ieee.org/document/")
+            ? url.split("ieee.org/document/")[1].match(/\d+/)[0]
+            : url.split("arnumber=")[1].match(/\d+/)[0];
+        const paper = Object.values(cleanPapers(global.state.papers)).filter((p) => {
+            return p.source === "ieee" && p.id.includes(articleId);
+        })[0];
+        return paper && paper.id;
     } else if (is.localFile) {
         return is.localFile;
     } else {
