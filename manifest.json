@@ -24,6 +24,10 @@
       "suggested_key": {
         "default": "Ctrl+Shift+E"
       }
+    },
+    "manualParsing": {
+      "suggested_key": "Ctrl+Shift+P",
+      "description": "Manually trigger the parsing of a paper; only available if you have disabled auto-parsing in the menu"
     }
   },
   "options_ui": {

@@ -342,7 +342,7 @@ const ignorePaper = (is, ignoreSources) => {
  * Also, if the current website is a known paper source (isPaper), adds or updates the current paper
  * @param {object} checks The user's stored preferences regarding menu options
  */
-const contentScriptMain = async (url, stateIsReady) => {
+const contentScriptMain = async (url, stateIsReady, manualTrigger = false) => {
     if (!stateIsReady) await initState(undefined, true);
     const menu = global.state.menu;
 
@@ -354,9 +354,30 @@ const contentScriptMain = async (url, stateIsReady) => {
     let ignoreSources = (await getStorage("ignoreSources")) ?? {};
 
     let update;
-    if (!ignorePaper(is, ignoreSources) && !(menu.checkPdfOnly && !isPdfUrl(url))) {
+    if (
+        !ignorePaper(is, ignoreSources) && // source is not ignored
+        !(menu.checkPdfOnly && !isPdfUrl(url)) && // pdf only is not checked or it is a pdf
+        !(menu.checkNoAuto && !manualTrigger) // no auto is not checked or it is a manual trigger
+    ) {
         update = await addOrUpdatePaper(url, is, menu);
+    } else {
+        if (ignorePaper(is, ignoreSources)) {
+            warn(
+                "Paper is being ignored because its source has been disabled in the Advanced Options."
+            );
+        } else if (menu.checkPdfOnly && !isPdfUrl(url)) {
+            warn(
+                `Paper is being ignored because you have checked the PDF-Only option ` +
+                    `and the current URL (${url}) is not that of a pdf's.`
+            );
+        } else if (menu.checkNoAuto && !manualTrigger) {
+            warn(
+                "Paper is being ignored because you disabled automatic parsing" +
+                    " in the menu."
+            );
+        }
     }
+
     let id;
     if (update) {
         id = update.id;
@@ -634,12 +655,16 @@ const arxiv = async (checks) => {
     const backgroundIsHere =
         (await sendMessageToBackground({ type: "hello" })) ??
         "Cannot connect to background script";
+
     log(backgroundIsHere);
+
     chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
         // listen for messages sent from background.js
         if (request.message === "tabUrlUpdate") {
             info("Running PaperMemory's content script for url update");
             contentScriptMain(request.url);
+        } else if (request.message === "manualParsing") {
+            contentScriptMain(url, stateIsReady, true);
         }
     });
 })();
