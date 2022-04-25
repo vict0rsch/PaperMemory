@@ -57,7 +57,7 @@ const updatePopupPaperNoMemory = async (url) => {
             </span>
             </h3>
             <div>
-                <div>Here's a ${animal.capitalize()} for your trouble</div>
+                <div>Here's a ${animal} for your trouble</div>
                 <div id="ascii-art-div"><div style="text-align:">${ascii}</div></div>
             </div>
         </div>
@@ -77,6 +77,7 @@ const updatePopupPaperNoMemory = async (url) => {
                         <div class="sk-cube3 sk-cube"></div>
                     </div>
                 </div>
+                <div id="manual-parsing-error"></div>
             </div>
         `;
     }
@@ -90,18 +91,30 @@ const updatePopupPaperNoMemory = async (url) => {
     if (allowManualParsing) {
         addListener("manual-trigger-btn", "click", async () => {
             showId("manual-loader-container");
-            const is = await isPaper(url);
-            let paper;
-            const update = await addOrUpdatePaper(url, is);
-            if (update) {
-                paper = update.paper;
-            } else {
-                return;
-            }
-            if (paper) {
+            try {
+                const is = await isPaper(url);
+                let paper;
+                paper.ndzeij.dz();
+                const update = await addOrUpdatePaper(url, is);
+                if (update) {
+                    paper = update.paper;
+                } else {
+                    return;
+                }
+                if (paper) {
+                    hideId("manual-loader-container");
+                    setHTML("isArxiv", previousIsArxiv);
+                    popupMain(url, is, true);
+                }
+            } catch (error) {
                 hideId("manual-loader-container");
-                setHTML("isArxiv", previousIsArxiv);
-                popupMain(url, is, true);
+                const errorText =
+                    "There was an issue parsing this paper. <br/> " +
+                    "Raise an issue on Github if you think it is a bug.<br/>" +
+                    "Attempted url: " +
+                    url;
+                setHTML("manual-parsing-error", `<strong>${errorText}</strong>`);
+                warn("Manual Parsing Error:", error);
             }
         });
     }
