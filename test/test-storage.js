@@ -18,16 +18,16 @@ const sleep = async (duration) => {
 var orders = ["abs;pdf", "pdf;abs"];
 
 // global constants to parametrize the tests
-const loadSecs = parseFloat(process.env.load_secs ?? 10);
-const maxSources = process.env.max_sources ?? -1;
-const pageTimeout = parseFloat(process.env.page_timeout ?? 5000);
-const singleSource = process.env.source?.toLowerCase() ?? false;
-const keepBrowser = Boolean(process.env.keep_browser ?? false);
-const dumpMemory = process.env.dump_memory ?? false;
-const singleOrder = process.env.order ?? false;
+const loadSecs = parseFloat(process.env.loadSecs ?? 10);
+const maxSources = process.env.maxSources ?? -1;
+const pageTimeout = parseFloat(process.env.pageTimeout ?? 5000);
+const singleSource = process.env.singleSource?.toLowerCase() ?? false;
+const keepBrowser = Boolean(process.env.keepBrowser ?? false);
+const dumpMemory = Boolean(process.env.dumpMemory) ?? false;
+const singleOrder = process.env.singleOrder ?? false;
 
 if (maxSources > 0 && singleSource) {
-    throw new Error("Please specify either MAX_SOURCES xor SINGLE_SOURCE");
+    throw new Error("Please specify either maxSources xor singleSource");
 }
 
 if (singleOrder && orders.indexOf(singleOrder) === -1) {
