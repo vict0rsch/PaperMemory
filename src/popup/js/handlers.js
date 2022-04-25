@@ -265,7 +265,7 @@ const handleConfirmDeleteModalClick = (e) => {
         sortMemory();
         displayMemoryTable();
         hideId("confirm-modal");
-        log(`Successfully deleted "${title}" (${id}) from PaperMemory`);
+        info(`Successfully deleted "${title}" (${id}) from PaperMemory`);
         if (global.state.currentId === id) {
             await updatePopupPaperNoMemory(url);
         }
