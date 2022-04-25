@@ -94,7 +94,6 @@ const updatePopupPaperNoMemory = async (url) => {
             try {
                 const is = await isPaper(url);
                 let paper;
-                paper.ndzeij.dz();
                 const update = await addOrUpdatePaper(url, is);
                 if (update) {
                     paper = update.paper;
