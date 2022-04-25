@@ -269,7 +269,7 @@ const addPreprintUpdate = (update) => {
 const registerUpdate = async (update) => {
     const { paper } = update;
     for (const [k, v] of Object.entries(update)) {
-        if (k !== "paper") {
+        if (k !== "paper" && v) {
             paper[k] = v;
         }
     }
