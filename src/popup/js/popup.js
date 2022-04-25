@@ -175,7 +175,7 @@ const popupMain = async (url, is, manualTrigger = false) => {
         if (!id || !global.state.papers.hasOwnProperty(id)) {
             // Unknown paper, probably deleted by the user
             log("Unknown id " + id);
-            updatePopupPaperNoMemory(url);
+            await updatePopupPaperNoMemory(url);
             if (menu.checkDirectOpen && !menu.checkNoAuto) {
                 dispatch("memory-switch", "click");
             }

@@ -37,15 +37,17 @@ const updateAllMemoryPaperTagOptions = () => {
     }
 };
 
-const sampleAsciiArt = () => {
-    const nArts = Object.keys(global.art).length;
+const sampleAsciiArt = async () => {
+    const artPath = chrome.runtime.getURL("src/popup/art.json");
+    const art = await fetch(artPath).then((res) => res.json());
+    const nArts = Object.keys(art).length;
     const u = Math.floor(Math.random() * nArts);
-    const [animal, art] = Object.entries(global.art)[u];
-    return { animal, art };
+    const [animal, ascii] = Object.entries(art)[u];
+    return { animal, ascii };
 };
 
-const updatePopupPaperNoMemory = (url) => {
-    const { animal, art } = sampleAsciiArt();
+const updatePopupPaperNoMemory = async (url) => {
+    let { animal, ascii } = await sampleAsciiArt();
 
     let noPaperHtml = /* html */ `
         <div class="no-paper-div">
@@ -56,7 +58,7 @@ const updatePopupPaperNoMemory = (url) => {
             </h3>
             <div>
                 <div>Here's a ${animal.capitalize()} for your trouble</div>
-                <div id="ascii-art-div"><div style="text-align: left">${art}</div></div>
+                <div id="ascii-art-div"><div style="text-align:">${ascii}</div></div>
             </div>
         </div>
     `;

@@ -260,14 +260,14 @@ const handleConfirmDeleteModalClick = (e) => {
     const title = global.state.papers[id].title;
     const url = global.state.papers[id].pdfLink;
     delete global.state.papers[id];
-    chrome.storage.local.set({ papers: global.state.papers }, () => {
+    chrome.storage.local.set({ papers: global.state.papers }, async () => {
         global.state.papersList = Object.values(cleanPapers(global.state.papers));
         sortMemory();
         displayMemoryTable();
         hideId("confirm-modal");
         log(`Successfully deleted "${title}" (${id}) from PaperMemory`);
         if (global.state.currentId === id) {
-            updatePopupPaperNoMemory(url);
+            await updatePopupPaperNoMemory(url);
         }
         setPlaceholder(
             "memory-search",
