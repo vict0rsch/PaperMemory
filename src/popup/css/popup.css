@@ -753,18 +753,23 @@ button.changed {
 
 #manual-trigger-wrapper {
     min-height: 120px;
+    max-width: 300px;
 }
 
 #manual-trigger-btn {
     display: flex;
     justify-content: center;
     align-items: center;
-    padding: 6px 8px;
+    padding: 8px 12px;
     border-radius: 4px;
     background-color: var(--red);
     cursor: pointer;
     color: white;
     margin-bottom: 24px;
+    max-width: 130px;
+    min-width: 130px;
+    margin: auto;
+    margin-bottom: 20px;
 }
 
 #manual-trigger-btn:hover {
