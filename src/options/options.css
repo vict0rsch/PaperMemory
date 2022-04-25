@@ -150,6 +150,60 @@ input {
 }
 
 /*
+-------------------------------
+-----  Preprint matching  -----
+-------------------------------
+*/
+
+.progress-container {
+    margin: 30px;
+    margin-top: 0;
+    height: 0.8rem;
+    width: 40%;
+    border-radius: 0.4rem;
+    background: #000;
+}
+
+.progress-container .progress {
+    height: 100%;
+    width: 0;
+    border-radius: 0.4rem;
+    background: #ff4754;
+    transition: width 0.4s ease;
+}
+
+#matching-progress-container {
+    display: flex;
+    justify-content: space-evenly;
+    align-items: center;
+    width: 100%;
+    padding-top: 24px;
+}
+
+#matching-status-title {
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+    display: inline-block;
+    max-width: 100%;
+}
+
+#matching-status {
+    width: 60%;
+    min-width: 60%;
+    max-width: 60%;
+}
+
+.paper-update-item {
+    width: calc(100% - 2rem);
+    border: 1px solid;
+    border-radius: 8px;
+    padding: 2rem;
+    margin-left: 2rem;
+    margin-bottom: 1rem;
+}
+
+/*
 -----------------------------------
 -----  Custom title function  -----
 -----------------------------------

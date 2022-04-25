@@ -10,6 +10,11 @@ function getRandomInt(max) {
     return Math.floor(Math.random() * max);
 }
 
+const sleep = async (timeout) =>
+    new Promise((resolve) => {
+        setTimeout(resolve, timeout);
+    });
+
 // ----------------------
 // -----  Keyboard  -----
 // ----------------------
@@ -217,6 +222,122 @@ const setupAutoTags = async () => {
     }
     setHTML("auto-tags-list", htmls.join(""));
     addAutoTagListeners(autoTags);
+};
+
+// -------------------------------
+// -----  Preprint Matching  -----
+// -------------------------------
+
+const addPreprintUpdate = (update) => {
+    const { paper } = update;
+    let contents = [];
+    for (const [k, v] of Object.entries(update)) {
+        if (k !== "paper" && k !== "bibtex") {
+            if (v) {
+                contents.push(`<span>${k}:</span>&nbsp;<span>${v}</span>`);
+            }
+        }
+    }
+    contents = contents.join("<br>");
+    const html = /*html*/ `
+    <div class="paper-update-item" id="paper-update-item--${paper.id}">
+        <h4>${paper.title}</h4>
+        <div>
+            <div class="preprint-update-contents">
+                <div>Updates to approve:</div>
+                ${contents}
+            </div>
+            <div>
+                <button class="preprint-update-ok" id="puo--${paper.id}">Ok</button>
+                <button class="preprint-update-cancel" id="puc--${paper.id}">Cancel</button>
+            </div>
+        </div>
+    </div>
+    `;
+
+    findEl("updates-to-confirm").append(createElementFromHTML(html));
+
+    addListener(`puo--${paper.id}`, "click", async () => {
+        await registerUpdate(update);
+        findEl(`paper-update-item--${paper.id}`).remove();
+    });
+    addListener(`puc--${paper.id}`, "click", () => {
+        findEl(`paper-update-item--${paper.id}`).remove();
+    });
+};
+
+const registerUpdate = async (update) => {
+    const { paper } = update;
+    for (const [k, v] of Object.entries(update)) {
+        if (k !== "paper") {
+            paper[k] = v;
+        }
+    }
+    let papers = (await getStorage("papers")) ?? {};
+    console.log("papers[paper.id]: ", papers[paper.id]);
+    console.log("paper: ", paper);
+    papers[paper.id] = paper;
+    await setStorage("papers", papers);
+};
+
+const startMatching = async (papersToMatch) => {
+    showId("matching-progress-container", "flex");
+    setHTML("matching-status-total", papersToMatch.length);
+
+    const progressbar = document.querySelector(".progress");
+
+    const changeProgress = (progress) => {
+        progressbar.style.width = `${progress}%`;
+    };
+
+    for (const [idx, paper] of papersToMatch.entries()) {
+        console.log("idx: ", idx);
+        setHTML("matching-status-index", idx + 1);
+        setHTML("matching-status-title", paper.title);
+        changeProgress(parseInt((idx / papersToMatch.length) * 100));
+
+        var bibtex, venue, note, code;
+
+        setHTML("matching-status-provider", "paperswithcode.org ...");
+        pwcMatch = await tryPWCMatch(paper);
+        console.log("pwcMatch: ", pwcMatch);
+        code = !paper.codeLink && pwcMatch?.url;
+        venue = pwcMatch?.venue;
+        note = !paper.note && pwcMatch?.note;
+
+        if (!venue) {
+            setHTML("matching-status-provider", "dblp.org ...");
+            dblpMatch = await tryDBLP(paper);
+            console.log("dblpMatch: ", dblpMatch);
+            bibtex = dblpMatch?.bibtex;
+            venue = dblpMatch?.venue;
+            note = !paper.note && dblpMatch?.note;
+        }
+
+        if (!venue) {
+            setHTML("matching-status-provider", "crossref.org ...");
+            crossRefMatch = await tryCrossRef(paper);
+            console.log("crossRefMatch: ", crossRefMatch);
+            venue = dblpMatch?.venue;
+            note = !paper.note && dblpMatch?.note;
+        }
+        if (venue || code) {
+            addPreprintUpdate({ bibtex, venue, note, codeLink: code, paper });
+        }
+    }
+    changeProgress(100);
+    setHTML("matching-status", "All done!");
+};
+
+const setupPreprintMatching = async () => {
+    const papers = (await getStorage("papers")) ?? {};
+    const papersToMatch = Object.values(cleanPapers(papers)).filter(
+        (paper) => !paper.venue
+    );
+    setHTML("preprints-number", papersToMatch.length);
+    addListener("start-matching", "click", () => {
+        startMatching(papersToMatch);
+    });
 };
 
 // -----------------------------------
@@ -518,6 +639,7 @@ const setupSourcesSelection = async () => {
 (() => {
     setupPWCPrefs();
     setupAutoTags();
+    setupPreprintMatching();
     setUpKeyboardListeners();
     setupSourcesSelection();
     setupTitleFunction();
