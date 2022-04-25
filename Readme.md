@@ -18,7 +18,7 @@
 
 [![](https://img.shields.io/chrome-web-store/stars/hmebhknlgddhfbbdhgplnillngljgmdi)](https://chrome.google.com/webstore/detail/paper-memory/hmebhknlgddhfbbdhgplnillngljgmdi)
 [![](https://img.shields.io/badge/buy%20me-a%20coffee%20%E2%98%95%EF%B8%8F-FFDD03)](https://www.buymeacoffee.com/vict0rsch)
-[![](https://img.shields.io/badge/Version-v0.5.2-A41716)](https://github.com/vict0rsch/PaperMemory)
+[![](https://img.shields.io/badge/Version-v0.5.3-A41716)](https://github.com/vict0rsch/PaperMemory)
 
 <br/>
 
@@ -254,6 +254,16 @@ Here's an example return value from PWC's API
 <summary><strong>Why does PaperMemory require access to all urls?</strong></summary>
 <br/>
 Because Chrome & Brave will disable an extension by default when it auto-updates with new permissions. In this case, any new addition of a paper source will require new permissions to access the data necessary to parse the paper data and will therefore disable the extension until users re-enable it.
+</details>
+
+<details>
+<summary><strong>The button to go from an abstract to its pdf does not work</strong></summary>
+<br/>
+In general there can be 2 reasons:
+
+1. It's a bug, it can happen, I'm sorry about this: you should raise an issue, and ideally even provide a fix in a Pull Resquest
+2. More likely, the pdf is behind a paywall and the standard `abstract -> pdf` path was redirected by the venue's website
+
 </details>
 
 <details>

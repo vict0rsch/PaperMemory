@@ -620,7 +620,7 @@ const arxiv = async (checks) => {
     }
 };
 
-$(async () => {
+(async () => {
     const url = window.location.href;
     let stateIsReady = false;
     if (url.startsWith("file://")) {
@@ -642,4 +642,4 @@ $(async () => {
             contentScriptMain(request.url);
         }
     });
-});
+})();

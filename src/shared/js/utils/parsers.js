@@ -558,20 +558,37 @@ const makeNaturePaper = async (url) => {
         .innerText.match(/\(\d{4}\)/)[0]
         .replace(/\(|\)/g, "");
     const journal = dom.querySelector(".c-article-info-details [data-test]").innerText;
-    const id = `Nature_${hash}`;
-    const doi = document
-        .querySelector(".c-bibliographic-information__citation")
-        .innerText.split("https://doi.org/")[1];
-    const bibURL = `https://doi.org/${doi}`;
+    const id = `Nature-${year}_${hash}`;
+
+    const doiClasses = [
+        ".c-bibliographic-information__citation",
+        ".c-bibliographic-information__value",
+    ];
+    let doi;
+    for (const doiClass of doiClasses) {
+        doi = document.querySelector(doiClass)?.innerText.split("https://doi.org/")[1];
+        if (doi) break;
+    }
+    if (!doi) {
+        doi = Array.from(dom.getElementsByTagName("span"))
+            .map((a) => a.innerText)
+            .filter((a) => a.includes("https://doi.org"))[0];
+    }
+
     const key = `${author.split(" ")[1]}${year}${firstNonStopLowercase(title)}`;
-    const bibtex = bibtexToString(`@article{${key},
-        author={${author}},
-        title={${title}},
-        journal = {${journal}},
-        year={${year}},
-        doi={${doi}},
-        url={${bibURL}}
-    }`);
+    let bibData = {
+        citationKey: key,
+        entryType: "article",
+        author,
+        title,
+        journal,
+        year,
+    };
+    if (doi) {
+        bibData.doi = doi;
+        bibData.url = `https://doi.org/${doi}`;
+    }
+    const bibtex = bibtexToString(bibData);
     const note = `Published @ ${journal} (${year})`;
     const venue = journal;
     return { author, bibtex, id, key, note, pdfLink, title, venue, year };
@@ -739,7 +756,7 @@ const makeIJCAIPaper = async (url) => {
               .replace(".pdf", "")
               .split("/")
               .last()
-              .match(/[1-9]\d*/)
+              .match(/[1-9]\d*/)[0]
         : url.split("/").last();
 
     const year = url.match(/proceedings\/\d+/gi)[0].split("/")[1];
@@ -800,6 +817,46 @@ const makeACMPaper = async (url) => {
         url: url.replace("/doi/pdf/", "/doi/"),
     });
     const id = `ACM-${year}_${doi.replaceAll(/(\.|\/)/gi, "")}`;
+
+    return { author, bibtex, id, key, note, pdfLink, title, venue, year };
+};
+
+const makeIEEEPaper = async (url) => {
+    if (isPdfUrl(url)) {
+        const articleId = url
+            .split("/stamp/stamp.jsp?tp=&arnumber=")[1]
+            .match(/\d+/)[0];
+        url = `https://ieeexplore.ieee.org/document/${articleId}/`;
+        console.log("url: ", url);
+    }
+    const dom = await fetchDom(url);
+    const metadata = JSON.parse(
+        Array.from(dom.getElementsByTagName("script"))
+            .filter((s) => s.innerHTML?.includes("metadata="))[0]
+            .innerHTML.split("metadata=")[1]
+            .trim()
+            .replace(/;$/, "")
+    );
+
+    const title = metadata.title;
+    const author = metadata.authors.map((a) => a.name).join(" and ");
+    const year = metadata.publicationYear;
+    const pdfLink = `${parseUrl(url).origin}${metadata.pdfUrl}`;
+    const venue = metadata.publicationTitle;
+    const key = metadata.articleId;
+    const bibtex = bibtexToString({
+        entryType: "article",
+        citationKey: key,
+        journal: venue,
+        volume: metadata.volume,
+        pages: `${metadata.startPage}-${metadata.endPage}`,
+        doi: metadata.doi,
+        title,
+        year,
+        author,
+    });
+    const id = `IEEE-${year}_${key}`;
+    const note = `Accepted @ ${venue} (${year})`;
 
     return { author, bibtex, id, key, note, pdfLink, title, venue, year };
 };
@@ -1062,6 +1119,11 @@ const makePaper = async (is, url, id) => {
         if (paper) {
             paper.source = "acm";
         }
+    } else if (is.ieee) {
+        paper = await makeIEEEPaper(url);
+        if (paper) {
+            paper.source = "ieee";
+        }
     } else {
         throw new Error("Unknown paper source: " + JSON.stringify({ is, url, id }));
     }
@@ -1122,6 +1184,7 @@ if (typeof module !== "undefined" && module.exports != null) {
         makePubMedPaper,
         makeIJCAIPaper,
         makeACMPaper,
+        makeIEEEPaper,
         tryCrossRef,
         tryDBLP,
         tryPreprintMatch,

@@ -121,6 +121,9 @@ const paperToAbs = (paper) => {
             abs = pdf.replace("/doi/pdf/", "/doi/");
             break;
 
+        case "ieee":
+            abs = `https://ieeexplore.ieee.org/document/${paper.key}`;
+
         default:
             abs = "https://xkcd.com/1969/";
             break;
@@ -195,6 +198,9 @@ const paperToPDF = (paper) => {
             break;
 
         case "acm":
+            break;
+
+        case "ieee":
             break;
 
         default:

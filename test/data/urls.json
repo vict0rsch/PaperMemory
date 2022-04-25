@@ -47,6 +47,13 @@
             "venue": "ijcai"
         }
     ],
+    "ieee": [
+        "https://ieeexplore.ieee.org/document/9090146",
+        "https://ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=9090146",
+        {
+            "venue": "IEEE Access"
+        }
+    ],
     "iop": [
         "https://iopscience.iop.org/article/10.1149/2.1051908jes",
         "https://iopscience.iop.org/article/10.1149/2.1051908jes/pdf",

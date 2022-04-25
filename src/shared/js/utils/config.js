@@ -112,6 +112,10 @@ global.knownPaperPages = {
     biorxiv: ["biorxiv.org/content"],
     cvf: ["openaccess.thecvf.com/content"],
     ijcai: [(url) => /ijcai\.org\/proceedings\/\d{4}\/\d+/gi.test(url)],
+    ieee: [
+        "ieeexplore.ieee.org/document/",
+        "ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=",
+    ],
     iop: ["iopscience.iop.org/article/"],
     jmlr: [(url) => url.includes("jmlr.org/papers/v") && !url.endsWith("/")],
     nature: ["nature.com/articles/"],
