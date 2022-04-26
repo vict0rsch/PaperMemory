@@ -123,18 +123,18 @@ input[type="checkbox"].switch:not(:checked) {
 */
 
 button,
-#file-upload-label {
+.file-upload-label {
     border-color: #adbac7 !important;
     background-color: var(--buttonBackground) !important;
     color: #15191f;
 }
 button:disabled,
-#file-upload-label:disabled {
+.file-upload-label:disabled {
     color: #2e3742 !important;
     background-color: #5c6268 !important;
 }
 button:not(.select2-selection__choice__remove):hover,
-#file-upload-label:hover {
+.file-upload-label:hover {
     border-color: #d8e7f7 !important;
     background-color: #eeeeee !important;
     color: #000000;
