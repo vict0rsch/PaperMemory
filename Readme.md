@@ -46,7 +46,7 @@ This browser extension allows you to do automatically store research papers you 
 <br/>
 
 <p align="center">
- <a href="#supported-venues">Supported Venues</a> &nbsp;•&nbsp; <a href="#demo">Demo</a> &nbsp;•&nbsp; <a href="#keyboard-navigation">Keyboard Navigation</a> &nbsp;•&nbsp; <a href="#guides">User Guide</a> &nbsp;•&nbsp; <a href="#advanced">Advanced features</a> &nbsp;•&nbsp; <a href="#install-from-source-brave--chrome">Install from source</a> &nbsp;•&nbsp; <a href="#preprints">About preprints</a> &nbsp;•&nbsp; <a href="#code">Discovering ode Repositories</a> &nbsp;•&nbsp; <a href="#faq">FAQ</a>
+ <a href="#supported-venues">Supported Venues</a> &nbsp;•&nbsp; <a href="#demo">Demo</a> &nbsp;•&nbsp; <a href="#keyboard-navigation">Keyboard Navigation</a> &nbsp;•&nbsp; <a href="#guides">User Guide</a> &nbsp;•&nbsp; <a href="#advanced">Advanced features</a> &nbsp;•&nbsp; <a href="#install-from-source-brave--chrome">Install from source</a> &nbsp;•&nbsp; <a href="#preprints">About preprints</a> &nbsp;•&nbsp; <a href="#discovering-code-repositories">Discovering code Repositories</a> &nbsp;•&nbsp; <a href="#faq">FAQ</a>
 </p>
 
 <br/>
@@ -197,7 +197,7 @@ My approach with PaperMemory is to try and notify you that a publication likely 
 
 There's room for improvement here^, please contact me (an issue will do) if you want to help
 
-## Code
+## Discovering Code repositories
 
 PaperMemory uses the PapersWithCode API in order to discover code repositories. If the paper being added to the Memory is from Arxiv, PaperMemory will use PWC's `arxiv_id` search field. Otherwise it will query per title. PaperMemory then expects exactly `1` result from the API. Any different `count` in the response will make PaperMemory consider there is no match.
 
