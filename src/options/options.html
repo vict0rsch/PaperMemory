@@ -12,6 +12,7 @@
         integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
     <link rel="stylesheet" type="text/css" href="../shared/css/vars.css">
     <link rel="stylesheet" type="text/css" href="../shared/css/loader.css">
+    <link rel="stylesheet" type="text/css" href="github.min.css">
     <link rel="stylesheet" type="text/css" href="options.css">
 </head>
 
@@ -116,6 +117,90 @@
             </div>
         </div>
 
+
+
+        <div class="section">
+            <h2>Import papers</h2>
+
+            <p>PaperMemory lets you add papers from other sources in the form of <code>.json</code> files
+            </p>
+
+            <h4>Import <code>.json</code> list of papers</h4>
+
+            <p>The file must be structured as follows: a list of entries where each entry is either a
+                <code>string</code> pointing to a paper's <code>url</code> (PDF or abstract) or a
+                <code>dictionnary</code> with a mandatory <code>"url"</code> field and <em>optionally</em>:
+            <ul>
+                <li><code>"codeLink": string</code> (link to code repo)</li>
+                <li><code>"note": string</code> (personal comment)</li>
+                <li><code>"venue": string</code> (known publication venue)
+                    <ul>
+                        <li>If you specify a venue you <em>must</em> also provide a
+                            <code>"year": string or number</code>
+                        </li>
+                    </ul>
+                </li>
+            </ul>
+
+            </p>
+
+            <p>Example valid <code>.json</code> file:</p>
+            <code style="display: block; white-space: pre-wrap; padding: 16px" class="language-json trim-code">
+                [
+                    "https://arxiv.org/pdf/1901.06500.pdf",
+                    "https://arxiv.org/abs/2110.02871",
+                    {
+                        "url": "https://arxiv.org/abs/1811.12833",
+                        "codeLink": "https://github.com/valeoai/ADVENT"
+                    },
+                    {
+                        "url": "https://openreview.net/forum?id=xQUe1pOKPam",
+                        "venue": "ICLR",
+                        "year": 2022
+                    }
+                ]
+            </code>
+
+            <div class="row mt-4">
+                <div class="col-3">
+                    <label id="import-json-label" for="import-json-papers-input" class="ms-2 file-upload-label">
+                        Select file
+                    </label>
+                    <input type="file" id="import-json-papers-input" style="display: none;"></input>
+                </div>
+                <div class="col-3">
+                    <button id="import-json-papers-button" disabled class="ms-2 flex-center-between code-font">
+                        .json&nbsp;
+                        <svg viewBox="0 0 24 24" style="height: 18px; width: 18px; color: black; stroke: black">
+                            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                            <path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2 -2v-2" />
+                            <polyline points="7 9 12 4 17 9" />
+                            <line x1="12" y1="4" x2="12" y2="16" />
+                        </svg>
+                    </button>
+                </div>
+                <div class="col-6" id="import-json-label-filename">
+
+                </div>
+
+                <div id="import-json-status-container" style="display: none; padding: 32px; align-items: center;">
+
+
+                    <div class="progress-container" style="margin: 0;">
+                        <div class="progress" id="import-json-progress-bar"></div>
+                    </div>
+                    <div id="import-json-status" style="display: flex; padding-left: 16px;">
+                    </div>
+
+                </div>
+                <div>
+                    <ul id="json-import-feedback" style="padding: 0px 32px; list-style-type: none;"></ul>
+                </div>
+
+            </div>
+
+        </div>
+
         <div class="section">
             <h2>Preprint matching</h2>
 
@@ -135,7 +220,7 @@
 
             <div id="matching-progress-container" style="display: none;">
                 <div class="progress-container">
-                    <div class="progress"></div>
+                    <div class="progress" id="manual-parsing-progress-bar"></div>
                     <div style="padding: 8px; text-align: center;">
                         <span id="matching-status-index"></span> / <span id="matching-status-total"></span>
                     </div>
@@ -272,7 +357,8 @@
                         Memory): </p>
                 </div>
                 <div class="col-2">
-                    <label id="file-upload-label" for="overwrite-arxivmemory-input" class="ms-2">Select
+                    <label id="file-upload-label" for="overwrite-arxivmemory-input"
+                        class="ms-2 file-upload-label">Select
                         file</label><input type="file" id="overwrite-arxivmemory-input" style="display: none;"></input>
                 </div>
                 <div class="col-2">
@@ -362,6 +448,7 @@
     </div>
 
     <script src="../shared/min/jquery.min.js"></script>
+    <script src="highlight.min.js"></script>
     <script src="../shared/min/utils.min.js"></script>
     <script src="options.js"></script>
 </body>
