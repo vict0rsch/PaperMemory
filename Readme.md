@@ -39,7 +39,19 @@ This browser extension allows you to do automatically store research papers you 
 8. 📄 **Go back from a pdf to its abstract page**. For instance: from `https://arxiv.org/pdf/1703.06907.pdf` to `https://arxiv.org/abs/1703.06907` in a click.
 9. 🏛️ **Export your data** as a `.json` file or a `.bib` full BibTex export
 
-### Supported venues
+<br/>
+
+---
+
+<br/>
+
+<p align="center">
+ <a href="#supported-venues">Supported Venues</a> &nbsp;•&nbsp; <a href="#demo">Demo</a> &nbsp;•&nbsp; <a href="#keyboard-navigation">Keyboard Navigation</a> &nbsp;•&nbsp; <a href="#guides">User Guide</a> &nbsp;•&nbsp; <a href="#advanced">Advanced features</a> &nbsp;•&nbsp; <a href="#install-from-source-brave--chrome">Install from source</a> &nbsp;•&nbsp; <a href="#preprints">About preprints</a> &nbsp;•&nbsp; <a href="#code">Discovering ode Repositories</a> &nbsp;•&nbsp; <a href="#faq">FAQ</a>
+</p>
+
+<br/>
+
+## Supported venues
 
 * Arxiv (PaperMemory will try to find if a pre-print has been published and create a corresponding `note` to the paper (see [preprints](#preprints)))
 * BioRxiv
@@ -62,7 +74,7 @@ This browser extension allows you to do automatically store research papers you 
 
 ### Privacy
 
-All the data collected is stored locally on your computer and you can export it to `json` it from the menu.
+All the data collected is stored locally on your computer and you can export it to `json` it from the options page.
 
 ### Feature requests
 
