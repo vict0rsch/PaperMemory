@@ -17,5 +17,17 @@
         setTimeout(() => {
             document.head.appendChild(link);
         }, 1);
+
+        if (window.location.href.includes("options.html")) {
+            var optLink = document.createElement("link");
+            optLink.href = chrome.runtime.getURL(
+                "src/options/github-dark-dimmed.min.css"
+            );
+            optLink.type = "text/css";
+            optLink.rel = "stylesheet";
+            setTimeout(() => {
+                document.head.appendChild(optLink);
+            }, 1);
+        }
     }
 })();
