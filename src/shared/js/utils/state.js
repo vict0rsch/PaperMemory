@@ -249,13 +249,7 @@ const addOrUpdatePaper = async (url, is, menu) => {
 
     if (!paper.codeLink || !paper.venue) {
         try {
-            const pwcPrefs = (await getStorage("pwcPrefs")) ?? {};
-            const payload = {
-                type: "papersWithCode",
-                pwcPrefs,
-                paper: paper,
-            };
-            const pwc = await sendMessageToBackground(payload);
+            const pwc = await tryPWCMatch(paper);
 
             pwcUrl = !paper.codeLink && pwc?.url;
             pwcNote = pwc?.note;

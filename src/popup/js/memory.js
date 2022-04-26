@@ -37,66 +37,83 @@ const updateAllMemoryPaperTagOptions = () => {
     }
 };
 
-const updatePopupPaperNoMemory = (url) => {
-    let noMemoryHTML = /*html*/ `
-        <div style="font-size: 1.5rem; width: 100%; text-align: center;">
-            This paper is not in your memory
+const sampleAsciiArt = async () => {
+    const artPath = chrome.runtime.getURL("src/popup/art.json");
+    const art = await fetch(artPath).then((res) => res.json());
+    const nArts = Object.keys(art).length;
+    const u = Math.floor(Math.random() * nArts);
+    const [animal, ascii] = Object.entries(art)[u];
+    return { animal, ascii };
+};
+
+const updatePopupPaperNoMemory = async (url) => {
+    let { animal, ascii } = await sampleAsciiArt();
+
+    let noPaperHtml = /* html */ `
+        <div class="no-paper-div">
+            <h3>This paper is not in your Memory&nbsp;
+            <span id="no-paper-why-span">
+                <code id="no-paper-why-code">?</code>
+            </span>
+            </h3>
+            <div>
+                <div>Here's a ${animal} for your trouble</div>
+                <div id="ascii-art-div"><div style="text-align:">${ascii}</div></div>
+            </div>
         </div>
-        <ul>
-            It can be for one of many reasons:
-            <li style="margin-top: 4px">
-                You disabled paper recording from non-pdf pages in the menu
-            </li>
-            <li style="margin-top: 4px">
-                You disabled this paper source in the options page
-            </li>
-            <li style="margin-top: 4px">
-            You deleted the paper (refresh the page to add it back)
-            </li>
-            <li style="margin-top: 4px">
-            There was an error parsing the paper's data (you can check the console
-                if you think this is an issue)
-                </li>
-            <li style="margin-top: 4px">
-                On Firefox, content scripts are not triggered on pdfs.
-                <ul>
-                    <li>
-                        This is not something I can do anything about, it's a design choice by Firefox developers.
-                    </li>
-                    <li>
-                        The extension would work on the paper's <i>abstract</i>
-                    </li>
-                </ul>
-            </li>
-            <li style="margin-top: 4px">
-                You are actually not on a paper page but the extension made a mistake thinking so, just ignore this.
-            </li>
-            <p style="font-size: 0.9rem">
-                Open an issue on
-                <a href="https://github.com/vict0rsch/PaperMemory/issues">Github</a> if
-                you think you encountered a malfunction.
-            </p>
-        </ul>
     `;
-    if (navigator.userAgent.search("Firefox") > -1) {
-        noMemoryHTML += `<div id="manual-firefox">Try manual trigger</div>`;
+    const allowManualParsing =
+        navigator.userAgent.search("Firefox") > -1 || global.state.menu.checkNoAuto;
+
+    if (allowManualParsing) {
+        noPaperHtml += /* html */ `
+            <div id="manual-trigger-wrapper">
+                <div id="manual-trigger-btn">Try manual trigger</div>
+                <div id="manual-loader-container" class="arxivTools-container" style='display: none;'>
+                    <div class="sk-folding-cube">
+                        <div class="sk-cube1 sk-cube"></div>
+                        <div class="sk-cube2 sk-cube"></div>
+                        <div class="sk-cube4 sk-cube"></div>
+                        <div class="sk-cube3 sk-cube"></div>
+                    </div>
+                </div>
+                <div id="manual-parsing-error"></div>
+            </div>
+        `;
     }
     const previousIsArxiv = findEl("isArxiv").innerHTML;
-    setHTML("isArxiv", noMemoryHTML);
+    setHTML("isArxiv", noPaperHtml);
 
-    if (navigator.userAgent.search("Firefox") > -1) {
-        addListener("manual-firefox", "click", async () => {
-            const is = await isPaper(url);
-            let paper;
-            const update = await addOrUpdatePaper(url, is);
-            if (update) {
-                paper = update.paper;
-            } else {
-                return;
-            }
-            if (paper) {
-                setHTML("isArxiv", previousIsArxiv);
-                popupMain(url, is, true);
+    addListener("no-paper-why-code", "click", () => {
+        showPopupModal("noPaper");
+    });
+
+    if (allowManualParsing) {
+        addListener("manual-trigger-btn", "click", async () => {
+            showId("manual-loader-container");
+            try {
+                const is = await isPaper(url);
+                let paper;
+                const update = await addOrUpdatePaper(url, is);
+                if (update) {
+                    paper = update.paper;
+                } else {
+                    return;
+                }
+                if (paper) {
+                    hideId("manual-loader-container");
+                    setHTML("isArxiv", previousIsArxiv);
+                    popupMain(url, is, true);
+                }
+            } catch (error) {
+                hideId("manual-loader-container");
+                const errorText =
+                    "There was an issue parsing this paper. <br/> " +
+                    "Raise an issue on Github if you think it is a bug.<br/>" +
+                    "Attempted url: " +
+                    url;
+                setHTML("manual-parsing-error", `<strong>${errorText}</strong>`);
+                warn("Manual Parsing Error:", error);
             }
         });
     }

@@ -7,9 +7,7 @@ const addEventToClass = (className, eventName, fn) => {
 const handleBackToFocus = (e) => {
     const id = eventId(e);
     setTimeout(() => {
-        document
-            .getElementById(`memory-container--${id}`)
-            .dispatchEvent(new Event("focus"));
+        dispatch(`memory-container--${id}`, "focus");
     }, 250);
 };
 
@@ -262,14 +260,14 @@ const handleConfirmDeleteModalClick = (e) => {
     const title = global.state.papers[id].title;
     const url = global.state.papers[id].pdfLink;
     delete global.state.papers[id];
-    chrome.storage.local.set({ papers: global.state.papers }, () => {
+    chrome.storage.local.set({ papers: global.state.papers }, async () => {
         global.state.papersList = Object.values(cleanPapers(global.state.papers));
         sortMemory();
         displayMemoryTable();
         hideId("confirm-modal");
-        log(`Successfully deleted "${title}" (${id}) from PaperMemory`);
+        info(`Successfully deleted "${title}" (${id}) from PaperMemory`);
         if (global.state.currentId === id) {
-            updatePopupPaperNoMemory(url);
+            await updatePopupPaperNoMemory(url);
         }
         setPlaceholder(
             "memory-search",
@@ -385,13 +383,26 @@ const handlePopupKeydown = (e) => {
 
 const handleMenuCheckChange = (e) => {
     const key = e.target.id;
+    console.log("key: ", key);
     const checked = findEl(key).checked;
+    console.log("checked: ", checked);
     chrome.storage.local.set({ [key]: checked }, function () {
         log(`Settings saved for ${key} (${checked})`);
         if (global.state && global.state.menu) {
             global.state.menu[key] = checked;
         }
     });
+    if (checked && key === "checkNoAuto") {
+        chrome.commands.getAll((commands) => {
+            const { shortcut } = commands.find(
+                (command) => command.name === "manualParsing"
+            );
+            console.log("shortcut: ", shortcut);
+            if (!shortcut) {
+                showPopupModal("manualParsing");
+            }
+        });
+    }
 };
 
 const handlePopupSaveEdits = (id) => {

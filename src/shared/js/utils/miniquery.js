@@ -4,10 +4,10 @@
  * @param {string} memoryItemClass The class of the element to find within the container with id^
  * @returns {HTMLElement}
  */
-const findEl = (id, memoryItemClass) => {
+const findEl = (elOrId, memoryItemClass) => {
     if (typeof memoryItemClass === "undefined")
-        return typeof id === "string" ? document.getElementById(id) : id;
-    return findEl(`memory-container--${id}`).querySelector(`.${memoryItemClass}`);
+        return typeof elOrId === "string" ? document.getElementById(elOrId) : elOrId;
+    return findEl(`memory-container--${elOrId}`).querySelector(`.${memoryItemClass}`);
 };
 
 const fadeOut = (el, duration = 250, callback = () => {}) => {
@@ -261,3 +261,11 @@ if (typeof module !== "undefined" && module.exports != null) {
         slideToggle,
     };
 }
+
+const createElementFromHTML = (htmlString) => {
+    var div = document.createElement("div");
+    div.innerHTML = htmlString.trim();
+
+    // Change this to div.childNodes to support multiple top-level nodes.
+    return div.firstChild;
+};

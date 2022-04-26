@@ -639,19 +639,6 @@ button.changed {
     font-family: "Fira-code", monospace;
 }
 
-#manual-firefox {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: 6px 8px;
-    border-radius: 4px;
-    background-color: var(--red);
-    cursor: pointer;
-    color: white;
-}
-#manual-firefox:hover {
-    background-color: rgb(151, 16, 16);
-}
 #popup-delete-paper {
     cursor: pointer;
 }
@@ -694,12 +681,12 @@ button.changed {
 }
 
 /*
-----------------------------
------  Keyboard Modal  -----
-----------------------------
+-------------------------
+-----  Popup Modal  -----
+-------------------------
 */
 
-.user-guide-modal {
+.popup-modal-wrapper {
     display: none; /* Hidden by default */
     position: fixed; /* Stay in place */
     z-index: 10; /* Sit on top */
@@ -718,7 +705,7 @@ button.changed {
 }
 
 /* Modal Content/Box */
-.user-guide-modal-content {
+.popup-modal-contents {
     background-color: #fefefe;
     padding: 20px 35px;
     border-radius: var(--rounder);
@@ -728,19 +715,71 @@ button.changed {
 }
 
 /* The Close Button */
-#close-user-guide-modal {
+#close-popup-modal {
     color: #aaa;
     float: right;
     font-size: 28px;
 }
 
-#close-user-guide-modal:hover,
-#close-user-guide-modal:focus {
+#close-popup-modal:hover,
+#close-popup-modal:focus {
     color: black;
     text-decoration: none;
     cursor: pointer;
 }
-.user-guide-modal-content ul {
+.popup-modal-contents ul {
     font-size: 0.9rem;
     padding-left: 12px;
+}
+
+/*
+------------------------------
+-----  No paper content  -----
+------------------------------
+*/
+#no-paper-div h3 {
+    font-size: 1rem;
+}
+
+#no-paper-why-code {
+    cursor: pointer;
+    border-radius: 100px;
+    min-height: 1.2rem !important;
+    min-width: 1.2rem !important;
+    display: inline-block;
+    text-align: center;
+    vertical-align: middle;
+}
+
+#manual-trigger-wrapper {
+    min-height: 120px;
+    max-width: 300px;
+}
+
+#manual-trigger-btn {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 8px 12px;
+    border-radius: 4px;
+    background-color: var(--red);
+    cursor: pointer;
+    color: white;
+    margin-bottom: 24px;
+    max-width: 130px;
+    min-width: 130px;
+    margin: auto;
+    margin-bottom: 20px;
+}
+
+#manual-trigger-btn:hover {
+    background-color: rgb(151, 16, 16);
+}
+
+#ascii-art-div {
+    font-family: "Fira Code", monospace;
+    font-size: 0.6rem;
+    white-space: pre;
+    display: flex;
+    justify-content: center;
 }

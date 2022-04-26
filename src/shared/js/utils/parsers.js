@@ -861,6 +861,16 @@ const makeIEEEPaper = async (url) => {
     return { author, bibtex, id, key, note, pdfLink, title, venue, year };
 };
 
+const tryPWCMatch = async (paper) => {
+    const pwcPrefs = (await getStorage("pwcPrefs")) ?? {};
+    const payload = {
+        type: "papersWithCode",
+        pwcPrefs,
+        paper: paper,
+    };
+    return sendMessageToBackground(payload);
+};
+
 // --------------------------------------------
 // -----  Try CrossRef's API for a match  -----
 // --------------------------------------------

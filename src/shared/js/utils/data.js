@@ -265,7 +265,7 @@ const weeklyBackup = async () => {
     const today = new Date();
     const backupDates = Object.keys(backups)
         .map((k) => new Date(k))
-        .sort();
+        .sort((a, b) => b.getTime() - a.getTime());
     if (backupDates.length > 0) {
         const latestBackup = backupDates[backupDates.length - 1];
         if (dateDiffInDays(latestBackup, today) < 7) return;

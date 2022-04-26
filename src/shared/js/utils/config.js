@@ -80,6 +80,7 @@ global.menuCheckNames = [
     "checkOfficialRepos",
     "checkPreferPdf",
     "checkPdfOnly",
+    "checkNoAuto",
 ];
 /**
  * Menu check names which should not default to true but to false
@@ -91,6 +92,7 @@ global.menuCheckDefaultFalse = [
     "checkScirate",
     "checkOfficialRepos",
     "checkPdfOnly",
+    "checkNoAuto",
 ];
 /**
  * All keys to retrieve from the menu, the checkboxes + the custom pdf function
