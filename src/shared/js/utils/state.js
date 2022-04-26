@@ -287,7 +287,7 @@ const addOrUpdatePaper = async (url, is, menu) => {
             if (isNew) {
                 // new paper
 
-                info("Added '" + paper.title + "' to your Memory!");
+                logOk("Added '" + paper.title + "' to your Memory!");
                 log("paper: ", paper);
                 notifText = "Added to your Memory";
                 if (pwcUrl) {

@@ -93,7 +93,7 @@ strong {
 }
 
 button,
-#file-upload-label {
+.file-upload-label {
     border: 1px solid var(--red);
     border-radius: var(--rounder);
     padding: 4px 6px;
@@ -102,14 +102,14 @@ button,
     cursor: pointer;
 }
 button:disabled,
-#file-upload-label:disabled {
+.file-upload-label:disabled {
     cursor: not-allowed;
     pointer-events: none;
     border-color: #e7a9a9;
 }
 
 button:hover,
-#file-upload-label:hover {
+.file-upload-label:hover {
     border-color: var(--red);
     background-color: rgb(253, 235, 235);
 }

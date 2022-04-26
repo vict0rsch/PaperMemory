@@ -15,6 +15,18 @@ const sleep = async (timeout) =>
         setTimeout(resolve, timeout);
     });
 
+const isValidHttpUrl = (string) => {
+    let url;
+
+    try {
+        url = new URL(string);
+    } catch (_) {
+        return false;
+    }
+
+    return url.protocol === "http:" || url.protocol === "https:";
+};
+
 // ----------------------
 // -----  Keyboard  -----
 // ----------------------
@@ -32,6 +44,200 @@ const setUpKeyboardListeners = () => {
             }
         }
     });
+};
+
+// -------------------------------
+// -----  Table of contents  -----
+// -------------------------------
+
+const makeTOC = async () => {
+    const h1s = Array.from(document.querySelectorAll("h2"));
+    let toc = [];
+    for (const h of h1s) {
+        const title = h.innerText;
+        const short = title.trim().toLowerCase().replace(/\s/g, "-");
+        toc.push(`<a class="col-3" href="#${short}">${title}</a>`);
+    }
+    setHTML("toc", toc.join(""));
+};
+
+// ----------------------------------------
+// -----  Code Blocks & Highlighting  -----
+// ----------------------------------------
+
+const setupCodeBlocks = async () => {
+    let codes = Array.from(document.querySelectorAll("code.trim-code"));
+
+    for (const code of codes) {
+        let lines = code.innerHTML.split("\n").filter((l) => l.trim() !== "");
+        const indent = Math.min(...lines.map((t) => t.match(/^\s*/)[0].length));
+        lines = lines.map((t) => t.slice(indent));
+        code.innerHTML = lines.join("\n");
+        hljs.highlightElement(code);
+    }
+};
+
+// --------------------------------
+// -----  Import Papers List  -----
+// --------------------------------
+const handleSelectImportJson = () => {
+    var file = document.getElementById("import-json-papers-input").files;
+    if (!file || file.length < 1) {
+        return;
+    }
+    file = file[0];
+    setHTML("import-json-label-filename", file.name);
+    if (!file.name.endsWith(".json")) return;
+    findEl("import-json-papers-button").disabled = false;
+};
+
+const validateImportPaper = (p) => {
+    if (typeof p === "string") {
+        if (!isValidHttpUrl(p)) {
+            alert(`${p} (entry ${i}) is not a valid URL`);
+            return;
+        }
+    } else {
+        if (!p.url || typeof p.url !== "string") {
+            alert(
+                `Entry ${i} should have a "url" string field: \n\n`,
+                JSON.stringify(p)
+            );
+            return;
+        }
+        if (!isValidHttpUrl(p.url)) {
+            alert(`${p.url} (entry ${i}) is not a valid URL`);
+            return;
+        }
+        if (p.codeLink && !isValidHttpUrl(p.codeLink)) {
+            alert(`${p.codeLink} (entry ${i}) is not a valid URL`);
+            return;
+        }
+    }
+    return true;
+};
+
+const storeImportedPaper = (paper) =>
+    new Promise(async (resolve) => {
+        const papers = (await getStorage("papers")) ?? {};
+        const exists = Boolean(papers[paper.id]);
+        if (!exists) {
+            logOk("New imported paper!", paper);
+            papers[paper.id] = paper;
+            await setStorage("papers", papers);
+        }
+        resolve(exists);
+    });
+
+const parsePaper = async (url, is) => {
+    const id = await parseIdFromUrl(url);
+    let match;
+    let paper = await makePaper(is, url, id);
+    if (paper) {
+        match = await tryPreprintMatch(paper, true);
+    }
+    if (match) {
+        for (const k in match) {
+            if (match[k] && !paper[k]) {
+                paper[k] = match[k];
+            }
+            if (k === "bibtex" && match[k]) {
+                paper[k] = match[k];
+            }
+        }
+    }
+    return paper;
+};
+
+const handleParseImportJson = async (e) => {
+    var file = document.getElementById("import-json-papers-input").files;
+    if (!file || file.length < 1) {
+        return;
+    }
+    file = file[0];
+    var reader = new FileReader();
+    reader.onload = async function (e) {
+        let papersToParse;
+        try {
+            papersToParse = JSON.parse(e.target.result);
+            info("Entries loaded from user file: ", papersToParse);
+            if (!Array.isArray(papersToParse)) {
+                throw new Error("The JSON file must contain a *list* of papers");
+            }
+            for (const [i, p] of papersToParse.entries()) {
+                if (!validateImportPaper(p)) {
+                    return;
+                }
+            }
+        } catch (error) {
+            logError(error);
+            alert("Error while parsing the file\n" + error);
+            return;
+        }
+
+        const progressbar = document.querySelector("#import-json-progress-bar");
+
+        const changeProgress = (progress) => {
+            progressbar.style.width = `${progress}%`;
+        };
+
+        const feedback = findEl("json-import-feedback");
+        feedback.innerHTML = "";
+
+        showId("import-json-status-container", "flex");
+
+        for (const [i, p] of papersToParse.entries()) {
+            const url = p.url ?? p;
+            info(`[${i + 1}] Processing ${url}`);
+            changeProgress(((i + 1) / papersToParse.length) * 100);
+            setHTML(
+                "import-json-status",
+                `Parsing paper ${i + 1} / ${papersToParse.length} ${url}`
+            );
+
+            try {
+                const is = await isPaper(url);
+                if (!Object.values(is).some((i) => i)) {
+                    feedback.innerHTML += `<li>[${
+                        i + 1
+                    }]&nbsp; &times;&nbsp; Error: ${url} does not come from a known source</li>`;
+                    warn("Aborting.");
+                } else {
+                    let paper;
+
+                    paper = await parsePaper(url, is);
+                    if (p.codeLink) {
+                        paper.codeLink = p.codeLink;
+                    }
+                    const exists = await storeImportedPaper(paper);
+                    if (exists) {
+                        feedback.innerHTML += `<li>[${
+                            i + 1
+                        }]&nbsp; &times;&nbsp; Warning: ${url} already exists and has been ignored</li>`;
+                        warn("Aborting.");
+                    } else {
+                        feedback.innerHTML += `<li>[${
+                            i + 1
+                        }]&nbsp; &#10004; ${url} has been successfully added to your Memory!</li>`;
+                    }
+                }
+            } catch (error) {
+                logError(`Entry ${i} (${url})`, error);
+                warn("Aborting.");
+                feedback.innerHTML += `<li>[${
+                    i + 1
+                }]&nbsp; &times;&nbsp; Error: ${url} (open the JavaScript Console for more info)</li>`;
+            }
+        }
+        changeProgress(0);
+        setHTML("import-json-status", `<strong>Done!</strong>`);
+    };
+    reader.readAsText(file);
+};
+
+const setupImportPapers = async () => {
+    addListener("import-json-papers-input", "change", handleSelectImportJson);
+    addListener("import-json-papers-button", "click", handleParseImportJson);
 };
 
 // ------------------------------
@@ -284,7 +490,7 @@ const startMatching = async (papersToMatch) => {
     showId("matching-progress-container", "flex");
     setHTML("matching-status-total", papersToMatch.length);
 
-    const progressbar = document.querySelector(".progress");
+    const progressbar = document.querySelector("#manual-parsing-progress-bar");
 
     const changeProgress = (progress) => {
         progressbar.style.width = `${progress}%`;
@@ -605,7 +811,7 @@ const makeSource = ([key, name], idx) => {
 const setupSourcesSelection = async () => {
     const sources = global.sourcesNames;
     const table = Object.entries(sources).map(makeSource).join("");
-    setHTML("select-sources", table);
+    setHTML("select-sources-container", table);
 
     let ignoreSources = (await getStorage("ignoreSources")) ?? {};
 
@@ -637,9 +843,12 @@ const setupSourcesSelection = async () => {
 // ----------------------------
 
 (() => {
+    makeTOC();
+    setupCodeBlocks();
     setupPWCPrefs();
     setupAutoTags();
     setupPreprintMatching();
+    setupImportPapers();
     setUpKeyboardListeners();
     setupSourcesSelection();
     setupTitleFunction();

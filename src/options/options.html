@@ -12,6 +12,7 @@
         integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
     <link rel="stylesheet" type="text/css" href="../shared/css/vars.css">
     <link rel="stylesheet" type="text/css" href="../shared/css/loader.css">
+    <link rel="stylesheet" type="text/css" href="github.min.css">
     <link rel="stylesheet" type="text/css" href="options.css">
 </head>
 
@@ -27,7 +28,7 @@
         </div>
     </div>
     <div id="content">
-        <p style="margin-bottom: 3rem;">
+        <p style="margin-bottom: 1rem;">
             <em>These customization options are complementary to those available in the
                 popup such as Dark Theme or
                 Notifications. You can also access your full-screen memory
@@ -36,8 +37,22 @@
                 </a>
             </em>.
         </p>
+        <p style="margin-bottom: 3rem;">
+            <em><strong>Warning:</strong> features which alter your Memory such as publication matching, importing
+                papers or overwriting your Memory should not be triggered while you are browsing papers. This would have
+                unpredictable effects as you would concurrently write to the same database.
+            </em>.
+        </p>
+
+        <div class="row mb-5">
+            <h3>Table of contents</h3>
+            <div id="toc" class="row"></div>
+        </div>
+
+        <hr>
+
         <div class="section">
-            <h2>PapersWithCode preferences</h2>
+            <h2 id="paperswithcode-preferences">PapersWithCode preferences</h2>
 
             <div style="display: flex; align-items: center; height:4rem">
                 <span style="width: 35%">[1] Only store <em>official</em> code repositories: </span>
@@ -66,8 +81,10 @@
                 stars.</p>
         </div>
 
+        <hr>
+
         <div class="section">
-            <h2>Auto-tagging</h2>
+            <h2 id="auto-tagging">Auto-tagging</h2>
             <p>Provide Javascript regular expressions to automatically add tags to papers based on their titles and
                 authors. The
                 two columns represent an <code>AND</code>. Use two different entries for an <code>OR</code>.
@@ -116,8 +133,84 @@
             </div>
         </div>
 
+
+
+        <hr>
+
         <div class="section">
-            <h2>Preprint matching</h2>
+            <h2 id="import-papers">Import papers</h2>
+
+            <p>PaperMemory lets you add papers from a list of URLs in the form of a <code>.json</code> file.
+            </p>
+
+            <p>The file must be structured as follows: a list of entries where each entry is either a
+                <code>string</code> pointing to a paper's <code>url</code> (PDF or abstract) or a
+                <code>dictionnary</code> with a mandatory <code>"url"</code> field and <em>optionally</em> a
+                <code>"codeLink": string</code> field pointing a to code repository.
+
+            </p>
+
+            <p><strong><em>Note</em></strong>&nbsp;: all URLs must come from sources known to PaperMemory</p>
+
+            <p>Example valid <code>.json</code> file:</p>
+            <code style="display: block; white-space: pre-wrap; padding: 16px" class="language-json trim-code">
+                [
+                    "https://arxiv.org/pdf/1901.06500.pdf",
+                    "https://arxiv.org/abs/2110.02871",
+                    {
+                        "url": "https://arxiv.org/abs/1811.12833",
+                        "codeLink": "https://github.com/valeoai/ADVENT"
+                    },
+                    {
+                        "url": "https://openreview.net/forum?id=xQUe1pOKPam"
+                    }
+                ]
+            </code>
+
+            <div class="row mt-4">
+                <div class="col-3">
+                    <label id="import-json-label" for="import-json-papers-input" class="ms-2 file-upload-label">
+                        Select file
+                    </label>
+                    <input type="file" id="import-json-papers-input" style="display: none;"></input>
+                </div>
+                <div class="col-3">
+                    <button id="import-json-papers-button" disabled class="ms-2 flex-center-between code-font">
+                        .json&nbsp;
+                        <svg viewBox="0 0 24 24" style="height: 18px; width: 18px; color: black; stroke: black">
+                            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                            <path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2 -2v-2" />
+                            <polyline points="7 9 12 4 17 9" />
+                            <line x1="12" y1="4" x2="12" y2="16" />
+                        </svg>
+                    </button>
+                </div>
+                <div class="col-6" id="import-json-label-filename">
+
+                </div>
+
+                <div id="import-json-status-container" style="display: none; padding: 32px; align-items: center;">
+
+
+                    <div class="progress-container" style="margin: 0;">
+                        <div class="progress" id="import-json-progress-bar"></div>
+                    </div>
+                    <div id="import-json-status" style="display: flex; padding-left: 16px;">
+                    </div>
+
+                </div>
+                <div>
+                    <ul id="json-import-feedback" style="padding: 0px 32px; list-style-type: none;"></ul>
+                </div>
+
+            </div>
+
+        </div>
+
+        <hr>
+
+        <div class="section">
+            <h2 id="preprint-matching">Preprint matching</h2>
 
             <p>In this section, you can manually trigger the <a
                     href="https://github.com/vict0rsch/PaperMemory#preprints" rel="noopenner noreferrer"
@@ -135,7 +228,7 @@
 
             <div id="matching-progress-container" style="display: none;">
                 <div class="progress-container">
-                    <div class="progress"></div>
+                    <div class="progress" id="manual-parsing-progress-bar"></div>
                     <div style="padding: 8px; text-align: center;">
                         <span id="matching-status-index"></span> / <span id="matching-status-total"></span>
                     </div>
@@ -155,8 +248,10 @@
         </div>
 
 
+        <hr>
+
         <div class="section">
-            <h2>Select Sources</h2>
+            <h2 id="select-sources">Select Sources</h2>
             <p>If you don't want to track papers from <emph>all</emph> the sources PaperMemory can handle, you can
                 disable them
                 here.
@@ -165,8 +260,10 @@
                 distinguish between Nature Communications and Nature Climate Change (both <code>nature</code> venues) or
                 between CVPR and ICCV (both <code>cvf</code> venues).</p>
             <p>Sources to parse papers from:</p>
-            <div id="select-sources"></div>
+            <div id="select-sources-container"></div>
         </div>
+
+        <hr>
 
         <div class="section">
             <h2>Custom title function</h2>
@@ -208,8 +305,10 @@
 
         </div>
 
+        <hr>
+
         <div class="section">
-            <h2>Data Management</h2>
+            <h2 id="data-management">Data Management</h2>
 
             <p>You can export your full Memory as a <code>json</code> file or as a bibliography.</p>
             <p>To perform advanced data manipulation (paper merges, batch tagging etc.) you can process the exported
@@ -272,7 +371,8 @@
                         Memory): </p>
                 </div>
                 <div class="col-2">
-                    <label id="file-upload-label" for="overwrite-arxivmemory-input" class="ms-2">Select
+                    <label id="file-upload-label" for="overwrite-arxivmemory-input"
+                        class="ms-2 file-upload-label">Select
                         file</label><input type="file" id="overwrite-arxivmemory-input" style="display: none;"></input>
                 </div>
                 <div class="col-2">
@@ -295,8 +395,10 @@
 
         </div>
 
+        <hr>
+
         <div class="section">
-            <h2>Local file storage</h2>
+            <h2 id="local-file-storage">Local file storage</h2>
 
             <p>PaperMemory can store pdfs in your Downloads folder and use this file instead of re-downloading a pdf
                 from the internet.</p>
@@ -362,6 +464,7 @@
     </div>
 
     <script src="../shared/min/jquery.min.js"></script>
+    <script src="highlight.min.js"></script>
     <script src="../shared/min/utils.min.js"></script>
     <script src="options.js"></script>
 </body>
