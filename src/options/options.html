@@ -28,7 +28,7 @@
         </div>
     </div>
     <div id="content">
-        <p style="margin-bottom: 3rem;">
+        <p style="margin-bottom: 1rem;">
             <em>These customization options are complementary to those available in the
                 popup such as Dark Theme or
                 Notifications. You can also access your full-screen memory
@@ -37,8 +37,22 @@
                 </a>
             </em>.
         </p>
+        <p style="margin-bottom: 3rem;">
+            <em><strong>Warning:</strong> features which alter your Memory such as publication matching, importing
+                papers or overwriting your Memory should not be triggered while you are browsing papers. This would have
+                unpredictable effects as you would concurrently write to the same database.
+            </em>.
+        </p>
+
+        <div class="row mb-5">
+            <h3>Table of contents</h3>
+            <div id="toc" class="row"></div>
+        </div>
+
+        <hr>
+
         <div class="section">
-            <h2>PapersWithCode preferences</h2>
+            <h2 id="paperswithcode-preferences">PapersWithCode preferences</h2>
 
             <div style="display: flex; align-items: center; height:4rem">
                 <span style="width: 35%">[1] Only store <em>official</em> code repositories: </span>
@@ -67,8 +81,10 @@
                 stars.</p>
         </div>
 
+        <hr>
+
         <div class="section">
-            <h2>Auto-tagging</h2>
+            <h2 id="auto-tagging">Auto-tagging</h2>
             <p>Provide Javascript regular expressions to automatically add tags to papers based on their titles and
                 authors. The
                 two columns represent an <code>AND</code>. Use two different entries for an <code>OR</code>.
@@ -119,28 +135,18 @@
 
 
 
+        <hr>
+
         <div class="section">
-            <h2>Import papers</h2>
+            <h2 id="import-papers">Import papers</h2>
 
             <p>PaperMemory lets you add papers from other sources in the form of <code>.json</code> files
             </p>
 
-            <h4>Import <code>.json</code> list of papers</h4>
-
             <p>The file must be structured as follows: a list of entries where each entry is either a
                 <code>string</code> pointing to a paper's <code>url</code> (PDF or abstract) or a
-                <code>dictionnary</code> with a mandatory <code>"url"</code> field and <em>optionally</em>:
-            <ul>
-                <li><code>"codeLink": string</code> (link to code repo)</li>
-                <li><code>"note": string</code> (personal comment)</li>
-                <li><code>"venue": string</code> (known publication venue)
-                    <ul>
-                        <li>If you specify a venue you <em>must</em> also provide a
-                            <code>"year": string or number</code>
-                        </li>
-                    </ul>
-                </li>
-            </ul>
+                <code>dictionnary</code> with a mandatory <code>"url"</code> field and <em>optionally</em> a
+                <code>"codeLink": string</code> field pointing a to code repository.
 
             </p>
 
@@ -154,9 +160,7 @@
                         "codeLink": "https://github.com/valeoai/ADVENT"
                     },
                     {
-                        "url": "https://openreview.net/forum?id=xQUe1pOKPam",
-                        "venue": "ICLR",
-                        "year": 2022
+                        "url": "https://openreview.net/forum?id=xQUe1pOKPam"
                     }
                 ]
             </code>
@@ -201,8 +205,10 @@
 
         </div>
 
+        <hr>
+
         <div class="section">
-            <h2>Preprint matching</h2>
+            <h2 id="preprint-matching">Preprint matching</h2>
 
             <p>In this section, you can manually trigger the <a
                     href="https://github.com/vict0rsch/PaperMemory#preprints" rel="noopenner noreferrer"
@@ -240,8 +246,10 @@
         </div>
 
 
+        <hr>
+
         <div class="section">
-            <h2>Select Sources</h2>
+            <h2 id="select-sources">Select Sources</h2>
             <p>If you don't want to track papers from <emph>all</emph> the sources PaperMemory can handle, you can
                 disable them
                 here.
@@ -250,8 +258,10 @@
                 distinguish between Nature Communications and Nature Climate Change (both <code>nature</code> venues) or
                 between CVPR and ICCV (both <code>cvf</code> venues).</p>
             <p>Sources to parse papers from:</p>
-            <div id="select-sources"></div>
+            <div id="select-sources-container"></div>
         </div>
+
+        <hr>
 
         <div class="section">
             <h2>Custom title function</h2>
@@ -293,8 +303,10 @@
 
         </div>
 
+        <hr>
+
         <div class="section">
-            <h2>Data Management</h2>
+            <h2 id="data-management">Data Management</h2>
 
             <p>You can export your full Memory as a <code>json</code> file or as a bibliography.</p>
             <p>To perform advanced data manipulation (paper merges, batch tagging etc.) you can process the exported
@@ -381,8 +393,10 @@
 
         </div>
 
+        <hr>
+
         <div class="section">
-            <h2>Local file storage</h2>
+            <h2 id="local-file-storage">Local file storage</h2>
 
             <p>PaperMemory can store pdfs in your Downloads folder and use this file instead of re-downloading a pdf
                 from the internet.</p>

@@ -77,8 +77,10 @@ code {
     padding: 32px;
 }
 
-.section {
-    margin-bottom: 4rem;
+hr {
+    border: none;
+    border-top: 1px solid var(--lighterColor);
+    margin: 4rem;
 }
 
 textarea {
@@ -275,7 +277,8 @@ input {
 
 #footer {
     border-top: 1px solid gray;
-    padding-top: 3rem;
+    padding-top: 4rem;
+    margin-top: 4rem;
 }
 
 .flex-center-evenly {

@@ -46,6 +46,21 @@ const setUpKeyboardListeners = () => {
     });
 };
 
+// -------------------------------
+// -----  Table of contents  -----
+// -------------------------------
+
+const makeTOC = async () => {
+    const h1s = Array.from(document.querySelectorAll("h2"));
+    let toc = [];
+    for (const h of h1s) {
+        const title = h.innerText;
+        const short = title.trim().toLowerCase().replace(/\s/g, "-");
+        toc.push(`<a class="col-3" href="#${short}">${title}</a>`);
+    }
+    setHTML("toc", toc.join(""));
+};
+
 // ----------------------------------------
 // -----  Code Blocks & Highlighting  -----
 // ----------------------------------------
@@ -796,7 +811,7 @@ const makeSource = ([key, name], idx) => {
 const setupSourcesSelection = async () => {
     const sources = global.sourcesNames;
     const table = Object.entries(sources).map(makeSource).join("");
-    setHTML("select-sources", table);
+    setHTML("select-sources-container", table);
 
     let ignoreSources = (await getStorage("ignoreSources")) ?? {};
 
@@ -828,6 +843,7 @@ const setupSourcesSelection = async () => {
 // ----------------------------
 
 (() => {
+    makeTOC();
     setupCodeBlocks();
     setupPWCPrefs();
     setupAutoTags();
