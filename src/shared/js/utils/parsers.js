@@ -980,8 +980,33 @@ const tryDBLP = async (paper) => {
     }
 };
 
-const tryPreprintMatch = async (paper) => {
-    let note, venue, bibtex;
+const tryPreprintMatch = async (paper, tryPwc = false) => {
+    let note, venue, bibtex, code;
+
+    if (tryPwc) {
+        const pwcPrefs = (await getStorage("pwcPrefs")) ?? {};
+        const payload = {
+            type: "papersWithCode",
+            pwcPrefs,
+            paper: paper,
+        };
+        const pwc = await sendMessageToBackground(payload);
+        pwcUrl = !paper.codeLink && pwc?.url;
+        pwcNote = !paper.note && pwc?.note;
+        pwcVenue = !paper.venue && pwc?.venue;
+
+        if (pwcUrl) {
+            code = pwc;
+        }
+        if (pwcNote) {
+            note = pwcNote;
+        }
+        if (pwcVenue) {
+            venue = pwcVenue;
+        }
+    }
+
+    if (venue) return { note, venue, bibtex };
 
     dblpMatch = await tryDBLP(paper);
     note = dblpMatch.note;
@@ -996,7 +1021,7 @@ const tryPreprintMatch = async (paper) => {
     if (!note) {
         log("[CrossRef] No publication found");
     }
-    return { note, venue, bibtex };
+    return { note, venue, bibtex, code };
 };
 
 // -----------------------------
