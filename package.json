@@ -7,7 +7,8 @@
     "test": "gulp build && cd test/ && ../node_modules/.bin/mocha test-*.js",
     "test-storage": "gulp build && cd test/ && ../node_modules/.bin/mocha test-storage.js",
     "test-no-storage": "gulp build && cd test/ && ../node_modules/.bin/mocha 'test-!(storage)*.js'",
-    "test-no-storage-no-build": "cd test/ && ../node_modules/.bin/mocha 'test-!(storage)*.js'"
+    "test-no-storage-no-build": "cd test/ && ../node_modules/.bin/mocha 'test-!(storage)*.js'",
+    "screenshots": "node_modules/.bin/mocha test/screenshots.js"
   },
   "repository": {
     "type": "git",

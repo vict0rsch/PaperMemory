@@ -1,6 +1,6 @@
 const puppeteer = require("puppeteer");
 
-exports.makeBrowser = async () => {
+exports.makeBrowser = async (windowSize = "500,600") => {
     const browserFetcher = puppeteer.createBrowserFetcher();
     const revisionInfo = await browserFetcher.download("818858");
     const browser = await puppeteer.launch({
@@ -10,7 +10,7 @@ exports.makeBrowser = async () => {
         ignoreDefaultArgs: ["--disable-extensions"],
         args: [
             "--load-extension=../",
-            `--window-size=500,600`,
+            `--window-size=${windowSize}`,
             "--user-agent=PuppeteerAgent",
         ],
     });
