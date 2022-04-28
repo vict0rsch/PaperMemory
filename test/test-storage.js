@@ -1,6 +1,6 @@
 // ❯ env MAX_SOURCES=2 PAGE_TIMEOUT_S=8 npm run test
 
-const expect = require("expect");
+const { expect } = require("expect");
 const fs = require("fs");
 const { isRegExp } = require("util/types");
 
