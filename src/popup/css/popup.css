@@ -400,6 +400,7 @@ code {
     outline: none;
     border: 0px;
     color: inherit;
+    padding-right: 18px;
 }
 #memory-search:focus {
     outline: none !important;
