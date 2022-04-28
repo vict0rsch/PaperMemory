@@ -128,12 +128,16 @@ const cleanPapers = (papers) => {
 
 const firstNonStopLowercase = (title) => {
     let t = title.toLowerCase();
-    let words = t.split(" ").map((w) => w.replace(/[^0-9a-z]/gi, ""));
-    let meaningful = words.filter((w) => global.englishStopWords.has(w));
+    let words = t.split(" ").map(miniHash);
+    let meaningful = words.filter((w) => !global.englishStopWords.has(w));
     if (meaningful.length > 0) {
         return meaningful[0];
     }
     return words[0];
+};
+
+const miniHash = (str) => {
+    return str.toLowerCase().replace(/\W/g, "");
 };
 
 const fallbackCopyTextToClipboard = (text) => {
