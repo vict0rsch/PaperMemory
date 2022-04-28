@@ -116,6 +116,29 @@ describe("paper.js", () => {
         }
     });
 
+    describe("#isPaper", () => {
+        const names = ["from abstract", "from pdf"];
+        for (const [source, urls] of Object.entries(allUrls)) {
+            for (const [i, url] of urls.slice(0, 2).entries()) {
+                it(`${source} - ${names[i]}`, async () => {
+                    const isp = await isPaper(url);
+                    let target = Object.fromEntries(
+                        Object.keys(isp).map((k) => [k, false])
+                    );
+                    target.stored = null;
+                    target[source] = true;
+                    expect(isp).toEqual(target);
+                });
+            }
+        }
+        for (const [u, url] of ["arxiv.org", "https://google.com"].entries()) {
+            it(`Negative ${u} (${url})`, async () => {
+                const isp = await isPaper(url);
+                let target = Object.fromEntries(
+                    Object.keys(isp).map((k) => [k, false])
+                );
+                target.stored = null;
+                expect(isp).toEqual(target);
             });
         }
     });
