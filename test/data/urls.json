@@ -102,5 +102,9 @@
     "pnas": [
         "https://www.pnas.org/doi/full/10.1073/pnas.1900358116",
         "https://www.pnas.org/doi/pdf/10.1073/pnas.1900358116"
+    ],
+    "springer": [
+        "https://link.springer.com/article/10.1007/s41095-022-0271-y",
+        "https://link.springer.com/content/pdf/10.1007/s41095-022-0271-y.pdf"
     ]
 }

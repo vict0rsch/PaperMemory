@@ -87,9 +87,103 @@ const fetchText = async (url) => {
     }
 };
 
+const fetchJSON = async (url) => {
+    try {
+        const response = await fetch(url);
+        const data = response.ok ? await response.json() : {};
+        return data;
+    } catch (error) {
+        console.log("fetchJSON error:", error);
+        return {};
+    }
+};
+
 // -------------------
 // -----  Parse  -----
 // -------------------
+
+const extractCrossrefData = (crossrefResponse) => {
+    if (!crossrefResponse.status || crossrefResponse.status !== "ok") {
+        error("Cannot parse CrossRef response", crossrefResponse);
+        return;
+    }
+    if (crossrefResponse["message-type"] !== "work") {
+        error("Unknown `message-type` from CrossRef", crossrefResponse);
+        return;
+    }
+
+    const data = crossrefResponse.message;
+    log("Crossref data.message: ", data);
+
+    const author = data.author.map((a) => `${a.given} ${a.family}`).join(" and ");
+
+    const year = data.issued
+        ? data.issued["date-parts"][0][0] + ""
+        : data.published
+        ? data.published["date-parts"][0][0] + ""
+        : null;
+
+    if (!year) {
+        error("Cannot find year in CrossRef data", data);
+        return;
+    }
+
+    const title = data.title[0];
+
+    if (!title) {
+        error("Cannot find title in CrossRef data", data);
+        return;
+    }
+
+    const venue = data["container-title"][0] ?? "Springer";
+    const key = [
+        miniHash(data.author[0].family),
+        year.slice(2),
+        firstNonStopLowercase(title),
+    ].join("");
+
+    const doi = data.DOI;
+    const entryType =
+        data.type === "book"
+            ? "book"
+            : data.type === "book-chapter"
+            ? "InBook"
+            : data.type.includes("article")
+            ? "Article"
+            : "InProceedings";
+    let bibData = {
+        entryType,
+        citationKey: key,
+        publisher: data.publisher,
+        author,
+        title,
+        year,
+        doi,
+    };
+    if (data.page) {
+        bibData.pages = data.page;
+    }
+    if (data.volume) {
+        bibData.volume = data.volume;
+    }
+    if (data.type.includes("journal")) {
+        bibData.journal = venue;
+    }
+    if (data.link && data.link.length > 0) {
+        const pdf = data.link.find((l) => l["content-type"] === "application/pdf");
+        if (pdf) {
+            bibData.pdf = pdf.URL;
+        }
+        const url =
+            data.link.find((l) => l["content-type"] === "text/html") ?? data.link[0];
+        if (url) {
+            bibData.url = url.URL;
+        }
+    }
+    const bibtex = bibtexToString(bibData);
+
+    return { ...bibData, bibtex, venue };
+};
 
 const makeArxivPaper = async (memoryId) => {
     const response = await fetchArxivXML(memoryId);
@@ -861,6 +955,56 @@ const makeIEEEPaper = async (url) => {
     return { author, bibtex, id, key, note, pdfLink, title, venue, year };
 };
 
+const makeSpringerPaper = async (url) => {
+    // https://link.springer.com/chapter/10.1007/978-981-16-1220-6_12
+    // https://link.springer.com/article/10.1007/s00148-021-00864-z
+    // https://link.springer.com/content/pdf/10.1007/s00148-021-00864-z.pdf
+    // https://link.springer.com/article/10.1007/s00148-021-00864-z?noAccess=true
+    // https://citation-needed.springer.com/v2/references/10.1007/s41095-022-0271-y?format=bibtex&flavour=citation
+    const types = [...global.sourceExtras.springer.types, "content/pdf"];
+    const springerType = types.find((c) => url.includes(`/${c}/`));
+    if (!springerType) {
+        throw new Error(
+            `Could not find Springer type for ${url} (known: ${types.join(", ")})`
+        );
+    }
+    const doi = url.split(`/${springerType}/`)[1].split("?")[0].replace(".pdf", "");
+
+    const crossrefResponse = await fetchJSON(
+        `https://api.crossref.org/works/${doi}?mailto=schmidtv%40mila.quebec`
+    );
+
+    const data = extractCrossrefData(crossrefResponse);
+
+    if (!data) {
+        throw new Error("Aborting Springer paper parsing, see error above");
+    }
+
+    const { author, bibtex, citationKey, year, title, venue } = data;
+
+    const id = `Springer-${year}_${miniHash(doi)}`;
+    const note = `Published @ ${venue} (${year})`;
+
+    const pdfLink =
+        data.pdf ??
+        (springerType === "content/pdf"
+            ? url
+            : url.replace(`/${springerType}/`, "/content/pdf/") + ".pdf");
+
+    return {
+        author,
+        bibtex,
+        id,
+        key: citationKey,
+        note,
+        pdfLink,
+        title,
+        venue,
+        year,
+        extra: { url: `https://doi.org/${doi}` },
+    };
+};
+
 const tryPWCMatch = async (paper) => {
     const pwcPrefs = (await getStorage("pwcPrefs")) ?? {};
     const payload = {
@@ -1158,6 +1302,11 @@ const makePaper = async (is, url, id) => {
         paper = await makeIEEEPaper(url);
         if (paper) {
             paper.source = "ieee";
+        }
+    } else if (is.springer) {
+        paper = await makeSpringerPaper(url);
+        if (paper) {
+            paper.source = "springer";
         }
     } else {
         throw new Error("Unknown paper source: " + JSON.stringify({ is, url, id }));

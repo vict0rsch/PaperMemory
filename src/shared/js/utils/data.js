@@ -382,6 +382,11 @@ const validatePaper = (paper, log = true) => {
             desc: "the paper's number of visits",
             default: (p) => 1,
         },
+        extras: {
+            type: "object",
+            desc: "extra information about the paper which may be required per source",
+            optional: true,
+        },
         favorite: {
             type: "boolean",
             desc: "user wants to star the paper",
@@ -456,7 +461,7 @@ const validatePaper = (paper, log = true) => {
                 // stores the update message. If `log` is true, also log the message
                 warns.push(message);
                 log && console.warn(message);
-            } else {
+            } else if (!expectedKeys[key].optional) {
                 // There's no default function for the missing attribute.
                 // This behavior is unaccounted for: throw an error and break the validation.
                 throw new Error(

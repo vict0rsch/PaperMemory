@@ -123,6 +123,11 @@ const paperToAbs = (paper) => {
 
         case "ieee":
             abs = `https://ieeexplore.ieee.org/document/${paper.key}`;
+            break;
+
+        case "springer":
+            abs = paper.extra.url;
+            break;
 
         default:
             abs = "https://xkcd.com/1969/";
@@ -203,6 +208,9 @@ const paperToPDF = (paper) => {
         case "ieee":
             break;
 
+        case "springer":
+            break;
+
         default:
             pdf = "https://xkcd.com/1969/";
             break;
@@ -263,10 +271,7 @@ const findLocalFile = async (paperOrUrl) => {
 const matchPapersToFiles = async (papers, files) => {
     // pre-compute paper's simplified titles
     const titles = Object.fromEntries(
-        Object.values(papers).map((paper) => [
-            paper.id,
-            paper.title.toLowerCase().replace(/\W/g, ""),
-        ])
+        Object.values(papers).map((paper) => [paper.id, miniHash(paper.title)])
     );
     // filter non-existing file handles
     files = files.filter(
@@ -277,7 +282,7 @@ const matchPapersToFiles = async (papers, files) => {
     );
     // pre-compute file's simplified titles
     const fileTitles = Object.fromEntries(
-        files.map((f) => [f.id, f.filename.toLowerCase().replace(/\W/g, "")])
+        files.map((f) => [f.id, miniHash(f.filename)])
     );
 
     // matching object to return
