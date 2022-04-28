@@ -66,6 +66,18 @@ code {
     margin-left: 1rem;
 }
 
+#toc {
+    text-align: center;
+    max-width: 75%;
+    margin: auto;
+    margin-top: 2rem;
+    font-size: 1.2rem;
+}
+
+.toc-item {
+    display: inline-block;
+}
+
 /*
 ---------------------
 -----  Content  -----

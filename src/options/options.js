@@ -56,9 +56,10 @@ const makeTOC = async () => {
     for (const h of h1s) {
         const title = h.innerText;
         const short = title.trim().toLowerCase().replace(/\s/g, "-");
-        toc.push(`<a class="col-3" href="#${short}">${title}</a>`);
+        toc.push(`<a class="toc-item" href="#${short}">${title}</a>`);
+        toc.push("&nbsp; &#149; &nbsp;");
     }
-    setHTML("toc", toc.join(""));
+    setHTML("toc", toc.slice(0, -1).join(""));
 };
 
 // ----------------------------------------
