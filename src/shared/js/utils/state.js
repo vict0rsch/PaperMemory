@@ -515,7 +515,7 @@ const isKnownLocalFile = (url) => {
         .replace(/\W/g, "");
     const titles = Object.values(cleanPapers(global.state.papers))
         .map((p) => {
-            return { title: p.title.toLowerCase().replace(/\W/g, ""), id: p.id };
+            return { title: miniHash(p.title), id: p.id };
         })
         .filter((t) => filename.includes(t.title));
 
