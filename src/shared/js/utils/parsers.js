@@ -102,6 +102,89 @@ const fetchJSON = async (url) => {
 // -----  Parse  -----
 // -------------------
 
+const extractCrossrefData = (crossrefResponse) => {
+    if (!crossrefResponse.status || crossrefResponse.status !== "ok") {
+        error("Cannot parse CrossRef response", crossrefResponse);
+        return;
+    }
+    if (crossrefResponse["message-type"] !== "work") {
+        error("Unknown `message-type` from CrossRef", crossrefResponse);
+        return;
+    }
+
+    const data = crossrefResponse.message;
+    log("Crossref data.message: ", data);
+
+    const author = data.author.map((a) => `${a.given} ${a.family}`).join(" and ");
+
+    const year = data.issued
+        ? data.issued["date-parts"][0][0] + ""
+        : data.published
+        ? data.published["date-parts"][0][0] + ""
+        : null;
+
+    if (!year) {
+        error("Cannot find year in CrossRef data", data);
+        return;
+    }
+
+    const title = data.title[0];
+
+    if (!title) {
+        error("Cannot find title in CrossRef data", data);
+        return;
+    }
+
+    const venue = data["container-title"][0] ?? "Springer";
+    const key = [
+        miniHash(data.author[0].family),
+        year.slice(2),
+        firstNonStopLowercase(title),
+    ].join("");
+
+    const doi = data.DOI;
+    const entryType =
+        data.type === "book"
+            ? "book"
+            : data.type === "book-chapter"
+            ? "InBook"
+            : data.type.includes("article")
+            ? "Article"
+            : "InProceedings";
+    let bibData = {
+        entryType,
+        citationKey: key,
+        publisher: data.publisher,
+        author,
+        title,
+        year,
+        doi,
+    };
+    if (data.page) {
+        bibData.pages = data.page;
+    }
+    if (data.volume) {
+        bibData.volume = data.volume;
+    }
+    if (data.type.includes("journal")) {
+        bibData.journal = venue;
+    }
+    if (data.link && data.link.length > 0) {
+        const pdf = data.link.find((l) => l["content-type"] === "application/pdf");
+        if (pdf) {
+            bibData.pdf = pdf.URL;
+        }
+        const url =
+            data.link.find((l) => l["content-type"] === "text/html") ?? data.link[0];
+        if (url) {
+            bibData.url = url.URL;
+        }
+    }
+    const bibtex = bibtexToString(bibData);
+
+    return { ...bibData, bibtex, venue };
+};
+
 const makeArxivPaper = async (memoryId) => {
     const response = await fetchArxivXML(memoryId);
     const xmlData = await response.text();
