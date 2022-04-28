@@ -182,7 +182,10 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
     // read changeInfo data and do something with it
     // like send the new url to content_scripts.js
     if (changeInfo.url) {
-        if (await isKnownURL(changeInfo.url)) {
+        if (
+            (await isKnownURL(changeInfo.url)) &&
+            changeInfo.url.includes("openreview")
+        ) {
             chrome.tabs.sendMessage(tabId, {
                 message: "tabUrlUpdate",
                 url: changeInfo.url,
