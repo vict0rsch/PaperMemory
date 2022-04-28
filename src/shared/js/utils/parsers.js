@@ -87,6 +87,17 @@ const fetchText = async (url) => {
     }
 };
 
+const fetchJSON = async (url) => {
+    try {
+        const response = await fetch(url);
+        const data = response.ok ? await response.json() : {};
+        return data;
+    } catch (error) {
+        console.log("fetchJSON error:", error);
+        return {};
+    }
+};
+
 // -------------------
 // -----  Parse  -----
 // -------------------
