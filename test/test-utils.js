@@ -1,21 +1,14 @@
 const { expect } = require("expect");
 const fs = require("fs");
+const glob = require("glob");
+const utilsFiles = glob.sync("../src/shared/js/utils/*.js");
+const utilsModules = utilsFiles.map((file) => require(file));
 
-const { cleanBiorxivURL } = require("../src/shared/js/utils/functions");
-const bp = require("../src/shared/js/utils/bibtexParser");
-const pjs = require("../src/shared/js/utils/paper");
-
-Object.defineProperty(Array.prototype, "last", {
-    value: function (i = 0) {
-        return this.reverse()[i];
-    },
-});
-
-Object.defineProperty(String.prototype, "capitalize", {
-    value: function () {
-        return this.charAt(0).toUpperCase() + this.slice(1);
-    },
-});
+for (const module of utilsModules) {
+    for (const [name, func] of Object.entries(module)) {
+        global[name] = func;
+    }
+}
 
 const range = (n) => [...Array(n).keys()];
 
@@ -29,7 +22,7 @@ describe("Bibtex parser", function () {
     describe("#bibtexToObject", function () {
         for (const i of range(bdata.strings.length)) {
             it(`Pair ${i}`, function () {
-                expect(bp.bibtexToObject(bdata.strings[i])).toEqual(bdata.objects[i]);
+                expect(bibtexToObject(bdata.strings[i])).toEqual(bdata.objects[i]);
             });
         }
     });
@@ -37,14 +30,14 @@ describe("Bibtex parser", function () {
     describe("#bibtexToString(object)", function () {
         for (const i of range(bdata.strings.length)) {
             it(`Pair ${i}`, function () {
-                expect(bp.bibtexToString(bdata.objects[i])).toEqual(bdata.strings[i]);
+                expect(bibtexToString(bdata.objects[i])).toEqual(bdata.strings[i]);
             });
         }
     });
     describe("#bibtexToString(string)", function () {
         for (const i of range(bdata.strings.length)) {
             it(`Pair ${i}`, function () {
-                expect(bp.bibtexToString(bp.bibtexToString(bdata.objects[i]))).toEqual(
+                expect(bibtexToString(bibtexToString(bdata.objects[i]))).toEqual(
                     bdata.strings[i]
                 );
             });
@@ -53,18 +46,18 @@ describe("Bibtex parser", function () {
 
     describe("String -> Object -> String", function () {
         for (const [b, bstring] of bdata["strings"].entries()) {
-            const bobj = bp.bibtexToObject(bstring);
+            const bobj = bibtexToObject(bstring);
             it(`String ${b}`, function () {
-                expect(bp.bibtexToString(bobj)).toEqual(bstring);
+                expect(bibtexToString(bobj)).toEqual(bstring);
             });
         }
     });
 
     describe("Object -> String -> Object", function () {
         for (const [b, bobj] of bdata.objects.entries()) {
-            const bstring = bp.bibtexToString(bobj);
+            const bstring = bibtexToString(bobj);
             it(`Object ${b}`, function () {
-                expect(bp.bibtexToObject(bstring)).toEqual(bobj);
+                expect(bibtexToObject(bstring)).toEqual(bobj);
             });
         }
     });
@@ -76,7 +69,7 @@ describe("Bibtex parser", function () {
             describe(`String ${i}`, function () {
                 for (const attribute in bobj) {
                     it(`Attribute ${attribute}`, function () {
-                        expect(bp.extractBibtexValue(bstring, attribute)).toEqual(
+                        expect(extractBibtexValue(bstring, attribute)).toEqual(
                             bobj[attribute]
                         );
                     });
@@ -107,19 +100,22 @@ describe("paper.js", () => {
                 if (source === "ieee") {
                     paper.key = "9090146";
                 }
-                expect(pjs.paperToAbs(paper)).toEqual(urls[0]);
+                expect(paperToAbs(paper)).toEqual(urls[0]);
             });
         }
     });
     describe("#paperToPDF", () => {
-        global.cleanBiorxivURL = cleanBiorxivURL;
         for (const [i, [source, urls]] of Object.entries(allUrls).entries()) {
             it(source, () => {
                 const paper = {
                     source,
                     pdfLink: urls[1],
                 };
-                expect(pjs.paperToPDF(paper)).toEqual(urls[1]);
+                expect(paperToPDF(paper)).toEqual(urls[1]);
+            });
+        }
+    });
+
             });
         }
     });
