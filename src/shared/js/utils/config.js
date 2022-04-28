@@ -943,3 +943,28 @@ global.journalAbbreviations = {
     "malar j": "Malaria Journal",
     "conserv soc": "Conservation and Society",
 };
+
+// ----------------------------------------------------
+// -----  TESTS: modules for node.js environment  -----
+// ----------------------------------------------------
+if (typeof module !== "undefined" && module.exports != null) {
+    module.exports = {
+        state: global.state,
+        descendingSortKeys: global.descendingSortKeys,
+        select2Options: global.select2Options,
+        menuCheckNames: global.menuCheckNames,
+        menuCheckDefaultFalse: global.menuCheckDefaultFalse,
+        menuStorageKeys: global.menuStorageKeys,
+        sourceExtras: global.sourceExtras,
+        knownPaperPages: global.knownPaperPages,
+        sourcesNames: global.sourcesNames,
+        overrideORConfs: global.overrideORConfs,
+        overridePMLRConfs: global.overridePMLRConfs,
+        overrideDBLPVenues: global.overrideDBLPVenues,
+        fuzzyTitleMatchMinDist: global.fuzzyTitleMatchMinDist,
+        defaultTitleFunctionCode: global.defaultTitleFunctionCode,
+        storeReadme: global.storeReadme,
+        englishStopWords: global.englishStopWords,
+        journalAbbreviations: global.journalAbbreviations,
+    };
+}
