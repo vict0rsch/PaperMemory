@@ -861,6 +861,56 @@ const makeIEEEPaper = async (url) => {
     return { author, bibtex, id, key, note, pdfLink, title, venue, year };
 };
 
+const makeSpringerPaper = async (url) => {
+    // https://link.springer.com/chapter/10.1007/978-981-16-1220-6_12
+    // https://link.springer.com/article/10.1007/s00148-021-00864-z
+    // https://link.springer.com/content/pdf/10.1007/s00148-021-00864-z.pdf
+    // https://link.springer.com/article/10.1007/s00148-021-00864-z?noAccess=true
+    // https://citation-needed.springer.com/v2/references/10.1007/s41095-022-0271-y?format=bibtex&flavour=citation
+    const types = [...global.sourceExtras.springer.types, "content/pdf"];
+    const springerType = types.find((c) => url.includes(`/${c}/`));
+    if (!springerType) {
+        throw new Error(
+            `Could not find Springer type for ${url} (known: ${types.join(", ")})`
+        );
+    }
+    const doi = url.split(`/${springerType}/`)[1].split("?")[0].replace(".pdf", "");
+
+    const crossrefResponse = await fetchJSON(
+        `https://api.crossref.org/works/${doi}?mailto=schmidtv%40mila.quebec`
+    );
+
+    const data = extractCrossrefData(crossrefResponse);
+
+    if (!data) {
+        throw new Error("Aborting Springer paper parsing, see error above");
+    }
+
+    const { author, bibtex, citationKey, year, title, venue } = data;
+
+    const id = `Springer-${year}_${miniHash(doi)}`;
+    const note = `Published @ ${venue} (${year})`;
+
+    const pdfLink =
+        data.pdf ??
+        (springerType === "content/pdf"
+            ? url
+            : url.replace(`/${springerType}/`, "/content/pdf/") + ".pdf");
+
+    return {
+        author,
+        bibtex,
+        id,
+        key: citationKey,
+        note,
+        pdfLink,
+        title,
+        venue,
+        year,
+        extra: { url: `https://doi.org/${doi}` },
+    };
+};
+
 const tryPWCMatch = async (paper) => {
     const pwcPrefs = (await getStorage("pwcPrefs")) ?? {};
     const payload = {
@@ -1158,6 +1208,11 @@ const makePaper = async (is, url, id) => {
         paper = await makeIEEEPaper(url);
         if (paper) {
             paper.source = "ieee";
+        }
+    } else if (is.springer) {
+        paper = await makeSpringerPaper(url);
+        if (paper) {
+            paper.source = "springer";
         }
     } else {
         throw new Error("Unknown paper source: " + JSON.stringify({ is, url, id }));

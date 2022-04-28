@@ -123,6 +123,11 @@ const paperToAbs = (paper) => {
 
         case "ieee":
             abs = `https://ieeexplore.ieee.org/document/${paper.key}`;
+            break;
+
+        case "springer":
+            abs = paper.extra.url;
+            break;
 
         default:
             abs = "https://xkcd.com/1969/";
@@ -201,6 +206,9 @@ const paperToPDF = (paper) => {
             break;
 
         case "ieee":
+            break;
+
+        case "springer":
             break;
 
         default:

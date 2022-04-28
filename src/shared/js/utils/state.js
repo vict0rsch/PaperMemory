@@ -466,6 +466,21 @@ const parseIdFromUrl = async (url) => {
             return p.source === "ieee" && p.id.includes(articleId);
         })[0];
         return paper && paper.id;
+    } else if (is.springer) {
+        const types = global.sourceExtras.springer.types;
+        let type = types.filter((c) => url.includes(`/${c}/`))[0];
+        if (!type) {
+            if (!url.includes("/content/pdf/")) {
+                throw new Error(`Could not find Springer type for ${url}`);
+            }
+            type = "content/pdf";
+        }
+        let doi = url.split(`/${type}/`)[1].split("?")[0].replace(".pdf", "");
+        doi = miniHash(doi);
+        const paper = Object.values(cleanPapers(global.state.papers)).filter((p) => {
+            return p.source === "springer" && p.id.includes(doi);
+        })[0];
+        return paper && paper.id;
     } else if (is.localFile) {
         return is.localFile;
     } else {
