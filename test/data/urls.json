@@ -1,6 +1,6 @@
 {
     "acl": [
-        "https://aclanthology.org/2020.acl-main.405/",
+        "https://aclanthology.org/2020.acl-main.405",
         "https://aclanthology.org/2020.acl-main.405.pdf",
         {
             "venue": "acl"
@@ -24,7 +24,7 @@
     ],
     "arxiv": [
         "https://arxiv.org/abs/1703.10593",
-        "https://arxiv.org/pdf/1703.10593v7.pdf",
+        "https://arxiv.org/pdf/1703.10593.pdf",
         {
             "venue": "iccv"
         }
@@ -86,7 +86,7 @@
         }
     ],
     "pmc": [
-        "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7249434/",
+        "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7249434",
         "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7249434/pdf/12961_2020_Article_544.pdf",
         {
             "venue": "Health research policy and systems"

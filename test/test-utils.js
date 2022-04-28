@@ -1,7 +1,21 @@
-const expect = require("expect");
+const { expect } = require("expect");
 const fs = require("fs");
 
+const { cleanBiorxivURL } = require("../src/shared/js/utils/functions");
 const bp = require("../src/shared/js/utils/bibtexParser");
+const pjs = require("../src/shared/js/utils/paper");
+
+Object.defineProperty(Array.prototype, "last", {
+    value: function (i = 0) {
+        return this.reverse()[i];
+    },
+});
+
+Object.defineProperty(String.prototype, "capitalize", {
+    value: function () {
+        return this.charAt(0).toUpperCase() + this.slice(1);
+    },
+});
 
 const range = (n) => [...Array(n).keys()];
 
@@ -67,6 +81,45 @@ describe("Bibtex parser", function () {
                         );
                     });
                 }
+            });
+        }
+    });
+});
+
+describe("paper.js", () => {
+    var allUrls = JSON.parse(fs.readFileSync("./data/urls.json"));
+
+    describe("#paperToAbs", () => {
+        for (const [i, [source, urls]] of Object.entries(allUrls).entries()) {
+            it(source, () => {
+                let paper = {
+                    source,
+                    pdfLink: urls[1],
+                };
+                if (source === "arxiv") {
+                    paper.id = "Arxiv-1703.10593";
+                }
+                if (source === "springer") {
+                    paper.extra = {
+                        url: urls[0],
+                    };
+                }
+                if (source === "ieee") {
+                    paper.key = "9090146";
+                }
+                expect(pjs.paperToAbs(paper)).toEqual(urls[0]);
+            });
+        }
+    });
+    describe("#paperToPDF", () => {
+        global.cleanBiorxivURL = cleanBiorxivURL;
+        for (const [i, [source, urls]] of Object.entries(allUrls).entries()) {
+            it(source, () => {
+                const paper = {
+                    source,
+                    pdfLink: urls[1],
+                };
+                expect(pjs.paperToPDF(paper)).toEqual(urls[1]);
             });
         }
     });
