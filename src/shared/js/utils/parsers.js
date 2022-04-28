@@ -1372,6 +1372,7 @@ if (typeof module !== "undefined" && module.exports != null) {
         tryCrossRef,
         tryDBLP,
         tryPreprintMatch,
+        tryPWCMatch,
         initPaper,
         autoTagPaper,
         makePaper,
