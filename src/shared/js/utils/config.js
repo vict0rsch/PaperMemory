@@ -43,6 +43,7 @@ global.state = {
     files: {},
     ignoreSources: {},
     lastRefresh: new Date(),
+    hashToId: {},
 };
 
 global.descendingSortKeys = [

@@ -45,11 +45,22 @@ const initState = async (papers, isContentScript) => {
     global.state.papers = papers;
 
     global.state.menu = await getMenu();
-    log("Time to parse user preferences (s): " + (Date.now() - times[0]) / 1000);
+    log("Time to retrieve user preferences (s): " + (Date.now() - times[0]) / 1000);
     times.unshift(Date.now());
 
     global.state.ignoreSources = (await getStorage("ignoreSources")) ?? {};
-    log("Time to read sources to ignore (s): " + (Date.now() - times[0]) / 1000);
+    log("Time to retrieve sources to ignore (s): " + (Date.now() - times[0]) / 1000);
+    times.unshift(Date.now());
+
+    global.state.hashToId = {};
+    for (const [id, paper] of Object.entries(cleanPapers(papers))) {
+        const hashed = miniHash(paper.title);
+        if (!global.state.hashToId.hasOwnProperty(hashed)) {
+            global.state.hashToId[hashed] = [];
+        }
+        global.state.hashToId[hashed].push(id);
+    }
+    log("Time to hash titles (s): " + (Date.now() - times[0]) / 1000);
     times.unshift(Date.now());
 
     if (isContentScript) {
