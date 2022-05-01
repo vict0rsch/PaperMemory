@@ -212,6 +212,40 @@ const stateTitleFunction = (paperOrId) => {
     return name.replaceAll("\n", " ").replace(/\s\s+/g, " ");
 };
 
+const updateDuplicatedUrls = (url, id, remove = false) => {
+    if (!remove) {
+        global.state.urlHashToId[miniHash(url)] = id;
+        setStorage("duplicatedUrls", global.state.urlHashToId);
+    } else {
+        let hashedUrls;
+        if (!url) {
+            hashedUrl = Object.keys(global.state.urlHashToId).filter(
+                (k) => global.state.urlHashToId[k] === id
+            );
+        } else {
+            hashedUrls = [miniHash(url)];
+        }
+        if (hashedUrls && hashedUrls.length) {
+            for (const hashedUrl of hashedUrls) {
+                warn("Removing duplicated url", url, "for", id);
+                delete global.state.urlHashToId[hashedUrl];
+            }
+            setStorage("duplicatedUrls", global.state.urlHashToId);
+        }
+    }
+};
+
+const addIdToTitleHash = (paper) => {
+    const id = paper.id;
+    const hashedTitle = miniHash(paper.title);
+    if (!global.state.titleHashToIds.hasOwnProperty(hashedTitle)) {
+        global.state.titleHashToIds[hashedTitle] = [];
+    }
+    if (!global.state.titleHashToIds[hashedTitle].includes(id)) {
+        global.state.titleHashToIds[hashedTitle].push(id);
+    }
+};
+
 // ----------------------------------------------------
 // -----  TESTS: modules for node.js environment  -----
 // ----------------------------------------------------
@@ -221,5 +255,6 @@ if (typeof module !== "undefined" && module.exports != null) {
         getExamplePaper,
         getTitleFunction,
         stateTitleFunction,
+        updateDuplicatedUrls,
     };
 }
