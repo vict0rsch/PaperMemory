@@ -185,8 +185,9 @@ const extractCrossrefData = (crossrefResponse) => {
     return { ...bibData, bibtex, venue };
 };
 
-const makeArxivPaper = async (memoryId) => {
-    const response = await fetchArxivXML(memoryId);
+const makeArxivPaper = async (url) => {
+    const arxivId = url.match(/\/(\d{4}\.\d{4,5})/)[1];
+    const response = await fetchArxivXML(arxivId);
     const xmlData = await response.text();
     var doc = new DOMParser().parseFromString(xmlData.replaceAll("\n", ""), "text/xml");
 
@@ -207,8 +208,7 @@ const makeArxivPaper = async (memoryId) => {
         year +
         firstNonStopLowercase(title);
 
-    const id = memoryId;
-    const conf = "arXiv";
+    const id = `Arxiv-${arxivId}`;
 
     let bibtex = "";
     bibtex += `@article{${key},\n`;
@@ -220,7 +220,7 @@ const makeArxivPaper = async (memoryId) => {
 
     const venue = "";
 
-    return { author, bibtex, conf, id, key, pdfLink, title, venue, year };
+    return { author, bibtex, id, key, pdfLink, title, venue, year };
 };
 
 const makeNeuripsPaper = async (url) => {
@@ -279,12 +279,10 @@ const makeNeuripsPaper = async (url) => {
         .replace("/hash/", "/file/")
         .replace("-Abstract.html", "-Paper.pdf");
     const id = `NeurIPS-${year}_${hash.slice(0, 8)}`;
-    const conf = `NeurIPS ${year}`;
-    const note = `Accepted @ ${conf}`;
-
     const venue = "NeurIPS";
+    const note = `Accepted @ ${venue} (${year})`;
 
-    return { author, bibtex, conf, id, key, note, pdfLink, title, venue, year };
+    return { author, bibtex, id, key, note, pdfLink, title, venue, year };
 };
 
 const makeCVFPaper = async (url) => {
@@ -315,12 +313,12 @@ const makeCVFPaper = async (url) => {
         }
         pdfLink = "http://openaccess.thecvf.com" + href;
     }
-    const note = `Accepted @ ${conf} ${year}`;
+    const venue = conf;
+    const note = `Accepted @ ${venue} (${year})`;
     const bibtex = bibtexToString(dom.querySelector(".bibref").innerText);
     const key = bibtex.split("{")[1].split(",")[0];
-    const venue = conf;
 
-    return { author, bibtex, conf, id, key, note, pdfLink, title, venue, year };
+    return { author, bibtex, id, key, note, pdfLink, title, venue, year };
 };
 
 const makeOpenReviewBibTex = (paper, url) => {
@@ -417,17 +415,17 @@ const makeOpenReviewPaper = async (url) => {
                 return i === 0 ? v + "ed" : v;
             })
             .join(" ");
-        note = `${decision} @ ${conf} ${year}`;
+        note = `${decision} @ ${conf} (${year})`;
         if (decision.toLowerCase().indexOf("rejected") < 0) {
             venue = conf;
         }
     }
 
     if (author === "Anonymous") {
-        note = `Under review @ ${conf} ${year} (${new Date().toLocaleDateString()})`;
+        note = `Under review @ ${conf} (${year}) (${new Date().toLocaleDateString()})`;
     }
 
-    return { author, bibtex, conf, id, key, note, pdfLink, title, venue, year };
+    return { author, bibtex, id, key, note, pdfLink, title, venue, year };
 };
 
 const makeBioRxivPaper = async (url) => {
@@ -460,7 +458,6 @@ const makeBioRxivPaper = async (url) => {
 
     const author = extractAuthor(bibtex);
 
-    const conf = "BioRxiv";
     const id = await parseIdFromUrl(url);
     const key = bibtex.split("\n")[0].split("{")[1].replace(",", "").trim();
     const note = "";
@@ -469,7 +466,7 @@ const makeBioRxivPaper = async (url) => {
     const year = paper.date.split("-")[0];
     const venue = "";
 
-    return { author, bibtex, conf, id, key, note, pdfLink, title, venue, year };
+    return { author, bibtex, id, key, note, pdfLink, title, venue, year };
 };
 
 const makePMLRPaper = async (url) => {
@@ -514,7 +511,7 @@ const makePMLRPaper = async (url) => {
         ""
     );
     let venue = conf;
-    note = "Accepted @ " + conf + ` (${year})`;
+    note = `Accepted @ ${venue} (${year})`;
     for (const long in global.overridePMLRConfs) {
         if (conf.includes(long)) {
             venue = global.overridePMLRConfs[long];
@@ -524,7 +521,7 @@ const makePMLRPaper = async (url) => {
         }
     }
 
-    return { author, bibtex, conf, id, key, note, pdfLink, title, venue, year };
+    return { author, bibtex, id, key, note, pdfLink, title, venue, year };
 };
 
 const findACLValue = (dom, key) => {
@@ -560,15 +557,14 @@ const makeACLPaper = async (url) => {
         .join(" and ");
     const key = bibtexData.citationKey;
 
-    const conf = findACLValue(dom, "Venue");
+    const venue = findACLValue(dom, "Venue");
     const pdfLink = findACLValue(dom, "PDF");
     const aid = findACLValue(dom, "Anthology ID");
 
-    const id = `ACL-${conf}-${year}_${aid}`;
-    const note = `Accepted @ ${conf} ${year}`;
-    const venue = conf;
+    const id = `ACL-${venue}-${year}_${aid}`;
+    const note = `Accepted @ ${venue} (${year})`;
 
-    return { author, bibtex, conf, id, key, note, pdfLink, title, venue, year };
+    return { author, bibtex, id, key, note, pdfLink, title, venue, year };
 };
 
 const makePNASPaper = async (url) => {
@@ -1231,10 +1227,10 @@ const autoTagPaper = async (paper) => {
     }
 };
 
-const makePaper = async (is, url, id) => {
+const makePaper = async (is, url) => {
     let paper;
     if (is.arxiv) {
-        paper = await makeArxivPaper(id);
+        paper = await makeArxivPaper(url);
         paper.source = "arxiv";
         // paper.codes = await fetchCodes(paper)
     } else if (is.neurips) {
@@ -1309,7 +1305,7 @@ const makePaper = async (is, url, id) => {
             paper.source = "springer";
         }
     } else {
-        throw new Error("Unknown paper source: " + JSON.stringify({ is, url, id }));
+        throw new Error("Unknown paper source: " + JSON.stringify({ is, url }));
     }
 
     if (typeof paper === "undefined") {
@@ -1319,19 +1315,15 @@ const makePaper = async (is, url, id) => {
     return await initPaper(paper);
 };
 
-const findFuzzyPaperMatch = (paper) => {
-    for (const paperId in global.state.papers) {
-        if (paperId === "__dataVersion") continue;
-        const item = global.state.papers[paperId];
-        if (
-            Math.abs(item.title.length - paper.title.length) <
-            global.fuzzyTitleMatchMinDist
-        ) {
-            const dist = levenshtein(item.title, paper.title);
-            if (dist < global.fuzzyTitleMatchMinDist) {
-                return item.id;
-            }
+const findFuzzyPaperMatch = (hashes, paper) => {
+    const paperHash = miniHash(paper.title);
+    if (hashes.hasOwnProperty(paperHash)) {
+        const matches = hashes[paperHash];
+        const nonArxiv = matches.find((m) => !m.toLowerCase().startsWith("arxiv"));
+        if (nonArxiv) {
+            return nonArxiv;
         }
+        return matches[0];
     }
     return null;
 };

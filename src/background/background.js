@@ -69,12 +69,12 @@ const findCodesForPaper = async (request) => {
     const { id, proceeding } = pwcData;
 
     if (proceeding) {
-        const conf = proceeding.split("-")[0].toUpperCase();
+        const venue = proceeding.split("-")[0].toUpperCase();
         const year = proceeding.split("-")[1];
-        info("Found a PWC proceeding paper:", conf, year);
+        info("Found a PWC proceeding paper:", venue, year);
         code = {
-            note: `Accepted @ ${conf} ${year} -- [paperswithcode.com]`,
-            venue: conf,
+            note: `Accepted @ ${venue} (${year}) -- [paperswithcode.com]`,
+            venue,
         };
     }
 
