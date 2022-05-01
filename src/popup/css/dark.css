@@ -19,7 +19,7 @@
 -------------------
 */
 body,
-#confirm-modal {
+#delete-paper-modal {
     color: var(--color);
     background: var(--background);
 }

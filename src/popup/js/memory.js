@@ -126,8 +126,8 @@ const updatePopupPaperNoMemory = async (url) => {
 const showConfirmDeleteModal = (id) => {
     const title = global.state.papers[id].title;
     setTextId("delete-modal-title", title);
-    setHTML("hidden-modal-id", id);
-    showId("confirm-modal", "flex");
+    setHTML("delete-paper-modal-hidden-id", id);
+    showId("delete-paper-modal", "flex");
 };
 
 /**
@@ -456,6 +456,7 @@ const searchMemory = (letters) => {
         const note = paper.note.toLowerCase();
         const tags = paper.tags.join(" ").toLowerCase();
         const displayId = getDisplayId(paper.id).toLowerCase();
+        const venue = paper.venue.toLowerCase();
         if (
             words.every(
                 (w) =>
@@ -463,7 +464,8 @@ const searchMemory = (letters) => {
                     author.includes(w) ||
                     note.includes(w) ||
                     tags.includes(w) ||
-                    displayId.includes(w)
+                    displayId.includes(w) ||
+                    venue.includes(w)
             )
         ) {
             if (!global.state.showFavorites || paper.favorite) {
@@ -740,8 +742,12 @@ const makeMemoryHTML = async () => {
     );
     addListener("memory-search", "clear-search", handleMemorySearchKeyPress(true));
     addListener("memory-search", "keyup", handleMemorySearchKeyUp);
-    addListener("cancel-modal-button", "click", handleCancelModalClick);
-    addListener("confirm-modal-button", "click", handleConfirmDeleteModalClick);
+    addListener("delete-paper-modal-cancel-button", "click", handleCancelModalClick);
+    addListener(
+        "delete-paper-modal-confirm-button",
+        "click",
+        handleConfirmDeleteModalClick
+    );
     addListener("filter-favorites", "click", handleFilterFavorites);
     // listen to sorting feature change
     addListener("memory-select", "change", handleMemorySelectChange);
