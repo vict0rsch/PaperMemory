@@ -52,13 +52,19 @@ const initState = async (papers, isContentScript) => {
     log("Time to retrieve sources to ignore (s): " + (Date.now() - times[0]) / 1000);
     times.unshift(Date.now());
 
-    global.state.hashToId = {};
+    global.state.urlHashToId = (await getStorage("urlHashToId")) ?? {};
+    log(
+        "Time to retrieve sources to urlHashToId (s): " + (Date.now() - times[0]) / 1000
+    );
+    times.unshift(Date.now());
+
+    global.state.titleHashToIds = {};
     for (const [id, paper] of Object.entries(cleanPapers(papers))) {
         const hashed = miniHash(paper.title);
-        if (!global.state.hashToId.hasOwnProperty(hashed)) {
-            global.state.hashToId[hashed] = [];
+        if (!global.state.titleHashToIds.hasOwnProperty(hashed)) {
+            global.state.titleHashToIds[hashed] = [];
         }
-        global.state.hashToId[hashed].push(id);
+        global.state.titleHashToIds[hashed].push(id);
     }
     log("Time to hash titles (s): " + (Date.now() - times[0]) / 1000);
     times.unshift(Date.now());
@@ -256,5 +262,6 @@ if (typeof module !== "undefined" && module.exports != null) {
         getTitleFunction,
         stateTitleFunction,
         updateDuplicatedUrls,
+        addIdToTitleHash,
     };
 }
