@@ -352,7 +352,9 @@ const mergePapers = (newPaper, oldPaper, extra = {}) => {
         mergedPaper.count += 1;
     }
     for (const attribute of opts.overwrites) {
-        mergedPaper[attribute] = newPaper[attribute];
+        if (newPaper.hasOwnProperty(attribute)) {
+            mergedPaper[attribute] = newPaper[attribute];
+        }
     }
 
     return mergedPaper;
@@ -374,29 +376,47 @@ const addOrUpdatePaper = async (url, is, menu) => {
     global.state.papers = (await getStorage("papers")) ?? {};
     const id = await parseIdFromUrl(url);
     const paperExists = global.state.papers.hasOwnProperty(id);
-    log("ID for url:", id, "--", "paperExists:", Boolean(paperExists));
+    log("Id for url:", id, "--", "Paper exists:", Boolean(paperExists));
 
     if (id && paperExists) {
         // Update paper if it exists
-        paper = updatePaper(global.state.papers[id]);
+        paper = updatePaperVisits(global.state.papers[id]);
         isNew = false;
     } else {
         // Or create a new one if it does not
-        paper = await makePaper(is, url, id);
+        paper = await makePaper(is, url);
         if (!paper) {
             return;
         }
-        const existingId = null; // findFuzzyPaperMatch(paper); // not used yet.
+        const existingId = findFuzzyPaperMatch(global.state.titleHashToIds, paper);
         if (existingId) {
-            // Currently the code never goes here
-
             // Update paper as already it exists
-            info(
-                `Found a fuzzy match for (${id}) ${paper.title}`,
-                global.state.papers[existingId]
-            );
-            global.state.papers = updatePaper(global.state.papers, existingId);
-            paper = global.state.papers[existingId];
+            let existingPaper = global.state.papers[existingId];
+            log("New paper", paper, "already exists as", existingPaper);
+            updateDuplicatedUrls(url, existingId);
+            if (!paper.venue && existingPaper.venue) {
+                existingPaper = mergePapers(paper, existingPaper, {
+                    incrementCount: true,
+                    overwrites: ["lastOpenDate"],
+                });
+            } else if (!existingPaper.venue && paper.venue) {
+                addIdToTitleHash(paper);
+                existingPaper = mergePapers(paper, existingPaper, {
+                    incrementCount: true,
+                    overwrites: [
+                        "lastOpenDate",
+                        "venue",
+                        "bibtex",
+                        "id",
+                        "key",
+                        "pdfLink",
+                        "source",
+                        "year",
+                    ],
+                });
+            }
+            paper = updatePaperVisits(existingPaper);
+            paper = existingPaper;
             isNew = false;
         } else {
             // set isNew to True for the storage setter
@@ -459,7 +479,7 @@ const addOrUpdatePaper = async (url, is, menu) => {
                 menu && menu.checkFeedback && feedback(notifText);
             }
         } else {
-            info("Updated '" + paper.title + "' in your Memory");
+            logOk("Updated '" + paper.title + "' in your Memory");
         }
 
         if (!paper.venue && !pwcVenue) {
@@ -517,33 +537,46 @@ const addOrUpdatePaper = async (url, is, menu) => {
  * @returns {string} The id of the paper found.
  */
 const parseIdFromUrl = async (url) => {
+    let idForUrl;
+    const hashedUrl = miniHash(url);
+    const hashedId = global.state.urlHashToId[hashedUrl];
+    if (hashedId) {
+        return hashedId;
+    }
     const is = await isPaper(url, true);
     if (is.arxiv) {
         const arxivId = url.match(/\d{4}\.\d{4,5}/g)[0];
-        return `Arxiv-${arxivId}`;
+        idForUrl = `Arxiv-${arxivId}`;
+
+        const existingIds = Object.values(global.state.titleHashToIds).find((ids) =>
+            ids.includes(idForUrl)
+        );
+        if (existingIds) {
+            idForUrl = existingIds.find((id) => !id.startsWith("Arxiv-")) ?? idForUrl;
+        }
     } else if (is.neurips) {
         const year = url.split("/paper/")[1].split("/")[0];
         const hash = url.split("/").last().split("-")[0].slice(0, 8);
-        return `NeurIPS-${year}_${hash}`;
+        idForUrl = `NeurIPS-${year}_${hash}`;
     } else if (is.cvf) {
-        return parseCVFUrl(url).id;
+        idForUrl = parseCVFUrl(url).id;
     } else if (is.openreview) {
         const OR_id = url.match(/id=\w+/)[0].replace("id=", "");
         const paper = Object.values(cleanPapers(global.state.papers)).filter((p) => {
             return p.id.includes(OR_id);
         })[0];
-        return paper && paper.id;
+        idForUrl = paper && paper.id;
     } else if (is.biorxiv) {
         url = cleanBiorxivURL(url);
         let id = url.split("/").last();
         if (id.match(/v\d+$/)) {
             id = id.split("v")[0];
         }
-        return `Biorxiv-${id}`;
+        idForUrl = `Biorxiv-${id}`;
     } else if (is.pmlr) {
         const key = url.split("/").last().split(".")[0];
         const year = "20" + key.match(/\d+/)[0];
-        return `PMLR-${year}-${key}`;
+        idForUrl = `PMLR-${year}-${key}`;
     } else if (is.acl) {
         url = url.replace(".pdf", "");
         if (url.endsWith("/")) {
@@ -553,7 +586,7 @@ const parseIdFromUrl = async (url) => {
         const paper = Object.values(cleanPapers(global.state.papers)).filter((p) => {
             return p.source === "acl" && p.id.includes(key);
         })[0];
-        return paper && paper.id;
+        idForUrl = paper && paper.id;
     } else if (is.pnas) {
         url = url.replace(".full.pdf", "");
         const pid = url.endsWith("/")
@@ -563,25 +596,25 @@ const parseIdFromUrl = async (url) => {
         const paper = Object.values(cleanPapers(global.state.papers)).filter((p) => {
             return p.source === "pnas" && p.id.includes(pid);
         })[0];
-        return paper && paper.id;
+        idForUrl = paper && paper.id;
     } else if (is.nature) {
         url = url.replace(".pdf", "").split("#")[0];
         const hash = url.split("/").last();
         const paper = Object.values(cleanPapers(global.state.papers)).filter((p) => {
             return p.source === "nature" && p.id.includes(hash);
         })[0];
-        return paper && paper.id;
+        idForUrl = paper && paper.id;
     } else if (is.acs) {
         url = url
             .replace("pubs.acs.org/doi/pdf/", "/doi/")
             .replace("pubs.acs.org/doi/abs/", "/doi/")
             .split("?")[0];
         const doi = url.split("/doi/")[1].replaceAll(".", "").replaceAll("/", "");
-        return `ACS_${doi}`;
+        idForUrl = `ACS_${doi}`;
     } else if (is.iop) {
         url = url.split("#")[0].replace(/\/pdf$/, "");
         const doi = url.split("/article/")[1].replaceAll(".", "").replaceAll("/", "");
-        return `IOPscience_${doi}`;
+        idForUrl = `IOPscience_${doi}`;
     } else if (is.jmlr) {
         if (url.endsWith(".pdf")) {
             url = url.split("/").slice(0, -1).join("/");
@@ -589,13 +622,13 @@ const parseIdFromUrl = async (url) => {
         url = url.replace(".html", "");
         const jid = url.split("/").last();
         const year = `20${jid.match(/\d+/)[0]}`;
-        return `JMLR-${year}_${jid}`;
+        idForUrl = `JMLR-${year}_${jid}`;
     } else if (is.pmc) {
         const pmcid = url.match(/PMC\d+/g)[0].replace("PMC", "");
         const paper = Object.values(cleanPapers(global.state.papers)).filter((p) => {
             return p.source === "pmc" && p.id.includes(pmcid);
         })[0];
-        return paper && paper.id;
+        idForUrl = paper && paper.id;
     } else if (is.ijcai) {
         const procId = url.endsWith(".pdf")
             ? url
@@ -605,7 +638,7 @@ const parseIdFromUrl = async (url) => {
                   .match(/[1-9]\d*/)
             : url.split("/").last();
         const year = url.match(/proceedings\/\d+/gi)[0].split("/")[1];
-        return `IJCAI-${year}_${procId}`;
+        idForUrl = `IJCAI-${year}_${procId}`;
     } else if (is.acm) {
         const doi = url
             .replace("/doi/pdf/", "/doi/")
@@ -614,7 +647,7 @@ const parseIdFromUrl = async (url) => {
         const paper = Object.values(cleanPapers(global.state.papers)).filter((p) => {
             return p.source === "acm" && p.id.includes(doi);
         })[0];
-        return paper && paper.id;
+        idForUrl = paper && paper.id;
     } else if (is.ieee) {
         const articleId = url.includes("ieee.org/document/")
             ? url.split("ieee.org/document/")[1].match(/\d+/)[0]
@@ -622,7 +655,7 @@ const parseIdFromUrl = async (url) => {
         const paper = Object.values(cleanPapers(global.state.papers)).filter((p) => {
             return p.source === "ieee" && p.id.includes(articleId);
         })[0];
-        return paper && paper.id;
+        idForUrl = paper && paper.id;
     } else if (is.springer) {
         const types = global.sourceExtras.springer.types;
         let type = types.filter((c) => url.includes(`/${c}/`))[0];
@@ -637,12 +670,14 @@ const parseIdFromUrl = async (url) => {
         const paper = Object.values(cleanPapers(global.state.papers)).filter((p) => {
             return p.source === "springer" && p.id.includes(doi);
         })[0];
-        return paper && paper.id;
+        idForUrl = paper && paper.id;
     } else if (is.localFile) {
-        return is.localFile;
+        idForUrl = is.localFile;
     } else {
         throw new Error("unknown paper url");
     }
+
+    return idForUrl;
 };
 
 /**
