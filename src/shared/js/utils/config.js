@@ -31,19 +31,20 @@ global.state = {
     dataVersion: 0,
     memoryIsOpen: false,
     menuIsOpen: false,
-    papers: {},
-    papersList: [],
-    paperTags: new Set(),
-    pdfTitleFn: null,
+    papers: {}, // (id => object)
+    papersList: [], // [papers]
+    paperTags: new Set(), // (Set(string))
+    pdfTitleFn: null, // function(paper) => string
     showFavorites: false,
-    sortedPapers: [],
+    sortedPapers: [], // [papers]
     sortKey: "",
     papersReady: false,
-    menu: {},
+    menu: {}, // (menuCheckKey => bool)
     files: {},
-    ignoreSources: {},
+    ignoreSources: {}, // (source => bool)
     lastRefresh: new Date(),
-    hashToId: {},
+    titleHashToIds: {}, // (miniHash(title) -> [ids])
+    urlHashToId: {}, // (miniHash(url) => id)
 };
 
 global.descendingSortKeys = [
