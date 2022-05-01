@@ -10,6 +10,7 @@ const log = (...args) => {
     let isInfo = false;
     let isWarn = false;
     let isError = false;
+    let isDebug = false;
     let isOk = false;
     if (args[0] === "[info]") {
         isInfo = true;
@@ -22,6 +23,9 @@ const log = (...args) => {
         args = args.slice(1);
     } else if (args[0] === "[ok]") {
         isOk = true;
+        args = args.slice(1);
+    } else if (args[0] === "[debug]") {
+        isDebug = true;
         args = args.slice(1);
     }
     // https://stackoverflow.com/questions/55643825/how-to-apply-colors-to-console-log-when-using-multiple-arguments
@@ -55,6 +59,8 @@ const log = (...args) => {
                 ? "#FF4F54; font-weight:bold;"
                 : isOk
                 ? "#23F62B; font-weight:bold;"
+                : isDebug
+                ? "#BA357E; font-weight:bold;"
                 : "tan"
         }`,
         "[PM]",
@@ -65,6 +71,8 @@ const log = (...args) => {
 const info = (...args) => log(...["[info]", ...args]);
 
 const warn = (...args) => log(...["[warn]", ...args]);
+
+const debug = (...args) => log(...["[debug]", ...args]);
 
 const logOk = (...args) => log(...["[ok]", ...args]);
 
@@ -709,6 +717,7 @@ if (typeof module !== "undefined" && module.exports != null) {
         info,
         logError,
         logOk,
+        debug,
         warn,
         getDisplayId,
         isObject,
