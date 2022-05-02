@@ -4,7 +4,12 @@ const { expect } = require("expect");
 const fs = require("fs");
 const { isRegExp } = require("util/types");
 
-const { makeBrowser, getMemoryData, extensionPopupURL } = require("./browser");
+const {
+    makeBrowser,
+    getMemoryData,
+    extensionPopupURL,
+    visitPaperPage,
+} = require("./browser");
 const { allIds, allAttributes } = require("./processMemory");
 
 const paperForSource = (source, memoryData) => {
@@ -20,9 +25,9 @@ var orders = ["abs;pdf", "pdf;abs"];
 // global constants to parametrize the tests
 const loadSecs = parseFloat(process.env.loadSecs ?? 10);
 const maxSources = process.env.maxSources ?? -1;
-const pageTimeout = parseFloat(process.env.pageTimeout ?? 5000);
+const pageTimeout = parseFloat(process.env.pageTimeout ?? -1);
 const singleSource = process.env.singleSource?.toLowerCase() ?? false;
-const keepBrowser = Boolean(process.env.keepBrowser ?? false);
+const keepOpen = Boolean(process.env.keepOpen ?? false);
 const dumpMemory = Boolean(process.env.dumpMemory) ?? false;
 const singleOrder = process.env.singleOrder ?? false;
 
@@ -41,7 +46,7 @@ console.log("    loadSecs    : ", loadSecs);
 console.log("    pageTimeout : ", pageTimeout);
 console.log("    maxSources  : ", maxSources);
 console.log("    singleSource: ", singleSource);
-console.log("    keepBrowser : ", keepBrowser);
+console.log("    keepOpen : ", keepOpen);
 console.log("    dumpMemory  : ", dumpMemory);
 console.log("    singleOrder : ", singleOrder);
 console.log("--------------------------");
@@ -79,7 +84,7 @@ describe("Test paper detection and storage", function () {
         orders = [singleOrder];
     }
 
-    const timeout = (sources.length + 1) * 20 * pageTimeout + loadSecs * 1000;
+    const timeout = (sources.length + 1) * 20 * 5000 + loadSecs * 1000;
     this.timeout(timeout * orders.length);
     this.slow(timeout * orders.length);
 
@@ -87,7 +92,7 @@ describe("Test paper detection and storage", function () {
     // -----  Prepare Data  -----
     // --------------------------
 
-    for (const order of orders) {
+    for (const [o, order] of orders.entries()) {
         describe("Parsing order: " + order, function () {
             before(async function () {
                 // create browser
@@ -102,6 +107,7 @@ describe("Test paper detection and storage", function () {
                 const indices = order === "abs;pdf" ? [0, 1] : [1, 0];
 
                 for (const t of indices) {
+                    let pagePromises = [];
                     for (const [idx, targets] of Object.values(urls).entries()) {
                         // for each target url (abstract, pdf), visit the url
                         // and wait a little for it to load
@@ -110,37 +116,19 @@ describe("Test paper detection and storage", function () {
                         const targetUrls = targets.filter((u) => typeof u === "string");
                         const target = targetUrls[t];
                         // log prefix
-                        const prefix = `${" ".repeat(4)}(${idx + t * nUrls + 1}/${
-                            nUrls * 2
-                        })`;
+                        const n = idx + (o > 0 ? 1 - t : t) * nUrls + 1;
+                        const prefix = `${" ".repeat(4)}(${n}/${nUrls * 2})`;
                         console.log(`${prefix} Going to: ${target}`);
 
-                        // create page
-                        const p = await browser.newPage();
-                        const paperIsStored = new Promise((resolve) => {
-                            p.on(
-                                "console",
-                                (msg) =>
-                                    msg
-                                        .text()
-                                        .match(/\[PM\]\s*Done processing paper/) &&
-                                    resolve()
-                            );
-                            setTimeout(resolve, pageTimeout);
-                        });
-                        // asynchronously go to url
-                        p.goto(target);
-                        const pageIsLoaded = new Promise((resolve) => {
-                            p.once("load", resolve);
-                            setTimeout(resolve, pageTimeout);
-                        });
-                        await pageIsLoaded;
-                        await paperIsStored;
+                        pagePromises.push(
+                            visitPaperPage(browser, target, {
+                                timeout: pageTimeout,
+                                keepOpen,
+                            })
+                        );
                     }
+                    await Promise.all(pagePromises);
                 }
-
-                // wait for all pages to load
-                await sleep(pageTimeout);
 
                 // go to the extension's popup url
                 const page = await browser.newPage();
@@ -262,7 +250,7 @@ describe("Test paper detection and storage", function () {
             });
 
             after(async () => {
-                !keepBrowser && (await browser.close());
+                !keepOpen && (await browser.close());
             });
         });
     }
