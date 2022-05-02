@@ -630,7 +630,7 @@ const arxiv = async (checks) => {
     }
 };
 
-(async () => {
+window.addEventListener("DOMContentLoaded", async () => {
     const url = window.location.href;
     let stateIsReady = false;
     if (url.startsWith("file://")) {
@@ -656,4 +656,4 @@ const arxiv = async (checks) => {
             contentScriptMain(url, stateIsReady, true);
         }
     });
-})();
+});
