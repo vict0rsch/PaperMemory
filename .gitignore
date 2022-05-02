@@ -6,3 +6,5 @@ node_modules/
 keys.json
 test/tmp/
 *.lock
+.nyc_output/
+coverage

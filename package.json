@@ -4,10 +4,12 @@
   "description": "<br/>",
   "main": "gulpfile.js",
   "scripts": {
-    "test": "gulp build && cd test/ && ../node_modules/.bin/mocha test-*.js",
+    "test": "gulp build && cd test/ && ../node_modules/.bin/nyc --reporter=html ../node_modules/.bin/mocha test-*.js",
+    "test-cov": "gulp build && cd test/ && ../node_modules/.bin/nyc --reporter=html ../node_modules/.bin/mocha test-*.js",
     "test-storage": "gulp build && cd test/ && ../node_modules/.bin/mocha test-storage.js",
     "test-no-storage": "gulp build && cd test/ && ../node_modules/.bin/mocha 'test-!(storage)*.js'",
     "test-no-storage-no-build": "cd test/ && ../node_modules/.bin/mocha 'test-!(storage)*.js'",
+    "test-no-storage-no-build-cov": "cd test/ && ../node_modules/.bin/nyc --reporter=html ../node_modules/.bin/mocha 'test-!(storage)*.js'",
     "screenshots": "node_modules/.bin/mocha test/screenshots.js"
   },
   "repository": {
@@ -23,6 +25,7 @@
   "devDependencies": {
     "expect": "^28.0.0",
     "fs": "^0.0.1-security",
+    "glob": "^8.0.1",
     "gulp": "^4.0.2",
     "gulp-clean-css": "^4.3.0",
     "gulp-concat": "^2.6.1",
@@ -33,6 +36,8 @@
     "gulp-rename": "^2.0.0",
     "gulp-uglify": "^3.0.2",
     "gulp-zip": "^5.1.0",
+    "heap": "^0.2.7",
+    "nyc": "^15.1.0",
     "mocha": "^10.0.0",
     "readline-sync": "^1.4.10",
     "uuid": "^8.3.2"
