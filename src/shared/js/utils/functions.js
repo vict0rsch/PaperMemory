@@ -745,5 +745,6 @@ if (typeof module !== "undefined" && module.exports != null) {
         cutAuthors,
         sendMessageToBackground,
         getStoredFiles,
+        miniHash,
     };
 }
