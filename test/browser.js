@@ -17,6 +17,10 @@ exports.makeBrowser = async (windowSize = "500,600") => {
     return browser;
 };
 
+exports.sleep = async (duration) => {
+    await new Promise((resolve) => setTimeout(resolve, duration));
+};
+
 exports.getMemoryData = async (page) => {
     return await page.evaluate(
         () =>
