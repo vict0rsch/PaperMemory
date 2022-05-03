@@ -394,14 +394,18 @@ const addOrUpdatePaper = async (url, is, menu) => {
             // Update paper as already it exists
             let existingPaper = global.state.papers[existingId];
             log("New paper", paper, "already exists as", existingPaper);
-            updateDuplicatedUrls(url, existingId);
-            if (!paper.venue && existingPaper.venue) {
+            addPaperToTitleHashToId(paper);
+            if (
+                (!paper.venue && existingPaper.venue) ||
+                (paper.venue && existingPaper.venue)
+            ) {
                 existingPaper = mergePapers({
                     newPaper: paper,
                     oldPaper: existingPaper,
                     incrementCount: false,
                     overwrites: ["lastOpenDate"],
                 });
+                updateDuplicatedUrls(url, existingId);
             } else if (!existingPaper.venue && paper.venue) {
                 await updateDuplicatedUrls(paperToAbs(existingPaper), paper.id);
                 await updateDuplicatedUrls(paperToPDF(existingPaper), paper.id);
