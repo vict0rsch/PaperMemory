@@ -1319,9 +1319,11 @@ const findFuzzyPaperMatch = (hashes, paper) => {
     const paperHash = miniHash(paper.title);
     if (hashes.hasOwnProperty(paperHash)) {
         const matches = hashes[paperHash];
-        const nonArxiv = matches.find((m) => !m.toLowerCase().startsWith("arxiv"));
-        if (nonArxiv) {
-            return nonArxiv;
+        const nonPreprint = matches.find(
+            (m) => !global.preprintSources.some((s) => m.toLowerCase().startsWith(s))
+        );
+        if (nonPreprint) {
+            return nonPreprint;
         }
         return matches[0];
     }
