@@ -17,15 +17,20 @@ exports.makeBrowser = async (windowSize = "500,600") => {
     return browser;
 };
 
-exports.sleep = async (duration) => {
-    await new Promise((resolve) => setTimeout(resolve, duration));
-};
-
-exports.getMemoryData = async (page) => {
+exports.getMemoryPapers = async (page) => {
     return await page.evaluate(
         () =>
             new Promise(async (resolve) => {
                 resolve(await getStorage("papers"));
+            })
+    );
+};
+
+exports.getMemoryState = async (page) => {
+    return await page.evaluate(
+        () =>
+            new Promise(async (resolve) => {
+                resolve(global.state);
             })
     );
 };
