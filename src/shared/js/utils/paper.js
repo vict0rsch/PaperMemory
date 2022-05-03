@@ -403,7 +403,10 @@ const addOrUpdatePaper = async (url, is, menu) => {
                     overwrites: ["lastOpenDate"],
                 });
             } else if (!existingPaper.venue && paper.venue) {
-                addIdToTitleHash(paper);
+                await updateDuplicatedUrls(paperToAbs(existingPaper), paper.id);
+                await updateDuplicatedUrls(paperToPDF(existingPaper), paper.id);
+                await deletePaperInStorage(existingPaper.id, global.state.papers);
+
                 existingPaper = mergePapers({
                     newPaper: paper,
                     oldPaper: existingPaper,
