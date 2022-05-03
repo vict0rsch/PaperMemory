@@ -101,11 +101,19 @@ global.menuCheckDefaultFalse = [
  */
 global.menuStorageKeys = [...global.menuCheckNames, "pdfTitleFn"];
 
+/**
+ * Extra data per source
+ */
 global.sourceExtras = {
     springer: {
         types: ["chapter", "article", "book", "referenceworkentry"],
     },
 };
+
+/**
+ * Sources which are preprints (important for de-duplication)
+ */
+global.preprintSources = ["arxiv", "biorxiv"];
 
 /**
  * Map of known data sources to the associated paper urls: pdf urls and web-pages urls.
@@ -958,6 +966,7 @@ if (typeof module !== "undefined" && module.exports != null) {
         menuCheckDefaultFalse: global.menuCheckDefaultFalse,
         menuStorageKeys: global.menuStorageKeys,
         sourceExtras: global.sourceExtras,
+        preprintSources: global.preprintSources,
         knownPaperPages: global.knownPaperPages,
         sourcesNames: global.sourcesNames,
         overrideORConfs: global.overrideORConfs,
