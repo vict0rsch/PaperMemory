@@ -33,7 +33,7 @@ const dump = Boolean(process.env.dump) ?? false;
 // only run tests for a specific abstract<->pdf order
 const singleOrder = process.env.singleOrder ?? false;
 // ignore sources to parse papers from (','-separated sources as per ./data/urls.json)
-const ignoreSources = process.env.ignoreSources ?? [];
+let ignoreSources = process.env.ignoreSources ?? [];
 
 // check env vars
 var orders = ["abs;pdf", "pdf;abs"];
