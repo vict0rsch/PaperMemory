@@ -221,11 +221,11 @@ const stateTitleFunction = (paperOrId) => {
 const updateDuplicatedUrls = (url, id, remove = false) => {
     if (!remove) {
         global.state.urlHashToId[miniHash(url)] = id;
-        setStorage("duplicatedUrls", global.state.urlHashToId);
+        setStorage("urlHashToId", global.state.urlHashToId);
     } else {
         let hashedUrls;
         if (!url) {
-            hashedUrl = Object.keys(global.state.urlHashToId).filter(
+            hashedUrls = Object.keys(global.state.urlHashToId).filter(
                 (k) => global.state.urlHashToId[k] === id
             );
         } else {
@@ -236,12 +236,12 @@ const updateDuplicatedUrls = (url, id, remove = false) => {
                 warn("Removing duplicated url", url, "for", id);
                 delete global.state.urlHashToId[hashedUrl];
             }
-            setStorage("duplicatedUrls", global.state.urlHashToId);
+            setStorage("urlHashToId", global.state.urlHashToId);
         }
     }
 };
 
-const addIdToTitleHash = (paper) => {
+const addPaperToTitleHashToId = (paper) => {
     const id = paper.id;
     const hashedTitle = miniHash(paper.title);
     if (!global.state.titleHashToIds.hasOwnProperty(hashedTitle)) {
@@ -262,6 +262,6 @@ if (typeof module !== "undefined" && module.exports != null) {
         getTitleFunction,
         stateTitleFunction,
         updateDuplicatedUrls,
-        addIdToTitleHash,
+        addPaperToTitleHashToId,
     };
 }
