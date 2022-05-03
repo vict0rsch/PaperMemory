@@ -1,16 +1,9 @@
 const { expect } = require("expect");
 const fs = require("fs");
-const glob = require("glob");
-const utilsFiles = glob.sync("../src/shared/js/utils/*.js");
-const utilsModules = utilsFiles.map((file) => require(file));
 
-for (const module of utilsModules) {
-    for (const [name, func] of Object.entries(module)) {
-        global[name] = func;
-    }
-}
+const { loadPaperMemoryUtils, range } = require("./utilsForTests");
 
-const range = (n) => [...Array(n).keys()];
+loadPaperMemoryUtils();
 
 describe("Bibtex parser", function () {
     var bdata = JSON.parse(fs.readFileSync("./data/bibtexs.json"));
