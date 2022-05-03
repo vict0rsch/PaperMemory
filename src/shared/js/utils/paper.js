@@ -582,6 +582,13 @@ const parseIdFromUrl = async (url) => {
             id = id.split("v")[0];
         }
         idForUrl = `Biorxiv-${id}`;
+
+        const existingIds = Object.values(global.state.titleHashToIds).find((ids) =>
+            ids.includes(idForUrl)
+        );
+        if (existingIds) {
+            idForUrl = existingIds.find((id) => !id.startsWith("Biorxiv-")) ?? idForUrl;
+        }
     } else if (is.pmlr) {
         const key = url.split("/").last().split(".")[0];
         const year = "20" + key.match(/\d+/)[0];
