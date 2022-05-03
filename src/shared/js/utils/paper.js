@@ -331,7 +331,8 @@ const matchAllFilesToPapers = () => {
     });
 };
 
-const mergePapers = (newPaper, oldPaper, extra = {}) => {
+const mergePapers = (options = { newPaper: {}, oldPaper: {} }) => {
+    const { oldPaper, newPaper, ...extra } = options;
     let mergedPaper = { ...oldPaper };
 
     const defaults = {
@@ -395,14 +396,18 @@ const addOrUpdatePaper = async (url, is, menu) => {
             log("New paper", paper, "already exists as", existingPaper);
             updateDuplicatedUrls(url, existingId);
             if (!paper.venue && existingPaper.venue) {
-                existingPaper = mergePapers(paper, existingPaper, {
-                    incrementCount: true,
+                existingPaper = mergePapers({
+                    newPaper: paper,
+                    oldPaper: existingPaper,
+                    incrementCount: false,
                     overwrites: ["lastOpenDate"],
                 });
             } else if (!existingPaper.venue && paper.venue) {
                 addIdToTitleHash(paper);
-                existingPaper = mergePapers(paper, existingPaper, {
-                    incrementCount: true,
+                existingPaper = mergePapers({
+                    newPaper: paper,
+                    oldPaper: existingPaper,
+                    incrementCount: false,
                     overwrites: [
                         "lastOpenDate",
                         "venue",
@@ -451,7 +456,9 @@ const addOrUpdatePaper = async (url, is, menu) => {
     global.state.papers = (await getStorage("papers")) ?? {};
     if (isNew && global.state.papers.hasOwnProperty(paper.id)) {
         warn("Paper has been created by another page: merging papers.");
-        paper = mergePapers(global.state.papers[paper.id], paper, {
+        paper = mergePapers({
+            newPaper: global.state.papers[paper.id],
+            oldPaper: paper,
             incrementCount: true,
         });
         isNew = false;
@@ -515,7 +522,9 @@ const addOrUpdatePaper = async (url, is, menu) => {
                 global.state.papers = (await getStorage("papers")) ?? {};
                 if (isNew && global.state.papers[paper.id].count > 1) {
                     warn("Paper has been created by another page: merging papers.");
-                    paper = mergePapers(global.state.papers[paper.id], paper, {
+                    paper = mergePapers({
+                        newPaper: global.state.papers[paper.id],
+                        oldPaper: paper,
                         incrementCount: false,
                     });
                 }
