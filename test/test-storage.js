@@ -1,32 +1,42 @@
 // ❯ env MAX_SOURCES=2 PAGE_TIMEOUT_S=8 npm run test
 
+// ---------------------
+// -----  Imports  -----
+// ---------------------
+
 const { expect } = require("expect");
 const fs = require("fs");
 const { isRegExp } = require("util/types");
 
 const {
     makeBrowser,
-    getMemoryData,
+    getMemoryPapers,
     extensionPopupURL,
     visitPaperPage,
-    sleep,
 } = require("./browser");
-const { allIds, allAttributes } = require("./processMemory");
+const { allAttributes } = require("./processMemory");
 
-const paperForSource = (source, memoryData) => {
-    return Object.values(memoryData).filter((p) => p.source === source)[0];
-};
+// -------------------------------------------------------
+// -----  Global constants to parametrize the tests  -----
+// -------------------------------------------------------
 
-var orders = ["abs;pdf", "pdf;abs"];
-
-// global constants to parametrize the tests
-const loadSecs = parseFloat(process.env.loadSecs ?? 10);
+// run tests for a maximum number of distinct sources
 const maxSources = process.env.maxSources ?? -1;
+// float to go to next paper page if the previous does not respond (-1: wait)
 const pageTimeout = parseFloat(process.env.pageTimeout ?? -1);
+// only run tests for a specific paper source (as per ./data/urls.json)
 const singleSource = process.env.singleSource?.toLowerCase() ?? false;
+// keep pages and browser open at the end of tests to inspect
 const keepOpen = Boolean(process.env.keepOpen ?? false);
-const dumpMemory = Boolean(process.env.dumpMemory) ?? false;
+// write the memory to ./tmp as a JSON file
+const dump = Boolean(process.env.dump) ?? false;
+// only run tests for a specific abstract<->pdf order
 const singleOrder = process.env.singleOrder ?? false;
+// ignore sources to parse papers from (','-separated sources as per ./data/urls.json)
+const ignoreSources = process.env.ignoreSources ?? [];
+
+// check env vars
+var orders = ["abs;pdf", "pdf;abs"];
 
 if (maxSources > 0 && singleSource) {
     throw new Error("Please specify either maxSources xor singleSource");
@@ -38,15 +48,23 @@ if (singleOrder && orders.indexOf(singleOrder) === -1) {
     );
 }
 
+if (typeof ignoreSources === "string") {
+    ignoreSources = ignoreSources.split(",").map((source) => source.trim());
+}
+
 console.log("Test params:");
-console.log("    loadSecs    : ", loadSecs);
 console.log("    pageTimeout : ", pageTimeout);
 console.log("    maxSources  : ", maxSources);
 console.log("    singleSource: ", singleSource);
 console.log("    keepOpen : ", keepOpen);
-console.log("    dumpMemory  : ", dumpMemory);
+console.log("    dump  : ", dump);
 console.log("    singleOrder : ", singleOrder);
 console.log("--------------------------");
+
+// util to find a paper in the Memory from a specific source
+const paperForSource = (source, memoryPapers) => {
+    return Object.values(memoryPapers).filter((p) => p.source === source)[0];
+};
 
 // --------------------------------
 // -----  Main test function  -----
@@ -54,7 +72,7 @@ console.log("--------------------------");
 
 describe("Test paper detection and storage", function () {
     // "global" variables for this test
-    var browser, memoryData, dataVersion;
+    var browser, memoryPapers, dataVersion;
 
     // load tests configurations
     var urls = JSON.parse(fs.readFileSync("./data/urls.json"));
@@ -81,7 +99,7 @@ describe("Test paper detection and storage", function () {
         orders = [singleOrder];
     }
 
-    const timeout = (sources.length + 1) * 20 * 5000 + loadSecs * 1000;
+    const timeout = (sources.length + 1) * 20 * 5000;
     this.timeout(timeout * orders.length);
     this.slow(timeout * orders.length);
 
@@ -129,17 +147,17 @@ describe("Test paper detection and storage", function () {
                 await page.waitForTimeout(1000);
 
                 // retrieve the data parsed by PaperMemory
-                memoryData = await getMemoryData(page);
+                memoryPapers = await getMemoryPapers(page);
 
-                if (dumpMemory) {
+                if (dump) {
                     // dump this data for human analysis
                     const fname = `./tmp/memory-${new Date()}.json`;
-                    fs.writeFileSync(fname, JSON.stringify(memoryData, null, 2));
+                    fs.writeFileSync(fname, JSON.stringify(memoryPapers, null, 2));
                 }
 
                 // remove data version key
-                dataVersion = memoryData["__dataVersion"];
-                delete memoryData["__dataVersion"];
+                dataVersion = memoryPapers["__dataVersion"];
+                delete memoryPapers["__dataVersion"];
             });
 
             // --------------------------------------
@@ -148,14 +166,14 @@ describe("Test paper detection and storage", function () {
 
             describe("Global memory inspection", function () {
                 it("All sources are detected", async function () {
-                    const memorySources = allAttributes(memoryData, "source").sort();
+                    const memorySources = allAttributes(memoryPapers, "source").sort();
                     const refSources = sources.sort();
                     expect(memorySources).toEqual(refSources);
                 });
 
                 it("Pdf and Abstract are matched to the same Memory item", async function () {
-                    const memoryCounts = allAttributes(memoryData, "count");
-                    const memorySources = allAttributes(memoryData, "source");
+                    const memoryCounts = allAttributes(memoryPapers, "count");
+                    const memorySources = allAttributes(memoryPapers, "source");
                     const memoryCountsBySource = Object.fromEntries(
                         [...Array(sources.length).keys()].map((i) => [
                             memorySources[i],
@@ -170,7 +188,7 @@ describe("Test paper detection and storage", function () {
 
                 it("No undefined keys", async function () {
                     expect(
-                        Object.values(memoryData).every((item) =>
+                        Object.values(memoryPapers).every((item) =>
                             Object.values(item).every(
                                 (v) => typeof v !== "undefined" && v !== "undefined"
                             )
@@ -188,14 +206,14 @@ describe("Test paper detection and storage", function () {
                 sources.map((source) => {
                     describe(source.toLocaleUpperCase(), function () {
                         it("1 paper for source", function () {
-                            const papers = Object.values(memoryData).filter(
+                            const papers = Object.values(memoryPapers).filter(
                                 (p) => p.source === source
                             );
                             expect(papers.length).toBe(1);
                         });
 
                         it("#count is 2", function () {
-                            const paper = paperForSource(source, memoryData);
+                            const paper = paperForSource(source, memoryPapers);
                             expect(paper.count).toEqual(2);
                         });
 
@@ -205,7 +223,7 @@ describe("Test paper detection and storage", function () {
 
                             if (additionalTest["code"]) {
                                 it("#codeLink", function () {
-                                    const paper = paperForSource(source, memoryData);
+                                    const paper = paperForSource(source, memoryPapers);
                                     expect(typeof paper.codeLink === "string").toBe(
                                         true,
                                         `${source}: code link should not be ${typeof paper.codeLink}${
@@ -216,12 +234,12 @@ describe("Test paper detection and storage", function () {
                             }
 
                             it("#venue is a string", function () {
-                                const paper = paperForSource(source, memoryData);
+                                const paper = paperForSource(source, memoryPapers);
                                 expect(typeof paper.venue).toMatch("string");
                             });
 
                             it("#venue matches source", function () {
-                                const paper = paperForSource(source, memoryData);
+                                const paper = paperForSource(source, memoryPapers);
                                 if (additionalTest["venue"]) {
                                     expect(
                                         paper.venue.toLowerCase().replace(/\s/gi, "")
