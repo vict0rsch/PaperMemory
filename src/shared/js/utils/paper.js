@@ -428,7 +428,6 @@ const addOrUpdatePaper = async (url, is, menu) => {
                 });
             }
             paper = updatePaperVisits(existingPaper);
-            paper = existingPaper;
             isNew = false;
         } else {
             // set isNew to True for the storage setter
