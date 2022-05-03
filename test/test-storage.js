@@ -9,15 +9,12 @@ const {
     getMemoryData,
     extensionPopupURL,
     visitPaperPage,
+    sleep,
 } = require("./browser");
 const { allIds, allAttributes } = require("./processMemory");
 
 const paperForSource = (source, memoryData) => {
     return Object.values(memoryData).filter((p) => p.source === source)[0];
-};
-
-const sleep = async (duration) => {
-    await new Promise((resolve) => setTimeout(resolve, duration));
 };
 
 var orders = ["abs;pdf", "pdf;abs"];
@@ -107,7 +104,6 @@ describe("Test paper detection and storage", function () {
                 const indices = order === "abs;pdf" ? [0, 1] : [1, 0];
 
                 for (const t of indices) {
-                    let pagePromises = [];
                     for (const [idx, targets] of Object.values(urls).entries()) {
                         // for each target url (abstract, pdf), visit the url
                         // and wait a little for it to load
@@ -120,14 +116,11 @@ describe("Test paper detection and storage", function () {
                         const prefix = `${" ".repeat(4)}(${n}/${nUrls * 2})`;
                         console.log(`${prefix} Going to: ${target}`);
 
-                        pagePromises.push(
-                            visitPaperPage(browser, target, {
-                                timeout: pageTimeout,
-                                keepOpen,
-                            })
-                        );
+                        await visitPaperPage(browser, target, {
+                            timeout: pageTimeout,
+                            keepOpen,
+                        });
                     }
-                    await Promise.all(pagePromises);
                 }
 
                 // go to the extension's popup url
