@@ -82,6 +82,10 @@ All the data collected is stored locally on your computer and you can export it 
 
 I'm regularly adding feature ideas in the [issues](https://github.com/vict0rsch/PaperMemory/issues). Feel free to go upvote the ones you'd like to see happen or submit your own requests.
 
+### Duplicates
+
+PaperMemory finds and merges duplicates based on their titles only. If you visit a paper which has the same title as an existing paper, it will not be added as a new paper, rather "attached" to the existing one. However, if the existing paper does not have a known publication venue and the new paper does, then they are switched to favour the one with a known publication venue.
+
 ## Demo
 
 
@@ -300,6 +304,17 @@ Contributions and ideas on how to improve the process and potentially add public
 <summary><strong>Where does PaperMemory store my data?</strong></summary>
 <br/>
 It's all stored locally in your browser's local storage. If you want to transfer data to a new browser/computer, use the export/import tools in the extension's options.
+</details>
+<details>
+
+<summary><strong>How do I resolve duplicates?</strong></summary>
+<br/>
+If you installed PaperMemory <code>&lt;5.3</code> (May 2022) you may have duplicate papers in your Memory. The easiest way to resolve this is to go to a duplicate's page, then delete it from memory and refresh the page. The automatic de-duplication features in version <code>5.3</code> should handle the matching <em>if</em> the 2 papers have the same title.
+
+<br/>
+
+If you still see duplicates with PaperMemory <code>&gt;=5.3</code> <em>and</em> the 2 papers have the same title, this may be a problem with PaperMemory and you should open an issue here on Github.
+
 </details>
 
 <details>
