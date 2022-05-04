@@ -97,12 +97,12 @@ describe("Paper de-duplication", function () {
                     if (order === "pre;pub") {
                         duplicates = [
                             ...duplicates.filter((d) => d.type === "preprint"),
-                            ...duplicates.filter((d) => d.type !== "publication"),
+                            ...duplicates.filter((d) => d.type !== "preprint"),
                         ];
                     } else {
                         duplicates = [
                             ...duplicates.filter((d) => d.type !== "preprint"),
-                            ...duplicates.filter((d) => d.type === "publication"),
+                            ...duplicates.filter((d) => d.type === "preprint"),
                         ];
                     }
 
