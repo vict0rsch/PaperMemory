@@ -309,11 +309,10 @@ It's all stored locally in your browser's local storage. If you want to transfer
 
 <summary><strong>How do I resolve duplicates?</strong></summary>
 <br/>
-If you installed PaperMemory <code>&lt;5.3</code> (May 2022) you may have duplicate papers in your Memory. The easiest way to resolve this is to go to a duplicate's page, then delete it from memory and refresh the page. The automatic de-duplication features in version <code>5.3</code> should handle the matching <em>if</em> the 2 papers have the same title.
-
-<br/>
-
-If you still see duplicates with PaperMemory <code>&gt;=5.3</code> <em>and</em> the 2 papers have the same title, this may be a problem with PaperMemory and you should open an issue here on Github.
+    <ul>
+        <li>If you installed PaperMemory <code>&lt;5.3</code> (May 2022) you may have duplicate papers in your Memory. The easiest way to resolve this is to go to a duplicate's page, then delete it from memory and refresh the page. The automatic de-duplication features in version <code>5.3</code> should handle the matching <em>if</em> the 2 papers have the same title.</li><br/>
+        <li>If you still see duplicates with PaperMemory <code>&gt;=5.3</code> <em>and</em> the 2 papers have the same title, this may be a problem with PaperMemory and you should open an issue here on Github.</li>
+        </ul>
 
 </details>
 
