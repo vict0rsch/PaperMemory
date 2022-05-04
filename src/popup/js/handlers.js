@@ -30,10 +30,9 @@ const handleOpenItemCodeLink = (e) => {
 const handleCopyMarkdownLink = async (e) => {
     const id = eventId(e);
     const menu = global.state.menu;
-    const paper = global.state.papers[id];
-    const link = menu.checkPreferPdf ? paperToPDF(paper) : paperToAbs(paper);
     const text = menu.checkPreferPdf ? "PDF" : "Abstract";
-    const md = `[${paper.title}](${link})`;
+    const paper = global.state.papers[id];
+    const md = makeMdLink(paper, menu);
     copyAndConfirmMemoryItem(id, md, `Markdown ${text} link copied!`);
 };
 
