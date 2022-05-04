@@ -1,12 +1,11 @@
 const { expect } = require("expect");
-const fs = require("fs");
 
-const { loadPaperMemoryUtils, range } = require("./utilsForTests");
+const { loadPaperMemoryUtils, range, readJSON } = require("./utilsForTests");
 
 loadPaperMemoryUtils();
 
 describe("Bibtex parser", function () {
-    var bdata = JSON.parse(fs.readFileSync("./data/bibtexs.json"));
+    var bdata = readJSON("./data/bibtexs.json");
 
     it("Test data is balanced", function () {
         expect(bdata.strings.length).toEqual(bdata.objects.length);
@@ -73,7 +72,7 @@ describe("Bibtex parser", function () {
 });
 
 describe("paper.js", () => {
-    var allUrls = JSON.parse(fs.readFileSync("./data/urls.json"));
+    var allUrls = readJSON("./data/urls.json");
 
     describe("#paperToAbs", () => {
         for (const [i, [source, urls]] of Object.entries(allUrls).entries()) {

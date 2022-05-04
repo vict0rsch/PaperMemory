@@ -14,6 +14,9 @@ const {
     extensionPopupURL,
     visitPaperPage,
 } = require("./browser");
+
+const { readJSON } = require("./utilsForTests");
+
 const { allAttributes } = require("./processMemory");
 
 // -------------------------------------------------------
@@ -76,7 +79,7 @@ describe("Test paper detection and storage", function () {
     var browser, memoryPapers, dataVersion;
 
     // load tests configurations
-    var urls = JSON.parse(fs.readFileSync("./data/urls.json"));
+    var urls = readJSON("./data/urls.json");
     if (maxSources > 0) {
         urls = Object.fromEntries(Object.entries(urls).slice(0, maxSources));
     } else if (singleSource) {

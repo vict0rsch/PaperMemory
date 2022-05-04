@@ -60,7 +60,9 @@ const preDuplicates = Object.entries(readJSON("./data/urls.json"))
 
 console.log(`\nUsing ${preDuplicates.length} pre-duplicates`);
 
-const allDuplicates = readJSON("./data/duplicates.json");
+const allDuplicates = readJSON("./data/duplicates.json").filter(
+    (duplicates) => !singleName || duplicates[0].name === singleName
+);
 
 // --------------------------------
 // -----  Main test function  -----
