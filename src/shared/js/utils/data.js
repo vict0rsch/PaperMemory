@@ -196,11 +196,15 @@ const setStorage = async (key, value, cb = () => {}) => {
  *
  * @param {string} id Paper id to delete. Must be exact.
  */
-const deletePaperInStorage = async (id) => {
-    const papers = (await getStorage("papers")) ?? {};
+const deletePaperInStorage = async (id, papers) => {
+    if (!papers) {
+        papers = (await getStorage("papers")) ?? {};
+    }
     let deleted = false;
     if (papers.hasOwnProperty(id)) {
-        deleted = delete papers[id];
+        updateDuplicatedUrls(null, id, true);
+        deleted = delete global.state.titleHashToIds[miniHash(papers[id].title)];
+        deleted = deleted && delete papers[id];
     }
     if (deleted) {
         setStorage("papers", papers);
@@ -627,10 +631,10 @@ const makeVenue = async (paper) => {
         case "biorxiv":
             break;
         case "pmlr":
-            venue = paper.conf.split(/\d{4}/)[0];
+            venue = paper.conf?.split(/\d{4}/)[0] ?? "";
             break;
         case "acl":
-            venue = paper.conf;
+            venue = paper.conf ?? "";
             break;
         case "pnas":
             venue = "PNAS";

@@ -1,19 +1,11 @@
 const { expect } = require("expect");
-const fs = require("fs");
-const glob = require("glob");
-const utilsFiles = glob.sync("../src/shared/js/utils/*.js");
-const utilsModules = utilsFiles.map((file) => require(file));
 
-for (const module of utilsModules) {
-    for (const [name, func] of Object.entries(module)) {
-        global[name] = func;
-    }
-}
+const { loadPaperMemoryUtils, range, readJSON } = require("./utilsForTests");
 
-const range = (n) => [...Array(n).keys()];
+loadPaperMemoryUtils();
 
 describe("Bibtex parser", function () {
-    var bdata = JSON.parse(fs.readFileSync("./data/bibtexs.json"));
+    var bdata = readJSON("./data/bibtexs.json");
 
     it("Test data is balanced", function () {
         expect(bdata.strings.length).toEqual(bdata.objects.length);
@@ -80,7 +72,7 @@ describe("Bibtex parser", function () {
 });
 
 describe("paper.js", () => {
-    var allUrls = JSON.parse(fs.readFileSync("./data/urls.json"));
+    var allUrls = readJSON("./data/urls.json");
 
     describe("#paperToAbs", () => {
         for (const [i, [source, urls]] of Object.entries(allUrls).entries()) {

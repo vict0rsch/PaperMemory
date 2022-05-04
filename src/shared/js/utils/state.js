@@ -45,11 +45,28 @@ const initState = async (papers, isContentScript) => {
     global.state.papers = papers;
 
     global.state.menu = await getMenu();
-    log("Time to parse user preferences (s): " + (Date.now() - times[0]) / 1000);
+    log("Time to retrieve user preferences (s): " + (Date.now() - times[0]) / 1000);
     times.unshift(Date.now());
 
     global.state.ignoreSources = (await getStorage("ignoreSources")) ?? {};
-    log("Time to read sources to ignore (s): " + (Date.now() - times[0]) / 1000);
+    log("Time to retrieve sources to ignore (s): " + (Date.now() - times[0]) / 1000);
+    times.unshift(Date.now());
+
+    global.state.urlHashToId = (await getStorage("urlHashToId")) ?? {};
+    log(
+        "Time to retrieve sources to urlHashToId (s): " + (Date.now() - times[0]) / 1000
+    );
+    times.unshift(Date.now());
+
+    global.state.titleHashToIds = {};
+    for (const [id, paper] of Object.entries(cleanPapers(papers))) {
+        const hashed = miniHash(paper.title);
+        if (!global.state.titleHashToIds.hasOwnProperty(hashed)) {
+            global.state.titleHashToIds[hashed] = [];
+        }
+        global.state.titleHashToIds[hashed].push(id);
+    }
+    log("Time to hash titles (s): " + (Date.now() - times[0]) / 1000);
     times.unshift(Date.now());
 
     if (isContentScript) {
@@ -74,6 +91,62 @@ const initState = async (papers, isContentScript) => {
     times.unshift(Date.now());
 
     info("State init duration (s): " + (Date.now() - times.last()) / 1000);
+};
+
+/**
+ * Execute the sort operation on global.state.sortedPapers using orderPapers, removing the
+ * __dataVersion element in global.state.papers.
+ */
+const sortMemory = () => {
+    global.state.sortedPapers = Object.values(cleanPapers(global.state.papers));
+    global.state.sortedPapers.sort(orderPapers);
+    global.state.papersList.sort(orderPapers);
+};
+
+/**
+ * Function to produce the sorting order of papers: it compares 2 papers and
+ * returns -1 or 1 depending on which should come first.
+ * addDate count and lastOpenDate are sorted descending by default.
+ * Others (id, title) are sorted ascending by default.
+ * @param {object} paper1 First item in the comparison
+ * @param {object} paper2 Second item to compare
+ * @returns {number} 1 or -1 depending on the prevalence of paper1/paper2
+ */
+const orderPapers = (paper1, paper2) => {
+    let val1 = paper1[global.state.sortKey];
+    let val2 = paper2[global.state.sortKey];
+
+    if (typeof val1 === "undefined") {
+        val1 = "";
+    }
+    if (typeof val2 === "undefined") {
+        val2 = "";
+    }
+
+    if (typeof val1 === "string") {
+        val1 = val1.toLowerCase();
+        val2 = val2.toLowerCase();
+    }
+    if (global.descendingSortKeys.indexOf(global.state.sortKey) >= 0) {
+        return val1 > val2 ? -1 : 1;
+    }
+    return val1 > val2 ? 1 : -1;
+};
+
+/**
+ * Create the set of all tags used in papers. If a tag used for a paper is new,
+ * it is added to this list, if a tag is never used after it's deleted from its
+ * last paper, it is removed from the list.
+ */
+const makeTags = () => {
+    let tags = new Set();
+    for (const p of global.state.sortedPapers) {
+        for (const t of p.tags) {
+            tags.add(t);
+        }
+    }
+    global.state.paperTags = Array.from(tags);
+    global.state.paperTags.sort();
 };
 
 /**
@@ -201,6 +274,40 @@ const stateTitleFunction = (paperOrId) => {
     return name.replaceAll("\n", " ").replace(/\s\s+/g, " ");
 };
 
+const updateDuplicatedUrls = (url, id, remove = false) => {
+    if (!remove) {
+        global.state.urlHashToId[miniHash(url)] = id;
+        setStorage("urlHashToId", global.state.urlHashToId);
+    } else {
+        let hashedUrls;
+        if (!url) {
+            hashedUrls = Object.keys(global.state.urlHashToId).filter(
+                (k) => global.state.urlHashToId[k] === id
+            );
+        } else {
+            hashedUrls = [miniHash(url)];
+        }
+        if (hashedUrls && hashedUrls.length) {
+            for (const hashedUrl of hashedUrls) {
+                warn("Removing duplicated url", url, "for", id);
+                delete global.state.urlHashToId[hashedUrl];
+            }
+            setStorage("urlHashToId", global.state.urlHashToId);
+        }
+    }
+};
+
+const addPaperToTitleHashToId = (paper) => {
+    const id = paper.id;
+    const hashedTitle = miniHash(paper.title);
+    if (!global.state.titleHashToIds.hasOwnProperty(hashedTitle)) {
+        global.state.titleHashToIds[hashedTitle] = [];
+    }
+    if (!global.state.titleHashToIds[hashedTitle].includes(id)) {
+        global.state.titleHashToIds[hashedTitle].push(id);
+    }
+};
+
 // ----------------------------------------------------
 // -----  TESTS: modules for node.js environment  -----
 // ----------------------------------------------------
@@ -210,5 +317,7 @@ if (typeof module !== "undefined" && module.exports != null) {
         getExamplePaper,
         getTitleFunction,
         stateTitleFunction,
+        updateDuplicatedUrls,
+        addPaperToTitleHashToId,
     };
 }

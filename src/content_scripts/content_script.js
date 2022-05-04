@@ -471,10 +471,10 @@ const feedback = (text, paper = null) => {
     });
 };
 
-const updatePaper = (paper) => {
+const updatePaperVisits = (paper) => {
     paper.count += 1;
     paper.lastOpenDate = new Date().toJSON();
-    info("Updating paper:", paper);
+    info("Updating paper to:", paper);
     return paper;
 };
 
@@ -567,81 +567,70 @@ const arxiv = async (checks) => {
         `;
         arxivAbsCol.insertAdjacentHTML("beforeend", bibLoader);
 
-        $.get(`https://export.arxiv.org/api/query?id_list=${id.split("-")[1]}`).then(
-            async (data) => {
-                const paper = await makeArxivPaper(id, data);
+        const paper = await makeArxivPaper(url);
 
-                const bibtexDiv = /*html*/ `
-                    <div id="bibtexDiv">
-                        <div id="texHeader" class="arxivTools-header">
-                            <h3>BibTex:</h3>
-                            ${svg("clipboard-default")} ${svg("clipboard-default-ok")}
-                        </div>
-                        <div id="texTextarea" class="arxivTools-codify">${bibtexToString(
-                            paper.bibtex
-                        ).replaceAll("\t", "  ")}</div>
-                    </div>
-                `;
+        const bibtexDiv = /*html*/ `
+            <div id="bibtexDiv">
+                <div id="texHeader" class="arxivTools-header">
+                    <h3>BibTex:</h3>
+                    ${svg("clipboard-default")} ${svg("clipboard-default-ok")}
+                </div>
+                <div id="texTextarea" class="arxivTools-codify">${bibtexToString(
+                    paper.bibtex
+                ).replaceAll("\t", "  ")}</div>
+            </div>
+        `;
 
-                $("#loader-container").fadeOut(() => {
-                    findEl("loader-container").remove();
-                    arxivAbsCol.insertAdjacentHTML("beforeend", bibtexDiv);
-                    addListener(
-                        document.querySelector("#texHeader .copy-feedback"),
-                        "click",
-                        (e) => {
-                            $("#texHeader .copy-feedback").fadeOut(200, () => {
-                                $("#texHeader .copy-feedback-ok").fadeIn(200, () => {
-                                    setTimeout(() => {
-                                        $("#texHeader .copy-feedback-ok").fadeOut(
-                                            200,
-                                            () => {
-                                                $("#texHeader .copy-feedback").fadeIn(
-                                                    200
-                                                );
-                                            }
-                                        );
-                                    }, 1500);
+        $("#loader-container").fadeOut(() => {
+            findEl("loader-container").remove();
+            arxivAbsCol.insertAdjacentHTML("beforeend", bibtexDiv);
+            addListener(
+                document.querySelector("#texHeader .copy-feedback"),
+                "click",
+                (e) => {
+                    $("#texHeader .copy-feedback").fadeOut(200, () => {
+                        $("#texHeader .copy-feedback-ok").fadeIn(200, () => {
+                            setTimeout(() => {
+                                $("#texHeader .copy-feedback-ok").fadeOut(200, () => {
+                                    $("#texHeader .copy-feedback").fadeIn(200);
                                 });
-                            });
-                            copyTextToClipboard(findEl("texTextarea").innerText);
-                            feedback("Bibtex Citation Copied!");
-                        }
-                    );
-                    addListener(
-                        document.querySelector("#markdown-header .copy-feedback"),
-                        "click",
-                        (e) => {
-                            console.log("click");
-                            $("#markdown-header .copy-feedback").fadeOut(200, () => {
-                                $("#markdown-header .copy-feedback-ok").fadeIn(
+                            }, 1500);
+                        });
+                    });
+                    copyTextToClipboard(findEl("texTextarea").innerText);
+                    feedback("Bibtex Citation Copied!");
+                }
+            );
+            addListener(
+                document.querySelector("#markdown-header .copy-feedback"),
+                "click",
+                (e) => {
+                    console.log("click");
+                    $("#markdown-header .copy-feedback").fadeOut(200, () => {
+                        $("#markdown-header .copy-feedback-ok").fadeIn(200, () => {
+                            setTimeout(() => {
+                                $("#markdown-header .copy-feedback-ok").fadeOut(
                                     200,
                                     () => {
-                                        setTimeout(() => {
-                                            $(
-                                                "#markdown-header .copy-feedback-ok"
-                                            ).fadeOut(200, () => {
-                                                $(
-                                                    "#markdown-header .copy-feedback"
-                                                ).fadeIn(200);
-                                            });
-                                        }, 1500);
+                                        $("#markdown-header .copy-feedback").fadeIn(
+                                            200
+                                        );
                                     }
                                 );
-                            });
-                            copyTextToClipboard(
-                                findEl("markdown-link").innerText.replaceAll("\n", "")
-                            );
-                            feedback("Markdown Link Copied!");
-                        }
+                            }, 1500);
+                        });
+                    });
+                    copyTextToClipboard(
+                        findEl("markdown-link").innerText.replaceAll("\n", "")
                     );
-                });
-            }
-        );
+                    feedback("Markdown Link Copied!");
+                }
+            );
+        });
     }
 };
 
-(async () => {
+window.addEventListener("DOMContentLoaded", async () => {
     const url = window.location.href;
     let stateIsReady = false;
     if (url.startsWith("file://")) {
@@ -667,4 +656,4 @@ const arxiv = async (checks) => {
             contentScriptMain(url, stateIsReady, true);
         }
     });
-})();
+});

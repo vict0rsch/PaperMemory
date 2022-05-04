@@ -1,0 +1,60 @@
+[
+    [
+        {
+            "type": "preprint",
+            "url": "https://arxiv.org/abs/2110.02871",
+            "name": "climategan"
+        },
+        {
+            "type": "publication",
+            "url": "https://openreview.net/forum?id=EZNOb_uNpJk",
+            "name": "climategan"
+        }
+    ],
+    [
+        {
+            "type": "preprint",
+            "url": "https://arxiv.org/abs/1904.01121",
+            "name": "hype"
+        },
+        {
+            "type": "publication",
+            "url": "https://proceedings.neurips.cc/paper/2019/hash/65699726a3c601b9f31bf04019c8593c-Abstract.html",
+            "name": "hype"
+        }
+    ],
+    [
+        {
+            "type": "publication",
+            "url": "https://www.pnas.org/doi/full/10.1073/pnas.1900358116",
+            "name": "turbulent"
+        },
+        {
+            "type": "publication",
+            "url": "https://www.pnas.org/content/116/18/8667",
+            "name": "turbulent"
+        }
+    ],
+    [
+        {
+            "type": "publication",
+            "url": "https://openaccess.thecvf.com/content_cvpr_2018/html/Chang_Scalable_and_Effective_CVPR_2018_paper.html",
+            "name": "scalable and effective"
+        },
+        {
+            "type": "preprint",
+            "url": "https://arxiv.org/abs/1707.09669",
+            "name": "scalable and effective"
+        },
+        {
+            "type": "publication",
+            "url": "https://ieeexplore.ieee.org/document/8578259",
+            "name": "scalable and effective"
+        },
+        {
+            "type": "publication",
+            "url": "https://ieeexplore.ieee.org/document/8578259/citations?tabFilter=papers#citations",
+            "name": "scalable and effective"
+        }
+    ]
+]

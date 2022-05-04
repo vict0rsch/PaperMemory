@@ -9,7 +9,11 @@ Object.defineProperty(Array.prototype, "last", {
 });
 
 Object.defineProperty(String.prototype, "capitalize", {
-    value: function () {
+    value: function (all = false) {
+        if (all)
+            return this.split(" ")
+                .map((s) => s.capitalize())
+                .join(" ");
         return this.charAt(0).toUpperCase() + this.slice(1);
     },
 });
@@ -31,18 +35,20 @@ global.state = {
     dataVersion: 0,
     memoryIsOpen: false,
     menuIsOpen: false,
-    papers: {},
-    papersList: [],
-    paperTags: new Set(),
-    pdfTitleFn: null,
+    papers: {}, // (id => object)
+    papersList: [], // [papers]
+    paperTags: new Set(), // (Set(string))
+    pdfTitleFn: null, // function(paper) => string
     showFavorites: false,
-    sortedPapers: [],
+    sortedPapers: [], // [papers]
     sortKey: "",
     papersReady: false,
-    menu: {},
+    menu: {}, // (menuCheckKey => bool)
     files: {},
-    ignoreSources: {},
+    ignoreSources: {}, // (source => bool)
     lastRefresh: new Date(),
+    titleHashToIds: {}, // (miniHash(title) -> [ids])
+    urlHashToId: {}, // (miniHash(url) => id)
 };
 
 global.descendingSortKeys = [
@@ -99,11 +105,19 @@ global.menuCheckDefaultFalse = [
  */
 global.menuStorageKeys = [...global.menuCheckNames, "pdfTitleFn"];
 
+/**
+ * Extra data per source
+ */
 global.sourceExtras = {
     springer: {
         types: ["chapter", "article", "book", "referenceworkentry"],
     },
 };
+
+/**
+ * Sources which are preprints (important for de-duplication)
+ */
+global.preprintSources = ["arxiv", "biorxiv"];
 
 /**
  * Map of known data sources to the associated paper urls: pdf urls and web-pages urls.
@@ -956,6 +970,7 @@ if (typeof module !== "undefined" && module.exports != null) {
         menuCheckDefaultFalse: global.menuCheckDefaultFalse,
         menuStorageKeys: global.menuStorageKeys,
         sourceExtras: global.sourceExtras,
+        preprintSources: global.preprintSources,
         knownPaperPages: global.knownPaperPages,
         sourcesNames: global.sourcesNames,
         overrideORConfs: global.overrideORConfs,

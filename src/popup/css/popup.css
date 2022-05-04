@@ -554,7 +554,7 @@ code {
     transform: scale(1.1);
 }
 
-#confirm-modal {
+#delete-paper-modal {
     width: 100%;
     height: 100%;
     background-color: #e0e0e0;

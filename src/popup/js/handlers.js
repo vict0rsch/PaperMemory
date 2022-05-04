@@ -252,19 +252,19 @@ const handleMemorySearchKeyUp = (e) => {
 };
 
 const handleCancelModalClick = () => {
-    hideId("confirm-modal");
+    hideId("delete-paper-modal");
 };
 
 const handleConfirmDeleteModalClick = (e) => {
-    const id = findEl("hidden-modal-id").innerHTML;
+    const id = findEl("delete-paper-modal-hidden-id").innerHTML;
     const title = global.state.papers[id].title;
     const url = global.state.papers[id].pdfLink;
-    delete global.state.papers[id];
+    deletePaperInStorage(id, global.state.papers);
     chrome.storage.local.set({ papers: global.state.papers }, async () => {
         global.state.papersList = Object.values(cleanPapers(global.state.papers));
         sortMemory();
         displayMemoryTable();
-        hideId("confirm-modal");
+        hideId("delete-paper-modal");
         info(`Successfully deleted "${title}" (${id}) from PaperMemory`);
         if (global.state.currentId === id) {
             await updatePopupPaperNoMemory(url);

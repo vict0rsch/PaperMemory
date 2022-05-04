@@ -126,8 +126,8 @@ const updatePopupPaperNoMemory = async (url) => {
 const showConfirmDeleteModal = (id) => {
     const title = global.state.papers[id].title;
     setTextId("delete-modal-title", title);
-    setHTML("hidden-modal-id", id);
-    showId("confirm-modal", "flex");
+    setHTML("delete-paper-modal-hidden-id", id);
+    showId("delete-paper-modal", "flex");
 };
 
 /**
@@ -393,46 +393,6 @@ const setMemorySortArrow = (direction) => {
 };
 
 /**
- * Function to produce the sorting order of papers: it compares 2 papers and
- * returns -1 or 1 depending on which should come first.
- * addDate count and lastOpenDate are sorted descending by default.
- * Others (id, title) are sorted ascending by default.
- * @param {object} paper1 First item in the comparison
- * @param {object} paper2 Second item to compare
- * @returns {number} 1 or -1 depending on the prevalence of paper1/paper2
- */
-const orderPapers = (paper1, paper2) => {
-    let val1 = paper1[global.state.sortKey];
-    let val2 = paper2[global.state.sortKey];
-
-    if (typeof val1 === "undefined") {
-        val1 = "";
-    }
-    if (typeof val2 === "undefined") {
-        val2 = "";
-    }
-
-    if (typeof val1 === "string") {
-        val1 = val1.toLowerCase();
-        val2 = val2.toLowerCase();
-    }
-    if (global.descendingSortKeys.indexOf(global.state.sortKey) >= 0) {
-        return val1 > val2 ? -1 : 1;
-    }
-    return val1 > val2 ? 1 : -1;
-};
-
-/**
- * Execute the sort operation on global.state.sortedPapers using orderPapers, removing the
- * __dataVersion element in global.state.papers.
- */
-const sortMemory = () => {
-    global.state.sortedPapers = Object.values(cleanPapers(global.state.papers));
-    global.state.sortedPapers.sort(orderPapers);
-    global.state.papersList.sort(orderPapers);
-};
-
-/**
  * Reverses the global.state's 2 ordered lists: sortedPapers and papersList
  */
 const reverseMemory = () => {
@@ -456,6 +416,7 @@ const searchMemory = (letters) => {
         const note = paper.note.toLowerCase();
         const tags = paper.tags.join(" ").toLowerCase();
         const displayId = getDisplayId(paper.id).toLowerCase();
+        const venue = paper.venue.toLowerCase();
         if (
             words.every(
                 (w) =>
@@ -463,7 +424,8 @@ const searchMemory = (letters) => {
                     author.includes(w) ||
                     note.includes(w) ||
                     tags.includes(w) ||
-                    displayId.includes(w)
+                    displayId.includes(w) ||
+                    venue.includes(w)
             )
         ) {
             if (!global.state.showFavorites || paper.favorite) {
@@ -618,22 +580,6 @@ const updatePaperTags = (id, elementId) => {
 };
 
 /**
- * Create the set of all tags used in papers. If a tag used for a paper is new,
- * it is added to this list, if a tag is never used after it's deleted from its
- * last paper, it is removed from the list.
- */
-const makeTags = () => {
-    let tags = new Set();
-    for (const p of global.state.sortedPapers) {
-        for (const t of p.tags) {
-            tags.add(t);
-        }
-    }
-    global.state.paperTags = Array.from(tags);
-    global.state.paperTags.sort();
-};
-
-/**
  * Iterates over all papers in the papersList (sorted and filtered),
  * creates each paper's HTML template and appends it to #memory-table.
  * Also creates the relevant events.
@@ -740,8 +686,12 @@ const makeMemoryHTML = async () => {
     );
     addListener("memory-search", "clear-search", handleMemorySearchKeyPress(true));
     addListener("memory-search", "keyup", handleMemorySearchKeyUp);
-    addListener("cancel-modal-button", "click", handleCancelModalClick);
-    addListener("confirm-modal-button", "click", handleConfirmDeleteModalClick);
+    addListener("delete-paper-modal-cancel-button", "click", handleCancelModalClick);
+    addListener(
+        "delete-paper-modal-confirm-button",
+        "click",
+        handleConfirmDeleteModalClick
+    );
     addListener("filter-favorites", "click", handleFilterFavorites);
     // listen to sorting feature change
     addListener("memory-select", "change", handleMemorySelectChange);
