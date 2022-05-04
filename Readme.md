@@ -84,7 +84,7 @@ I'm regularly adding feature ideas in the [issues](https://github.com/vict0rsch/
 
 ### Duplicates
 
-As of version `5.3`, PaperMemory finds and merges duplicates based on their titles only. If you visit a paper which has the same title as an existing paper, it will not be added as a new paper, rather "attached" to the existing one. However, if the existing paper does not have a known publication venue and the new paper does, then they are switched to favour the one with a known publication venue.
+As of version `0.5.3`, PaperMemory finds and merges duplicates based on their titles only. If you visit a paper which has the same title as an existing paper, it will not be added as a new paper, rather "attached" to the existing one. However, if the existing paper does not have a known publication venue and the new paper does, then they are switched to favour the one with a known publication venue.
 
 ## Demo
 
@@ -310,8 +310,8 @@ It's all stored locally in your browser's local storage. If you want to transfer
 <summary><strong>How do I resolve duplicates?</strong></summary>
 <br/>
     <ul>
-        <li>If you installed PaperMemory <code>&lt;5.3</code> (May 2022) you may have duplicate papers in your Memory. The easiest way to resolve this is to go to a duplicate's page, then delete it from memory and refresh the page. The automatic de-duplication features in version <code>5.3</code> should handle the matching <em>if</em> the 2 papers have the same title.</li><br/>
-        <li>If you still see duplicates with PaperMemory <code>&gt;=5.3</code> <em>and</em> the 2 papers have the same title, this may be a problem with PaperMemory and you should open an issue here on Github.</li>
+        <li>If you installed PaperMemory <code>&lt;0.5.3</code> (May 2022) you may have duplicate papers in your Memory. The easiest way to resolve this is to go to a duplicate's page, then delete it from memory and refresh the page. The automatic de-duplication features in version <code>0.5.3</code> should handle the matching <em>if</em> the 2 papers have the same title.</li><br/>
+        <li>If you still see duplicates with PaperMemory <code>&gt;=0.5.3</code> <em>and</em> the 2 papers have the same title, this may be a problem with PaperMemory and you should open an issue here on Github.</li>
         </ul>
 
 </details>
