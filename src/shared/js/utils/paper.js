@@ -134,8 +134,13 @@ const paperToAbs = (paper) => {
             abs = pdf.replace(`/${journal}/${type}/`, `/${journal}/abstract/`);
             break;
 
-        case "aps":
+        case "wiley":
             abs = pdf.replace(/\/doi\/e?pdf\//g, `/doi/abs/`);
+            break;
+
+        case "sciencedirect":
+            const pii = url.split("/pii/")[1].split("/")[0].split("#")[0].split("?")[0];
+            abs = `https://www.sciencedirect.com/science/article/pii/${pii}`;
             break;
 
         default:
@@ -224,6 +229,9 @@ const paperToPDF = (paper) => {
             break;
 
         case "wiley":
+            break;
+
+        case "sciencedirect":
             break;
 
         default:
@@ -723,6 +731,14 @@ const parseIdFromUrl = async (url) => {
         );
         const paper = Object.values(cleanPapers(global.state.papers)).filter((p) => {
             return p.source === "wiley" && p.id.includes(doi);
+        })[0];
+        idForUrl = paper && paper.id;
+    } else if (is.sciencedirect) {
+        const pii = miniHash(
+            url.split("/pii/")[1].split("/")[0].split("#")[0].split("?")[0]
+        );
+        const paper = Object.values(cleanPapers(global.state.papers)).filter((p) => {
+            return p.source === "sciencedirect" && p.id.includes(pii);
         })[0];
         idForUrl = paper && paper.id;
     } else if (is.localFile) {

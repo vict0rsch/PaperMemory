@@ -149,6 +149,11 @@ global.knownPaperPages = {
     pmc: ["ncbi.nlm.nih.gov/pmc/articles/PMC"],
     pmlr: ["proceedings.mlr.press/"],
     pnas: ["pnas.org/content/", "pnas.org/doi/"],
+    sciencedirect: [
+        "sciencedirect.com/science/article/pii/",
+        "sciencedirect.com/science/article/abs/pii/",
+        "reader.elsevier.com/reader/sd/pii/",
+    ],
     springer: [
         ...global.sourceExtras.springer.types.map(
             (type) => `link.springer.com/${type}/`
@@ -177,6 +182,7 @@ global.sourcesNames = {
     pmc: "PubMed Central",
     pmlr: "Proceedings of Machine Learning Research (PMLR)",
     pnas: "Proceedings of the National Academy of Sciences (PNAS)",
+    sciencedirect: "ScienceDirect",
     springer: "Springer",
     wiley: "Wiley",
 };

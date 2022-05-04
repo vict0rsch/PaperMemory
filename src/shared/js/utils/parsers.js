@@ -1108,6 +1108,21 @@ const makeWileyPaper = async (url) => {
     return { author, bibtex, id, key: doi, note, pdfLink, title, venue, year };
 };
 
+const makeScienceDirectPaper = async (url) => {
+    const pii = url.split("/pii/")[1].split("/")[0].split("#")[0].split("?")[0];
+    const bibtex = await fetchText(
+        `https://www.sciencedirect.com/sdfe/arp/cite?pii=${pii}&format=text%2Fx-bibtex&withabstract=false`
+    );
+    const data = bibtexToObject(bibtex);
+
+    const { author, journal, year, doi, title, citationKey } = data;
+    const note = `Published @ ${journal} (${year})`;
+    const id = `ScienceDirect-${year}_${miniHash(pii)}`;
+    const venue = journal ?? "Science Direct";
+    const pdfLink = `https://reader.elsevier.com/reader/sd/pii/${pii}`;
+
+    return { author, bibtex, id, key: citationKey, note, pdfLink, title, venue, year };
+};
 // -------------------------------
 // -----  PREPRINT MATCHING  -----
 // -------------------------------
@@ -1464,6 +1479,11 @@ const makePaper = async (is, url) => {
         paper = await makeWileyPaper(url);
         if (paper) {
             paper.source = "wiley";
+        }
+    } else if (is.sciencedirect) {
+        paper = await makeScienceDirectPaper(url);
+        if (paper) {
+            paper.source = "sciencedirect";
         }
     } else {
         throw new Error("Unknown paper source: " + JSON.stringify({ is, url }));
