@@ -178,6 +178,7 @@ global.sourcesNames = {
     pmlr: "Proceedings of Machine Learning Research (PMLR)",
     pnas: "Proceedings of the National Academy of Sciences (PNAS)",
     springer: "Springer",
+    wiley: "Wiley",
 };
 
 global.overrideORConfs = {
