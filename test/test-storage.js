@@ -53,12 +53,13 @@ if (typeof ignoreSources === "string") {
 }
 
 console.log("Test params:");
-console.log("    pageTimeout : ", pageTimeout);
-console.log("    maxSources  : ", maxSources);
-console.log("    singleSource: ", singleSource);
-console.log("    keepOpen : ", keepOpen);
-console.log("    dump  : ", dump);
-console.log("    singleOrder : ", singleOrder);
+console.log("    pageTimeout   : ", pageTimeout);
+console.log("    maxSources    : ", maxSources);
+console.log("    singleSource  : ", singleSource);
+console.log("    keepOpen      : ", keepOpen);
+console.log("    dump          : ", dump);
+console.log("    singleOrder   : ", singleOrder);
+console.log("    ignoreSources : ", ignoreSources);
 console.log("--------------------------");
 
 // util to find a paper in the Memory from a specific source
@@ -131,7 +132,7 @@ describe("Test paper detection and storage", function () {
                         const target = targetUrls[t];
                         // log prefix
                         const n = idx + (o > 0 ? 1 - t : t) * nUrls + 1;
-                        const prefix = `${" ".repeat(4)}(${n}/${nUrls * 2})`;
+                        const prefix = `${" ".repeat(6)}(${n}/${nUrls * 2})`;
                         console.log(`${prefix} Going to: ${target}`);
 
                         await visitPaperPage(browser, target, {
