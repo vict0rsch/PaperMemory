@@ -702,7 +702,9 @@ const parseIdFromUrl = async (url) => {
         })[0];
         idForUrl = paper && paper.id;
     } else if (is.aps) {
-        const [journal, type] = parseUrl(url).pathname.split("/").slice(1, 3);
+        const [journal, type] = parseUrl(url.split("#")[0])
+            .pathname.split("/")
+            .slice(1, 3);
         const doi = miniHash(url.split(`/${journal}/${type}/`).last());
         const paper = Object.values(cleanPapers(global.state.papers)).filter((p) => {
             return p.source === "aps" && p.id.includes(doi);

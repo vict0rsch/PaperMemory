@@ -1039,6 +1039,7 @@ const makeSpringerPaper = async (url) => {
 };
 
 const makeAPSPaper = async (url) => {
+    url = url.split("#")[0];
     const [journal, type] = parseUrl(url).pathname.split("/").slice(1, 3);
     const doi = url.split(`/${journal}/${type}/`).last();
     const exportPath = url.replace(`/${journal}/${type}/`, `/${journal}/export/`);
