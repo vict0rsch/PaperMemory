@@ -1,15 +1,6 @@
 @import url("https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;500;600;700&display=swap");
 @import url("https://fonts.googleapis.com/css?family=Mukta:700");
 
-* {
-    box-sizing: border-box;
-}
-
-*::before,
-*::after {
-    box-sizing: border-box;
-}
-
 .leftcolumn {
     width: calc(100% - 25em) !important;
 }
@@ -216,18 +207,4 @@
     stroke: #20cca5;
     stroke-dashoffset: 174;
     transition-delay: 0.4s;
-}
-
-@keyframes drop {
-    20% {
-        transform: translate(0, -3px);
-    }
-
-    80% {
-        transform: translate(0, 2px);
-    }
-
-    95% {
-        transform: translate(0, 0);
-    }
 }

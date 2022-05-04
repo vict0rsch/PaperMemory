@@ -157,6 +157,12 @@ const popupMain = async (url, is, manualTrigger = false) => {
             url: chrome.extension.getURL("src/fullMemory/fullMemory.html"),
         });
     });
+    // Open stats page
+    addListener("stats-page", "click", () => {
+        chrome.tabs.create({
+            url: chrome.extension.getURL("src/stats/stats.html"),
+        });
+    });
 
     // Set PDF title function
     // setAndHandleCustomPDFFunction(menu);
