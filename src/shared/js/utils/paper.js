@@ -740,7 +740,7 @@ const isKnownLocalFile = (url) => {
 
 const makeMdLink = (paper, menu = {}) => {
     const link = menu.checkPreferPdf ? paperToPDF(paper) : paperToAbs(paper);
-    let yearAndVenue;
+    let yearAndVenue = "";
     if (menu.checkMdYearVenue) {
         yearAndVenue = paper.note.match(/(.+)\s*@\s*([\w\s]+\(?\d{4}\)?)/i);
         if (yearAndVenue) {
