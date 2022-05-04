@@ -38,7 +38,7 @@ const updateAllMemoryPaperTagOptions = () => {
 };
 
 const sampleAsciiArt = async () => {
-    const artPath = chrome.runtime.getURL("src/popup/art.json");
+    const artPath = chrome.runtime.getURL("src/data/art.json");
     const art = await fetch(artPath).then((res) => res.json());
     const nArts = Object.keys(art).length;
     const u = Math.floor(Math.random() * nArts);
