@@ -155,6 +155,9 @@ global.knownPaperPages = {
         ),
         "link.springer.com/content/pdf/",
     ],
+    wiley: [
+        (url) => url.match(/onlinelibrary\.wiley\.com\/doi\/(abs|full|pdf|epdf)\//g),
+    ],
 };
 
 global.sourcesNames = {
@@ -175,6 +178,7 @@ global.sourcesNames = {
     pmlr: "Proceedings of Machine Learning Research (PMLR)",
     pnas: "Proceedings of the National Academy of Sciences (PNAS)",
     springer: "Springer",
+    wiley: "Wiley",
 };
 
 global.overrideORConfs = {

@@ -115,6 +115,8 @@ const isPdfUrl = (url) => {
         url.includes("openreview.net/pdf") ||
         url.includes("arxiv.org/pdf/") ||
         url.includes("dl.acm.org/doi/pdf/") ||
+        url.match(/journals\.aps\.org\/\w+\/pdf\//g) ||
+        url.match(/onlinelibrary\.wiley\.com\/doi\/e?pdf\//g) ||
         url.includes("ieee.org/stamp/stamp.jsp?tp=&arnumber=")
     );
 };

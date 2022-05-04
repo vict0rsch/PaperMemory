@@ -1064,6 +1064,50 @@ const makeAPSPaper = async (url) => {
     };
 };
 
+const makeWileyPaper = async (url) => {
+    const pdfLink = url.replace(/\/doi\/(abs|epdf|full)\//g, "/doi/pdf/");
+    const absLink = pdfLink.replace("/doi/pdf/", "/doi/abs/");
+    const dom = await fetchDom(absLink);
+
+    const author = Array.from(dom.querySelectorAll("meta[name=citation_author]"))
+        .map((m) => m.getAttribute("content"))
+        .join(" and ");
+    const venue = dom
+        .querySelector("meta[name=citation_journal_title]")
+        .getAttribute("content");
+    const title = dom
+        .querySelector("meta[name=citation_title]")
+        .getAttribute("content");
+    const publisher = dom
+        .querySelector("meta[name=citation_publisher]")
+        .getAttribute("content");
+    const year =
+        dom
+            .querySelector("meta[name=citation_publication_date]")
+            ?.getAttribute("content")
+            ?.split("/")[0] ??
+        dom
+            .querySelector("meta[name=citation_online_date]")
+            ?.getAttribute("content")
+            ?.split("/")[0];
+    const doi = dom.querySelector("meta[name=citation_doi]").getAttribute("content");
+
+    const note = `Published @ ${venue} (${year})`;
+    const id = `Wiley-${year}_${miniHash(doi)}`;
+    const bibtex = bibtexToString({
+        citationKey: doi,
+        entryType: "article",
+        title,
+        author,
+        year,
+        doi,
+        publisher,
+        journal: venue,
+    });
+
+    return { author, bibtex, id, key: doi, note, pdfLink, title, venue, year };
+};
+
 // -------------------------------
 // -----  PREPRINT MATCHING  -----
 // -------------------------------
@@ -1416,6 +1460,11 @@ const makePaper = async (is, url) => {
         if (paper) {
             paper.source = "aps";
         }
+    } else if (is.wiley) {
+        paper = await makeWileyPaper(url);
+        if (paper) {
+            paper.source = "wiley";
+        }
     } else {
         throw new Error("Unknown paper source: " + JSON.stringify({ is, url }));
     }
@@ -1477,6 +1526,7 @@ if (typeof module !== "undefined" && module.exports != null) {
         makeIEEEPaper,
         makeSpringerPaper,
         makeAPSPaper,
+        makeWileyPaper,
         tryCrossRef,
         tryDBLP,
         tryPreprintMatch,
