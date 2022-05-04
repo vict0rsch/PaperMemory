@@ -1,0 +1,95 @@
+body {
+    margin: 0;
+    font-family: "Yantramanav";
+}
+
+svg {
+    stroke-width: 1.15;
+    stroke: #7c7f8b;
+    fill: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+code {
+    font-family: "Fira Code", monospace !important;
+    color: inherit !important;
+    padding: 1px 4px;
+    vertical-align: text-top;
+    border-radius: var(--round);
+    background-color: rgb(238, 238, 238);
+}
+
+.tabler-icon {
+    height: 32px;
+    width: 32px;
+    color: var(--red);
+    stroke-width: 1px;
+}
+
+/*
+--------------------
+-----  Header  -----
+--------------------
+*/
+#header {
+    background-color: var(--red);
+    padding: 12px;
+    color: white;
+    display: flex;
+    justify-content: start;
+    align-items: center;
+    border-radius: 0 0 75% 0/50%;
+    box-shadow: 14px 30px 122px -30px rgba(0, 0, 0, 0.75);
+    margin-bottom: 4rem;
+}
+#header-wrapper {
+    max-width: var(--maxWidth);
+    margin: auto;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+#header-wrapper h1 {
+    font-weight: 300;
+}
+#header-icon {
+    stroke: white;
+    margin-left: 1rem;
+}
+
+/*
+--------------------
+-----  Footer  -----
+--------------------
+*/
+
+#footer {
+    border-top: 1px solid gray;
+    padding-top: 4rem;
+    margin-top: 4rem;
+}
+
+.flex-center-evenly {
+    display: flex;
+    align-items: center;
+    justify-content: space-evenly;
+}
+
+#footer a {
+    font-weight: 800;
+}
+
+/*
+------------------
+-----  Main  -----
+------------------
+*/
+
+#main-container {
+    max-width: 1000px;
+    display: flex;
+    justify-content: center;
+    margin: auto;
+    padding-bottom: 4rem;
+}
