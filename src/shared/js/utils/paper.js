@@ -755,7 +755,7 @@ const makeMdLink = (paper, menu = {}) => {
         }
         yearAndVenue = ` (${yearAndVenue})`;
     }
-    yearAndVenue = yearAndVenue.replace(/\s+/g, " ");
+    yearAndVenue = yearAndVenue.replace(/\s\s+/g, " ");
     const md = `[${paper.title}${yearAndVenue}](${link})`;
     return md;
 };
