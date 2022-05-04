@@ -31,7 +31,7 @@ This browser extension allows you to do automatically store research papers you 
 
 1. 🏬 **Automatically record papers** you open, without clicking anywhere. You can then **search** them, **tag** them, **comment** them and link a code repository.
 2. 💻 **Automatically find code** repositories using PapersWithCode's API
-3. 🤝 **Match pre-prints to publications** using 3 different databases
+3. 🤝 **Match pre-prints to publications** using 4 different databases
 4. 🎬 **Change a pdf's webpage title to the article's title**, because who cares about that saved bookmark `1812.10889.pdf` when it could be `InstaGAN Instance-aware Image-to-Image Translation.pdf`
 5. 🎫 **BibTex citation**, because citing papers should not be a hassle you can copy a BibTex citation to your clipboard or export the Memory itself as a `.bib` file
 6. 🔗 **Markdown link**, `[title](url)` because it's the little things that make sharing a paper easier (to be used in issues, PRs, Readme, HackMD.io etc.)
@@ -180,15 +180,11 @@ In the extension's `options` (right click on the icon or in the popup's menu) yo
 There currently exists, to my knowledge, no centralized source for matching a preprint to its subsequent published article. This makes it really hard to try and implement best practices in terms of citing published papers rather than their preprint.
 
 My approach with PaperMemory is to try and notify you that a publication likely exists by utilizing the `note` field. You will occasionally notice `Accepted @ X` in a Paper's notes. This will be added automatically if you are on a known published venue's website (as Nature, PMLR or NeurIPS) but also from:
-* [PapersWithCode.com](https://paperswithcode.com)(https://paperswithcode.com/api/v1/docs/)
+* [PapersWithCode.com](https://paperswithcode.com)
+  * A query is sent to their [api](https://paperswithcode.com/api/v1/docs/) from an Arxiv ID or a paper's plain text title if it's not an Arxiv paper
   * As PaperMemory retrieves code, it also looks for a `proceeding` field in PWC's response.
   * If it exists and is not `null` then it is expected to look like `${conf}-${year}-${month}`.
   * In this case a note is added to the paper: `Accepted @ ${conf} ${year} -- [paperswithcode.com]`  
-* [CrossRef.org](https://crossref.org)
-  * A query is sent to their [api](https://api.crossref.org/swagger-ui/index.html) for an exact paper title match
-  * The response *must* contain an `event` field with a `name` attribute. If it does not it'll be ignored.
-  * If it does, a note is added as: `Accepted @ ${items.event.name} -- [crossref.org]`
-    * Try for instance [Attention-Guided Generative Adversarial Networks for Unsupervised Image-to-Image Translation](http://arxiv.org/pdf/1903.12296v3)
 * [dblp.org](https://dblp.org)
   * A query is sent to their [api](https://dblp.org/faq/How+to+use+the+dblp+search+API.html) for an exact paper title match
   * The oldest `hit` in the response which is not a preprint (`hit.venue !== "CoRR"`) is used 
@@ -196,6 +192,16 @@ My approach with PaperMemory is to try and notify you that a publication likely 
     * In this case, **the original Arxiv bibtex data is overwritten to use DBLP's** 
     * Try for instance [Domain-Adversarial Training of Neural Networks](http://arxiv.org/pdf/1505.07818v4)
     * Note that DBLP journals may use ISO4 abbreviations
+* [SemanticScholar.org](https://www.semanticscholar.org/)
+  * A query is sent to their [api](https://www.semanticscholar.org/product/api) for an exact paper title match
+  * Up to 50 relevant papers are returned in `response.data` as an `Array`
+  * In case of a match, the venue should not be `"ArXiv"`
+  * If there's a match and it's venue is not Arxiv then `match.venue` and `match.year` are used to create a note: `Accepted @ {venue} ({year}) -- [semanticscholar.org]`
+* [CrossRef.org](https://crossref.org)
+  * A query is sent to their [api](https://api.crossref.org/swagger-ui/index.html) for an exact paper title match
+  * The response *must* contain an `event` field with a `name` attribute. If it does not it'll be ignored.
+  * If it does, a note is added as: `Accepted @ ${items.event.name} -- [crossref.org]`
+    * Try for instance [Attention-Guided Generative Adversarial Networks for Unsupervised Image-to-Image Translation](http://arxiv.org/pdf/1903.12296v3)
 
 There's room for improvement here^, please contact me (an issue will do) if you want to help
 

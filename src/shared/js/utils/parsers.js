@@ -90,11 +90,11 @@ const fetchText = async (url) => {
 const fetchJSON = async (url) => {
     try {
         const response = await fetch(url);
-        const data = response.ok ? await response.json() : {};
+        const data = response.ok ? await response.json() : null;
         return data;
     } catch (error) {
         console.log("fetchJSON error:", error);
-        return {};
+        return null;
     }
 };
 
@@ -183,6 +183,47 @@ const extractCrossrefData = (crossrefResponse) => {
     const bibtex = bibtexToString(bibData);
 
     return { ...bibData, bibtex, venue };
+};
+
+const fetchCrossRefDataForDoi = async (doi) => {
+    const crossrefResponse = await fetchJSON(
+        `https://api.crossref.org/works/${doi}?mailto=schmidtv%40mila.quebec`
+    );
+    return extractCrossrefData(crossrefResponse);
+};
+
+const fetchSemanticsScholarDataForDoi = async (doi) => {
+    const ssResponse = await fetchJSON(
+        `https://api.semanticscholar.org/graph/v1/paper/${doi}?fields=venue,year,authors,title`
+    );
+
+    let bibData;
+    if (ssResponse) {
+        bibData = {};
+        if (ssResponse.venue) {
+            bibData.venue = ssResponse.venue;
+        }
+        if (ssResponse.year) {
+            bibData.year = ssResponse.year;
+        }
+        if (ssResponse.authors) {
+            bibData.author = ssResponse.authors.map((a) => a.name).join(" and ");
+        }
+        if (ssResponse.title) {
+            bibData.title = ssResponse.title;
+        }
+        const citationKey = `${miniHash(
+            ssResponse.authors[0].name
+        )}${firstNonStopLowercase(bibData.title)}`;
+        const bibtex = bibtexToString({
+            entryType: "article",
+            citationKey,
+            ...bibData,
+        });
+        bibData.bibtex = bibtex;
+        bibData.key = citationKey;
+    }
+    return bibData;
 };
 
 const makeArxivPaper = async (url) => {
@@ -966,11 +1007,7 @@ const makeSpringerPaper = async (url) => {
     }
     const doi = url.split(`/${springerType}/`)[1].split("?")[0].replace(".pdf", "");
 
-    const crossrefResponse = await fetchJSON(
-        `https://api.crossref.org/works/${doi}?mailto=schmidtv%40mila.quebec`
-    );
-
-    const data = extractCrossrefData(crossrefResponse);
+    const data = await fetchCrossRefDataForDoi(doi);
 
     if (!data) {
         throw new Error("Aborting Springer paper parsing, see error above");
@@ -1062,7 +1099,7 @@ const tryCrossRef = async (paper) => {
         return { venue, note };
     } catch (error) {
         // something went wrong, log the error, return {note: null}
-        log("[Crossref]", error);
+        logError("[Crossref]", error);
         return { note: null };
     }
 };
@@ -1115,8 +1152,40 @@ const tryDBLP = async (paper) => {
         return { note: null };
     } catch (error) {
         // something went wrong, log the error, return {note: null}
-        log("[DBLP]", error);
+        logError("[DBLP]", error);
         return { note: null };
+    }
+};
+
+const trySemanticScholar = async (paper) => {
+    try {
+        const matches = await fetchJSON(
+            `https://api.semanticscholar.org/graph/v1/paper/search?query=${encodeURI(
+                paper.title
+            )}&fields=title,venue,year&limit=50`
+        );
+
+        if (matches && matches.data && matches.data.length > 0) {
+            for (const match of matches.data) {
+                if (
+                    miniHash(match.title) === miniHash(paper.title) &&
+                    match.venue.toLowerCase() !== "arxiv"
+                ) {
+                    info("Found a Semantic Scholar match");
+                    let venue = match.venue
+                        .trim()
+                        .replace(/^\d{4}/, "")
+                        .trim()
+                        .capitalize(true);
+                    const year = match.year;
+                    const note = `Accepted @ ${venue} (${year}) -- [semanticscholar.org]`;
+                    venue = venue.toLowerCase();
+                    return { venue, note };
+                }
+            }
+        }
+    } catch (error) {
+        logError("[SemanticScholar]", error);
     }
 };
 
@@ -1148,13 +1217,19 @@ const tryPreprintMatch = async (paper, tryPwc = false) => {
 
     if (venue) return { note, venue, bibtex };
 
-    dblpMatch = await tryDBLP(paper);
+    const dblpMatch = await tryDBLP(paper);
     note = dblpMatch.note;
     venue = dblpMatch.venue;
     bibtex = dblpMatch.bibtex;
     if (!note) {
         log("[DBLP] No publication found");
-        crossRefMatch = await tryCrossRef(paper);
+        const ssMatch = await trySemanticScholar(paper);
+        note = ssMatch?.note;
+        venue = ssMatch?.venue;
+    }
+    if (!note) {
+        log("[SemanticScholar] No publication found");
+        const crossRefMatch = await tryCrossRef(paper);
         note = crossRefMatch.note;
         venue = crossRefMatch.venue;
     }
@@ -1371,5 +1446,7 @@ if (typeof module !== "undefined" && module.exports != null) {
         autoTagPaper,
         makePaper,
         findFuzzyPaperMatch,
+        fetchCrossRefDataForDoi,
+        fetchSemanticsScholarDataForDoi,
     };
 }
