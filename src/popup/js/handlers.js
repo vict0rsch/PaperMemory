@@ -382,9 +382,7 @@ const handlePopupKeydown = (e) => {
 
 const handleMenuCheckChange = (e) => {
     const key = e.target.id;
-    console.log("key: ", key);
     const checked = findEl(key).checked;
-    console.log("checked: ", checked);
     chrome.storage.local.set({ [key]: checked }, function () {
         log(`Settings saved for ${key} (${checked})`);
         if (global.state && global.state.menu) {
