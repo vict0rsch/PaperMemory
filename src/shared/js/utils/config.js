@@ -9,7 +9,11 @@ Object.defineProperty(Array.prototype, "last", {
 });
 
 Object.defineProperty(String.prototype, "capitalize", {
-    value: function () {
+    value: function (all = false) {
+        if (all)
+            return this.split(" ")
+                .map((s) => s.capitalize())
+                .join(" ");
         return this.charAt(0).toUpperCase() + this.slice(1);
     },
 });
