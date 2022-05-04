@@ -84,7 +84,7 @@ I'm regularly adding feature ideas in the [issues](https://github.com/vict0rsch/
 
 ### Duplicates
 
-PaperMemory finds and merges duplicates based on their titles only. If you visit a paper which has the same title as an existing paper, it will not be added as a new paper, rather "attached" to the existing one. However, if the existing paper does not have a known publication venue and the new paper does, then they are switched to favour the one with a known publication venue.
+As of version `5.3`, PaperMemory finds and merges duplicates based on their titles only. If you visit a paper which has the same title as an existing paper, it will not be added as a new paper, rather "attached" to the existing one. However, if the existing paper does not have a known publication venue and the new paper does, then they are switched to favour the one with a known publication venue.
 
 ## Demo
 
