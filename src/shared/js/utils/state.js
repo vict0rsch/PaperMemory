@@ -308,6 +308,22 @@ const addPaperToTitleHashToId = (paper) => {
     }
 };
 
+const readJournalAbbreviations = async () => {
+    if (global.journalAbbreviations) {
+        return;
+    }
+    const iso4Path = chrome.runtime.getURL("src/data/iso4-journals.json");
+    const iso4 = await fetch(iso4Path).then((res) => res.json());
+    const abbrPath = chrome.runtime.getURL("src/data/journal-abbreviations.json");
+    const abbr = await fetch(abbrPath).then((res) => res.json());
+    global.journalAbbreviations = Object.fromEntries(
+        [...Object.entries(iso4), ...Object.entries(abbr)].map(([k, v]) => [
+            miniHash(k),
+            v,
+        ])
+    );
+};
+
 // ----------------------------------------------------
 // -----  TESTS: modules for node.js environment  -----
 // ----------------------------------------------------
@@ -319,5 +335,6 @@ if (typeof module !== "undefined" && module.exports != null) {
         stateTitleFunction,
         updateDuplicatedUrls,
         addPaperToTitleHashToId,
+        readJournalAbbreviations,
     };
 }

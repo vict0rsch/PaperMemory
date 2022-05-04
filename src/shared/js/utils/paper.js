@@ -129,6 +129,11 @@ const paperToAbs = (paper) => {
             abs = paper.extra.url;
             break;
 
+        case "aps":
+            const [journal, type] = parseUrl(pdf).pathname.split("/").slice(1, 3);
+            abs = pdf.replace(`/${journal}/${type}/`, `/${journal}/abstract/`);
+            break;
+
         default:
             abs = "https://xkcd.com/1969/";
             break;
@@ -209,6 +214,9 @@ const paperToPDF = (paper) => {
             break;
 
         case "springer":
+            break;
+
+        case "aps":
             break;
 
         default:
@@ -691,6 +699,15 @@ const parseIdFromUrl = async (url) => {
         doi = miniHash(doi);
         const paper = Object.values(cleanPapers(global.state.papers)).filter((p) => {
             return p.source === "springer" && p.id.includes(doi);
+        })[0];
+        idForUrl = paper && paper.id;
+    } else if (is.aps) {
+        const [journal, type] = parseUrl(url.split("#")[0])
+            .pathname.split("/")
+            .slice(1, 3);
+        const doi = miniHash(url.split(`/${journal}/${type}/`).last());
+        const paper = Object.values(cleanPapers(global.state.papers)).filter((p) => {
+            return p.source === "aps" && p.id.includes(doi);
         })[0];
         idForUrl = paper && paper.id;
     } else if (is.localFile) {

@@ -1038,6 +1038,36 @@ const makeSpringerPaper = async (url) => {
     };
 };
 
+const makeAPSPaper = async (url) => {
+    url = url.split("#")[0];
+    const [journal, type] = parseUrl(url).pathname.split("/").slice(1, 3);
+    const doi = url.split(`/${journal}/${type}/`).last();
+    const exportPath = url.replace(`/${journal}/${type}/`, `/${journal}/export/`);
+    const bibtex = await fetchText(`${exportPath}?type=bibtex&download=true`);
+    const data = bibtexToObject(bibtex);
+    const pdfLink = url.replace(`/${journal}/${type}/`, `/${journal}/pdf/`);
+    const id = `APS-${data.year}_${miniHash(doi)}`;
+    const journalKey = data.journal ?? data.publisher;
+    await readJournalAbbreviations();
+    const venue = global.journalAbbreviations[miniHash(journalKey)] ?? journalKey;
+    const note = `Published @ ${venue} (${data.year})`;
+    return {
+        author: flipAndAuthors(data.author),
+        bibtex,
+        id,
+        key: data.citationKey,
+        note,
+        pdfLink,
+        title: data.title,
+        venue,
+        year: data.year,
+    };
+};
+
+// -------------------------------
+// -----  PREPRINT MATCHING  -----
+// -------------------------------
+
 const tryPWCMatch = async (paper) => {
     const pwcPrefs = (await getStorage("pwcPrefs")) ?? {};
     const payload = {
@@ -1051,6 +1081,7 @@ const tryPWCMatch = async (paper) => {
 // --------------------------------------------
 // -----  Try CrossRef's API for a match  -----
 // --------------------------------------------
+
 /**
  * Looks for a title in crossref's database, querying titles and looking for an exact match. If no
  * exact match is found, it will return an empty note "". If a match is found and `item.event.name`
@@ -1139,9 +1170,10 @@ const tryDBLP = async (paper) => {
             if (hitTitle === refTitle && hit.info.venue !== "CoRR") {
                 info("Found a DBLP match");
                 const bibtex = await fetchText(hit.info.url + ".bib");
-                const abbr = hit.info.venue.toLowerCase().replaceAll(".", "").trim();
+                const abbr = miniHash(hit.info.venue);
+                await readJournalAbbreviations();
                 const venue = (
-                    global.journalAbbreviations[abbr] || hit.info.venue
+                    global.journalAbbreviations[abbr] ?? hit.info.venue
                 ).trim();
                 const year = hit.info.year;
                 const url = hit.info.url;
@@ -1379,6 +1411,11 @@ const makePaper = async (is, url) => {
         if (paper) {
             paper.source = "springer";
         }
+    } else if (is.aps) {
+        paper = await makeAPSPaper(url);
+        if (paper) {
+            paper.source = "aps";
+        }
     } else {
         throw new Error("Unknown paper source: " + JSON.stringify({ is, url }));
     }
@@ -1438,6 +1475,8 @@ if (typeof module !== "undefined" && module.exports != null) {
         makeIJCAIPaper,
         makeACMPaper,
         makeIEEEPaper,
+        makeSpringerPaper,
+        makeAPSPaper,
         tryCrossRef,
         tryDBLP,
         tryPreprintMatch,
