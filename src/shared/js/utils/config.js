@@ -155,6 +155,9 @@ global.knownPaperPages = {
         ),
         "link.springer.com/content/pdf/",
     ],
+    wiley: [
+        (url) => url.match(/onlinelibrary\.wiley\.com\/doi\/(abs|full|pdf|epdf)\//g),
+    ],
 };
 
 global.sourcesNames = {
