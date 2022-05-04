@@ -25,14 +25,17 @@ const keepOpen = Boolean(process.env.keepOpen ?? false);
 // write the state to ./tmp as a JSON file
 const dump = Boolean(process.env.dump) ?? false;
 // only run tests for a specific publication<->preprint order
-const singleOrder = process.env.singleOrder ?? false;
+const singleOrder = process.env.singleOrder ?? "";
+// only run tests for a specific named duplicate
+const singleName = process.env.singleName ?? "";
 // ignore pre-duplicate sources (','-separated sources as per ./data/urls.json)
 let ignoreSources = process.env.ignoreSources ?? [];
 
 console.log("Test params:");
-console.log("    keepOpen            : ", keepOpen);
+console.log("    keepOpen      : ", keepOpen);
 console.log("    dump          : ", dump);
-console.log("    singleOrder         : ", singleOrder);
+console.log("    singleOrder   : ", singleOrder);
+console.log("    singleName    : ", singleName);
 console.log("    ignoreSources : ", ignoreSources);
 
 // check env vars
@@ -143,7 +146,7 @@ describe("Paper de-duplication", function () {
                     // test variables
                     var hashedName, hashedTitle, ids, papers;
 
-                    before(async function () {
+                    beforeEach(async function () {
                         // before each duplicate test: find the right objects
                         hashedName = miniHash(duplicates[0].name);
                         hashedTitle = Object.keys(memoryState.titleHashToIds).find(

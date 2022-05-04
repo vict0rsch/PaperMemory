@@ -6,8 +6,6 @@
 
 const { expect } = require("expect");
 const fs = require("fs");
-const { isRegExp } = require("util/types");
-
 const {
     makeBrowser,
     getMemoryPapers,
@@ -84,6 +82,14 @@ describe("Test paper detection and storage", function () {
         urls = Object.fromEntries(Object.entries(urls).slice(0, maxSources));
     } else if (singleSource) {
         urls = { [singleSource]: urls[singleSource] };
+    }
+
+    if (ignoreSources && ignoreSources.length > 0) {
+        urls = Object.fromEntries(
+            Object.entries(urls).filter(
+                ([source, v]) => ignoreSources.indexOf(source) < 0
+            )
+        );
     }
 
     for (const source in urls) {
