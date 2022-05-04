@@ -58,5 +58,8 @@
         "src/content_scripts/content_script.css"
       ]
     }
+  ],
+  "web_accessible_resources": [
+    "src/data/*.json"
   ]
 }
