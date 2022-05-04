@@ -738,6 +738,30 @@ const isKnownLocalFile = (url) => {
     return titles[0].id;
 };
 
+const makeMdLink = (paper, menu = {}) => {
+    const link = menu.checkPreferPdf ? paperToPDF(paper) : paperToAbs(paper);
+    let yearAndVenue = "";
+    if (menu.checkMdYearVenue) {
+        yearAndVenue = paper.note.match(/(.+)\s*@\s*([\w\s]+\(?\d{4}\)?)/i);
+        if (yearAndVenue) {
+            yearAndVenue = yearAndVenue[2]?.replace(/\s+/g, " ").replace(/[\(\)]/g, "");
+        }
+        if (!yearAndVenue) {
+            yearAndVenue = "";
+            if (paper.venue) {
+                yearAndVenue += paper.venue + " ";
+            }
+            yearAndVenue += paper.year;
+        }
+    }
+    let title = paper.title;
+    if (yearAndVenue) {
+        title = `${title} (${yearAndVenue.replace(/\s+/g, " ")})`;
+    }
+    const md = `[${title}](${link})`;
+    return md;
+};
+
 // ----------------------------------------------------
 // -----  TESTS: modules for node.js environment  -----
 // ----------------------------------------------------
@@ -754,5 +778,6 @@ if (typeof module !== "undefined" && module.exports != null) {
         addOrUpdatePaper,
         parseIdFromUrl,
         isKnownLocalFile,
+        makeMdLink,
     };
 }

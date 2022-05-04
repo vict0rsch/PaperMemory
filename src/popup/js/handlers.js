@@ -30,10 +30,9 @@ const handleOpenItemCodeLink = (e) => {
 const handleCopyMarkdownLink = async (e) => {
     const id = eventId(e);
     const menu = global.state.menu;
-    const paper = global.state.papers[id];
-    const link = menu.checkPreferPdf ? paperToPDF(paper) : paperToAbs(paper);
     const text = menu.checkPreferPdf ? "PDF" : "Abstract";
-    const md = `[${paper.title}](${link})`;
+    const paper = global.state.papers[id];
+    const md = makeMdLink(paper, menu);
     copyAndConfirmMemoryItem(id, md, `Markdown ${text} link copied!`);
 };
 
@@ -383,9 +382,7 @@ const handlePopupKeydown = (e) => {
 
 const handleMenuCheckChange = (e) => {
     const key = e.target.id;
-    console.log("key: ", key);
     const checked = findEl(key).checked;
-    console.log("checked: ", checked);
     chrome.storage.local.set({ [key]: checked }, function () {
         log(`Settings saved for ${key} (${checked})`);
         if (global.state && global.state.menu) {

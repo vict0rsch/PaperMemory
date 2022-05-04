@@ -244,9 +244,10 @@ const popupMain = async (url, is, manualTrigger = false) => {
             copyAndConfirmMemoryItem(id, link, `${text} link copied!`, true);
         });
         addListener(`popup-memory-item-md--${id}`, "click", () => {
-            const link = menu.checkPreferPdf ? paperToPDF(paper) : paperToAbs(paper);
+            const menu = global.state.menu;
+            console.log("state.menu: ", state.menu);
+            const md = makeMdLink(paper, menu);
             const text = menu.checkPreferPdf ? "PDF" : "Abstract";
-            const md = `[${paper.title}](${link})`;
             copyAndConfirmMemoryItem(id, md, `Markdown link to ${text} copied!`, true);
         });
         addListener(`popup-memory-item-bibtex--${id}`, "click", () => {
