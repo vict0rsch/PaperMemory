@@ -363,7 +363,7 @@ In case there's a bad bug or you mess up when overwriting your memory, PaperMemo
     setStorage("papers", overwrite) // Careful! This will overwrite the current data with the backup data
     ```
 
-  Note that if you uninstall PaperMemory all your data will be gone and the only way to keep track of what was in your Memory is to export your Memory first (in the advanced options page).
+  Note that if you uninstall PaperMemory all your data will be gone and the only way to keep track of what was in your Memory is to export it first (in the advanced options page).
 </details>
 
 ## Todo
