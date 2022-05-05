@@ -605,7 +605,6 @@ const handleTryAnotherPaper = async () => {
 /**
  * Retrieve the custom pdf function, updates the associated textarea and adds and
  * event listener for when the latter changes.
- * @param {object} menu the user's menu options, especially including pdfTitleFn
  */
 const setupTitleFunction = async () => {
     // attempt to use the user's custom function

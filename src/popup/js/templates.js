@@ -15,7 +15,7 @@ const getMemoryItemHTML = (paper, titles) => {
     // titles behave differently in build/watch mode. This works in build
     titles.pdfLink = `Open link to ${paper.title}`;
     titles.copyLink = `Open link to the paper's ${
-        global.state.menu.checkPreferPdf ? "PDF" : "abstract"
+        global.state.prefs.checkPreferPdf ? "PDF" : "abstract"
     }`;
 
     let codeDiv = /*html*/ `
@@ -282,7 +282,7 @@ const getPopupPaperIconsHTML = (paper, currentUrl, is) => {
     const name = isPdfUrl(currentUrl) ? "HTML" : "PDF";
 
     let scirate = "";
-    if (global.state.menu.checkScirate && paper.source === "arxiv") {
+    if (global.state.prefs.checkScirate && paper.source === "arxiv") {
         scirate = /*html*/ `
         <div
             tabindex="0"
@@ -295,7 +295,7 @@ const getPopupPaperIconsHTML = (paper, currentUrl, is) => {
     }
 
     const download =
-        global.state.menu.checkStore && (is.localFile || is.stored)
+        global.state.prefs.checkStore && (is.localFile || is.stored)
             ? /*html*/ `
         <div
             tabindex="0"

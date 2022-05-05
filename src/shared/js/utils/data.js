@@ -284,27 +284,39 @@ const weeklyBackup = async () => {
 };
 
 /**
- * Retrieve the boolean preferences as defined in config.js/menuStorageKeys
+ * Retrieve the boolean preferences as defined in config.js/prefsStorageKeys
  * @returns {object} The user's preferences as per the popup's sliders in the menu.
  */
-const getMenu = async () => {
-    const storedMenu = (await getStorage(global.menuStorageKeys)) ?? {};
-    let menu = {};
-    for (const m of global.menuCheckNames) {
-        menu[m] = storedMenu.hasOwnProperty(m)
-            ? storedMenu[m]
-            : global.menuCheckDefaultFalse.indexOf(m) >= 0
+const getPrefs = async () => {
+    let isNew = false;
+    let legacyPrefs;
+    const storedPrefs = (await getStorage("prefs")) ?? {};
+    if (Object.keys(storedPrefs).length === 0) {
+        isNew = true;
+    }
+    if (isNew) {
+        legacyPrefs = (await getStorage(global.prefsStorageKeys)) ?? {};
+    }
+    let prefs = {};
+    for (const m of global.prefsCheckNames) {
+        prefs[m] = (legacyPrefs ?? storedPrefs).hasOwnProperty(m)
+            ? (legacyPrefs ?? storedPrefs)[m]
+            : global.prefsCheckDefaultFalse.indexOf(m) >= 0
             ? false
             : true;
     }
 
-    if (menu.checkOfficialRepos) {
+    if (prefs.checkOfficialRepos) {
         setStorage("pwcPrefs", { official: true });
-        delete menu.checkOfficialRepos;
-        setStorage("menu", menu);
+        delete prefs.checkOfficialRepos;
+        setStorage("prefs", prefs);
     }
 
-    return menu;
+    if (isNew) {
+        setStorage("prefs", prefs);
+    }
+
+    return prefs;
 };
 
 /**
@@ -666,7 +678,7 @@ if (typeof module !== "undefined" && module.exports != null) {
         getTheme,
         backupData,
         weeklyBackup,
-        getMenu,
+        getPrefs,
         getManifestDataVersion,
         versionToSemantic,
         validatePaper,

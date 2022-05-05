@@ -63,7 +63,7 @@ const updatePopupPaperNoMemory = async (url) => {
         </div>
     `;
     const allowManualParsing =
-        navigator.userAgent.search("Firefox") > -1 || global.state.menu.checkNoAuto;
+        navigator.userAgent.search("Firefox") > -1 || global.state.prefs.checkNoAuto;
 
     if (allowManualParsing) {
         noPaperHtml += /* html */ `
@@ -198,7 +198,7 @@ const focusExistingOrCreateNewCodeTab = (codeLink) => {
 const focusExistingOrCreateNewPaperTab = (paper, fromMemoryItem) => {
     chrome.tabs.query({}, async (tabs) => {
         // find user's preferences
-        const menu = global.state.menu;
+        const prefs = global.state.prefs;
 
         let paperTabs = []; // tabs to the paper
         for (const tab of tabs) {
@@ -216,7 +216,7 @@ const focusExistingOrCreateNewPaperTab = (paper, fromMemoryItem) => {
 
         let tabToFocus;
         // choose favorite tabs
-        const favoriteTabs = menu.checkPreferPdf
+        const favoriteTabs = prefs.checkPreferPdf
             ? paperTabs.filter((tab) => tab.url && isPdfUrl(tab.url))
             : paperTabs.filter((tab) => tab.url && !isPdfUrl(tab.url));
 
@@ -263,7 +263,7 @@ const focusExistingOrCreateNewPaperTab = (paper, fromMemoryItem) => {
             } else {
                 // no tab open or local file: open a new tab to the paper's pdf
                 chrome.tabs.create({
-                    url: menu.checkPreferPdf ? paperToPDF(paper) : paperToAbs(paper),
+                    url: prefs.checkPreferPdf ? paperToPDF(paper) : paperToAbs(paper),
                 });
             }
         }
@@ -700,7 +700,7 @@ const makeMemoryHTML = async () => {
 };
 
 const openMemory = () => {
-    global.state.menuIsOpen && closeMenu();
+    global.state.prefsIsOpen && closeMenu();
     global.state.memoryIsOpen = true;
     // hide menu button
     hideId("memory-switch-open");

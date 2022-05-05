@@ -7,7 +7,7 @@ const closeMenu = () => {
     slideUp("menu-container", 300);
     setHTML("menu-switch", tablerSvg("settings", "menu-switch-svg", classes));
     dispatch("menu-switch", "blur");
-    global.state.menuIsOpen = false;
+    global.state.prefsIsOpen = false;
 };
 
 /**
@@ -18,20 +18,20 @@ const openMenu = () => {
     slideDown("menu-container", 300);
     dispatch("menu-switch", "blur");
     setHTML("menu-switch", tablerSvg("circle-x", "close-menu-btn", classes));
-    global.state.menuIsOpen = true;
+    global.state.prefsIsOpen = true;
 };
 /**
- * Parses menu options from the storage and adds events listeners for their change.
- * Notably, if a key in `menuCheckNames` is missing from `menu` it is set to true
- * @param {object} menu The menu retrieved from storage
- * @param {string []} menuCheckNames The array of all expected menu options
+ * Parses prefs options from the storage and adds events listeners for their change.
+ * Notably, if a key in `prefsCheckNames` is missing from `prefs` it is set to true
+ * @param {object} prefs The user preferences retrieved from storage
+ * @param {string []} prefsCheckNames The array of all expected prefs options
  */
-const getAndTrackPopupMenuChecks = (menu, menuCheckNames) => {
+const getAndTrackPopupMenuChecks = (prefs, prefsCheckNames) => {
     let setValues = {};
-    for (const key of menuCheckNames) {
-        setValues[key] = menu.hasOwnProperty(key)
-            ? menu[key]
-            : global.menuCheckDefaultFalse.indexOf(key) >= 0
+    for (const key of prefsCheckNames) {
+        setValues[key] = prefs.hasOwnProperty(key)
+            ? prefs[key]
+            : global.prefsCheckDefaultFalse.indexOf(key) >= 0
             ? false
             : true;
         const el = findEl(key);
@@ -39,10 +39,10 @@ const getAndTrackPopupMenuChecks = (menu, menuCheckNames) => {
             el.checked = setValues[key];
         }
     }
-    chrome.storage.local.set(setValues);
+    setStorage("prefs", setValues);
 
-    for (const key of menuCheckNames) {
-        addListener(key, "change", handleMenuCheckChange);
+    for (const key of prefsCheckNames) {
+        addListener(key, "change", handlePrefsCheckChange);
     }
 };
 
@@ -97,7 +97,7 @@ const setStandardPopupClicks = () => {
     });
 
     addListener("menu-switch", "click", () => {
-        global.state.menuIsOpen ? closeMenu() : openMenu();
+        global.state.prefsIsOpen ? closeMenu() : openMenu();
     });
 
     addListener("memory-switch", "click", handleMemorySwitchClick);
@@ -143,9 +143,9 @@ const popupMain = async (url, is, manualTrigger = false) => {
         // Set click events (regardless of paper)
         setStandardPopupClicks();
     }
-    const menu = (await getStorage(global.menuStorageKeys)) ?? {};
+    const prefs = await getPrefs();
     // Set checkboxes
-    getAndTrackPopupMenuChecks(menu, global.menuCheckNames);
+    getAndTrackPopupMenuChecks(prefs, global.prefsCheckNames);
 
     // Set options page link
     addListener("advanced-configuration", "click", () => {
@@ -176,7 +176,7 @@ const popupMain = async (url, is, manualTrigger = false) => {
             // Unknown paper, probably deleted by the user
             log("Unknown id " + id);
             await updatePopupPaperNoMemory(url);
-            if (menu.checkDirectOpen && !menu.checkNoAuto) {
+            if (prefs.checkDirectOpen && !prefs.checkNoAuto) {
                 dispatch("memory-switch", "click");
             }
             return;
@@ -239,15 +239,15 @@ const popupMain = async (url, is, manualTrigger = false) => {
             }
         });
         addListener(`popup-memory-item-copy-link--${id}`, "click", () => {
-            const link = menu.checkPreferPdf ? paperToPDF(paper) : paperToAbs(paper);
-            const text = menu.checkPreferPdf ? "PDF" : "Abstract";
+            const link = prefs.checkPreferPdf ? paperToPDF(paper) : paperToAbs(paper);
+            const text = prefs.checkPreferPdf ? "PDF" : "Abstract";
             copyAndConfirmMemoryItem(id, link, `${text} link copied!`, true);
         });
         addListener(`popup-memory-item-md--${id}`, "click", () => {
-            const menu = global.state.menu;
-            console.log("state.menu: ", state.menu);
-            const md = makeMdLink(paper, menu);
-            const text = menu.checkPreferPdf ? "PDF" : "Abstract";
+            const prefs = global.state.prefs;
+            console.log("state.prefs: ", state.prefs);
+            const md = makeMdLink(paper, prefs);
+            const text = prefs.checkPreferPdf ? "PDF" : "Abstract";
             copyAndConfirmMemoryItem(id, md, `Markdown link to ${text} copied!`, true);
         });
         addListener(`popup-memory-item-bibtex--${id}`, "click", () => {
@@ -264,7 +264,7 @@ const popupMain = async (url, is, manualTrigger = false) => {
         });
         addListener(`popup-memory-item-download--${id}`, "click", async () => {
             let title = stateTitleFunction(paper);
-            if (global.state.menu.checkStore) {
+            if (global.state.prefs.checkStore) {
                 title = "PaperMemoryStore/" + title;
                 const storedFiles = await getStoredFiles();
                 if (storedFiles.length === 0) {
@@ -286,7 +286,7 @@ const popupMain = async (url, is, manualTrigger = false) => {
             });
         });
     } else {
-        if (menu.checkDirectOpen) {
+        if (prefs.checkDirectOpen) {
             dispatch("memory-switch", "click");
         }
     }
