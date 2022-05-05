@@ -336,7 +336,7 @@ const bibtexToString = (bibtex) => {
             bstr += `\t${bkey} = {${value}},\n`;
         }
     }
-    return (bstr.slice(0, -2) + "\n}").replaceAll("\t", "  ");
+    return (bstr.slice(0, -2) + "\n}").replaceAll("\t", "  ").replaceAll("--", "-");
 };
 
 const extractBibtexValue = (bibtex, key) => {
