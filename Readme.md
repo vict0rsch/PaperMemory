@@ -308,7 +308,6 @@ Contributions and ideas on how to improve the process and potentially add public
 <br/>
 It's all stored locally in your browser's local storage. If you want to transfer data to a new browser/computer, use the export/import tools in the extension's options.
 </details>
-<details>
 
 <details>
 <summary><strong>How can I export all or some papers?</strong></summary>
