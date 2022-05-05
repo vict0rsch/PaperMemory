@@ -375,16 +375,44 @@
 				<h3 style="margin-bottom: 0px;">What's new</h3>
 				<ul>
 					<li><strong>Current: </strong><a
-							href="https://github.com/vict0rsch/PaperMemory/releases/tag/0.5.1">0.5.3</a>
-						<em>(2022-04-22)</em>
+							href="https://github.com/vict0rsch/PaperMemory/releases/tag/0.5.3">0.5.3</a>
+						<em>(2022-05-05)</em>
 						<ul>
-							<li>[new source] Add IEEE papers parsing
+							<li>[new source] Add IEEE papers parsing</li>
+							<li>[new source] Add Springer papers parsing</li>
+							<li>[new source] Add APS papers parsing</li>
+							<li>[new source] Add ScienceDirect papers parsing</li>
+							<li>[new source] Add Wiley papers parsing</li>
+							<br>
+							<li>[feature] You can now include the venue and year of a paper in its Markdown link (see
+								popup menu)</li>
+							<li>[feature] Deduplication: PaperMemory now matches and merges papers based on their titles
+								not to create multiple Memory entries for the same paper</li>
+							<li>[feature] Paper imports: in the advanced options page, in the Data Management section,
+								you can now import papers from a list of urls</li>
+							<li>[feature] Paper exports by tag: in the same Data Management section, you can now select
+								papers to export by providing a list of tags and obtain a <code>.bib</code> or
+								<code>.json</code> file with the appropriate papers.
+								<ul>
+									<li>If you export papers by tags and give the file to someone on your team, they'll
+										be
+										able
+										to import them!</li>
+								</ul>
 							</li>
+							<li>[feature] In the menu, you can now disable automatic paper recording. In which case you
+								can trigger paper parsing manually from the popup or with a keyboard shortcut
+								<code>ctrl/cmd + shift + p</code>
+							</li>
+							<li>[feature] There's a new keyboard shortcut to download a paper (it goes to your
+								PaperMemoryStore if you have enabled the feature) <code>cmd/ctrl + shift + s</code>
+							</li>
+							<br>
 							<li>[dev] More tests</li>
 							<li>[dev] Fix paper parsing from pdf urls for Nature and IJCAI venues</li>
 						</ul>
 					</li>
-					<li><a href="https://github.com/vict0rsch/PaperMemory/releases/tag/0.5.1">0.5.2</a>
+					<li><a href="https://github.com/vict0rsch/PaperMemory/releases/tag/0.5.2">0.5.2</a>
 						<em>(2022-04-19)</em>
 						<ul>
 							<li>[feature] Add prefered framework when discovering code repositories with PapersWithCode.
