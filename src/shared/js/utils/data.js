@@ -267,9 +267,10 @@ const weeklyBackup = async () => {
     let backups = (await getStorage("weeklyBackups")) ?? {};
 
     const today = new Date();
+    // older to newer
     const backupDates = Object.keys(backups)
         .map((k) => new Date(k))
-        .sort((a, b) => b.getTime() - a.getTime());
+        .sort((a, b) => a.getTime() - b.getTime());
     if (backupDates.length > 0) {
         const latestBackup = backupDates[backupDates.length - 1];
         if (dateDiffInDays(latestBackup, today) < 7) return;
