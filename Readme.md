@@ -161,6 +161,16 @@ Share ideas 💡 in [issues](https://github.com/vict0rsch/PaperMemory/issues) an
 <img src="https://raw.github.com/vict0rsch/PaperMemory/master/extra/imgs/guide-memory.png?raw=true">
 </p>
 
+### Shortcuts
+
+By default, and _if_ they are not already attributed, the following keyboard shortcuts are available:
+
+* `cmd/ctrl + shift + e` will open PaperMemory's popup
+* `cmd/ctrl + shift + s` will try to download the pdf of the current paper. If you have enabled this feature in the menu, the paper will be downloaded in your PaperMemoryStore (see thee advanced options page for more info)
+* `cmd/ctrl + shift + l` will trigger the manual parsing of a paper if you have disabled automatic paper detection in the menu
+
+All those shortcuts can be changed/set from `chrome://extensions/shortcuts` or `about:addons` (Firefox).
+
 ## Advanced
 
 In the extension's `options` (right click on the icon or in the popup's menu) you will find advanced customization features:

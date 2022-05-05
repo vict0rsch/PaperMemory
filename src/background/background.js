@@ -200,5 +200,16 @@ chrome.commands.onCommand.addListener((command) => {
         chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
             chrome.tabs.sendMessage(tabs[0].id, { message: "manualParsing" });
         });
+    } else if (command === "downloadPdf") {
+        chrome.tabs.query({ active: true, currentWindow: true }, async function (tabs) {
+            const url = tabs[0].url;
+            await initState();
+            const id = await parseIdFromUrl(url);
+            if (id) {
+                const paper = global.state.papers[id];
+                console.log("paper: ", paper);
+                downloadPaperPdf(paper);
+            }
+        });
     }
 });

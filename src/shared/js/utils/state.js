@@ -324,6 +324,32 @@ const readJournalAbbreviations = async () => {
     );
 };
 
+const downloadPaperPdf = async (paper) => {
+    if (!global.state.papersReady) {
+        throw new Error("[PM] State is not ready (downloadPaperPdf)");
+    }
+    let title = stateTitleFunction(paper);
+    if (global.state.prefs.checkStore) {
+        title = "PaperMemoryStore/" + title;
+        const storedFiles = await getStoredFiles();
+        if (storedFiles.length === 0) {
+            chrome.downloads.download({
+                url: URL.createObjectURL(new Blob([global.storeReadme])),
+                filename: "PaperMemoryStore/IMPORTANT_README.txt",
+                saveAs: false,
+            });
+        }
+    }
+    if (!title.endsWith(".pdf")) {
+        title += ".pdf";
+    }
+    title = title.replaceAll(":", " ");
+    chrome.downloads.download({
+        url: paperToPDF(paper),
+        filename: title,
+    });
+};
+
 // ----------------------------------------------------
 // -----  TESTS: modules for node.js environment  -----
 // ----------------------------------------------------
@@ -336,5 +362,6 @@ if (typeof module !== "undefined" && module.exports != null) {
         updateDuplicatedUrls,
         addPaperToTitleHashToId,
         readJournalAbbreviations,
+        downloadPaperPdf,
     };
 }
