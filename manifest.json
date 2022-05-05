@@ -28,6 +28,10 @@
     "manualParsing": {
       "suggested_key": "Ctrl+Shift+P",
       "description": "Manually trigger the parsing of a paper; only available if you have disabled auto-parsing in the menu"
+    },
+    "downloadPdf": {
+      "suggested_key": "Ctrl+Shift+S",
+      "description": "Download the pdf file for the current paper into your PaperMemoryStore"
     }
   },
   "options_ui": {
