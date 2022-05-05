@@ -208,7 +208,6 @@ chrome.commands.onCommand.addListener((command) => {
             if (id) {
                 const paper = global.state.papers[id];
                 if (paper) {
-                    log("Downloading paper", paper, "to", title);
                     downloadPaperPdf(paper);
                 } else {
                     warn("Unknown paper id:", id);

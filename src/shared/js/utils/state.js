@@ -329,6 +329,11 @@ const downloadPaperPdf = async (paper) => {
         throw new Error("[PM] State is not ready (downloadPaperPdf)");
     }
     let title = stateTitleFunction(paper);
+    title = title.replaceAll(":", " ");
+    const punctuationRegex =
+        /[\u2000-\u206F\u2E00-\u2E7F\\'!"#$%&()*+,\/:;<=>?@\[\]^`{|}~]/g;
+    const spaceRegex = /\s+/g;
+    title = title.replace(punctuationRegex, " ").replace(spaceRegex, " ");
     if (global.state.prefs.checkStore) {
         title = "PaperMemoryStore/" + title;
         const storedFiles = await getStoredFiles();
@@ -340,10 +345,13 @@ const downloadPaperPdf = async (paper) => {
             });
         }
     }
+    if (title.endsWith("pdf")) {
+        title = title.slice(0, -3) + ".pdf";
+    }
     if (!title.endsWith(".pdf")) {
         title += ".pdf";
     }
-    title = title.replaceAll(":", " ");
+    log("Downloading paper", paper, "to", title);
     chrome.downloads.download({
         url: paperToPDF(paper),
         filename: title,
