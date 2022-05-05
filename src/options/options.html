@@ -144,8 +144,8 @@
             <p>The file must be structured as follows: a list of entries where each entry is either a
                 <code>string</code> pointing to a paper's <code>url</code> (PDF or abstract) or a
                 <code>dictionnary</code> with a mandatory <code>"url"</code> field and <em>optionally</em> a
-                <code>"codeLink": string</code> field pointing a to code repository.
-
+                <code>"codeLink": string</code> field pointing a to code repository or a
+                <code>"tags": Array&lt;string&gt;</code> field with tags.
             </p>
 
             <p><strong><em>Note</em></strong>&nbsp;: all URLs must come from sources known to PaperMemory</p>
@@ -160,7 +160,9 @@
                         "codeLink": "https://github.com/valeoai/ADVENT"
                     },
                     {
-                        "url": "https://openreview.net/forum?id=xQUe1pOKPam"
+                        "url": "https://openreview.net/forum?id=xQUe1pOKPam",
+                        "tags": ["graphs", "3d", "molecules"],
+                        "codeLink": "https://github.com/chao1224/graphmvp"
                     }
                 ]
             </code>

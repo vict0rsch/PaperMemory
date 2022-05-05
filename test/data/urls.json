@@ -106,9 +106,17 @@
             "venue": "aistats"
         }
     ],
+    "wiley": [
+        "https://onlinelibrary.wiley.com/doi/abs/10.1002/acr2.11440",
+        "https://onlinelibrary.wiley.com/doi/pdf/10.1002/acr2.11440"
+    ],
     "pnas": [
         "https://www.pnas.org/doi/full/10.1073/pnas.2114679118",
         "https://www.pnas.org/doi/pdf/10.1073/pnas.2114679118"
+    ],
+    "sciencedirect": [
+        "https://www.sciencedirect.com/science/article/pii/S2589721721000349",
+        "https://reader.elsevier.com/reader/sd/pii/S2589721721000349"
     ],
     "springer": [
         "https://link.springer.com/article/10.1007/s41095-022-0271-y",

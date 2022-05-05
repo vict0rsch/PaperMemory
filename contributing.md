@@ -110,6 +110,7 @@ The following functions and constants should be updated:
 * `paper.js:paperToAbs()` and `paper.js:paperToPDF()` to enable to pdf<->webpage button
 * `functions.js:getDisplayId()` if necessary
 * `functions.js:isPdfUrl()` if necessary
+* `test/data/urls.json` to test that the integration works (and keeps working!)
 
 
 ## Creating a new paper attribute
