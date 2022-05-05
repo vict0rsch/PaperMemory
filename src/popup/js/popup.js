@@ -263,27 +263,7 @@ const popupMain = async (url, is, manualTrigger = false) => {
             }
         });
         addListener(`popup-memory-item-download--${id}`, "click", async () => {
-            let title = stateTitleFunction(paper);
-            if (global.state.prefs.checkStore) {
-                title = "PaperMemoryStore/" + title;
-                const storedFiles = await getStoredFiles();
-                if (storedFiles.length === 0) {
-                    chrome.downloads.download({
-                        url: URL.createObjectURL(new Blob([global.storeReadme])),
-                        filename: "PaperMemoryStore/IMPORTANT_README.txt",
-                        saveAs: false,
-                    });
-                }
-            }
-            log({ title });
-            if (!title.endsWith(".pdf")) {
-                title += ".pdf";
-            }
-            title = title.replaceAll(":", " ");
-            chrome.downloads.download({
-                url: paperToPDF(paper),
-                filename: title,
-            });
+            downloadPaperPdf(paper);
         });
     } else {
         if (prefs.checkDirectOpen) {
