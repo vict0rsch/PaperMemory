@@ -139,7 +139,7 @@ const paperToAbs = (paper) => {
             break;
 
         case "sciencedirect":
-            const pii = url.split("/pii/")[1].split("/")[0].split("#")[0].split("?")[0];
+            const pii = pdf.split("/pii/")[1].split("/")[0].split("#")[0].split("?")[0];
             abs = `https://www.sciencedirect.com/science/article/pii/${pii}`;
             break;
 
@@ -392,7 +392,7 @@ const mergePapers = (options = { newPaper: {}, oldPaper: {} }) => {
  * @param {object} checks The user's preferences
  * @returns
  */
-const addOrUpdatePaper = async (url, is, menu) => {
+const addOrUpdatePaper = async (url, is, prefs) => {
     const aouStart = Date.now();
     let paper, isNew, pwcUrl, pwcNote, pwcVenue;
 
@@ -507,12 +507,12 @@ const addOrUpdatePaper = async (url, is, menu) => {
                     notifText +=
                         "<br/><div id='feedback-pwc'>(+ repo from PapersWithCode) </div>";
                 }
-                menu && menu.checkFeedback && feedback(notifText, paper);
+                prefs && prefs.checkFeedback && feedback(notifText, paper);
             } else {
                 // existing paper but new code repo
 
                 notifText = "Found a code repository on PapersWithCode!";
-                menu && menu.checkFeedback && feedback(notifText);
+                prefs && prefs.checkFeedback && feedback(notifText);
             }
         } else {
             logOk("Updated '" + paper.title + "' in your Memory");
@@ -786,10 +786,10 @@ const isKnownLocalFile = (url) => {
     return titles[0].id;
 };
 
-const makeMdLink = (paper, menu = {}) => {
-    const link = menu.checkPreferPdf ? paperToPDF(paper) : paperToAbs(paper);
+const makeMdLink = (paper, prefs = {}) => {
+    const link = prefs.checkPreferPdf ? paperToPDF(paper) : paperToAbs(paper);
     let yearAndVenue = "";
-    if (menu.checkMdYearVenue) {
+    if (prefs.checkMdYearVenue) {
         yearAndVenue = paper.note.match(/(.+)\s*@\s*([\w\s]+\(?\d{4}\)?)/i);
         if (yearAndVenue) {
             yearAndVenue = yearAndVenue[2]?.replace(/\s+/g, " ").replace(/[\(\)]/g, "");

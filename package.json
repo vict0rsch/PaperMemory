@@ -38,9 +38,10 @@
     "gulp-uglify": "^3.0.2",
     "gulp-zip": "^5.1.0",
     "heap": "^0.2.7",
+    "jsdom": "^19.0.0",
+    "mocha": "^10.0.0",
     "nyc": "^15.1.0",
     "puppeteer-to-istanbul": "^1.4.0",
-    "mocha": "^10.0.0",
     "readline-sync": "^1.4.10",
     "uuid": "^8.3.2"
   },

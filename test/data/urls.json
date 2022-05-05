@@ -108,7 +108,10 @@
     ],
     "wiley": [
         "https://onlinelibrary.wiley.com/doi/abs/10.1002/acr2.11440",
-        "https://onlinelibrary.wiley.com/doi/pdf/10.1002/acr2.11440"
+        "https://onlinelibrary.wiley.com/doi/pdf/10.1002/acr2.11440",
+        {
+            "botPrevention": true
+        }
     ],
     "pnas": [
         "https://www.pnas.org/doi/full/10.1073/pnas.2114679118",

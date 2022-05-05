@@ -12,6 +12,7 @@
         integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
     <link rel="stylesheet" type="text/css" href="../shared/css/vars.css">
     <link rel="stylesheet" type="text/css" href="../shared/css/loader.css">
+    <link rel="stylesheet" type="text/css" href="../popup/css/select2.min.css">
     <link rel="stylesheet" type="text/css" href="github.min.css">
     <link rel="stylesheet" type="text/css" href="options.css">
 </head>
@@ -310,11 +311,14 @@
         <div class="section">
             <h2 id="data-management">Data Management</h2>
 
-            <p>You can export your full Memory as a <code>json</code> file or as a bibliography.</p>
+            <p>You can export your Memory as a <code>json</code> file or as a bibliography.</p>
             <p>To perform advanced data manipulation (paper merges, batch tagging etc.) you can process the exported
                 Memory file
                 and then load it into the extension, overwriting your current data.</p>
 
+            <p>You can also share a list of papers for others in your team!</p>
+            <br>
+            <h5>Full Memory Exports</h5>
 
             <div style="display: flex; align-items: center;" class="row mb-4">
                 <div class="col-6">
@@ -366,7 +370,8 @@
 
             <div id="overwrite-container" class="row">
                 <div class="col-6" style="display: flex; align-items: center;">
-                    <p class="mb-0"> &gt; Load a <code>json</code> memory file (this will <strong>overwrite</strong>
+                    <p class="mb-0"> &gt; Load a <code>json</code> memory file (this will <strong
+                            style="text-decoration: underline;">overwrite</strong>
                         your
                         Memory): </p>
                 </div>
@@ -392,6 +397,44 @@
                 <div style="display: none; margin: auto; margin-top: 1rem" id="overwriteFeedback" class="col-11"></div>
             </div>
 
+            <br>
+            <h5>Export by tags</h5>
+
+            <p>Select papers to export by providing a list of tags. If you select the <code>AND</code> operator, papers
+                will be required to have all those tags. If you select the <code>OR</code> operator, papers
+                will be required to have at least one of those tags.</p>
+
+            <p>You can export to <code>.bib</code> for bibliographies, or to <code>.json</code>. In the latter case you
+                can choose to either just export URLs, or include <code>title</code>, <code>codeLink</code> and
+                <code>tags</code> fields (in
+                order to match the <a href="#import-papers">import format</a>, and <code>title</code> is just for the
+                sake of human
+                readability)
+            </p>
+
+            <div class="row align-items-center mt-4">
+                <div style="font-size: 0.8rem;" class="col-5 d-flex justify-content-evenly">
+                    <select class="" id="export-tags-select" multiple="multiple">
+                    </select>
+                </div>
+                <div class="col-2 d-flex justify-content-evenly">
+                    <select name="export-tags-operator" id="export-tags-operator">
+                        <option selected value="OR">OR</option>
+                        <option value="AND">AND</option>
+                    </select>
+                </div>
+                <div class="col-3 d-flex justify-content-evenly align-items-center">
+                    <label for="export-tags-format">Format:&nbsp;&nbsp;</label>
+                    <select name="export-tags-format" id="export-tags-format">
+                        <option selected value="json">.json</option>
+                        <option value="json-urls">.json (urls only)</option>
+                        <option value="bib">.bib</option>
+                    </select>
+                </div>
+                <div class="col-2 d-flex justify-content-evenly">
+                    <button id="export-tags-confirm">Export!</button>
+                </div>
+            </div>
 
         </div>
 
@@ -464,6 +507,7 @@
     </div>
 
     <script src="../shared/min/jquery.min.js"></script>
+    <script src="../popup/js/select2.min.js"></script>
     <script src="highlight.min.js"></script>
     <script src="../shared/min/utils.min.js"></script>
     <script src="options.js"></script>

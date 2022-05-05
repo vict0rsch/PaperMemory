@@ -44,7 +44,7 @@ const initState = async (papers, isContentScript) => {
     papers = migration.papers;
     global.state.papers = papers;
 
-    global.state.menu = await getMenu();
+    global.state.prefs = await getPrefs();
     log("Time to retrieve user preferences (s): " + (Date.now() - times[0]) / 1000);
     times.unshift(Date.now());
 

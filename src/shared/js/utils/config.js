@@ -43,7 +43,7 @@ global.state = {
     sortedPapers: [], // [papers]
     sortKey: "",
     papersReady: false,
-    menu: {}, // (menuCheckKey => bool)
+    prefs: {}, // (prefsCheckKey => bool)
     files: {},
     ignoreSources: {}, // (source => bool)
     lastRefresh: new Date(),
@@ -73,7 +73,7 @@ global.select2Options = {
 /**
  * The array of keys in the menu, i.e. options the user can dis/enable in the menu
  */
-global.menuCheckNames = [
+global.prefsCheckNames = [
     "checkBib",
     "checkMd",
     "checkDownload",
@@ -92,7 +92,7 @@ global.menuCheckNames = [
 /**
  * Menu check names which should not default to true but to false
  */
-global.menuCheckDefaultFalse = [
+global.prefsCheckDefaultFalse = [
     "checkDarkMode",
     "checkDirectOpen",
     "checkStore",
@@ -105,7 +105,7 @@ global.menuCheckDefaultFalse = [
 /**
  * All keys to retrieve from the menu, the checkboxes + the custom pdf function
  */
-global.menuStorageKeys = [...global.menuCheckNames, "pdfTitleFn"];
+global.prefsStorageKeys = [...global.prefsCheckNames, "pdfTitleFn"];
 
 /**
  * Extra data per source
@@ -131,7 +131,7 @@ global.preprintSources = ["arxiv", "biorxiv"];
 global.knownPaperPages = {
     acl: ["aclanthology.org/"],
     acm: ["dl.acm.org/doi/"],
-    aps: [(url) => url.match(/journals\.aps\.org\/\w+\/(abstract|pdf)\//g)],
+    aps: [(url) => Boolean(url.match(/journals\.aps\.org\/\w+\/(abstract|pdf)\//g))],
     acs: ["pubs.acs.org/doi/"],
     arxiv: ["arxiv.org/abs/", "arxiv.org/pdf/", "scirate.com/arxiv/"],
     biorxiv: ["biorxiv.org/content"],
@@ -161,7 +161,10 @@ global.knownPaperPages = {
         "link.springer.com/content/pdf/",
     ],
     wiley: [
-        (url) => url.match(/onlinelibrary\.wiley\.com\/doi\/(abs|full|pdf|epdf)\//g),
+        (url) =>
+            Boolean(
+                url.match(/onlinelibrary\.wiley\.com\/doi\/(abs|full|pdf|epdf)\//g)
+            ),
     ],
 };
 
@@ -364,9 +367,9 @@ if (typeof module !== "undefined" && module.exports != null) {
         state: global.state,
         descendingSortKeys: global.descendingSortKeys,
         select2Options: global.select2Options,
-        menuCheckNames: global.menuCheckNames,
-        menuCheckDefaultFalse: global.menuCheckDefaultFalse,
-        menuStorageKeys: global.menuStorageKeys,
+        prefsCheckNames: global.prefsCheckNames,
+        prefsCheckDefaultFalse: global.prefsCheckDefaultFalse,
+        prefsStorageKeys: global.prefsStorageKeys,
         sourceExtras: global.sourceExtras,
         preprintSources: global.preprintSources,
         knownPaperPages: global.knownPaperPages,

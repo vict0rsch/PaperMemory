@@ -29,10 +29,10 @@ const handleOpenItemCodeLink = (e) => {
 
 const handleCopyMarkdownLink = async (e) => {
     const id = eventId(e);
-    const menu = global.state.menu;
-    const text = menu.checkPreferPdf ? "PDF" : "Abstract";
+    const prefs = global.state.prefs;
+    const text = prefs.checkPreferPdf ? "PDF" : "Abstract";
     const paper = global.state.papers[id];
-    const md = makeMdLink(paper, menu);
+    const md = makeMdLink(paper, prefs);
     copyAndConfirmMemoryItem(id, md, `Markdown ${text} link copied!`);
 };
 
@@ -44,10 +44,10 @@ const handleCopyBibtex = (e) => {
 
 const handleCopyPDFLink = async (e) => {
     const id = eventId(e);
-    const menu = global.state.menu;
+    const prefs = global.state.prefs;
     const paper = global.state.papers[id];
-    const link = menu.checkPreferPdf ? paperToPDF(paper) : paperToAbs(paper);
-    const text = menu.checkPreferPdf ? "PDF" : "Abstract";
+    const link = prefs.checkPreferPdf ? paperToPDF(paper) : paperToAbs(paper);
+    const text = prefs.checkPreferPdf ? "PDF" : "Abstract";
     copyAndConfirmMemoryItem(id, link, `${text} link copied!`);
 };
 
@@ -299,7 +299,7 @@ const handlePopupKeydown = (e) => {
         return;
     }
 
-    if (global.state.menuIsOpen) {
+    if (global.state.prefsIsOpen) {
         if (key === "Escape") {
             // escape closes menu
             e.preventDefault();
@@ -380,15 +380,21 @@ const handlePopupKeydown = (e) => {
     }
 };
 
-const handleMenuCheckChange = (e) => {
+const handlePrefsCheckChange = async (e) => {
     const key = e.target.id;
     const checked = findEl(key).checked;
-    chrome.storage.local.set({ [key]: checked }, function () {
-        log(`Settings saved for ${key} (${checked})`);
-        if (global.state && global.state.menu) {
-            global.state.menu[key] = checked;
-        }
-    });
+    if (global.state && global.state.prefs) {
+        global.state.prefs[key] = checked;
+        setStorage("prefs", global.state.prefs, function () {
+            log(`Settings saved for ${key} (${checked})`);
+        });
+    } else {
+        const prefs = (await getStorage("prefs")) ?? {};
+        prefs[key] = checked;
+        setStorage("prefs", prefs, function () {
+            log(`Settings saved for ${key} (${checked})`);
+        });
+    }
     if (checked && key === "checkNoAuto") {
         chrome.commands.getAll((commands) => {
             const { shortcut } = commands.find(

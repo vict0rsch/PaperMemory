@@ -141,3 +141,4 @@ exports.dev = parallel(popupJS, themeJS, utilsJS, popupCSS, popupDarkCSS, popupH
 exports.watch = series(exports.dev, watchFiles);
 exports.archive = series(exports.build, createArchive);
 exports.html = series(popupHTMLDev);
+exports.popupHTMLDev = popupHTMLDev;

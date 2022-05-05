@@ -344,33 +344,33 @@ const ignorePaper = (is, ignoreSources) => {
  */
 const contentScriptMain = async (url, stateIsReady, manualTrigger = false) => {
     if (!stateIsReady) await initState(undefined, true);
-    const menu = global.state.menu;
+    const prefs = global.state.prefs;
 
     let is = await isPaper(url, true);
 
     if (is.arxiv) {
-        arxiv(menu);
+        arxiv(prefs);
     }
     let ignoreSources = (await getStorage("ignoreSources")) ?? {};
 
     let update;
     if (
         !ignorePaper(is, ignoreSources) && // source is not ignored
-        !(menu.checkPdfOnly && !isPdfUrl(url)) && // pdf only is not checked or it is a pdf
-        !(menu.checkNoAuto && !manualTrigger) // no auto is not checked or it is a manual trigger
+        !(prefs.checkPdfOnly && !isPdfUrl(url)) && // pdf only is not checked or it is a pdf
+        !(prefs.checkNoAuto && !manualTrigger) // no auto is not checked or it is a manual trigger
     ) {
-        update = await addOrUpdatePaper(url, is, menu);
+        update = await addOrUpdatePaper(url, is, prefs);
     } else {
         if (ignorePaper(is, ignoreSources)) {
             warn(
                 "Paper is being ignored because its source has been disabled in the Advanced Options."
             );
-        } else if (menu.checkPdfOnly && !isPdfUrl(url)) {
+        } else if (prefs.checkPdfOnly && !isPdfUrl(url)) {
             warn(
                 `Paper is being ignored because you have checked the PDF-Only option ` +
                     `and the current URL (${url}) is not that of a pdf's.`
             );
-        } else if (menu.checkNoAuto && !manualTrigger) {
+        } else if (prefs.checkNoAuto && !manualTrigger) {
             warn(
                 "Paper is being ignored because you disabled automatic parsing" +
                     " in the menu."
@@ -383,7 +383,7 @@ const contentScriptMain = async (url, stateIsReady, manualTrigger = false) => {
         id = update.id;
     }
 
-    if (id && menu.checkPdfTitle) {
+    if (id && prefs.checkPdfTitle) {
         const makeTitle = async (id, url) => {
             if (!global.state.papers.hasOwnProperty(id)) return;
             const paper = global.state.papers[id];

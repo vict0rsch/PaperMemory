@@ -1,8 +1,11 @@
 const { expect } = require("expect");
+const { JSDOM } = require("jsdom");
 
 const { loadPaperMemoryUtils, range, readJSON } = require("./utilsForTests");
 
 loadPaperMemoryUtils();
+// create fake `document`, parseUrl() will need it for instance
+global.document = new JSDOM(`<!DOCTYPE html>`).window.document;
 
 describe("Bibtex parser", function () {
     var bdata = readJSON("./data/bibtexs.json");
