@@ -207,7 +207,7 @@ chrome.commands.onCommand.addListener((command) => {
             const id = await parseIdFromUrl(url);
             if (id) {
                 const paper = global.state.papers[id];
-                console.log("paper: ", paper);
+                log("Downloading paper", paper, "to", title);
                 downloadPaperPdf(paper);
             }
         });
