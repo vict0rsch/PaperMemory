@@ -209,6 +209,11 @@ const handleParseImportJson = async (e) => {
                     if (p.codeLink) {
                         paper.codeLink = p.codeLink;
                     }
+                    if (p.tags && Array.isArray(p.tags) && p.tags.length > 0) {
+                        paper.tags = p.tags.filter(
+                            (t) => typeof t === "string" && t.length > 0
+                        );
+                    }
                     const exists = await storeImportedPaper(paper);
                     if (exists) {
                         feedback.innerHTML += `<li>[${
