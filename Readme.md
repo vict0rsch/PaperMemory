@@ -347,9 +347,10 @@ chrome-extension://ehchlpggdaffcncbeopdopnndhdjelbc/src/options/options.html
 </details>
 
 <details>
-<summary><strong>How can I retrieve a backup?</strong></summary>
+<summary><strong>Are there data backups?</strong></summary>
 <br/>
-There is no straightforward way to do this currently, it will require a little coding:
+
+In case there's a bad bug or you mess up when overwriting your memory, PaperMemory preforms weekly backups (locally as always), which you can retrieve with a little coding:
 
 1. Open the extension's options (either right clicking its icon, or from the extension's menu, at the bottom)
 2. On the options page, open the Javascript Console with `cmd/ctrl + alt + i` or `right click > Inspect`
@@ -361,6 +362,8 @@ There is no straightforward way to do this currently, it will require a little c
     console.log(overwrite) // inspect this and make sure it is what you want
     setStorage("papers", overwrite) // Careful! This will overwrite the current data with the backup data
     ```
+
+  Note that if you uninstall PaperMemory all your data will be gone and the only way to keep track of what was in your Memory is to export your Memory first (in the advanced options page).
 </details>
 
 ## Todo
