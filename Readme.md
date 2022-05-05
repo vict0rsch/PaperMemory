@@ -313,7 +313,7 @@ It's all stored locally in your browser's local storage. If you want to transfer
 <summary><strong>How can I export all or some papers?</strong></summary>
 <br/>
 
-In the Advanced Options page, you can either export your full memory data to a <code>.json</code> or <code>.bib</code> bibliography, or only export papers with a given tag. More detains in <a href="https://github.com/vict0rsch/PaperMemory/issues/89">#89</a>
+In the Advanced Options page, you can either export your full memory data to a <code>.json</code> or <code>.bib</code> bibliography, or only export papers with a given tag. More details in <a href="https://github.com/vict0rsch/PaperMemory/issues/89">#89</a>
 </details>
 
 <details>
