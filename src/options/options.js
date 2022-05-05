@@ -791,12 +791,71 @@ const handleSelectOverwriteFile = () => {
     findEl("overwrite-arxivmemory-button").disabled = false;
 };
 
+const handleExportTagsConfirm = () => {
+    const tags = parseTags(findEl("export-tags-select"));
+    const operator = findEl("export-tags-operator").value;
+    const format = findEl("export-tags-format").value;
+
+    let papers = global.state.sortedPapers.filter((p) =>
+        operator === "AND"
+            ? p.tags && tags.every((t) => p.tags.includes(t))
+            : p.tags && tags.some((t) => p.tags.includes(t))
+    );
+    if (format === "bib") {
+        papers = papers.map((p) => bibtexToString(p.bibtex)).join("\n");
+    } else if (format.includes("json")) {
+        papers = JSON.stringify(
+            papers.map((p) => {
+                if (format.includes("url")) return p.pdfLink;
+
+                let e = { url: p.pdfLink, title: p.title };
+                if (p.tags && p.tags.length > 0) {
+                    e.tags = p.tags;
+                }
+                if (p.codeLink) {
+                    e.codeLink = p.codeLink;
+                }
+                return e;
+            }),
+            null,
+            2
+        );
+    }
+    const now = new Date();
+    const date = now.toLocaleDateString().replaceAll("/", ".");
+    const time = now.toLocaleTimeString().replaceAll(":", ".");
+    const fname = `PMExport-${date}-${time}-${tags.join("-")}${
+        format.includes("url") ? "-urls" : ""
+    }`;
+    if (format.includes("json")) {
+        downloadTextFile(papers, fname + ".json", "text/json");
+    } else {
+        downloadTextFile(papers, fname + ".bib", "text/plain");
+    }
+};
+
 const setupDataManagement = () => {
     addListener("download-arxivmemory", "click", handleDownloadMemoryClick);
     addListener("download-bibtex-json", "click", handleDownloadBibtexJsonClick);
     addListener("download-bibtex-plain", "click", handleDownloadBibtexPlainClick);
     addListener("overwrite-arxivmemory-button", "click", handleOverwriteMemory);
     addListener("overwrite-arxivmemory-input", "change", handleSelectOverwriteFile);
+
+    const tagOptions = Array.from(global.state.paperTags)
+        .sort()
+        .map((t, i) => {
+            const h = '<option value="' + t + '"'; // not string literal here for minification
+            return h + `>${t}</option>`;
+        })
+        .join("");
+    setHTML("export-tags-select", tagOptions);
+    $(`#export-tags-select`).select2({
+        ...global.select2Options,
+        placeholder: "Tags to export",
+        width: "100%",
+        tags: false,
+    });
+    addListener("export-tags-confirm", "click", handleExportTagsConfirm);
 };
 
 // ----------------------------
@@ -847,7 +906,8 @@ const setupSourcesSelection = async () => {
 // -----  Document Ready  -----
 // ----------------------------
 
-(() => {
+(async () => {
+    await initState();
     makeTOC();
     setupCodeBlocks();
     setupPWCPrefs();

@@ -139,7 +139,9 @@ input {
 -----------------
 */
 
-#framework-select {
+#framework-select,
+#export-tags-format,
+#export-tags-operator {
     border-radius: 4px;
     padding: 6px 12px;
     background-color: var(--color);
