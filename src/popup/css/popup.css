@@ -117,9 +117,11 @@ button:hover,
 code {
     font-family: "Fira Code", monospace;
     padding: 1px 4px;
-    vertical-align: text-top;
+    /* vertical-align: middle; */
     border-radius: var(--round);
     background-color: rgb(238, 238, 238);
+    margin: 1px auto;
+    display: inline-block;
 }
 .code-font {
     font-family: "Fira Code", monospace;
@@ -677,8 +679,9 @@ button.changed {
     margin-top: 16px;
     display: inline-block;
 }
-#modal-whatsnew-content code {
-    font-size: 0.8rem;
+#modal-whatsnew-content code,
+#modal-keyboard-content code {
+    font-size: 0.75rem;
 }
 
 /*
@@ -744,12 +747,13 @@ button.changed {
 
 #no-paper-why-code {
     cursor: pointer;
-    border-radius: 100px;
-    min-height: 1.2rem !important;
-    min-width: 1.2rem !important;
-    display: inline-block;
-    text-align: center;
+    border-radius: 1000px;
+    min-height: 1.5rem !important;
+    min-width: 1.5rem !important;
     vertical-align: middle;
+    padding: 6px !important;
+    line-height: 0;
+    font-weight: inherit;
 }
 
 #manual-trigger-wrapper {

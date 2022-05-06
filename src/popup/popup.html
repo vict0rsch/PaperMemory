@@ -75,8 +75,11 @@
 					<line x1="17" y1="7" x2="7" y2="17" />
 					<polyline points="16 17 7 17 7 8" />
 				</svg> (or press <code>a</code>
-				)! (<code style="cursor: pointer;" id="keyboardShortcuts" href="#">usage guide</code>)
+				)!
 			</p>
+			<p style="text-align: center;"><button style="cursor: pointer;" id="keyboardShortcuts"
+					class="code-font">User
+					Guide</button></p>
 
 			<div id="whats-new-container">
 				<div class="d-relative">
@@ -126,7 +129,7 @@
 
 		<h3>⋗ Help</h3>
 
-		<code style="cursor: pointer; font-size: 1rem;" id="keyboardShortcutsMenu" href="#">Usage guide</code>
+		<button class="code-font" style="font-size: 1rem;" id="keyboardShortcutsMenu">User guide</button>
 
 		<h3 class="mt-4">⋗ Configuration</h3>
 
@@ -305,12 +308,37 @@
 		<div class="popup-modal-contents">
 			<span id="close-popup-modal">&times;</span>
 			<div id="modal-keyboard-content" class="popup-modal-content" style="display:none;">
-				<h3>Keyboard navigation</h3>
+				<h3>Keyboard Shortcuts</h3>
+
+				<p style="font-size: 0.9rem">The following shortcuts are available on your browser <em>if and only
+						if</em> they are not already
+					assigned.</p>
+				<p style="font-size: 0.9rem"> Go to your settings or <code>chrome://extensions/shortcuts</code> (Chrome
+					&amp; Brave) or
+					<code>about:extensions</code>
+					(Firefox) to set/edit these shortcuts.
+				</p>
+
 				<ul>
-					<li>Open the popup:<ul>
+					<li style="margin-bottom: 4px">Open the popup
+						<ul style="margin-top: 2px;">
 							<li><code>cmd/ctrl + shift + e</code></li>
 						</ul>
 					</li>
+
+					<li style="margin-bottom: 4px">Trigger manual paper parsing
+						<ul style="margin-top: 2px;">
+							<li><code>cmd/ctrl + shift + p</code></li>
+						</ul>
+					</li>
+					<li>Download current paper's pdf
+						<ul style="margin-top: 2px;">
+							<li><code>cmd/ctrl + shift + s</code></li>
+						</ul>
+					</li>
+				</ul>
+				<h3>Keyboard navigation</h3>
+				<ul>
 					<li>Open the Memory<ul>
 							<li><code>a</code> from the popup&#39;s home will open the Memory</li>
 							<li>navigate to the bottom left button with <code>tab</code> and hit <code>enter</code>
@@ -366,6 +394,33 @@
 							<li><code>t: gan tim</code> will look for <em>all papers whose tag-list contains (at
 									least 1 tag containing &quot;gan&quot;) AND (at least 1 tag containing
 									&quot;tim&quot;)</em></li>
+						</ul>
+					</li>
+					<li>Search paper by years with <code>y: ${year}</code>
+						<ul>
+							<li>Use <code>,</code>
+								to separate
+								requested
+								years
+								or
+								start with <code>&gt;</code> or <code>&lt;</code> to filter paper published
+								after/before a given
+								year (stricly)
+								<ul>
+									<li><code>y: 20,21,22</code> will display papers published in <code>2020 OR 2021 OR
+										2022</code>
+									</li>
+									<li><code>y: &lt;2015</code> will display papers published before (strictly)
+										<code>2015</code>
+									</li>
+									<li><code>y:>19</code> will
+										display
+										papers
+										published after
+										(strictly) <code>2019</code>
+									</li>
+								</ul>
+							</li>
 						</ul>
 					</li>
 				</ul>

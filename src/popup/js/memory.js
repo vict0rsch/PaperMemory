@@ -53,11 +53,11 @@ const updatePopupPaperNoMemory = async (url) => {
         <div class="no-paper-div">
             <h3>This paper is not in your Memory&nbsp;
             <span id="no-paper-why-span">
-                <code id="no-paper-why-code">?</code>
+                <button class="code-font" id="no-paper-why-code">?</button>
             </span>
             </h3>
             <div>
-                <div>Here's a ${animal} for your trouble</div>
+                <div>Here's a ${animal} for your trouble</div><br>
                 <div id="ascii-art-div"><div style="text-align:">${ascii}</div></div>
             </div>
         </div>
