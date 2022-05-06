@@ -213,7 +213,7 @@ My approach with PaperMemory is to try and notify you that a publication likely 
   * A query is sent to their [api](https://www.semanticscholar.org/product/api) for an exact paper title match
   * Up to 50 relevant papers are returned in `response.data` as an `Array`
   * In case of a match, the venue should not be `"ArXiv"`
-  * If there's a match and it's venue is not Arxiv then `match.venue` and `match.year` are used to create a note: `Accepted @ {venue} ({year}) -- [semanticscholar.org]`
+  * If there's a match and its venue is not Arxiv then `match.venue` and `match.year` are used to create a note: `Accepted @ {venue} ({year}) -- [semanticscholar.org]`
 * [CrossRef.org](https://crossref.org)
   * A query is sent to their [api](https://api.crossref.org/swagger-ui/index.html) for an exact paper title match
   * The response *must* contain an `event` field with a `name` attribute. If it does not it'll be ignored.
@@ -226,7 +226,7 @@ There's room for improvement here^, please contact me (an issue will do) if you 
 
 PaperMemory uses the PapersWithCode API in order to discover code repositories. If the paper being added to the Memory is from Arxiv, PaperMemory will use PWC's `arxiv_id` search field. Otherwise it will query per title. PaperMemory then expects exactly `1` result from the API. Any different `count` in the response will make PaperMemory consider there is no match.
 
-If a match is found, the selected repo is the official (if it exists) one with the most stars.
+If a match is found, the selected repo is the official (if it exists) one with the most stars (customizable in the Advanced Options).
 
 Here's an example return value from PWC's API
 
