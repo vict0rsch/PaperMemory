@@ -1260,6 +1260,7 @@ const trySemanticScholar = async (paper) => {
             for (const match of matches.data) {
                 if (
                     miniHash(match.title) === miniHash(paper.title) &&
+                    match.venue &&
                     match.venue.toLowerCase() !== "arxiv"
                 ) {
                     info("Found a Semantic Scholar match");
