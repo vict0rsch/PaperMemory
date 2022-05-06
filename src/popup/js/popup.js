@@ -189,7 +189,7 @@ const popupMain = async (url, is, manualTrigger = false) => {
         // -----  Fill Paper Data  -----
         // -----------------------------
         setTextId("popup-paper-title", paper.title.replaceAll("\n", ""));
-        setTextId("popup-authors", cutAuthors(paper.author, 350));
+        setTextId("popup-authors", cutAuthors(paper.author, 350).replace(/({|})/g, ""));
         if (paper.codeLink) {
             showId("popup-code-link");
             setTextId("popup-code-link", paper.codeLink.replace(/^https?:\/\//, ""));
