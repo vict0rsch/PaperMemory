@@ -579,17 +579,37 @@ const updatePaperTags = (id, elementId) => {
     }
 };
 
+const displayOnScroll = (isPopup) =>
+    delay(() => {
+        const { bottom } = findEl("memory-table").getBoundingClientRect();
+        const height = isPopup
+            ? findEl("memory-container").getBoundingClientRect().height
+            : window.innerHeight;
+        const currentPapers =
+            global.state.currentMemoryPagination * global.state.memoryItemsPerPage;
+        if (
+            Math.abs(bottom - height) < height &&
+            currentPapers < global.state.papersList.length
+        ) {
+            global.state.currentMemoryPagination += 1;
+            displayMemoryTable(global.state.currentMemoryPagination);
+        }
+    }, 50);
+
 /**
  * Iterates over all papers in the papersList (sorted and filtered),
  * creates each paper's HTML template and appends it to #memory-table.
  * Also creates the relevant events.
  */
-const displayMemoryTable = () => {
+const displayMemoryTable = (pagination = 0) => {
     const start = Date.now();
 
     // Clear existing items
     var memoryTable = findEl("memory-table");
-    setHTML(memoryTable, "");
+    if (pagination === 0) {
+        setHTML(memoryTable, "");
+        global.state.currentMemoryPagination = 0;
+    }
 
     // Define SVG hover titles:
     // titles behave differently in build/watch mode. This works in build
@@ -604,7 +624,10 @@ const displayMemoryTable = () => {
     // Add relevant sorted papers (papersList may be smaller than sortedPapers
     // depending on the search query)
     let table = [];
-    for (const paper of global.state.papersList) {
+    for (const paper of global.state.papersList.slice(
+        pagination * global.state.memoryItemsPerPage,
+        (pagination + 1) * global.state.memoryItemsPerPage
+    )) {
         try {
             table.push(getMemoryItemHTML(paper, titles));
         } catch (error) {
@@ -614,7 +637,11 @@ const displayMemoryTable = () => {
         }
     }
     // https://stackoverflow.com/questions/18393981/append-vs-html-vs-innerhtml-performance
-    setHTML(memoryTable, table.join(""));
+    if (pagination === 0) {
+        setHTML(memoryTable, table.join(""));
+    } else {
+        memoryTable.insertAdjacentHTML("beforeend", table.join(""));
+    }
 
     // Add events
     // after a click on such a button, the focus returns to the
@@ -697,6 +724,7 @@ const makeMemoryHTML = async () => {
     addListener("memory-select", "change", handleMemorySelectChange);
     // listen to sorting direction change
     addListener("memory-sort-arrow", "click", handleMemorySortArrow);
+    addListener("memory-container", "scroll", displayOnScroll(true));
 };
 
 const openMemory = () => {

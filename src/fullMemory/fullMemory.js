@@ -30,6 +30,7 @@ const autoRefresh = () => {
     await initState();
     makeMemoryHTML();
     addListener("memory-search-clear-icon", "click", handleClearSearch);
+    addListener(document, "scroll", displayOnScroll(false));
     // set default sort to lastOpenDate
     val("memory-select", "lastOpenDate");
     // set default sort direction arrow down

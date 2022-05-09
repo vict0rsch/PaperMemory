@@ -49,6 +49,8 @@ global.state = {
     lastRefresh: new Date(),
     titleHashToIds: {}, // (miniHash(title) -> [ids])
     urlHashToId: {}, // (miniHash(url) => id)
+    memoryItemsPerPage: 25,
+    currentMemoryPagination: 0,
 };
 
 global.descendingSortKeys = [
