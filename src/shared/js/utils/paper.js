@@ -145,7 +145,7 @@ const paperToAbs = (paper) => {
             break;
 
         case "science":
-            doi = url.split("/doi/")[1];
+            doi = pdf.split("/doi/")[1];
             if (!doi.startsWith("10.")) {
                 doi = doi.split("/").slice(1).join("/");
             }
