@@ -177,8 +177,8 @@ Help wanted: [Puppeteer in Github Actions](https://stackoverflow.com/questions/6
 Why do we need this?
 
 ```javascript
-var dummyModule = module;
-if (typeof dummyModule !== "undefined" && dummyModule.exports != null) {
+if (typeof module !== "undefined" && module.exports != null) {
+    var dummyModule = module;
     dummyModule.exports = { ... };
 }
 ```

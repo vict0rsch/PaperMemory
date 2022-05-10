@@ -151,6 +151,7 @@ global.knownPaperPages = {
     pmc: ["ncbi.nlm.nih.gov/pmc/articles/PMC"],
     pmlr: ["proceedings.mlr.press/"],
     pnas: ["pnas.org/content/", "pnas.org/doi/"],
+    science: [(url) => Boolean(url.match(/science\.org\/doi\/(abs|full|pdf|epdf)\//g))],
     sciencedirect: [
         "sciencedirect.com/science/article/pii/",
         "sciencedirect.com/science/article/abs/pii/",
@@ -187,6 +188,7 @@ global.sourcesNames = {
     pmc: "PubMed Central",
     pmlr: "Proceedings of Machine Learning Research (PMLR)",
     pnas: "Proceedings of the National Academy of Sciences (PNAS)",
+    science: "Science",
     sciencedirect: "ScienceDirect",
     springer: "Springer",
     wiley: "Wiley",
@@ -365,8 +367,8 @@ global.journalAbbreviations = null;
 // ----------------------------------------------------
 // -----  TESTS: modules for node.js environment  -----
 // ----------------------------------------------------
-var dummyModule = module;
-if (typeof dummyModule !== "undefined" && dummyModule.exports != null) {
+if (typeof module !== "undefined" && module.exports != null) {
+    var dummyModule = module;
     dummyModule.exports = {
         state: global.state,
         descendingSortKeys: global.descendingSortKeys,
