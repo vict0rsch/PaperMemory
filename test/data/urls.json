@@ -117,6 +117,13 @@
         "https://www.pnas.org/doi/full/10.1073/pnas.2114679118",
         "https://www.pnas.org/doi/pdf/10.1073/pnas.2114679118"
     ],
+    "science": [
+        "https://science.org/doi/full/10.1126/scirobotics.abm6597",
+        "https://science.org/doi/epdf/10.1126/scirobotics.abm6597",
+        {
+            "venue": "science robotics"
+        }
+    ],
     "sciencedirect": [
         "https://www.sciencedirect.com/science/article/pii/S2589721721000349",
         "https://reader.elsevier.com/reader/sd/pii/S2589721721000349"

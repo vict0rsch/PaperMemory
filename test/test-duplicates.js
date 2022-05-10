@@ -166,7 +166,7 @@ describe("Paper de-duplication", function () {
                         const multipleCountsPaper = papers.find((p) => p.count > 1);
                         const targetSingles = memoryState.titleHashToIds[
                             hashedTitle
-                        ].filter((id) => id != multipleCountsPaper.id).length;
+                        ].filter((id) => id !== multipleCountsPaper?.id).length;
                         expect(singleCountPapers.length).toEqual(targetSingles);
                     });
                 });
