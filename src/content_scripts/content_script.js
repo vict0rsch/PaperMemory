@@ -630,7 +630,7 @@ const arxiv = async (checks) => {
     }
 };
 
-window.addEventListener("DOMContentLoaded", async () => {
+(async () => {
     const url = window.location.href;
     let stateIsReady = false;
     if (url.startsWith("file://")) {
@@ -638,7 +638,6 @@ window.addEventListener("DOMContentLoaded", async () => {
         stateIsReady = true;
     }
     if (await isKnownURL(url, true)) {
-        info("Running PaperMemory's content script");
         contentScriptMain(url, stateIsReady);
     }
 
@@ -655,4 +654,4 @@ window.addEventListener("DOMContentLoaded", async () => {
             contentScriptMain(url, stateIsReady, true);
         }
     });
-});
+})();
