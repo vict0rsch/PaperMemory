@@ -408,6 +408,10 @@ const contentScriptMain = async (url, stateIsReady, manualTrigger = false) => {
  * @param {string} text the text to display in the slider div
  */
 const feedback = (text, paper = null) => {
+    if (document.readyState === "loading") {
+        setTimeout(() => feedback(text, paper), 250);
+        return;
+    }
     const notifTime = 3000;
     try {
         clearTimeout(timeout);
