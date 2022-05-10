@@ -395,7 +395,7 @@ const mergePapers = (options = { newPaper: {}, oldPaper: {} }) => {
 const addOrUpdatePaper = async (url, is, prefs) => {
     const aouStart = Date.now();
     let paper, isNew, pwcUrl, pwcNote, pwcVenue;
-
+    console.group("%cPaperMemory parsing 📕", global.consolHeaderStyle);
     // Extract id from url
     global.state.papers = (await getStorage("papers")) ?? {};
     const id = await parseIdFromUrl(url);
@@ -562,6 +562,7 @@ const addOrUpdatePaper = async (url, is, prefs) => {
             }
         }
         info(`Done processing paper (${(Date.now() - aouStart) / 1000}s).`);
+        console.groupEnd();
     });
 
     return { paper, id };

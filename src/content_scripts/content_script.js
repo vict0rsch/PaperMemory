@@ -474,7 +474,7 @@ const feedback = (text, paper = null) => {
 const updatePaperVisits = (paper) => {
     paper.count += 1;
     paper.lastOpenDate = new Date().toJSON();
-    info("Updating paper to:", paper);
+    log("Updating paper to:", paper);
     return paper;
 };
 
@@ -641,11 +641,10 @@ window.addEventListener("DOMContentLoaded", async () => {
         info("Running PaperMemory's content script");
         contentScriptMain(url, stateIsReady);
     }
-    const backgroundIsHere =
-        (await sendMessageToBackground({ type: "hello" })) ??
-        "Cannot connect to background script";
 
-    log(backgroundIsHere);
+    if (!(await sendMessageToBackground({ type: "hello" }))) {
+        warn("Cannot connect to background script");
+    }
 
     chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
         // listen for messages sent from background.js

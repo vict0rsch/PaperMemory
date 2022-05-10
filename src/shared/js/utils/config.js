@@ -210,6 +210,9 @@ global.overrideDBLPVenues = {
     "J. Mach. Learn. Res.": "JMLR",
 };
 
+global.consolHeaderStyle =
+    "font-family:system-ui;font-size:1.2rem;font-weight:lighter;display:inline-block;border:2px solid #A41716;border-radius: 8px;padding: 16px; margin: 20px;";
+
 /**
  * Minimal Levenshtein distance between two paper titles for those to be merged
  */
@@ -388,5 +391,6 @@ if (typeof module !== "undefined" && module.exports != null) {
         storeReadme: global.storeReadme,
         englishStopWords: global.englishStopWords,
         journalAbbreviations: global.journalAbbreviations,
+        consolHeaderStyle: global.consolHeaderStyle,
     };
 }

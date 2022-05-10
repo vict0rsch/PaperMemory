@@ -18,6 +18,7 @@
 const initState = async (papers, isContentScript) => {
     const times = [];
     times.unshift(Date.now());
+    console.group("%cPaperMemory Init ✅", global.consolHeaderStyle);
 
     if (typeof papers === "undefined") {
         papers = (await getStorage("papers")) ?? {};
@@ -69,28 +70,26 @@ const initState = async (papers, isContentScript) => {
     log("Time to hash titles (s): " + (Date.now() - times[0]) / 1000);
     times.unshift(Date.now());
 
-    if (isContentScript) {
-        info("State init duration (s): " + (Date.now() - times.last()) / 1000);
-        return;
+    if (!isContentScript) {
+        global.state.files = await matchAllFilesToPapers();
+        log("Time to match all local files (s): " + (Date.now() - times[0]) / 1000);
+        times.unshift(Date.now());
+
+        global.state.papersList = Object.values(cleanPapers(papers));
+        global.state.sortKey = "lastOpenDate";
+        global.state.papersReady = true;
+
+        sortMemory();
+        log("Time to sort memory (s): " + (Date.now() - times[0]) / 1000);
+        times.unshift(Date.now());
+
+        makeTags();
+        log("Time to make tags (s): " + (Date.now() - times[0]) / 1000);
+        times.unshift(Date.now());
     }
 
-    global.state.files = await matchAllFilesToPapers();
-    log("Time to match all local files (s): " + (Date.now() - times[0]) / 1000);
-    times.unshift(Date.now());
-
-    global.state.papersList = Object.values(cleanPapers(papers));
-    global.state.sortKey = "lastOpenDate";
-    global.state.papersReady = true;
-
-    sortMemory();
-    log("Time to sort memory (s): " + (Date.now() - times[0]) / 1000);
-    times.unshift(Date.now());
-
-    makeTags();
-    log("Time to make tags (s): " + (Date.now() - times[0]) / 1000);
-    times.unshift(Date.now());
-
     info("State init duration (s): " + (Date.now() - times.last()) / 1000);
+    console.groupEnd();
 };
 
 /**
