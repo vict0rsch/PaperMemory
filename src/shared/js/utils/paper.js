@@ -754,7 +754,7 @@ const parseIdFromUrl = async (url) => {
         })[0];
         idForUrl = paper && paper.id;
     } else if (is.science) {
-        doi = url.split("/doi/")[1];
+        doi = noParamUrl(url).split("/doi/")[1];
         if (!doi.startsWith("10.")) {
             doi = doi.split("/").slice(1).join("/");
         }

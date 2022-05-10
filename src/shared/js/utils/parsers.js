@@ -1127,7 +1127,7 @@ const makeScienceDirectPaper = async (url) => {
 const makeSciencePaper = async (url) => {
     let author, bibtex, id, key, note, pdfLink, title, venue, year, doi, absUrl;
 
-    doi = url.split("/doi/")[1];
+    doi = noParamUrl(url).split("/doi/")[1];
     if (!doi.startsWith("10.")) {
         doi = doi.split("/").slice(1).join("/");
     }

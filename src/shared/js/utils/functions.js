@@ -714,6 +714,14 @@ const getStoredFiles = () =>
         );
     });
 
+/**
+ * Splits url on # and ?
+ * @param {string} url The url to check
+ */
+const noParamUrl = (url) => {
+    return url.split("?")[0].split("#")[0];
+};
+
 if (typeof module !== "undefined" && module.exports != null) {
     var dummyModule = module;
     dummyModule.exports = {
@@ -750,5 +758,6 @@ if (typeof module !== "undefined" && module.exports != null) {
         sendMessageToBackground,
         getStoredFiles,
         miniHash,
+        noParamUrl,
     };
 }
