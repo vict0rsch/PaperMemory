@@ -670,7 +670,8 @@ const makeVenue = async (paper) => {
 };
 
 if (typeof module !== "undefined" && module.exports != null) {
-    module.exports = {
+    var dummyModule = module;
+    dummyModule.exports = {
         migrateData,
         logStorage,
         getStorage,

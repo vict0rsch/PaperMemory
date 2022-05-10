@@ -151,6 +151,9 @@ global.knownPaperPages = {
     pmc: ["ncbi.nlm.nih.gov/pmc/articles/PMC"],
     pmlr: ["proceedings.mlr.press/"],
     pnas: ["pnas.org/content/", "pnas.org/doi/"],
+    science: [
+        (url) => Boolean(url.match(/science\.org\/doi\/?(abs|full|pdf|epdf)?\//g)),
+    ],
     sciencedirect: [
         "sciencedirect.com/science/article/pii/",
         "sciencedirect.com/science/article/abs/pii/",
@@ -187,6 +190,7 @@ global.sourcesNames = {
     pmc: "PubMed Central",
     pmlr: "Proceedings of Machine Learning Research (PMLR)",
     pnas: "Proceedings of the National Academy of Sciences (PNAS)",
+    science: "Science",
     sciencedirect: "ScienceDirect",
     springer: "Springer",
     wiley: "Wiley",
@@ -207,6 +211,9 @@ global.overridePMLRConfs = {
 global.overrideDBLPVenues = {
     "J. Mach. Learn. Res.": "JMLR",
 };
+
+global.consolHeaderStyle =
+    "font-family:system-ui;font-size:1.2rem;font-weight:lighter;display:inline-block;border:2px solid #A41716;border-radius: 8px;padding: 16px; margin: 20px;";
 
 /**
  * Minimal Levenshtein distance between two paper titles for those to be merged
@@ -366,7 +373,8 @@ global.journalAbbreviations = null;
 // -----  TESTS: modules for node.js environment  -----
 // ----------------------------------------------------
 if (typeof module !== "undefined" && module.exports != null) {
-    module.exports = {
+    var dummyModule = module;
+    dummyModule.exports = {
         state: global.state,
         descendingSortKeys: global.descendingSortKeys,
         select2Options: global.select2Options,
@@ -385,5 +393,6 @@ if (typeof module !== "undefined" && module.exports != null) {
         storeReadme: global.storeReadme,
         englishStopWords: global.englishStopWords,
         journalAbbreviations: global.journalAbbreviations,
+        consolHeaderStyle: global.consolHeaderStyle,
     };
 }

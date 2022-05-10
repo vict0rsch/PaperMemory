@@ -553,7 +553,7 @@ const updatePaperTags = (id, elementId) => {
         ref = findEl(id, elementId);
     }
     const tags = parseTags(ref);
-    updated = false;
+    let updated = false;
     let newTags = new Set();
     if (!arraysIdentical(global.state.papers[id].tags, tags)) updated = true;
     global.state.papers[id].tags = tags;

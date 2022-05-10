@@ -239,7 +239,8 @@ const slideToggle = (el, duration = 500, complete = () => {}) => {
 // -----  TESTS: modules for node.js environment  -----
 // ----------------------------------------------------
 if (typeof module !== "undefined" && module.exports != null) {
-    module.exports = {
+    var dummyModule = module;
+    dummyModule.exports = {
         findEl,
         fadeOut,
         fadeIn,

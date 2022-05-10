@@ -1123,6 +1123,58 @@ const makeScienceDirectPaper = async (url) => {
 
     return { author, bibtex, id, key: citationKey, note, pdfLink, title, venue, year };
 };
+
+const makeSciencePaper = async (url) => {
+    let author, bibtex, id, key, note, pdfLink, title, venue, year, doi, absUrl;
+
+    doi = noParamUrl(url).split("/doi/")[1];
+    if (!doi.startsWith("10.")) {
+        doi = doi.split("/").slice(1).join("/");
+    }
+    pdfLink = `https://science.org/doi/pdf/${doi}`;
+    absUrl = `https://science.org/doi/full/${doi}`;
+
+    const data = await fetchCrossRefDataForDoi(doi);
+    if (data) {
+        ({ author, bibtex, title, venue, year } = data);
+        key = data.citationKey;
+    } else {
+        const dom = await fetchDom(absUrl);
+        author = Array.from(dom.querySelectorAll("meta[name='dc.Creator']"))
+            .map((el) => el.getAttribute("content"))
+            .join(" and ");
+        year = dom
+            .querySelector("meta[name='dc.Date']")
+            .getAttribute("content")
+            .split("-")[0];
+        const publisher = dom
+            .querySelector("meta[name='dc.Publisher']")
+            .getAttribute("content");
+        title = dom.querySelector("meta[name='dc.Title']").getAttribute("content");
+        venue = dom
+            .querySelector("meta[name='citation_journal_title']")
+            .getAttribute("content");
+        key = `${author.split(" and ")[1].split(" ")[0]}${year}${firstNonStopLowercase(
+            title
+        )}`.toLowerCase();
+        bibtex = bibtexToString({
+            citationKey: key,
+            entryType: "article",
+            title,
+            author,
+            year,
+            doi,
+            publisher,
+            journal: venue,
+        });
+    }
+
+    id = `Science-${year}_${miniHash(doi)}`;
+    note = `Published @ ${venue} (${year})`;
+
+    return { author, bibtex, id, key, note, pdfLink, title, venue, year };
+};
+
 // -------------------------------
 // -----  PREPRINT MATCHING  -----
 // -------------------------------
@@ -1486,6 +1538,11 @@ const makePaper = async (is, url) => {
         if (paper) {
             paper.source = "sciencedirect";
         }
+    } else if (is.science) {
+        paper = await makeSciencePaper(url);
+        if (paper) {
+            paper.source = "science";
+        }
     } else {
         throw new Error("Unknown paper source: " + JSON.stringify({ is, url }));
     }
@@ -1516,7 +1573,8 @@ const findFuzzyPaperMatch = (hashes, paper) => {
 // -----  TESTS: modules for node.js environment  -----
 // ----------------------------------------------------
 if (typeof module !== "undefined" && module.exports != null) {
-    module.exports = {
+    var dummyModule = module;
+    dummyModule.exports = {
         decodeHtml,
         flipAuthor,
         flipAndAuthors,

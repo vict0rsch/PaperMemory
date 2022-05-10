@@ -171,3 +171,18 @@ env keep_browser=true max_sources=3 npm run test
 Currently, tests **only** check that a pre-defined set of papers (`tests/data/urls.json`) are correctly parsed to memory once the browser visits a given url. Much more testing can be done: testing functions (most of them are pure, it's easier), user options, UI etc.
 
 Help wanted: [Puppeteer in Github Actions](https://stackoverflow.com/questions/62228154/puppeteer-fails-to-initiate-in-github-actions)
+
+### `module.export`
+
+Why do we need this?
+
+```javascript
+if (typeof module !== "undefined" && module.exports != null) {
+    var dummyModule = module;
+    dummyModule.exports = { ... };
+}
+```
+
+1. `if (typeof dummyModule !== "undefined" && dummyModule.exports != null) {}` is required to make functions available as module exports for the `node` test environment. Without this, `const { func } = require("path/to/file")` would not work.
+2. `var dummyModule = module;` is there to be able to use IDE `Go to definition` functionalities. Without this, VSCode reads `module.exports = {...}` and thinks it's a module and does not discover functions in non-explicitly imported files
+

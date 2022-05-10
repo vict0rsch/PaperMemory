@@ -408,6 +408,10 @@ const contentScriptMain = async (url, stateIsReady, manualTrigger = false) => {
  * @param {string} text the text to display in the slider div
  */
 const feedback = (text, paper = null) => {
+    if (document.readyState === "loading") {
+        setTimeout(() => feedback(text, paper), 250);
+        return;
+    }
     const notifTime = 3000;
     try {
         clearTimeout(timeout);
@@ -474,7 +478,7 @@ const feedback = (text, paper = null) => {
 const updatePaperVisits = (paper) => {
     paper.count += 1;
     paper.lastOpenDate = new Date().toJSON();
-    info("Updating paper to:", paper);
+    log("Updating paper to:", paper);
     return paper;
 };
 
@@ -630,7 +634,7 @@ const arxiv = async (checks) => {
     }
 };
 
-window.addEventListener("DOMContentLoaded", async () => {
+(async () => {
     const url = window.location.href;
     let stateIsReady = false;
     if (url.startsWith("file://")) {
@@ -638,14 +642,12 @@ window.addEventListener("DOMContentLoaded", async () => {
         stateIsReady = true;
     }
     if (await isKnownURL(url, true)) {
-        info("Running PaperMemory's content script");
         contentScriptMain(url, stateIsReady);
     }
-    const backgroundIsHere =
-        (await sendMessageToBackground({ type: "hello" })) ??
-        "Cannot connect to background script";
 
-    log(backgroundIsHere);
+    if (!(await sendMessageToBackground({ type: "hello" }))) {
+        warn("Cannot connect to background script");
+    }
 
     chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
         // listen for messages sent from background.js
@@ -656,4 +658,4 @@ window.addEventListener("DOMContentLoaded", async () => {
             contentScriptMain(url, stateIsReady, true);
         }
     });
-});
+})();
