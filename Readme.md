@@ -73,6 +73,7 @@ This browser extension allows you to do automatically store research papers you 
 * American Physical Society (APS)
 * Wiley (Advanced Materials, InfoMat etc.)
 * Science Direct
+* Science (Science, Science Immunology, Science Robotics etc.)
 * [Add more](https://github.com/vict0rsch/PaperMemory/issues/13)
 
 [About finding published papers from preprints](#preprints)

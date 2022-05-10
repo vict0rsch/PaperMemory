@@ -151,7 +151,9 @@ global.knownPaperPages = {
     pmc: ["ncbi.nlm.nih.gov/pmc/articles/PMC"],
     pmlr: ["proceedings.mlr.press/"],
     pnas: ["pnas.org/content/", "pnas.org/doi/"],
-    science: [(url) => Boolean(url.match(/science\.org\/doi\/(abs|full|pdf|epdf)\//g))],
+    science: [
+        (url) => Boolean(url.match(/science\.org\/doi\/?(abs|full|pdf|epdf)?\//g)),
+    ],
     sciencedirect: [
         "sciencedirect.com/science/article/pii/",
         "sciencedirect.com/science/article/abs/pii/",

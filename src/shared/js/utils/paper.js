@@ -49,6 +49,7 @@ const isKnownURL = async (url, noStored) =>
  * @returns {string} the url to the paper's abstract
  */
 const paperToAbs = (paper) => {
+    let journal, type, doi;
     const pdf = paper.pdfLink;
     let abs = "";
     switch (paper.source) {
@@ -130,7 +131,7 @@ const paperToAbs = (paper) => {
             break;
 
         case "aps":
-            const [journal, type] = parseUrl(pdf).pathname.split("/").slice(1, 3);
+            [journal, type] = parseUrl(pdf).pathname.split("/").slice(1, 3);
             abs = pdf.replace(`/${journal}/${type}/`, `/${journal}/abstract/`);
             break;
 
@@ -141,6 +142,14 @@ const paperToAbs = (paper) => {
         case "sciencedirect":
             const pii = pdf.split("/pii/")[1].split("/")[0].split("#")[0].split("?")[0];
             abs = `https://www.sciencedirect.com/science/article/pii/${pii}`;
+            break;
+
+        case "science":
+            doi = url.split("/doi/")[1];
+            if (!doi.startsWith("10.")) {
+                doi = doi.split("/").slice(1).join("/");
+            }
+            abs = `https://science.org/doi/full/${doi}`;
             break;
 
         default:
@@ -232,6 +241,9 @@ const paperToPDF = (paper) => {
             break;
 
         case "sciencedirect":
+            break;
+
+        case "science":
             break;
 
         default:
@@ -400,7 +412,6 @@ const addOrUpdatePaper = async (url, is, prefs) => {
     global.state.papers = (await getStorage("papers")) ?? {};
     const id = await parseIdFromUrl(url);
     const paperExists = global.state.papers.hasOwnProperty(id);
-    log("Id for url:", id, "--", "Paper exists:", Boolean(paperExists));
 
     if (id && paperExists) {
         // Update paper if it exists
@@ -740,6 +751,15 @@ const parseIdFromUrl = async (url) => {
         );
         const paper = Object.values(cleanPapers(global.state.papers)).filter((p) => {
             return p.source === "sciencedirect" && p.id.includes(pii);
+        })[0];
+        idForUrl = paper && paper.id;
+    } else if (is.science) {
+        doi = url.split("/doi/")[1];
+        if (!doi.startsWith("10.")) {
+            doi = doi.split("/").slice(1).join("/");
+        }
+        const paper = Object.values(cleanPapers(global.state.papers)).filter((p) => {
+            return p.source === "science" && p.id.includes(miniHash(doi));
         })[0];
         idForUrl = paper && paper.id;
     } else if (is.localFile) {
