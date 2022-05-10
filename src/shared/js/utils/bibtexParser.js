@@ -354,8 +354,9 @@ const extractAuthor = (bibtex) =>
         .map((a) => a.split(", ").reverse().join(" "))
         .join(" and ");
 
-if (typeof module !== "undefined" && module.exports != null) {
-    module.exports = {
+var dummyModule = module;
+if (typeof dummyModule !== "undefined" && dummyModule.exports != null) {
+    dummyModule.exports = {
         bibtexToObject,
         bibtexToString,
         extractBibtexValue,

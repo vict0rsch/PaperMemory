@@ -361,8 +361,9 @@ const downloadPaperPdf = async (paper) => {
 // ----------------------------------------------------
 // -----  TESTS: modules for node.js environment  -----
 // ----------------------------------------------------
-if (typeof module !== "undefined" && module.exports != null) {
-    module.exports = {
+var dummyModule = module;
+if (typeof dummyModule !== "undefined" && dummyModule.exports != null) {
+    dummyModule.exports = {
         initState,
         getExamplePaper,
         getTitleFunction,

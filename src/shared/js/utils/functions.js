@@ -713,8 +713,10 @@ const getStoredFiles = () =>
                 )
         );
     });
-if (typeof module !== "undefined" && module.exports != null) {
-    module.exports = {
+
+var dummyModule = module;
+if (typeof dummyModule !== "undefined" && dummyModule.exports != null) {
+    dummyModule.exports = {
         log,
         info,
         logError,

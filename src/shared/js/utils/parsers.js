@@ -1515,8 +1515,9 @@ const findFuzzyPaperMatch = (hashes, paper) => {
 // ----------------------------------------------------
 // -----  TESTS: modules for node.js environment  -----
 // ----------------------------------------------------
-if (typeof module !== "undefined" && module.exports != null) {
-    module.exports = {
+var dummyModule = module;
+if (typeof dummyModule !== "undefined" && dummyModule.exports != null) {
+    dummyModule.exports = {
         decodeHtml,
         flipAuthor,
         flipAndAuthors,

@@ -365,8 +365,9 @@ global.journalAbbreviations = null;
 // ----------------------------------------------------
 // -----  TESTS: modules for node.js environment  -----
 // ----------------------------------------------------
-if (typeof module !== "undefined" && module.exports != null) {
-    module.exports = {
+var dummyModule = module;
+if (typeof dummyModule !== "undefined" && dummyModule.exports != null) {
+    dummyModule.exports = {
         state: global.state,
         descendingSortKeys: global.descendingSortKeys,
         select2Options: global.select2Options,
