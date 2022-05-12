@@ -960,31 +960,10 @@ const makeACMPaper = async (url) => {
         pdfLink = url.replace("/doi/", "/doi/pdf/");
     }
     const dom = await fetchDom(url.replace("/doi/pdf/", "/doi/"));
-    const title = dom.querySelector(".citation__title").innerText;
-    const author = Array.from(
-        dom.querySelectorAll("ul[ariaa-label='authors'] li.loa__item .loa__author-name")
-    )
-        .map((el) => el.innerText.replace(",", "").trim())
-        .join(" and ");
-    const publication = dom.querySelector(".issue-item__detail a").innerText;
-    const venue = publication.split("'")[0].trim();
-    const year = "20" + publication.split("'")[1].split(":")[0].trim();
-    const doi = pdfLink.split("/doi/pdf/")[1];
+    const { author, year, title, venue, key, doi, bibtex, note } =
+        extractDataFromDCMetaTags(dom);
 
-    const note = `Accepted @ ${venue} (${year})`;
-    const key = doi;
-    const bibtex = bibtexToString({
-        entryType: "article",
-        citationKey: doi,
-        journal: venue,
-        author,
-        title,
-        year,
-        publisher: "Association for Computing Machinery",
-        address: "New York, NY, USA",
-        url: url.replace("/doi/pdf/", "/doi/"),
-    });
-    const id = `ACM-${year}_${doi.replaceAll(/(\.|\/)/gi, "")}`;
+    const id = `ACM-${year}_${miniHash(doi)}`;
 
     return { author, bibtex, id, key, note, pdfLink, title, venue, year };
 };
@@ -1175,39 +1154,14 @@ const makeSciencePaper = async (url) => {
     if (data) {
         ({ author, bibtex, title, venue, year } = data);
         key = data.citationKey;
+        note = `Published @ ${venue} (${year})`;
     } else {
         const dom = await fetchDom(absUrl);
-        author = Array.from(dom.querySelectorAll("meta[name='dc.Creator']"))
-            .map((el) => el.getAttribute("content"))
-            .join(" and ");
-        year = dom
-            .querySelector("meta[name='dc.Date']")
-            .getAttribute("content")
-            .split("-")[0];
-        const publisher = dom
-            .querySelector("meta[name='dc.Publisher']")
-            .getAttribute("content");
-        title = dom.querySelector("meta[name='dc.Title']").getAttribute("content");
-        venue = dom
-            .querySelector("meta[name='citation_journal_title']")
-            .getAttribute("content");
-        key = `${author.split(" and ")[1].split(" ")[0]}${year}${firstNonStopLowercase(
-            title
-        )}`.toLowerCase();
-        bibtex = bibtexToString({
-            citationKey: key,
-            entryType: "article",
-            title,
-            author,
-            year,
-            doi,
-            publisher,
-            journal: venue,
-        });
+        ({ author, year, publisher, title, venue, key, bibtex, note } =
+            extractDataFromDCMetaTags(dom));
     }
 
     id = `Science-${year}_${miniHash(doi)}`;
-    note = `Published @ ${venue} (${year})`;
 
     return { author, bibtex, id, key, note, pdfLink, title, venue, year };
 };
