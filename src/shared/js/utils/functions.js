@@ -113,10 +113,7 @@ const isPdfUrl = (url) => {
     return (
         url.endsWith(".pdf") ||
         url.includes("openreview.net/pdf") ||
-        url.includes("arxiv.org/pdf/") ||
-        url.includes("dl.acm.org/doi/pdf/") ||
-        url.match(/journals\.aps\.org\/\w+\/pdf\//g) ||
-        url.match(/onlinelibrary\.wiley\.com\/doi\/e?pdf\//g) ||
+        url.match(/\/e?pdf\//g) ||
         url.includes("ieee.org/stamp/stamp.jsp?tp=&arnumber=")
     );
 };
@@ -254,6 +251,11 @@ const hashCode = (s) => {
     }, 0);
 };
 
+/**
+ * Parse { conf, year, id } from a url
+ * @param {String} url URL to parse data from
+ * @returns {Object} { conf, year, id }
+ */
 const parseCVFUrl = (url) => {
     // model: https://openaccess.thecvf.com/content_ICCV_2017/papers/Campbell_Globally-Optimal_Inlier_Set_ICCV_2017_paper.pdf
     // or   : https://openaccess.thecvf.com/content/ICCV2021/html/Jang_C2N_Practical_Generative_Noise_Modeling_for_Real-World_Denoising_ICCV_2021_paper.html
