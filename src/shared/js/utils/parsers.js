@@ -226,6 +226,43 @@ const fetchSemanticsScholarDataForDoi = async (doi) => {
     return bibData;
 };
 
+const extractDataFromDCMetaTags = (dom) => {
+    const author = Array.from(dom.querySelectorAll("meta[name='dc.Creator']"))
+        .map((el) => el.getAttribute("content").replace(/([a-z])([A-Z])/g, "$1 $2"))
+        .join(" and ");
+    const year = dom
+        .querySelector("meta[name='dc.Date']")
+        .getAttribute("content")
+        .split("-")[0];
+    const publisher = dom
+        .querySelector("meta[name='dc.Publisher']")
+        .getAttribute("content")
+        .replaceAll("\n", " ");
+    const title = dom.querySelector("meta[name='dc.Title']").getAttribute("content");
+    const venue = dom
+        .querySelector("meta[name='citation_journal_title']")
+        .getAttribute("content");
+    const key = `${
+        author.split(" and ")[1].split(" ")[0]
+    }${year}${firstNonStopLowercase(title)}`.toLowerCase();
+    const doi = document
+        .querySelector("meta[name='dc.Identifier'][scheme='doi']")
+        .getAttribute("content");
+    const bibtex = bibtexToString({
+        citationKey: key,
+        entryType: "article",
+        title,
+        author,
+        year,
+        doi,
+        publisher,
+        journal: venue,
+    });
+    const note = `Published @ ${venue} (${year})`;
+
+    return { author, year, publisher, title, venue, key, doi, bibtex, note };
+};
+
 const makeArxivPaper = async (url) => {
     const arxivId = url.match(/\/(\d{4}\.\d{4,5})/)[1];
     const response = await fetchArxivXML(arxivId);
