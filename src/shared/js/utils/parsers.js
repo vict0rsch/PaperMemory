@@ -226,28 +226,35 @@ const fetchSemanticsScholarDataForDoi = async (doi) => {
     return bibData;
 };
 
+const getMetaContent = (selectors, dom, all = false) => {
+    const selector =
+        "meta" +
+        Object.entries(selectors)
+            .map(([k, v]) => `[${k}='${v}']`)
+            .join("");
+    if (all) {
+        return Array.from(dom.querySelectorAll(selector)).map(
+            (el) => el.getAttribute("content") ?? ""
+        );
+    }
+    return dom.querySelector(selector)?.getAttribute("content") ?? "";
+};
+
 const extractDataFromDCMetaTags = (dom) => {
-    const author = Array.from(dom.querySelectorAll("meta[name='dc.Creator']"))
-        .map((el) => el.getAttribute("content").replace(/([a-z])([A-Z])/g, "$1 $2"))
+    const author = getMetaContent({ name: "dc.Creator" }, dom, true)
+        .map((content) => content.replace(/([a-z])([A-Z])/g, "$1 $2"))
         .join(" and ");
-    const year = dom
-        .querySelector("meta[name='dc.Date']")
-        .getAttribute("content")
-        .split("-")[0];
-    const publisher = dom
-        .querySelector("meta[name='dc.Publisher']")
-        .getAttribute("content")
-        .replaceAll("\n", " ");
-    const title = dom.querySelector("meta[name='dc.Title']").getAttribute("content");
-    const venue = dom
-        .querySelector("meta[name='citation_journal_title']")
-        .getAttribute("content");
+    const year = getMetaContent({ name: "dc.Date" }, dom).split("-")[0];
+    const publisher = getMetaContent({ name: "dc.Publisher" }, dom).replaceAll(
+        "\n",
+        " "
+    );
+    const title = getMetaContent({ name: "dc.Title" }, dom);
+    const venue = getMetaContent({ name: "citation_journal_title" }, dom);
     const key = `${
         author.split(" and ")[1].split(" ")[0]
     }${year}${firstNonStopLowercase(title)}`.toLowerCase();
-    const doi = document
-        .querySelector("meta[name='dc.Identifier'][scheme='doi']")
-        .getAttribute("content");
+    const doi = getMetaContent({ name: "dc.Date", scheme: "doi" }, dom);
     const bibtex = bibtexToString({
         citationKey: key,
         entryType: "article",
@@ -957,7 +964,7 @@ const makeACMPaper = async (url) => {
     if (isPdfUrl(url)) {
         pdfLink = url;
     } else {
-        pdfLink = url.replace("/doi/", "/doi/pdf/");
+        pdfLink = url.replace(/\/doi\/?(abs|full)?\//, "/doi/pdf/");
     }
     const dom = await fetchDom(url.replace("/doi/pdf/", "/doi/"));
     const { author, year, title, venue, key, doi, bibtex, note } =
