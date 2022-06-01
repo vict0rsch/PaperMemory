@@ -580,6 +580,17 @@ const addOrUpdatePaper = async (url, is, prefs) => {
 };
 
 /**
+ * Find the first paper from a source whose #id matches a certain string.
+ * Return its #id.
+ * @param {Array<object>} papers List of papers to check
+ * @param {String} source the source to filter for
+ * @param {String} match the id's uniquely identifiable string to match
+ * @returns {String} paper?.id
+ */
+const findPaperId = (papers, source, match) =>
+    papers.find((p) => p.source === source && p.id.includes(match))?.id;
+
+/**
  * Parses a paper's id from a url.
  * Throws error if the url is not a paper source as defined per isPaper(url).
  *
@@ -588,12 +599,16 @@ const addOrUpdatePaper = async (url, is, prefs) => {
  */
 const parseIdFromUrl = async (url) => {
     let idForUrl;
+
     const hashedUrl = miniHash(url);
     const hashedId = global.state.urlHashToId[hashedUrl];
     if (hashedId) {
         return hashedId;
     }
+
     const is = await isPaper(url, true);
+    const papers = Object.values(cleanPapers(global.state.papers));
+
     if (is.arxiv) {
         const arxivId = url.match(/\d{4}\.\d{4,5}/g)[0];
         idForUrl = `Arxiv-${arxivId}`;
@@ -612,10 +627,7 @@ const parseIdFromUrl = async (url) => {
         idForUrl = parseCVFUrl(url).id;
     } else if (is.openreview) {
         const OR_id = url.match(/id=\w+/)[0].replace("id=", "");
-        const paper = Object.values(cleanPapers(global.state.papers)).filter((p) => {
-            return p.id.includes(OR_id);
-        })[0];
-        idForUrl = paper && paper.id;
+        idForUrl = findPaperId(papers, "openreview", OR_id);
     } else if (is.biorxiv) {
         url = cleanBiorxivURL(url);
         let id = url.split("/").last();
@@ -640,37 +652,27 @@ const parseIdFromUrl = async (url) => {
             url = url.slice(0, -1);
         }
         const key = url.split("/").last();
-        const paper = Object.values(cleanPapers(global.state.papers)).filter((p) => {
-            return p.source === "acl" && p.id.includes(key);
-        })[0];
-        idForUrl = paper && paper.id;
+        idForUrl = findPaperId(papers, "acl", key);
     } else if (is.pnas) {
         url = url.replace(".full.pdf", "");
         const pid = url.endsWith("/")
             ? url.split("/").slice(-2)[0]
             : url.split("/").slice(-1)[0];
 
-        const paper = Object.values(cleanPapers(global.state.papers)).filter((p) => {
-            return p.source === "pnas" && p.id.includes(pid);
-        })[0];
-        idForUrl = paper && paper.id;
+        idForUrl = findPaperId(papers, "pnas", pid);
     } else if (is.nature) {
         url = url.replace(".pdf", "").split("#")[0];
         const hash = url.split("/").last();
-        const paper = Object.values(cleanPapers(global.state.papers)).filter((p) => {
-            return p.source === "nature" && p.id.includes(hash);
-        })[0];
-        idForUrl = paper && paper.id;
+        idForUrl = findPaperId(papers, "nature", hash);
     } else if (is.acs) {
-        url = url
+        url = noParamUrl(url)
             .replace("pubs.acs.org/doi/pdf/", "/doi/")
-            .replace("pubs.acs.org/doi/abs/", "/doi/")
-            .split("?")[0];
-        const doi = url.split("/doi/")[1].replaceAll(".", "").replaceAll("/", "");
+            .replace("pubs.acs.org/doi/abs/", "/doi/");
+        const doi = miniHash(url.split("/doi/")[1]);
         idForUrl = `ACS_${doi}`;
     } else if (is.iop) {
-        url = url.split("#")[0].replace(/\/pdf$/, "");
-        const doi = url.split("/article/")[1].replaceAll(".", "").replaceAll("/", "");
+        url = noParamUrl(url).replace(/\/pdf$/, "");
+        const doi = miniHash(url.split("/article/")[1]);
         idForUrl = `IOPscience_${doi}`;
     } else if (is.jmlr) {
         if (url.endsWith(".pdf")) {
@@ -682,10 +684,7 @@ const parseIdFromUrl = async (url) => {
         idForUrl = `JMLR-${year}_${jid}`;
     } else if (is.pmc) {
         const pmcid = url.match(/PMC\d+/g)[0].replace("PMC", "");
-        const paper = Object.values(cleanPapers(global.state.papers)).filter((p) => {
-            return p.source === "pmc" && p.id.includes(pmcid);
-        })[0];
-        idForUrl = paper && paper.id;
+        idForUrl = findPaperId(papers, "pmc", pmcid);
     } else if (is.ijcai) {
         const procId = url.endsWith(".pdf")
             ? url
@@ -697,22 +696,13 @@ const parseIdFromUrl = async (url) => {
         const year = url.match(/proceedings\/\d+/gi)[0].split("/")[1];
         idForUrl = `IJCAI-${year}_${procId}`;
     } else if (is.acm) {
-        const doi = url
-            .replace("/doi/pdf/", "/doi/")
-            .split("/doi/")[1]
-            .replaceAll(/(\.|\/)/gi, "");
-        const paper = Object.values(cleanPapers(global.state.papers)).filter((p) => {
-            return p.source === "acm" && p.id.includes(doi);
-        })[0];
-        idForUrl = paper && paper.id;
+        const doi = url.replace(/\/doi\/?(pdf|abs|full)?\//, "/doi/").split("/doi/")[1];
+        idForUrl = findPaperId(papers, "acm", miniHash(doi));
     } else if (is.ieee) {
         const articleId = url.includes("ieee.org/document/")
             ? url.split("ieee.org/document/")[1].match(/\d+/)[0]
             : url.split("arnumber=")[1].match(/\d+/)[0];
-        const paper = Object.values(cleanPapers(global.state.papers)).filter((p) => {
-            return p.source === "ieee" && p.id.includes(articleId);
-        })[0];
-        idForUrl = paper && paper.id;
+        idForUrl = findPaperId(papers, "ieee", articleId);
     } else if (is.springer) {
         const types = global.sourceExtras.springer.types;
         let type = types.filter((c) => url.includes(`/${c}/`))[0];
@@ -723,45 +713,25 @@ const parseIdFromUrl = async (url) => {
             type = "content/pdf";
         }
         let doi = url.split(`/${type}/`)[1].split("?")[0].replace(".pdf", "");
-        doi = miniHash(doi);
-        const paper = Object.values(cleanPapers(global.state.papers)).filter((p) => {
-            return p.source === "springer" && p.id.includes(doi);
-        })[0];
-        idForUrl = paper && paper.id;
+        idForUrl = findPaperId(papers, "springer", miniHash(doi));
     } else if (is.aps) {
         const [journal, type] = parseUrl(url.split("#")[0])
             .pathname.split("/")
             .slice(1, 3);
-        const doi = miniHash(url.split(`/${journal}/${type}/`).last());
-        const paper = Object.values(cleanPapers(global.state.papers)).filter((p) => {
-            return p.source === "aps" && p.id.includes(doi);
-        })[0];
-        idForUrl = paper && paper.id;
+        const doi = url.split(`/${journal}/${type}/`).last();
+        idForUrl = findPaperId(papers, "aps", miniHash(doi));
     } else if (is.wiley) {
-        const doi = miniHash(
-            url.split("?")[0].split("#")[0].split("/").slice(-2).join("/")
-        );
-        const paper = Object.values(cleanPapers(global.state.papers)).filter((p) => {
-            return p.source === "wiley" && p.id.includes(doi);
-        })[0];
-        idForUrl = paper && paper.id;
+        const doi = url.split("?")[0].split("#")[0].split("/").slice(-2).join("/");
+        idForUrl = findPaperId(papers, "wiley", miniHash(doi));
     } else if (is.sciencedirect) {
-        const pii = miniHash(
-            url.split("/pii/")[1].split("/")[0].split("#")[0].split("?")[0]
-        );
-        const paper = Object.values(cleanPapers(global.state.papers)).filter((p) => {
-            return p.source === "sciencedirect" && p.id.includes(pii);
-        })[0];
-        idForUrl = paper && paper.id;
+        const pii = url.split("/pii/")[1].split("/")[0].split("#")[0].split("?")[0];
+        idForUrl = findPaperId(papers, "sciencedirect", miniHash(pii));
     } else if (is.science) {
         doi = noParamUrl(url).split("/doi/")[1];
         if (!doi.startsWith("10.")) {
             doi = doi.split("/").slice(1).join("/");
         }
-        const paper = Object.values(cleanPapers(global.state.papers)).filter((p) => {
-            return p.source === "science" && p.id.includes(miniHash(doi));
-        })[0];
-        idForUrl = paper && paper.id;
+        idForUrl = findPaperId(papers, "science", miniHash(doi));
     } else if (is.localFile) {
         idForUrl = is.localFile;
     } else {

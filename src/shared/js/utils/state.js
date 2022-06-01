@@ -18,7 +18,7 @@
 const initState = async (papers, isContentScript) => {
     const times = [];
     times.unshift(Date.now());
-    console.group("%cPaperMemory Init ✅", global.consolHeaderStyle);
+    console.groupCollapsed("%cPaperMemory Init ✅", global.consolHeaderStyle);
 
     if (typeof papers === "undefined") {
         papers = (await getStorage("papers")) ?? {};
