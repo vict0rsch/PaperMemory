@@ -74,6 +74,7 @@ This browser extension allows you to do automatically store research papers you 
 * Wiley (Advanced Materials, InfoMat etc.)
 * Science Direct
 * Science (Science, Science Immunology, Science Robotics etc.)
+* [Sci-Hub](#ad-hoc-pdfs)
 * [Add more](https://github.com/vict0rsch/PaperMemory/issues/13)
 
 [About finding published papers from preprints](#preprints)
@@ -286,6 +287,12 @@ Here's an example return value from PWC's API
 }
 
 ```
+
+## Ad-Hoc PDFs
+
+If you want to associate a pdf to a paper in your PaperMemoryStore that is not downloaded from PaperMemory (for instance, it is behind a paywall), you can **download it to `~/Downloads/PaperMemoryStore/`** (maybe you're reading the paper on Sci-Hub you thief 🙃) provided the file's name contains the **paper's title** (not counting non-alphanumeric characters and case-insensitive).
+
+Because of limitations Browser Extensions face, a file **must** be _downloaded from the Browser to the folder_ in order to be detected. This means that if someone sends you a pdf over Slack or if you move a file to the PaperMemoryStore folder for instance, you won't be able to match it to a PaperMemory item.
 
 ## FAQ
 
