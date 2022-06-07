@@ -348,9 +348,6 @@ const contentScriptMain = async (url, stateIsReady, manualTrigger = false) => {
 
     let is = await isPaper(url, true);
 
-    if (is.arxiv) {
-        arxiv(prefs);
-    }
     let ignoreSources = (await getStorage("ignoreSources")) ?? {};
 
     let update;
@@ -659,3 +656,14 @@ const arxiv = async (checks) => {
         }
     });
 })();
+
+document.addEventListener("DOMContentLoaded", async () => {
+    const url = window.location.href;
+    const prefs = global.state.prefs;
+
+    let is = await isPaper(url, true);
+
+    if (is.arxiv) {
+        arxiv(prefs);
+    }
+});
