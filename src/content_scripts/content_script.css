@@ -208,3 +208,8 @@
     stroke-dashoffset: 174;
     transition-delay: 0.4s;
 }
+
+#pm-publication-div {
+    font-size: 1.3rem;
+    font-weight: bold;
+}
