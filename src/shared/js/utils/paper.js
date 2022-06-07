@@ -396,6 +396,13 @@ const mergePapers = (options = { newPaper: {}, oldPaper: {} }) => {
     return mergedPaper;
 };
 
+const updatePaperVisits = (paper) => {
+    paper.count += 1;
+    paper.lastOpenDate = new Date().toJSON();
+    log("Updating paper to:", paper);
+    return paper;
+};
+
 /**
  *  Adds a new paper to the memory or updates the counts and open dates of an existing paper.
  *
@@ -819,5 +826,6 @@ if (typeof module !== "undefined" && module.exports != null) {
         parseIdFromUrl,
         isKnownLocalFile,
         makeMdLink,
+        updatePaperVisits,
     };
 }

@@ -472,13 +472,6 @@ const feedback = (text, paper = null) => {
     });
 };
 
-const updatePaperVisits = (paper) => {
-    paper.count += 1;
-    paper.lastOpenDate = new Date().toJSON();
-    log("Updating paper to:", paper);
-    return paper;
-};
-
 const arxiv = async (checks) => {
     const { checkMd, checkBib, checkDownload, checkStore } = checks;
     global.state.titleFunction = (await getTitleFunction()).titleFunction;
