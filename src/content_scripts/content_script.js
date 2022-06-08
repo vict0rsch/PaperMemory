@@ -348,9 +348,6 @@ const contentScriptMain = async (url, stateIsReady, manualTrigger = false) => {
 
     let is = await isPaper(url, true);
 
-    if (is.arxiv) {
-        arxiv(prefs);
-    }
     let ignoreSources = (await getStorage("ignoreSources")) ?? {};
 
     let update;
@@ -473,13 +470,6 @@ const feedback = (text, paper = null) => {
             setHTML("notif-text", "<div>Removed from memory</div>");
         });
     });
-};
-
-const updatePaperVisits = (paper) => {
-    paper.count += 1;
-    paper.lastOpenDate = new Date().toJSON();
-    log("Updating paper to:", paper);
-    return paper;
 };
 
 const arxiv = async (checks) => {
@@ -659,3 +649,14 @@ const arxiv = async (checks) => {
         }
     });
 })();
+
+document.addEventListener("DOMContentLoaded", async () => {
+    const url = window.location.href;
+    const prefs = global.state.prefs;
+
+    let is = await isPaper(url, true);
+
+    if (is.arxiv) {
+        arxiv(prefs);
+    }
+});

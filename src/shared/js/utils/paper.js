@@ -337,12 +337,12 @@ const matchPapersToFiles = async (papers, files) => {
         if (!id) {
             // no id was found, try to match titles.
             // This is expensive so it should be rare.
-            const candidateTitle = fileTitles[candidate.id];
-            const match = Object.entries(titles).filter(([id, title]) =>
-                title.includes(candidateTitle)
+            const candidateFileTitle = fileTitles[candidate.id];
+            const match = Object.entries(titles).find(([id, title]) =>
+                candidateFileTitle.includes(title)
             );
-            if (match.length === 1) {
-                matches[match[0][0]] = candidate;
+            if (match) {
+                matches[match[0]] = candidate;
             }
         }
     }
@@ -394,6 +394,13 @@ const mergePapers = (options = { newPaper: {}, oldPaper: {} }) => {
     }
 
     return mergedPaper;
+};
+
+const updatePaperVisits = (paper) => {
+    paper.count += 1;
+    paper.lastOpenDate = new Date().toJSON();
+    log("Updating paper to:", paper);
+    return paper;
 };
 
 /**
@@ -819,5 +826,6 @@ if (typeof module !== "undefined" && module.exports != null) {
         parseIdFromUrl,
         isKnownLocalFile,
         makeMdLink,
+        updatePaperVisits,
     };
 }
