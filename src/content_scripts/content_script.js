@@ -342,7 +342,12 @@ const ignorePaper = (is, ignoreSources) => {
  * Also, if the current website is a known paper source (isPaper), adds or updates the current paper
  * @param {object} checks The user's stored preferences regarding menu options
  */
-const contentScriptMain = async (url, stateIsReady, manualTrigger = false) => {
+const contentScriptMain = async (
+    url,
+    stateIsReady,
+    manualTrigger = false,
+    paperUpdateDoneCallback = () => {}
+) => {
     if (!stateIsReady) await initState(undefined, true);
     const prefs = global.state.prefs;
 
@@ -357,6 +362,7 @@ const contentScriptMain = async (url, stateIsReady, manualTrigger = false) => {
         !(prefs.checkNoAuto && !manualTrigger) // no auto is not checked or it is a manual trigger
     ) {
         update = await addOrUpdatePaper(url, is, prefs);
+        paperUpdateDoneCallback();
     } else {
         if (ignorePaper(is, ignoreSources)) {
             warn(
@@ -531,6 +537,29 @@ const arxiv = async (checks) => {
     // ---------------------------
     // -----  Markdown Link  -----
     // ---------------------------
+
+    let paper = global.state.papers.hasOwnProperty(id)
+        ? global.state.papers[id]
+        : await makeArxivPaper(url);
+
+    if (paper.venue) {
+        const venueDiv = /*html*/ `
+        <div>
+            <div id="pm-publication-div">Published @ ${paper.venue} ${
+            bibtexToObject(paper.bibtex).year
+        }</div>
+            <em style="font-weight: 100; color: grey; font-style: italic; font-size: 0.8rem">(PaperMemory)</em>
+        </div>
+            `;
+        arxivAbsCol.insertAdjacentHTML("beforeend", venueDiv);
+        document
+            .getElementsByClassName("leftcolumn")[0]
+            .setAttribute("style", "width: calc(100% - 35em) !important");
+        document
+            .getElementsByClassName("extra-services")[0]
+            .setAttribute("style", "width: 35em !important");
+    }
+
     if (checkMd) {
         const mdHtml = /*html*/ `
         <div id="markdown-container">
@@ -560,8 +589,6 @@ const arxiv = async (checks) => {
             </div>
         `;
         arxivAbsCol.insertAdjacentHTML("beforeend", bibLoader);
-
-        const paper = await makeArxivPaper(url);
 
         const bibtexDiv = /*html*/ `
             <div id="bibtexDiv">
@@ -631,27 +658,34 @@ const arxiv = async (checks) => {
         await initState(undefined, true);
         stateIsReady = true;
     }
-    if (await isKnownURL(url, true)) {
-        contentScriptMain(url, stateIsReady);
-    }
-
-    if (!(await sendMessageToBackground({ type: "hello" }))) {
-        warn("Cannot connect to background script");
-    }
-
-    chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
-        // listen for messages sent from background.js
-        if (request.message === "tabUrlUpdate") {
-            info("Running PaperMemory's content script for url update");
-            contentScriptMain(request.url);
-        } else if (request.message === "manualParsing") {
-            contentScriptMain(url, stateIsReady, true);
+    const paperPromise = new Promise(async (resolve) => {
+        if (await isKnownURL(url, true)) {
+            contentScriptMain(url, stateIsReady, false, resolve);
         }
-    });
-})();
 
-document.addEventListener("DOMContentLoaded", async () => {
-    const url = window.location.href;
+        if (!(await sendMessageToBackground({ type: "hello" }))) {
+            warn("Cannot connect to background script");
+        }
+
+        chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
+            // listen for messages sent from background.js
+            if (request.message === "tabUrlUpdate") {
+                info("Running PaperMemory's content script for url update");
+                contentScriptMain(request.url, stateIsReady, false, resolve);
+            } else if (request.message === "manualParsing") {
+                contentScriptMain(url, stateIsReady, true, resolve);
+            }
+        });
+    });
+
+    const domReadyPromise = new Promise((resolve) => {
+        document.addEventListener("DOMContentLoaded", () => {
+            resolve();
+        });
+    });
+
+    await Promise.all([paperPromise, domReadyPromise]);
+
     const prefs = global.state.prefs;
 
     let is = await isPaper(url, true);
@@ -659,4 +693,4 @@ document.addEventListener("DOMContentLoaded", async () => {
     if (is.arxiv) {
         arxiv(prefs);
     }
-});
+})();
