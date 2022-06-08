@@ -18,7 +18,7 @@
 
 [![](https://img.shields.io/chrome-web-store/stars/hmebhknlgddhfbbdhgplnillngljgmdi)](https://chrome.google.com/webstore/detail/paper-memory/hmebhknlgddhfbbdhgplnillngljgmdi)
 [![](https://img.shields.io/badge/buy%20me-a%20coffee%20%E2%98%95%EF%B8%8F-FFDD03)](https://www.buymeacoffee.com/vict0rsch)
-<!-- [![](https://img.shields.io/badge/Source%20%5BWIP%5D-v0.5.4-important)](https://github.com/vict0rsch/PaperMemory) -->
+[![](https://img.shields.io/badge/Source%20%5BWIP%5D-v0.5.5-important)](https://github.com/vict0rsch/PaperMemory)
 [![](https://img.shields.io/badge/Release-v0.5.4-A41716)](https://github.com/vict0rsch/PaperMemory/tree/0.5.4)
 
 <br/>
@@ -203,12 +203,12 @@ My approach with PaperMemory is to try and notify you that a publication likely 
   * A query is sent to their [api](https://paperswithcode.com/api/v1/docs/) from an Arxiv ID or a paper's plain text title if it's not an Arxiv paper
   * As PaperMemory retrieves code, it also looks for a `proceeding` field in PWC's response.
   * If it exists and is not `null` then it is expected to look like `${conf}-${year}-${month}`.
-  * In this case a note is added to the paper: `Accepted @ ${conf} ${year} -- [paperswithcode.com]`  
+  * In this case a note is added to the paper: `Accepted @ ${conf} ${year} -- [paperswithcode.com]`
 * [dblp.org](https://dblp.org)
   * A query is sent to their [api](https://dblp.org/faq/How+to+use+the+dblp+search+API.html) for an exact paper title match
-  * The oldest `hit` in the response which is not a preprint (`hit.venue !== "CoRR"`) is used 
+  * The oldest `hit` in the response which is not a preprint (`hit.venue !== "CoRR"`) is used
   * If such a match is found, a note is added as: `Accepted @ ${venue} ${year} -- [dblp.org]`
-    * In this case, **the original Arxiv bibtex data is overwritten to use DBLP's** 
+    * In this case, **the original Arxiv bibtex data is overwritten to use DBLP's**
     * Try for instance [Domain-Adversarial Training of Neural Networks](http://arxiv.org/pdf/1505.07818v4)
     * Note that DBLP journals may use ISO4 abbreviations
 * [SemanticScholar.org](https://www.semanticscholar.org/)
@@ -347,7 +347,7 @@ In the Advanced Options page, you can either export your full memory data to a <
 <details>
 <summary><strong>Can I access the memory full-screen?</strong></summary>
 <br/>
-Sure! In the extension popup's menu, there's a link at the bottom to the full-page memory. You can also just go to this url (Thanks @kaixin96!): 
+Sure! In the extension popup's menu, there's a link at the bottom to the full-page memory. You can also just go to this url (Thanks @kaixin96!):
 
 ```
 chrome-extension://ehchlpggdaffcncbeopdopnndhdjelbc/src/fullMemory/fullMemory.html
@@ -357,7 +357,7 @@ chrome-extension://ehchlpggdaffcncbeopdopnndhdjelbc/src/fullMemory/fullMemory.ht
 <details>
 <summary><strong>Can I exclude a paper source?</strong></summary>
 <br/>
-Yep. In the extension popup's advanced options page: right-click the extension's icon and click on `Options`. Or click on the link at the bottom of the popup menu. Or go to this url (Thanks @kaixin96!):  
+Yep. In the extension popup's advanced options page: right-click the extension's icon and click on `Options`. Or click on the link at the bottom of the popup menu. Or go to this url (Thanks @kaixin96!):
 
 ```
 chrome-extension://ehchlpggdaffcncbeopdopnndhdjelbc/src/options/options.html
