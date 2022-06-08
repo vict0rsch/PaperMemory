@@ -552,6 +552,12 @@ const arxiv = async (checks) => {
         </div>
             `;
         arxivAbsCol.insertAdjacentHTML("beforeend", venueDiv);
+        document
+            .getElementsByClassName("leftcolumn")[0]
+            .setAttribute("style", "width: calc(100% - 35em) !important");
+        document
+            .getElementsByClassName("extra-services")[0]
+            .setAttribute("style", "width: 35em !important");
     }
 
     if (checkMd) {
