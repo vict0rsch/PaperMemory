@@ -37,7 +37,7 @@ const isPaper = async (url, noStored = false) => {
  * @param {string} url The url to test
  * @returns {boolean}
  */
-const isKnownURL = async (url, noStored) =>
+const isSourceURL = async (url, noStored) =>
     Object.values(await isPaper(url, noStored)).some((i) => i);
 
 /**
@@ -831,7 +831,7 @@ if (typeof module !== "undefined" && module.exports != null) {
     var dummyModule = module;
     dummyModule.exports = {
         isPaper,
-        isKnownURL,
+        isSourceURL,
         paperToAbs,
         paperToPDF,
         findLocalFile,

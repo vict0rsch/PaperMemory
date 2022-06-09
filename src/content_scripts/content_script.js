@@ -675,7 +675,7 @@ const arxiv = async (checks) => {
     var paperPromise, preprintsPromise;
     preprintsPromise = new Promise(async (preprintsResolve) => {
         paperPromise = new Promise(async (paperResolve) => {
-            if (await isKnownURL(url, true)) {
+            if (await isSourceURL(url, true)) {
                 contentScriptMain(url, stateIsReady, false, {
                     update: paperResolve,
                     preprints: preprintsResolve,
