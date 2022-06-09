@@ -180,21 +180,22 @@
 }
 
 #pm-venue-name {
-    background: #b31b1b;
-    border-radius: 4px 0px 0px 4px;
-    padding: 5px 5px 5px 10px;
-    display: flex;
     align-items: center;
+    background: linear-gradient(180deg, rgb(91, 91, 91), rgb(110, 110, 110));
+    border-radius: 4px 0px 0px 4px;
     color: white;
+    display: flex;
+    padding: 5px 5px 5px 10px;
+    text-shadow: 0px 0.05em 0px rgba(0, 0, 0, 0.5);
 }
 
 #pm-venue-year {
-    color: black;
-    border: 1px solid grey;
     align-items: center;
-    display: flex;
+    background: #cd1212;
     border-radius: 0px 4px 4px 0px;
-    padding: 5px;
+    color: white;
+    display: flex;
+    padding: 5px 10px 5px 5px;
 }
 
 #pm-extras {
