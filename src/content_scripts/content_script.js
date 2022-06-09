@@ -480,6 +480,29 @@ const feedback = (text, paper = null) => {
     });
 };
 
+const displayPaperVenue = (paper) => {
+    const venueDiv = /*html*/ `
+        <div>
+            <div id="pm-publication-venue">
+                <span id="pm-venue-name">${paper.venue}</span>
+                <span id="pm-venue-year">${bibtexToObject(paper.bibtex).year}</span>
+            </div>
+        </div>`;
+    document
+        .getElementById("pm-header-content")
+        .insertAdjacentHTML("afterbegin", venueDiv);
+    adjustArxivColWidth();
+};
+
+const adjustArxivColWidth = (newColWidth = "33%") => {
+    document
+        .getElementsByClassName("leftcolumn")[0]
+        .setAttribute("style", `width: calc(100% - ${newColWidth}) !important`);
+    document
+        .getElementsByClassName("extra-services")[0]
+        .setAttribute("style", `width: ${newColWidth} !important`);
+};
+
 const arxiv = async (checks) => {
     const { checkMd, checkBib, checkDownload, checkStore } = checks;
     global.state.titleFunction = (await getTitleFunction()).titleFunction;
@@ -490,21 +513,30 @@ const arxiv = async (checks) => {
     if (!isArxivAbs) return;
 
     const id = await parseIdFromUrl(url);
-    const arxivAbsCol = document.querySelector(
-        ".extra-services .full-text h2"
-    ).parentElement;
+    document.querySelector(".extra-services .full-text").innerHTML = /*html*/ `
+            <div>${document.querySelector(".extra-services .full-text").innerHTML}</div>
+        <div id="pm-download-wrapper" class="arxivTools-container">
+            <div id="pm-header" style="width: 100%"><h2 style="margin-top: 1rem">PaperMemory:</h2>
+                <div id="pm-header-content"></div>
+            </div>
+        </div>
+        <div id="pm-extras"></div>`;
     const pdfUrl = document.querySelector(".abs-button.download-pdf").href;
+    const arxivPMDiv = document.getElementById("pm-extras");
 
     // -----------------------------
     // -----  Download Button  -----
     // -----------------------------
     if (checkDownload) {
         const button = /*html*/ `
-            <div class="arxivTools-container">
+            <div class="arxivTools-container" style="align-items: end;">
+                <div style="font-size: 0.6rem; color: #cac7c7; padding-bottom: 0.6rem;">Download to<br/>PaperMemoryStore</div>
                 <div id="arxiv-button">${svg("download")}</div>
             </div>
         `;
-        arxivAbsCol.insertAdjacentHTML("beforeend", button);
+        document
+            .getElementById("pm-header-content")
+            .insertAdjacentHTML("beforeend", button);
         var downloadTimeout;
         addListener("arxiv-button", "click", async () => {
             removeClass("arxiv-button", "downloaded");
@@ -545,38 +577,23 @@ const arxiv = async (checks) => {
         : await makeArxivPaper(url);
 
     if (paper.venue) {
-        const venueDiv = /*html*/ `
-        <div>
-            <div id="pm-publication-div">Published @ ${paper.venue} ${
-            bibtexToObject(paper.bibtex).year
-        }</div>
-            <em style="font-weight: 100; color: grey; font-style: italic; font-size: 0.8rem">(PaperMemory)</em>
-        </div>
-            `;
-        arxivAbsCol.insertAdjacentHTML("beforeend", venueDiv);
-        document
-            .getElementsByClassName("leftcolumn")[0]
-            .setAttribute("style", "width: calc(100% - 35em) !important");
-        document
-            .getElementsByClassName("extra-services")[0]
-            .setAttribute("style", "width: 35em !important");
+        displayPaperVenue(paper);
     }
 
     if (checkMd) {
+        const mdTitle = global.state.papers.hasOwnProperty(id)
+            ? global.state.papers[id].title
+            : document.title;
+        const mdContent = `[${mdTitle}](${pdfUrl})`;
         const mdHtml = /*html*/ `
         <div id="markdown-container">
             <div id="markdown-header" class="arxivTools-header">
                 <h3>Markdown</h3>
                 ${svg("clipboard-default")} ${svg("clipboard-default-ok")}
             </div>
-            <div id="markdown-link" class="arxivTools-codify">[${
-                global.state.papers.hasOwnProperty(id)
-                    ? global.state.papers[id].title
-                    : document.title
-            }](${pdfUrl})
-            </div>
+            <div id="markdown-link" class="arxivTools-codify">${mdContent}</div>
         </div>`;
-        arxivAbsCol.insertAdjacentHTML("beforeend", mdHtml);
+        arxivPMDiv.insertAdjacentHTML("beforeend", mdHtml);
     }
 
     if (checkBib) {
@@ -590,93 +607,104 @@ const arxiv = async (checks) => {
                 </div>
             </div>
         `;
-        arxivAbsCol.insertAdjacentHTML("beforeend", bibLoader);
-
+        arxivPMDiv.insertAdjacentHTML("beforeend", bibLoader);
+        console.log("set bibtex for paper", paper);
         const bibtexDiv = /*html*/ `
             <div id="bibtexDiv">
                 <div id="texHeader" class="arxivTools-header">
                     <h3>BibTex:</h3>
                     ${svg("clipboard-default")} ${svg("clipboard-default-ok")}
                 </div>
-                <div id="texTextarea" class="arxivTools-codify">${bibtexToString(
+                <div id="pm-bibtex-textarea" class="arxivTools-codify">${bibtexToString(
                     paper.bibtex
                 ).replaceAll("\t", "  ")}</div>
             </div>
         `;
 
-        $("#loader-container").fadeOut(() => {
-            findEl("loader-container").remove();
-            arxivAbsCol.insertAdjacentHTML("beforeend", bibtexDiv);
-            addListener(
-                document.querySelector("#texHeader .copy-feedback"),
-                "click",
-                (e) => {
-                    $("#texHeader .copy-feedback").fadeOut(200, () => {
-                        $("#texHeader .copy-feedback-ok").fadeIn(200, () => {
-                            setTimeout(() => {
-                                $("#texHeader .copy-feedback-ok").fadeOut(200, () => {
-                                    $("#texHeader .copy-feedback").fadeIn(200);
-                                });
-                            }, 1500);
-                        });
+        findEl("loader-container").remove();
+        arxivPMDiv.insertAdjacentHTML("beforeend", bibtexDiv);
+        addListener(
+            document.querySelector("#texHeader .copy-feedback"),
+            "click",
+            (e) => {
+                $("#texHeader .copy-feedback").fadeOut(200, () => {
+                    $("#texHeader .copy-feedback-ok").fadeIn(200, () => {
+                        setTimeout(() => {
+                            $("#texHeader .copy-feedback-ok").fadeOut(200, () => {
+                                $("#texHeader .copy-feedback").fadeIn(200);
+                            });
+                        }, 1500);
                     });
-                    copyTextToClipboard(findEl("texTextarea").innerText);
-                    feedback("Bibtex Citation Copied!");
-                }
-            );
-            addListener(
-                document.querySelector("#markdown-header .copy-feedback"),
-                "click",
-                (e) => {
-                    console.log("click");
-                    $("#markdown-header .copy-feedback").fadeOut(200, () => {
-                        $("#markdown-header .copy-feedback-ok").fadeIn(200, () => {
-                            setTimeout(() => {
-                                $("#markdown-header .copy-feedback-ok").fadeOut(
-                                    200,
-                                    () => {
-                                        $("#markdown-header .copy-feedback").fadeIn(
-                                            200
-                                        );
-                                    }
-                                );
-                            }, 1500);
-                        });
+                });
+                copyTextToClipboard(findEl("pm-bibtex-textarea").innerText);
+                feedback("Bibtex Citation Copied!");
+            }
+        );
+        addListener(
+            document.querySelector("#markdown-header .copy-feedback"),
+            "click",
+            (e) => {
+                console.log("click");
+                $("#markdown-header .copy-feedback").fadeOut(200, () => {
+                    $("#markdown-header .copy-feedback-ok").fadeIn(200, () => {
+                        setTimeout(() => {
+                            $("#markdown-header .copy-feedback-ok").fadeOut(200, () => {
+                                $("#markdown-header .copy-feedback").fadeIn(200);
+                            });
+                        }, 1500);
                     });
-                    copyTextToClipboard(
-                        findEl("markdown-link").innerText.replaceAll("\n", "")
-                    );
-                    feedback("Markdown Link Copied!");
-                }
-            );
-        });
+                });
+                copyTextToClipboard(
+                    findEl("markdown-link").innerText.replaceAll("\n", "")
+                );
+                feedback("Markdown Link Copied!");
+            }
+        );
     }
 };
 
 (async () => {
     const url = window.location.href;
     let stateIsReady = false;
+    var prefs, paper;
     if (url.startsWith("file://")) {
         await initState(undefined, true);
+        prefs = global.state.prefs;
         stateIsReady = true;
     }
-    const paperPromise = new Promise(async (resolve) => {
-        if (await isKnownURL(url, true)) {
-            contentScriptMain(url, stateIsReady, false, resolve);
-        }
-
-        if (!(await sendMessageToBackground({ type: "hello" }))) {
-            warn("Cannot connect to background script");
-        }
-
-        chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
-            // listen for messages sent from background.js
-            if (request.message === "tabUrlUpdate") {
-                info("Running PaperMemory's content script for url update");
-                contentScriptMain(request.url, stateIsReady, false, resolve);
-            } else if (request.message === "manualParsing") {
-                contentScriptMain(url, stateIsReady, true, resolve);
+    var paperPromise, preprintsPromise;
+    preprintsPromise = new Promise(async (preprintsResolve) => {
+        paperPromise = new Promise(async (paperResolve) => {
+            if (await isKnownURL(url, true)) {
+                contentScriptMain(url, stateIsReady, false, {
+                    update: paperResolve,
+                    preprints: preprintsResolve,
+                });
             }
+
+            if (!(await sendMessageToBackground({ type: "hello" }))) {
+                warn("Cannot connect to background script");
+            }
+
+            chrome.runtime.onMessage.addListener(function (
+                request,
+                sender,
+                sendResponse
+            ) {
+                // listen for messages sent from background.js
+                if (request.message === "tabUrlUpdate") {
+                    info("Running PaperMemory's content script for url update");
+                    contentScriptMain(request.url, stateIsReady, false, {
+                        update: paperResolve,
+                        preprints: preprintsResolve,
+                    });
+                } else if (request.message === "manualParsing") {
+                    contentScriptMain(url, stateIsReady, true, {
+                        update: paperResolve,
+                        preprints: preprintsResolve,
+                    });
+                }
+            });
         });
     });
 
@@ -686,13 +714,32 @@ const arxiv = async (checks) => {
         });
     });
 
-    await Promise.all([paperPromise, domReadyPromise]);
-
-    const prefs = global.state.prefs;
+    const results = await Promise.all([paperPromise, domReadyPromise]);
+    paper = results[0];
+    prefs = global.state.prefs;
 
     let is = await isPaper(url, true);
 
     if (is.arxiv) {
-        arxiv(prefs);
+        await arxiv(prefs);
     }
+
+    paper = await preprintsPromise;
+
+    if (prefs.checkBib) {
+        console.log(
+            'document.getElementById("pm-bibtex-textarea"): ',
+            document.getElementById("pm-bibtex-textarea")
+        );
+        if (document.getElementById("pm-bibtex-textarea")) {
+            console.log("update bibtex for paper", paper);
+            document.getElementById("pm-bibtex-textarea").innerHTML = bibtexToString(
+                paper.bibtex
+            ).replaceAll("\t", "  ");
+        }
+    }
+    paper.venue &&
+        !document.getElementById("pm-publication-venue") &&
+        displayPaperVenue(paper) &&
+        adjustArxivColWidth();
 })();
