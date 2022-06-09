@@ -411,7 +411,13 @@ const updatePaperVisits = (paper) => {
  * @param {object} checks The user's preferences
  * @returns
  */
-const addOrUpdatePaper = async (url, is, prefs) => {
+const addOrUpdatePaper = async (
+    url,
+    is,
+    prefs,
+    store = true,
+    contentScriptCallbacks = { update: () => {}, preprints: () => {} }
+) => {
     const aouStart = Date.now();
     let paper, isNew, pwcUrl, pwcNote, pwcVenue;
     console.group("%cPaperMemory parsing 📕", global.consolHeaderStyle);
@@ -431,7 +437,7 @@ const addOrUpdatePaper = async (url, is, prefs) => {
             return;
         }
         const existingId = findFuzzyPaperMatch(global.state.titleHashToIds, paper);
-        if (existingId) {
+        if (existingId && store) {
             // Update paper as already it exists
             let existingPaper = global.state.papers[existingId];
             log("New paper", paper, "already exists as", existingPaper);
@@ -510,30 +516,33 @@ const addOrUpdatePaper = async (url, is, prefs) => {
         });
         isNew = false;
     }
-    global.state.papers[paper.id] = paper;
+    if (store) global.state.papers[paper.id] = paper;
 
     chrome.storage.local.set({ papers: global.state.papers }, async () => {
+        contentScriptCallbacks["update"]();
         let notifText;
         if (isNew || pwcUrl) {
             if (isNew) {
                 // new paper
 
-                logOk("Added '" + paper.title + "' to your Memory!");
+                store
+                    ? logOk("Added '" + paper.title + "' to your Memory!")
+                    : warn("Discovered '" + paper.title + "' but did not store it.");
                 log("paper: ", paper);
                 notifText = "Added to your Memory";
                 if (pwcUrl) {
                     notifText +=
                         "<br/><div id='feedback-pwc'>(+ repo from PapersWithCode) </div>";
                 }
-                prefs && prefs.checkFeedback && feedback(notifText, paper);
+                prefs && prefs.checkFeedback && store && feedback(notifText, paper);
             } else {
                 // existing paper but new code repo
 
                 notifText = "Found a code repository on PapersWithCode!";
-                prefs && prefs.checkFeedback && feedback(notifText);
+                prefs && prefs.checkFeedback && store && feedback(notifText);
             }
         } else {
-            logOk("Updated '" + paper.title + "' in your Memory");
+            store && logOk("Updated '" + paper.title + "' in your Memory");
         }
 
         if (!paper.venue && !pwcVenue) {
@@ -567,7 +576,11 @@ const addOrUpdatePaper = async (url, is, prefs) => {
                     paper.bibtex = bibtex;
                 }
                 global.state.papers = (await getStorage("papers")) ?? {};
-                if (isNew && global.state.papers[paper.id].count > 1) {
+                if (
+                    isNew &&
+                    global.state.papers.hasOwnProperty(paper.id) &&
+                    global.state.papers[paper.id].count > 1
+                ) {
                     warn("Paper has been created by another page: merging papers.");
                     paper = mergePapers({
                         newPaper: global.state.papers[paper.id],
@@ -575,10 +588,11 @@ const addOrUpdatePaper = async (url, is, prefs) => {
                         incrementCount: false,
                     });
                 }
-                global.state.papers[paper.id] = paper;
+                if (store) global.state.papers[paper.id] = paper;
                 chrome.storage.local.set({ papers: global.state.papers });
             }
         }
+        contentScriptCallbacks["preprints"](paper);
         info(`Done processing paper (${(Date.now() - aouStart) / 1000}s).`);
         console.groupEnd();
     });
