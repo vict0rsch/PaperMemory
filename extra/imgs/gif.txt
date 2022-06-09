@@ -1,4 +1,4 @@
-1. Arxiv
+1. Arxiv "Neural Message Passing for Quantum Chemistry"
     a. Notif
     b. Venue
     c. Markdown
