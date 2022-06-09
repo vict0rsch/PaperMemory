@@ -356,13 +356,15 @@ const contentScriptMain = async (
     let ignoreSources = (await getStorage("ignoreSources")) ?? {};
 
     let update;
+    const isIgnored = ignorePaper(is, ignoreSources); // source is not ignored
+    const isPdfPrevented = prefs.checkPdfOnly && !isPdfUrl(url); // pdf only is not checked or it is a pdf
+    const isAutoDisabled = prefs.checkNoAuto && !manualTrigger; // no auto is not checked or it is a manual trigger
     if (
-        !ignorePaper(is, ignoreSources) && // source is not ignored
-        !(prefs.checkPdfOnly && !isPdfUrl(url)) && // pdf only is not checked or it is a pdf
-        !(prefs.checkNoAuto && !manualTrigger) // no auto is not checked or it is a manual trigger
+        manualTrigger || // force parsing
+        (!isIgnored && ((!isPdfPrevented && !isAutoDisabled) || is.arxiv))
     ) {
-        update = await addOrUpdatePaper(url, is, prefs);
-        paperUpdateDoneCallback();
+        const store = !(isPdfPrevented || isAutoDisabled) || manualTrigger;
+        update = await addOrUpdatePaper(url, is, prefs, store, paperUpdateDoneCallback);
     } else {
         if (ignorePaper(is, ignoreSources)) {
             warn(
