@@ -608,7 +608,6 @@ const arxiv = async (checks) => {
             </div>
         `;
         arxivPMDiv.insertAdjacentHTML("beforeend", bibLoader);
-        console.log("set bibtex for paper", paper);
         const bibtexDiv = /*html*/ `
             <div id="bibtexDiv">
                 <div id="texHeader" class="pm-sub-header">
@@ -644,7 +643,6 @@ const arxiv = async (checks) => {
             document.querySelector("#markdown-header .copy-feedback"),
             "click",
             (e) => {
-                console.log("click");
                 $("#markdown-header .copy-feedback").fadeOut(200, () => {
                     $("#markdown-header .copy-feedback-ok").fadeIn(200, () => {
                         setTimeout(() => {
@@ -727,12 +725,7 @@ const arxiv = async (checks) => {
     paper = await preprintsPromise;
 
     if (prefs.checkBib) {
-        console.log(
-            'document.getElementById("pm-bibtex-textarea"): ',
-            document.getElementById("pm-bibtex-textarea")
-        );
         if (document.getElementById("pm-bibtex-textarea")) {
-            console.log("update bibtex for paper", paper);
             document.getElementById("pm-bibtex-textarea").innerHTML = bibtexToString(
                 paper.bibtex
             ).replaceAll("\t", "  ");
