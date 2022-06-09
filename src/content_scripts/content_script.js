@@ -587,7 +587,7 @@ const arxiv = async (checks) => {
         const mdContent = `[${mdTitle}](${pdfUrl})`;
         const mdHtml = /*html*/ `
         <div id="markdown-container">
-            <div id="markdown-header" class="arxivTools-header">
+            <div id="markdown-header" class="pm-sub-header">
                 <h3>Markdown</h3>
                 ${svg("clipboard-default")} ${svg("clipboard-default-ok")}
             </div>
@@ -611,7 +611,7 @@ const arxiv = async (checks) => {
         console.log("set bibtex for paper", paper);
         const bibtexDiv = /*html*/ `
             <div id="bibtexDiv">
-                <div id="texHeader" class="arxivTools-header">
+                <div id="texHeader" class="pm-sub-header">
                     <h3>BibTex:</h3>
                     ${svg("clipboard-default")} ${svg("clipboard-default-ok")}
                 </div>
