@@ -93,47 +93,6 @@
     font-size: 0.75rem;
 }
 
-.arxivTools-card {
-    width: 300px;
-    right: 32px;
-    position: absolute;
-    border: 1px solid #0276ff;
-    padding: 16px;
-    font-size: 0.8rem;
-    border-radius: 8px;
-    background: white;
-    box-shadow: 10px 10px 30px 0px rgba(184, 184, 184, 1);
-}
-
-.arxivTools-card-body {
-    position: relative;
-    color: rgba(0, 0, 0, 0.75);
-}
-
-.arxiv-tools-close,
-.arxiv-tools-close {
-    margin: 0px;
-    justify-content: center;
-    display: flex;
-}
-
-.arxiv-tools-close svg,
-.arxiv-tools-close svg {
-    margin: 0px !important;
-}
-
-.arxivTools-buttons {
-    display: flex;
-    justify-content: space-evenly;
-    align-items: center;
-}
-
-.arxivTools-bibtex {
-    white-space: pre-wrap;
-    color: grey;
-    font-family: "Fira Code", monospace;
-}
-
 #notif-text {
     display: flex;
     justify-content: center;
