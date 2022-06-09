@@ -24,7 +24,7 @@
     align-items: center;
 }
 
-.arxivTools-codify {
+.pm-codify {
     white-space: pre-wrap;
     color: grey;
     font-family: "Fira Code", monospace;

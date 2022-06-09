@@ -591,7 +591,7 @@ const arxiv = async (checks) => {
                 <h3>Markdown</h3>
                 ${svg("clipboard-default")} ${svg("clipboard-default-ok")}
             </div>
-            <div id="markdown-link" class="arxivTools-codify">${mdContent}</div>
+            <div id="markdown-link" class="pm-codify">${mdContent}</div>
         </div>`;
         arxivPMDiv.insertAdjacentHTML("beforeend", mdHtml);
     }
@@ -615,7 +615,7 @@ const arxiv = async (checks) => {
                     <h3>BibTex:</h3>
                     ${svg("clipboard-default")} ${svg("clipboard-default-ok")}
                 </div>
-                <div id="pm-bibtex-textarea" class="arxivTools-codify">${bibtexToString(
+                <div id="pm-bibtex-textarea" class="pm-codify">${bibtexToString(
                     paper.bibtex
                 ).replaceAll("\t", "  ")}</div>
             </div>
