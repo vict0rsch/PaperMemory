@@ -515,7 +515,7 @@ const arxiv = async (checks) => {
     const id = await parseIdFromUrl(url);
     document.querySelector(".extra-services .full-text").innerHTML = /*html*/ `
             <div>${document.querySelector(".extra-services .full-text").innerHTML}</div>
-        <div id="pm-download-wrapper" class="arxivTools-container">
+        <div id="pm-download-wrapper" class="pm-container">
             <div id="pm-header" style="width: 100%"><h2 style="margin-top: 1rem">PaperMemory:</h2>
                 <div id="pm-header-content"></div>
             </div>
@@ -529,7 +529,7 @@ const arxiv = async (checks) => {
     // -----------------------------
     if (checkDownload) {
         const button = /*html*/ `
-            <div class="arxivTools-container" style="align-items: end;">
+            <div class="pm-container" style="align-items: end;">
                 <div style="font-size: 0.6rem; color: #cac7c7; padding-bottom: 0.6rem;">Download to<br/>PaperMemoryStore</div>
                 <div id="arxiv-button">${svg("download")}</div>
             </div>
@@ -598,7 +598,7 @@ const arxiv = async (checks) => {
 
     if (checkBib) {
         const bibLoader = /*html*/ `
-            <div id="loader-container" class="arxivTools-container">
+            <div id="loader-container" class="pm-container">
                 <div class="sk-folding-cube">
                     <div class="sk-cube1 sk-cube"></div>
                     <div class="sk-cube2 sk-cube"></div>
