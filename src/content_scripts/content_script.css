@@ -13,25 +13,26 @@
     display: flex;
     justify-content: center;
     align-items: center;
+    justify-content: space-between;
 }
 
-.arxivTools-header,
-.arxivTools-card-header {
-    margin-bottom: 1em;
+.arxivTools-header {
+    /* margin-bottom: 1em; */
     margin-top: 1em;
     display: flex;
     justify-content: space-between;
     align-items: center;
 }
 
-.arxivTools-card-header {
-    text-align: center;
-}
-
 .arxivTools-codify {
     white-space: pre-wrap;
     color: grey;
     font-family: "Fira Code", monospace;
+    background: #f6f6f6;
+    border-radius: 8px;
+    border: 1px solid lightgray;
+    word-break: break-all !important;
+    margin-top: 0.5rem;
 }
 
 #bibtexDiv {
@@ -76,6 +77,7 @@
     cursor: pointer;
     -webkit-tap-highlight-color: transparent;
     border-radius: 50%;
+    margin-right: 13px;
 }
 
 .tabler-icon:hover {
@@ -84,7 +86,7 @@
 }
 
 #markdown-link,
-#texTextarea {
+#pm-bibtex-textarea {
     padding: 8px;
     word-break: break-word;
     overflow: hidden;
@@ -209,8 +211,42 @@
     transition-delay: 0.4s;
 }
 
-#pm-publication-div {
-    font-size: 1.3rem;
-    font-weight: bold;
-    margin-top: 0.8rem;
+#pm-publication-venue {
+    display: flex;
+    width: fit-content;
+    font-size: 0.8rem;
+    background: white;
+    padding: 0px;
+    margin-top: 1rem;
+}
+
+#pm-venue-name {
+    background: #b31b1b;
+    border-radius: 4px 0px 0px 4px;
+    padding: 5px 5px 5px 10px;
+    display: flex;
+    align-items: center;
+    color: white;
+}
+
+#pm-venue-year {
+    color: black;
+    border: 1px solid grey;
+    align-items: center;
+    display: flex;
+    border-radius: 0px 4px 4px 0px;
+    padding: 5px;
+}
+
+#pm-extras {
+    margin-bottom: 0.8rem;
+}
+#pm-download-wrapper {
+    align-items: end;
+}
+
+#pm-header-content {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
 }
