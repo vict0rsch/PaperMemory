@@ -141,6 +141,7 @@ global.knownPaperPages = {
     ijcai: [(url) => /ijcai\.org\/proceedings\/\d{4}\/\d+/gi.test(url)],
     ieee: [
         "ieeexplore.ieee.org/document/",
+        "ieeexplore.ieee.org/abstract/document/",
         "ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=",
     ],
     iop: ["iopscience.iop.org/article/"],

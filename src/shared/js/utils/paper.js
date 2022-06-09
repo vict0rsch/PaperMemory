@@ -708,6 +708,8 @@ const parseIdFromUrl = async (url) => {
     } else if (is.ieee) {
         const articleId = url.includes("ieee.org/document/")
             ? url.split("ieee.org/document/")[1].match(/\d+/)[0]
+            : url.includes("ieee.org/abstract/document/")
+            ? url.split("ieee.org/abstract/document/")[1].match(/\d+/)[0]
             : url.split("arnumber=")[1].match(/\d+/)[0];
         idForUrl = findPaperId(papers, "ieee", articleId);
     } else if (is.springer) {

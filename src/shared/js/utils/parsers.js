@@ -988,8 +988,7 @@ const makeIEEEPaper = async (url) => {
         Array.from(dom.getElementsByTagName("script"))
             .filter((s) => s.innerHTML?.includes("metadata="))[0]
             .innerHTML.split("metadata=")[1]
-            .trim()
-            .replace(/;$/, "")
+            .split(/};\s*/)[0] + "}"
     );
 
     const title = metadata.title;
