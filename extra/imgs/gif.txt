@@ -1,0 +1,37 @@
+1. Arxiv
+    a. Notif
+    b. Venue
+    c. Markdown
+    d. Bibtex
+    e. Download
+
+2. Popup
+    a. Paper
+        i. Title
+        ii. Authors
+        iii. Code
+        iv. Tags
+        v. favorite
+        vi. Note
+    b. Memory
+        i. Show paper
+        ii. Show favorite
+        iii. Scroll
+        iv. Show Edit
+        v. Search "climate"
+        vi. Search y: <2016
+    c. Options
+        i. Scroll slow
+        ii. Go to full-page Memory
+
+3. Full-Page Memory
+    a. Scroll around
+    b. Click some tags
+
+4. Popup
+    a. Go to Advanced Options
+
+5. Advanced Options
+    a. Scroll around
+
+Array.from(document.getElementsByTagName("a")).forEach((el) => {el.style.color = "#8bb4f7"})
