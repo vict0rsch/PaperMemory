@@ -488,10 +488,9 @@ const displayPaperVenue = (paper) => {
                 <span id="pm-venue-year">${bibtexToObject(paper.bibtex).year}</span>
             </div>
         </div>`;
-    document
-        .getElementById("pm-header-content")
-        .insertAdjacentHTML("afterbegin", venueDiv);
+    findEl("pm-header-content").insertAdjacentHTML("afterbegin", venueDiv);
     adjustArxivColWidth();
+    return true;
 };
 
 const adjustArxivColWidth = (newColWidth = "33%") => {
@@ -501,6 +500,15 @@ const adjustArxivColWidth = (newColWidth = "33%") => {
     document
         .getElementsByClassName("extra-services")[0]
         .setAttribute("style", `width: ${newColWidth} !important`);
+};
+
+const displayPaperCode = (paper) => {
+    const code = /*html*/ `
+        <div id="pm-code">
+        <h3>Code:</h3> <a href="${paper.codeLink}">${paper.codeLink}</a>
+        </div>
+    `;
+    findEl("pm-extras").insertAdjacentHTML("afterbegin", code);
 };
 
 const arxiv = async (checks) => {
@@ -522,7 +530,7 @@ const arxiv = async (checks) => {
         </div>
         <div id="pm-extras"></div>`;
     const pdfUrl = document.querySelector(".abs-button.download-pdf").href;
-    const arxivPMDiv = document.getElementById("pm-extras");
+    const arxivPMDiv = findEl("pm-extras");
 
     // -----------------------------
     // -----  Download Button  -----
@@ -578,6 +586,10 @@ const arxiv = async (checks) => {
 
     if (paper.venue) {
         displayPaperVenue(paper);
+    }
+
+    if (paper.codeLink) {
+        displayPaperCode(paper);
     }
 
     if (checkMd) {
@@ -725,14 +737,16 @@ const arxiv = async (checks) => {
     paper = await preprintsPromise;
 
     if (prefs.checkBib) {
-        if (document.getElementById("pm-bibtex-textarea")) {
-            document.getElementById("pm-bibtex-textarea").innerHTML = bibtexToString(
+        if (findEl("pm-bibtex-textarea")) {
+            findEl("pm-bibtex-textarea").innerHTML = bibtexToString(
                 paper.bibtex
             ).replaceAll("\t", "  ");
         }
     }
     paper.venue &&
-        !document.getElementById("pm-publication-venue") &&
+        !findEl("pm-publication-venue") &&
         displayPaperVenue(paper) &&
         adjustArxivColWidth();
+
+    paper.codeLink && !findEl("pm-code") && displayPaperCode(paper);
 })();
