@@ -1211,12 +1211,37 @@ const makeSciencePaper = async (url) => {
 
 const tryPWCMatch = async (paper) => {
     const pwcPrefs = (await getStorage("pwcPrefs")) ?? {};
+    let bibtex;
     const payload = {
         type: "papersWithCode",
         pwcPrefs,
         paper: paper,
     };
-    return sendMessageToBackground(payload);
+    const { url, note, venue, pubYear } =
+        (await sendMessageToBackground(payload)) ?? {};
+    if (url && !paper.codeLink) {
+        log("[PapersWithCode] Discovered a code repository:", url);
+    } else {
+        log("[PapersWithCode] No code repository found");
+    }
+    if (venue && !paper.venue) {
+        log("[PapersWithCode] Found a publication venue:", venue);
+        const paperBib = bibtexToObject(paper.bibtex);
+        bibtex = bibtexToString({
+            ...paperBib,
+            year: pubYear,
+            journal: venue,
+        });
+    } else {
+        log("[PapersWithCode] No publication found");
+    }
+
+    return {
+        codeLink: url,
+        note,
+        venue,
+        bibtex,
+    };
 };
 
 // --------------------------------------------
