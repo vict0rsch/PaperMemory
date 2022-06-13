@@ -129,6 +129,7 @@
     border-radius: 50%;
     -webkit-tap-highlight-color: transparent;
     transition: all 0.2s ease;
+    margin-top: -16px;
 }
 
 #arxiv-button:hover {
