@@ -474,7 +474,7 @@ const tablerSvg = (pathName, id, classNames) => {
             </svg>`;
 
         case "math-function":
-            return `<svg viewBox="0 0 24 24" ${id} ${classNames}>            
+            return `<svg viewBox="0 0 24 24" ${id} ${classNames}>
                 <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
                 <path d="M14 10h1c1 0 1 1 2.016 3.527c.984 2.473 .984 3.473 1.984 3.473h1" />
                 <path d="M13 17c1.5 0 3 -2 4 -3.5s2.5 -3.5 4 -3.5" />
@@ -724,6 +724,15 @@ const noParamUrl = (url) => {
     return url.split("?")[0].split("#")[0];
 };
 
+const silentPromiseTimeout = (prom, time = 5000) => {
+    // https://advancedweb.hu/how-to-add-timeout-to-a-promise-in-javascript/
+    let timer;
+    return Promise.race([
+        prom,
+        new Promise((_r, rej) => (timer = setTimeout(rej, time))),
+    ]).finally(() => clearTimeout(timer));
+};
+
 if (typeof module !== "undefined" && module.exports != null) {
     var dummyModule = module;
     dummyModule.exports = {
@@ -761,5 +770,6 @@ if (typeof module !== "undefined" && module.exports != null) {
         getStoredFiles,
         miniHash,
         noParamUrl,
+        silentPromiseTimeout,
     };
 }

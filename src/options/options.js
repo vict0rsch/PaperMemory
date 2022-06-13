@@ -513,8 +513,9 @@ const startMatching = async (papersToMatch) => {
         pwcMatch = await tryPWCMatch(paper);
         console.log("pwcMatch: ", pwcMatch);
         code = !paper.codeLink && pwcMatch?.url;
-        venue = pwcMatch?.venue;
         note = !paper.note && pwcMatch?.note;
+        venue = pwcMatch?.venue;
+        bibtex = pwcMatch?.bibtex;
 
         if (!venue) {
             setHTML("matching-status-provider", "dblp.org ...");

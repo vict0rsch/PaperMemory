@@ -510,7 +510,7 @@ const displayPaperCode = (paper) => {
     }
     const code = /*html*/ `
         <div id="pm-code">
-        <h3>Code:</h3> <a href="${paper.codeLink}">${paper.codeLink}</a>
+        <h3>Code:</h3> <a id="pm-code-link" href="${paper.codeLink}">${paper.codeLink}</a>
         </div>
     `;
     findEl("pm-code")?.remove();

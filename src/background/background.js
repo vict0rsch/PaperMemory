@@ -75,6 +75,7 @@ const findCodesForPaper = async (request) => {
         code = {
             note: `Accepted @ ${venue} (${year}) -- [paperswithcode.com]`,
             venue,
+            pubYear: year,
         };
     }
 

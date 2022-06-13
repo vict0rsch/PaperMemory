@@ -1211,12 +1211,37 @@ const makeSciencePaper = async (url) => {
 
 const tryPWCMatch = async (paper) => {
     const pwcPrefs = (await getStorage("pwcPrefs")) ?? {};
+    let bibtex;
     const payload = {
         type: "papersWithCode",
         pwcPrefs,
         paper: paper,
     };
-    return sendMessageToBackground(payload);
+    const { url, note, venue, pubYear } =
+        (await sendMessageToBackground(payload)) ?? {};
+    if (url && !paper.codeLink) {
+        log("[PapersWithCode] Discovered a code repository:", url);
+    } else {
+        log("[PapersWithCode] No code repository found");
+    }
+    if (venue && !paper.venue) {
+        log("[PapersWithCode] Found a publication venue:", venue);
+        const paperBib = bibtexToObject(paper.bibtex);
+        bibtex = bibtexToString({
+            ...paperBib,
+            year: pubYear,
+            journal: venue,
+        });
+    } else {
+        log("[PapersWithCode] No publication found");
+    }
+
+    return {
+        codeLink: url,
+        note,
+        venue,
+        bibtex,
+    };
 };
 
 // --------------------------------------------
@@ -1335,7 +1360,7 @@ const trySemanticScholar = async (paper) => {
         const matches = await fetchJSON(
             `https://api.semanticscholar.org/graph/v1/paper/search?query=${encodeURI(
                 paper.title
-            )}&fields=title,venue,year&limit=50`
+            )}&fields=title,venue,year,authors,externalIds,url&limit=50`
         );
 
         if (matches && matches.data && matches.data.length > 0) {
@@ -1351,10 +1376,28 @@ const trySemanticScholar = async (paper) => {
                         .replace(/^\d{4}/, "")
                         .trim()
                         .capitalize(true);
-                    const year = match.year;
+                    const year = match.year + "";
                     const note = `Accepted @ ${venue} (${year}) -- [semanticscholar.org]`;
                     venue = venue.toLowerCase();
-                    return { venue, note };
+                    const authors = match.authors.map((a) => a.name).join(" and ");
+                    let doi = match.externalIds.DOI;
+                    if (doi) {
+                        doi = doi.replaceAll("_", "\\{_}");
+                    }
+                    const bibtex = bibtexToString({
+                        entryType: "article",
+                        citationKey:
+                            miniHash(match.authors[0].name.split(" ").last()) +
+                            year +
+                            firstNonStopLowercase(paper.title),
+                        title: paper.title,
+                        author: authors,
+                        journal: venue,
+                        year,
+                        doi,
+                        bibSource: `Semantic Scholar ${match.url}`,
+                    });
+                    return { venue, note, bibtex };
                 }
             }
         }
@@ -1365,51 +1408,40 @@ const trySemanticScholar = async (paper) => {
 
 const tryPreprintMatch = async (paper, tryPwc = false) => {
     let note, venue, bibtex, code;
+    let matches = {};
+
+    let names = ["DBLP", "SemanticScholar", "CrossRef"];
+    let matchPromises = [
+        silentPromiseTimeout(tryDBLP(paper)),
+        silentPromiseTimeout(trySemanticScholar(paper)),
+        silentPromiseTimeout(tryCrossRef(paper)),
+    ];
 
     if (tryPwc) {
-        const pwcPrefs = (await getStorage("pwcPrefs")) ?? {};
-        const payload = {
-            type: "papersWithCode",
-            pwcPrefs,
-            paper: paper,
-        };
-        const pwc = await sendMessageToBackground(payload);
-        pwcUrl = !paper.codeLink && pwc?.url;
-        pwcNote = !paper.note && pwc?.note;
-        pwcVenue = !paper.venue && pwc?.venue;
+        matchPromises.push(silentPromiseTimeout(tryPWCMatch(paper)));
+        names.push("PapersWithCode");
+    }
 
-        if (pwcUrl) {
-            code = pwc;
-        }
-        if (pwcNote) {
-            note = pwcNote;
-        }
-        if (pwcVenue) {
-            venue = pwcVenue;
+    for (const [n, name] of Object.entries(names)) {
+        matches[name] = await matchPromises[n];
+        ({ note, venue, bibtex } = matches[name] ?? {});
+        if (note) {
+            break;
+        } else {
+            log(`[${name}] No publication found`);
         }
     }
 
-    if (venue) return { note, venue, bibtex };
+    if (tryPwc) {
+        const name = "PapersWithCode";
+        if (!matches.hasOwnProperty(name)) {
+            matches[name] = await matchPromises[name];
+        }
+        if (matches[name].codeLink && !paper.codeLink) {
+            code = matches[name].codeLink;
+        }
+    }
 
-    const dblpMatch = await tryDBLP(paper);
-    note = dblpMatch.note;
-    venue = dblpMatch.venue;
-    bibtex = dblpMatch.bibtex;
-    if (!note) {
-        log("[DBLP] No publication found");
-        const ssMatch = await trySemanticScholar(paper);
-        note = ssMatch?.note;
-        venue = ssMatch?.venue;
-    }
-    if (!note) {
-        log("[SemanticScholar] No publication found");
-        const crossRefMatch = await tryCrossRef(paper);
-        note = crossRefMatch.note;
-        venue = crossRefMatch.venue;
-    }
-    if (!note) {
-        log("[CrossRef] No publication found");
-    }
     return { note, venue, bibtex, code };
 };
 
