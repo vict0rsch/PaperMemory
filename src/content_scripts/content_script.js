@@ -480,19 +480,6 @@ const feedback = (text, paper = null) => {
     });
 };
 
-const displayPaperVenue = (paper) => {
-    const venueDiv = /*html*/ `
-        <div>
-            <div id="pm-publication-venue">
-                <span id="pm-venue-name">${paper.venue}</span>
-                <span id="pm-venue-year">${bibtexToObject(paper.bibtex).year}</span>
-            </div>
-        </div>`;
-    findEl("pm-header-content").insertAdjacentHTML("afterbegin", venueDiv);
-    adjustArxivColWidth();
-    return true;
-};
-
 const adjustArxivColWidth = (newColWidth = "33%") => {
     document
         .getElementsByClassName("leftcolumn")[0]
@@ -502,13 +489,32 @@ const adjustArxivColWidth = (newColWidth = "33%") => {
         .setAttribute("style", `width: ${newColWidth} !important`);
 };
 
+const displayPaperVenue = (paper) => {
+    if (!paper.venue) {
+        return;
+    }
+    const venueDiv = /*html*/ `
+        <div id="pm-publication-wrapper">
+            <div id="pm-publication-venue">
+                <span id="pm-venue-name">${paper.venue}</span>
+                <span id="pm-venue-year">${bibtexToObject(paper.bibtex).year}</span>
+            </div>
+        </div>`;
+    findEl("pm-publication-wrapper")?.remove();
+    findEl("pm-header-content")?.insertAdjacentHTML("afterbegin", venueDiv);
+};
+
 const displayPaperCode = (paper) => {
+    if (!paper.codeLink) {
+        return;
+    }
     const code = /*html*/ `
         <div id="pm-code">
         <h3>Code:</h3> <a href="${paper.codeLink}">${paper.codeLink}</a>
         </div>
     `;
-    findEl("pm-extras").insertAdjacentHTML("afterbegin", code);
+    findEl("pm-code")?.remove();
+    findEl("pm-extras")?.insertAdjacentHTML("afterbegin", code);
 };
 
 const arxiv = async (checks) => {
@@ -522,13 +528,14 @@ const arxiv = async (checks) => {
 
     const id = await parseIdFromUrl(url);
     document.querySelector(".extra-services .full-text").innerHTML = /*html*/ `
-            <div>${document.querySelector(".extra-services .full-text").innerHTML}</div>
+        <div>${document.querySelector(".extra-services .full-text").innerHTML}</div>
         <div id="pm-download-wrapper" class="pm-container">
             <div id="pm-header" style="width: 100%"><h2 id="pm-col-title">PaperMemory:</h2>
                 <div id="pm-header-content"></div>
             </div>
         </div>
-        <div id="pm-extras"></div>`;
+        <div id="pm-extras"></div>
+    `;
     const pdfUrl = document.querySelector(".abs-button.download-pdf").href;
     const arxivPMDiv = findEl("pm-extras");
 
