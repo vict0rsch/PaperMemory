@@ -674,79 +674,109 @@ const arxiv = async (checks) => {
 };
 
 (async () => {
-    const url = window.location.href;
-    let stateIsReady = false;
     var prefs, paper;
+    var paperPromise, preprintsPromise;
+    const url = window.location.href;
+
+    // state will be initialized if the source is known
+    // but not on files
+    let stateIsReady = false;
     if (url.startsWith("file://")) {
         await initState(undefined, true);
         prefs = global.state.prefs;
         stateIsReady = true;
     }
-    var paperPromise, preprintsPromise;
+
+    // check the background script is reachable
+    if (!(await sendMessageToBackground({ type: "hello" }))) {
+        warn("Cannot connect to background script");
+    }
+
+    // listen to the background script for :
+    //  1. tab url updates (SPAs)
+    //  2. manual parsing keyboard shortcuts
+    chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
+        if (request.message === "tabUrlUpdate") {
+            info("Running PaperMemory's content script for url update");
+            contentScriptMain(request.url, stateIsReady, false, {
+                update: paperResolve,
+                preprints: preprintsResolve,
+            });
+        } else if (request.message === "manualParsing") {
+            info("Triggering manual parsing");
+            contentScriptMain(url, stateIsReady, true, {
+                update: paperResolve,
+                preprints: preprintsResolve,
+            });
+        }
+    });
+
+    // 2 Promises:
+    //   1. fetch paper data
+    //   2. fetch preprints data
     preprintsPromise = new Promise(async (preprintsResolve) => {
         paperPromise = new Promise(async (paperResolve) => {
+            // if the url is associated to a known source: trigger
+            // the main functions.
             if (await isSourceURL(url, true)) {
                 contentScriptMain(url, stateIsReady, false, {
                     update: paperResolve,
                     preprints: preprintsResolve,
                 });
+            } else {
+                // if the url is not associated to a known source:
+                paperResolve(null);
+                preprintsResolve();
             }
-
-            if (!(await sendMessageToBackground({ type: "hello" }))) {
-                warn("Cannot connect to background script");
-            }
-
-            chrome.runtime.onMessage.addListener(function (
-                request,
-                sender,
-                sendResponse
-            ) {
-                // listen for messages sent from background.js
-                if (request.message === "tabUrlUpdate") {
-                    info("Running PaperMemory's content script for url update");
-                    contentScriptMain(request.url, stateIsReady, false, {
-                        update: paperResolve,
-                        preprints: preprintsResolve,
-                    });
-                } else if (request.message === "manualParsing") {
-                    contentScriptMain(url, stateIsReady, true, {
-                        update: paperResolve,
-                        preprints: preprintsResolve,
-                    });
-                }
-            });
         });
     });
 
+    // Promise resolved when the DOM is loaded
     const domReadyPromise = new Promise((resolve) => {
         document.addEventListener("DOMContentLoaded", () => {
             resolve();
         });
     });
 
+    // wait for the paper to be parsed and the DOM to be loaded
     const results = await Promise.all([paperPromise, domReadyPromise]);
+
     paper = results[0];
-    prefs = global.state.prefs;
+    console.log("paper: ", paper);
+    if (paper) {
+        // a paper was parsed
 
-    let is = await isPaper(url, true);
+        // user preferences
+        prefs = global.state.prefs;
 
-    if (is.arxiv) {
-        await arxiv(prefs);
-    }
+        // paper.source may not be "arxiv" even on arxiv.org
+        // because of the existing paper matching mechanism
+        let is = await isPaper(url, true);
 
-    paper = await preprintsPromise;
+        if (is.arxiv) {
+            // larger arxiv column
+            adjustArxivColWidth();
 
-    if (prefs.checkBib) {
-        if (findEl("pm-bibtex-textarea")) {
-            findEl("pm-bibtex-textarea").innerHTML = bibtexToString(
-                paper.bibtex
-            ).replaceAll("\t", "  ");
+            // display arxiv paper metadata
+            await arxiv(prefs);
+
+            // wait for publication databases to be queried
+            paper = await preprintsPromise;
+
+            // update bibtex
+            if (prefs.checkBib) {
+                if (findEl("pm-bibtex-textarea")) {
+                    findEl("pm-bibtex-textarea").innerHTML = bibtexToString(
+                        paper.bibtex
+                    ).replaceAll("\t", "  ");
+                }
+            }
+
+            // update venue
+            displayPaperVenue(paper);
+
+            // update codeLink
+            displayPaperCode(paper);
         }
     }
-    paper.venue &&
-        !findEl("pm-publication-venue") &&
-        displayPaperVenue(paper) &&
-        adjustArxivColWidth();
-
-    paper.codeLink && !findEl("pm-code") && displayPaperCode(paper);
 })();
