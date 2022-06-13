@@ -724,6 +724,15 @@ const noParamUrl = (url) => {
     return url.split("?")[0].split("#")[0];
 };
 
+const silentPromiseTimeout = (prom, time = 5000) => {
+    // https://advancedweb.hu/how-to-add-timeout-to-a-promise-in-javascript/
+    let timer;
+    return Promise.race([
+        prom,
+        new Promise((_r, rej) => (timer = setTimeout(rej, time))),
+    ]).finally(() => clearTimeout(timer));
+};
+
 if (typeof module !== "undefined" && module.exports != null) {
     var dummyModule = module;
     dummyModule.exports = {
@@ -761,5 +770,6 @@ if (typeof module !== "undefined" && module.exports != null) {
         getStoredFiles,
         miniHash,
         noParamUrl,
+        silentPromiseTimeout,
     };
 }
