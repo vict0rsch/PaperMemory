@@ -244,6 +244,9 @@ const extractDataFromDCMetaTags = (dom) => {
     const author = getMetaContent({ name: "dc.Creator" }, dom, true)
         .map((content) => content.replace(/([a-z])([A-Z])/g, "$1 $2"))
         .join(" and ");
+    if (!author) {
+        return null;
+    }
     const year = getMetaContent({ name: "dc.Date" }, dom).split("-")[0];
     const publisher = getMetaContent({ name: "dc.Publisher" }, dom).replaceAll(
         "\n",
@@ -686,10 +689,10 @@ const makePNASPaper = async (url) => {
             ? url.replace("/doi/epdf/", "/doi/pdf/")
             : url.replace("/doi/abs/", "/doi/pdf/").replace("/doi/full/", "/doi/pdf/");
     const doi = Array.from(
-        dom.querySelector(".self-citation").getElementsByTagName("a")
+        dom.querySelector(".core-container").getElementsByTagName("a")
     )
         .map((a) => a.getAttribute("href"))
-        .filter((a) => a.includes("https://doi.org"))[0]
+        .filter((a) => a?.includes("https://doi.org"))[0]
         .split("/")
         .slice(-2)
         .join("/");
@@ -967,9 +970,39 @@ const makeACMPaper = async (url) => {
         pdfLink = url.replace(/\/doi\/?(abs|full)?\//, "/doi/pdf/");
     }
     const dom = await fetchDom(url.replace("/doi/pdf/", "/doi/"));
-    const { author, year, title, venue, key, doi, bibtex, note } =
-        extractDataFromDCMetaTags(dom);
 
+    let author, year, title, venue, key, doi, bibtex, note;
+    const metaTagsData = extractDataFromDCMetaTags(dom);
+    if (metaTagsData) {
+        ({ author, year, title, venue, key, doi, bibtex, note } = metaTagsData);
+    } else {
+        title = dom.querySelector(".citation__title").innerText;
+        author = Array.from(
+            dom.querySelectorAll(
+                "ul[ariaa-label='authors'] li.loa__item .loa__author-name"
+            )
+        )
+            .map((el) => el.innerText.replace(",", "").trim())
+            .join(" and ");
+        const publication = dom.querySelector(".issue-item__detail a").innerText;
+        venue = publication.split("'")[0].trim();
+        year = "20" + publication.split("'")[1].split(":")[0].trim();
+        doi = pdfLink.split("/doi/pdf/")[1];
+
+        note = `Accepted @ ${venue} (${year})`;
+        key = doi;
+        bibtex = bibtexToString({
+            entryType: "article",
+            citationKey: doi,
+            journal: venue,
+            author,
+            title,
+            year,
+            publisher: "Association for Computing Machinery",
+            address: "New York, NY, USA",
+            url: url.replace("/doi/pdf/", "/doi/"),
+        });
+    }
     const id = `ACM-${year}_${miniHash(doi)}`;
 
     return { author, bibtex, id, key, note, pdfLink, title, venue, year };

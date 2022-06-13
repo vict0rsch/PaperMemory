@@ -69,7 +69,7 @@ const updatePopupPaperNoMemory = async (url) => {
         noPaperHtml += /* html */ `
             <div id="manual-trigger-wrapper">
                 <div id="manual-trigger-btn">Try manual trigger</div>
-                <div id="manual-loader-container" class="arxivTools-container" style='display: none;'>
+                <div id="manual-loader-container" class="pm-container" style='display: none;'>
                     <div class="sk-folding-cube">
                         <div class="sk-cube1 sk-cube"></div>
                         <div class="sk-cube2 sk-cube"></div>

@@ -695,7 +695,7 @@ const handleDownloadBibtexPlainClick = () => {
 const handleConfirmOverwrite = (papersToWrite, warning) => (e) => {
     setHTML(
         "overwriteFeedback",
-        `<div class="arxivTools-container"><div class="sk-folding-cube"><div class="sk-cube1 sk-cube"></div><div class="sk-cube2 sk-cube"></div><div class="sk-cube4 sk-cube"></div><div class="sk-cube3 sk-cube"></div></div></div>`
+        `<div class="pm-container"><div class="sk-folding-cube"><div class="sk-cube1 sk-cube"></div><div class="sk-cube2 sk-cube"></div><div class="sk-cube4 sk-cube"></div><div class="sk-cube3 sk-cube"></div></div></div>`
     );
     setTimeout(async () => {
         if (warning) {
@@ -736,7 +736,7 @@ const handleOverwriteMemory = () => {
             showId("overwriteFeedback");
             setHTML(
                 "overwriteFeedback",
-                `<div class="arxivTools-container"><div class="sk-folding-cube"><div class="sk-cube1 sk-cube"></div><div class="sk-cube2 sk-cube"></div><div class="sk-cube4 sk-cube"></div><div class="sk-cube3 sk-cube"></div></div></div>`
+                `<div class="pm-container"><div class="sk-folding-cube"><div class="sk-cube1 sk-cube"></div><div class="sk-cube2 sk-cube"></div><div class="sk-cube4 sk-cube"></div><div class="sk-cube3 sk-cube"></div></div></div>`
             );
             const confirm = `<button id="confirm-overwrite">Confirm</button>`;
             const cancel = `<button id="cancel-overwrite">Cancel</button>`;
