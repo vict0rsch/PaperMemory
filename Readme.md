@@ -1,9 +1,5 @@
 # My Paper Memory ⚡
 
-<p align="center">
-<img width="600" src="https://github.com/vict0rsch/PaperMemory/blob/master/extra/imgs/display.png?raw=true"/>
-</p>
-
 <br/>
 
 <p align="center">
@@ -44,6 +40,10 @@ This browser extension allows you to do automatically store research papers you 
 9. 🏛️ **Export your data** as a `.json` file or a `.bib` full BibTex export
 
 <br/>
+
+<p align="center">
+<img width="800" src="https://github.com/vict0rsch/PaperMemory/blob/master/extra/imgs/display.png?raw=true"/>
+</p>
 
 ---
 
