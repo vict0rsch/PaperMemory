@@ -15,12 +15,12 @@
         {
             "type": "preprint",
             "url": "https://arxiv.org/abs/1904.01121",
-            "name": "hype"
+            "name": "hype a benchmark"
         },
         {
             "type": "publication",
             "url": "https://proceedings.neurips.cc/paper/2019/hash/65699726a3c601b9f31bf04019c8593c-Abstract.html",
-            "name": "hype"
+            "name": "hype benchmark"
         }
     ],
     [
