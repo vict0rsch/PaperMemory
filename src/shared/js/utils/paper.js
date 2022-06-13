@@ -418,9 +418,12 @@ const addOrUpdatePaper = async (
     store = true,
     contentScriptCallbacks = { update: () => {}, preprints: () => {} }
 ) => {
+    // start time
     const aouStart = Date.now();
+
     let paper, isNew, pwcUrl, pwcNote, pwcVenue;
     console.group("%cPaperMemory parsing 📕", global.consolHeaderStyle);
+
     // Extract id from url
     global.state.papers = (await getStorage("papers")) ?? {};
     const id = await parseIdFromUrl(url);
@@ -516,15 +519,21 @@ const addOrUpdatePaper = async (
         });
         isNew = false;
     }
+
+    // Store may be false if the user has disabled:
+    //   * paper storage from Abstract URLs
+    //   * automatic parsing altogether
+    // but we still want to display paper metadata on arxiv.org
     if (store) global.state.papers[paper.id] = paper;
 
     chrome.storage.local.set({ papers: global.state.papers }, async () => {
-        contentScriptCallbacks["update"]();
+        // tell the content script the paper has been parsed/updated
+        contentScriptCallbacks["update"](paper);
+
         let notifText;
         if (isNew || pwcUrl) {
             if (isNew) {
                 // new paper
-
                 store
                     ? logOk("Added '" + paper.title + "' to your Memory!")
                     : warn("Discovered '" + paper.title + "' but did not store it.");
@@ -592,7 +601,9 @@ const addOrUpdatePaper = async (
                 chrome.storage.local.set({ papers: global.state.papers });
             }
         }
+        // tell the content script the pre-print matching procedure has finished
         contentScriptCallbacks["preprints"](paper);
+
         info(`Done processing paper (${(Date.now() - aouStart) / 1000}s).`);
         console.groupEnd();
     });
