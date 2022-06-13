@@ -421,7 +421,9 @@ const addOrUpdatePaper = async (
     // start time
     const aouStart = Date.now();
 
-    let paper, isNew, pwcUrl, pwcNote, pwcVenue;
+    let paper, isNew;
+    let pwc = {};
+
     console.group("%cPaperMemory parsing 📕", global.consolHeaderStyle);
 
     // Extract id from url
@@ -487,21 +489,24 @@ const addOrUpdatePaper = async (
 
     if (!paper.codeLink || !paper.venue) {
         try {
-            const pwc = await tryPWCMatch(paper);
+            const pwcMatch = await tryPWCMatch(paper);
 
-            pwcUrl = !paper.codeLink && pwc?.url;
-            pwcNote = pwc?.note;
-            pwcVenue = !paper.venue && pwc?.venue;
+            const pwcCodeLink = !paper.codeLink && pwcMatch?.url;
+            const pwcNote = pwcMatch?.note;
+            const pwcBibtex = pwcMatch?.bibtex;
+            const pwcVenue = !paper.venue && pwcMatch?.venue;
 
-            if (pwcUrl) {
-                log("Discovered a code repository from PapersWithCode:", pwcUrl);
-                paper.codeLink = pwcUrl;
-                if (pwc.hasOwnProperty("note")) delete pwc.note;
-                paper.code = pwc;
-            } else {
-                if (!paper.codeLink) {
-                    log("No code repository found from PapersWithCode");
-                }
+            pwc = {
+                codeLink: pwcCodeLink,
+                note: pwcNote,
+                venue: pwcVenue,
+                bibtex: pwcBibtex,
+            };
+
+            if (pwc.codeLink) {
+                paper.codeLink = pwc.codeLink;
+                if (pwcMatch.hasOwnProperty("note")) delete pwcMatch.note;
+                paper.code = pwcMatch;
             }
         } catch (error) {
             log("Error trying to discover a code repository:");
@@ -510,6 +515,8 @@ const addOrUpdatePaper = async (
     }
 
     global.state.papers = (await getStorage("papers")) ?? {};
+
+    // minimize risk of concurrent writes to the same paper
     if (isNew && global.state.papers.hasOwnProperty(paper.id)) {
         warn("Paper has been created by another page: merging papers.");
         paper = mergePapers({
@@ -531,22 +538,23 @@ const addOrUpdatePaper = async (
         contentScriptCallbacks["update"](paper);
 
         let notifText;
-        if (isNew || pwcUrl) {
+        if (isNew || pwc.codeLink) {
             if (isNew) {
                 // new paper
                 store
                     ? logOk("Added '" + paper.title + "' to your Memory!")
                     : warn("Discovered '" + paper.title + "' but did not store it.");
                 log("paper: ", paper);
+
                 notifText = "Added to your Memory";
-                if (pwcUrl) {
+                if (pwc.codeLink) {
                     notifText +=
                         "<br/><div id='feedback-pwc'>(+ repo from PapersWithCode) </div>";
                 }
+
                 prefs && prefs.checkFeedback && store && feedback(notifText, paper);
             } else {
                 // existing paper but new code repo
-
                 notifText = "Found a code repository on PapersWithCode!";
                 prefs && prefs.checkFeedback && store && feedback(notifText);
             }
@@ -554,52 +562,38 @@ const addOrUpdatePaper = async (
             store && logOk("Updated '" + paper.title + "' in your Memory");
         }
 
-        if (!paper.venue && !pwcVenue) {
-            log("[PapersWithCode] No publication found");
-        }
-
         // anyway: try and update note with actual publication
         if (!paper.note || !paper.venue) {
-            const { note, venue, bibtex } = await tryPreprintMatch(paper);
-            if (note || venue || bibtex) {
-                if (!paper.note) {
-                    if (note) {
-                        log("Updating preprint note to", note);
-                        paper.note = note;
-                    } else if (pwcNote) {
-                        log("Updating preprint note to", pwcNote);
-                        paper.note = pwcNote;
+            const preprintMatch = await tryPreprintMatch(paper);
+            for (const key of ["note", "venue", "bibtex"]) {
+                if (!paper[key] || key === "bibtex") {
+                    const value = preprintMatch[key] ?? pwc[key];
+                    if (value) {
+                        log(`Updating preprint ${key} to`, value);
+                        paper[key] = value;
                     }
                 }
-                if (!paper.venue) {
-                    if (venue) {
-                        log("Updating preprint venue to", venue);
-                        paper.venue = venue;
-                    } else if (pwcVenue) {
-                        log("Updating preprint venue to", pwcVenue);
-                        paper.venue = pwcVenue;
-                    }
-                }
-                if (bibtex) {
-                    log("Updating preprint bibtex to", bibtex);
-                    paper.bibtex = bibtex;
-                }
-                global.state.papers = (await getStorage("papers")) ?? {};
-                if (
-                    isNew &&
-                    global.state.papers.hasOwnProperty(paper.id) &&
-                    global.state.papers[paper.id].count > 1
-                ) {
-                    warn("Paper has been created by another page: merging papers.");
-                    paper = mergePapers({
-                        newPaper: global.state.papers[paper.id],
-                        oldPaper: paper,
-                        incrementCount: false,
-                    });
-                }
-                if (store) global.state.papers[paper.id] = paper;
-                chrome.storage.local.set({ papers: global.state.papers });
             }
+
+            global.state.papers = (await getStorage("papers")) ?? {};
+
+            // minimize risk of concurrent writes to the same paper
+            if (
+                isNew &&
+                global.state.papers.hasOwnProperty(paper.id) &&
+                global.state.papers[paper.id].count > 1
+            ) {
+                warn("Paper has been created by another page: merging papers.");
+                paper = mergePapers({
+                    newPaper: global.state.papers[paper.id],
+                    oldPaper: paper,
+                    incrementCount: false,
+                });
+            }
+
+            // record updated paper if store is true
+            if (store) global.state.papers[paper.id] = paper;
+            chrome.storage.local.set({ papers: global.state.papers });
         }
         // tell the content script the pre-print matching procedure has finished
         contentScriptCallbacks["preprints"](paper);
