@@ -689,10 +689,10 @@ const makePNASPaper = async (url) => {
             ? url.replace("/doi/epdf/", "/doi/pdf/")
             : url.replace("/doi/abs/", "/doi/pdf/").replace("/doi/full/", "/doi/pdf/");
     const doi = Array.from(
-        dom.querySelector(".self-citation").getElementsByTagName("a")
+        dom.querySelector(".core-container").getElementsByTagName("a")
     )
         .map((a) => a.getAttribute("href"))
-        .filter((a) => a.includes("https://doi.org"))[0]
+        .filter((a) => a?.includes("https://doi.org"))[0]
         .split("/")
         .slice(-2)
         .join("/");
