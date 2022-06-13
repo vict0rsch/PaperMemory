@@ -216,3 +216,7 @@
     align-items: center;
     justify-content: space-between;
 }
+
+#pm-code-link {
+    word-break: break-all;
+}
