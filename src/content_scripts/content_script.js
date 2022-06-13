@@ -524,7 +524,7 @@ const arxiv = async (checks) => {
     document.querySelector(".extra-services .full-text").innerHTML = /*html*/ `
             <div>${document.querySelector(".extra-services .full-text").innerHTML}</div>
         <div id="pm-download-wrapper" class="pm-container">
-            <div id="pm-header" style="width: 100%"><h2 style="margin-top: 1rem">PaperMemory:</h2>
+            <div id="pm-header" style="width: 100%"><h2 id="pm-col-title">PaperMemory:</h2>
                 <div id="pm-header-content"></div>
             </div>
         </div>

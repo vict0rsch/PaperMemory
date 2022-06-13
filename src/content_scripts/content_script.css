@@ -129,7 +129,7 @@
     border-radius: 50%;
     -webkit-tap-highlight-color: transparent;
     transition: all 0.2s ease;
-    margin-top: -16px;
+    margin-top: -3px;
 }
 
 #arxiv-button:hover {
@@ -169,6 +169,11 @@
     stroke: #20cca5;
     stroke-dashoffset: 174;
     transition-delay: 0.4s;
+}
+
+#pm-col-title {
+    margin-top: 1rem;
+    margin-bottom: -12px;
 }
 
 #pm-publication-venue {
