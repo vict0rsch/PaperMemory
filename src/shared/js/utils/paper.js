@@ -152,6 +152,10 @@ const paperToAbs = (paper) => {
             abs = `https://science.org/doi/full/${doi}`;
             break;
 
+        case "frontiers":
+            abs = pdf.replace(/\/pdf$/, "/full");
+            break;
+
         default:
             abs = "https://xkcd.com/1969/";
             break;
@@ -244,6 +248,9 @@ const paperToPDF = (paper) => {
             break;
 
         case "science":
+            break;
+
+        case "frontiers":
             break;
 
         default:
@@ -760,6 +767,9 @@ const parseIdFromUrl = async (url) => {
             doi = doi.split("/").slice(1).join("/");
         }
         idForUrl = findPaperId(papers, "science", miniHash(doi));
+    } else if (is.frontiers) {
+        doi = noParamUrl(url).split("/articles/")[1].split("/").slice(0, -1).join("/");
+        idForUrl = findPaperId(papers, "frontiers", miniHash(doi));
     } else if (is.localFile) {
         idForUrl = is.localFile;
     } else {
