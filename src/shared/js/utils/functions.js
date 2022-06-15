@@ -729,7 +729,7 @@ const silentPromiseTimeout = (prom, time = 5000) => {
     let timer;
     return Promise.race([
         prom,
-        new Promise((_r, rej) => (timer = setTimeout(rej, time))),
+        new Promise((res, rej) => (timer = setTimeout(res, time))),
     ]).finally(() => clearTimeout(timer));
 };
 
