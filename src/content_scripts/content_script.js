@@ -749,7 +749,6 @@ const arxiv = async (checks) => {
     const results = await Promise.all([paperPromise, domReadyPromise]);
 
     paper = results[0];
-    console.log("paper: ", paper);
     if (paper) {
         // a paper was parsed
 
