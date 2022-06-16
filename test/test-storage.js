@@ -100,6 +100,12 @@ describe("Test paper detection and storage", function () {
                     `prevents automated browsing`
             );
             delete urls[source];
+        } else if (targets.length === 3 && targets[2].noPdf) {
+            console.log(
+                `\n>>> Skipping test for ${source} because its ` +
+                    `pdf page does not exist`
+            );
+            delete urls[source];
         }
     }
 
