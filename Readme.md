@@ -78,6 +78,7 @@ This browser extension allows you to do automatically store research papers you 
 * Wiley (Advanced Materials, InfoMat etc.)
 * Science Direct
 * Science (Science, Science Immunology, Science Robotics etc.)
+* FrontiersIn (Frontiers in Neuroscience, Frontiers in Neuroscience, Frontiers in Microbiology etc.)
 * [Sci-Hub](#ad-hoc-pdfs)
 * [Add more](https://github.com/vict0rsch/PaperMemory/issues/13)
 
