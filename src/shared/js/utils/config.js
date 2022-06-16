@@ -138,6 +138,7 @@ global.knownPaperPages = {
     arxiv: ["arxiv.org/abs/", "arxiv.org/pdf/", "scirate.com/arxiv/"],
     biorxiv: ["biorxiv.org/content"],
     cvf: ["openaccess.thecvf.com/content"],
+    frontiers: ["frontiersin.org/articles"],
     ijcai: [(url) => /ijcai\.org\/proceedings\/\d{4}\/\d+/gi.test(url)],
     ieee: [
         "ieeexplore.ieee.org/document/",

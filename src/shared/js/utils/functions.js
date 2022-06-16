@@ -112,6 +112,7 @@ const isObject = (obj) =>
 const isPdfUrl = (url) => {
     return (
         url.endsWith(".pdf") ||
+        url.endsWith("/pdf") ||
         url.includes("openreview.net/pdf") ||
         url.match(/\/e?pdf\//g) ||
         url.includes("ieee.org/stamp/stamp.jsp?tp=&arnumber=")

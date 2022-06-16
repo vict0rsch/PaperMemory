@@ -1205,6 +1205,30 @@ const makeSciencePaper = async (url) => {
     return { author, bibtex, id, key, note, pdfLink, title, venue, year };
 };
 
+const makeFrontiersPaper = async (url) => {
+    url = url.replace(/\/pdf$/, "/full");
+    const doi = noParamUrl(url).split("/articles/")[1].split("/full")[0];
+    const bib = await fetchText(`https://www.frontiersin.org/articles/${doi}/bibTex`);
+    const data = Object.fromEntries(
+        Object.entries(bibtexToObject(bib)).map(([k, v]) => [
+            k === "citationKey" || k === "entryType" ? k : k.toLowerCase(),
+            v,
+        ])
+    );
+    data.author = flipAndAuthors(data.author);
+    delete data.abstract;
+    const { author, journal, year, title, citationKey } = data;
+    const bibtex = bibtexToString(data);
+
+    const venue = journal;
+    const note = `Published @ ${venue} (${year})`;
+    const id = `Frontiers-${year}_${miniHash(doi)}`;
+    const key = citationKey;
+    const pdfLink = url.replace(/\/full$/, "/pdf");
+
+    return { author, bibtex, id, key, note, pdfLink, title, venue, year };
+};
+
 // -------------------------------
 // -----  PREPRINT MATCHING  -----
 // -------------------------------
@@ -1604,6 +1628,11 @@ const makePaper = async (is, url) => {
         paper = await makeSciencePaper(url);
         if (paper) {
             paper.source = "science";
+        }
+    } else if (is.frontiers) {
+        paper = await makeFrontiersPaper(url);
+        if (paper) {
+            paper.source = "frontiers";
         }
     } else {
         throw new Error("Unknown paper source: " + JSON.stringify({ is, url }));

@@ -47,6 +47,13 @@
             "venue": "cvpr"
         }
     ],
+    "frontiers": [
+        "https://www.frontiersin.org/articles/10.3389/fpace.2022.892330/full",
+        "https://www.frontiersin.org/articles/10.3389/fpace.2022.892330/pdf",
+        {
+            "noPdf": true
+        }
+    ],
     "ijcai": [
         "https://www.ijcai.org/proceedings/2020/1",
         "https://www.ijcai.org/proceedings/2020/0001.pdf",
