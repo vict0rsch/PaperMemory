@@ -235,6 +235,8 @@ const slideToggle = (el, duration = 500, complete = () => {}) => {
     }
 };
 
+const queryAll = (dom, selector) => Array.from(dom.querySelectorAll(selector));
+
 // ----------------------------------------------------
 // -----  TESTS: modules for node.js environment  -----
 // ----------------------------------------------------
@@ -260,6 +262,7 @@ if (typeof module !== "undefined" && module.exports != null) {
         slideUp,
         slideDown,
         slideToggle,
+        queryAll,
     };
 }
 

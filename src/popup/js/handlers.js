@@ -314,9 +314,9 @@ const handlePopupKeydown = (e) => {
     if (!global.state.memoryIsOpen) {
         if (key === "a") {
             // a opens the arxiv memory
-            const focused = document.querySelectorAll(":focus");
+            const focused = queryAll(document, ":focus");
             if (focused && focused.length) {
-                if (Array.from(focused).some((el) => hasClass(el, "noMemoryOnA"))) {
+                if (focused.some((el) => hasClass(el, "noMemoryOnA"))) {
                     return;
                 }
             }

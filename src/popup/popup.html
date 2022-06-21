@@ -113,6 +113,10 @@
 
 		</div>
 
+		<div>
+			<div id="warning-button" style="display: none"> ⚠️ Important Notice<br>Click here</div>
+		</div>
+
 	</div>
 
 	<div id="menu-container" style="display: none;">
@@ -428,6 +432,8 @@
 			<div id="modal-whatsnew-content" class="popup-modal-content" style="display: none;">
 				<h3 style="margin-bottom: 0px;">What's new</h3>
 				<ul>
+					<li><strong>Beta from source - WIP: </strong> 0.5.8
+					</li>
 					<li><strong>Current: </strong><a
 							href="https://github.com/vict0rsch/PaperMemory/releases/tag/0.5.7">0.5.7</a>
 						<em>(2022-06-13)</em>
@@ -783,6 +789,31 @@
 						you think you encountered a malfunction.
 					</p>
 				</ul>
+			</div>
+
+			<div id="modal-warning-pdf-title-content" class="popup-modal-content">
+				<h3>Deprecation notice: custom title function</h3>
+				<p>PaperMemory displayed a warning notification because it has detected that you are using a <span
+						style="text-decoration: underline;">custom
+						title function</span>.</p>
+				<p>If it is <em>not</em> the case, meaning you have not changed the function that produces a title from
+					a paper in your Advanced Options, you can safely ignore this warning.</p>
+				<p>If you <em><strong>do</strong></em> however use a custom title function, be aware that this
+					functionnality will be removed in version <code>0.6.0</code>.</p>
+
+				<h3>Why?</h3>
+				<p>Mostly because of safety, code quality and accessibility.</p>
+				<p>The vision for this feature is to make it modular but not code-based. Something like asking you for a
+					list of attributes you want to be part of the title and potenlially lower/upper case or
+					capitalizing.</p>
+				<p>This vision is not fully-shaped but I wanted to give you a proper heads-up to give you time to
+					adjust.
+				</p>
+
+				<h3>What should you do about it?</h3>
+				<p>If you're happy with the vision for this feature, you don't have anything to do about it.</p>
+				<p>If you want to keep the feature as is, let's go and discuss on <a
+						href="https://github.com/vict0rsch/PaperMemory/issues/109">Issue #109</a>!</p>
 			</div>
 
 		</div>

@@ -51,7 +51,7 @@ const setUpKeyboardListeners = () => {
 // -------------------------------
 
 const makeTOC = async () => {
-    const h1s = Array.from(document.querySelectorAll("h2"));
+    const h1s = queryAll(document, "h2");
     let toc = [];
     for (const h of h1s) {
         const title = h.innerText;
@@ -67,7 +67,7 @@ const makeTOC = async () => {
 // ----------------------------------------
 
 const setupCodeBlocks = async () => {
-    let codes = Array.from(document.querySelectorAll("code.trim-code"));
+    let codes = queryAll(document, "code.trim-code");
 
     for (const code of codes) {
         let lines = code.innerHTML.split("\n").filter((l) => l.trim() !== "");
