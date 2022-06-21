@@ -30,7 +30,7 @@ const parseAuthor = (page) => {
             }, 800);
         });
         let citeCounter = {};
-        Array.from(document.querySelectorAll(".gsc_a_ac.gs_ibl"))
+        queryAll(document, ".gsc_a_ac.gs_ibl")
             .map((e) => e.innerText)
             .forEach((t) => {
                 if (!citeCounter.hasOwnProperty(t)) {
@@ -39,7 +39,7 @@ const parseAuthor = (page) => {
                 citeCounter[t] += 1;
             });
         let yearCounter = {};
-        Array.from(document.querySelectorAll("#gsc_a_b .gsc_a_y"))
+        queryAll(document, "#gsc_a_b .gsc_a_y")
             .map((e) => e.innerText)
             .forEach((t) => {
                 if (!yearCounter.hasOwnProperty(t)) {
@@ -53,14 +53,12 @@ const parseAuthor = (page) => {
             .join(" ")
             .trim()
             .replace(/[^\w\s_-]/g, "");
-        const [total, h, i10] = Array.from(
-            document.querySelectorAll("#gsc_rsb_st .gsc_rsb_std")
-        )
+        const [total, h, i10] = queryAll(document, "#gsc_rsb_st .gsc_rsb_std")
             .filter((v, i) => i % 2 === 0)
             .map((e) => e.innerText);
-        const tags = Array.from(
-            document.querySelectorAll("#gsc_prf_i .gsc_prf_inta.gs_ibl")
-        ).map((a) => a.innerText.toLowerCase());
+        const tags = queryAll(document, "#gsc_prf_i .gsc_prf_inta.gs_ibl").map((a) =>
+            a.innerText.toLowerCase()
+        );
         const id = window.location.href.match(/user=(\w+)&?/)[1];
         const affiliations = document
             .querySelector("#gsc_prf_i .gsc_prf_il")
@@ -83,7 +81,7 @@ const parseAuthor = (page) => {
 const getCoauthors = (page, max = 4) => {
     return page.evaluate((max) => {
         return Promise.resolve(
-            Array.from(document.querySelectorAll("#gsc_rsb_co .gsc_rsb_a_desc a"))
+            queryAll(document, "#gsc_rsb_co .gsc_rsb_a_desc a")
                 .map((a) => a.getAttribute("href"))
                 .map((h) => h.match(/user=([\w|-|-|_]+)&?/)[1])
                 .slice(0, max)

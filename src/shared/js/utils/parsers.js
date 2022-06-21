@@ -233,9 +233,7 @@ const getMetaContent = (selectors, dom, all = false) => {
             .map(([k, v]) => `[${k}='${v}']`)
             .join("");
     if (all) {
-        return Array.from(dom.querySelectorAll(selector)).map(
-            (el) => el.getAttribute("content") ?? ""
-        );
+        return queryAll(dom, selector).map((el) => el.getAttribute("content") ?? "");
     }
     return dom.querySelector(selector)?.getAttribute("content") ?? "";
 };
@@ -279,9 +277,7 @@ const makeArxivPaper = async (url) => {
     const xmlData = await response.text();
     var doc = new DOMParser().parseFromString(xmlData.replaceAll("\n", ""), "text/xml");
 
-    const authors = Array.from(doc.querySelectorAll("author name")).map(
-        (el) => el.innerHTML
-    );
+    const authors = queryAll(doc, "author name").map((el) => el.innerHTML);
     const author = authors.join(" and ");
 
     const pdfLink = Array.from(doc.getElementsByTagName("link"))
@@ -331,10 +327,10 @@ const makeNeuripsPaper = async (url) => {
         author = flipAndAuthors(author);
         key = citationKey;
     } else {
-        const paragraphs = Array.from(dom.querySelectorAll(".container-fluid .col p"));
+        const paragraphs = queryAll(dom, ".container-fluid .col p");
 
         title = dom.getElementsByTagName("h4")[0].innerHTML;
-        const h4Authors = Array.from(document.querySelectorAll("h4")).filter(
+        const h4Authors = queryAll(document, "h4").filter(
             (h) => h.innerText === "Authors"
         )[0];
 
@@ -613,9 +609,7 @@ const makePMLRPaper = async (url) => {
 };
 
 const findACLValue = (dom, key) => {
-    const dt = Array.from(dom.querySelectorAll("dt")).filter((v) =>
-        v.innerText.includes(key)
-    )[0];
+    const dt = queryAll(dom, "dt").filter((v) => v.innerText.includes(key))[0];
     return dt.nextElementSibling.innerText;
 };
 
@@ -666,10 +660,9 @@ const makePNASPaper = async (url) => {
     const dom = await fetchDom(url);
 
     const title = dom.getElementsByTagName("h1")[0].innerText;
-    const author = Array.from(
-        dom.querySelectorAll(
-            ".authors span[property='author'] a:not([property='email']):not(.orcid-id)"
-        )
+    const author = queryAll(
+        dom,
+        ".authors span[property='author'] a:not([property='email']):not(.orcid-id)"
     )
         .filter((el) => !el.getAttribute("href").includes("mailto:"))
         .map((el) => el.innerText)
@@ -722,7 +715,7 @@ const makeNaturePaper = async (url) => {
     const dom = await fetchDom(url);
 
     const title = dom.querySelector("h1.c-article-title").innerText;
-    const author = Array.from(dom.querySelectorAll("ul.c-article-author-list li"))
+    const author = queryAll(dom, "ul.c-article-author-list li")
         .map((a) =>
             a.innerText
                 .replace(/(\ ?,)|&|…|\d/g, "")
@@ -795,7 +788,7 @@ const makeIOPPaper = async (url) => {
     url = url.split("#")[0];
     if (url.endsWith("/pdf")) url = url.slice(0, -4);
     const dom = await fetchDom(url);
-    const bibtexPath = Array.from(dom.querySelectorAll(".btn-multi-block a"))
+    const bibtexPath = queryAll(dom, ".btn-multi-block a")
         .filter((a) => a.innerText === "BibTeX")
         .map((a) => a.getAttribute("href"))[0];
     const citeUrl = `https://${parseUrl(url).host}${bibtexPath}`;
@@ -977,10 +970,9 @@ const makeACMPaper = async (url) => {
         ({ author, year, title, venue, key, doi, bibtex, note } = metaTagsData);
     } else {
         title = dom.querySelector(".citation__title").innerText;
-        author = Array.from(
-            dom.querySelectorAll(
-                "ul[ariaa-label='authors'] li.loa__item .loa__author-name"
-            )
+        author = queryAll(
+            dom,
+            "ul[ariaa-label='authors'] li.loa__item .loa__author-name"
         )
             .map((el) => el.innerText.replace(",", "").trim())
             .join(" and ");
@@ -1124,7 +1116,7 @@ const makeWileyPaper = async (url) => {
     const absLink = pdfLink.replace("/doi/pdf/", "/doi/abs/");
     const dom = await fetchDom(absLink);
 
-    const author = Array.from(dom.querySelectorAll("meta[name=citation_author]"))
+    const author = queryAll("meta[name=citation_author]")
         .map((m) => m.getAttribute("content"))
         .join(" and ");
     const venue = dom
