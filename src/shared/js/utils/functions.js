@@ -734,6 +734,19 @@ const silentPromiseTimeout = (prom, time = 5000) => {
     ]).finally(() => clearTimeout(timer));
 };
 
+const shouldWarn = async (warningName, callback = () => {}) => {
+    if (warningName === "pdf-title") {
+        const code = await getStorage("titleFunctionCode");
+        if (code && code !== global.defaultTitleFunctionCode) {
+            const warnings = (await getStorage("userWarnings")) ?? {};
+            if (!warnings[warningName]) {
+                return callback(true);
+            }
+        }
+    }
+    return callback(false);
+};
+
 if (typeof module !== "undefined" && module.exports != null) {
     var dummyModule = module;
     dummyModule.exports = {
@@ -772,5 +785,6 @@ if (typeof module !== "undefined" && module.exports != null) {
         miniHash,
         noParamUrl,
         silentPromiseTimeout,
+        shouldWarn,
     };
 }

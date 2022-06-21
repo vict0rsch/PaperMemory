@@ -788,3 +788,21 @@ button.changed {
     display: flex;
     justify-content: center;
 }
+
+#warning-button {
+    position: fixed;
+    left: 50%;
+    bottom: 12px;
+    transform: translateX(-50%);
+    text-align: center;
+    border: 3px solid orange;
+    border-radius: 6px;
+    padding: 4px 12px;
+    background: grey;
+    cursor: pointer;
+    color: white;
+}
+#warning-button:hover {
+    background-color: darkgrey;
+    border-color: rgb(255, 195, 74);
+}

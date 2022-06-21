@@ -90,6 +90,19 @@ const setStandardPopupClicks = () => {
         // button in the menu
         showPopupModal("keyboard");
     });
+    shouldWarn("pdf-title", (displayWarning) => {
+        if (displayWarning) {
+            showId("warning-button");
+            addListener("warning-button", "click", async () => {
+                // button in the menu
+                showPopupModal("warning-pdf-title");
+                let warnings = (await getStorage("userWarnings")) ?? {};
+                warnings["pdf-title"] = true;
+                setStorage("userWarnings", warnings);
+                hideId("warning-button");
+            });
+        }
+    });
     addListener("close-popup-modal", "click", () => {
         style("popup-modal-wrapper", "display", "none");
     });
