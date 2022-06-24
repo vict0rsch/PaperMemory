@@ -46,6 +46,6 @@
     "uuid": "^8.3.2"
   },
   "dependencies": {
-    "puppeteer": "^14.0.0"
+    "puppeteer": "^15.0.0"
   }
 }
