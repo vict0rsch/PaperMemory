@@ -1392,9 +1392,8 @@ const trySemanticScholar = async (paper) => {
                         .replace(/^\d{4}/, "")
                         .trim()
                         .capitalize(true);
-                    const year = match.year + "";
+                    const year = (match.year + "").trim();
                     const note = `Accepted @ ${venue} (${year}) -- [semanticscholar.org]`;
-                    venue = venue.toLowerCase();
                     const authors = match.authors.map((a) => a.name).join(" and ");
                     let doi = match.externalIds.DOI;
                     if (doi) {
