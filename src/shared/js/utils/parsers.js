@@ -1421,14 +1421,20 @@ const trySemanticScholar = async (paper) => {
     }
 };
 
+const tryGoogleScholar = async (paper) => {
+    const resp = await sendMessageToBackground({ type: "google-scholar", paper });
+    return resp;
+};
+
 const tryPreprintMatch = async (paper, tryPwc = false) => {
     let note, venue, bibtex, code;
     let matches = {};
 
-    let names = ["DBLP", "SemanticScholar", "CrossRef"];
+    let names = ["DBLP", "SemanticScholar", "CrossRef", "GoogleScholar"];
     let matchPromises = [
         silentPromiseTimeout(tryDBLP(paper)),
         silentPromiseTimeout(trySemanticScholar(paper)),
+        silentPromiseTimeout(tryGoogleScholar(paper)),
         silentPromiseTimeout(tryCrossRef(paper)),
     ];
 
