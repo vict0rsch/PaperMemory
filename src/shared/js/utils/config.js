@@ -14,7 +14,7 @@ Object.defineProperty(String.prototype, "capitalize", {
             return this.split(" ")
                 .map((s) => s.capitalize())
                 .join(" ");
-        return this.charAt(0).toUpperCase() + this.slice(1);
+        return this.charAt(0).toUpperCase() + this.slice(1).toLowerCase();
     },
 });
 

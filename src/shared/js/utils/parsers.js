@@ -1392,9 +1392,8 @@ const trySemanticScholar = async (paper) => {
                         .replace(/^\d{4}/, "")
                         .trim()
                         .capitalize(true);
-                    const year = match.year + "";
+                    const year = (match.year + "").trim();
                     const note = `Accepted @ ${venue} (${year}) -- [semanticscholar.org]`;
-                    venue = venue.toLowerCase();
                     const authors = match.authors.map((a) => a.name).join(" and ");
                     let doi = match.externalIds.DOI;
                     if (doi) {
@@ -1422,14 +1421,20 @@ const trySemanticScholar = async (paper) => {
     }
 };
 
+const tryGoogleScholar = async (paper) => {
+    const resp = await sendMessageToBackground({ type: "google-scholar", paper });
+    return resp;
+};
+
 const tryPreprintMatch = async (paper, tryPwc = false) => {
     let note, venue, bibtex, code;
     let matches = {};
 
-    let names = ["DBLP", "SemanticScholar", "CrossRef"];
+    let names = ["DBLP", "SemanticScholar", "CrossRef", "GoogleScholar"];
     let matchPromises = [
         silentPromiseTimeout(tryDBLP(paper)),
         silentPromiseTimeout(trySemanticScholar(paper)),
+        silentPromiseTimeout(tryGoogleScholar(paper)),
         silentPromiseTimeout(tryCrossRef(paper)),
     ];
 
@@ -1658,46 +1663,47 @@ const findFuzzyPaperMatch = (hashes, paper) => {
 if (typeof module !== "undefined" && module.exports != null) {
     var dummyModule = module;
     dummyModule.exports = {
+        autoTagPaper,
         decodeHtml,
-        flipAuthor,
-        flipAndAuthors,
         fetchArxivXML,
+        fetchCrossRefDataForDoi,
         fetchCvfHTML,
-        fetchOpenReviewNoteJSON,
-        fetchOpenReviewForumJSON,
         fetchDom,
+        fetchOpenReviewForumJSON,
+        fetchOpenReviewNoteJSON,
+        fetchSemanticsScholarDataForDoi,
         fetchText,
-        makeArxivPaper,
-        makeNeuripsPaper,
-        makeCVFPaper,
-        makeOpenReviewBibTex,
-        makeOpenReviewPaper,
-        makeBioRxivPaper,
-        makePMLRPaper,
         findACLValue,
+        findFuzzyPaperMatch,
+        flipAndAuthors,
+        flipAuthor,
+        initPaper,
         makeACLPaper,
-        makePNASPaper,
-        makeNaturePaper,
+        makeACMPaper,
         makeACSPaper,
+        makeAPSPaper,
+        makeArxivPaper,
+        makeBioRxivPaper,
+        makeCVFPaper,
+        makeIEEEPaper,
+        makeIJCAIPaper,
         makeIOPPaper,
         makeJMLRPaper,
+        makeNaturePaper,
+        makeNeuripsPaper,
+        makeOpenReviewBibTex,
+        makeOpenReviewPaper,
+        makePaper,
         makePMCPaper,
+        makePMLRPaper,
+        makePNASPaper,
         makePubMedPaper,
-        makeIJCAIPaper,
-        makeACMPaper,
-        makeIEEEPaper,
         makeSpringerPaper,
-        makeAPSPaper,
         makeWileyPaper,
         tryCrossRef,
         tryDBLP,
         tryPreprintMatch,
         tryPWCMatch,
-        initPaper,
-        autoTagPaper,
-        makePaper,
-        findFuzzyPaperMatch,
-        fetchCrossRefDataForDoi,
-        fetchSemanticsScholarDataForDoi,
+        trySemanticScholar,
     };
 }

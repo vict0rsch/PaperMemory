@@ -37,6 +37,47 @@ const urlIsAKnownPdfSource = (url) => {
     return pdfPages.some((p) => url.includes(p));
 };
 
+const fetchGSData = async (paper) => {
+    try {
+        var resultsDom = await fetchDom(
+            `https://scholar.google.com/scholar?q=${encodeURI(paper.title)}&hl=en`
+        );
+        const result = queryAll(resultsDom, "#gs_res_ccl_mid h3.gs_rt")
+            .map((h3, idx) => [
+                miniHash(h3.innerText.toLowerCase().replace("[pdf]", "")),
+                idx,
+            ])
+            .find(([mh3, idx]) => mh3 === miniHash(paper.title));
+        const dataId = resultsDom
+            .querySelector(".gs_r.gs_or.gs_scl")
+            ?.getAttribute("data-aid");
+        if (result && dataId) {
+            const [, idx] = result;
+            const citeDom = await fetchDom(
+                `https://scholar.google.fr/scholar?q=info:${dataId}:scholar.google.com/&output=cite&scirp=0&hl=en`
+            );
+            const bibURL = queryAll(citeDom, "a.gs_citi")
+                .find((a) => a.innerText.toLowerCase() === "bibtex")
+                ?.getAttribute("href");
+            if (bibURL) {
+                const bibtex = await fetchText(bibURL);
+                const venue = bibtexToObject(bibtex)?.journal;
+                if (
+                    venue &&
+                    !venue.toLowerCase().includes("arxiv") &&
+                    !venue.toLowerCase().includes("preprint")
+                ) {
+                    const note = `Accepted @ ${venue} -- [scholar.google.com]`;
+                    return { venue, note, bibtex: bibtexToString(bibtex) };
+                }
+            }
+        }
+        return { note: null };
+    } catch (error) {
+        logError("[GoogleScholar]", error);
+    }
+};
+
 const fetchPWCData = async (arxivId, title) => {
     let pwcPath = `https://paperswithcode.com/api/v1/papers/?`;
     if (arxivId) {
@@ -131,6 +172,8 @@ chrome.runtime.onMessage.addListener((payload, sender, sendResponse) => {
         sendResponse(sender.tab.id);
     } else if (payload.type === "papersWithCode") {
         findCodesForPaper(payload).then(sendResponse);
+    } else if (payload.type === "google-scholar") {
+        fetchGSData(payload.paper).then(sendResponse);
     } else if (payload.type === "download-pdf-to-store") {
         getStoredFiles().then((storedFiles) => {
             if (storedFiles.length === 0) {
