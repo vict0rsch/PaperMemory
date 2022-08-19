@@ -428,3 +428,27 @@ input {
         opacity: 0.6;
     }
 }
+
+/*
+---------------------
+-----  SYNCING  -----
+---------------------
+*/
+
+#pat-input {
+    margin-left: 1rem;
+    width: 350px;
+}
+#save-pat {
+    margin-left: 1rem;
+    background-color: rgb(27, 159, 7);
+    color: rgb(223, 223, 223);
+}
+#delete-pat {
+    margin-left: 2rem;
+    background-color: rgb(196, 18, 18);
+    color: rgb(223, 223, 223);
+}
+#pat-feedback {
+    color: rgb(150, 102, 13);
+}

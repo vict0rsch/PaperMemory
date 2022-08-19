@@ -902,6 +902,36 @@ const setupSourcesSelection = async () => {
     }
 };
 
+// ---------------------
+// -----  SYNCING  -----
+// ---------------------
+
+const setupSync = () => {
+    addListener("save-pat", "click", async () => {
+        const pat = val("pat-input");
+        console.log(pat);
+        if (!pat) {
+            setHTML("pat-feedback", "Invalid PAT");
+            return;
+        }
+        const githubGist = new GithubGist.default({
+            personalAccessToken: pat,
+            appIdentifier: "PaperMemorySync",
+            isPublic: false,
+        });
+        try {
+            await githubGist.touch();
+
+            console.log("Gist ID", githubGist.id);
+            console.log("Github Owner Username", githubGist.ownerUsername);
+        } catch (e) {
+            // gist initialization failed.
+            console.log(e);
+            setHTML("pat-feedback", e);
+        }
+    });
+};
+
 // ----------------------------
 // -----  Document Ready  -----
 // ----------------------------
@@ -918,4 +948,5 @@ const setupSourcesSelection = async () => {
     setupSourcesSelection();
     setupTitleFunction();
     setupDataManagement();
+    setupSync();
 })();
