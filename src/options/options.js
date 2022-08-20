@@ -972,6 +972,7 @@ const setupSync = async () => {
                     "  3. Abort this procedure.\n"
             );
             if (userChoice !== "1" && userChoice !== "2") {
+                hideId("sync-loader");
                 return;
             }
         }
@@ -1013,6 +1014,8 @@ const setupSync = async () => {
                         );
                     }
                     await setStorage("papers", papersToWrite);
+                    setStorage("syncState", true);
+                    alert("Synced!");
                 } else {
                     setHTML("overwriteRemoteFeedback", message);
                 }
