@@ -163,6 +163,25 @@ const findCodesForPaper = async (request) => {
     return { ...codes[0], ...code };
 };
 
+const writeSyncPapers = async () => {
+    let success = false;
+    const { ok, error, payload } = await getGist();
+    if (ok) {
+        console.log("Writing to Github...");
+        const papers = (await getStorage("papers")) ?? {};
+        const dataFile = getDataFile(payload.gist);
+        dataFile.overwrite(JSON.stringify(papers, null, ""));
+        await dataFile.save();
+        console.log("Writing to Github... Done!");
+        success = true;
+    } else {
+        console.warn(payload);
+        error && console.warn(error);
+        console.log("Writing to Github canceled.");
+    }
+    return success;
+};
+
 chrome.runtime.onMessage.addListener((payload, sender, sendResponse) => {
     if (payload.type === "update-title") {
         const { title, url } = payload.options;
@@ -190,6 +209,8 @@ chrome.runtime.onMessage.addListener((payload, sender, sendResponse) => {
         });
     } else if (payload.type === "hello") {
         sendResponse("Connection to background script established.");
+    } else if (payload.type === "writeSync") {
+        writeSyncPapers().then(sendResponse);
     }
     return true;
 });
@@ -257,6 +278,16 @@ chrome.commands.onCommand.addListener((command) => {
                     warn("Unknown paper id:", id);
                 }
             }
+        });
+    }
+});
+
+chrome.runtime.onConnect.addListener(function (port) {
+    if (port.name === "PaperMemorySync") {
+        console.log("PaperMemorySync connected.");
+        port.onDisconnect.addListener(async function () {
+            console.log("PaperMemorySync: popup has been closed");
+            await writeSyncPapers();
         });
     }
 });

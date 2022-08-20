@@ -298,7 +298,11 @@ const query = { active: true, lastFocusedWindow: true };
 if (window.location.href.includes("popup")) {
     chrome.tabs.query(query, async (tabs) => {
         const url = tabs[0].url;
-        await initState();
+        const remotePapers = await initSync();
+        await initState(remotePapers);
+        if (remotePapers) {
+            // setStorage("papers", remotePapers);
+        }
 
         const is = await isPaper(url);
         const isKnown = Object.values(is).some((i) => i);

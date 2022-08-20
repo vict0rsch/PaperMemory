@@ -444,6 +444,29 @@ input {
     background-color: rgb(27, 159, 7);
     color: rgb(223, 223, 223);
 }
+#save-pat:hover {
+    color: white;
+}
 #pat-feedback {
     color: rgb(150, 102, 13);
+}
+
+@keyframes rotation {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(359deg);
+    }
+}
+
+.pm-loader {
+    animation: rotation 1.3s infinite linear;
+    height: 50px;
+    width: 50px;
+    border-left: 4px dotted salmon;
+    border-radius: 100%;
+    margin: auto;
+    margin-top: 1rem;
+    margin-bottom: 1rem;
 }

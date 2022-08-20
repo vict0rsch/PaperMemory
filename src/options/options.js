@@ -907,7 +907,9 @@ const setupSourcesSelection = async () => {
 // ---------------------
 
 const setupSync = async () => {
+    showId("pat-loader");
     const { ok, payload, error } = await getGist();
+    hideId("pat-loader");
 
     if (!ok) {
         if (error) {
@@ -920,6 +922,8 @@ const setupSync = async () => {
     }
 
     addListener("save-pat", "click", async () => {
+        console.log("Attempting to store Github PAT");
+        showId("pat-loader");
         const pat = val("pat-input");
         if (!pat) {
             setHTML("pat-feedback", "Invalid PAT");
@@ -937,6 +941,7 @@ const setupSync = async () => {
             setHTML("pat-feedback", "Ok! Token is valid.");
             showSync();
         }
+        hideId("pat-loader");
     });
 
     addListener("stop-gh-sync", "click", async () => {
@@ -947,6 +952,7 @@ const setupSync = async () => {
         val("pat-input", pat);
     });
     addListener("start-gh-sync", "click", async () => {
+        showId("sync-loader");
         const { ok, payload, error } = await getGist();
         if (!ok) {
             alert("Your Personal Access Token is invalid.\n\n" + (error ?? ""));
@@ -954,11 +960,67 @@ const setupSync = async () => {
         }
         const { gist } = payload;
         const dataFile = getDataFile(gist);
-        const papersString = JSON.stringify(global.state.papers, null, "");
-        console.log("dataFile: ", dataFile);
-        dataFile.overwrite(papersString);
-        await dataFile.save();
-        alert("Synced!");
+        let userChoice;
+        if (dataFile.content) {
+            console.log("Existing data file content:", dataFile.content);
+            userChoice = prompt(
+                "You seem to already have a synced Memory. What do you want to do?\n\n" +
+                    "  1. Overwrite your LOCAL data with the REMOTE data" +
+                    " (a copy of your local data will be saved just in case)?\n" +
+                    "  2. Overwrite your REMOTE data with the LOCAL data" +
+                    " (a copy of your remote data will be saved just in case)?\n" +
+                    "  3. Abort this procedure.\n"
+            );
+            if (userChoice !== "1" && userChoice !== "2") {
+                return;
+            }
+        }
+        try {
+            if (userChoice === "2" || typeof userChoice === "undefined") {
+                if (userChoice) {
+                    const now = new Date();
+                    const date = now.toLocaleDateString().replaceAll("/", ".");
+                    const time = now.toLocaleTimeString().replaceAll(":", ".");
+                    downloadTextFile(
+                        JSON.stringify(dataFile.content),
+                        `PaperMemory-remote-data-backup-${date}-${time}.json`,
+                        "text/json"
+                    );
+                }
+                const papersString = JSON.stringify(global.state.papers, null, "");
+                console.log("dataFile: ", dataFile);
+                dataFile.overwrite(papersString);
+                await dataFile.save();
+                setStorage("syncState", true);
+                alert("Synced!");
+            } else if (userChoice === "1") {
+                dispatch("download-arxivmemory", "click");
+                const remotePapers = dataFile.content;
+                const { success, message, warning, papersToWrite } =
+                    await prepareOverwriteData(remotePapers);
+                if (success) {
+                    if (warning) {
+                        const nWarnings = (warning.match(/<br\/>/g) ?? []).length;
+                        setHTML(
+                            "overwriteRemoteFeedback",
+                            `<h5 class="errorTitle">Done with ${nWarnings} non-breaking warnings.</h5>${warning}`
+                        );
+                    } else {
+                        style("overwriteRemoteFeedback", "text-align", "center");
+                        setHTML(
+                            "overwriteRemoteFeedback",
+                            `<h5 class="mb-0 mt-2">Data is valid. Overwriting</h5>`
+                        );
+                    }
+                    await setStorage("papers", papersToWrite);
+                } else {
+                    setHTML("overwriteRemoteFeedback", message);
+                }
+            }
+        } catch (e) {
+            setHTML("overwriteRemoteFeedback", e);
+        }
+        hideId("sync-loader");
     });
 };
 
