@@ -455,10 +455,27 @@
                 <input name="pat-input" id="pat-input" type="text"
                     placeholder="ghp_0IurqH9T1wj0E1E3YuroyvykuYI17Rl5hdN9" />
                 <input id="save-pat" type="button" value="Save">
-                <input id="delete-pat" type="button" value="Delete">
                 <div>
                     <p id="pat-feedback">
                     </p>
+                </div>
+                <div id="start-sync" class="row" style="display: none;">
+                    <h4>Start syncing your data to Github?</h4>
+                    <p>
+                        Your data sill be stored as a Gist on your personal github account. Do <strong>not</strong> edit
+                        that file manually or you may corrupt your whole data.
+                    </p>
+                    <p>In case anything goes wrong, we'll still download a backup locally</p>
+                    <p><input id="start-gh-sync" type="button" value="Start Github synchronization" /></p>
+
+                </div>
+                <div id="stop-sync" class="row" style="display: none;">
+                    <h4>STOP syncing your data to Github?</h4>
+                    <p>
+                        The Gist will not be deleted, but changes to your Memory will not be synced anymore.
+                    </p>
+                    <p><input id="stop-gh-sync" type="button" value="Stop ()[Github] synchronization" /></p>
+
                 </div>
             </div>
         </div>

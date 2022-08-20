@@ -27,3 +27,12 @@ const getGist = async (pat, store = true) => {
         };
     }
 };
+
+const getDataFile = (gist) => {
+    let dataFile = gist.getFile("PaperMemory-sync-data.json");
+    if (!dataFile) {
+        gist.createFile("PaperMemory-sync-data.json");
+        dataFile = gist.getFile("PaperMemory-sync-data.json");
+    }
+    return dataFile;
+};

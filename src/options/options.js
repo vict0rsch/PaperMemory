@@ -906,30 +906,69 @@ const setupSourcesSelection = async () => {
 // -----  SYNCING  -----
 // ---------------------
 
-const setupSync = () => {
+const setupSync = async () => {
+    const { ok, payload, error } = await getGist();
+
+    if (!ok) {
+        if (error) {
+            setHTML("pat-feedback", "Invalid PAT" + "<br/><br/>" + error);
+        }
+    } else {
+        const { gist, pat } = payload;
+        val("pat-input", pat);
+        await showSync();
+    }
+
     addListener("save-pat", "click", async () => {
         const pat = val("pat-input");
-        console.log(pat);
         if (!pat) {
             setHTML("pat-feedback", "Invalid PAT");
             return;
         }
-        const githubGist = new GithubGist.default({
-            personalAccessToken: pat,
-            appIdentifier: "PaperMemorySync",
-            isPublic: false,
-        });
-        try {
-            await githubGist.touch();
-
-            console.log("Gist ID", githubGist.id);
-            console.log("Github Owner Username", githubGist.ownerUsername);
-        } catch (e) {
-            // gist initialization failed.
+        const { ok, payload, error } = await getGist(pat);
+        if (payload === "wrongPat") {
             console.log(e);
             setHTML("pat-feedback", e);
+        } else {
+            const { gist, pat } = payload;
+            console.log("Gist ID", gist.id);
+            console.log("Github Owner Username", gist.ownerUsername);
+            console.log("Personal Access Token", pat);
+            setHTML("pat-feedback", "Ok! Token is valid.");
+            showSync();
         }
     });
+
+    addListener("stop-gh-sync", "click", async () => {
+        const c = confirm("Are you sure you want to stop syncing to Github?");
+        if (!c) return;
+        const pat = "";
+        setStorage("syncPAT", pat);
+        val("pat-input", pat);
+    });
+    addListener("start-gh-sync", "click", async () => {
+        const { ok, payload, error } = await getGist();
+        if (!ok) {
+            alert("Your Personal Access Token is invalid.\n\n" + (error ?? ""));
+            return;
+        }
+        const { gist } = payload;
+        const dataFile = getDataFile(gist);
+        const papersString = JSON.stringify(global.state.papers, null, "");
+        console.log("dataFile: ", dataFile);
+        dataFile.overwrite(papersString);
+        await dataFile.save();
+        alert("Synced!");
+    });
+};
+
+const showSync = async () => {
+    const syncState = await getStorage("syncState");
+    if (!syncState) {
+        showId("start-sync");
+    } else {
+        showId("stop-sync");
+    }
 };
 
 // ----------------------------
