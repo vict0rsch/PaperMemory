@@ -450,13 +450,14 @@
             <p>How it works:</p>
             <ul>
                 <li>Your Memory data gets written to a <code>.json</code> file as a gist on your Github account (<a
-                        href="https://github.com/about/gists" target="_blank" rel="noopener noreferrer">read about
+                        href="https://docs.github.com/en/get-started/writing-on-github/editing-and-sharing-content-with-gists/creating-gists#about-gists"
+                        target="_blank" rel="noopener noreferrer">read about
                         gists</a>)</li>
                 <li>Although it is non-discoverable, your gist data is still accessible to someone you'd give the link
                     to</li>
                 <li>The synchronization happens in 2 stages:
                     <ul>
-                        <li><em>Push</em>&nbsp;: when you close the Popup or a paper gets added to the memory, the
+                        <li><em>Push</em>&nbsp;: when you close the Popup or when a paper gets added to the memory, the
                             remote gist
                             gets overwritten</li>
                         <li><em>Pull</em>&nbsp;: when you open the popup or before a paper gets added, the remote gist
@@ -476,8 +477,17 @@
 
             <h4>Syncing</h4>
 
-            <p><a href="https://github.com/settings/tokens/new?scopes=gist">Generate new Github Personal Access
-                    Token</a></p>
+            <p>PaperMemory relies on Github's <em>Personal Access Tokens</em> which you can easily generate from your
+                Github
+                account. Make sure
+            <ol>
+                <li>It has no expiration date</li>
+                <li>The <code>gist</code> scope is selected</li>
+            </ol>
+            You can revoke the token later at any time. Click <a
+                href="https://github.com/settings/tokens/new?scopes=gist" target="_blank"
+                rel="noopener noreferrer">here</a> to generate a new token.
+            </p>
 
             <div>
                 <label for="pat-input">Github Personal Access Token:</label>
@@ -492,7 +502,8 @@
                 <div id="start-sync" class="row" style="display: none;">
                     <h5>Start syncing your data to Github?</h5>
                     <p>
-                        Your data sill be stored as a Gist on your personal github account. Do <strong>not</strong> edit
+                        Your data sill be stored as a Gist on your personal github account. Do <strong>not</strong>
+                        edit
                         that file manually or you may corrupt your whole data.
                     </p>
                     <p>In case anything goes wrong, we'll still download a backup locally</p>
