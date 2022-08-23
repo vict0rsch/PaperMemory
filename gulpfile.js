@@ -36,11 +36,11 @@ function utilsJS() {
         src([
             "src/shared/js/utils/miniquery.js",
             "src/shared/js/utils/config.js",
-            "src/shared/js/utils/gist.js",
-            "src/shared/js/utils/sync.js",
             "src/shared/js/utils/levenshtein.js",
             "src/shared/js/utils/bibtexParser.js",
             "src/shared/js/utils/functions.js",
+            "src/shared/js/utils/gist.js",
+            "src/shared/js/utils/sync.js",
             "src/shared/js/utils/data.js",
             "src/shared/js/utils/paper.js",
             "src/shared/js/utils/state.js",

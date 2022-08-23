@@ -918,7 +918,7 @@ const setupSync = async () => {
     } else {
         const { gist, pat } = payload;
         val("pat-input", pat);
-        await showSync();
+        await toggleSync();
     }
 
     addListener("save-pat", "click", async () => {
@@ -930,16 +930,16 @@ const setupSync = async () => {
             return;
         }
         const { ok, payload, error } = await getGist(pat);
-        if (payload === "wrongPat") {
-            console.log(e);
-            setHTML("pat-feedback", e);
+        if (!ok) {
+            console.log(error);
+            setHTML("pat-feedback", error.response.data.message);
         } else {
             const { gist, pat } = payload;
             console.log("Gist ID", gist.id);
             console.log("Github Owner Username", gist.ownerUsername);
             console.log("Personal Access Token", pat);
             setHTML("pat-feedback", "Ok! Token is valid.");
-            showSync();
+            toggleSync();
         }
         hideId("pat-loader");
     });
@@ -950,7 +950,10 @@ const setupSync = async () => {
         const pat = "";
         setStorage("syncPAT", pat);
         val("pat-input", pat);
+        await sendMessageToBackground({ type: "reSync" });
+        toggleSync();
     });
+
     addListener("start-gh-sync", "click", async () => {
         showId("sync-loader");
         const { ok, payload, error } = await getGist();
@@ -992,8 +995,7 @@ const setupSync = async () => {
                 console.log("dataFile: ", dataFile);
                 dataFile.overwrite(papersString);
                 await dataFile.save();
-                setStorage("syncState", true);
-                alert("Synced!");
+                await setSyncOk();
             } else if (userChoice === "1") {
                 dispatch("download-arxivmemory", "click");
                 const remotePapers = dataFile.content;
@@ -1004,7 +1006,7 @@ const setupSync = async () => {
                         const nWarnings = (warning.match(/<br\/>/g) ?? []).length;
                         setHTML(
                             "overwriteRemoteFeedback",
-                            `<h5 class="errorTitle">Done with ${nWarnings} non-breaking warnings.</h5>${warning}`
+                            `<h5 class="errorTitle">Done with ${nWarnings} non-breaking warnings.</h5>${warning}<br/><br/>`
                         );
                     } else {
                         style("overwriteRemoteFeedback", "text-align", "center");
@@ -1014,8 +1016,7 @@ const setupSync = async () => {
                         );
                     }
                     await setStorage("papers", papersToWrite);
-                    setStorage("syncState", true);
-                    alert("Synced!");
+                    await setSyncOk();
                 } else {
                     setHTML("overwriteRemoteFeedback", message);
                 }
@@ -1023,16 +1024,25 @@ const setupSync = async () => {
         } catch (e) {
             setHTML("overwriteRemoteFeedback", e);
         }
+        await sendMessageToBackground({ type: "reSync" });
         hideId("sync-loader");
     });
 };
 
-const showSync = async () => {
+const setSyncOk = async () => {
+    setStorage("syncState", true);
+    await toggleSync();
+    alert("Synced!");
+};
+
+const toggleSync = async () => {
     const syncState = await getStorage("syncState");
     if (!syncState) {
         showId("start-sync");
+        hideId("stop-sync");
     } else {
         showId("stop-sync");
+        hideId("start-sync");
     }
 };
 
@@ -1041,7 +1051,7 @@ const showSync = async () => {
 // ----------------------------
 
 (async () => {
-    await initState();
+    await initSyncAndState();
     makeTOC();
     setupCodeBlocks();
     setupPWCPrefs();

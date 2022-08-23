@@ -543,6 +543,7 @@ const addOrUpdatePaper = async (
     chrome.storage.local.set({ papers: global.state.papers }, async () => {
         // tell the content script the paper has been parsed/updated
         contentScriptCallbacks["update"](paper);
+        pushToRemote();
 
         let notifText;
         if (isNew || pwc.codeLink) {
@@ -604,6 +605,7 @@ const addOrUpdatePaper = async (
         }
         // tell the content script the pre-print matching procedure has finished
         contentScriptCallbacks["preprints"](paper);
+        pushToRemote();
 
         info(`Done processing paper (${(Date.now() - aouStart) / 1000}s).`);
         console.groupEnd();

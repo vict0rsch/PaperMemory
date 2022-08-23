@@ -443,9 +443,38 @@
         <hr>
 
         <div class="section">
-            <h2>Online synchronization</h2>
+            <h2 id="online-synchronization">Online synchronization</h2>
 
-            <p>Explain</p>
+            <h4>About synchronization</h4>
+
+            <p>How it works:</p>
+            <ul>
+                <li>Your Memory data gets written to a <code>.json</code> file as a gist on your Github account (<a
+                        href="https://github.com/about/gists" target="_blank" rel="noopener noreferrer">read about
+                        gists</a>)</li>
+                <li>Although it is non-discoverable, your gist data is still accessible to someone you'd give the link
+                    to</li>
+                <li>The synchronization happens in 2 stages:
+                    <ul>
+                        <li><em>Push</em>&nbsp;: when you close the Popup or a paper gets added to the memory, the
+                            remote gist
+                            gets overwritten</li>
+                        <li><em>Pull</em>&nbsp;: when you open the popup or before a paper gets added, the remote gist
+                            is
+                            downloaded and overwrites your local Memory</li>
+                    </ul>
+                </li>
+                <li>This is all very alpha!</li>
+            </ul>
+
+            <p>Syncing is meant for <em>sequential</em> use across multiple devices.</p>
+
+            <p>Syncing does <strong>NOT</strong> turn PaperMemory into a multi-user tool: in its current state,
+                PaperMemory will NOT handle
+                conflicts or concurrent writes
+                to the remote data. Any conflict will result in potential loss of data.</p>
+
+            <h4>Syncing</h4>
 
             <p><a href="https://github.com/settings/tokens/new?scopes=gist">Generate new Github Personal Access
                     Token</a></p>
@@ -461,7 +490,7 @@
                     </p>
                 </div>
                 <div id="start-sync" class="row" style="display: none;">
-                    <h4>Start syncing your data to Github?</h4>
+                    <h5>Start syncing your data to Github?</h5>
                     <p>
                         Your data sill be stored as a Gist on your personal github account. Do <strong>not</strong> edit
                         that file manually or you may corrupt your whole data.
@@ -476,7 +505,7 @@
 
                 </div>
                 <div id="stop-sync" class="row" style="display: none;">
-                    <h4>STOP syncing your data to Github?</h4>
+                    <h5>STOP syncing your data to Github?</h5>
                     <p>
                         The Gist will not be deleted, but changes to your Memory will not be synced anymore.
                     </p>

@@ -2,6 +2,24 @@ var paperTitles = {};
 var MAX_TITLE_UPDATES = 100;
 var tabStatuses = {};
 
+const shouldSync = async () => !!(await getStorage("syncState"));
+
+const initSync = async () => {
+    if (!(await shouldSync())) {
+        log("Sync disabled.");
+        return;
+    }
+    const { ok, error, payload } = await getGist();
+    if (ok) {
+        global.state.gist = payload.gist;
+        global.state.gistDataFile = await getDataFile(global.state.gist);
+    } else {
+        logError("[initSync]", error);
+    }
+};
+
+initSync();
+
 const setFaviconCode = `
 var link;
 if (window.location.href.startsWith("file://")){
@@ -163,23 +181,29 @@ const findCodesForPaper = async (request) => {
     return { ...codes[0], ...code };
 };
 
-const writeSyncPapers = async () => {
-    let success = false;
-    const { ok, error, payload } = await getGist();
-    if (ok) {
+const pullSyncPapers = async () => {
+    if (!(await shouldSync())) return;
+    try {
+        log("Pulling from Github...");
+        await global.state.gistDataFile.fetchLatest();
+        info("Pulling from Github... Done!");
+        return global.state.gistDataFile.content;
+    } catch (e) {
+        logError("[pullSyncPapers]", e);
+    }
+};
+
+const pushSyncPapers = async () => {
+    if (!(await shouldSync())) return;
+    try {
         console.log("Writing to Github...");
         const papers = (await getStorage("papers")) ?? {};
-        const dataFile = getDataFile(payload.gist);
-        dataFile.overwrite(JSON.stringify(papers, null, ""));
-        await dataFile.save();
+        global.state.gistDataFile.overwrite(JSON.stringify(papers, null, ""));
+        await global.state.gistDataFile.save();
         console.log("Writing to Github... Done!");
-        success = true;
-    } else {
-        console.warn(payload);
-        error && console.warn(error);
-        console.log("Writing to Github canceled.");
+    } catch (e) {
+        logError("[pushSyncPapers]", e);
     }
-    return success;
 };
 
 chrome.runtime.onMessage.addListener((payload, sender, sendResponse) => {
@@ -210,7 +234,11 @@ chrome.runtime.onMessage.addListener((payload, sender, sendResponse) => {
     } else if (payload.type === "hello") {
         sendResponse("Connection to background script established.");
     } else if (payload.type === "writeSync") {
-        writeSyncPapers().then(sendResponse);
+        pushSyncPapers().then(sendResponse);
+    } else if (payload.type === "pullSync") {
+        pullSyncPapers(payload.gist).then(sendResponse);
+    } else if (payload.type === "reSync") {
+        initSync().then(sendResponse);
     }
     return true;
 });
@@ -287,7 +315,7 @@ chrome.runtime.onConnect.addListener(function (port) {
         console.log("PaperMemorySync connected.");
         port.onDisconnect.addListener(async function () {
             console.log("PaperMemorySync: popup has been closed");
-            await writeSyncPapers();
+            await pushSyncPapers();
         });
     }
 });

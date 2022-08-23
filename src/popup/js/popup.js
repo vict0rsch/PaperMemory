@@ -153,7 +153,7 @@ const popupMain = async (url, is, manualTrigger = false) => {
         // but update the current state and rebuild the Memory's HTML
         hideId("memory-switch");
         showId("memory-spinner");
-        await initState();
+        await initSyncAndState();
         hideId("memory-spinner");
         showId("memory-switch");
         makeMemoryHTML();
@@ -297,12 +297,10 @@ const popupMain = async (url, is, manualTrigger = false) => {
 const query = { active: true, lastFocusedWindow: true };
 if (window.location.href.includes("popup")) {
     chrome.tabs.query(query, async (tabs) => {
+        chrome.runtime.connect({ name: "PaperMemorySync" });
         const url = tabs[0].url;
-        const remotePapers = await initSync();
-        await initState(remotePapers);
-        if (remotePapers) {
-            // setStorage("papers", remotePapers);
-        }
+
+        await initSyncAndState();
 
         const is = await isPaper(url);
         const isKnown = Object.values(is).some((i) => i);

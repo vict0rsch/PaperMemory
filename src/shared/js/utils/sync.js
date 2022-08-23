@@ -21,7 +21,8 @@ const getGist = async (pat, store = true) => {
         store && (await setStorage("syncPAT", pat));
         return { ok: true, payload: { gist: githubGist, pat } };
     } catch (e) {
-        console.log(e);
+        console.log(e.response.data.message);
+        warn("Because of the error ^ syncing is now disabled.");
         setStorage("syncState", false);
         return {
             ok: false,
@@ -40,39 +41,18 @@ const getDataFile = (gist) => {
     return dataFile;
 };
 
-const initSync = async () => {
-    const shouldSync = await getStorage("syncState");
-    if (!shouldSync) return;
-    const { ok, error, payload } = await getGist();
-    if (ok) {
-        global.state.gist = payload.gist;
-        global.state.remoteFile = await getDataFile(global.state.gist);
-        chrome.runtime.connect({ name: "PaperMemorySync" });
-        return await pullFromRemote();
-    }
-};
-
 const pushToRemote = () => {
     sendMessageToBackground({ type: "writeSync" });
 };
 
-const pullFromRemote = async (gist) => {
-    let ok, error;
-    if (gist) {
-        ok = true;
-        error = null;
-    } else {
-        ({ ok, error, payload } = await getGist());
-        if (ok) ({ gist } = payload);
-    }
-    if (ok) {
-        log("Pulling from Github...");
-        await global.state.remoteFile.fetchLatest();
-        info("Pulling from Github... Done!");
-        return JSON.parse(global.state.remoteFile.content);
-    } else {
-        warn(payload);
-        error && warn(error);
-        warn("Pulling from Github canceled.");
+const pullFromRemote = () => sendMessageToBackground({ type: "pullSync" });
+
+const initSyncAndState = async (papers, isContentScript = false) => {
+    const remotePapers = await pullFromRemote();
+    console.log("remotePapers: ", remotePapers);
+    await initState(remotePapers ?? papers, isContentScript);
+    if (remotePapers) {
+        log("Successfully pulled from Github.");
+        setStorage("papers", global.state.papers);
     }
 };

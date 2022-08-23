@@ -27,7 +27,7 @@ const autoRefresh = () => {
 };
 
 (async () => {
-    await initState();
+    await initSyncAndState();
     makeMemoryHTML();
     addListener("memory-search-clear-icon", "click", handleClearSearch);
     addListener(document, "scroll", displayOnScroll(false));
