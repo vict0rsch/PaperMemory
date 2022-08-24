@@ -4,7 +4,7 @@
 ---------------------
 */
 :root {
-    --maxWidth: 900px;
+    --maxWidth: 1000px;
     --color: unset;
 }
 body {
@@ -528,9 +528,9 @@ input {
     transition: all 0.3s ease;
 }
 
-@media screen and (max-width: 1000px) {
-    #toc-container {
-        display: none;
+@media screen and (max-width: 1400px) {
+    #content {
+        max-width: 900px;
     }
 }
 @media screen and (max-width: 1200px) {
@@ -543,5 +543,10 @@ input {
         font-size: 0.8rem;
         left: 1rem;
         width: 10em;
+    }
+}
+@media screen and (max-width: 1000px) {
+    #toc-container {
+        display: none;
     }
 }
