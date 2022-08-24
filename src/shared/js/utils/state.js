@@ -98,8 +98,12 @@ const initState = async (papers, isContentScript) => {
  */
 const sortMemory = () => {
     global.state.sortedPapers = Object.values(cleanPapers(global.state.papers));
-    global.state.sortedPapers.sort(orderPapers);
-    global.state.papersList.sort(orderPapers);
+    global.state.sortedPapers.sort(
+        orderPapers(global.descendingSortKeys.indexOf(global.state.sortKey) >= 0)
+    );
+    global.state.papersList.sort(
+        orderPapers(global.descendingSortKeys.indexOf(global.state.sortKey) >= 0)
+    );
 };
 
 /**
@@ -111,7 +115,7 @@ const sortMemory = () => {
  * @param {object} paper2 Second item to compare
  * @returns {number} 1 or -1 depending on the prevalence of paper1/paper2
  */
-const orderPapers = (paper1, paper2) => {
+const orderPapers = (descending) => (paper1, paper2) => {
     let val1 = paper1[global.state.sortKey];
     let val2 = paper2[global.state.sortKey];
 
@@ -126,7 +130,7 @@ const orderPapers = (paper1, paper2) => {
         val1 = val1.toLowerCase();
         val2 = val2.toLowerCase();
     }
-    if (global.descendingSortKeys.indexOf(global.state.sortKey) >= 0) {
+    if (descending) {
         return val1 > val2 ? -1 : 1;
     }
     return val1 > val2 ? 1 : -1;
