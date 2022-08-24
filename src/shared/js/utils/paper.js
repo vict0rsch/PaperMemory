@@ -466,8 +466,8 @@ const addOrUpdatePaper = async (
                 });
                 updateDuplicatedUrls(url, existingId);
             } else if (!existingPaper.venue && paper.venue) {
-                await updateDuplicatedUrls(paperToAbs(existingPaper), paper.id);
-                await updateDuplicatedUrls(paperToPDF(existingPaper), paper.id);
+                updateDuplicatedUrls(paperToAbs(existingPaper), paper.id);
+                updateDuplicatedUrls(paperToPDF(existingPaper), paper.id);
                 await deletePaperInStorage(existingPaper.id, global.state.papers);
 
                 existingPaper = mergePapers({

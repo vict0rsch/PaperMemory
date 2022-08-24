@@ -2,8 +2,6 @@ var paperTitles = {};
 var MAX_TITLE_UPDATES = 100;
 var tabStatuses = {};
 
-const shouldSync = async () => !!(await getStorage("syncState"));
-
 const initSync = async () => {
     if (!(await shouldSync())) {
         log("Sync disabled.");
@@ -194,10 +192,12 @@ const pullSyncPapers = async () => {
 };
 
 const pushSyncPapers = async () => {
+    console.log("await shouldSync(): ", await shouldSync());
     if (!(await shouldSync())) return;
     try {
         console.log("Writing to Github...");
         const papers = (await getStorage("papers")) ?? {};
+        console.log("papers to write: ", papers);
         global.state.gistDataFile.overwrite(JSON.stringify(papers, null, ""));
         await global.state.gistDataFile.save();
         console.log("Writing to Github... Done!");

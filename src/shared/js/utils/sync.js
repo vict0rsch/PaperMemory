@@ -41,18 +41,55 @@ const getDataFile = (gist) => {
     return dataFile;
 };
 
-const pushToRemote = () => {
-    sendMessageToBackground({ type: "writeSync" });
-};
+const pushToRemote = () => sendMessageToBackground({ type: "writeSync" });
 
 const pullFromRemote = () => sendMessageToBackground({ type: "pullSync" });
 
+const shouldSync = async () => !!(await getStorage("syncState"));
+
 const initSyncAndState = async (papers, isContentScript = false) => {
-    const remotePapers = await pullFromRemote();
-    console.log("remotePapers: ", remotePapers);
-    await initState(remotePapers ?? papers, isContentScript);
-    if (remotePapers) {
-        log("Successfully pulled from Github.");
-        setStorage("papers", global.state.papers);
-    }
+    await initState(papers, isContentScript);
+    (async () => {
+        if (!(await shouldSync())) return;
+        !isContentScript && startSyncLoader();
+        await sendMessageToBackground({ type: "reSync" });
+        const remotePapers = await pullFromRemote();
+        console.log("remotePapers: ", remotePapers);
+        if (remotePapers) {
+            await initState(remotePapers ?? papers, isContentScript);
+            log("Successfully pulled from Github.");
+            await setStorage("papers", global.state.papers);
+            if (!isContentScript) {
+                const n = global.state.sortedPapers.length;
+                setPlaceholder("memory-search", `Search ${n} entries...`);
+            }
+        } else {
+            !isContentScript && errorSyncLoader();
+        }
+    })();
+};
+
+const startSyncLoader = async () => {
+    showId("sync-popup-feedback");
+    hideId("sync-popup-error");
+    hideId("sync-popup-synced");
+    showId("sync-popup-syncing", "flex");
+};
+const successSyncLoader = async () => {
+    showId("sync-popup-feedback");
+    hideId("sync-popup-syncing");
+    hideId("sync-popup-error");
+    showId("sync-popup-synced");
+    setTimeout(() => {
+        hideId("sync-popup-feedback");
+    }, 2000);
+};
+const errorSyncLoader = async () => {
+    showId("sync-popup-feedback");
+    hideId("sync-popup-syncing");
+    hideId("sync-popup-synced");
+    showId("sync-popup-error");
+    setTimeout(() => {
+        hideId("sync-popup-feedback");
+    }, 2000);
 };
