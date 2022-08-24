@@ -43,6 +43,17 @@
             </em>
         </p>
 
+        <div id="toc-container">
+            <nav class="toc">
+                <ul>
+                </ul>
+                <svg class="toc-marker" width="200" height="200" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke="#b31b1b" stroke-width="3" fill="transparent" stroke-dasharray="0, 0, 0, 1000"
+                        stroke-linecap="round" stroke-linejoin="round" transform="translate(-0.5, -0.5)" />
+                </svg>
+            </nav>
+        </div>
+
         <div class="row mb-5">
             <!-- <h3>Table of contents</h3> -->
             <div id="toc"></div>
@@ -70,7 +81,7 @@
                 </span>
             </div>
 
-            <h5>About</h5>
+            <h5 id="pwc-about-title">About</h5>
             <p>If you select option [1] and PapersWithCode reports no official implementation for the paper then no
                 repository will be stored, even if there are non-official implementations. Otherwise, official
                 implementations will always be preferred.</p>
@@ -191,7 +202,7 @@
         <hr>
 
         <div class="section">
-            <h2>Custom title function</h2>
+            <h2 id="custom-title-function">Custom title function</h2>
             <p>Provide a Javascript function code to produce a "title" from a <code>paper</code> object. This function
                 <em>must</em> return a <code>string</code> which will be used to 1/ Change the webpage titles 2/ Name
                 the pdf files you download with Paper Memory. The <code>.pdf</code> extension will be added
@@ -242,7 +253,7 @@
 
             <p>You can also share a list of papers for others in your team!</p>
             <br>
-            <h5>Full Memory Exports</h5>
+            <h5 id="memory-exports-title">Full Memory Exports</h5>
 
             <div style="display: flex; align-items: center;" class="row mb-4">
                 <div class="col-6">
@@ -322,7 +333,7 @@
             </div>
 
             <br>
-            <h5>Export by tags</h5>
+            <h5 id="memory-export-tags-title">Export by tags</h5>
 
             <p>Select papers to export by providing a list of tags. If you select the <code>AND</code> operator, papers
                 will be required to have all those tags. If you select the <code>OR</code> operator, papers
@@ -445,7 +456,7 @@
         <div class="section">
             <h2 id="online-synchronization">Online synchronization</h2>
 
-            <h4>About synchronization</h4>
+            <h4 id="sync-about-title">About synchronization</h4>
 
             <p>How it works:</p>
             <ul>
@@ -475,7 +486,7 @@
                 conflicts or concurrent writes
                 to the remote data. Any conflict will result in potential loss of data.</p>
 
-            <h4>Syncing</h4>
+            <h4 id="sync-syncing-state-title">Syncing</h4>
 
             <p>PaperMemory relies on Github's <em>Personal Access Tokens</em> which you can easily generate from your
                 Github
@@ -494,6 +505,8 @@
                 <input name="pat-input" id="pat-input" type="text"
                     placeholder="ghp_0IurqH9T1wj0E1E3YuroyvykuYI17Rl5hdN9" />
                 <input id="save-pat" type="button" value="Save">
+                <br />
+                <div><small>Note: your token is saved locally and does not leave your computer.</small></div>
                 <div>
                     <div class="pm-loader" id="pat-loader" style="display: none;"></div>
                     <p id="pat-feedback">

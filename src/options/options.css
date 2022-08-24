@@ -4,7 +4,7 @@
 ---------------------
 */
 :root {
-    --maxWidth: 1000px;
+    --maxWidth: 900px;
     --color: unset;
 }
 body {
@@ -34,6 +34,14 @@ code {
     width: 32px;
     color: var(--red);
     stroke-width: 1px;
+}
+
+h2,
+h3,
+h4,
+h5,
+h6 {
+    padding-top: 1.5rem;
 }
 
 /*
@@ -469,4 +477,71 @@ input {
     margin: auto;
     margin-top: 1rem;
     margin-bottom: 1rem;
+}
+
+/*
+---------------------
+-----  Sidebar  -----
+---------------------
+*/
+
+.toc {
+    position: fixed;
+    left: 2em;
+    top: 5em;
+    padding: 1em;
+    width: 14em;
+    line-height: 2;
+    font-size: 0.9rem;
+}
+.toc a:hover {
+    color: var(--color) !important;
+}
+.toc ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+.toc ul ul {
+    padding-left: 2em;
+}
+.toc li a {
+    display: inline-block;
+    color: #aaa;
+    text-decoration: none;
+    transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+}
+.toc li.visible > a {
+    color: #111;
+    transform: translate(6px, 2px);
+}
+
+.toc-marker {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+}
+.toc-marker path {
+    transition: all 0.3s ease;
+}
+
+@media screen and (max-width: 1000px) {
+    #toc-container {
+        display: none;
+    }
+}
+@media screen and (max-width: 1200px) {
+    #content {
+        max-width: 800px;
+        margin: auto;
+        padding: 32px;
+    }
+    .toc {
+        font-size: 0.8rem;
+        left: 1rem;
+        width: 10em;
+    }
 }
