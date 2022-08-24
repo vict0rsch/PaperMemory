@@ -62,6 +62,7 @@ const initSyncAndState = async (papers, isContentScript = false) => {
             if (!isContentScript) {
                 const n = global.state.sortedPapers.length;
                 setPlaceholder("memory-search", `Search ${n} entries...`);
+                successSyncLoader();
             }
         } else {
             !isContentScript && errorSyncLoader();
