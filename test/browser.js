@@ -1,6 +1,6 @@
 const puppeteer = require("puppeteer");
 
-exports.makeBrowser = async (windowSize = "500,600") => {
+exports.makeBrowser = async (windowSize = "1200,900") => {
     const browserFetcher = puppeteer.createBrowserFetcher();
     const revisionInfo = await browserFetcher.download("818858");
     const browser = await puppeteer.launch({
@@ -61,3 +61,5 @@ exports.visitPaperPage = async (browser, target, options = {}) => {
 
 exports.extensionPopupURL =
     "chrome-extension://ehchlpggdaffcncbeopdopnndhdjelbc/src/popup/min/popup.min.html";
+exports.fullMemoryURL =
+    "chrome-extension://ehchlpggdaffcncbeopdopnndhdjelbc/src/fullMemory/fullMemory.html";
