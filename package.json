@@ -43,9 +43,7 @@
     "nyc": "^15.1.0",
     "puppeteer-to-istanbul": "^1.4.0",
     "readline-sync": "^1.4.10",
-    "uuid": "^8.3.2"
-  },
-  "dependencies": {
-    "puppeteer": "^16.0.0"
+    "uuid": "^8.3.2",
+    "puppeteer": "^13.5.2"
   }
 }
