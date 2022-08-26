@@ -24,7 +24,7 @@
   },
   "homepage": "https://github.com/vict0rsch/PaperMemory",
   "devDependencies": {
-    "expect": "^28.0.0",
+    "expect": "^29.0.0",
     "fs": "^0.0.1-security",
     "glob": "^8.0.1",
     "gulp": "^4.0.2",
