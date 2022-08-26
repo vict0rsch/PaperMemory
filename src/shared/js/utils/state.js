@@ -1,3 +1,4 @@
+const duration = (times) => (Date.now() - times[0]) / 1000;
 /**
  * Function to initialize the app's state.
  *  1. load the papers from storage is the papers argument is undefined
@@ -15,48 +16,46 @@
  * @param {object} papers Memory object with papers to initialize the state with
  * @param {boolean} isContentScript Whether the call is from a content_script or the popup
  */
-const initState = async (papers, isContentScript) => {
+const initState = async (papers, isContentScript, print = true) => {
     const times = [];
     times.unshift(Date.now());
-    console.groupCollapsed("%cPaperMemory Init ✅", global.consolHeaderStyle);
+    print && console.groupCollapsed("%cPaperMemory Init ✅", global.consolHeaderStyle);
 
     if (typeof papers === "undefined") {
         papers = (await getStorage("papers")) ?? {};
-        log("Time to retrieve stored papers (s): " + (Date.now() - times[0]) / 1000);
+        print && log("Time to retrieve stored papers (s): " + duration(times));
     }
     times.unshift(Date.now());
 
     global.state.dataVersion = getManifestDataVersion();
-    log("Time to parse data version (s): " + (Date.now() - times[0]) / 1000);
+    print && log("Time to parse data version (s): " + duration(times));
     times.unshift(Date.now());
 
     global.state.titleFunction = (await getTitleFunction()).titleFunction;
-    log("Time to make title function (s): " + (Date.now() - times[0]) / 1000);
+    print && log("Time to make title function (s): " + duration(times));
     times.unshift(Date.now());
 
     weeklyBackup();
-    log("Time to backup papers (weekly) (s): " + (Date.now() - times[0]) / 1000);
+    print && log("Time to backup papers (weekly) (s): " + duration(times));
     times.unshift(Date.now());
 
     const migration = await migrateData(papers, global.state.dataVersion);
-    log("Time to migrate data (s): " + (Date.now() - times[0]) / 1000);
+    print && log("Time to migrate data (s): " + duration(times));
     times.unshift(Date.now());
 
     papers = migration.papers;
     global.state.papers = papers;
 
     global.state.prefs = await getPrefs();
-    log("Time to retrieve user preferences (s): " + (Date.now() - times[0]) / 1000);
+    print && log("Time to retrieve user preferences (s): " + duration(times));
     times.unshift(Date.now());
 
     global.state.ignoreSources = (await getStorage("ignoreSources")) ?? {};
-    log("Time to retrieve sources to ignore (s): " + (Date.now() - times[0]) / 1000);
+    print && log("Time to retrieve sources to ignore (s): " + duration(times));
     times.unshift(Date.now());
 
     global.state.urlHashToId = (await getStorage("urlHashToId")) ?? {};
-    log(
-        "Time to retrieve sources to urlHashToId (s): " + (Date.now() - times[0]) / 1000
-    );
+    print && log("Time to retrieve sources to urlHashToId (s): " + duration(times));
     times.unshift(Date.now());
 
     global.state.titleHashToIds = {};
@@ -67,12 +66,12 @@ const initState = async (papers, isContentScript) => {
         }
         global.state.titleHashToIds[hashed].push(id);
     }
-    log("Time to hash titles (s): " + (Date.now() - times[0]) / 1000);
+    print && log("Time to hash titles (s): " + duration(times));
     times.unshift(Date.now());
 
     if (!isContentScript) {
         global.state.files = await matchAllFilesToPapers();
-        log("Time to match all local files (s): " + (Date.now() - times[0]) / 1000);
+        print && log("Time to match all local files (s): " + duration(times));
         times.unshift(Date.now());
 
         global.state.papersList = Object.values(cleanPapers(papers));
@@ -80,16 +79,16 @@ const initState = async (papers, isContentScript) => {
         global.state.papersReady = true;
 
         sortMemory();
-        log("Time to sort memory (s): " + (Date.now() - times[0]) / 1000);
+        print && log("Time to sort memory (s): " + duration(times));
         times.unshift(Date.now());
 
         makeTags();
-        log("Time to make tags (s): " + (Date.now() - times[0]) / 1000);
+        print && log("Time to make tags (s): " + duration(times));
         times.unshift(Date.now());
     }
 
     info("State init duration (s): " + (Date.now() - times.last()) / 1000);
-    console.groupEnd();
+    print && console.groupEnd();
 };
 
 /**

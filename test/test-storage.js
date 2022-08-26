@@ -28,9 +28,9 @@ const pageTimeout = parseFloat(process.env.pageTimeout ?? -1);
 // only run tests for a specific paper source (as per ./data/urls.json)
 const singleSource = process.env.singleSource?.toLowerCase() ?? false;
 // keep pages and browser open at the end of tests to inspect
-const keepOpen = Boolean(process.env.keepOpen ?? false);
+const keepOpen = !!(process.env.keepOpen ?? false);
 // write the memory to ./tmp as a JSON file
-const dump = Boolean(process.env.dump) ?? false;
+const dump = !!(process.env.dump ?? false);
 // only run tests for a specific abstract<->pdf order
 const singleOrder = process.env.singleOrder ?? false;
 // ignore sources to parse papers from (','-separated sources as per ./data/urls.json)
