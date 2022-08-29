@@ -8,6 +8,7 @@ const adjustCss = () => {
 };
 
 const autoRefresh = () => {
+    if (window.location.href.includes("?noRefresh=true")) return;
     info(`Enabling auto refresh if inactive for ${REFRESH_INTERVAL_SECS} seconds.`);
     const reload = () => {
         window.location.reload();
