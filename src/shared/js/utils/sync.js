@@ -43,22 +43,32 @@ const getDataFile = (gist) => {
 
 const pushToRemote = () => sendMessageToBackground({ type: "writeSync" });
 
-const pullFromRemote = () => sendMessageToBackground({ type: "pullSync" });
+const pullFromRemote = async (papers, isContentScript) => {
+    const remotePapers = await sendMessageToBackground({ type: "pullSync" });
+    log("Remote Papers pulled: ", remotePapers);
+    if (remotePapers) {
+        await initState(remotePapers ?? papers, isContentScript, false);
+        info("Successfully pulled from Github.");
+        await setStorage("papers", global.state.papers);
+    }
+    return remotePapers;
+};
 
 const shouldSync = async () => !!(await getStorage("syncState"));
 
-const initSyncAndState = async (papers, isContentScript = false) => {
-    await initState(papers, isContentScript);
-    (async () => {
+const initSyncAndState = async (
+    papers,
+    isContentScript = false,
+    waitForRemote = false
+) => {
+    !global.state.dataVersion && (await initState(papers, isContentScript));
+    const f = async () => {
         if (!(await shouldSync())) return;
         !isContentScript && startSyncLoader();
         await sendMessageToBackground({ type: "reSync" });
-        const remotePapers = await pullFromRemote();
-        console.log("remotePapers: ", remotePapers);
+        const remotePapers = await pullFromRemote(papers, isContentScript);
+        log("Remote Papers pulled: ", remotePapers);
         if (remotePapers) {
-            await initState(remotePapers ?? papers, isContentScript);
-            log("Successfully pulled from Github.");
-            await setStorage("papers", global.state.papers);
             if (!isContentScript) {
                 const n = global.state.sortedPapers.length;
                 setPlaceholder("memory-search", `Search ${n} entries...`);
@@ -67,7 +77,8 @@ const initSyncAndState = async (papers, isContentScript = false) => {
         } else {
             !isContentScript && errorSyncLoader();
         }
-    })();
+    };
+    waitForRemote ? await f() : f();
 };
 
 const startSyncLoader = async () => {
