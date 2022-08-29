@@ -192,15 +192,15 @@ const pullSyncPapers = async () => {
 };
 
 const pushSyncPapers = async () => {
-    console.log("await shouldSync(): ", await shouldSync());
+    console.log("Should sync? ->", await shouldSync());
     if (!(await shouldSync())) return;
     try {
-        console.log("Writing to Github...");
+        log("Writing to Github...");
         const papers = (await getStorage("papers")) ?? {};
-        console.log("papers to write: ", papers);
+        log("papers to write: ", papers);
         await global.state.gistDataFile.overwrite(JSON.stringify(papers, null, ""));
         await global.state.gistDataFile.save();
-        console.log("Writing to Github... Done!");
+        log("Writing to Github... Done!");
     } catch (e) {
         logError("[pushSyncPapers]", e);
     }
