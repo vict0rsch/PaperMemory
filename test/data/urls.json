@@ -69,7 +69,12 @@
         }
     ],
     "ihep": [
-        "https://inspirehep.net/literature/2095720"
+        "https://inspirehep.net/literature/2095720",
+        "https://inspirehep.net/files/d49a276d7d2370cce978dd900d94ab84",
+        {
+            "venue": "Nucl. Instrum. Meth. A",
+            "singleOrder": "abs;pdf"
+        }
     ],
     "iop": [
         "https://iopscience.iop.org/article/10.1149/2.1051908jes",
