@@ -8,7 +8,7 @@ const {
 const { expect } = require("expect");
 const { readJSON, sleep, asyncMap } = require("./utilsForTests");
 
-const pat = process.env.github_pat;
+const pat = process.env.github_pat ?? process.env.pm_ghp;
 const keepOpen = !!(process.env.keepOpen ?? false);
 
 if (!pat) {
