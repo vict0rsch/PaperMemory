@@ -1432,10 +1432,10 @@ const tryPreprintMatch = async (paper, tryPwc = false) => {
 
     let names = ["DBLP", "SemanticScholar", "CrossRef", "GoogleScholar"];
     let matchPromises = [
-        silentPromiseTimeout(tryDBLP(paper)),
-        silentPromiseTimeout(trySemanticScholar(paper)),
         silentPromiseTimeout(tryGoogleScholar(paper)),
+        silentPromiseTimeout(trySemanticScholar(paper)),
         silentPromiseTimeout(tryCrossRef(paper)),
+        silentPromiseTimeout(tryDBLP(paper)),
     ];
 
     if (tryPwc) {
