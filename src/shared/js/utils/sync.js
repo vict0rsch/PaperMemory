@@ -50,6 +50,10 @@ const pushToRemote = async () => await sendMessageToBackground({ type: "writeSyn
 const pullFromRemote = async (papers, isContentScript) => {
     const start = Date.now();
     const remotePapers = await sendMessageToBackground({ type: "pullSync" });
+    console.groupCollapsed(
+        `%cPaperMemory Pull ${String.fromCodePoint("0x1F504")}`,
+        global.consolHeaderStyle
+    );
     log("Remote Papers pulled: ", remotePapers);
     if (remotePapers) {
         await initState(remotePapers ?? papers, isContentScript, false);
@@ -57,6 +61,7 @@ const pullFromRemote = async (papers, isContentScript) => {
         info(`Successfully pulled from Github (${time}s).`);
         await setStorage("papers", global.state.papers);
     }
+    console.groupEnd();
     return remotePapers;
 };
 
@@ -76,7 +81,6 @@ const initSyncAndState = async ({
     !isContentScript && startSyncLoader();
     await sendMessageToBackground({ type: "restartGist" });
     const remotePapers = await pullFromRemote(papers, isContentScript);
-    log("Remote Papers pulled: ", remotePapers);
     if (remotePapers) {
         if (!isContentScript) {
             const n = global.state.sortedPapers.length;
