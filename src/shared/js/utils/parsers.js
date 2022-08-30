@@ -1231,7 +1231,8 @@ const makeIHEPPaper = async (url) => {
         `https://inspirehep.net/api/literature/${num}?format=json`
     );
     const bibObj = bibtexToObject(bibtex);
-    const title = bibObj.title ?? data.metadata.titles[0].title;
+    let title = bibObj.title ?? data.metadata.titles[0].title;
+    if (title.startsWith("{") && title.endsWith("}")) title = title.slice(1, -1);
     const pdfLink = data.metadata.documents?.[0]?.url ?? url;
     const author = flipAndAuthors(bibObj.author);
     const year = bibObj.year ?? data.created.split("-")[0];
