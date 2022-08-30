@@ -32,11 +32,15 @@ const getGist = async (pat, store = true) => {
     }
 };
 
-const getDataFile = (gist) => {
-    let dataFile = gist.getFile("PaperMemory-sync-data.json");
+const getDataFile = async (gist) => {
+    const isTest = await getStorage("syncTest");
+    const fileName = isTest
+        ? "TESTS-PaperMemory-sync-data.json"
+        : "PaperMemory-sync-data.json";
+    let dataFile = gist.getFile(fileName);
     if (!dataFile) {
-        gist.createFile("PaperMemory-sync-data.json");
-        dataFile = gist.getFile("PaperMemory-sync-data.json");
+        gist.createFile(fileName);
+        dataFile = gist.getFile(fileName);
     }
     return dataFile;
 };
