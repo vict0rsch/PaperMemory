@@ -1221,6 +1221,29 @@ const makeFrontiersPaper = async (url) => {
     return { author, bibtex, id, key, note, pdfLink, title, venue, year };
 };
 
+const makeIHEPPaper = async (url) => {
+    if (url.includes("/files/")) return;
+    const num = url.match(/\/literature\/(\d+)/)[1];
+    const bibtex = await fetchText(
+        `https://inspirehep.net/api/literature/${num}?format=bibtex`
+    );
+    const data = await fetchJSON(
+        `https://inspirehep.net/api/literature/${num}?format=json`
+    );
+    const bibObj = bibtexToObject(bibtex);
+    const title = bibObj.title ?? data.metadata.titles[0].title;
+    const pdfLink = data.metadata.documents?.[0]?.url ?? url;
+    const author = flipAndAuthors(bibObj.author);
+    const year = bibObj.year ?? data.created.split("-")[0];
+    const id = `IHEP-${num}`;
+    const venue = bibObj.journal ?? "Inspire HEP";
+    const key = bibObj.citationKey;
+    const note = `Published @ ${venue} (${year})`;
+    const doi = bibObj.doi ?? "";
+
+    return { author, bibtex, id, key, note, pdfLink, title, venue, year, doi };
+};
+
 // -------------------------------
 // -----  PREPRINT MATCHING  -----
 // -------------------------------
@@ -1533,24 +1556,36 @@ const makePaper = async (is, url) => {
     let paper;
     if (is.arxiv) {
         paper = await makeArxivPaper(url);
-        paper.source = "arxiv";
+        if (paper) {
+            paper.source = "arxiv";
+        }
         // paper.codes = await fetchCodes(paper)
     } else if (is.neurips) {
         paper = await makeNeuripsPaper(url);
-        paper.source = "neurips";
+        if (paper) {
+            paper.source = "neurips";
+        }
         // paper.codes = await fetchCodes(paper);
     } else if (is.cvf) {
         paper = await makeCVFPaper(url);
-        paper.source = "cvf";
+        if (paper) {
+            paper.source = "cvf";
+        }
     } else if (is.openreview) {
         paper = await makeOpenReviewPaper(url);
-        paper.source = "openreview";
+        if (paper) {
+            paper.source = "openreview";
+        }
     } else if (is.biorxiv) {
         paper = await makeBioRxivPaper(url);
-        paper.source = "biorxiv";
+        if (paper) {
+            paper.source = "biorxiv";
+        }
     } else if (is.pmlr) {
         paper = await makePMLRPaper(url);
-        paper.source = "pmlr";
+        if (paper) {
+            paper.source = "pmlr";
+        }
     } else if (is.acl) {
         paper = await makeACLPaper(url);
         if (paper) {
@@ -1630,6 +1665,11 @@ const makePaper = async (is, url) => {
         paper = await makeFrontiersPaper(url);
         if (paper) {
             paper.source = "frontiers";
+        }
+    } else if (is.ihep) {
+        paper = await makeIHEPPaper(url);
+        if (paper) {
+            paper.source = "ihep";
         }
     } else {
         throw new Error("Unknown paper source: " + JSON.stringify({ is, url }));

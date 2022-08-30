@@ -144,6 +144,9 @@ describe("Test paper detection and storage", function () {
 
                         // filter out the additional test configs
                         const targetUrls = targets.filter((u) => typeof u === "string");
+                        if (t >= targetUrls.length) {
+                            continue;
+                        }
                         const target = targetUrls[t];
                         // log prefix
                         const n = idx + (o > 0 ? 1 - t : t) * nUrls + 1;
