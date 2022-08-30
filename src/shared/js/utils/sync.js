@@ -44,11 +44,13 @@ const getDataFile = (gist) => {
 const pushToRemote = () => sendMessageToBackground({ type: "writeSync" });
 
 const pullFromRemote = async (papers, isContentScript) => {
+    const start = Date.now();
     const remotePapers = await sendMessageToBackground({ type: "pullSync" });
     log("Remote Papers pulled: ", remotePapers);
     if (remotePapers) {
         await initState(remotePapers ?? papers, isContentScript, false);
-        info("Successfully pulled from Github.");
+        const time = (Date.now() - start) / 1000;
+        info(`Successfully pulled from Github (${time}s).`);
         await setStorage("papers", global.state.papers);
     }
     return remotePapers;
