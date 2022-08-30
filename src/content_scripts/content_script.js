@@ -342,12 +342,12 @@ const ignorePaper = (is, ignoreSources) => {
  * Also, if the current website is a known paper source (isPaper), adds or updates the current paper
  * @param {object} checks The user's stored preferences regarding menu options
  */
-const contentScriptMain = async (
+const contentScriptMain = async ({
     url,
     stateIsReady,
     manualTrigger = false,
-    paperUpdateDoneCallback = () => {}
-) => {
+    paperUpdateDoneCallbacks = {},
+} = {}) => {
     if (!stateIsReady) await initSyncAndState({ isContentScript: true });
     const prefs = global.state.prefs;
 
@@ -364,7 +364,13 @@ const contentScriptMain = async (
         (!isIgnored && ((!isPdfPrevented && !isAutoDisabled) || is.arxiv))
     ) {
         const store = !(isPdfPrevented || isAutoDisabled) || manualTrigger;
-        update = await addOrUpdatePaper(url, is, prefs, store, paperUpdateDoneCallback);
+        update = await addOrUpdatePaper({
+            url,
+            is,
+            prefs,
+            store,
+            paperUpdateDoneCallbacks,
+        });
     } else {
         if (ignorePaper(is, ignoreSources)) {
             warn(
@@ -705,15 +711,25 @@ const arxiv = async (checks) => {
     chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
         if (request.message === "tabUrlUpdate") {
             info("Running PaperMemory's content script for url update");
-            contentScriptMain(request.url, stateIsReady, false, {
-                update: paperResolve,
-                preprints: preprintsResolve,
+            contentScriptMain({
+                url: request.url,
+                stateIsReady,
+                manualTrigger: false,
+                paperUpdateDoneCallbacks: {
+                    update: paperResolve,
+                    preprints: preprintsResolve,
+                },
             });
         } else if (request.message === "manualParsing") {
             info("Triggering manual parsing");
-            contentScriptMain(url, stateIsReady, true, {
-                update: paperResolve,
-                preprints: preprintsResolve,
+            contentScriptMain({
+                url,
+                stateIsReady,
+                manualTrigger: true,
+                paperUpdateDoneCallbacks: {
+                    update: paperResolve,
+                    preprints: preprintsResolve,
+                },
             });
         }
     });
@@ -726,9 +742,14 @@ const arxiv = async (checks) => {
             // if the url is associated to a known source: trigger
             // the main functions.
             if (await isSourceURL(url, true)) {
-                contentScriptMain(url, stateIsReady, false, {
-                    update: paperResolve,
-                    preprints: preprintsResolve,
+                contentScriptMain({
+                    url,
+                    stateIsReady,
+                    manualTrigger: false,
+                    paperUpdateDoneCallbacks: {
+                        update: paperResolve,
+                        preprints: preprintsResolve,
+                    },
                 });
             } else {
                 // if the url is not associated to a known source:

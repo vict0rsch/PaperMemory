@@ -418,13 +418,13 @@ const updatePaperVisits = (paper) => {
  * @param {object} checks The user's preferences
  * @returns
  */
-const addOrUpdatePaper = async (
+const addOrUpdatePaper = async ({
     url,
     is,
     prefs,
     store = true,
-    contentScriptCallbacks = { update: () => {}, preprints: () => {} }
-) => {
+    contentScriptCallbacks = { update: () => {}, preprints: () => {} },
+}) => {
     // start time
     const aouStart = Date.now();
 

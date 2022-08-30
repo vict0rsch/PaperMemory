@@ -94,7 +94,7 @@ const updatePopupPaperNoMemory = async (url) => {
             try {
                 const is = await isPaper(url);
                 let paper;
-                const update = await addOrUpdatePaper(url, is);
+                const update = await addOrUpdatePaper({ url, is });
                 if (update) {
                     paper = update.paper;
                 } else {
