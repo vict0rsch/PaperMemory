@@ -71,9 +71,13 @@ const initSyncAndState = async ({
     remoteIsReady = () => {},
 } = {}) => {
     !global.state.dataVersion && (await initState(papers, isContentScript));
+
     stateIsReady();
 
-    if (!(await shouldSync())) return;
+    if (!(await shouldSync())) {
+        remoteIsReady();
+        return;
+    }
 
     !isContentScript && startSyncLoader();
     await sendMessageToBackground({ type: "restartGist" });
