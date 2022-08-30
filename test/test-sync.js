@@ -4,6 +4,7 @@ const {
     extensionPopupURL,
     visitPaperPage,
     getMemoryPapers,
+    getPaperMemoryState,
 } = require("./browser");
 const { expect } = require("expect");
 
@@ -35,6 +36,8 @@ const setupSync = async (browser) => {
         await sendMessageToBackground({ type: "restartGist" });
         info("syncState: ", await getStorage("syncState"));
     }, pat);
+    // const state = await getPaperMemoryState(page);
+    // console.log("setupSync -> Initial papers", Object.keys(state.papers));
 };
 
 describe("Test Github Gist Sync", async function () {

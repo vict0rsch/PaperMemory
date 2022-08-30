@@ -26,7 +26,7 @@ exports.getMemoryPapers = async (page) => {
     );
 };
 
-exports.getMemoryState = async (page) => {
+exports.getPaperMemoryState = async (page) => {
     return await page.evaluate(
         () =>
             new Promise(async (resolve) => {
