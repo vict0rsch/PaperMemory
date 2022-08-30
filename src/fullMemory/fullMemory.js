@@ -30,6 +30,18 @@ const autoRefresh = () => {
     resetTimer();
 };
 
+const syncOnBlur = async () => {
+    if (!(await shouldSync())) return;
+    window.addEventListener(
+        "blur",
+        delay(async () => {
+            info("Syncing back and forth...");
+            await pushToRemote();
+            await initSyncAndState();
+        }, 5000)
+    );
+};
+
 (async () => {
     await initSyncAndState();
     makeMemoryHTML();
@@ -41,4 +53,5 @@ const autoRefresh = () => {
     setMemorySortArrow("down");
     adjustCss();
     autoRefresh();
+    syncOnBlur();
 })();
