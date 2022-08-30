@@ -300,7 +300,10 @@ if (window.location.href.includes("popup")) {
         chrome.runtime.connect({ name: "PaperMemorySync" });
         const url = tabs[0].url;
 
-        await initSyncAndState();
+        const stateReadyPromise = new Promise((resolve) => {
+            initSyncAndState({ stateIsReady: resolve });
+        });
+        await stateReadyPromise;
 
         const is = await isPaper(url);
         const isKnown = Object.values(is).some((i) => i);

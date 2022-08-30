@@ -62,29 +62,32 @@ const pullFromRemote = async (papers, isContentScript) => {
 
 const shouldSync = async () => !!(await getStorage("syncState"));
 
-const initSyncAndState = async (
-    papers,
+const initSyncAndState = async ({
+    papers = null,
     isContentScript = false,
-    waitForRemote = false
-) => {
+    stateIsReady = () => {},
+    remoteIsReady = () => {},
+} = {}) => {
     !global.state.dataVersion && (await initState(papers, isContentScript));
-    const f = async () => {
-        if (!(await shouldSync())) return;
-        !isContentScript && startSyncLoader();
+    stateIsReady();
+
+    if (!(await shouldSync())) return;
+
+    !isContentScript && startSyncLoader();
     await sendMessageToBackground({ type: "restartGist" });
-        const remotePapers = await pullFromRemote(papers, isContentScript);
-        log("Remote Papers pulled: ", remotePapers);
-        if (remotePapers) {
-            if (!isContentScript) {
-                const n = global.state.sortedPapers.length;
-                setPlaceholder("memory-search", `Search ${n} entries...`);
-                successSyncLoader();
-            }
-        } else {
-            !isContentScript && errorSyncLoader();
+    const remotePapers = await pullFromRemote(papers, isContentScript);
+    log("Remote Papers pulled: ", remotePapers);
+    if (remotePapers) {
+        if (!isContentScript) {
+            const n = global.state.sortedPapers.length;
+            setPlaceholder("memory-search", `Search ${n} entries...`);
+            successSyncLoader();
         }
-    };
-    waitForRemote ? await f() : f();
+    } else {
+        !isContentScript && errorSyncLoader();
+    }
+
+    remoteIsReady();
 };
 
 const startSyncLoader = async () => {

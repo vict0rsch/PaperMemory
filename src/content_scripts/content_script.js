@@ -348,7 +348,7 @@ const contentScriptMain = async (
     manualTrigger = false,
     paperUpdateDoneCallback = () => {}
 ) => {
-    if (!stateIsReady) await initSyncAndState(undefined, true);
+    if (!stateIsReady) await initSyncAndState({ isContentScript: true });
     const prefs = global.state.prefs;
 
     let is = await isPaper(url, true);
@@ -689,7 +689,7 @@ const arxiv = async (checks) => {
     // but not on files
     let stateIsReady = false;
     if (url.startsWith("file://")) {
-        await initSyncAndState(undefined, true);
+        await initSyncAndState({ isContentScript: true });
         prefs = global.state.prefs;
         stateIsReady = true;
     }
