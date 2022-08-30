@@ -348,7 +348,21 @@ const contentScriptMain = async ({
     manualTrigger = false,
     paperUpdateDoneCallbacks = {},
 } = {}) => {
-    if (!stateIsReady) await initSyncAndState({ isContentScript: true });
+    if (!stateIsReady) {
+        let remoteReadyPromise;
+        const stateReadyPromise = new Promise((stateResolve) => {
+            remoteReadyPromise = new Promise((remoteResolve) => {
+                initSyncAndState({
+                    isContentScript: true,
+                    stateIsReady: stateResolve,
+                    remoteIsReady: remoteResolve,
+                });
+            });
+        });
+        await stateReadyPromise;
+        tryArxivDisplay({ url });
+        await remoteReadyPromise;
+    }
     const prefs = global.state.prefs;
 
     let is = await isPaper(url, true);
@@ -686,6 +700,54 @@ const arxiv = async (checks) => {
     }
 };
 
+const tryArxivDisplay = async ({
+    url = null,
+    paper = null,
+    preprintsPromise = null,
+} = {}) => {
+    // a paper was parsed
+
+    // user preferences
+    const prefs = global.state.prefs;
+
+    // paper.source may not be "arxiv" even on arxiv.org
+    // because of the existing paper matching mechanism
+    let is = await isPaper(url, true);
+
+    if (is.arxiv) {
+        // larger arxiv column
+        adjustArxivColWidth();
+
+        // display arxiv paper metadata
+        await arxiv(prefs);
+
+        // wait for publication databases to be queried
+        if (preprintsPromise) {
+            paper = await preprintsPromise;
+        } else {
+            const id = await parseIdFromUrl(url);
+            const paperExists = global.state.papers.hasOwnProperty(id);
+            if (!paperExists) return;
+            paper = global.state.papers[id];
+        }
+
+        // update bibtex
+        if (prefs.checkBib) {
+            if (findEl("pm-bibtex-textarea")) {
+                findEl("pm-bibtex-textarea").innerHTML = bibtexToString(
+                    paper.bibtex
+                ).replaceAll("\t", "  ");
+            }
+        }
+
+        // update venue
+        displayPaperVenue(paper);
+
+        // update codeLink
+        displayPaperCode(paper);
+    }
+};
+
 (async () => {
     var prefs, paper;
     var paperPromise, preprintsPromise;
@@ -771,39 +833,6 @@ const arxiv = async (checks) => {
 
     paper = results[0];
     if (paper) {
-        // a paper was parsed
-
-        // user preferences
-        prefs = global.state.prefs;
-
-        // paper.source may not be "arxiv" even on arxiv.org
-        // because of the existing paper matching mechanism
-        let is = await isPaper(url, true);
-
-        if (is.arxiv) {
-            // larger arxiv column
-            adjustArxivColWidth();
-
-            // display arxiv paper metadata
-            await arxiv(prefs);
-
-            // wait for publication databases to be queried
-            paper = await preprintsPromise;
-
-            // update bibtex
-            if (prefs.checkBib) {
-                if (findEl("pm-bibtex-textarea")) {
-                    findEl("pm-bibtex-textarea").innerHTML = bibtexToString(
-                        paper.bibtex
-                    ).replaceAll("\t", "  ");
-                }
-            }
-
-            // update venue
-            displayPaperVenue(paper);
-
-            // update codeLink
-            displayPaperCode(paper);
-        }
+        tryArxivDisplay({ paper, preprintsPromise });
     }
 })();
