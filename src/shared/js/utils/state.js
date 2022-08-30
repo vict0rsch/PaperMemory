@@ -25,7 +25,7 @@ const initState = async (papers, isContentScript, print = true) => {
             global.consolHeaderStyle
         );
 
-    if (typeof papers === "undefined") {
+    if (!papers) {
         papers = (await getStorage("papers")) ?? {};
         print && log("Time to retrieve stored papers (s): " + duration(times));
     }
