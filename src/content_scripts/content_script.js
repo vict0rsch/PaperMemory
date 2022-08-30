@@ -551,8 +551,8 @@ const arxiv = async (checks) => {
     if (checkDownload) {
         const button = /*html*/ `
             <div class="pm-container" style="align-items: end;">
-                <div style="font-size: 0.6rem; color: #cac7c7; padding-bottom: 0.6rem;">Download to<br/>PaperMemoryStore</div>
                 <div id="arxiv-button">${svg("download")}</div>
+                <div style="font-size: 0.6rem; color: #cac7c7; padding-bottom: 0.6rem;">Download to<br/>PaperMemoryStore</div>
             </div>
         `;
         document
