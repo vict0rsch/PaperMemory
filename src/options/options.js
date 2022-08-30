@@ -962,7 +962,7 @@ const setupSync = async () => {
             return;
         }
         const { gist } = payload;
-        const dataFile = getDataFile(gist);
+        const dataFile = await getDataFile(gist);
         let userChoice;
         if (dataFile.content) {
             console.log("Existing data file content:", dataFile.content);
