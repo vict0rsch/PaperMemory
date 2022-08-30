@@ -26,6 +26,19 @@
 <body>
     <div id="memory-container" style="display: block;">
         <div id="memory-filters">
+            <div id="sync-popup-feedback" style="display: none;">
+                <div id="sync-popup-syncing" style="display: none; align-items: center; justify-content: center;">
+                    <div style="display: inline-block; margin-right: 8px">Syncing</div>
+                    <div class="pm-loader" style="width: 24px; height: 24px; border-width: 2px; display: inline-block;">
+                    </div>
+                </div>
+                <div id="sync-popup-synced" style="display: none; text-align: center;">
+                    <div>Synced &#9989;</div>
+                </div>
+                <div id="sync-popup-synced" style="display: none; text-align: center;">
+                    <div>Sync failed &#10060;</div>
+                </div>
+            </div>
             <!-- <input id="memory-search" type="search" placeholder="search" style="width: 45%;" /> -->
             <div class="memory-search-wrapper">
                 <input id="memory-search" placeholder="Search" type="text">

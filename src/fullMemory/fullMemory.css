@@ -42,3 +42,15 @@ body {
     background-color: rgba(34, 42, 53, 0.8) !important;
     color: #c1cedb !important;
 }
+
+#sync-popup-feedback {
+    position: unset;
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: var(--red);
+    white-space: nowrap;
+    margin-right: 32px;
+}
+.pm-loader {
+    margin: 8px;
+}

@@ -550,3 +550,15 @@ input {
         display: none;
     }
 }
+
+#sync-popup-feedback {
+    position: unset;
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: var(--red);
+    white-space: nowrap;
+    margin-top: 32px;
+}
+.pm-loader {
+    margin: 8px;
+}
