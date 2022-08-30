@@ -206,9 +206,12 @@ const deletePaperInStorage = async (id, papers) => {
         updateDuplicatedUrls(null, id, true);
         deleted = delete global.state.titleHashToIds[miniHash(papers[id].title)];
         deleted = deleted && delete papers[id];
+        delete global.state.papers[id];
     }
     if (deleted) {
-        setStorage("papers", papers);
+        await setStorage("papers", papers);
+        global.state.papersList = Object.values(cleanPapers(global.state.papers));
+        sortMemory();
         log("Successfully deleted paper", id);
     } else {
         log("Error: no deletion");
