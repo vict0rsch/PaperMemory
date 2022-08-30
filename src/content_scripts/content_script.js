@@ -369,7 +369,7 @@ const contentScriptMain = async ({
             is,
             prefs,
             store,
-            paperUpdateDoneCallbacks,
+            contentScriptCallbacks: paperUpdateDoneCallbacks,
         });
     } else {
         if (ignorePaper(is, ignoreSources)) {
