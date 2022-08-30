@@ -19,7 +19,11 @@ const duration = (times) => (Date.now() - times[0]) / 1000;
 const initState = async (papers, isContentScript, print = true) => {
     const times = [];
     times.unshift(Date.now());
-    print && console.groupCollapsed("%cPaperMemory Init ✅", global.consolHeaderStyle);
+    print &&
+        console.groupCollapsed(
+            `%cPaperMemory Init ${String.fromCodePoint("0x2705")}`,
+            global.consolHeaderStyle
+        );
 
     if (typeof papers === "undefined") {
         papers = (await getStorage("papers")) ?? {};
