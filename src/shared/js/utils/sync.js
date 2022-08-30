@@ -50,10 +50,7 @@ const pushToRemote = async () => await sendMessageToBackground({ type: "writeSyn
 const pullFromRemote = async (papers, isContentScript) => {
     const start = Date.now();
     const remotePapers = await sendMessageToBackground({ type: "pullSync" });
-    console.groupCollapsed(
-        `%cPaperMemory Pull ${String.fromCodePoint("0x1F504")}`,
-        global.consolHeaderStyle
-    );
+    consoleHeader(`PaperMemory Pull ${String.fromCodePoint("0x1F504")}`);
     log("Remote Papers pulled: ", remotePapers);
     if (remotePapers) {
         await initState(remotePapers ?? papers, isContentScript, false);

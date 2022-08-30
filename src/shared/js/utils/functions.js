@@ -78,6 +78,9 @@ const logOk = (...args) => log(...["[ok]", ...args]);
 
 const logError = (...args) => log(...["[error]", ...args]);
 
+const consoleHeader = (text) =>
+    console.groupCollapsed(`%c${text}`, global.consolHeaderStyle);
+
 const getDisplayId = (id) => {
     const baseId = id;
     id = id.split("_")[0].split(".")[0];

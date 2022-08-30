@@ -431,7 +431,7 @@ const addOrUpdatePaper = async ({
     let paper, isNew;
     let pwc = {};
 
-    console.group("%cPaperMemory parsing 📕", global.consolHeaderStyle);
+    consoleHeader(`PaperMemory Parsing ${String.fromCodePoint("0x1F4DD")}`);
 
     // Extract id from url
     global.state.papers = (await getStorage("papers")) ?? {};
