@@ -714,7 +714,7 @@ const tryArxivDisplay = async ({
     // because of the existing paper matching mechanism
     let is = await isPaper(url, true);
 
-    if (is.arxiv) {
+    if (is.arxiv && !isPdfUrl(url)) {
         // larger arxiv column
         adjustArxivColWidth();
 
@@ -833,6 +833,6 @@ const tryArxivDisplay = async ({
 
     paper = results[0];
     if (paper) {
-        tryArxivDisplay({ paper, preprintsPromise });
+        tryArxivDisplay({ url, paper, preprintsPromise });
     }
 })();
