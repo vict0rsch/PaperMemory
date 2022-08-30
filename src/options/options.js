@@ -234,6 +234,7 @@ const handleParseImportJson = async (e) => {
                 }]&nbsp; &times;&nbsp; Error: ${url} (open the JavaScript Console for more info)</li>`;
             }
         }
+        await pushToRemote();
         changeProgress(0);
         setHTML("import-json-status", `<strong>Done!</strong>`);
     };
@@ -709,9 +710,13 @@ const handleConfirmOverwrite = (papersToWrite, warning) => (e) => {
             }
         }
         await setStorage("papers", papersToWrite);
+        const pushed = (await shouldSync())
+            ? " and pushed to your online Gist storage"
+            : "";
+        await pushToRemote();
         setHTML(
             "overwriteFeedback",
-            `<h4 style="margin: 1.5rem">Memory overwritten.</h4>`
+            `<h4 style="margin: 1.5rem">Memory overwritten${pushed}.</h4>`
         );
         val("overwrite-arxivmemory-input", "");
     }, 700);
