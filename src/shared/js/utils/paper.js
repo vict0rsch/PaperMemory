@@ -781,10 +781,10 @@ const parseIdFromUrl = async (url) => {
     } else if (is.ihep) {
         if (url.includes("/literature/")) {
             const num = noParamUrl(url).match(/\/literature\/(\d+)/)[1];
-            idForUrl = findPaperForProperty(papers, "IHEP", num);
+            idForUrl = findPaperForProperty(papers, "ihep", num);
         } else {
             const hash = noParamUrl(url).split("/files/")[1].split("/")[0];
-            idForUrl = findPaperForProperty(papers, "IHEP", hash, "pdfLink");
+            idForUrl = findPaperForProperty(papers, "ihep", hash, "pdfLink");
         }
     } else if (is.localFile) {
         idForUrl = is.localFile;
