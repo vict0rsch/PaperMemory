@@ -156,8 +156,9 @@ const paperToAbs = (paper) => {
             abs = pdf.replace(/\/pdf$/, "/full");
             break;
 
-        case ihep:
+        case "ihep":
             abs = `https://inspirehep.net/literature/${paper.id.split("-")[1]}`;
+            break;
 
         default:
             abs = "https://xkcd.com/1969/";
