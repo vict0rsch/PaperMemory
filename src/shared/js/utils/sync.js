@@ -65,7 +65,7 @@ const initSyncAndState = async (
     const f = async () => {
         if (!(await shouldSync())) return;
         !isContentScript && startSyncLoader();
-        await sendMessageToBackground({ type: "reSync" });
+    await sendMessageToBackground({ type: "restartGist" });
         const remotePapers = await pullFromRemote(papers, isContentScript);
         log("Remote Papers pulled: ", remotePapers);
         if (remotePapers) {

@@ -32,7 +32,7 @@ const setupSync = async (browser) => {
     await page.evaluate(async (pat) => {
         await setStorage("syncPAT", pat);
         await setStorage("syncState", true);
-        await sendMessageToBackground({ type: "reSync" });
+        await sendMessageToBackground({ type: "restartGist" });
         info("syncState: ", await getStorage("syncState"));
     }, pat);
 };

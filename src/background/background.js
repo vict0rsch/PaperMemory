@@ -2,21 +2,23 @@ var paperTitles = {};
 var MAX_TITLE_UPDATES = 100;
 var tabStatuses = {};
 
-const initSync = async () => {
+const initGist = async () => {
     if (!(await shouldSync())) {
-        log("Sync disabled.");
+        warn("Sync disabled.");
         return;
     }
     const { ok, error, payload } = await getGist();
     if (ok) {
         global.state.gist = payload.gist;
         global.state.gistDataFile = await getDataFile(global.state.gist);
+        await global.state.gistDataFile.fetchLatest();
+        logOk("Sync successfully enabled.");
     } else {
-        logError("[initSync]", error);
+        logError("[initGist]", error);
     }
 };
 
-initSync();
+initGist();
 
 const setFaviconCode = `
 var link;
@@ -184,8 +186,10 @@ const pullSyncPapers = async () => {
     try {
         log("Pulling from Github...");
         await global.state.gistDataFile.fetchLatest();
+        const remotePapers = global.state.gistDataFile.content;
+        log("Pulled papers:", remotePapers);
         info("Pulling from Github... Done!");
-        return global.state.gistDataFile.content;
+        return remotePapers;
     } catch (e) {
         logError("[pullSyncPapers]", e);
     }
@@ -237,8 +241,8 @@ chrome.runtime.onMessage.addListener((payload, sender, sendResponse) => {
         pushSyncPapers().then(sendResponse);
     } else if (payload.type === "pullSync") {
         pullSyncPapers(payload.gist).then(sendResponse);
-    } else if (payload.type === "reSync") {
-        initSync().then(sendResponse);
+    } else if (payload.type === "restartGist") {
+        initGist().then(sendResponse);
     }
     return true;
 });

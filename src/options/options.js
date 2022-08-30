@@ -950,7 +950,7 @@ const setupSync = async () => {
         const pat = "";
         setStorage("syncPAT", pat);
         val("pat-input", pat);
-        await sendMessageToBackground({ type: "reSync" });
+        await sendMessageToBackground({ type: "restartGist" });
         toggleSync();
     });
 
@@ -1024,7 +1024,7 @@ const setupSync = async () => {
         } catch (e) {
             setHTML("overwriteRemoteFeedback", e);
         }
-        await sendMessageToBackground({ type: "reSync" });
+        await sendMessageToBackground({ type: "restartGist" });
         hideId("sync-loader");
     });
 };
