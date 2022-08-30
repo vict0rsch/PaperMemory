@@ -45,7 +45,7 @@ const getDataFile = async (gist) => {
     return dataFile;
 };
 
-const pushToRemote = () => sendMessageToBackground({ type: "writeSync" });
+const pushToRemote = async () => await sendMessageToBackground({ type: "writeSync" });
 
 const pullFromRemote = async (papers, isContentScript) => {
     const start = Date.now();
