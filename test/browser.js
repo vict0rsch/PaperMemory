@@ -62,4 +62,6 @@ exports.visitPaperPage = async (browser, target, options = {}) => {
 exports.extensionPopupURL =
     "chrome-extension://ehchlpggdaffcncbeopdopnndhdjelbc/src/popup/min/popup.min.html";
 exports.fullMemoryURL =
-    "chrome-extension://ehchlpggdaffcncbeopdopnndhdjelbc/src/fullMemory/fullMemory.html";
+    "chrome-extension://ehchlpggdaffcncbeopdopnndhdjelbc/src/fullMemory/fullMemory.html?noRefresh=true";
+exports.chromeExtensionsURL =
+    "chrome://extensions/?id=ehchlpggdaffcncbeopdopnndhdjelbc";
