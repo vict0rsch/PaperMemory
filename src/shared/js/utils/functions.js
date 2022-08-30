@@ -119,14 +119,14 @@ const isPdfUrl = (url) => {
     );
 };
 
-const delay = (fn, ms) => {
+function delay(fn, ms) {
     // https://stackoverflow.com/questions/1909441/how-to-delay-the-keyup-handler-until-the-user-stops-typing
     let timer = 0;
-    return (...args) => {
+    return function (...args) {
         clearTimeout(timer);
         timer = setTimeout(fn.bind(this, ...args), ms || 0);
     };
-};
+}
 
 const cleanPapers = (papers) => {
     let cleaned = { ...papers };
