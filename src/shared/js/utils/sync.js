@@ -91,7 +91,10 @@ const initSyncAndState = async ({
         if (!isContentScript) {
             const n = global.state.sortedPapers.length;
             setPlaceholder("memory-search", `Search ${n} entries...`);
-            if (!global.state.memoryIsOpen) {
+            if (
+                !global.state.memoryIsOpen &&
+                !window.location.href.includes("options.html")
+            ) {
                 await makeMemoryHTML();
             }
             successSyncLoader();
