@@ -17,13 +17,13 @@ const autoRefresh = () => {
         window.location.reload();
     };
 
-    var time;
+    let time;
 
     const resetTimer = () => {
         clearTimeout(time);
         time = setTimeout(reload, REFRESH_INTERVAL_SECS * 1000);
     };
-    var events = ["click", "keypress", "touchstart"];
+    const events = ["click", "keypress", "touchstart"];
     events.forEach(function (name) {
         document.addEventListener(name, resetTimer, true);
     });

@@ -406,7 +406,7 @@ const saveNewAutoTagItem = async () => {
     autoTags.push(at);
     setStorage("autoTags", autoTags, () => {
         const items = findEl("auto-tags-list").getElementsByClassName("auto-tags-item");
-        const last = Array.from(items).last();
+        const last = [...items].last();
         last.insertAdjacentHTML("afterend", getAutoTagHTML(at));
         addListener(`auto-tags-item-save--${at.id}`, "click", updateAutoTagHandler);
         addListener(`auto-tags-item-delete--${at.id}`, "click", deleteAutoTagHandler);
@@ -846,7 +846,7 @@ const setupDataManagement = () => {
     addListener("overwrite-arxivmemory-button", "click", handleOverwriteMemory);
     addListener("overwrite-arxivmemory-input", "change", handleSelectOverwriteFile);
 
-    const tagOptions = Array.from(global.state.paperTags)
+    const tagOptions = [...global.state.paperTags]
         .sort()
         .map((t, i) => {
             const h = '<option value="' + t + '"'; // not string literal here for minification

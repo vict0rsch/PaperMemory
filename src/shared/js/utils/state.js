@@ -147,7 +147,7 @@ const makeTags = () => {
             tags.add(t);
         }
     }
-    global.state.paperTags = Array.from(tags);
+    global.state.paperTags = [...tags];
     global.state.paperTags.sort();
 };
 

@@ -235,7 +235,7 @@ const slideToggle = (el, duration = 500, complete = () => {}) => {
     }
 };
 
-const queryAll = (dom, selector) => Array.from(dom.querySelectorAll(selector));
+const queryAll = (dom, selector) => [...dom.querySelectorAll(selector)];
 
 // ----------------------------------------------------
 // -----  TESTS: modules for node.js environment  -----

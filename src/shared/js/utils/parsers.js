@@ -280,7 +280,7 @@ const makeArxivPaper = async (url) => {
     const authors = queryAll(doc, "author name").map((el) => el.innerHTML);
     const author = authors.join(" and ");
 
-    const pdfLink = Array.from(doc.getElementsByTagName("link"))
+    const pdfLink = [...doc.getElementsByTagName("link")]
         .map((l) => l.getAttribute("href"))
         .filter((h) => h.includes("arxiv.org/pdf/"))[0]
         .replace(/v\d+\.pdf$/gi, ".pdf");
@@ -315,7 +315,7 @@ const makeNeuripsPaper = async (url) => {
 
     const dom = await fetchDom(url);
 
-    const citeUrl = Array.from(dom.getElementsByTagName("a"))
+    const citeUrl = [...dom.getElementsByTagName("a")]
         .filter((a) => a.innerText === "Bibtex")[0]
         ?.getAttribute("href");
 
@@ -386,7 +386,7 @@ const makeCVFPaper = async (url) => {
     if (url.endsWith(".pdf")) {
         pdfLink = url;
     } else {
-        let href = Array.from(dom.getElementsByTagName("a"))
+        let href = [...dom.getElementsByTagName("a")]
             .filter((a) => a.innerText === "pdf")[0]
             .getAttribute("href");
         if (href.startsWith("../")) {
@@ -681,9 +681,7 @@ const makePNASPaper = async (url) => {
         url.includes("/doi/pdf/") || url.includes("/doi/epdf/")
             ? url.replace("/doi/epdf/", "/doi/pdf/")
             : url.replace("/doi/abs/", "/doi/pdf/").replace("/doi/full/", "/doi/pdf/");
-    const doi = Array.from(
-        dom.querySelector(".core-container").getElementsByTagName("a")
-    )
+    const doi = [...dom.querySelector(".core-container").getElementsByTagName("a")]
         .map((a) => a.getAttribute("href"))
         .filter((a) => a?.includes("https://doi.org"))[0]
         .split("/")
@@ -741,7 +739,7 @@ const makeNaturePaper = async (url) => {
         if (doi) break;
     }
     if (!doi) {
-        doi = Array.from(dom.getElementsByTagName("span"))
+        doi = [...dom.getElementsByTagName("span")]
             .map((a) => a.innerText)
             .filter((a) => a.includes("https://doi.org"))[0];
     }
@@ -879,7 +877,7 @@ const makePMCPaper = async (url) => {
 
 const makePubMedPaper = async (url) => {
     const dom = await fetchDom(url.split("?")[0]);
-    const metas = Array.from(dom.getElementsByTagName("meta")).filter((el) =>
+    const metas = [...dom.getElementsByTagName("meta")].filter((el) =>
         el.getAttribute("name")?.includes("citation_")
     );
     const data = Object.fromEntries(
@@ -1010,7 +1008,7 @@ const makeIEEEPaper = async (url) => {
     }
     const dom = await fetchDom(url);
     const metadata = JSON.parse(
-        Array.from(dom.getElementsByTagName("script"))
+        [...dom.getElementsByTagName("script")]
             .filter((s) => s.innerHTML?.includes("metadata="))[0]
             .innerHTML.split("metadata=")[1]
             .split(/};\s*/)[0] + "}"
@@ -1561,7 +1559,7 @@ const autoTagPaper = async (paper) => {
                 at.tags.forEach((t) => tags.add(t));
             }
         }
-        paper.tags = Array.from(tags).sort();
+        paper.tags = [...tags].sort();
         if (paper.tags.length) {
             log("Automatically adding tags:", paper.tags);
         }

@@ -50,7 +50,7 @@ const showPopupModal = (name) => {
     document.querySelectorAll(".popup-modal-content").forEach(hideId);
     showId(`modal-${name}-content`, "contents");
     style("popup-modal-wrapper", "display", "flex");
-    Array.from(document.getElementsByTagName("a")).forEach((el) => {
+    [...document.getElementsByTagName("a")].forEach((el) => {
         addListener(el, "click", () => {
             chrome.tabs.create({ url: el.getAttribute("href") });
         });
