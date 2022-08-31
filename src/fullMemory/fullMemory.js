@@ -38,7 +38,7 @@ const syncOnBlur = async () => {
             info("Syncing back and forth...");
             await pushToRemote();
             await initSyncAndState();
-        }, 5000)
+        }, 10000)
     );
 };
 

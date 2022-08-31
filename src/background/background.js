@@ -7,12 +7,15 @@ const initGist = async () => {
         warn("Sync disabled.");
         return;
     }
+    const start = Date.now();
+    log("Initializing Sync...");
     const { ok, error, payload } = await getGist();
     if (ok) {
         global.state.gist = payload.gist;
         global.state.gistDataFile = await getDataFile(global.state.gist);
         await global.state.gistDataFile.fetchLatest();
-        logOk("Sync successfully enabled.");
+        const duration = (Date.now() - start) / 1000;
+        logOk(`Sync successfully enabled (${duration}s).`);
     } else {
         logError("[initGist]", error);
     }
@@ -184,30 +187,38 @@ const findCodesForPaper = async (request) => {
 const pullSyncPapers = async () => {
     if (!(await shouldSync())) return;
     try {
+        const start = Date.now();
+        consoleHeader(`Pulling ${String.fromCodePoint("0x23EC")}`);
         log("Pulling from Github...");
         await global.state.gistDataFile.fetchLatest();
         const remotePapers = global.state.gistDataFile.content;
         log("Pulled papers:", remotePapers);
-        info("Pulling from Github... Done!");
+        const duration = (Date.now() - start) / 1000;
+        info(`Pulling from Github... Done (${duration}s)!`);
+        console.groupEnd();
         return remotePapers;
     } catch (e) {
         logError("[pullSyncPapers]", e);
     }
+    console.groupEnd();
 };
 
 const pushSyncPapers = async () => {
-    console.log("Should sync? ->", await shouldSync());
     if (!(await shouldSync())) return;
     try {
+        const start = Date.now();
+        consoleHeader(`Pushing ${String.fromCodePoint("0x23EB")}`);
         log("Writing to Github...");
         const papers = (await getStorage("papers")) ?? {};
         log("papers to write: ", papers);
         await global.state.gistDataFile.overwrite(JSON.stringify(papers, null, ""));
         await global.state.gistDataFile.save();
-        log("Writing to Github... Done!");
+        const duration = (Date.now() - start) / 1000;
+        log(`Writing to Github... Done (${duration}s)!`);
     } catch (e) {
         logError("[pushSyncPapers]", e);
     }
+    console.groupEnd();
 };
 
 chrome.runtime.onMessage.addListener((payload, sender, sendResponse) => {
@@ -315,10 +326,10 @@ chrome.commands.onCommand.addListener((command) => {
 });
 
 chrome.runtime.onConnect.addListener(function (port) {
-    if (port.name === "PaperMemorySync") {
-        console.log("PaperMemorySync connected.");
+    if (port.name === "PaperMemoryPopupSync") {
+        log("[chrome.runtime.onConnect] Popup connected.");
         port.onDisconnect.addListener(async function () {
-            console.log("PaperMemorySync: popup has been closed");
+            log("[chrome.runtime.onConnect] Popup disconnected.");
             await pushSyncPapers();
         });
     }

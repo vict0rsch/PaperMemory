@@ -297,7 +297,7 @@ const popupMain = async (url, is, manualTrigger = false) => {
 const query = { active: true, lastFocusedWindow: true };
 if (window.location.href.includes("popup")) {
     chrome.tabs.query(query, async (tabs) => {
-        chrome.runtime.connect({ name: "PaperMemorySync" });
+        chrome.runtime.connect({ name: "PaperMemoryPopupSync" });
         const url = tabs[0].url;
 
         const stateReadyPromise = new Promise((resolve) => {

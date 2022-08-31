@@ -10,9 +10,13 @@ const getGist = async (pat, store = true) => {
         };
     }
 
+    const isTest = await getStorage("syncTest");
+
+    const appIdentifier = isTest ? "TestsPaperMemorySync" : "PaperMemorySync";
+
     const githubGist = new GithubGist.default({
+        appIdentifier,
         personalAccessToken: pat,
-        appIdentifier: "PaperMemorySync",
         isPublic: false,
     });
 
@@ -33,10 +37,7 @@ const getGist = async (pat, store = true) => {
 };
 
 const getDataFile = async (gist) => {
-    const isTest = await getStorage("syncTest");
-    const fileName = isTest
-        ? "TESTS-PaperMemory-sync-data.json"
-        : "PaperMemory-sync-data.json";
+    const fileName = "PaperMemory-sync-data.json";
     let dataFile = gist.getFile(fileName);
     if (!dataFile) {
         gist.createFile(fileName);
@@ -80,7 +81,7 @@ const initSyncAndState = async ({
     }
 
     !isContentScript && startSyncLoader();
-    await sendMessageToBackground({ type: "restartGist" });
+    // await sendMessageToBackground({ type: "restartGist" });
     const remotePapers = await pullFromRemote(papers, isContentScript);
     if (remotePapers) {
         if (!isContentScript) {
