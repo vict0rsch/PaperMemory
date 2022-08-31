@@ -300,9 +300,16 @@ if (window.location.href.includes("popup")) {
         chrome.runtime.connect({ name: "PaperMemoryPopupSync" });
         const url = tabs[0].url;
 
-        const stateReadyPromise = new Promise((resolve) => {
-            initSyncAndState({ stateIsReady: resolve });
+        let stateReadyPromise, remoteIsReadyPromise;
+        remoteIsReadyPromise = new Promise((remoteReadyResolve) => {
+            stateReadyPromise = new Promise((stateReadyResolve) => {
+                initSyncAndState({
+                    stateIsReady: stateReadyResolve,
+                    remoteIsReady: remoteReadyResolve,
+                });
+            });
         });
+
         await stateReadyPromise;
 
         const is = await isPaper(url);
@@ -316,6 +323,14 @@ if (window.location.href.includes("popup")) {
         popupMain(url, is);
         if (navigator.userAgent.search("Firefox") > -1) {
             hideId("overwrite-container");
+        }
+
+        await remoteIsReadyPromise;
+
+        if (global.state.currentId && !global.state.papers[global.state.currentId]) {
+            global.state.currentId = null;
+            makeMemoryHTML();
+            await updatePopupPaperNoMemory(url);
         }
     });
 }
