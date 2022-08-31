@@ -1222,14 +1222,34 @@ const makeFrontiersPaper = async (url) => {
 };
 
 const makeIHEPPaper = async (url) => {
-    if (url.includes("/files/")) return;
-    const num = url.match(/\/literature\/(\d+)/)[1];
+    let data, num;
+    if (url.includes("/files/")) {
+        const hash = url.split("/files/")[1].split("/")[0];
+        const api = `https://inspirehep.net/api/literature?q=documents.key:${hash}`;
+        const results = await fetchJSON(api);
+        data = results.hits.hits.find(
+            (h) => !!h.metadata.documents.find((d) => d.key === hash)
+        );
+        if (!data) {
+            warn("Could not find an Inspire HEP record for the url", url);
+            return;
+        }
+        num = data.metadata.control_number;
+    } else {
+        num = url.match(/\/literature\/(\d+)/)[1];
+    }
+    if (!num) {
+        warn("Could not find an Inspire HEP id for the url", url);
+        return;
+    }
     const bibtex = await fetchText(
         `https://inspirehep.net/api/literature/${num}?format=bibtex`
     );
-    const data = await fetchJSON(
-        `https://inspirehep.net/api/literature/${num}?format=json`
-    );
+    if (!data) {
+        data = await fetchJSON(
+            `https://inspirehep.net/api/literature/${num}?format=json`
+        );
+    }
     const bibObj = bibtexToObject(bibtex);
     let title = bibObj.title ?? data.metadata.titles[0].title;
     if (title.startsWith("{") && title.endsWith("}")) title = title.slice(1, -1);
