@@ -920,6 +920,8 @@ const setupSync = async () => {
         if (error) {
             setHTML("pat-feedback", "Invalid PAT" + "<br/><br/>" + error);
         }
+        hideId("pat-loader");
+        await toggleSync({ hideAll: true });
     } else {
         const { gist, pat } = payload;
         val("pat-input", pat);
@@ -932,6 +934,10 @@ const setupSync = async () => {
         const pat = val("pat-input");
         if (!pat) {
             setHTML("pat-feedback", "Invalid PAT");
+            await setStorage("syncPAT", pat);
+            await setStorage("syncState", false);
+            hideId("pat-loader");
+            await toggleSync({ hideAll: true });
             return;
         }
         const { ok, payload, error } = await getGist(pat);
@@ -1142,8 +1148,13 @@ const setSyncOk = async ({ push = false } = {}) => {
     alert("Synced!");
 };
 
-const toggleSync = async () => {
+const toggleSync = async ({ hideAll = false } = {}) => {
     const syncState = await getStorage("syncState");
+    if (hideAll) {
+        hideId("stop-sync");
+        hideId("start-sync");
+        return;
+    }
     if (!syncState) {
         showId("start-sync");
         hideId("stop-sync");
