@@ -16,7 +16,7 @@ const duration = (times) => (Date.now() - times[0]) / 1e3;
  * @param {object} papers Memory object with papers to initialize the state with
  * @param {boolean} isContentScript Whether the call is from a content_script or the popup
  */
-const initState = async (papers, isContentScript, print = true) => {
+const initState = async ({ papers, isContentScript, print = true } = {}) => {
     const times = [];
     times.unshift(Date.now());
     print && consoleHeader(`PaperMemory Init ${String.fromCodePoint("0x2705")}`);

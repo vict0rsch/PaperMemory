@@ -54,7 +54,11 @@ const pullFromRemote = async (papers, isContentScript) => {
     consoleHeader(`PaperMemory Pull ${String.fromCodePoint("0x1F504")}`);
     log("Remote Papers pulled: ", remotePapers);
     if (remotePapers) {
-        await initState(remotePapers ?? papers, isContentScript, false);
+        await initState({
+            isContentScript,
+            papers: remotePapers ?? papers,
+            print: false,
+        });
         const time = (Date.now() - start) / 1e3;
         info(`Successfully pulled from Github (${time}s).`);
         await setStorage("papers", global.state.papers);
@@ -71,7 +75,7 @@ const initSyncAndState = async ({
     stateIsReady = () => {},
     remoteIsReady = () => {},
 } = {}) => {
-    !global.state.dataVersion && (await initState(papers, isContentScript));
+    !global.state.dataVersion && (await initState({ papers, isContentScript }));
 
     stateIsReady();
 
@@ -87,6 +91,9 @@ const initSyncAndState = async ({
         if (!isContentScript) {
             const n = global.state.sortedPapers.length;
             setPlaceholder("memory-search", `Search ${n} entries...`);
+            if (!global.state.memoryIsOpen) {
+                await makeMemoryHTML();
+            }
             successSyncLoader();
         }
     } else {
