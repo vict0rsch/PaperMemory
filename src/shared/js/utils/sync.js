@@ -55,7 +55,7 @@ const pullFromRemote = async (papers, isContentScript) => {
     log("Remote Papers pulled: ", remotePapers);
     if (remotePapers) {
         await initState(remotePapers ?? papers, isContentScript, false);
-        const time = (Date.now() - start) / 1000;
+        const time = (Date.now() - start) / 1e3;
         info(`Successfully pulled from Github (${time}s).`);
         await setStorage("papers", global.state.papers);
     }

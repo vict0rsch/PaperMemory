@@ -14,7 +14,7 @@ const initGist = async () => {
         global.state.gist = payload.gist;
         global.state.gistDataFile = await getDataFile(global.state.gist);
         await global.state.gistDataFile.fetchLatest();
-        const duration = (Date.now() - start) / 1000;
+        const duration = (Date.now() - start) / 1e3;
         logOk(`Sync successfully enabled (${duration}s).`);
     } else {
         logError("[initGist]", error);
@@ -193,7 +193,7 @@ const pullSyncPapers = async () => {
         await global.state.gistDataFile.fetchLatest();
         const remotePapers = global.state.gistDataFile.content;
         log("Pulled papers:", remotePapers);
-        const duration = (Date.now() - start) / 1000;
+        const duration = (Date.now() - start) / 1e3;
         info(`Pulling from Github... Done (${duration}s)!`);
         console.groupEnd();
         return remotePapers;
@@ -213,7 +213,7 @@ const pushSyncPapers = async () => {
         log("papers to write: ", papers);
         await global.state.gistDataFile.overwrite(JSON.stringify(papers, null, ""));
         await global.state.gistDataFile.save();
-        const duration = (Date.now() - start) / 1000;
+        const duration = (Date.now() - start) / 1e3;
         log(`Writing to Github... Done (${duration}s)!`);
     } catch (e) {
         logError("[pushSyncPapers]", e);

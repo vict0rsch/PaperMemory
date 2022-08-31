@@ -4,8 +4,8 @@ const ora = require("ora");
 
 exports.sleep = async (duration, textToDisplay) => {
     const text = textToDisplay
-        ? `${textToDisplay} (${duration / 1000}s)`
-        : `Waiting for ${duration / 1000}s`;
+        ? `${textToDisplay} (${duration / 1e3}s)`
+        : `Waiting for ${duration / 1e3}s`;
     const spinner = ora({ text, spinner: "timeTravel" }).start();
     await new Promise((resolve) => setTimeout(resolve, duration));
     spinner.stop();

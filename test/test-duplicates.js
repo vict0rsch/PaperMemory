@@ -123,7 +123,7 @@ describe("Paper de-duplication", function () {
                 memoryPage = await browser.newPage();
                 await memoryPage.goto(extensionPopupURL);
                 // wait for it to load
-                await sleep(1000);
+                await sleep(1e3);
                 // get PaperMemory's state
                 memoryState = await getPaperMemoryState(memoryPage);
 

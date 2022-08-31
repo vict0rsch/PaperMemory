@@ -303,7 +303,7 @@ const cleanBiorxivURL = (url) => {
  */
 const textareaFocusEnd = (element) => {
     setTimeout(() => {
-        element.selectionStart = element.selectionEnd = 10000;
+        element.selectionStart = element.selectionEnd = 10e3;
     }, 0);
 };
 

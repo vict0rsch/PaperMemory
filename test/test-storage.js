@@ -174,7 +174,7 @@ describe("Test paper detection and storage", function () {
                 // go to the extension's popup url
                 const page = await browser.newPage();
                 await page.goto(extensionPopupURL);
-                await page.waitForTimeout(1000);
+                await page.waitForTimeout(1e3);
 
                 // retrieve the data parsed by PaperMemory
                 memoryPapers = await getMemoryPapers(page);

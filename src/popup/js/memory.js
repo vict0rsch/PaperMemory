@@ -676,7 +676,7 @@ const displayMemoryTable = (pagination = 0) => {
     // Save fields on edits save (submit)
     const end = Date.now();
 
-    info("Display duration (s): " + (end - start) / 1000);
+    info("Display duration (s): " + (end - start) / 1e3);
 };
 
 /**

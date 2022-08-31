@@ -47,9 +47,9 @@ const nowStr = () => {
         await page.goto(`${root}/src/popup/min/popup.min.html`, {
             waitUntil: "domcontentloaded",
         });
-        await page.waitForTimeout(1000);
+        await page.waitForTimeout(1e3);
         await page.click("#memory-switch");
-        await page.waitForTimeout(1000);
+        await page.waitForTimeout(1e3);
         await page.screenshot({
             path: `${path}/${now}-menu.png`,
             fullPage: true,

@@ -614,7 +614,7 @@ const addOrUpdatePaper = async ({
         contentScriptCallbacks["preprints"](paper);
         pushToRemote();
 
-        info(`Done processing paper (${(Date.now() - aouStart) / 1000}s).`);
+        info(`Done processing paper (${(Date.now() - aouStart) / 1e3}s).`);
         console.groupEnd();
     });
 

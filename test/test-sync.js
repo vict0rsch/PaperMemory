@@ -34,8 +34,8 @@ describe("Test Github Gist Sync", async function () {
     const miniMemory = readJSON("./data/3-papers-memory.json");
     urls = [urls["acl"][0], urls["arxiv"][0], urls["jmlr"][0]];
 
-    this.slow(60 * 1000);
-    this.timeout(60 * 2 * 1000);
+    this.slow(60e3);
+    this.timeout(120e3);
 
     describe("Papers are added on Device 0 and pulled on Device 1", async function () {
         let pages, browsers, memories;

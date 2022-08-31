@@ -1,4 +1,4 @@
-const duration = (times) => (Date.now() - times[0]) / 1000;
+const duration = (times) => (Date.now() - times[0]) / 1e3;
 /**
  * Function to initialize the app's state.
  *  1. load the papers from storage is the papers argument is undefined
@@ -87,7 +87,7 @@ const initState = async (papers, isContentScript, print = true) => {
         times.unshift(Date.now());
     }
 
-    info("State init duration (s): " + (Date.now() - times.last()) / 1000);
+    info("State init duration (s): " + (Date.now() - times.last()) / 1e3);
     print && console.groupEnd();
 };
 
