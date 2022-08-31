@@ -1324,9 +1324,13 @@ const showOptionsModal = (name) => {
     document.querySelectorAll(".modal-content-div").forEach(hideId);
     showId(`modal-${name}-content`, "contents");
     style("modal-wrapper", "display", "flex");
+    document.body.style.overflow = "hidden";
 };
 
-const closeModal = () => style("modal-wrapper", "display", "none");
+const closeModal = () => {
+    style("modal-wrapper", "display", "none");
+    document.body.style.overflow = "auto";
+};
 
 const setupModals = () => {
     addListener("close-modal", "click", closeModal);
