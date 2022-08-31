@@ -562,3 +562,65 @@ input {
 .pm-loader {
     margin: 8px;
 }
+/*
+ -------------------
+ -----  Modal  -----
+ -------------------
+ */
+
+#modal-wrapper {
+    display: none; /* Hidden by default */
+    position: fixed; /* Stay in place */
+    z-index: 10; /* Sit on top */
+    left: 0;
+    top: 0;
+    width: 100%; /* Full width */
+    max-width: 100%; /* Full width */
+    height: 100%; /* Full height */
+    overflow: auto; /* Enable scroll if needed */
+    background-color: rgb(0, 0, 0); /* Fallback color */
+    background-color: rgba(0, 0, 0, 0.2); /* Black w/ opacity */
+    backdrop-filter: blur(6px);
+    justify-content: center;
+    align-items: center;
+    transition: all ease 0.5s;
+}
+
+/* Modal Content/Box */
+#modal-contents {
+    background-color: #fefefe;
+    padding: 20px 35px;
+    border-radius: var(--rounder);
+    width: 60%; /* Could be more or less, depending on screen size */
+    min-width: 500px;
+    min-height: 200px;
+    max-height: 80%;
+    overflow: scroll;
+    position: fixed;
+    top: 10%;
+}
+.modal-content-div {
+    padding-top: 50px;
+}
+/* The Close Button */
+#close-modal {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+}
+
+#close-modal:hover,
+#close-modal:focus {
+    color: black;
+    text-decoration: none;
+    cursor: pointer;
+}
+#modal-sync-cancel:hover,
+#modal-sync-warning-cancel:hover {
+    color: var(--red);
+}
+#modal-sync-cancel,
+#modal-sync-warning-cancel {
+    padding: 8px 16px;
+    background: rgb(253, 201, 195);
+}

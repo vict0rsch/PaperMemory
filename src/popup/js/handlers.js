@@ -1,9 +1,3 @@
-const addEventToClass = (className, eventName, fn) => {
-    document.querySelectorAll(className).forEach((el) => {
-        el.addEventListener(eventName, fn);
-    });
-};
-
 const handleBackToFocus = (e) => {
     const id = eventId(e);
     setTimeout(() => {

@@ -474,7 +474,7 @@
         <div class="section">
             <h2 id="online-synchronization">Online synchronization</h2>
 
-            <h4 id="sync-about-title">How it works</h4>
+            <h4 id="sync-how-it-works">How it works</h4>
 
             <ul>
                 <li>Your Memory data gets written to a <code>.json</code> file as a gist on your Github account (<a
@@ -621,6 +621,80 @@
                 <a href="https://addons.mozilla.org/en-US/firefox/addon/paper-memory/">
                     Firefox Add-ons
                 </a>
+            </div>
+        </div>
+
+        <div id="modal-wrapper" style="display: none;">
+            <div id="modal-contents">
+                <span id="close-modal">&times;</span>
+                <div id="modal-sync-strategy-content" class="modal-content-div">
+                    <h3>Syncronization conflict</h3>
+
+                    <p>You seem to already have a synced Memory. What do you want to do?</p>
+                    <ol class="mb-4">
+                        <li>Overwrite your LOCAL data with the REMOTE data</li>
+                        <li>Overwrite your REMOTE data with the LOCAL data</li>
+                        <li>Merge both data sources into the union of all papers</li>
+                        <li>Abort this procedure.</li>
+                    </ol>
+
+                    <p class="mt-4 mb-4"><strong><em>Note&nbsp;:</em></strong>&nbsp; All overwritten data will be saved
+                        to
+                        your <code>Downloads/</code> folder in case anything goes wrong.</p>
+
+                    <div class="row d-flex justify-content-evenly align-items-center pt-4">
+                        <div class="col-3 d-flex justify-content-center align-items-center">
+                            <button id="modal-sync-local-remote" class="modal-sync-strategy-choice">
+                                1. Overwrite local with remote
+                            </button>
+                        </div>
+                        <div class="col-3 d-flex justify-content-center align-items-center">
+                            <button id="modal-sync-remote-local" class="modal-sync-strategy-choice">
+                                2. Overwrite remote with local
+                            </button>
+                        </div>
+                        <div class="col-3 d-flex justify-content-center align-items-center">
+                            <button id="modal-sync-merge" class="modal-sync-strategy-choice">
+                                3. Merge both data sources
+                            </button>
+                        </div>
+                        <div class="col-6 d-flex justify-content-center align-items-center mt-4">
+                            <button id="modal-sync-cancel" class="modal-sync-strategy-choice">
+                                Cancel synchronization
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="modal-sync-warning-content" class="modal-content-div">
+                    <p>You are about to enable Syncing across devices with Github Gists.</p>
+
+                    <p>This popup is simply to make sure everything is clear on what will happen</p>
+
+                    <p>In particular, make sure you have read and understood the <a
+                            href="chrome-extension://ehchlpggdaffcncbeopdopnndhdjelbc/src/options/options.html#sync-how-it-works"
+                            id="modal-sync-warning-description">description
+                            of the feature</a> before
+                        continuing.</p>
+
+                    <p>Additionally:
+                    <ul>
+                        <li>Syncronization typically takes approximately 2 seconds to <em>Pull</em> or to <em>Push</em>
+                            the data.</li>
+                        <li>Therefore, if you modify your memory (add tags, notes, delete a paper) from the popup and
+                            then close it, your modifications will be lost so you have to make sure the app is done
+                            syncing before leaving the popup. </li>
+                        <li>In most cases, the above is not critical. But it may explain why you feel like some of your
+                            actions are not recored or overwritten.</li>
+                    </ul>
+                    </p>
+                    <br>
+                    <br>
+                    <div class="row d-flex justify-content-evenly align-items-center">
+                        <button class="col-7 mb-4" id="modal-sync-warning-cancel">Cancel Synchronization.</button>
+                        <button class="col-7 mb-4" id="modal-sync-warning-continue">Ok, let's do this!</button>
+                    </div>
+                </div>
             </div>
         </div>
 

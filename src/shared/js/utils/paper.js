@@ -387,6 +387,7 @@ const mergePapers = (options = { newPaper: {}, oldPaper: {} }) => {
     const defaults = {
         overwrites: ["lastOpenDate"],
         incrementCount: false,
+        syncMerge: false,
     };
 
     const opts = { ...defaults, ...extra };
@@ -400,6 +401,31 @@ const mergePapers = (options = { newPaper: {}, oldPaper: {} }) => {
     }
     if (opts.incrementCount && mergedPaper.count === 1) {
         mergedPaper.count += 1;
+    }
+    if (opts.syncMerge) {
+        // add counts
+        mergedPaper.count = oldPaper.count + newPaper.count;
+
+        // combine notes
+        mergedPaper.note = oldPaper.note ?? "";
+        if (newPaper.note && newPaper.note !== oldPaper.note) {
+            mergedPaper.note += "\n\n--[Sync Merge]--\n";
+            mergedPaper.note += newPaper.note;
+        }
+
+        // combine tags
+        mergedPaper.tags = [...oldPaper.tags, ...newPaper.tags];
+
+        mergedPaper.lastOpenDate = newPaper.lastOpenDate;
+        // keep most recent open date
+        if (newPaper.lastOpenDate > oldPaper.lastOpenDate) {
+            mergedPaper.lastOpenDate = newPaper.lastOpenDate;
+        }
+        mergedPaper.addDate = newPaper.addDate;
+        // keep oldest add date
+        if (newPaper.addDate > oldPaper.addDate) {
+            mergedPaper.addDate = newPaper.addDate;
+        }
     }
     for (const attribute of opts.overwrites) {
         if (newPaper.hasOwnProperty(attribute)) {

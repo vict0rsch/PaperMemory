@@ -961,6 +961,10 @@ const setupSync = async () => {
 
     addListener("start-gh-sync", "click", async () => {
         showId("sync-loader");
+        if (!(await showSyncWarning())) {
+            hideId("sync-loader");
+            return;
+        }
         const { ok, payload, error } = await getGist();
         if (!ok) {
             alert("Your Personal Access Token is invalid.\n\n" + (error ?? ""));
@@ -968,25 +972,20 @@ const setupSync = async () => {
         }
         const { gist } = payload;
         const dataFile = await getDataFile(gist);
-        let userChoice;
+        let userChoice = "no-remote";
         if (dataFile.content) {
             console.log("Existing data file content:", dataFile.content);
-            userChoice = prompt(
-                "You seem to already have a synced Memory. What do you want to do?\n\n" +
-                    "  1. Overwrite your LOCAL data with the REMOTE data" +
-                    " (a copy of your local data will be saved just in case)?\n" +
-                    "  2. Overwrite your REMOTE data with the LOCAL data" +
-                    " (a copy of your remote data will be saved just in case)?\n" +
-                    "  3. Abort this procedure.\n"
-            );
-            if (userChoice !== "1" && userChoice !== "2") {
+            userChoice = await getSyncStrategy();
+            if (!userChoice) {
                 hideId("sync-loader");
                 return;
             }
         }
         try {
-            if (userChoice === "2" || typeof userChoice === "undefined") {
-                if (userChoice) {
+            if (userChoice === "remote-local" || userChoice === "no-remote") {
+                // writing to remote, keeping local untouched
+                if (userChoice === "remote-local") {
+                    // save pre-existing remote data
                     const now = new Date();
                     const date = now.toLocaleDateString().replaceAll("/", ".");
                     const time = now.toLocaleTimeString().replaceAll(":", ".");
@@ -1001,7 +1000,8 @@ const setupSync = async () => {
                 dataFile.overwrite(papersString);
                 await dataFile.save();
                 await setSyncOk();
-            } else if (userChoice === "1") {
+            } else if (userChoice === "local-remote") {
+                // overwrite local data with remote data
                 dispatch("download-arxivmemory", "click");
                 const remotePapers = dataFile.content;
                 const { success, message, warning, papersToWrite } =
@@ -1025,6 +1025,69 @@ const setupSync = async () => {
                 } else {
                     setHTML("overwriteRemoteFeedback", message);
                 }
+            } else if (userChoice === "merge") {
+                const now = new Date();
+                const date = now.toLocaleDateString().replaceAll("/", ".");
+                const time = now.toLocaleTimeString().replaceAll(":", ".");
+                downloadTextFile(
+                    JSON.stringify(dataFile.content),
+                    `PaperMemory-merge--remote-data-backup-${date}-${time}.json`,
+                    "text/json"
+                );
+                downloadTextFile(
+                    JSON.stringify(await getStorage("papers")),
+                    `PaperMemory-merge--local-data-backup-${date}-${time}.json`,
+                    "text/json"
+                );
+                let mergedPapers = {};
+                const remotePapers = dataFile.content;
+                const localPapers = await getStorage("papers");
+                const remoteVersion = remotePapers["__dataVersion"];
+                const localVersion = localPapers["__dataVersion"];
+                mergedPapers["__dataVersion"] = Math.min(remoteVersion, localVersion);
+                for (const key of Object.keys(localPapers)) {
+                    if (key === "__dataVersion") continue;
+                    if (remotePapers[key]) {
+                        mergedPapers[key] = mergePapers({
+                            newPaper: remotePapers[key],
+                            oldPaper: localPapers[key],
+                            overwrites: [],
+                            syncMerge: true,
+                        });
+                    } else {
+                        mergedPapers[key] = localPapers[key];
+                    }
+                }
+                for (const key of Object.keys(remotePapers)) {
+                    if (key === "__dataVersion") continue;
+                    if (!mergedPapers[key]) {
+                        mergedPapers[key] = remotePapers[key];
+                    }
+                }
+
+                const { success, message, warning, papersToWrite } =
+                    await prepareOverwriteData(mergedPapers);
+                if (success) {
+                    if (warning) {
+                        const nWarnings = (warning.match(/<br\/>/g) ?? []).length;
+                        setHTML(
+                            "overwriteRemoteFeedback",
+                            `<h5 class="errorTitle">Done with ${nWarnings} non-breaking warnings.</h5>${warning}<br/><br/>`
+                        );
+                    } else {
+                        style("overwriteRemoteFeedback", "text-align", "center");
+                        setHTML(
+                            "overwriteRemoteFeedback",
+                            `<h5 class="mb-0 mt-2">Data is valid. Overwriting</h5>`
+                        );
+                    }
+                    await setStorage("papers", papersToWrite);
+                    await dataFile.overwrite(JSON.stringify(papersToWrite, null, ""));
+                    await dataFile.save();
+                    await setSyncOk();
+                } else {
+                    setHTML("overwriteRemoteFeedback", message);
+                }
             }
         } catch (e) {
             setHTML("overwriteRemoteFeedback", e);
@@ -1034,8 +1097,47 @@ const setupSync = async () => {
     });
 };
 
-const setSyncOk = async () => {
-    setStorage("syncState", true);
+const getSyncStrategy = async () => {
+    showOptionsModal("sync-strategy");
+    return new Promise((resolve) => {
+        const done = (val) => {
+            closeModal();
+            resolve(val);
+        };
+        addEventToClass("modal-sync-strategy-choice", "click", (event) => {
+            const id = event.target.id ?? "";
+            const strategy = id.split("modal-sync-").last() ?? "";
+            done(strategy === "cancel" ? "" : strategy);
+        });
+        addListener("close-modal", "click", () => done(""));
+        addListener(window, "click", (event) => {
+            event.target === findEl("modal-wrapper") && done("");
+        });
+    });
+};
+
+const showSyncWarning = async () => {
+    showOptionsModal("sync-warning");
+    return new Promise((resolve) => {
+        const done = (val) => {
+            closeModal();
+            resolve(val);
+        };
+
+        addListener("modal-sync-warning-continue", "click", () => done(true));
+
+        addListener("modal-sync-warning-description", "click", () => done(false));
+        addListener("modal-sync-warning-cancel", "click", () => done(false));
+        addListener("close-modal", "click", () => done(false));
+        addListener(window, "click", (event) => {
+            event.target === findEl("modal-wrapper") && done(false);
+        });
+    });
+};
+
+const setSyncOk = async ({ push = false } = {}) => {
+    await setStorage("syncState", true);
+    push && (await pushToRemote());
     await toggleSync();
     alert("Synced!");
 };
@@ -1051,7 +1153,9 @@ const toggleSync = async () => {
     }
 };
 
-// Sidebar
+// ---------------------
+// -----  Sidebar  -----
+// ---------------------
 
 const makeSideBar = () => {
     const sections = [...document.querySelectorAll(".section")].filter(
@@ -1201,6 +1305,25 @@ const setupSidebar = async () => {
     }
 };
 
+// -------------------
+// -----  Modal  -----
+// -------------------
+
+const showOptionsModal = (name) => {
+    document.querySelectorAll(".modal-content-div").forEach(hideId);
+    showId(`modal-${name}-content`, "contents");
+    style("modal-wrapper", "display", "flex");
+};
+
+const closeModal = () => style("modal-wrapper", "display", "none");
+
+const setupModals = () => {
+    addListener("close-modal", "click", closeModal);
+    addListener(window, "click", (event) => {
+        event.target === findEl("modal-wrapper") && closeModal();
+    });
+};
+
 // ----------------------------
 // -----  Document Ready  -----
 // ----------------------------
@@ -1219,4 +1342,5 @@ const setupSidebar = async () => {
     setupTitleFunction();
     setupDataManagement();
     setupSync();
+    setupModals();
 })();
