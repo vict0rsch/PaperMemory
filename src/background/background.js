@@ -2,6 +2,31 @@ var paperTitles = {};
 var MAX_TITLE_UPDATES = 100;
 var tabStatuses = {};
 
+const badgeOk = () => {
+    chrome.browserAction.setBadgeText({ text: "OK!" });
+    chrome.browserAction.setBadgeBackgroundColor({ color: "rgb(68, 164, 68)" });
+};
+
+const badgeWait = (text) => {
+    chrome.browserAction.setBadgeText({ text });
+    chrome.browserAction.setBadgeBackgroundColor({ color: "rgb(189, 127, 10)" });
+};
+
+const badgeError = () => {
+    chrome.browserAction.setBadgeText({ text: "Error" });
+    chrome.browserAction.setBadgeBackgroundColor({ color: "rgb(195, 40, 56)" });
+};
+
+const badgeClear = (preventTimeout = false) => {
+    if (preventTimeout) {
+        chrome.browserAction.setBadgeText({ text: "" });
+    } else {
+        setTimeout(() => {
+            chrome.browserAction.setBadgeText({ text: "" });
+        }, 2000);
+    }
+};
+
 const initGist = async () => {
     if (!(await shouldSync())) {
         warn("Sync disabled.");
@@ -9,6 +34,7 @@ const initGist = async () => {
     }
     const start = Date.now();
     log("Initializing Sync...");
+    badgeWait("Init...");
     const { ok, error, payload } = await getGist();
     if (ok) {
         global.state.gist = payload.gist;
@@ -16,9 +42,12 @@ const initGist = async () => {
         await global.state.gistDataFile.fetchLatest();
         const duration = (Date.now() - start) / 1e3;
         logOk(`Sync successfully enabled (${duration}s).`);
+        badgeOk();
     } else {
         logError("[initGist]", error);
+        badgeError();
     }
+    badgeClear();
 };
 
 initGist();
@@ -187,6 +216,7 @@ const findCodesForPaper = async (request) => {
 const pullSyncPapers = async () => {
     if (!(await shouldSync())) return;
     try {
+        badgeWait("Pull...");
         const start = Date.now();
         consoleHeader(`Pulling ${String.fromCodePoint("0x23EC")}`);
         log("Pulling from Github...");
@@ -196,10 +226,14 @@ const pullSyncPapers = async () => {
         const duration = (Date.now() - start) / 1e3;
         info(`Pulling from Github... Done (${duration}s)!`);
         console.groupEnd();
+        badgeOk();
+        badgeClear();
         return remotePapers;
     } catch (e) {
         logError("[pullSyncPapers]", e);
+        badgeError();
     }
+    badgeClear();
     console.groupEnd();
 };
 
@@ -209,15 +243,20 @@ const pushSyncPapers = async () => {
         const start = Date.now();
         consoleHeader(`Pushing ${String.fromCodePoint("0x23EB")}`);
         log("Writing to Github...");
+        badgeWait("Push...");
+        chrome.browserAction.setBadgeBackgroundColor({ color: "rgb(189, 127, 10)" });
         const papers = (await getStorage("papers")) ?? {};
-        log("papers to write: ", papers);
+        log("Papers to write: ", papers);
         await global.state.gistDataFile.overwrite(JSON.stringify(papers, null, ""));
         await global.state.gistDataFile.save();
         const duration = (Date.now() - start) / 1e3;
         log(`Writing to Github... Done (${duration}s)!`);
+        badgeOk();
     } catch (e) {
         logError("[pushSyncPapers]", e);
+        badgeError();
     }
+    badgeClear();
     console.groupEnd();
 };
 
