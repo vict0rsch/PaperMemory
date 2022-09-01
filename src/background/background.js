@@ -36,6 +36,10 @@ const initGist = async () => {
     log("Initializing Sync...");
     badgeWait("Init...");
     const { ok, error, payload } = await getGist();
+    // const deviceId = await getStorage("deviceId");
+    // if (!deviceId) {
+    //     await setStorage("deviceId", Math.random().toString(36).substring(2));
+    // }
     if (ok) {
         global.state.gist = payload.gist;
         global.state.gistDataFile = await getDataFile(global.state.gist);
@@ -252,6 +256,10 @@ const pushSyncPapers = async () => {
         const duration = (Date.now() - start) / 1e3;
         log(`Writing to Github... Done (${duration}s)!`);
         badgeOk();
+        // chrome.storage.sync.set({
+        //     lastSync: Date.now(),
+        //     device: await getStorage("deviceId"),
+        // });
     } catch (e) {
         logError("[pushSyncPapers]", e);
         badgeError();
@@ -373,3 +381,11 @@ chrome.runtime.onConnect.addListener(function (port) {
         });
     }
 });
+
+// chrome.storage.onChanged.addListener(async (changes, areaName) => {
+//     if (areaName === "sync") {
+//         if (changes.lastSync) {
+//             console.log("changes.lastSync: ", changes.lastSync);
+//         }
+//     }
+// });
