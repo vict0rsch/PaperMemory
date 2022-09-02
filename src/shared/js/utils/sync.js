@@ -12,16 +12,12 @@ const getGist = async (pat, store = true) => {
 
     const isTest = await getStorage("syncTest");
 
-    const appIdentifier = isTest ? "TestsPaperMemorySync" : "PaperMemorySync";
+    const name = isTest ? "TestsPaperMemorySync" : "PaperMemorySync";
 
-    const githubGist = new GithubGist.default({
-        appIdentifier,
-        personalAccessToken: pat,
-        isPublic: false,
-    });
+    const githubGist = new GistManager({ name, pat: pat });
 
     try {
-        await githubGist.touch();
+        await githubGist.init();
         store && (await setStorage("syncPAT", pat));
         return { ok: true, payload: { gist: githubGist, pat } };
     } catch (e) {
@@ -34,16 +30,6 @@ const getGist = async (pat, store = true) => {
             error: e,
         };
     }
-};
-
-const getDataFile = async (gist) => {
-    const fileName = "PaperMemory-sync-data.json";
-    let dataFile = gist.getFile(fileName);
-    if (!dataFile) {
-        gist.createFile(fileName);
-        dataFile = gist.getFile(fileName);
-    }
-    return dataFile;
 };
 
 const pushToRemote = async () => await sendMessageToBackground({ type: "writeSync" });

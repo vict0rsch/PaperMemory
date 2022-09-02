@@ -42,8 +42,7 @@ const initGist = async () => {
     // }
     if (ok) {
         global.state.gist = payload.gist;
-        global.state.gistDataFile = await getDataFile(global.state.gist);
-        await global.state.gistDataFile.fetchLatest();
+        await global.state.gist.pull();
         const duration = (Date.now() - start) / 1e3;
         logOk(`Sync successfully enabled (${duration}s).`);
         badgeOk();
@@ -224,8 +223,8 @@ const pullSyncPapers = async () => {
         const start = Date.now();
         consoleHeader(`Pulling ${String.fromCodePoint("0x23EC")}`);
         log("Pulling from Github...");
-        await global.state.gistDataFile.fetchLatest();
-        const remotePapers = global.state.gistDataFile.content;
+        await global.state.gist.pull();
+        const remotePapers = global.state.gist.data;
         log("Pulled papers:", remotePapers);
         const duration = (Date.now() - start) / 1e3;
         info(`Pulling from Github... Done (${duration}s)!`);
@@ -251,8 +250,7 @@ const pushSyncPapers = async () => {
         chrome.browserAction.setBadgeBackgroundColor({ color: "rgb(189, 127, 10)" });
         const papers = (await getStorage("papers")) ?? {};
         log("Papers to write: ", papers);
-        await global.state.gistDataFile.overwrite(JSON.stringify(papers, null, ""));
-        await global.state.gistDataFile.save();
+        await global.state.gist.overwrite(JSON.stringify(papers, null, ""));
         const duration = (Date.now() - start) / 1e3;
         log(`Writing to Github... Done (${duration}s)!`);
         badgeOk();

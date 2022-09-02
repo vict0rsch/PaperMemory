@@ -977,10 +977,9 @@ const setupSync = async () => {
             return;
         }
         const { gist } = payload;
-        const dataFile = await getDataFile(gist);
         let userChoice = "no-remote";
-        if (dataFile.content) {
-            console.log("Existing data file content:", dataFile.content);
+        if (Object.keys(gist.data).length > 0) {
+            console.log("Existing data file content:", gist.data);
             userChoice = await getSyncStrategy();
             if (!userChoice) {
                 hideId("sync-loader");
@@ -996,20 +995,19 @@ const setupSync = async () => {
                     const date = now.toLocaleDateString().replaceAll("/", ".");
                     const time = now.toLocaleTimeString().replaceAll(":", ".");
                     downloadTextFile(
-                        JSON.stringify(dataFile.content),
+                        JSON.stringify(gist.data),
                         `PaperMemory-remote-data-backup-${date}-${time}.json`,
                         "text/json"
                     );
                 }
                 const papersString = JSON.stringify(global.state.papers, null, "");
-                console.log("dataFile: ", dataFile);
-                dataFile.overwrite(papersString);
-                await dataFile.save();
+                console.log("gist: ", gist);
+                await gist.overwrite(papersString);
                 await setSyncOk();
             } else if (userChoice === "local-remote") {
                 // overwrite local data with remote data
                 dispatch("download-arxivmemory", "click");
-                const remotePapers = dataFile.content;
+                const remotePapers = gist.data;
                 const { success, message, warning, papersToWrite } =
                     await prepareOverwriteData(remotePapers);
                 if (success) {
@@ -1036,7 +1034,7 @@ const setupSync = async () => {
                 const date = now.toLocaleDateString().replaceAll("/", ".");
                 const time = now.toLocaleTimeString().replaceAll(":", ".");
                 downloadTextFile(
-                    JSON.stringify(dataFile.content),
+                    JSON.stringify(gist.data),
                     `PaperMemory-merge--remote-data-backup-${date}-${time}.json`,
                     "text/json"
                 );
@@ -1046,7 +1044,7 @@ const setupSync = async () => {
                     "text/json"
                 );
                 let mergedPapers = {};
-                const remotePapers = dataFile.content;
+                const remotePapers = gist.data;
                 const localPapers = await getStorage("papers");
                 const remoteVersion = remotePapers["__dataVersion"];
                 const localVersion = localPapers["__dataVersion"];
@@ -1088,8 +1086,7 @@ const setupSync = async () => {
                         );
                     }
                     await setStorage("papers", papersToWrite);
-                    await dataFile.overwrite(JSON.stringify(papersToWrite, null, ""));
-                    await dataFile.save();
+                    await gist.overwrite(JSON.stringify(papersToWrite, null, ""));
                     await setSyncOk();
                 } else {
                     setHTML("overwriteRemoteFeedback", message);
