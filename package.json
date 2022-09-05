@@ -1,6 +1,6 @@
 {
   "name": "papermemory",
-  "version": "0.5.3",
+  "version": "0.5.8",
   "description": "<br/>",
   "main": "gulpfile.js",
   "scripts": {
@@ -48,6 +48,7 @@
     "uuid": "^8.3.2"
   },
   "dependencies": {
+    "node-fetch-commonjs": "^3.1.1",
     "ora": "5.4.1"
   }
 }
