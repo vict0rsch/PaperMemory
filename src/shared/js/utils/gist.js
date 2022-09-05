@@ -1,10 +1,13 @@
 class GistManager {
-    constructor({ pat, appName = "PaperMemorySync" }) {
+    constructor({ pat, identifier }) {
         if (!pat) {
             throw new Error("GistManager: `pat` argument is required");
         }
+        if (!identifier) {
+            throw new Error("GistManager: `identifier` argument is required");
+        }
         this.pat = pat;
-        this.appName = appName;
+        this.identifier = identifier;
 
         this.apiURL = "https://api.github.com";
         this.valid = false;
@@ -48,25 +51,27 @@ class GistManager {
             body: JSON.stringify(body),
         });
     }
-    getIdentifierFilename() {
-        return `DO_NO_EDIT__${this.appName}.json`;
+    get identifierFilename() {
+        return `DO_NO_EDIT__${this.identifier}.json`;
     }
-    findMemoryInfo(gists) {
-        const pmGist = gists.find(
+    findMemoryGist(gists) {
+        return gists.find(
             (g) =>
                 !!Object.values(g.files).find(
-                    (f) => f.filename === this.getIdentifierFilename()
+                    (f) => f.filename === this.identifierFilename
                 )
         );
-        if (pmGist) {
-            return this.makeInfo(pmGist);
-        }
-        return pmGist;
     }
     makeInfo(gist) {
+        if (!gist || !gist.id || !gist.url || !gist.html_url) {
+            throw new Error(
+                "GistManager: Gist is invalid. Expected {id, html_url, url}, received " +
+                    JSON.stringify(gist)
+            );
+        }
         return {
             id: gist.id,
-            html: gist.html_url,
+            html_url: gist.html_url,
             url: gist.url,
         };
     }
@@ -74,31 +79,31 @@ class GistManager {
         return this.get("/gists");
     }
     makeFileRequestBody({ content }) {
-        const filename = this.getIdentifierFilename();
         return {
             description: "Automated PaperMemory sync Gist. Do not edit manually.",
             public: false,
             files: {
-                [filename]: {
+                [this.identifierFilename]: {
                     content,
                     type: "application/json",
                 },
             },
         };
     }
-    updateFromGist(gist) {
+    async updateFromGist(gist) {
         this.info = this.makeInfo(gist);
         this.file = Object.values(gist.files)[0];
-        if (this.file.filename !== this.getIdentifierFilename()) {
+        if (this.file.filename !== this.identifierFilename) {
             this.valid = false;
             throw new Error(
                 "GistManager: Gist file name is invalid. Expected " +
-                    this.getIdentifierFilename() +
+                    this.identifierFilename +
                     ", got " +
                     this.file.filename
             );
         }
         this.data = JSON.parse(this.file.content);
+        await setStorage("syncGistInfo", this.info);
     }
     async createGist() {
         const res = await this.post(
@@ -107,9 +112,7 @@ class GistManager {
         );
         if (res.ok) {
             const json = await res.json();
-            const info = this.makeInfo(json);
-            await setStorage("syncGistInfo", info);
-            return info;
+            return json;
         }
     }
     async init(reset = false) {
@@ -120,13 +123,14 @@ class GistManager {
                 return;
             }
             const gists = await res.json();
-            this.info = this.findMemoryInfo(gists);
-            if (!this.info) {
-                this.info = await this.createGist();
-            } else {
-                await this.pull(true);
+            let gist = this.findMemoryGist(gists);
+            if (!gist) {
+                gist = await this.createGist();
             }
-            this.valid = !!this.info;
+            this.valid = !!gist;
+            if (this.valid) {
+                await this.updateFromGist(gist);
+            }
         } else {
             this.info = info;
             await this.pull(true);
@@ -139,7 +143,7 @@ class GistManager {
         const res = await this.get(this.info.url);
         if (res.ok) {
             const gist = await res.json();
-            this.updateFromGist(gist);
+            await this.updateFromGist(gist);
             this.valid = true;
         }
     }
@@ -154,6 +158,28 @@ class GistManager {
             this.makeFileRequestBody({ content })
         );
         const gist = await res.json();
-        this.updateFromGist(gist);
+        await this.updateFromGist(gist);
     }
+
+    async delete(force = false) {
+        if (!this.valid && !force) {
+            throw new Error("GistManager: Gist is not valid");
+        }
+        const res = await fetch(this.info.url, {
+            method: "DELETE",
+            headers: {
+                Authorization: "token " + this.pat,
+            },
+        });
+        if (res.ok) {
+            await setStorage("syncGistInfo", null);
+            this.valid = false;
+            console.log(`GistManager: Gist deleted (${JSON.stringify(this.info)})`);
+        }
+    }
+}
+
+if (typeof module !== "undefined" && module.exports != null) {
+    var dummyModule = module;
+    dummyModule.exports = { GistManager };
 }
