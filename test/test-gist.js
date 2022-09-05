@@ -6,14 +6,30 @@ const fetch = require("node-fetch-commonjs");
 // patch it through to gist.js
 global.fetch = fetch;
 
-var storage = {};
+var storage = {
+    gets: {},
+    sets: {},
+    data: {},
+};
+
+resetStorage = () => {
+    storage = {
+        gets: {},
+        sets: {},
+        data: {},
+    };
+};
 
 global.setStorage = async (key, value) => {
-    storage[key] = value;
+    storage.sets[key] =
+        typeof storage.sets[key] === "undefined" ? 1 : storage.sets[key] + 1;
+    storage.data[key] = value;
 };
 
 global.getStorage = async (key) => {
-    return storage[key];
+    storage.gets[key] =
+        typeof storage.sets[key] === "undefined" ? 1 : storage.sets[key] + 1;
+    return storage.data[key];
 };
 
 const expectThrowsAsync = async (method, errorMessage) => {
@@ -285,8 +301,74 @@ describe("Testing GistManager", function () {
             }
         });
     });
-    describe("Testing #init", function () {});
-    describe("Testing #init", function () {});
+    describe("Testing #init", function () {
+        it("Creates a gist if none exists", async function () {
+            gm = new GistManager({ pat: PAT, identifier: IDENTIFIER });
+            const gists = await (await gm.getGists()).json();
+            await gm.init();
+            const updated_gists = await (await gm.getGists()).json();
+            expect(updated_gists.length).toEqual(gists.length + 1);
+        });
+        it("2 instances are associated with the same Gist", async function () {
+            gm = new GistManager({ pat: PAT, identifier: IDENTIFIER });
+            await gm.init();
+            ggm = new GistManager({ pat: PAT, identifier: IDENTIFIER });
+            await ggm.init();
+            expect(ggm.info).toEqual(gm.info);
+        });
+        it("Writes its info to storage", async function () {
+            gm = new GistManager({ pat: PAT, identifier: IDENTIFIER });
+            await gm.init();
+            expect(await getStorage("syncGistInfo")).toEqual(gm.info);
+        });
+        it("Does not create a gist if one exists", async function () {
+            gm = new GistManager({ pat: PAT, identifier: IDENTIFIER });
+            await gm.init();
+            ggm = new GistManager({ pat: PAT, identifier: IDENTIFIER });
+            const gists = await (await ggm.getGists()).json();
+            await ggm.init();
+            const updated_gists = await (await ggm.getGists()).json();
+            expect(updated_gists.length).toEqual(gists.length);
+        });
+        it("Pulls the appropriate data", async function () {
+            const testData = { test: "data", nested: { yes: true } };
+            gm = new GistManager({ pat: PAT, identifier: IDENTIFIER });
+            await gm.init();
+            await gm.overwrite(testData);
+            ggm = new GistManager({ pat: PAT, identifier: IDENTIFIER });
+            await ggm.init();
+            expect(ggm.data).toEqual(testData);
+        });
+        afterEach(async function () {
+            if (!noDelete) {
+                await gm.delete(true);
+            }
+        });
+    });
+    describe("Testing #overwrite & #pull", function () {
+        it("Overwrites and updates the files' contents", async function () {
+            const testData1 = { test: "data", nested: { yes: true } };
+            const testData2 = { tetest: "data", nested: { no: true } };
+            gm = new GistManager({ pat: PAT, identifier: IDENTIFIER });
+            ggm = new GistManager({ pat: PAT, identifier: IDENTIFIER });
+            await gm.init();
+            await ggm.init();
+            await gm.overwrite(testData1);
+            expect(gm.data).toEqual(testData1);
+            await ggm.pull();
+            expect(ggm.data).toEqual(testData1);
+
+            await ggm.overwrite(testData2);
+            expect(ggm.data).toEqual(testData2);
+            await gm.pull();
+            expect(gm.data).toEqual(testData2);
+        });
+        afterEach(async function () {
+            if (!noDelete) {
+                await gm.delete(true);
+            }
+        });
+    });
     describe("Testing #init", function () {});
     after(async function () {
         gm.valid && !noDelete && (await gm.delete());
