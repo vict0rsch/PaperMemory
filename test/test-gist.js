@@ -57,7 +57,7 @@ const expectNotThrowsAsync = async (method) => {
 
 const PAT = process.env.github_pat ?? process.env.pm_ghp;
 const noDelete = !!process.env.noDelete;
-const IDENTIFIER = "[test][GistManager]";
+const IDENTIFIER = "[test-gist]PaperMemorySync";
 
 describe("Testing GistManager", function () {
     var gm = new GistManager({ pat: PAT, identifier: IDENTIFIER });

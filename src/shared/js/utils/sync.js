@@ -12,7 +12,7 @@ const getGist = async (pat, store = true) => {
 
     const isTest = await getStorage("syncTest");
 
-    const name = isTest ? "TestsPaperMemorySync" : "PaperMemorySync";
+    const name = isTest ? "[test-sync]PaperMemorySync" : "PaperMemorySync";
 
     const githubGist = new GistManager({ name, pat: pat });
 
