@@ -161,7 +161,7 @@ class GistManager {
         await this.updateFromGist(gist);
     }
 
-    async delete(force = false) {
+    async delete(force = false, verbose = false) {
         if (!this.valid && !force) {
             throw new Error("GistManager: Gist is not valid");
         }
@@ -174,7 +174,8 @@ class GistManager {
         if (res.ok) {
             await setStorage("syncGistInfo", null);
             this.valid = false;
-            console.log(`GistManager: Gist deleted (${JSON.stringify(this.info)})`);
+            verbose &&
+                console.log(`GistManager: Gist deleted (${JSON.stringify(this.info)})`);
         }
     }
 }
