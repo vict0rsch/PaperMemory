@@ -576,6 +576,7 @@ const addOrUpdatePaper = async ({
     chrome.storage.local.set({ papers: global.state.papers }, async () => {
         // tell the content script the paper has been parsed/updated
         contentScriptCallbacks["update"](paper);
+        await setStorage("syncPush", true);
         pushToRemote();
 
         let notifText;
@@ -612,6 +613,7 @@ const addOrUpdatePaper = async ({
                     if (value) {
                         log(`Updating preprint ${key} to`, value);
                         paper[key] = value;
+                        await setStorage("syncPush", true);
                     }
                 }
             }

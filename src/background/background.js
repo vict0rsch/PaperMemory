@@ -242,6 +242,10 @@ const pullSyncPapers = async () => {
 
 const pushSyncPapers = async () => {
     if (!(await shouldSync())) return;
+    if (!(await getStorage("syncPush"))) {
+        log("Skipping push.");
+        return;
+    }
     try {
         const start = Date.now();
         consoleHeader(`Pushing ${String.fromCodePoint("0x23EB")}`);
@@ -253,6 +257,7 @@ const pushSyncPapers = async () => {
         await global.state.gist.overwrite(JSON.stringify(papers, null, ""));
         const duration = (Date.now() - start) / 1e3;
         log(`Writing to Github... Done (${duration}s)!`);
+        await setStorage("syncPush", false);
         badgeOk();
         // chrome.storage.sync.set({
         //     lastSync: Date.now(),

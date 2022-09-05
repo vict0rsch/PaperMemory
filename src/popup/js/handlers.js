@@ -64,13 +64,14 @@ const handleTextareaFocus = () => {
     textareaFocusEnd(that);
 };
 
-const handleMemorySaveEdits = (id) => {
+const handleMemorySaveEdits = async (id) => {
     const { note, codeLink } = getPaperEdits(id);
 
     // Update metadata
     saveNote(id, note);
     saveCodeLink(id, codeLink);
     updatePaperTags(id, "memory-item-tags");
+    await setStorage("syncPush", true);
 };
 
 const handleCancelPaperEdit = (e) => {
@@ -404,6 +405,7 @@ const handlePopupSaveEdits = (id) => {
     saveNote(id, note);
     saveCodeLink(id, codeLink);
     saveFavoriteItem(id, favorite);
+    setStorage("syncPush", true);
 };
 
 const handlePopupDeletePaper = (id) => () => {

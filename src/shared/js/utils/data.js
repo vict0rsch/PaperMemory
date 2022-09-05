@@ -216,6 +216,7 @@ const deletePaperInStorage = async (id, papers) => {
     } else {
         log("Error: no deletion");
     }
+    await setStorage("syncPush", true);
 };
 
 /**
