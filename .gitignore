@@ -8,3 +8,10 @@ test/tmp/
 *.lock
 .nyc_output/
 coverage
+.venv
+*.json
+*.log
+.env
+.pdm.toml
+__pycache__
+!pdm.lock
