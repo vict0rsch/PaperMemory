@@ -46,6 +46,6 @@
     "uuid": "^9.0.0"
   },
   "dependencies": {
-    "puppeteer": "^17.0.0"
+    "puppeteer": "^18.0.2"
   }
 }
