@@ -15,3 +15,5 @@ coverage
 .pdm.toml
 __pycache__
 !pdm.lock
+ai/data/*
+!ai/data/.gitkeep

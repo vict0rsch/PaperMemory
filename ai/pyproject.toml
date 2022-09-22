@@ -3,7 +3,7 @@ name = ""
 version = ""
 description = ""
 authors = [
-    {name = "Łukasz Woronkiewicz", email = "woronkiewicz@gmail.com"},
+    {name = "", email = ""},
 ]
 dependencies = [
     "arxiv>=1.4.2",
@@ -24,4 +24,6 @@ _.env_file = ".env"
 [tool.pdm.dev-dependencies]
 dev = [
     "black>=22.8.0",
+    "ipykernel>=6.15.3",
+    "matplotlib>=3.6.0",
 ]
