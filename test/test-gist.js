@@ -2,7 +2,6 @@ const { GistManager } = require("../src/shared/js/utils/gist.js");
 
 const { expect } = require("expect");
 const fetch = require("node-fetch-commonjs");
-
 // patch it through to gist.js
 global.fetch = fetch;
 

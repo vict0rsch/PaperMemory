@@ -27,3 +27,19 @@ exports.range = (n) => [...Array(n).keys()];
 exports.readJSON = (fname) => JSON.parse(fs.readFileSync(fname));
 
 exports.asyncMap = (arr, func) => Promise.all(arr.map(func));
+
+exports.keypress = async (text = "") => {
+    console.log("[waiting for keypress]", text);
+    process.stdin.setRawMode(true);
+    return new Promise((resolve) =>
+        process.stdin.once("data", (data) => {
+            const byteArray = [...data];
+            if (byteArray.length > 0 && byteArray[0] === 3) {
+                console.log("^C");
+                process.exit(1);
+            }
+            process.stdin.setRawMode(false);
+            resolve();
+        })
+    );
+};

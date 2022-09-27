@@ -3,13 +3,18 @@ const {
     fullMemoryURL,
     extensionPopupURL,
     getMemoryPapers,
-    getPaperMemoryState,
 } = require("./browser");
 const { expect } = require("expect");
-const { readJSON, sleep, asyncMap } = require("./utilsForTests");
+const { readJSON, keypress, asyncMap, sleep } = require("./utilsForTests");
+const { GistManager } = require("../src/shared/js/utils/gist.js");
+const fetch = require("node-fetch-commonjs");
+// patch it through to gist.js
+global.fetch = fetch;
 
 const pat = process.env.github_pat ?? process.env.pm_ghp;
 const keepOpen = !!(process.env.keepOpen ?? false);
+const noDelete = !!(process.env.noDelete ?? false);
+const stepByStep = !!(process.env.stepByStep ?? false);
 
 if (!pat) {
     throw new Error("Please specify `github_pat` env var.");
@@ -22,11 +27,19 @@ const setupSync = async (browser, goto = true) => {
         await setStorage("syncTest", true);
         await setStorage("syncPAT", pat);
         await setStorage("syncState", true);
-        await sendMessageToBackground({ type: "restartGist" });
+        await setStorage("syncPush", true);
+        const gist_url = await sendMessageToBackground({ type: "restartGist" });
+        console.log("gist_url: ", gist_url);
         info("syncState: ", await getStorage("syncState"));
     }, pat);
     // const state = await getPaperMemoryState(page);
     // console.log("setupSync -> Initial papers", Object.keys(state.papers));
+};
+
+const resetTestGistManager = async () => {
+    console.log("Resetting GistManager for id: `[test-sync]PaperMemorySync`");
+    const gm = new GistManager({ identifier: "[test-sync]PaperMemorySync", pat });
+    await gm.deleteAll();
 };
 
 describe("Test Github Gist Sync", async function () {
@@ -34,8 +47,8 @@ describe("Test Github Gist Sync", async function () {
     const miniMemory = readJSON("./data/3-papers-memory.json");
     urls = [urls["acl"][0], urls["arxiv"][0], urls["jmlr"][0]];
 
-    this.slow(60e3);
-    this.timeout(120e3);
+    this.slow(60e3 * (stepByStep ? 1e4 : 1));
+    this.timeout(120e3 * (stepByStep ? 1e4 : 1));
 
     describe("Papers are added on Device 0 and pulled on Device 1", async function () {
         let pages, browsers, memories;
@@ -49,18 +62,27 @@ describe("Test Github Gist Sync", async function () {
             // Go to extension url on both devices
             await asyncMap(pages, async (page) => await page.goto(extensionPopupURL));
             // Enable sync on both devices
-            await asyncMap(browsers, setupSync);
+            for (const b of browsers) {
+                await setupSync(b, false);
+            }
+            // await sleep(1e6);
             // Device 0 discovers papers
             await pages[0].evaluate(async (mem) => {
                 await setStorage("papers", mem);
+                await setStorage("syncPush", true);
             }, miniMemory);
+            stepByStep && (await keypress("before push from 0"));
             // Push papers from device 0
             await pages[0].evaluate(async () => await pushToRemote());
             // Pull to device 1
+            stepByStep && (await keypress("before pull to 1"));
+            await sleep(10e3);
             await pages[1].evaluate(async () => await pullFromRemote());
             // See full memories
+            stepByStep && (await keypress("before go to fullMemoryURL"));
             await asyncMap(pages, async (page) => await page.goto(fullMemoryURL));
             memories = await asyncMap(pages, getMemoryPapers);
+            stepByStep && (await keypress("before end of `before`"));
         });
 
         it("Memories are equal", async function () {
@@ -84,6 +106,9 @@ describe("Test Github Gist Sync", async function () {
         });
 
         after(async function () {
+            if (!noDelete) {
+                await resetTestGistManager();
+            }
             if (!keepOpen) {
                 await asyncMap(browsers, (browser) => browser.close());
             }
@@ -101,57 +126,66 @@ describe("Test Github Gist Sync", async function () {
             );
             // Go to extension url on both devices
             await asyncMap(pages, async (page) => await page.goto(fullMemoryURL));
+            for (const [p, page] of pages.entries()) {
+                await page.evaluate(async (p) => {
+                    info(`Device ${p}`);
+                }, p);
+            }
+
             // Start syncing on device 1
-            await asyncMap(browsers, (b) => setupSync(b, false));
+            for (const b of browsers) {
+                await setupSync(b, false);
+            }
+            stepByStep && (await keypress("before adding papers"));
             // Go to paper pages on device 0
             await asyncMap(
                 pages,
                 async (page) =>
                     await page.evaluate(async (mem) => {
                         await setStorage("papers", mem);
+                        await setStorage("syncPush", true);
                         await initState();
                         await makeMemoryHTML();
                     }, miniMemory)
             );
             // Push papers from device 0
+            stepByStep && (await keypress("before push from 0"));
             await pages[0].evaluate(async () => await pushToRemote());
-
-            // console.log(
-            //     "Memories before deletion: ",
-            //     (await asyncMap(pages, getMemoryPapers)).map((papers) =>
-            //         Object.keys(papers)
-            //     )
-            // );
 
             // Select paper id to delete
             const memory = await getMemoryPapers(pages[0]);
             const id = Object.keys(memory).find((k) => !k.startsWith("_"));
 
+            stepByStep && (await keypress("before deletion"));
+
             // Delete paper on device 0 and push update
             await pages[0].evaluate(async (id) => {
                 console.log(
-                    "[test-sync] Before delete storage: ",
+                    "[test-sync] Before delete (storage): ",
                     await getStorage("papers")
                 );
-                console.log("[test-sync] Before delete state: ", state.papers);
+                console.log("[test-sync] Before delete (state): ", state.papers);
                 await deletePaperInStorage(id);
                 console.log(
-                    "[test-sync] After delete storage: ",
+                    "[test-sync] After delete (storage): ",
                     await getStorage("papers")
                 );
-                console.log("[test-sync] After delete state: ", state.papers);
+                console.log("[test-sync] After delete (state): ", state.papers);
                 await pushToRemote();
                 console.log(
-                    "[test-sync] After push storage: ",
+                    "[test-sync] After push (storage): ",
                     await getStorage("papers")
                 );
-                console.log("[test-sync] After push state: ", state.papers);
+                console.log("[test-sync] After push (state): ", state.papers);
             }, id);
 
             await pages[0].evaluate(() => {
                 makeMemoryHTML();
                 console.log("[test-sync] New Memory HTML");
             });
+
+            stepByStep && (await keypress("before initSyncAndState device 1"));
+            await sleep(10e3);
 
             await pages[1].evaluate(async (id) => {
                 console.log("[test-sync] Before pull: ", await getStorage("papers"));
@@ -163,6 +197,8 @@ describe("Test Github Gist Sync", async function () {
                 makeMemoryHTML();
                 console.log("[test-sync] New Memory HTML");
             });
+
+            stepByStep && (await keypress("before end of before"));
 
             memories = await asyncMap(pages, getMemoryPapers);
         });
@@ -184,6 +220,9 @@ describe("Test Github Gist Sync", async function () {
         });
 
         after(async function () {
+            if (!noDelete) {
+                await resetTestGistManager();
+            }
             if (!keepOpen) {
                 await asyncMap(browsers, (browser) => browser.close());
             }

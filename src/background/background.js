@@ -41,11 +41,13 @@ const initGist = async () => {
     //     await setStorage("deviceId", Math.random().toString(36).substring(2));
     // }
     if (ok) {
-        global.state.gist = payload.gist;
-        await global.state.gist.pull();
+        global.state.gm = payload.gm;
+        // await global.state.gm.pull();
         const duration = (Date.now() - start) / 1e3;
         logOk(`Sync successfully enabled (${duration}s).`);
         badgeOk();
+        badgeClear();
+        return global.state.gm.info.url;
     } else {
         logError("[initGist]", error);
         badgeError();
@@ -223,8 +225,13 @@ const pullSyncPapers = async () => {
         const start = Date.now();
         consoleHeader(`Pulling ${String.fromCodePoint("0x23EC")}`);
         log("Pulling from Github...");
-        await global.state.gist.pull();
-        const remotePapers = global.state.gist.data;
+        console.log(global.state.gm.info.url);
+        console.log(
+            "await get json",
+            await (await global.state.gm.get(global.state.gm.info.url)).json()
+        );
+        await global.state.gm.pull();
+        const remotePapers = global.state.gm.data;
         log("Pulled papers:", remotePapers);
         const duration = (Date.now() - start) / 1e3;
         info(`Pulling from Github... Done (${duration}s)!`);
@@ -251,14 +258,17 @@ const pushSyncPapers = async () => {
         consoleHeader(`Pushing ${String.fromCodePoint("0x23EB")}`);
         log("Writing to Github...");
         badgeWait("Push...");
-        chrome.browserAction.setBadgeBackgroundColor({ color: "rgb(189, 127, 10)" });
+
         const papers = (await getStorage("papers")) ?? {};
         log("Papers to write: ", papers);
-        await global.state.gist.overwrite(JSON.stringify(papers, null, ""));
+
+        await global.state.gm.overwrite(JSON.stringify(papers, null, ""));
         const duration = (Date.now() - start) / 1e3;
+
         log(`Writing to Github... Done (${duration}s)!`);
-        await setStorage("syncPush", false);
+        // await setStorage("syncPush", false);
         badgeOk();
+
         // chrome.storage.sync.set({
         //     lastSync: Date.now(),
         //     device: await getStorage("deviceId"),
@@ -301,7 +311,7 @@ chrome.runtime.onMessage.addListener((payload, sender, sendResponse) => {
     } else if (payload.type === "writeSync") {
         pushSyncPapers().then(sendResponse);
     } else if (payload.type === "pullSync") {
-        pullSyncPapers(payload.gist).then(sendResponse);
+        pullSyncPapers().then(sendResponse);
     } else if (payload.type === "restartGist") {
         initGist().then(sendResponse);
     }

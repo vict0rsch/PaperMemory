@@ -102,6 +102,12 @@ class GistManager {
                     this.file.filename
             );
         }
+        if (typeof this.file.content === "undefined") {
+            this.valid = false;
+            throw new Error(
+                "GistManager: Gist file content is invalid." + JSON.stringify(this.file)
+            );
+        }
         this.data = JSON.parse(this.file.content);
         await setStorage("syncGistInfo", this.info);
     }
@@ -126,23 +132,25 @@ class GistManager {
             let gist = this.findMemoryGist(gists);
             if (!gist) {
                 gist = await this.createGist();
-            }
-            this.valid = !!gist;
-            if (this.valid) {
                 await this.updateFromGist(gist);
+                this.valid = true;
+            } else {
+                await this.pull({ url: gist.url, init: true });
             }
         } else {
             this.info = info;
-            await this.pull(true);
+            await this.pull({ init: true });
         }
     }
-    async pull(init = false) {
+    async pull({ init = false, url = null } = {}) {
         if (!init && !this.valid) {
             throw new Error("GistManager: Gist is not valid");
         }
-        const res = await this.get(this.info.url);
+        const res = await this.get(url ?? this.info.url);
+        console.log("pull->res: ", res);
         if (res.ok) {
             const gist = await res.json();
+            console.log("pull->gist: ", gist);
             await this.updateFromGist(gist);
             this.valid = true;
         }
@@ -176,6 +184,24 @@ class GistManager {
             this.valid = false;
             verbose &&
                 console.log(`GistManager: Gist deleted (${JSON.stringify(this.info)})`);
+        }
+    }
+    async deleteAll() {
+        const res = await this.getGists();
+        if (res.ok) {
+            const data = await res.json();
+            const gists = data.filter(
+                (g) => !!Object.keys(g.files).find((k) => k === this.identifierFilename)
+            );
+            console.log(`Deleting ${gists.length} gists`);
+            for (const gist of gists) {
+                await fetch(gist.url, {
+                    method: "DELETE",
+                    headers: {
+                        Authorization: "token " + this.pat,
+                    },
+                });
+            }
         }
     }
 }

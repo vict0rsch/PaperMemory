@@ -14,19 +14,20 @@ const getGist = async (pat, store = true) => {
 
     const identifier = isTest ? "[test-sync]PaperMemorySync" : "PaperMemorySync";
 
-    const githubGist = new GistManager({ identifier, pat });
+    const gm = new GistManager({ identifier, pat });
+    console.log("gm: ", gm);
 
     try {
-        await githubGist.init();
+        await gm.init();
         store && (await setStorage("syncPAT", pat));
-        return { ok: true, payload: { gist: githubGist, pat } };
+        return { ok: true, payload: { gm, pat } };
     } catch (e) {
-        console.log(e.response.data.message);
+        console.log(e.response);
         warn("Because of the error ^ syncing is now disabled.");
         setStorage("syncState", false);
         return {
             ok: false,
-            payload: "wrongPAT",
+            payload: "GistManager Error",
             error: e,
         };
     }
