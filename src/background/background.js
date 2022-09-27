@@ -87,6 +87,22 @@ const urlIsAKnownPdfSource = (url) => {
     return pdfPages.some((p) => url.includes(p));
 };
 
+const fetchOpenReviewNoteJSON = async (url) => {
+    const id = url.match(/id=([\w-])+/)[0].replace("id=", "");
+    const api = `https://api.openreview.net/notes?id=${id}`;
+    return fetch(api).then((response) => {
+        return response.json();
+    });
+};
+
+const fetchOpenReviewForumJSON = async (url) => {
+    const id = url.match(/id=([\w-])+/)[0].replace("id=", "");
+    const api = `https://api.openreview.net/notes?forum=${id}`;
+    return fetch(api).then((response) => {
+        return response.json();
+    });
+};
+
 const fetchGSData = async (paper) => {
     try {
         var resultsDom = await fetchDom(
@@ -293,6 +309,10 @@ chrome.runtime.onMessage.addListener((payload, sender, sendResponse) => {
         pullSyncPapers(payload.gist).then(sendResponse);
     } else if (payload.type === "restartGist") {
         initGist().then(sendResponse);
+    } else if (payload.type === "OpenReviewNoteJSON") {
+        fetchOpenReviewNoteJSON(payload.url).then(sendResponse);
+    } else if (payload.type === "OpenReviewForumJSON") {
+        fetchOpenReviewForumJSON(payload.url).then(sendResponse);
     }
     return true;
 });
