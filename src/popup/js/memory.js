@@ -25,6 +25,28 @@ const getTagsOptions = (paper) => {
         })
         .join("");
 };
+
+const toggleTagsCollapse = (on) => {
+    if (on) {
+        if (!!findEl("tags-list-container")) return;
+        const contents = /*html*/ `
+            <ul id="all-tags-list">
+                ${[...global.state.paperTags]
+                    .map((t) => /*html*/ `<li class="memory-tag" >${t}</li>`)
+                    .join("")}
+            </ul>`;
+        const details = /*html*/ `
+            <div id="tags-list-container">
+                <details id="tags-list-details" style="outline: none !important;">
+                    <summary style="font-size: 0.85rem; color: #5f5f5f;">Tags list</summary>
+                    ${contents}
+                </details>
+            </div>`;
+        findEl("memory-filters").insertAdjacentHTML("afterend", details);
+    } else {
+        findEl("tags-list-container")?.remove();
+    }
+};
 /**
  * Updates all the papers' options HTML list
  */

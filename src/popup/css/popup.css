@@ -831,3 +831,27 @@ button.changed {
         transform: rotate(359deg);
     }
 }
+
+#tags-list-container {
+    margin: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: calc(100% - 32px);
+}
+#all-tags-list li {
+    display: inline-block;
+    margin-bottom: 8px;
+}
+#all-tags-list {
+    display: block;
+    list-style-type: none;
+    padding: 0;
+    margin-bottom: -8px;
+}
+summary {
+    cursor: pointer;
+    padding: 4px 6px 2px;
+    border-radius: var(--round);
+    margin-left: 3px;
+}

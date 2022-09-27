@@ -229,6 +229,7 @@ const handleMemorySearchKeyPress = (allowEmptySearch) => (e) => {
         searchMemory(query);
     }
     // display filtered papers
+    toggleTagsCollapse(query.startsWith("t:"));
     displayMemoryTable();
 };
 
