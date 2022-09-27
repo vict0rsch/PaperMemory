@@ -43,6 +43,31 @@
             </em>
         </p>
 
+        <div id="toc-container">
+            <nav class="toc">
+                <ul>
+                </ul>
+                <svg class="toc-marker" width="200" height="200" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke="#b31b1b" stroke-width="3" fill="transparent" stroke-dasharray="0, 0, 0, 1000"
+                        stroke-linecap="round" stroke-linejoin="round" transform="translate(-0.5, -0.5)" />
+                </svg>
+                <div id="sync-popup-feedback" style="display: none;">
+                    <div id="sync-popup-syncing" style="display: none; align-items: center; justify-content: center;">
+                        <div style="display: inline-block; margin-right: 8px">Syncing</div>
+                        <div class="pm-loader"
+                            style="width: 24px; height: 24px; border-width: 2px; display: inline-block;">
+                        </div>
+                    </div>
+                    <div id="sync-popup-synced" style="display: none; text-align: center;">
+                        <div>Synced &#9989;</div>
+                    </div>
+                    <div id="sync-popup-synced" style="display: none; text-align: center;">
+                        <div>Sync failed &#10060;</div>
+                    </div>
+                </div>
+            </nav>
+        </div>
+
         <div class="row mb-5">
             <!-- <h3>Table of contents</h3> -->
             <div id="toc"></div>
@@ -70,7 +95,7 @@
                 </span>
             </div>
 
-            <h5>About</h5>
+            <h5 id="pwc-about-title">About</h5>
             <p>If you select option [1] and PapersWithCode reports no official implementation for the paper then no
                 repository will be stored, even if there are non-official implementations. Otherwise, official
                 implementations will always be preferred.</p>
@@ -191,7 +216,7 @@
         <hr>
 
         <div class="section">
-            <h2>Custom title function</h2>
+            <h2 id="custom-title-function">Custom title function</h2>
             <p>Provide a Javascript function code to produce a "title" from a <code>paper</code> object. This function
                 <em>must</em> return a <code>string</code> which will be used to 1/ Change the webpage titles 2/ Name
                 the pdf files you download with Paper Memory. The <code>.pdf</code> extension will be added
@@ -242,7 +267,7 @@
 
             <p>You can also share a list of papers for others in your team!</p>
             <br>
-            <h5>Full Memory Exports</h5>
+            <h5 id="memory-exports-title">Full Memory Exports</h5>
 
             <div style="display: flex; align-items: center;" class="row mb-4">
                 <div class="col-6">
@@ -322,7 +347,7 @@
             </div>
 
             <br>
-            <h5>Export by tags</h5>
+            <h5 id="memory-export-tags-title">Export by tags</h5>
 
             <p>Select papers to export by providing a list of tags. If you select the <code>AND</code> operator, papers
                 will be required to have all those tags. If you select the <code>OR</code> operator, papers
@@ -381,7 +406,11 @@
             </ul>
             </p>
 
-            <p><strong><em>Note</em></strong>&nbsp;: all URLs must come from sources known to PaperMemory</p>
+            <p><strong><em>Note&nbsp;&nbsp;&nbsp;</em></strong>&nbsp;: all URLs must come from sources known to
+                PaperMemory
+            </p>
+            <p><strong><em>Note 2</em></strong>&nbsp;: If you have enabled online synchronization through Github Gists,
+                be aware that synchronization will only happen after <em>all</em> imported papers have been parsed.</p>
 
             <p>Example valid <code>.json</code> file:</p>
             <code style="display: block; white-space: pre-wrap; padding: 16px" class="language-json trim-code">
@@ -438,6 +467,95 @@
 
             </div>
 
+        </div>
+
+        <hr>
+
+        <div class="section">
+            <h2 id="online-synchronization">Online synchronization</h2>
+
+            <h4 id="sync-how-it-works">How it works</h4>
+
+            <ul>
+                <li>Your Memory data gets written to a <code>.json</code> file as a gist on your Github account (<a
+                        href="https://docs.github.com/en/get-started/writing-on-github/editing-and-sharing-content-with-gists/creating-gists#about-gists"
+                        target="_blank" rel="noopener noreferrer">read about
+                        gists</a>)</li>
+                <li>Although it is non-discoverable, your gist data is still accessible to someone you'd give the link
+                    to</li>
+                <li>The synchronization happens in 2 stages:
+                    <ul>
+                        <li><em>Push</em>&nbsp;: when you close the Popup or when a paper gets added to the memory, the
+                            remote gist
+                            gets overwritten</li>
+                        <li><em>Pull</em>&nbsp;&nbsp;&nbsp;: when you open the popup or before a paper gets added, the
+                            remote
+                            gist
+                            is
+                            downloaded and overwrites your local Memory</li>
+                    </ul>
+                </li>
+                <li>This is all very alpha!</li>
+            </ul>
+
+            <p>Syncing is meant for <em>sequential</em> use across multiple devices.</p>
+
+            <p>Syncing does <strong>NOT</strong> turn PaperMemory into a multi-user tool: in its current state,
+                PaperMemory will NOT handle
+                conflicts or concurrent writes
+                to the remote data. Any conflict will result in potential loss of data.</p>
+
+            <h4 id="sync-syncing-state-title">Syncing</h4>
+
+            <p>PaperMemory relies on Github's <em>Personal Access Tokens</em> which you can easily generate from your
+                Github
+                account. Make sure
+            <ol>
+                <li>It has no expiration date</li>
+                <li>The <code>gist</code> scope is selected</li>
+            </ol>
+            You can revoke the token later at any time. Click <a
+                href="https://github.com/settings/tokens/new?scopes=gist" target="_blank"
+                rel="noopener noreferrer">here</a> to generate a new token.
+            </p>
+
+            <div>
+                <label for="pat-input">Github Personal Access Token:</label>
+                <input name="pat-input" id="pat-input" type="text"
+                    placeholder="ghp_0IurqH9T1wj0E1E3YuroyvykuYI17Rl5hdN9" />
+                <input id="save-pat" type="button" value="Save">
+                <br />
+                <div><small>Note: your token is saved locally and does not leave your computer.</small></div>
+                <div>
+                    <div class="pm-loader" id="pat-loader" style="display: none;"></div>
+                    <p id="pat-feedback">
+                    </p>
+                </div>
+                <div id="start-sync" class="row" style="display: none;">
+                    <h5>Start syncing your data to Github?</h5>
+                    <p>
+                        Your data sill be stored as a Gist on your personal github account. Do <strong>not</strong>
+                        edit
+                        that file manually or you may corrupt your whole data.
+                    </p>
+                    <p>In case anything goes wrong, we'll still download a backup locally</p>
+                    <p><input id="start-gh-sync" type="button" value="Start Github synchronization" /></p>
+
+                    <div class="pm-loader" id="sync-loader" style="display: none;"></div>
+
+                    <div id="overwriteRemoteFeedback">
+                    </div>
+
+                </div>
+                <div id="stop-sync" class="row" style="display: none;">
+                    <h5>STOP syncing your data to Github?</h5>
+                    <p>
+                        The Gist will not be deleted, but changes to your Memory will not be synced anymore.
+                    </p>
+                    <p><input id="stop-gh-sync" type="button" value="Stop Github synchronization" /></p>
+
+                </div>
+            </div>
         </div>
 
         <hr>
@@ -503,6 +621,85 @@
                 <a href="https://addons.mozilla.org/en-US/firefox/addon/paper-memory/">
                     Firefox Add-ons
                 </a>
+            </div>
+        </div>
+
+        <div id="modal-wrapper" style="display: none;">
+            <div id="modal-contents">
+                <span id="close-modal">&times;</span>
+                <div id="modal-sync-strategy-content" class="modal-content-div">
+                    <h3>Syncronization conflict</h3>
+
+                    <p>You seem to already have a synced Memory. What do you want to do?</p>
+                    <ol class="mb-4">
+                        <li>Overwrite your LOCAL data with the REMOTE data</li>
+                        <li>Overwrite your REMOTE data with the LOCAL data</li>
+                        <li>Merge both data sources into the union of all papers</li>
+                        <li>Abort this procedure.</li>
+                    </ol>
+
+                    <p class="mt-4 mb-4"><strong><em>Note&nbsp;:</em></strong>&nbsp; All overwritten data will be saved
+                        to
+                        your <code>Downloads/</code> folder in case anything goes wrong.</p>
+
+                    <div class="row d-flex justify-content-evenly align-items-center pt-4">
+                        <div class="col-3 d-flex justify-content-center align-items-center">
+                            <button id="modal-sync-local-remote" class="modal-sync-strategy-choice">
+                                1. Overwrite local with remote
+                            </button>
+                        </div>
+                        <div class="col-3 d-flex justify-content-center align-items-center">
+                            <button id="modal-sync-remote-local" class="modal-sync-strategy-choice">
+                                2. Overwrite remote with local
+                            </button>
+                        </div>
+                        <div class="col-3 d-flex justify-content-center align-items-center">
+                            <button id="modal-sync-merge" class="modal-sync-strategy-choice">
+                                3. Merge both data sources
+                            </button>
+                        </div>
+                        <div class="col-6 d-flex justify-content-center align-items-center mt-4">
+                            <button id="modal-sync-cancel" class="modal-sync-strategy-choice">
+                                Cancel synchronization
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="modal-sync-warning-content" class="modal-content-div">
+                    <p>You are about to enable Syncing across devices with Github Gists.</p>
+
+                    <p>This popup is simply to make sure everything is clear on what will happen</p>
+
+                    <p>In particular, make sure you have read and understood the <a
+                            href="chrome-extension://ehchlpggdaffcncbeopdopnndhdjelbc/src/options/options.html#sync-how-it-works"
+                            id="modal-sync-warning-description">description
+                            of the feature</a> before
+                        continuing.</p>
+
+                    <p>Additionally:
+                    <ul>
+                        <li>Syncronization typically takes approximately 2-3 seconds to <em>Pull</em> or to
+                            <em>Push</em>
+                            the data.
+                        </li>
+                        <li>Therefore, if you modify your memory (add tags, notes, delete a paper) from the popup and
+                            then close it, your modifications will be lost so you have to make sure the app is done
+                            syncing before leaving the popup. </li>
+                        <li>In most cases, the above is not critical. But it may explain why you feel like some of your
+                            actions are not recored or overwritten.</li>
+                    </ul>
+                    </p>
+                    <p>In general, you can consider that PaperMemory expects around <strong>5-10 seconds between devices
+                        </strong> to work
+                        properly.</p>
+                    <br>
+                    <br>
+                    <div class="row d-flex justify-content-evenly align-items-center">
+                        <button class="col-7 mb-4" id="modal-sync-warning-cancel">Cancel Synchronization.</button>
+                        <button class="col-7 mb-4" id="modal-sync-warning-continue">Ok, let's do this!</button>
+                    </div>
+                </div>
             </div>
         </div>
 

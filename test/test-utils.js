@@ -95,6 +95,9 @@ describe("paper.js", () => {
                 if (source === "ieee") {
                     paper.key = "9090146";
                 }
+                if (source === "ihep") {
+                    paper.id = "IHEP-2095720";
+                }
                 expect(paperToAbs(paper)).toEqual(urls[0]);
             });
         }

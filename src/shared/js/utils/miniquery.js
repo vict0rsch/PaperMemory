@@ -235,7 +235,22 @@ const slideToggle = (el, duration = 500, complete = () => {}) => {
     }
 };
 
-const queryAll = (dom, selector) => Array.from(dom.querySelectorAll(selector));
+const queryAll = (dom, selector) => [...dom.querySelectorAll(selector)];
+
+const createElementFromHTML = (htmlString) => {
+    var div = document.createElement("div");
+    div.innerHTML = htmlString.trim();
+
+    // Change this to div.childNodes to support multiple top-level nodes.
+    return div.firstChild;
+};
+
+const addEventToClass = (className, eventName, fn) => {
+    if (!className.startsWith(".")) className = "." + className;
+    document.querySelectorAll(className).forEach((el) => {
+        el.addEventListener(eventName, fn);
+    });
+};
 
 // ----------------------------------------------------
 // -----  TESTS: modules for node.js environment  -----
@@ -263,13 +278,7 @@ if (typeof module !== "undefined" && module.exports != null) {
         slideDown,
         slideToggle,
         queryAll,
+        addEventToClass,
+        createElementFromHTML,
     };
 }
-
-const createElementFromHTML = (htmlString) => {
-    var div = document.createElement("div");
-    div.innerHTML = htmlString.trim();
-
-    // Change this to div.childNodes to support multiple top-level nodes.
-    return div.firstChild;
-};

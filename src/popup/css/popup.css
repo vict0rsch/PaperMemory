@@ -16,6 +16,17 @@ body {
     position: relative;
 }
 
+.pm-loader {
+    animation: rotation 1.3s infinite linear;
+    height: 50px;
+    width: 50px;
+    border-left: 4px dotted salmon;
+    border-radius: 100%;
+    margin: auto;
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+}
+
 #popup-container {
     padding: 16px 32px 24px 32px;
     flex: 1;
@@ -805,4 +816,42 @@ button.changed {
 #warning-button:hover {
     background-color: darkgrey;
     border-color: rgb(255, 195, 74);
+}
+#sync-popup-feedback {
+    position: fixed;
+    bottom: 32px;
+    left: 65px;
+    font-family: "Fira Code", monospace;
+}
+@keyframes rotation {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(359deg);
+    }
+}
+
+#tags-list-container {
+    margin: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: calc(100% - 32px);
+}
+#all-tags-list li {
+    display: inline-block;
+    margin-bottom: 8px;
+}
+#all-tags-list {
+    display: block;
+    list-style-type: none;
+    padding: 0;
+    margin-bottom: -8px;
+}
+summary {
+    cursor: pointer;
+    padding: 4px 6px 2px;
+    border-radius: var(--round);
+    margin-left: 3px;
 }

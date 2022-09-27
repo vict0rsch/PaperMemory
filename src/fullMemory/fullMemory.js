@@ -8,26 +8,42 @@ const adjustCss = () => {
 };
 
 const autoRefresh = () => {
+    if (window.location.href.includes("?noRefresh=true")) {
+        warn("No auto refresh");
+        return;
+    }
     info(`Enabling auto refresh if inactive for ${REFRESH_INTERVAL_SECS} seconds.`);
     const reload = () => {
         window.location.reload();
     };
 
-    var time;
+    let time;
 
     const resetTimer = () => {
         clearTimeout(time);
         time = setTimeout(reload, REFRESH_INTERVAL_SECS * 1000);
     };
-    var events = ["click", "keypress", "touchstart"];
+    const events = ["click", "keypress", "touchstart"];
     events.forEach(function (name) {
         document.addEventListener(name, resetTimer, true);
     });
     resetTimer();
 };
 
+const syncOnBlur = async () => {
+    if (!(await shouldSync())) return;
+    window.addEventListener(
+        "blur",
+        delay(async () => {
+            info("Syncing back and forth...");
+            await pushToRemote();
+            await initSyncAndState();
+        }, 10e3)
+    );
+};
+
 (async () => {
-    await initState();
+    await initSyncAndState();
     makeMemoryHTML();
     addListener("memory-search-clear-icon", "click", handleClearSearch);
     addListener(document, "scroll", displayOnScroll(false));
@@ -37,4 +53,5 @@ const autoRefresh = () => {
     setMemorySortArrow("down");
     adjustCss();
     autoRefresh();
+    syncOnBlur();
 })();

@@ -186,6 +186,7 @@ In the extension's `options` (right click on the icon or in the popup's menu) yo
 * **Source filtering**: filter out some paper sources you don't want to record papers from
 * **Custom title function**: provide Javascript code to generate your own web page titles and pdf filenames based on a paper's attributes
 * **Data management**: export/load your memory data and export the bibliography as a `.bib` file
+* **Online Synchronization**: use Github Gists to sync your papers across devices
 
 <p align="center">
   <img src="https://raw.github.com/vict0rsch/PaperMemory/master/extra/imgs/opt_concat.png?raw=true">

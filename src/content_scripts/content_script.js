@@ -342,13 +342,27 @@ const ignorePaper = (is, ignoreSources) => {
  * Also, if the current website is a known paper source (isPaper), adds or updates the current paper
  * @param {object} checks The user's stored preferences regarding menu options
  */
-const contentScriptMain = async (
+const contentScriptMain = async ({
     url,
     stateIsReady,
     manualTrigger = false,
-    paperUpdateDoneCallback = () => {}
-) => {
-    if (!stateIsReady) await initState(undefined, true);
+    paperUpdateDoneCallbacks = {},
+} = {}) => {
+    if (!stateIsReady) {
+        let remoteReadyPromise;
+        const stateReadyPromise = new Promise((stateResolve) => {
+            remoteReadyPromise = new Promise((remoteResolve) => {
+                initSyncAndState({
+                    isContentScript: true,
+                    stateIsReady: stateResolve,
+                    remoteIsReady: remoteResolve,
+                });
+            });
+        });
+        await stateReadyPromise;
+        tryArxivDisplay({ url });
+        await remoteReadyPromise;
+    }
     const prefs = global.state.prefs;
 
     let is = await isPaper(url, true);
@@ -364,7 +378,13 @@ const contentScriptMain = async (
         (!isIgnored && ((!isPdfPrevented && !isAutoDisabled) || is.arxiv))
     ) {
         const store = !(isPdfPrevented || isAutoDisabled) || manualTrigger;
-        update = await addOrUpdatePaper(url, is, prefs, store, paperUpdateDoneCallback);
+        update = await addOrUpdatePaper({
+            url,
+            is,
+            prefs,
+            store,
+            contentScriptCallbacks: paperUpdateDoneCallbacks,
+        });
     } else {
         if (ignorePaper(is, ignoreSources)) {
             warn(
@@ -545,8 +565,8 @@ const arxiv = async (checks) => {
     if (checkDownload) {
         const button = /*html*/ `
             <div class="pm-container" style="align-items: end;">
-                <div style="font-size: 0.6rem; color: #cac7c7; padding-bottom: 0.6rem;">Download to<br/>PaperMemoryStore</div>
                 <div id="arxiv-button">${svg("download")}</div>
+                <div style="font-size: 0.6rem; color: #cac7c7; padding-bottom: 0.6rem;">Download to<br/>PaperMemoryStore</div>
             </div>
         `;
         document
@@ -680,6 +700,54 @@ const arxiv = async (checks) => {
     }
 };
 
+const tryArxivDisplay = async ({
+    url = null,
+    paper = null,
+    preprintsPromise = null,
+} = {}) => {
+    // a paper was parsed
+
+    // user preferences
+    const prefs = global.state.prefs;
+
+    // paper.source may not be "arxiv" even on arxiv.org
+    // because of the existing paper matching mechanism
+    let is = await isPaper(url, true);
+
+    if (is.arxiv && !isPdfUrl(url)) {
+        // larger arxiv column
+        adjustArxivColWidth();
+
+        // display arxiv paper metadata
+        await arxiv(prefs);
+
+        // wait for publication databases to be queried
+        if (preprintsPromise) {
+            paper = await preprintsPromise;
+        } else {
+            const id = await parseIdFromUrl(url);
+            const paperExists = global.state.papers.hasOwnProperty(id);
+            if (!paperExists) return;
+            paper = global.state.papers[id];
+        }
+
+        // update bibtex
+        if (prefs.checkBib) {
+            if (findEl("pm-bibtex-textarea")) {
+                findEl("pm-bibtex-textarea").innerHTML = bibtexToString(
+                    paper.bibtex
+                ).replaceAll("\t", "  ");
+            }
+        }
+
+        // update venue
+        displayPaperVenue(paper);
+
+        // update codeLink
+        displayPaperCode(paper);
+    }
+};
+
 (async () => {
     var prefs, paper;
     var paperPromise, preprintsPromise;
@@ -689,7 +757,7 @@ const arxiv = async (checks) => {
     // but not on files
     let stateIsReady = false;
     if (url.startsWith("file://")) {
-        await initState(undefined, true);
+        await initSyncAndState({ isContentScript: true });
         prefs = global.state.prefs;
         stateIsReady = true;
     }
@@ -705,15 +773,25 @@ const arxiv = async (checks) => {
     chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
         if (request.message === "tabUrlUpdate") {
             info("Running PaperMemory's content script for url update");
-            contentScriptMain(request.url, stateIsReady, false, {
-                update: paperResolve,
-                preprints: preprintsResolve,
+            contentScriptMain({
+                url: request.url,
+                stateIsReady,
+                manualTrigger: false,
+                paperUpdateDoneCallbacks: {
+                    update: paperResolve,
+                    preprints: preprintsResolve,
+                },
             });
         } else if (request.message === "manualParsing") {
             info("Triggering manual parsing");
-            contentScriptMain(url, stateIsReady, true, {
-                update: paperResolve,
-                preprints: preprintsResolve,
+            contentScriptMain({
+                url,
+                stateIsReady,
+                manualTrigger: true,
+                paperUpdateDoneCallbacks: {
+                    update: paperResolve,
+                    preprints: preprintsResolve,
+                },
             });
         }
     });
@@ -726,9 +804,14 @@ const arxiv = async (checks) => {
             // if the url is associated to a known source: trigger
             // the main functions.
             if (await isSourceURL(url, true)) {
-                contentScriptMain(url, stateIsReady, false, {
-                    update: paperResolve,
-                    preprints: preprintsResolve,
+                contentScriptMain({
+                    url,
+                    stateIsReady,
+                    manualTrigger: false,
+                    paperUpdateDoneCallbacks: {
+                        update: paperResolve,
+                        preprints: preprintsResolve,
+                    },
                 });
             } else {
                 // if the url is not associated to a known source:
@@ -750,39 +833,6 @@ const arxiv = async (checks) => {
 
     paper = results[0];
     if (paper) {
-        // a paper was parsed
-
-        // user preferences
-        prefs = global.state.prefs;
-
-        // paper.source may not be "arxiv" even on arxiv.org
-        // because of the existing paper matching mechanism
-        let is = await isPaper(url, true);
-
-        if (is.arxiv) {
-            // larger arxiv column
-            adjustArxivColWidth();
-
-            // display arxiv paper metadata
-            await arxiv(prefs);
-
-            // wait for publication databases to be queried
-            paper = await preprintsPromise;
-
-            // update bibtex
-            if (prefs.checkBib) {
-                if (findEl("pm-bibtex-textarea")) {
-                    findEl("pm-bibtex-textarea").innerHTML = bibtexToString(
-                        paper.bibtex
-                    ).replaceAll("\t", "  ");
-                }
-            }
-
-            // update venue
-            displayPaperVenue(paper);
-
-            // update codeLink
-            displayPaperCode(paper);
-        }
+        tryArxivDisplay({ url, paper, preprintsPromise });
     }
 })();

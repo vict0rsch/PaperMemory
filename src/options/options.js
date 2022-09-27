@@ -234,6 +234,7 @@ const handleParseImportJson = async (e) => {
                 }]&nbsp; &times;&nbsp; Error: ${url} (open the JavaScript Console for more info)</li>`;
             }
         }
+        await pushToRemote();
         changeProgress(0);
         setHTML("import-json-status", `<strong>Done!</strong>`);
     };
@@ -405,7 +406,7 @@ const saveNewAutoTagItem = async () => {
     autoTags.push(at);
     setStorage("autoTags", autoTags, () => {
         const items = findEl("auto-tags-list").getElementsByClassName("auto-tags-item");
-        const last = Array.from(items).last();
+        const last = [...items].last();
         last.insertAdjacentHTML("afterend", getAutoTagHTML(at));
         addListener(`auto-tags-item-save--${at.id}`, "click", updateAutoTagHandler);
         addListener(`auto-tags-item-delete--${at.id}`, "click", deleteAutoTagHandler);
@@ -709,9 +710,13 @@ const handleConfirmOverwrite = (papersToWrite, warning) => (e) => {
             }
         }
         await setStorage("papers", papersToWrite);
+        const pushed = (await shouldSync())
+            ? " and pushed to your online Gist storage"
+            : "";
+        await pushToRemote();
         setHTML(
             "overwriteFeedback",
-            `<h4 style="margin: 1.5rem">Memory overwritten.</h4>`
+            `<h4 style="margin: 1.5rem">Memory overwritten${pushed}.</h4>`
         );
         val("overwrite-arxivmemory-input", "");
     }, 700);
@@ -841,7 +846,7 @@ const setupDataManagement = () => {
     addListener("overwrite-arxivmemory-button", "click", handleOverwriteMemory);
     addListener("overwrite-arxivmemory-input", "change", handleSelectOverwriteFile);
 
-    const tagOptions = Array.from(global.state.paperTags)
+    const tagOptions = [...global.state.paperTags]
         .sort()
         .map((t, i) => {
             const h = '<option value="' + t + '"'; // not string literal here for minification
@@ -902,12 +907,445 @@ const setupSourcesSelection = async () => {
     }
 };
 
+// ---------------------
+// -----  SYNCING  -----
+// ---------------------
+
+const setupSync = async () => {
+    showId("pat-loader");
+    const { ok, payload, error } = await getGist();
+    hideId("pat-loader");
+
+    if (!ok) {
+        if (error) {
+            setHTML("pat-feedback", "Invalid PAT" + "<br/><br/>" + error);
+        }
+        hideId("pat-loader");
+        await toggleSync({ hideAll: true });
+    } else {
+        const { gist, pat } = payload;
+        val("pat-input", pat);
+        await toggleSync();
+    }
+
+    addListener("save-pat", "click", async () => {
+        console.log("Attempting to store Github PAT");
+        showId("pat-loader");
+        const pat = val("pat-input");
+        if (!pat) {
+            setHTML("pat-feedback", "Invalid PAT");
+            await setStorage("syncPAT", pat);
+            await setStorage("syncState", false);
+            hideId("pat-loader");
+            await toggleSync({ hideAll: true });
+            return;
+        }
+        const { ok, payload, error } = await getGist(pat);
+        if (!ok) {
+            console.log(error);
+            setHTML("pat-feedback", error.response.data.message);
+        } else {
+            const { gist, pat } = payload;
+            console.log("Gist ID", gist.id);
+            console.log("Github Owner Username", gist.ownerUsername);
+            console.log("Personal Access Token", pat);
+            setHTML("pat-feedback", "Ok! Token is valid.");
+            toggleSync();
+        }
+        hideId("pat-loader");
+    });
+
+    addListener("stop-gh-sync", "click", async () => {
+        const c = confirm("Are you sure you want to stop syncing to Github?");
+        if (!c) return;
+        const pat = "";
+        setStorage("syncPAT", pat);
+        val("pat-input", pat);
+        await sendMessageToBackground({ type: "restartGist" });
+        toggleSync();
+    });
+
+    addListener("start-gh-sync", "click", async () => {
+        showId("sync-loader");
+        if (!(await showSyncWarning())) {
+            hideId("sync-loader");
+            return;
+        }
+        const { ok, payload, error } = await getGist();
+        if (!ok) {
+            alert("Your Personal Access Token is invalid.\n\n" + (error ?? ""));
+            return;
+        }
+        const { gist } = payload;
+        const dataFile = await getDataFile(gist);
+        let userChoice = "no-remote";
+        if (dataFile.content) {
+            console.log("Existing data file content:", dataFile.content);
+            userChoice = await getSyncStrategy();
+            if (!userChoice) {
+                hideId("sync-loader");
+                return;
+            }
+        }
+        try {
+            if (userChoice === "remote-local" || userChoice === "no-remote") {
+                // writing to remote, keeping local untouched
+                if (userChoice === "remote-local") {
+                    // save pre-existing remote data
+                    const now = new Date();
+                    const date = now.toLocaleDateString().replaceAll("/", ".");
+                    const time = now.toLocaleTimeString().replaceAll(":", ".");
+                    downloadTextFile(
+                        JSON.stringify(dataFile.content),
+                        `PaperMemory-remote-data-backup-${date}-${time}.json`,
+                        "text/json"
+                    );
+                }
+                const papersString = JSON.stringify(global.state.papers, null, "");
+                console.log("dataFile: ", dataFile);
+                dataFile.overwrite(papersString);
+                await dataFile.save();
+                await setSyncOk();
+            } else if (userChoice === "local-remote") {
+                // overwrite local data with remote data
+                dispatch("download-arxivmemory", "click");
+                const remotePapers = dataFile.content;
+                const { success, message, warning, papersToWrite } =
+                    await prepareOverwriteData(remotePapers);
+                if (success) {
+                    if (warning) {
+                        const nWarnings = (warning.match(/<br\/>/g) ?? []).length;
+                        setHTML(
+                            "overwriteRemoteFeedback",
+                            `<h5 class="errorTitle">Done with ${nWarnings} non-breaking warnings.</h5>${warning}<br/><br/>`
+                        );
+                    } else {
+                        style("overwriteRemoteFeedback", "text-align", "center");
+                        setHTML(
+                            "overwriteRemoteFeedback",
+                            `<h5 class="mb-0 mt-2">Data is valid. Overwriting</h5>`
+                        );
+                    }
+                    await setStorage("papers", papersToWrite);
+                    await setSyncOk();
+                } else {
+                    setHTML("overwriteRemoteFeedback", message);
+                }
+            } else if (userChoice === "merge") {
+                const now = new Date();
+                const date = now.toLocaleDateString().replaceAll("/", ".");
+                const time = now.toLocaleTimeString().replaceAll(":", ".");
+                downloadTextFile(
+                    JSON.stringify(dataFile.content),
+                    `PaperMemory-merge--remote-data-backup-${date}-${time}.json`,
+                    "text/json"
+                );
+                downloadTextFile(
+                    JSON.stringify(await getStorage("papers")),
+                    `PaperMemory-merge--local-data-backup-${date}-${time}.json`,
+                    "text/json"
+                );
+                let mergedPapers = {};
+                const remotePapers = dataFile.content;
+                const localPapers = await getStorage("papers");
+                const remoteVersion = remotePapers["__dataVersion"];
+                const localVersion = localPapers["__dataVersion"];
+                mergedPapers["__dataVersion"] = Math.min(remoteVersion, localVersion);
+                for (const key of Object.keys(localPapers)) {
+                    if (key === "__dataVersion") continue;
+                    if (remotePapers[key]) {
+                        mergedPapers[key] = mergePapers({
+                            newPaper: remotePapers[key],
+                            oldPaper: localPapers[key],
+                            overwrites: [],
+                            syncMerge: true,
+                        });
+                    } else {
+                        mergedPapers[key] = localPapers[key];
+                    }
+                }
+                for (const key of Object.keys(remotePapers)) {
+                    if (key === "__dataVersion") continue;
+                    if (!mergedPapers[key]) {
+                        mergedPapers[key] = remotePapers[key];
+                    }
+                }
+
+                const { success, message, warning, papersToWrite } =
+                    await prepareOverwriteData(mergedPapers);
+                if (success) {
+                    if (warning) {
+                        const nWarnings = (warning.match(/<br\/>/g) ?? []).length;
+                        setHTML(
+                            "overwriteRemoteFeedback",
+                            `<h5 class="errorTitle">Done with ${nWarnings} non-breaking warnings.</h5>${warning}<br/><br/>`
+                        );
+                    } else {
+                        style("overwriteRemoteFeedback", "text-align", "center");
+                        setHTML(
+                            "overwriteRemoteFeedback",
+                            `<h5 class="mb-0 mt-2">Data is valid. Overwriting</h5>`
+                        );
+                    }
+                    await setStorage("papers", papersToWrite);
+                    await dataFile.overwrite(JSON.stringify(papersToWrite, null, ""));
+                    await dataFile.save();
+                    await setSyncOk();
+                } else {
+                    setHTML("overwriteRemoteFeedback", message);
+                }
+            }
+        } catch (e) {
+            setHTML("overwriteRemoteFeedback", e);
+        }
+        await sendMessageToBackground({ type: "restartGist" });
+        hideId("sync-loader");
+    });
+};
+
+const getSyncStrategy = async () => {
+    showOptionsModal("sync-strategy");
+    return new Promise((resolve) => {
+        const done = (val) => {
+            closeModal();
+            resolve(val);
+        };
+        addEventToClass("modal-sync-strategy-choice", "click", (event) => {
+            const id = event.target.id ?? "";
+            const strategy = id.split("modal-sync-").last() ?? "";
+            done(strategy === "cancel" ? "" : strategy);
+        });
+        addListener("close-modal", "click", () => done(""));
+        addListener(window, "click", (event) => {
+            event.target === findEl("modal-wrapper") && done("");
+        });
+    });
+};
+
+const showSyncWarning = async () => {
+    showOptionsModal("sync-warning");
+    return new Promise((resolve) => {
+        const done = (val) => {
+            closeModal();
+            resolve(val);
+        };
+
+        addListener("modal-sync-warning-continue", "click", () => done(true));
+
+        addListener("modal-sync-warning-description", "click", () => done(false));
+        addListener("modal-sync-warning-cancel", "click", () => done(false));
+        addListener("close-modal", "click", () => done(false));
+        addListener(window, "click", (event) => {
+            event.target === findEl("modal-wrapper") && done(false);
+        });
+    });
+};
+
+const setSyncOk = async ({ push = false } = {}) => {
+    await setStorage("syncState", true);
+    push && (await pushToRemote());
+    await toggleSync();
+    alert("Synced!");
+};
+
+const toggleSync = async ({ hideAll = false } = {}) => {
+    const syncState = await getStorage("syncState");
+    if (hideAll) {
+        hideId("stop-sync");
+        hideId("start-sync");
+        return;
+    }
+    if (!syncState) {
+        showId("start-sync");
+        hideId("stop-sync");
+    } else {
+        showId("stop-sync");
+        hideId("start-sync");
+    }
+};
+
+// ---------------------
+// -----  Sidebar  -----
+// ---------------------
+
+const makeSideBar = () => {
+    const sections = [...document.querySelectorAll(".section")].filter(
+        (section) => !!section.querySelector("h2")
+    );
+    const lis = sections.map((section) => {
+        const h2 = section.querySelector("h2");
+        const id = h2.id;
+        const title = h2.innerText;
+        let ul = "";
+        const titles = ["h3", "h4", "h5", "h6"];
+        let hs = [];
+        for (const t of titles) {
+            hs = section.querySelectorAll(t);
+            if (hs.length) break;
+        }
+        if (hs.length > 1) {
+            ul = `<ul>${[...hs]
+                .map((h) => `<li><a href="#${h.id}">${h.innerText}</a></li>`)
+                .join("")}</ul>`;
+        }
+
+        return `<li class="nav-item"><a class="nav-link" href="#${id}">${title}</a>${ul}</li>`;
+    });
+    setHTML(document.querySelector("nav ul"), lis.join(""));
+};
+
+const setupSidebar = async () => {
+    makeSideBar();
+    var toc = document.querySelector(".toc");
+    var tocPath = document.querySelector(".toc-marker path");
+    var tocItems;
+
+    // Factor of screen size that the element must cross
+    // before it's considered visible
+    var TOP_MARGIN = 0.05,
+        BOTTOM_MARGIN = 0.1;
+
+    var pathLength;
+
+    var lastPathStart, lastPathEnd;
+
+    window.addEventListener("resize", drawPath, false);
+    window.addEventListener("scroll", sync, false);
+
+    drawPath();
+
+    function drawPath() {
+        tocItems = [].slice.call(toc.querySelectorAll("li"));
+
+        // Cache element references and measurements
+        tocItems = tocItems.map(function (item) {
+            var anchor = item.querySelector("a");
+            var target = document.getElementById(anchor.getAttribute("href").slice(1));
+
+            return {
+                listItem: item,
+                anchor: anchor,
+                target: target,
+            };
+        });
+
+        // Remove missing targets
+        tocItems = tocItems.filter(function (item) {
+            return !!item.target;
+        });
+
+        var path = [];
+        var pathIndent;
+
+        tocItems.forEach(function (item, i) {
+            var x = item.anchor.offsetLeft - 5,
+                y = item.anchor.offsetTop,
+                height = item.anchor.offsetHeight;
+
+            if (i === 0) {
+                path.push("M", x, y, "L", x, y + height);
+                item.pathStart = 0;
+            } else {
+                // Draw an additional line when there's a change in
+                // indent levels
+                if (pathIndent !== x) path.push("L", pathIndent, y);
+
+                path.push("L", x, y);
+
+                // Set the current path so that we can measure it
+                tocPath.setAttribute("d", path.join(" "));
+                item.pathStart = tocPath.getTotalLength() || 0;
+
+                path.push("L", x, y + height);
+            }
+
+            pathIndent = x;
+
+            tocPath.setAttribute("d", path.join(" "));
+            item.pathEnd = tocPath.getTotalLength();
+        });
+
+        pathLength = tocPath.getTotalLength();
+
+        sync();
+    }
+
+    function sync() {
+        var windowHeight = window.innerHeight;
+
+        var pathStart = pathLength,
+            pathEnd = 0;
+
+        var visibleItems = 0;
+
+        tocItems.forEach(function (item) {
+            var targetBounds = item.target.getBoundingClientRect();
+
+            if (
+                targetBounds.bottom > windowHeight * TOP_MARGIN &&
+                targetBounds.top < windowHeight * (1 - BOTTOM_MARGIN)
+            ) {
+                pathStart = Math.min(item.pathStart, pathStart);
+                pathEnd = Math.max(item.pathEnd, pathEnd);
+
+                visibleItems += 1;
+
+                item.listItem.classList.add("visible");
+            } else {
+                item.listItem.classList.remove("visible");
+            }
+        });
+
+        // Specify the visible path or hide the path altogether
+        // if there are no visible items
+        if (visibleItems > 0 && pathStart < pathEnd) {
+            if (pathStart !== lastPathStart || pathEnd !== lastPathEnd) {
+                tocPath.setAttribute("stroke-dashoffset", "1");
+                tocPath.setAttribute(
+                    "stroke-dasharray",
+                    "1, " + pathStart + ", " + (pathEnd - pathStart) + ", " + pathLength
+                );
+                tocPath.setAttribute("opacity", 1);
+            }
+        } else {
+            tocPath.setAttribute("opacity", 0);
+        }
+
+        lastPathStart = pathStart;
+        lastPathEnd = pathEnd;
+    }
+};
+
+// -------------------
+// -----  Modal  -----
+// -------------------
+
+const showOptionsModal = (name) => {
+    document.querySelectorAll(".modal-content-div").forEach(hideId);
+    showId(`modal-${name}-content`, "contents");
+    style("modal-wrapper", "display", "flex");
+    document.body.style.overflow = "hidden";
+};
+
+const closeModal = () => {
+    style("modal-wrapper", "display", "none");
+    document.body.style.overflow = "auto";
+};
+
+const setupModals = () => {
+    addListener("close-modal", "click", closeModal);
+    addListener(window, "click", (event) => {
+        event.target === findEl("modal-wrapper") && closeModal();
+    });
+};
+
 // ----------------------------
 // -----  Document Ready  -----
 // ----------------------------
 
 (async () => {
-    await initState();
+    setupSidebar();
+    await initSyncAndState();
     makeTOC();
     setupCodeBlocks();
     setupPWCPrefs();
@@ -918,4 +1356,6 @@ const setupSourcesSelection = async () => {
     setupSourcesSelection();
     setupTitleFunction();
     setupDataManagement();
+    setupSync();
+    setupModals();
 })();

@@ -50,7 +50,7 @@ const showPopupModal = (name) => {
     document.querySelectorAll(".popup-modal-content").forEach(hideId);
     showId(`modal-${name}-content`, "contents");
     style("popup-modal-wrapper", "display", "flex");
-    Array.from(document.getElementsByTagName("a")).forEach((el) => {
+    [...document.getElementsByTagName("a")].forEach((el) => {
         addListener(el, "click", () => {
             chrome.tabs.create({ url: el.getAttribute("href") });
         });
@@ -131,12 +131,12 @@ const popupMain = async (url, is, manualTrigger = false) => {
     console.log(navigator.userAgent);
     if (navigator.userAgent === "PuppeteerAgent") {
         info("Is puppet");
-        style(document.body, "min-width", "500px");
-        style(document.body, "max-width", "500px");
-        style(document.body, "width", "500px");
-        style("popup-modal-wrapper", "min-width", "500px");
-        style("popup-modal-wrapper", "max-width", "500px");
-        style("popup-modal-wrapper", "width", "500px");
+        // style(document.body, "min-width", "500px");
+        // style(document.body, "max-width", "500px");
+        // style(document.body, "width", "500px");
+        // style("popup-modal-wrapper", "min-width", "500px");
+        // style("popup-modal-wrapper", "max-width", "500px");
+        // style("popup-modal-wrapper", "width", "500px");
     }
 
     addListener(document, "keydown", handlePopupKeydown);
@@ -153,7 +153,7 @@ const popupMain = async (url, is, manualTrigger = false) => {
         // but update the current state and rebuild the Memory's HTML
         hideId("memory-switch");
         showId("memory-spinner");
-        await initState();
+        await initSyncAndState();
         hideId("memory-spinner");
         showId("memory-switch");
         makeMemoryHTML();
@@ -297,8 +297,20 @@ const popupMain = async (url, is, manualTrigger = false) => {
 const query = { active: true, lastFocusedWindow: true };
 if (window.location.href.includes("popup")) {
     chrome.tabs.query(query, async (tabs) => {
+        chrome.runtime.connect({ name: "PaperMemoryPopupSync" });
         const url = tabs[0].url;
-        await initState();
+
+        let stateReadyPromise, remoteIsReadyPromise;
+        remoteIsReadyPromise = new Promise((remoteReadyResolve) => {
+            stateReadyPromise = new Promise((stateReadyResolve) => {
+                initSyncAndState({
+                    stateIsReady: stateReadyResolve,
+                    remoteIsReady: remoteReadyResolve,
+                });
+            });
+        });
+
+        await stateReadyPromise;
 
         const is = await isPaper(url);
         const isKnown = Object.values(is).some((i) => i);
@@ -311,6 +323,14 @@ if (window.location.href.includes("popup")) {
         popupMain(url, is);
         if (navigator.userAgent.search("Firefox") > -1) {
             hideId("overwrite-container");
+        }
+
+        await remoteIsReadyPromise;
+
+        if (global.state.currentId && !global.state.papers[global.state.currentId]) {
+            global.state.currentId = null;
+            makeMemoryHTML();
+            await updatePopupPaperNoMemory(url);
         }
     });
 }

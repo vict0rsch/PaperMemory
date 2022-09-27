@@ -8,9 +8,10 @@
     "test-cov": "gulp build && cd test/ && ../node_modules/.bin/nyc --reporter=text ../node_modules/.bin/mocha test-*.js",
     "test-storage": "gulp build && cd test/ && ../node_modules/.bin/mocha test-storage.js",
     "test-duplicates": "gulp build && cd test/ && ../node_modules/.bin/mocha test-duplicates.js",
-    "test-no-browser": "gulp build && cd test/ && ../node_modules/.bin/mocha 'test-!(storage|duplicates)*.js'",
-    "test-no-browser-no-build": "cd test/ && ../node_modules/.bin/mocha 'test-!(storage)*.js'",
-    "test-no-browser-no-build-cov": "cd test/ && ../node_modules/.bin/nyc --reporter=text ../node_modules/.bin/mocha 'test-!(storage)*.js'",
+    "test-sync": "gulp build && cd test/ && ../node_modules/.bin/mocha test-sync.js",
+    "test-no-browser": "gulp build && cd test/ && ../node_modules/.bin/mocha 'test-!(storage|duplicates|sync)*.js'",
+    "test-no-browser-no-build": "cd test/ && ../node_modules/.bin/mocha 'test-!(storage|duplicates|sync)*.js'",
+    "test-no-browser-no-build-cov": "cd test/ && ../node_modules/.bin/nyc --reporter=text ../node_modules/.bin/mocha 'test-!(storage|duplicates|sync)*.js'",
     "screenshots": "node_modules/.bin/mocha test/screenshots.js"
   },
   "repository": {
@@ -41,11 +42,12 @@
     "jsdom": "^20.0.0",
     "mocha": "^10.0.0",
     "nyc": "^15.1.0",
+    "puppeteer": "^13.5.2",
     "puppeteer-to-istanbul": "^1.4.0",
     "readline-sync": "^1.4.10",
     "uuid": "^9.0.0"
   },
   "dependencies": {
-    "puppeteer": "^18.0.2"
+    "ora": "5.4.1"
   }
 }

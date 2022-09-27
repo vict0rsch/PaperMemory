@@ -14,7 +14,7 @@
 const getTagsOptions = (paper) => {
     const tags = new Set(paper.tags);
 
-    return Array.from(global.state.paperTags)
+    return [...global.state.paperTags]
         .sort()
         .map((t, i) => {
             let h = '<option value="' + t + '"'; // not string literal here for minification
@@ -24,6 +24,28 @@ const getTagsOptions = (paper) => {
             return h + `>${t}</option>`;
         })
         .join("");
+};
+
+const toggleTagsCollapse = (on) => {
+    if (on) {
+        if (!!findEl("tags-list-container")) return;
+        const contents = /*html*/ `
+            <ul id="all-tags-list">
+                ${[...global.state.paperTags]
+                    .map((t) => /*html*/ `<li class="memory-tag" >${t}</li>`)
+                    .join("")}
+            </ul>`;
+        const details = /*html*/ `
+            <div id="tags-list-container">
+                <details id="tags-list-details" style="outline: none !important;">
+                    <summary style="font-size: 0.85rem; color: #5f5f5f;">Tags list</summary>
+                    ${contents}
+                </details>
+            </div>`;
+        findEl("memory-filters").insertAdjacentHTML("afterend", details);
+    } else {
+        findEl("tags-list-container")?.remove();
+    }
 };
 /**
  * Updates all the papers' options HTML list
@@ -94,7 +116,7 @@ const updatePopupPaperNoMemory = async (url) => {
             try {
                 const is = await isPaper(url);
                 let paper;
-                const update = await addOrUpdatePaper(url, is);
+                const update = await addOrUpdatePaper({ url, is });
                 if (update) {
                     paper = update.paper;
                 } else {
@@ -676,7 +698,7 @@ const displayMemoryTable = (pagination = 0) => {
     // Save fields on edits save (submit)
     const end = Date.now();
 
-    info("Display duration (s): " + (end - start) / 1000);
+    info("Display duration (s): " + (end - start) / 1e3);
 };
 
 /**

@@ -1,6 +1,6 @@
 const puppeteer = require("puppeteer");
 
-exports.makeBrowser = async (windowSize = "500,600") => {
+exports.makeBrowser = async (windowSize = "1200,900") => {
     const browserFetcher = puppeteer.createBrowserFetcher();
     const revisionInfo = await browserFetcher.download("818858");
     const browser = await puppeteer.launch({
@@ -26,7 +26,7 @@ exports.getMemoryPapers = async (page) => {
     );
 };
 
-exports.getMemoryState = async (page) => {
+exports.getPaperMemoryState = async (page) => {
     return await page.evaluate(
         () =>
             new Promise(async (resolve) => {
@@ -61,3 +61,7 @@ exports.visitPaperPage = async (browser, target, options = {}) => {
 
 exports.extensionPopupURL =
     "chrome-extension://ehchlpggdaffcncbeopdopnndhdjelbc/src/popup/min/popup.min.html";
+exports.fullMemoryURL =
+    "chrome-extension://ehchlpggdaffcncbeopdopnndhdjelbc/src/fullMemory/fullMemory.html?noRefresh=true";
+exports.chromeExtensionsURL =
+    "chrome://extensions/?id=ehchlpggdaffcncbeopdopnndhdjelbc";

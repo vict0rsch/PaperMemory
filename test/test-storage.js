@@ -28,9 +28,9 @@ const pageTimeout = parseFloat(process.env.pageTimeout ?? -1);
 // only run tests for a specific paper source (as per ./data/urls.json)
 const singleSource = process.env.singleSource?.toLowerCase() ?? false;
 // keep pages and browser open at the end of tests to inspect
-const keepOpen = Boolean(process.env.keepOpen ?? false);
+const keepOpen = !!(process.env.keepOpen ?? false);
 // write the memory to ./tmp as a JSON file
-const dump = Boolean(process.env.dump) ?? false;
+const dump = !!(process.env.dump ?? false);
 // only run tests for a specific abstract<->pdf order
 const singleOrder = process.env.singleOrder ?? false;
 // ignore sources to parse papers from (','-separated sources as per ./data/urls.json)
@@ -65,8 +65,11 @@ console.log("--------------------------");
 
 // util to find a paper in the Memory from a specific source
 const paperForSource = (source, memoryPapers) => {
-    return Object.values(memoryPapers).filter((p) => p.source === source)[0];
+    return Object.values(memoryPapers).find((p) => p.source === source);
 };
+
+const ignoreSingleOrder = (s, urls, order) =>
+    urls[s][2] && urls[s][2].singleOrder && urls[s][2].singleOrder !== order;
 
 // --------------------------------
 // -----  Main test function  -----
@@ -144,6 +147,17 @@ describe("Test paper detection and storage", function () {
 
                         // filter out the additional test configs
                         const targetUrls = targets.filter((u) => typeof u === "string");
+                        if (t >= targetUrls.length) {
+                            continue;
+                        }
+                        if (targets.length > 2) {
+                            if (
+                                targets[2].singleOrder &&
+                                targets[2].singleOrder !== order
+                            ) {
+                                continue;
+                            }
+                        }
                         const target = targetUrls[t];
                         // log prefix
                         const n = idx + (o > 0 ? 1 - t : t) * nUrls + 1;
@@ -160,7 +174,7 @@ describe("Test paper detection and storage", function () {
                 // go to the extension's popup url
                 const page = await browser.newPage();
                 await page.goto(extensionPopupURL);
-                await page.waitForTimeout(1000);
+                await page.waitForTimeout(1e3);
 
                 // retrieve the data parsed by PaperMemory
                 memoryPapers = await getMemoryPapers(page);
@@ -183,21 +197,26 @@ describe("Test paper detection and storage", function () {
             describe("Global memory inspection", function () {
                 it("All sources are detected", async function () {
                     const memorySources = allAttributes(memoryPapers, "source").sort();
-                    const refSources = sources.sort();
+                    const refSources = sources
+                        .filter((s) => !ignoreSingleOrder(s, urls, order))
+                        .sort();
                     expect(memorySources).toEqual(refSources);
                 });
 
                 it("Pdf and Abstract are matched to the same Memory item", async function () {
+                    const filteredSources = sources.filter(
+                        (s) => !ignoreSingleOrder(s, urls, order)
+                    );
                     const memoryCounts = allAttributes(memoryPapers, "count");
                     const memorySources = allAttributes(memoryPapers, "source");
                     const memoryCountsBySource = Object.fromEntries(
-                        [...Array(sources.length).keys()].map((i) => [
+                        [...Array(filteredSources.length).keys()].map((i) => [
                             memorySources[i],
                             memoryCounts[i],
                         ])
                     );
                     const refCountsBySource = Object.fromEntries(
-                        sources.map((s) => [s, 2])
+                        filteredSources.map((s) => [s, 2])
                     );
                     expect(memoryCountsBySource).toEqual(refCountsBySource);
                 });
@@ -219,7 +238,10 @@ describe("Test paper detection and storage", function () {
 
             describe("Per source specifics", function () {
                 // execute shared tests for all sources
-                sources.map((source) => {
+                const filteredSources = sources.filter(
+                    (s) => !ignoreSingleOrder(s, urls, order)
+                );
+                filteredSources.map((source) => {
                     describe(source.toLocaleUpperCase(), function () {
                         it("1 paper for source", function () {
                             const papers = Object.values(memoryPapers).filter(

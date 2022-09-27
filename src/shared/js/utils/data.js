@@ -21,6 +21,7 @@ const migrateData = async (papers, manifestDataVersion, store = true) => {
 
     try {
         if (currentVersion >= latestDataVersion) {
+            log("No migration needed");
             return { papers: papers, success: true };
         }
 
@@ -205,9 +206,12 @@ const deletePaperInStorage = async (id, papers) => {
         updateDuplicatedUrls(null, id, true);
         deleted = delete global.state.titleHashToIds[miniHash(papers[id].title)];
         deleted = deleted && delete papers[id];
+        delete global.state.papers[id];
     }
     if (deleted) {
-        setStorage("papers", papers);
+        await setStorage("papers", papers);
+        global.state.papersList = Object.values(cleanPapers(global.state.papers));
+        sortMemory();
         log("Successfully deleted paper", id);
     } else {
         log("Error: no deletion");
@@ -361,7 +365,7 @@ const versionToSemantic = (dataVersionInt) => {
  */
 const validatePaper = (paper, log = true) => {
     /*
-    object mapping a paper's attributes to another object describing the 
+    object mapping a paper's attributes to another object describing the
     expected behavior of this attribute:
         a type, a description and a default function.
     If a paper is missing an attribute but the latter has a default function,

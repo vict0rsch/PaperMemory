@@ -63,7 +63,7 @@ const getMemoryItemHTML = (paper, titles) => {
             </h4>
             <div class="my-1 mx-0">
                 <small class="tag-list">
-                    ${Array.from(tags)
+                    ${[...tags]
                         .map((t) => `<span class="memory-tag" >${t}</span>`)
                         .join("")}
                 </small>

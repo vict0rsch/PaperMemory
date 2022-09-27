@@ -2,6 +2,56 @@ var paperTitles = {};
 var MAX_TITLE_UPDATES = 100;
 var tabStatuses = {};
 
+const badgeOk = () => {
+    chrome.browserAction.setBadgeText({ text: "OK!" });
+    chrome.browserAction.setBadgeBackgroundColor({ color: "rgb(68, 164, 68)" });
+};
+
+const badgeWait = (text) => {
+    chrome.browserAction.setBadgeText({ text });
+    chrome.browserAction.setBadgeBackgroundColor({ color: "rgb(189, 127, 10)" });
+};
+
+const badgeError = () => {
+    chrome.browserAction.setBadgeText({ text: "Error" });
+    chrome.browserAction.setBadgeBackgroundColor({ color: "rgb(195, 40, 56)" });
+};
+
+const badgeClear = (preventTimeout = false) => {
+    if (preventTimeout) {
+        chrome.browserAction.setBadgeText({ text: "" });
+    } else {
+        setTimeout(() => {
+            chrome.browserAction.setBadgeText({ text: "" });
+        }, 2000);
+    }
+};
+
+const initGist = async () => {
+    if (!(await shouldSync())) {
+        warn("Sync disabled.");
+        return;
+    }
+    const start = Date.now();
+    log("Initializing Sync...");
+    badgeWait("Init...");
+    const { ok, error, payload } = await getGist();
+    if (ok) {
+        global.state.gist = payload.gist;
+        global.state.gistDataFile = await getDataFile(global.state.gist);
+        await global.state.gistDataFile.fetchLatest();
+        const duration = (Date.now() - start) / 1e3;
+        logOk(`Sync successfully enabled (${duration}s).`);
+        badgeOk();
+    } else {
+        logError("[initGist]", error);
+        badgeError();
+    }
+    badgeClear();
+};
+
+initGist();
+
 const setFaviconCode = `
 var link;
 if (window.location.href.startsWith("file://")){
@@ -163,6 +213,53 @@ const findCodesForPaper = async (request) => {
     return { ...codes[0], ...code };
 };
 
+const pullSyncPapers = async () => {
+    if (!(await shouldSync())) return;
+    try {
+        badgeWait("Pull...");
+        const start = Date.now();
+        consoleHeader(`Pulling ${String.fromCodePoint("0x23EC")}`);
+        log("Pulling from Github...");
+        await global.state.gistDataFile.fetchLatest();
+        const remotePapers = global.state.gistDataFile.content;
+        log("Pulled papers:", remotePapers);
+        const duration = (Date.now() - start) / 1e3;
+        info(`Pulling from Github... Done (${duration}s)!`);
+        console.groupEnd();
+        badgeOk();
+        badgeClear();
+        return remotePapers;
+    } catch (e) {
+        logError("[pullSyncPapers]", e);
+        badgeError();
+    }
+    badgeClear();
+    console.groupEnd();
+};
+
+const pushSyncPapers = async () => {
+    if (!(await shouldSync())) return;
+    try {
+        const start = Date.now();
+        consoleHeader(`Pushing ${String.fromCodePoint("0x23EB")}`);
+        log("Writing to Github...");
+        badgeWait("Push...");
+        chrome.browserAction.setBadgeBackgroundColor({ color: "rgb(189, 127, 10)" });
+        const papers = (await getStorage("papers")) ?? {};
+        log("Papers to write: ", papers);
+        await global.state.gistDataFile.overwrite(JSON.stringify(papers, null, ""));
+        await global.state.gistDataFile.save();
+        const duration = (Date.now() - start) / 1e3;
+        log(`Writing to Github... Done (${duration}s)!`);
+        badgeOk();
+    } catch (e) {
+        logError("[pushSyncPapers]", e);
+        badgeError();
+    }
+    badgeClear();
+    console.groupEnd();
+};
+
 chrome.runtime.onMessage.addListener((payload, sender, sendResponse) => {
     if (payload.type === "update-title") {
         const { title, url } = payload.options;
@@ -190,6 +287,12 @@ chrome.runtime.onMessage.addListener((payload, sender, sendResponse) => {
         });
     } else if (payload.type === "hello") {
         sendResponse("Connection to background script established.");
+    } else if (payload.type === "writeSync") {
+        pushSyncPapers().then(sendResponse);
+    } else if (payload.type === "pullSync") {
+        pullSyncPapers(payload.gist).then(sendResponse);
+    } else if (payload.type === "restartGist") {
+        initGist().then(sendResponse);
     }
     return true;
 });
@@ -257,6 +360,16 @@ chrome.commands.onCommand.addListener((command) => {
                     warn("Unknown paper id:", id);
                 }
             }
+        });
+    }
+});
+
+chrome.runtime.onConnect.addListener(function (port) {
+    if (port.name === "PaperMemoryPopupSync") {
+        log("[chrome.runtime.onConnect] Popup connected.");
+        port.onDisconnect.addListener(async function () {
+            log("[chrome.runtime.onConnect] Popup disconnected.");
+            await pushSyncPapers();
         });
     }
 });

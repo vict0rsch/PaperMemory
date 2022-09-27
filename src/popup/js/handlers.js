@@ -1,9 +1,3 @@
-const addEventToClass = (className, eventName, fn) => {
-    document.querySelectorAll(className).forEach((el) => {
-        el.addEventListener(eventName, fn);
-    });
-};
-
 const handleBackToFocus = (e) => {
     const id = eventId(e);
     setTimeout(() => {
@@ -235,6 +229,7 @@ const handleMemorySearchKeyPress = (allowEmptySearch) => (e) => {
         searchMemory(query);
     }
     // display filtered papers
+    toggleTagsCollapse(query.startsWith("t:"));
     displayMemoryTable();
 };
 
@@ -254,26 +249,22 @@ const handleCancelModalClick = () => {
     hideId("delete-paper-modal");
 };
 
-const handleConfirmDeleteModalClick = (e) => {
+const handleConfirmDeleteModalClick = async (e) => {
     const id = findEl("delete-paper-modal-hidden-id").innerHTML;
     const title = global.state.papers[id].title;
     const url = global.state.papers[id].pdfLink;
-    deletePaperInStorage(id, global.state.papers);
-    chrome.storage.local.set({ papers: global.state.papers }, async () => {
-        global.state.papersList = Object.values(cleanPapers(global.state.papers));
-        sortMemory();
-        displayMemoryTable();
-        hideId("delete-paper-modal");
-        info(`Successfully deleted "${title}" (${id}) from PaperMemory`);
-        if (global.state.currentId === id) {
-            await updatePopupPaperNoMemory(url);
-        }
-        setPlaceholder(
-            "memory-search",
-            `Search ${global.state.papersList.length} entries ...`
-        );
-        addListener("memory-switch", "click", handleMemorySwitchClick);
-    });
+    await deletePaperInStorage(id, global.state.papers);
+    displayMemoryTable();
+    hideId("delete-paper-modal");
+    info(`Successfully deleted "${title}" (${id}) from PaperMemory`);
+    if (global.state.currentId === id) {
+        await updatePopupPaperNoMemory(url);
+    }
+    setPlaceholder(
+        "memory-search",
+        `Search ${global.state.papersList.length} entries ...`
+    );
+    addListener("memory-switch", "click", handleMemorySwitchClick);
 };
 
 const handleTagClick = (e) => {

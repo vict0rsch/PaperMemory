@@ -78,6 +78,9 @@ const logOk = (...args) => log(...["[ok]", ...args]);
 
 const logError = (...args) => log(...["[error]", ...args]);
 
+const consoleHeader = (text) =>
+    console.groupCollapsed(`%c${text}`, global.consolHeaderStyle);
+
 const getDisplayId = (id) => {
     const baseId = id;
     id = id.split("_")[0].split(".")[0];
@@ -119,14 +122,14 @@ const isPdfUrl = (url) => {
     );
 };
 
-const delay = (fn, ms) => {
+function delay(fn, ms) {
     // https://stackoverflow.com/questions/1909441/how-to-delay-the-keyup-handler-until-the-user-stops-typing
     let timer = 0;
-    return (...args) => {
+    return function (...args) {
         clearTimeout(timer);
         timer = setTimeout(fn.bind(this, ...args), ms || 0);
     };
-};
+}
 
 const cleanPapers = (papers) => {
     let cleaned = { ...papers };
@@ -300,7 +303,7 @@ const cleanBiorxivURL = (url) => {
  */
 const textareaFocusEnd = (element) => {
     setTimeout(() => {
-        element.selectionStart = element.selectionEnd = 10000;
+        element.selectionStart = element.selectionEnd = 10e3;
     }, 0);
 };
 

@@ -6,7 +6,7 @@ const { expect } = require("expect");
 const fs = require("fs");
 const {
     makeBrowser,
-    getMemoryState,
+    getPaperMemoryState,
     extensionPopupURL,
     visitPaperPage,
 } = require("./browser");
@@ -123,9 +123,9 @@ describe("Paper de-duplication", function () {
                 memoryPage = await browser.newPage();
                 await memoryPage.goto(extensionPopupURL);
                 // wait for it to load
-                await sleep(1000);
+                await sleep(1e3);
                 // get PaperMemory's state
-                memoryState = await getMemoryState(memoryPage);
+                memoryState = await getPaperMemoryState(memoryPage);
 
                 if (dump) {
                     // dump this data for human analysis

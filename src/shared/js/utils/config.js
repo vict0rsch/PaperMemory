@@ -139,6 +139,7 @@ global.knownPaperPages = {
     biorxiv: ["biorxiv.org/content"],
     cvf: ["openaccess.thecvf.com/content"],
     frontiers: ["frontiersin.org/articles"],
+    ihep: ["inspirehep.net/literature/", "inspirehep.net/files/"],
     ijcai: [(url) => /ijcai\.org\/proceedings\/\d{4}\/\d+/gi.test(url)],
     ieee: [
         "ieeexplore.ieee.org/document/",
@@ -215,7 +216,7 @@ global.overrideDBLPVenues = {
 };
 
 global.consolHeaderStyle =
-    "font-family:system-ui;font-size:1.2rem;font-weight:lighter;display:inline-block;border:2px solid #A41716;border-radius: 8px;padding: 16px; margin: 20px;";
+    "@import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@300');font-family:'Fira Code' monospace;font-size:1rem;font-weight:300;display:inline-block;border:2px solid #A41716;border-radius: 4px;padding: 12px; margin: 12px;";
 
 /**
  * Minimal Levenshtein distance between two paper titles for those to be merged
