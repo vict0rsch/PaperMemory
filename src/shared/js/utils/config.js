@@ -150,7 +150,11 @@ global.knownPaperPages = {
     jmlr: [(url) => url.includes("jmlr.org/papers/v") && !url.endsWith("/")],
     nature: ["nature.com/articles/"],
     neurips: ["neurips.cc/paper/", "nips.cc/paper/"],
-    openreview: ["openreview.net/forum", "openreview.net/pdf"],
+    openreview: [
+        "openreview.net/forum",
+        "openreview.net/pdf",
+        "openreview.net/attachment",
+    ],
     pmc: ["ncbi.nlm.nih.gov/pmc/articles/PMC"],
     pmlr: ["proceedings.mlr.press/"],
     pnas: ["pnas.org/content/", "pnas.org/doi/"],
