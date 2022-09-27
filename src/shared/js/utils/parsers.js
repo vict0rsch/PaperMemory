@@ -54,19 +54,12 @@ const fetchCvfHTML = async (url) => {
     return text;
 };
 
-const fetchOpenReviewNoteJSON = async (url) => {
-    const id = url.match(/id=([\w-])+/)[0].replace("id=", "");
-    const api = `https://api.openreview.net/notes?id=${id}`;
-    return fetch(api).then((response) => {
-        return response.json();
-    });
+const getOpenReviewNoteJSON = (url) => {
+    return sendMessageToBackground({ type: "OpenReviewNoteJSON", url });
 };
-const fetchOpenReviewForumJSON = async (url) => {
-    const id = url.match(/id=([\w-])+/)[0].replace("id=", "");
-    const api = `https://api.openreview.net/notes?forum=${id}`;
-    return fetch(api).then((response) => {
-        return response.json();
-    });
+
+const getOpenReviewForumJSON = (url) => {
+    return sendMessageToBackground({ type: "OpenReviewForumJSON", url });
 };
 
 const fetchDom = async (url) => {
@@ -429,8 +422,8 @@ const makeOpenReviewBibTex = (paper, url) => {
 };
 
 const makeOpenReviewPaper = async (url) => {
-    const noteJson = await fetchOpenReviewNoteJSON(url);
-    const forumJson = await fetchOpenReviewForumJSON(url);
+    const noteJson = await getOpenReviewNoteJSON(url);
+    const forumJson = await getOpenReviewForumJSON(url);
 
     var paper = noteJson.notes[0];
     var forum = forumJson.notes;
