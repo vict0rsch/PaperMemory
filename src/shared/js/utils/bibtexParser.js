@@ -50,8 +50,11 @@ function BibtexParser() {
             this.pos += s.length;
         } else {
             throw TypeError(
-                "Token mismatch: match",
-                "expected " + s + ", found " + this.input.substring(this.pos)
+                "Token mismatch: match" +
+                    " -> expected " +
+                    s +
+                    ", found " +
+                    this.input.substring(this.pos)
             );
         }
         this.skipWhitespace(canCommentOut);
