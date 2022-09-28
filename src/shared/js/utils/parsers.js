@@ -1427,13 +1427,14 @@ const trySemanticScholar = async (paper) => {
                         .replace(/^\d{4}/, "")
                         .trim()
                         .capitalize(true);
+                    if (venue.indexOf(" ") < 0) venue = venue.toUpperCase();
                     const year = (match.year + "").trim();
                     const note = `Accepted @ ${venue} (${year}) -- [semanticscholar.org]`;
                     const authors = match.authors.map((a) => a.name).join(" and ");
                     let doi = match.externalIds.DOI;
-                    if (doi) {
-                        doi = doi.replaceAll("_", "\\{_}");
-                    }
+                    // if (doi) {
+                    //     doi = doi.replaceAll("_", "\\{_}");
+                    // }
                     const bibtex = bibtexToString({
                         entryType: "article",
                         citationKey:
