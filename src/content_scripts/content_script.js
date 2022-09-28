@@ -564,11 +564,12 @@ const arxiv = async (checks) => {
     // -----------------------------
     if (checkDownload) {
         const button = /*html*/ `
-            <div class="pm-container" style="align-items: end;">
+            <div id="pm-arxiv-direct-download" class="pm-container" style="align-items: end;">
                 <div id="arxiv-button">${svg("download")}</div>
                 <div style="font-size: 0.6rem; color: #cac7c7; padding-bottom: 0.6rem;">Download to<br/>PaperMemoryStore</div>
             </div>
         `;
+        findEl("pm-arxiv-direct-download")?.remove();
         document
             .getElementById("pm-header-content")
             .insertAdjacentHTML("beforeend", button);
@@ -632,6 +633,7 @@ const arxiv = async (checks) => {
             </div>
             <div id="markdown-link" class="pm-codify">${mdContent}</div>
         </div>`;
+        findEl("markdown-container")?.remove();
         arxivPMDiv.insertAdjacentHTML("beforeend", mdHtml);
     }
 
@@ -647,6 +649,7 @@ const arxiv = async (checks) => {
             </div>
         `;
         arxivPMDiv.insertAdjacentHTML("beforeend", bibLoader);
+        findEl("bibtexDiv")?.remove();
         const bibtexDiv = /*html*/ `
             <div id="bibtexDiv">
                 <div id="texHeader" class="pm-sub-header">
