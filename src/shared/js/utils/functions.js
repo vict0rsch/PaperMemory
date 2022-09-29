@@ -706,7 +706,7 @@ const getStoredFiles = () =>
     new Promise((resolve) => {
         chrome.downloads.search(
             {
-                filenameRegex: "PaperMemoryStore/.*",
+                filenameRegex: "(PaperMemoryStore/)?.*\.pdf",
             },
             (files) =>
                 resolve(
