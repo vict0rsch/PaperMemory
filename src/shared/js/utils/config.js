@@ -96,7 +96,6 @@ global.prefsCheckNames = [
  */
 global.prefsCheckDefaultFalse = [
     "checkDarkMode",
-    "checkDirectOpen",
     "checkStore",
     "checkScirate",
     "checkOfficialRepos",
