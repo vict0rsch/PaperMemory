@@ -158,6 +158,7 @@ global.knownPaperPages = {
     pmc: ["ncbi.nlm.nih.gov/pmc/articles/PMC"],
     pmlr: ["proceedings.mlr.press/"],
     pnas: ["pnas.org/content/", "pnas.org/doi/"],
+    rsc: ["pubs.rsc.org/en/content/article"],
     science: [
         (url) => Boolean(url.match(/science\.org\/doi\/?(abs|full|pdf|epdf)?\//g)),
     ],

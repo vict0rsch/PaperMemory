@@ -1258,13 +1258,16 @@ const makeIHEPPaper = async (url) => {
 
 const makePLOSPaper = async (url) => {
     const doi = url.split("?id=").last().split("&")[0];
-    const bibtex = await fetchText(
+    let bibtex = await fetchText(
         `${url.split("/article")[0]}/article/citation/bibtex?id=${doi}`
     );
+    let bibObj = bibtexToObject(bibtex);
+    delete bibObj.abstract;
+    bibtex = bibtexToString(bibObj);
+    let { citationKey, author, journal, title, year } = bibObj;
+
     const pdfLink = `${url.split("/article")[0]}/article/file?id=${doi}&type=printable`;
     const section = url.split("journals.plos.org/")[1].split("/")[0];
-    const bibObj = bibtexToObject(bibtex);
-    let { citationKey, author, journal, title, year } = bibObj;
 
     author = flipAndAuthors(author);
     const key = citationKey;
@@ -1272,6 +1275,31 @@ const makePLOSPaper = async (url) => {
     const note = `Published @ ${venue} (${year})`;
     const id = `PLOS-${section}_${miniHash(doi)}`;
 
+    return { author, bibtex, id, key, note, pdfLink, title, venue, year, doi };
+};
+
+const makeRSCPaper = async (url) => {
+    const rscId = noParamUrl(url).split("/").last();
+    const type = url
+        .split("/")
+        .find(
+            (s) => s === "articlehtml" || s === "articlepdf" || s === "articlelanding"
+        )
+        .replace("article", "");
+    let bibtex = await fetchText(
+        `https://pubs.rsc.org/en/content/formatedresult?markedids=${rscId}&downloadtype=article&managertype=bibtex`
+    );
+    const pdfLink =
+        type === "articlepdf" ? url : url.replace(`/article${type}/`, "/articlepdf/");
+    const bibObj = bibtexToObject(bibtex);
+    delete bibObj.abstract;
+    bibtex = bibtexToString(bibObj);
+    let { citationKey, author, journal, title, year, doi } = bibObj;
+    author = flipAndAuthors(author);
+    const key = citationKey;
+    const venue = journal;
+    const note = `Published @ ${venue} (${year})`;
+    const id = `RSC-${journal.replaceAll(" ", "")}_${miniHash(rscId)}`;
     return { author, bibtex, id, key, note, pdfLink, title, venue, year, doi };
 };
 
@@ -1707,6 +1735,11 @@ const makePaper = async (is, url) => {
         paper = await makePLOSPaper(url);
         if (paper) {
             paper.source = "plos";
+        }
+    } else if (is.rsc) {
+        paper = await makeRSCPaper(url);
+        if (paper) {
+            paper.source = "rsc";
         }
     } else {
         throw new Error("Unknown paper source: " + JSON.stringify({ is, url }));

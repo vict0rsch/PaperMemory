@@ -118,7 +118,8 @@ const isPdfUrl = (url) => {
         url.endsWith("/pdf") ||
         url.includes("openreview.net/pdf") ||
         url.match(/\/e?pdf\//g) ||
-        url.includes("ieee.org/stamp/stamp.jsp?tp=&arnumber=")
+        url.includes("ieee.org/stamp/stamp.jsp?tp=&arnumber=") ||
+        url.includes("articlepdf")
     );
 };
 
@@ -706,7 +707,7 @@ const getStoredFiles = () =>
     new Promise((resolve) => {
         chrome.downloads.search(
             {
-                filenameRegex: "(PaperMemoryStore/)?.*\.pdf",
+                filenameRegex: "(PaperMemoryStore/)?.*.pdf",
             },
             (files) =>
                 resolve(
