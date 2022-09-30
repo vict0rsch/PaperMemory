@@ -160,6 +160,10 @@ const paperToAbs = (paper) => {
             abs = `https://inspirehep.net/literature/${paper.id.split("-")[1]}`;
             break;
 
+        case "plos":
+            abs = pdf.replace("/article/file?", "/article?").split("&")[0];
+            break;
+
         default:
             abs = "https://xkcd.com/1969/";
             break;
@@ -258,6 +262,9 @@ const paperToPDF = (paper) => {
             break;
 
         case "ihep":
+            break;
+
+        case "plos":
             break;
 
         default:
@@ -813,6 +820,9 @@ const parseIdFromUrl = async (url) => {
             const hash = noParamUrl(url).split("/files/")[1].split("/")[0];
             idForUrl = findPaperForProperty(papers, "ihep", hash, "pdfLink");
         }
+    } else if (is.plos) {
+        const doi = url.split("?id=").last().split("&")[0];
+        idForUrl = findPaperForProperty(papers, "plos", miniHash(doi));
     } else if (is.localFile) {
         idForUrl = is.localFile;
     } else {

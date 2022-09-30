@@ -1256,6 +1256,25 @@ const makeIHEPPaper = async (url) => {
     return { author, bibtex, id, key, note, pdfLink, title, venue, year, doi };
 };
 
+const makePLOSPaper = async (url) => {
+    const doi = url.split("?id=").last().split("&")[0];
+    const bibtex = await fetchText(
+        `${url.split("/article")[0]}/article/citation/bibtex?id=${doi}`
+    );
+    const pdfLink = `${url.split("/article")[0]}/article/file?id=${doi}&type=printable`;
+    const section = url.split("journals.plos.org/")[1].split("/")[0];
+    const bibObj = bibtexToObject(bibtex);
+    let { citationKey, author, journal, title, year } = bibObj;
+
+    author = flipAndAuthors(author);
+    const key = citationKey;
+    const venue = journal;
+    const note = `Published @ ${venue} (${year})`;
+    const id = `PLOS-${section}_${miniHash(doi)}`;
+
+    return { author, bibtex, id, key, note, pdfLink, title, venue, year, doi };
+};
+
 // -------------------------------
 // -----  PREPRINT MATCHING  -----
 // -------------------------------
@@ -1684,6 +1703,11 @@ const makePaper = async (is, url) => {
         if (paper) {
             paper.source = "ihep";
         }
+    } else if (is.plos) {
+        paper = await makePLOSPaper(url);
+        if (paper) {
+            paper.source = "plos";
+        }
     } else {
         throw new Error("Unknown paper source: " + JSON.stringify({ is, url }));
     }
@@ -1751,6 +1775,7 @@ if (typeof module !== "undefined" && module.exports != null) {
         makePMLRPaper,
         makePNASPaper,
         makePubMedPaper,
+        makePLOSPaper,
         makeSpringerPaper,
         makeWileyPaper,
         tryCrossRef,

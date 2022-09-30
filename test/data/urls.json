@@ -145,5 +145,12 @@
     "springer": [
         "https://link.springer.com/article/10.1007/s41095-022-0271-y",
         "https://link.springer.com/content/pdf/10.1007/s41095-022-0271-y.pdf"
+    ],
+    "plos": [
+        "https://journals.plos.org/climate/article?id=10.1371/journal.pclm.0000068",
+        "https://journals.plos.org/climate/article/file?id=10.1371/journal.pclm.0000068&type=printable",
+        {
+            "noPdf": true
+        }
     ]
 }
