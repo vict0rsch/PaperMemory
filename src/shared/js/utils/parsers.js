@@ -91,6 +91,21 @@ const fetchJSON = async (url) => {
     }
 };
 
+const fetchBibtex = async (url) => {
+    let bibtex = await fetchText(url);
+    const bibObj = bibtexToObject(bibtex);
+    delete bibObj.abstract;
+    bibtex = bibtexToString(bibObj);
+    const note = `Published in ${bibObj.journal} (${bibObj.year})`;
+    return {
+        ...bibObj,
+        bibtex,
+        note,
+        venue: bibObj.journal,
+        key: bibObj.citationKey,
+    };
+};
+
 // -------------------
 // -----  Parse  -----
 // -------------------
@@ -1258,21 +1273,13 @@ const makeIHEPPaper = async (url) => {
 
 const makePLOSPaper = async (url) => {
     const doi = url.split("?id=").last().split("&")[0];
-    let bibtex = await fetchText(
+    let { bibtex, key, author, venue, title, note, year } = await fetchBibtex(
         `${url.split("/article")[0]}/article/citation/bibtex?id=${doi}`
     );
-    let bibObj = bibtexToObject(bibtex);
-    delete bibObj.abstract;
-    bibtex = bibtexToString(bibObj);
-    let { citationKey, author, journal, title, year } = bibObj;
-
     const pdfLink = `${url.split("/article")[0]}/article/file?id=${doi}&type=printable`;
     const section = url.split("journals.plos.org/")[1].split("/")[0];
 
     author = flipAndAuthors(author);
-    const key = citationKey;
-    const venue = journal;
-    const note = `Published @ ${venue} (${year})`;
     const id = `PLOS-${section}_${miniHash(doi)}`;
 
     return { author, bibtex, id, key, note, pdfLink, title, venue, year, doi };
@@ -1286,20 +1293,14 @@ const makeRSCPaper = async (url) => {
             (s) => s === "articlehtml" || s === "articlepdf" || s === "articlelanding"
         )
         .replace("article", "");
-    let bibtex = await fetchText(
-        `https://pubs.rsc.org/en/content/formatedresult?markedids=${rscId}&downloadtype=article&managertype=bibtex`
-    );
     const pdfLink =
         type === "articlepdf" ? url : url.replace(`/article${type}/`, "/articlepdf/");
-    const bibObj = bibtexToObject(bibtex);
-    delete bibObj.abstract;
-    bibtex = bibtexToString(bibObj);
-    let { citationKey, author, journal, title, year, doi } = bibObj;
+
+    let { bibtex, key, author, venue, title, note, year, doi } = await fetchBibtex(
+        `https://pubs.rsc.org/en/content/formatedresult?markedids=${rscId}&downloadtype=article&managertype=bibtex`
+    );
     author = flipAndAuthors(author);
-    const key = citationKey;
-    const venue = journal;
-    const note = `Published @ ${venue} (${year})`;
-    const id = `RSC-${journal.replaceAll(" ", "")}_${miniHash(rscId)}`;
+    const id = `RSC-${venue.replaceAll(" ", "")}_${miniHash(rscId)}`;
     return { author, bibtex, id, key, note, pdfLink, title, venue, year, doi };
 };
 
