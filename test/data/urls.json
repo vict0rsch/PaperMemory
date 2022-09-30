@@ -150,7 +150,15 @@
         "https://journals.plos.org/climate/article?id=10.1371/journal.pclm.0000068",
         "https://journals.plos.org/climate/article/file?id=10.1371/journal.pclm.0000068&type=printable",
         {
-            "noPdf": true
+            "noPdf": true,
+            "venue": "plos climate"
+        }
+    ],
+    "rsc": [
+        "https://pubs.rsc.org/en/content/articlelanding/2022/dd/d2dd00066k",
+        "https://pubs.rsc.org/en/content/articlepdf/2022/dd/d2dd00066k",
+        {
+            "venue": "digital discovery"
         }
     ]
 }
