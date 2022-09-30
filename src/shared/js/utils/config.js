@@ -154,6 +154,7 @@ global.knownPaperPages = {
         "openreview.net/pdf",
         "openreview.net/attachment",
     ],
+    plos: [(url) => /journals\.plos\.org\/.+\/article.+id=/gi.test(url)],
     pmc: ["ncbi.nlm.nih.gov/pmc/articles/PMC"],
     pmlr: ["proceedings.mlr.press/"],
     pnas: ["pnas.org/content/", "pnas.org/doi/"],
