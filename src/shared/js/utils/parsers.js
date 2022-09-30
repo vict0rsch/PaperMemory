@@ -91,6 +91,21 @@ const fetchJSON = async (url) => {
     }
 };
 
+const fetchBibtex = async (url) => {
+    let bibtex = await fetchText(url);
+    const bibObj = bibtexToObject(bibtex);
+    delete bibObj.abstract;
+    bibtex = bibtexToString(bibObj);
+    const note = `Published in ${bibObj.journal} (${bibObj.year})`;
+    return {
+        ...bibObj,
+        bibtex,
+        note,
+        venue: bibObj.journal,
+        key: bibObj.citationKey,
+    };
+};
+
 // -------------------
 // -----  Parse  -----
 // -------------------
@@ -1258,20 +1273,34 @@ const makeIHEPPaper = async (url) => {
 
 const makePLOSPaper = async (url) => {
     const doi = url.split("?id=").last().split("&")[0];
-    const bibtex = await fetchText(
+    let { bibtex, key, author, venue, title, note, year } = await fetchBibtex(
         `${url.split("/article")[0]}/article/citation/bibtex?id=${doi}`
     );
     const pdfLink = `${url.split("/article")[0]}/article/file?id=${doi}&type=printable`;
     const section = url.split("journals.plos.org/")[1].split("/")[0];
-    const bibObj = bibtexToObject(bibtex);
-    let { citationKey, author, journal, title, year } = bibObj;
 
     author = flipAndAuthors(author);
-    const key = citationKey;
-    const venue = journal;
-    const note = `Published @ ${venue} (${year})`;
     const id = `PLOS-${section}_${miniHash(doi)}`;
 
+    return { author, bibtex, id, key, note, pdfLink, title, venue, year, doi };
+};
+
+const makeRSCPaper = async (url) => {
+    const rscId = noParamUrl(url).split("/").last();
+    const type = url
+        .split("/")
+        .find(
+            (s) => s === "articlehtml" || s === "articlepdf" || s === "articlelanding"
+        )
+        .replace("article", "");
+    const pdfLink =
+        type === "articlepdf" ? url : url.replace(`/article${type}/`, "/articlepdf/");
+
+    let { bibtex, key, author, venue, title, note, year, doi } = await fetchBibtex(
+        `https://pubs.rsc.org/en/content/formatedresult?markedids=${rscId}&downloadtype=article&managertype=bibtex`
+    );
+    author = flipAndAuthors(author);
+    const id = `RSC-${venue.replaceAll(" ", "")}_${miniHash(rscId)}`;
     return { author, bibtex, id, key, note, pdfLink, title, venue, year, doi };
 };
 
@@ -1707,6 +1736,11 @@ const makePaper = async (is, url) => {
         paper = await makePLOSPaper(url);
         if (paper) {
             paper.source = "plos";
+        }
+    } else if (is.rsc) {
+        paper = await makeRSCPaper(url);
+        if (paper) {
+            paper.source = "rsc";
         }
     } else {
         throw new Error("Unknown paper source: " + JSON.stringify({ is, url }));

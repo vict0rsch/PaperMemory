@@ -164,6 +164,10 @@ const paperToAbs = (paper) => {
             abs = pdf.replace("/article/file?", "/article?").split("&")[0];
             break;
 
+        case "rsc":
+            abs = pdf.replace("/articlepdf/", "/articlelanding/");
+            break;
+
         default:
             abs = "https://xkcd.com/1969/";
             break;
@@ -265,6 +269,9 @@ const paperToPDF = (paper) => {
             break;
 
         case "plos":
+            break;
+
+        case "rsc":
             break;
 
         default:
@@ -823,6 +830,9 @@ const parseIdFromUrl = async (url) => {
     } else if (is.plos) {
         const doi = url.split("?id=").last().split("&")[0];
         idForUrl = findPaperForProperty(papers, "plos", miniHash(doi));
+    } else if (is.rsc) {
+        const rscId = noParamUrl(url).split("/").last();
+        idForUrl = findPaperForProperty(papers, "rsc", miniHash(rscId));
     } else if (is.localFile) {
         idForUrl = is.localFile;
     } else {
