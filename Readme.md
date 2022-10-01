@@ -23,11 +23,11 @@
 
 <br/>
 
-An **automated**, web-based and minimalist reference manager that also finds code repositories.
+An **automated**, web-based and minimalist reference manager that also finds code repositories and published versions of preprints.
 
 It is not meant to replace, rather complete more standard reference managers as Zotero etc.
 
-This browser extension allows you to do automatically store research papers you read, find a code repository and much more:
+This browser extension allows you to automatically store research papers you read, find a code repository and much more:
 
 1. 🏬 **Automatically record papers** you open, without clicking anywhere. You can then **search** them, **tag** them, **comment** them and link a code repository.
 2. 💻 **Automatically find code** repositories using PapersWithCode's API
