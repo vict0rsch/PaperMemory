@@ -480,23 +480,28 @@ const feedback = (text, paper = null) => {
             }
         );
     }, notifTime);
-    addListener("notif-cancel", "click", () => {
+    addListener("notif-cancel", "click", async () => {
         clearTimeout(timeout);
-        delete global.state.papers[paper.id];
-        chrome.storage.local.set({ papers: global.state.papers }, () => {
-            timeout = setTimeout(() => {
-                $("#feedback-notif").animate(
-                    { right: "-200px", opacity: "0" },
-                    400,
-                    "easeInOutBack",
-                    () => {
-                        !prevent && $("#feedback-notif").remove();
-                        prevent = false;
-                    }
-                );
-            }, notifTime);
-            setHTML("notif-text", "<div>Removed from memory</div>");
-        });
+        await deletePaperInStorage(paper.id, global.state.papers);
+        if (!global.state.deleted) {
+            global.state.deleted = {};
+        }
+        global.state.deleted[paper.id] = true;
+        setTimeout(() => {
+            delete global.state.deleted[paper.id];
+        }, 30 * 1000);
+        timeout = setTimeout(() => {
+            $("#feedback-notif").animate(
+                { right: "-200px", opacity: "0" },
+                400,
+                "easeInOutBack",
+                () => {
+                    !prevent && $("#feedback-notif").remove();
+                    prevent = false;
+                }
+            );
+        }, notifTime);
+        setHTML("notif-text", "<div>Removed from memory</div>");
     });
 };
 
