@@ -54,7 +54,7 @@ const paperToAbs = (paper) => {
     let abs = "";
     switch (paper.source) {
         case "arxiv":
-            abs = `https://arxiv.org/abs/${paper.id.split("-")[1]}`;
+            abs = pdf.replace("/pdf/", "/abs/").replace(".pdf", "");
             break;
 
         case "neurips":
@@ -692,7 +692,11 @@ const parseIdFromUrl = async (url) => {
     const papers = Object.values(cleanPapers(global.state.papers));
 
     if (is.arxiv) {
-        const arxivId = url.match(/\d{4}\.\d{4,5}/g)[0];
+        let arxivId = noParamUrl(url)
+            .replace("/abs/", "/pdf/")
+            .split("/pdf/")[1]
+            .replace(".pdf", "")
+            .split("v")[0];
         idForUrl = `Arxiv-${arxivId}`;
 
         const existingIds = Object.values(global.state.titleHashToIds).find((ids) =>
