@@ -696,7 +696,8 @@ const parseIdFromUrl = async (url) => {
             .replace("/abs/", "/pdf/")
             .split("/pdf/")[1]
             .replace(".pdf", "")
-            .split("v")[0];
+            .split("v")[0]
+            .replace("/", "_");
         idForUrl = `Arxiv-${arxivId}`;
 
         const existingIds = Object.values(global.state.titleHashToIds).find((ids) =>
