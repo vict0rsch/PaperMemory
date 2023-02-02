@@ -1470,9 +1470,7 @@ const trySemanticScholar = async (paper) => {
             for (const match of matches.data) {
                 if (
                     miniHash(match.title) === miniHash(paper.title) &&
-                    (match.year === paper.year ||
-                        match.year === paper.year - 1 ||
-                        match.year === paper.year + 1) &&
+                    Math.abs(match.year - paper.year) < 3 &&
                     match.venue &&
                     match.venue.toLowerCase() !== "arxiv"
                 ) {
