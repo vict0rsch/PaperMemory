@@ -18,7 +18,7 @@ const flipAndAuthors = (authors) =>
 // -------------------
 
 const fetchArxivXML = async (paperId) => {
-    const arxivId = paperId.replace("Arxiv-", "");
+    const arxivId = paperId.replace("Arxiv-", "").replace("_", "/");
     return fetch(
         "https://export.arxiv.org/api/query?" +
             new URLSearchParams({ id_list: arxivId })
@@ -304,14 +304,14 @@ const makeArxivPaper = async (url) => {
         year +
         firstNonStopLowercase(title);
 
-    const id = `Arxiv-${arxivId}`;
+    const id = `Arxiv-${arxivId.replace("/", "_")}`;
 
     let bibtex = "";
     bibtex += `@article{${key},\n`;
     bibtex += `    title={${title} },\n`;
     bibtex += `    author={${author} },\n`;
     bibtex += `    year={${year}},\n`;
-    bibtex += `    journal={arXiv preprint arXiv: ${id}}\n`;
+    bibtex += `    journal={arXiv preprint arXiv: ${arxivId}}\n`;
     bibtex += `}`;
 
     const venue = "";
