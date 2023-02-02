@@ -167,7 +167,7 @@ const fetchPWCData = async (arxivId, title) => {
 const findCodesForPaper = async (request) => {
     let arxivId, title, code;
     if (request.paper.source === "arxiv") {
-        arxivId = request.paper.id.split("-").last();
+        arxivId = request.paper.id.split("-").last().replace("_", "/");
     } else {
         title = request.paper.title;
     }
