@@ -32,25 +32,26 @@ if (typeof window !== "undefined") {
  * The popup's global state to store data across functions
  */
 global.state = {
+    currentMemoryPagination: 0,
     dataVersion: 0,
-    memoryIsOpen: false,
-    menuIsOpen: false,
-    papers: {}, // (id => object)
-    papersList: [], // [papers]
-    paperTags: new Set(), // (Set(string))
-    pdfTitleFn: null, // function(paper) => string
-    showFavorites: false,
-    sortedPapers: [], // [papers]
-    sortKey: "",
-    papersReady: false,
-    prefs: {}, // (prefsCheckKey => bool)
+    deleted: {}, // (id => bool)
     files: {},
     ignoreSources: {}, // (source => bool)
     lastRefresh: new Date(),
+    memoryIsOpen: false,
+    memoryItemsPerPage: 25,
+    menuIsOpen: false,
+    papers: {}, // (id => object)
+    papersList: [], // [papers]
+    papersReady: false,
+    paperTags: new Set(), // (Set(string))
+    pdfTitleFn: null, // function(paper) => string
+    prefs: {}, // (prefsCheckKey => bool)
+    showFavorites: false,
+    sortedPapers: [], // [papers]
+    sortKey: "",
     titleHashToIds: {}, // (miniHash(title) -> [ids])
     urlHashToId: {}, // (miniHash(url) => id)
-    memoryItemsPerPage: 25,
-    currentMemoryPagination: 0,
 };
 
 global.descendingSortKeys = [
