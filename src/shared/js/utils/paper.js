@@ -585,7 +585,7 @@ const addOrUpdatePaper = async ({
     //   * paper storage from Abstract URLs
     //   * automatic parsing altogether
     // but we still want to display paper metadata on arxiv.org
-    if (store) global.state.papers[paper.id] = paper;
+    if (store && !global.state.deleted[paper.id]) global.state.papers[paper.id] = paper;
 
     chrome.storage.local.set({ papers: global.state.papers }, async () => {
         // tell the content script the paper has been parsed/updated
@@ -647,7 +647,8 @@ const addOrUpdatePaper = async ({
             }
 
             // record updated paper if store is true
-            if (store) global.state.papers[paper.id] = paper;
+            if (store && !global.state.deleted[paper.id])
+                global.state.papers[paper.id] = paper;
             chrome.storage.local.set({ papers: global.state.papers });
         }
         // tell the content script the pre-print matching procedure has finished
