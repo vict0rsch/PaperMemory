@@ -485,40 +485,50 @@ const addOrUpdatePaper = async ({
     const id = await parseIdFromUrl(url);
     const paperExists = global.state.papers.hasOwnProperty(id);
 
-    if (id && paperExists) {
+    if (
+        id &&
+        paperExists &&
+        global.state.papers[id].author.toLowerCase() !== "anonymous"
+    ) {
         // Update paper if it exists
         paper = updatePaperVisits(global.state.papers[id]);
         isNew = false;
     } else {
         // Or create a new one if it does not
-        paper = await makePaper(is, url);
-        if (!paper) {
+        let newPaper = await makePaper(is, url);
+        if (!newPaper) {
             return;
         }
-        const existingId = findFuzzyPaperMatch(global.state.titleHashToIds, paper);
+        const existingId = findFuzzyPaperMatch(global.state.titleHashToIds, newPaper);
         if (existingId && store) {
             // Update paper as already it exists
             let existingPaper = global.state.papers[existingId];
-            log("New paper", paper, "already exists as", existingPaper);
-            addPaperToTitleHashToId(paper);
-            if (
-                (!paper.venue && existingPaper.venue) ||
-                (paper.venue && existingPaper.venue)
-            ) {
+            log("New paper", newPaper, "already exists as", existingPaper);
+            addPaperToTitleHashToId(newPaper);
+
+            if (existingPaper.venue) {
+                let overwrites = ["lastOpenDate"];
+                if (existingPaper.author.toLowerCase() === "anonymous") {
+                    overwrites.push("author");
+                    overwrites.push("year");
+                    overwrites.push("venue");
+                    overwrites.push("bibtex");
+                    overwrites.push("note");
+                }
+                console.log("overwrites: ", overwrites);
                 existingPaper = mergePapers({
-                    newPaper: paper,
+                    newPaper,
+                    overwrites,
                     oldPaper: existingPaper,
                     incrementCount: false,
-                    overwrites: ["lastOpenDate"],
                 });
                 updateDuplicatedUrls(url, existingId);
-            } else if (!existingPaper.venue && paper.venue) {
-                updateDuplicatedUrls(paperToAbs(existingPaper), paper.id);
-                updateDuplicatedUrls(paperToPDF(existingPaper), paper.id);
+            } else if (newPaper.venue) {
+                updateDuplicatedUrls(paperToAbs(existingPaper), newPaper.id);
+                updateDuplicatedUrls(paperToPDF(existingPaper), newPaper.id);
                 await deletePaperInStorage(existingPaper.id, global.state.papers);
-
                 existingPaper = mergePapers({
-                    newPaper: paper,
+                    newPaper: newPaper,
                     oldPaper: existingPaper,
                     incrementCount: false,
                     overwrites: [
@@ -530,15 +540,31 @@ const addOrUpdatePaper = async ({
                         "pdfLink",
                         "source",
                         "year",
+                        "author",
+                    ],
+                });
+            } else if (existingPaper.author.toLowerCase() === "anonymous") {
+                existingPaper = mergePapers({
+                    newPaper,
+                    oldPaper: existingPaper,
+                    incrementCount: true, // ?
+                    overwrites: [
+                        "lastOpenDate",
+                        "author",
+                        "year",
+                        "venue",
+                        "bibtex",
+                        "note",
                     ],
                 });
             }
-            paper = updatePaperVisits(existingPaper);
+            newPaper = updatePaperVisits(existingPaper);
             isNew = false;
         } else {
             // set isNew to True for the storage setter
             isNew = true;
         }
+        paper = newPaper;
     }
 
     if (!paper.codeLink || !paper.venue) {
@@ -618,7 +644,7 @@ const addOrUpdatePaper = async ({
         }
 
         // anyway: try and update note with actual publication
-        if (!paper.note || !paper.venue) {
+        if (!paper.note || !paper.venue || paper.author.toLowerCase() === "anonymous") {
             const preprintMatch = await tryPreprintMatch(paper);
             for (const key of ["note", "venue", "bibtex"]) {
                 if (!paper[key] || key === "bibtex") {
