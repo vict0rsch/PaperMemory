@@ -517,7 +517,7 @@ const makeOpenReviewPaper = async (url) => {
         }
     }
 
-    if (author === "Anonymous") {
+    if (author === "Anonymous" && decision != "Rejected") {
         note = `Under review @ ${conf} (${year}) (${new Date().toLocaleDateString()})`;
     }
 
