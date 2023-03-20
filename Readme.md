@@ -43,6 +43,9 @@ This browser extension allows you to automatically store research papers you rea
 
 <p align="center">
 <img width="800" src="https://github.com/vict0rsch/PaperMemory/blob/master/extra/imgs/display.png?raw=true"/>
+<br/>
+<br/>
+<img width="800" src="https://github.com/vict0rsch/PaperMemory/blob/master/extra/imgs/home_slideshow.gif?raw=true"/>
 </p>
 
 ---
