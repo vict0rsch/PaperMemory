@@ -23,6 +23,10 @@
 
 <br/>
 
+<p align="center">
+ <a href="#supported-venues">Supported Venues</a> &nbsp;•&nbsp; <a href="#customization">Customization</a> &nbsp;•&nbsp; <a href="#keyboard-navigation">Keyboard Navigation</a> &nbsp;•&nbsp; <a href="#guides">User Guide</a> &nbsp;•&nbsp; <a href="#advanced">Advanced features</a> &nbsp;•&nbsp; <a href="#install-from-source-brave--chrome">Install from source</a> &nbsp;•&nbsp; <a href="#preprints">About preprints</a> &nbsp;•&nbsp; <a href="#discovering-code-repositories">Discovering code Repositories</a> &nbsp;•&nbsp; <a href="#faq">FAQ</a>
+</p>
+
 An **automated**, web-based and minimalist reference manager that also finds code repositories and published versions of preprints.
 
 It is not meant to replace, rather complete more standard reference managers as Zotero etc.
@@ -46,15 +50,12 @@ This browser extension allows you to automatically store research papers you rea
 <br/>
 <br/>
 <img width="800" src="https://github.com/vict0rsch/PaperMemory/blob/master/extra/imgs/home_slideshow.gif?raw=true"/>
+<br/>
+<br/>
+<img width="800" src="https://github.com/vict0rsch/PaperMemory/blob/master/extra/imgs/d2.gif?raw=true"/>
 </p>
 
 ---
-
-<br/>
-
-<p align="center">
- <a href="#supported-venues">Supported Venues</a> &nbsp;•&nbsp; <a href="#demo">Demo</a> &nbsp;•&nbsp; <a href="#keyboard-navigation">Keyboard Navigation</a> &nbsp;•&nbsp; <a href="#guides">User Guide</a> &nbsp;•&nbsp; <a href="#advanced">Advanced features</a> &nbsp;•&nbsp; <a href="#install-from-source-brave--chrome">Install from source</a> &nbsp;•&nbsp; <a href="#preprints">About preprints</a> &nbsp;•&nbsp; <a href="#discovering-code-repositories">Discovering code Repositories</a> &nbsp;•&nbsp; <a href="#faq">FAQ</a>
-</p>
 
 <br/>
 
@@ -101,10 +102,7 @@ I'm regularly adding feature ideas in the [issues](https://github.com/vict0rsch/
 
 As of version `0.5.3`, PaperMemory finds and merges duplicates based on their titles only. If you visit a paper which has the same title as an existing paper, it will not be added as a new paper, rather "attached" to the existing one. However, if the existing paper does not have a known publication venue and the new paper does, then they are switched to favour the one with a known publication venue.
 
-## Demo
-
-
-![](https://github.com/vict0rsch/PaperMemory/blob/master/extra/imgs/d2.gif?raw=true)
+## Customization
 
 Customize features in the menu:
 
@@ -114,7 +112,6 @@ Customize features in the menu:
 </p>
 
 Switch between Light and Dark mode
-
 
 <p align="center">
 <img src="https://github.com/vict0rsch/PaperMemory/blob/master/extra/imgs/lightdark.png?raw=true">
