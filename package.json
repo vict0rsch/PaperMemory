@@ -27,7 +27,7 @@
   "devDependencies": {
     "expect": "^29.0.0",
     "fs": "^0.0.1-security",
-    "glob": "^9.0.1",
+    "glob": "^10.0.0",
     "gulp": "^4.0.2",
     "gulp-clean-css": "^4.3.0",
     "gulp-concat": "^2.6.1",
