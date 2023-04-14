@@ -795,5 +795,7 @@ if (typeof module !== "undefined" && module.exports != null) {
         noParamUrl,
         silentPromiseTimeout,
         shouldWarn,
+        spaceCamelCase,
+        toSingleSpace,
     };
 }
