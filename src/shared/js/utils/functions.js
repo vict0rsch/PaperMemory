@@ -751,6 +751,9 @@ const shouldWarn = async (warningName, callback = () => {}) => {
     return callback(false);
 };
 
+const spaceCamelCase = (str) =>
+    str.replace(/([A-Z](?=[a-z]+)|[A-Z]+(?![a-z]))/g, " $1").trim();
+
 if (typeof module !== "undefined" && module.exports != null) {
     var dummyModule = module;
     dummyModule.exports = {
