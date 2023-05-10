@@ -152,6 +152,10 @@ const migrateData = async (papers, manifestDataVersion, store = true) => {
                         migrationSummaries[id].push("(m509) empty year to unknown");
                     }
                 }
+                if (papers[id].venue === undefined) {
+                    papers[id].venue = "";
+                    migrationSummaries[id].push("(m509) venue undefined to ''");
+                }
             }
         }
 
