@@ -729,6 +729,14 @@ const noParamUrl = (url) => {
     return url.split("?")[0].split("#")[0];
 };
 
+const urlToWebsiteId = (url) =>
+    miniHash(
+        noParamUrl(url)
+            .replace("https://", "")
+            .replace("http://", "")
+            .replace("www.", "")
+    );
+
 const silentPromiseTimeout = (prom, time = 5000) => {
     // https://advancedweb.hu/how-to-add-timeout-to-a-promise-in-javascript/
     let timer;
