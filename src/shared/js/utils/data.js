@@ -140,6 +140,18 @@ const migrateData = async (papers, manifestDataVersion, store = true) => {
                         .trim();
                     migrationSummaries[id].push("(m509) fix: remove arxiv as venue");
                 }
+                if (papers[id].codeLink === false) {
+                    papers[id].codeLink = "";
+                    migrationSummaries[id].push("(m509) codeLink from false to ''");
+                }
+                if (typeof papers[id].year !== "string") {
+                    papers[id].year = papers[id].year + "";
+                    migrationSummaries[id].push("(m509) year to string");
+                    if (papers[id].year === "undefined") {
+                        papers[id].year = "unknown";
+                        migrationSummaries[id].push("(m509) empty year to unknown");
+                    }
+                }
             }
         }
 
@@ -509,9 +521,9 @@ const validatePaper = (paper, log = true) => {
                 // there's a default function fo the missing attribute
                 const defaultValue = expectedKeys[key].default(paper);
                 paper[key] = defaultValue;
-                message = `➤ Attribute "${key}" absent; will be set to "${JSON.stringify(
+                message = `➤ Attribute "${key}" absent; will be set to '${JSON.stringify(
                     defaultValue
-                )}" (${paper.id})`;
+                )}' (${paper.id})`;
                 // stores the update message. If `log` is true, also log the message
                 warns.push(message);
                 log && console.warn(message);
