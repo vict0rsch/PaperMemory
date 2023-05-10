@@ -1476,7 +1476,7 @@ const trySemanticScholar = async (paper) => {
                     miniHash(match.title) === miniHash(paper.title) &&
                     Math.abs(match.year - paper.year) < 3 &&
                     match.venue &&
-                    match.venue.toLowerCase() !== "arxiv"
+                    !match.venue.toLowerCase().includes("arxiv")
                 ) {
                     info("Found a Semantic Scholar match");
                     let venue = match.venue
