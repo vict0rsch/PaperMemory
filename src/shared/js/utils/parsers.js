@@ -200,7 +200,7 @@ const fetchCrossRefDataForDoi = async (doi) => {
     return extractCrossrefData(crossrefResponse);
 };
 
-const fetchSemanticsScholarDataForDoi = async (doi) => {
+const fetchSemanticScholarDataForDoi = async (doi) => {
     const ssResponse = await fetchJSON(
         `https://api.semanticscholar.org/graph/v1/paper/${doi}?fields=venue,year,authors,title`
     );
@@ -1791,7 +1791,7 @@ if (typeof module !== "undefined" && module.exports != null) {
         fetchDom,
         getOpenReviewForumJSON,
         getOpenReviewNoteJSON,
-        fetchSemanticsScholarDataForDoi,
+        fetchSemanticScholarDataForDoi,
         fetchText,
         findACLValue,
         findFuzzyPaperMatch,
