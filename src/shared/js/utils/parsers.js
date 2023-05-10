@@ -1312,6 +1312,41 @@ const makeRSCPaper = async (url) => {
     return { author, bibtex, id, key, note, pdfLink, title, venue, year, doi };
 };
 
+const makeWebsitePaper = async (tab) => {
+    console.log("tab: ", tab);
+    const url = tab.url;
+    const dom = await fetchDom(url);
+    const og = Object.fromEntries(
+        [...dom.querySelectorAll("meta")]
+            .filter((m) => m.getAttribute("property"))
+            .filter((m) => m.getAttribute("property").startsWith("og:"))
+            .map((m) => [
+                m.getAttribute("property").replace("og:", ""),
+                m.getAttribute("content"),
+            ])
+    );
+
+    const author = og.site_name || parseUrl(url).hostname.capitalize();
+    const codeLink = url;
+    const year = new Date().getFullYear() + "";
+    const id = `Website_${urlToWebsiteId(url)}`;
+    const note = og.description || "";
+    const pdfLink = url;
+    const title = og.title || tab.title;
+    const key = `${miniHash(author)}${year}${firstNonStopLowercase(title)}`;
+    const venue = "";
+    const accessDate = new Date().toISOString().split("T")[0];
+    const bib = `@misc{${key},
+        author = {${author}},
+        title = {${title}},
+        year = {${year}},
+        url = {${url}},
+        note = {Accessed ${accessDate}}
+    }`;
+    const bibtex = bibtexToString(bibtexToObject(bib));
+    return { author, bibtex, id, key, note, pdfLink, codeLink, title, venue, year };
+};
+
 // -------------------------------
 // -----  PREPRINT MATCHING  -----
 // -------------------------------
@@ -1570,7 +1605,7 @@ const initPaper = async (paper) => {
 
     paper.md = `[${paper.title}](${paper.pdfLink})`;
     paper.tags = [];
-    paper.codeLink = "";
+    paper.codeLink = paper.codeLink ?? "";
     paper.favorite = false;
     paper.favoriteDate = "";
     paper.addDate = new Date().toJSON();
@@ -1622,9 +1657,14 @@ const autoTagPaper = async (paper) => {
     }
 };
 
-const makePaper = async (is, url) => {
+const makePaper = async (is, url, tab = false) => {
     let paper;
-    if (is.arxiv) {
+    if (tab) {
+        paper = await makeWebsitePaper(tab);
+        if (paper) {
+            paper.source = "website";
+        }
+    } else if (is.arxiv) {
         paper = await makeArxivPaper(url);
         if (paper) {
             paper.source = "arxiv";
