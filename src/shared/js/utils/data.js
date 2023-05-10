@@ -15,7 +15,7 @@ const migrateData = async (papers, manifestDataVersion, store = true) => {
     }
     const currentVersion = papers["__dataVersion"] || -1;
     var deleteIds = [];
-    const latestDataVersion = 502;
+    const latestDataVersion = 510;
 
     let newPapers = { ...papers };
 
@@ -28,61 +28,67 @@ const migrateData = async (papers, manifestDataVersion, store = true) => {
         store && backupData({ ...papers });
 
         delete papers["__dataVersion"];
+        let migrationSummaries = {};
 
         for (const id in papers) {
+            migrationSummaries[id] = [];
             if (currentVersion < 5) {
-                info("Applying migration 5");
                 // pre-0.2.8 and manifestDataVersion()
                 if (!papers[id].hasOwnProperty("bibtex")) {
                     papers[id].bibtex = "";
-                    log("Migrating bibtex for " + id);
+                    migrationSummaries[id].push("(m5) bibtex default");
                 }
                 if (!papers[id].pdfLink.endsWith(".pdf")) {
                     papers[id].pdfLink = papers[id].pdfLink + ".pdf";
+                    migrationSummaries[id].push("(m5) pdfLink to .pdf");
                 }
                 if (!papers[id].codeLink) {
                     papers[id].codeLink = "";
+                    migrationSummaries[id].push("(m5) codeLink default");
                 }
                 if (!papers[id].source) {
                     if (papers[id].id.includes("NeurIPS")) {
                         papers[id].source = "neurips";
+                        migrationSummaries[id].push("(m5) NeurIPS to neurips");
                     } else {
                         papers[id].source = "arxiv";
+                        migrationSummaries[id].push("(m5) source default is arxiv");
                     }
                 }
             }
             if (currentVersion < 208) {
                 // 0.2.8
-                info("Applying migration 0.2.8");
                 if (
                     papers[id].source !== "arxiv" &&
                     papers[id].md.includes("https://arxiv.com/abs/")
                 ) {
                     papers[id].md = `[${papers[id].title}](${papers[id].pdfLink})`;
+                    migrationSummaries[id].push("(m208) md from title and pdfLink");
                 }
                 if (
                     papers[id].source !== "arxiv" &&
                     papers[id].pdfLink.includes("arxiv.org/pdf/")
                 ) {
                     papers[id].source = "arxiv";
+                    migrationSummaries[id].push("(m208) set arxiv source from pdfLink");
                 }
                 if (id.match(/^\d/) && papers[id].source === "arxiv") {
                     const newId = `Arxiv-${id}`;
                     let newPaper = { ...papers[id], id: newId };
                     papers[newId] = newPaper;
                     deleteIds.push(id);
+                    migrationSummaries[id].push("(m208) new arxiv id to Arxiv-");
                 }
             }
             if (currentVersion < 209) {
                 // 0.2.9
-                info("Applying migration 0.2.9");
                 if (!papers[id].hasOwnProperty("favorite")) {
                     papers[id].favorite = false;
                     papers[id].favoriteDate = "";
+                    migrationSummaries[id].push("(m209) favorite defaults");
                 }
             }
             if (currentVersion < 210) {
-                info("Applying migration 0.2.10");
                 if (papers[id].source === "arxiv") {
                     // replace vX in pdfs so the paper always points to the latest
                     const pdfVersion = papers[id].pdfLink.match(/v\d+\.pdf/gi);
@@ -91,29 +97,62 @@ const migrateData = async (papers, manifestDataVersion, store = true) => {
                             pdfVersion[0],
                             ".pdf"
                         );
+                        migrationSummaries[id].push("(m210) remove pdf version");
                     }
                 }
                 if (papers[id].hasOwnProperty("bibtext")) {
                     papers[id].bibtex = papers[id].bibtext + "";
                     delete papers[id].bibtext;
+                    migrationSummaries[id].push("(m210) bibtext typo to bibtex");
                 }
             }
             if (currentVersion < 450) {
-                info("Applying migration 0.4.5");
                 if (!papers[id].hasOwnProperty("venue")) {
                     papers[id].venue = await makeVenue(papers[id]);
+                    migrationSummaries[id].push("(m450) venue from id");
                 }
             }
             if (currentVersion < 502) {
-                info("Applying migration 0.5.2");
                 if (id.startsWith("ACL-") && papers[id].source !== "acl") {
                     papers[id].source = "acl";
+                    migrationSummaries[id].push("(m502) fix set source to acl");
                 }
                 if (papers[id].source === "acs") {
                     papers[id].pdfLink = papers[id].pdfLink.replace(
                         "/doi/pdf/abs/",
                         "/doi/pdf/"
                     );
+                    migrationSummaries[id].push("(m502) fix acs pdfLink");
+                }
+            }
+
+            if (currentVersion < 510) {
+                // fix semanticscholar venues
+                if (papers[id].venue?.toLowerCase().includes("arxiv")) {
+                    papers[id].venue = "";
+                    papers[id].note = papers[id].note
+                        .replace(
+                            /accepted\s*@\s*arxiv\.org.+semanticscholar\.org\]/gi,
+                            ""
+                        )
+                        .trim();
+                    migrationSummaries[id].push("(m509) fix: remove arxiv as venue");
+                }
+                if (papers[id].codeLink === false) {
+                    papers[id].codeLink = "";
+                    migrationSummaries[id].push("(m509) codeLink from false to ''");
+                }
+                if (typeof papers[id].year !== "string") {
+                    papers[id].year = papers[id].year + "";
+                    migrationSummaries[id].push("(m509) year to string");
+                    if (papers[id].year === "undefined") {
+                        papers[id].year = "unknown";
+                        migrationSummaries[id].push("(m509) empty year to unknown");
+                    }
+                }
+                if (papers[id].venue === undefined) {
+                    papers[id].venue = "";
+                    migrationSummaries[id].push("(m509) venue undefined to ''");
                 }
             }
         }
@@ -125,6 +164,14 @@ const migrateData = async (papers, manifestDataVersion, store = true) => {
 
         newPapers = { ...papers };
         newPapers["__dataVersion"] = manifestDataVersion;
+
+        // log the migration summaries, each paper at a time with indented summaries
+        info("Migration summary:");
+        Object.keys(migrationSummaries).forEach((id) => {
+            if (migrationSummaries[id].length > 0) {
+                log(id + ":\n\t • " + migrationSummaries[id].join("\n\t • "));
+            }
+        });
 
         if (store) {
             chrome.storage.local.set({ papers: newPapers }, () => {
@@ -476,9 +523,9 @@ const validatePaper = (paper, log = true) => {
                 // there's a default function fo the missing attribute
                 const defaultValue = expectedKeys[key].default(paper);
                 paper[key] = defaultValue;
-                message = `➤ Attribute "${key}" absent; will be set to "${JSON.stringify(
+                message = `➤ Attribute "${key}" absent; will be set to '${JSON.stringify(
                     defaultValue
-                )}" (${paper.id})`;
+                )}' (${paper.id})`;
                 // stores the update message. If `log` is true, also log the message
                 warns.push(message);
                 log && console.warn(message);
