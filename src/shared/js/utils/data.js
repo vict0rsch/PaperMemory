@@ -15,7 +15,7 @@ const migrateData = async (papers, manifestDataVersion, store = true) => {
     }
     const currentVersion = papers["__dataVersion"] || -1;
     var deleteIds = [];
-    const latestDataVersion = 509;
+    const latestDataVersion = 510;
 
     let newPapers = { ...papers };
 
