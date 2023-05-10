@@ -357,7 +357,9 @@ const handlePopupKeydown = (e) => {
     } else if (key === "Enter") {
         // open paper
         const target =
-            findEl(id, "memory-item-openLocal") || findEl(id, "memory-item-link");
+            (global.state.prefs.checkEnterLocalPdf &&
+                findEl(id, "memory-item-openLocal")) ||
+            findEl(id, "memory-item-link");
         dispatch(target, "click");
     } else if (key === "Escape") {
         // close memory
