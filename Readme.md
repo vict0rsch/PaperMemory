@@ -197,6 +197,7 @@ In the extension's `options` (right click on the icon or in the popup's menu) yo
 ## Install from source (Brave & Chrome)
 
 * Download/clone the repo
+    * If you want to try a feature that's not currently merged to `master` you need to first change the repository's branch you want to try
 * Go to Chrome/Brave's extension manager
 * Enable developer mode
 * Click on "load unpackaged extension"
