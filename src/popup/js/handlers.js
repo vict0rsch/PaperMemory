@@ -60,6 +60,7 @@ const handleMemoryOpenLocal = (e) => {
     if (file && (file.id || file.id === 0)) {
         chrome.downloads.open(file.id);
     }
+    window?.close && window.close();
 };
 
 const handleTextareaFocus = () => {
