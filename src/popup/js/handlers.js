@@ -54,6 +54,9 @@ const handleAddItemToFavorites = (e) => {
 const handleMemoryOpenLocal = (e) => {
     const id = eventId(e);
     const file = global.state.files[id];
+    const paper = global.state.papers[id];
+    global.state.papers[id] = updatePaperVisits(paper);
+    setStorage("papers", global.state.papers);
     if (file && (file.id || file.id === 0)) {
         chrome.downloads.open(file.id);
     }
