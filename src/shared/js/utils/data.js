@@ -169,7 +169,7 @@ const migrateData = async (papers, manifestDataVersion, store = true) => {
         info("Migration summary:");
         Object.keys(migrationSummaries).forEach((id) => {
             if (migrationSummaries[id].length > 0) {
-                log(id + ":\n\t\t" + migrationSummaries[id].join("\n\t\t"));
+                log(id + ":\n\t • " + migrationSummaries[id].join("\n\t • "));
             }
         });
 
