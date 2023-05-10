@@ -356,7 +356,9 @@ const handlePopupKeydown = (e) => {
         dispatch(findEl(id, "memory-delete"), "click");
     } else if (key === "Enter") {
         // open paper
-        dispatch(findEl(id, "memory-item-link"), "click");
+        const target =
+            findEl(id, "memory-item-openLocal") || findEl(id, "memory-item-link");
+        dispatch(target, "click");
     } else if (key === "Escape") {
         // close memory
         e.preventDefault();
