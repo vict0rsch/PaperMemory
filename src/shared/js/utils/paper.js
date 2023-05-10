@@ -28,6 +28,7 @@ const isPaper = async (url, noStored = false) => {
     // is the url a local file in the memory?
     is.localFile = isKnownLocalFile(url);
     is.stored = noStored ? false : await findLocalFile(url);
+    is.parsedWebsite = global.state.papers[`Website_${urlToWebsiteId(url)}`];
     return is;
 };
 
