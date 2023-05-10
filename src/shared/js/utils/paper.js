@@ -470,6 +470,7 @@ const addOrUpdatePaper = async ({
     url,
     is,
     prefs,
+    tab,
     store = true,
     contentScriptCallbacks = { update: () => {}, preprints: () => {} },
 }) => {
@@ -483,7 +484,7 @@ const addOrUpdatePaper = async ({
 
     // Extract id from url
     global.state.papers = (await getStorage("papers")) ?? {};
-    const id = await parseIdFromUrl(url);
+    const id = await parseIdFromUrl(url, tab);
     const paperExists = global.state.papers.hasOwnProperty(id);
 
     if (
@@ -496,7 +497,7 @@ const addOrUpdatePaper = async ({
         isNew = false;
     } else {
         // Or create a new one if it does not
-        let newPaper = await makePaper(is, url);
+        let newPaper = await makePaper(is, url, tab);
         if (!newPaper) {
             return;
         }
