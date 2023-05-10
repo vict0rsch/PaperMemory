@@ -730,7 +730,6 @@ const handleCancelOverwrite = (e) => {
 
 const handleOverwriteMemory = () => {
     var file = document.getElementById("overwrite-arxivmemory-input").files;
-    log("file: ", file);
     if (!file || file.length < 1) {
         return;
     }

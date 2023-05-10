@@ -89,7 +89,6 @@ const migrateData = async (papers, manifestDataVersion, store = true) => {
                 }
             }
             if (currentVersion < 210) {
-                info("Applying migration 0.2.10");
                 if (papers[id].source === "arxiv") {
                     // replace vX in pdfs so the paper always points to the latest
                     const pdfVersion = papers[id].pdfLink.match(/v\d+\.pdf/gi);
@@ -127,10 +126,9 @@ const migrateData = async (papers, manifestDataVersion, store = true) => {
                 }
             }
 
-            if (currentVersion < 509) {
+            if (currentVersion < 510) {
                 // fix semanticscholar venues
                 if (papers[id].venue?.toLowerCase().includes("arxiv")) {
-                    info("Applying migration 0.5.9 to", papers[id]);
                     papers[id].venue = "";
                     papers[id].note = papers[id].note
                         .replace(
@@ -168,10 +166,10 @@ const migrateData = async (papers, manifestDataVersion, store = true) => {
         newPapers["__dataVersion"] = manifestDataVersion;
 
         // log the migration summaries, each paper at a time with indented summaries
-        log("Migration summaries:");
+        info("Migration summary:");
         Object.keys(migrationSummaries).forEach((id) => {
             if (migrationSummaries[id].length > 0) {
-                log(id + ":\n\t" + migrationSummaries[id].join("\n\t"));
+                log(id + ":\n\t\t" + migrationSummaries[id].join("\n\t\t"));
             }
         });
 
