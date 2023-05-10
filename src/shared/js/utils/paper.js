@@ -571,7 +571,7 @@ const addOrUpdatePaper = async ({
         try {
             const pwcMatch = await tryPWCMatch(paper);
 
-            const pwcCodeLink = !paper.codeLink && pwcMatch?.url;
+            const pwcCodeLink = !paper.codeLink && pwcMatch?.codeLink;
             const pwcNote = pwcMatch?.note;
             const pwcBibtex = pwcMatch?.bibtex;
             const pwcVenue = !paper.venue && pwcMatch?.venue;

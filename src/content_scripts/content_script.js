@@ -507,11 +507,11 @@ const feedback = (text, paper = null) => {
 
 const adjustArxivColWidth = (newColWidth = "33%") => {
     document
-        .getElementsByClassName("leftcolumn")[0]
-        .setAttribute("style", `width: calc(100% - ${newColWidth}) !important`);
+        .querySelector(".leftcolumn")
+        ?.setAttribute("style", `width: calc(100% - ${newColWidth}) !important`);
     document
-        .getElementsByClassName("extra-services")[0]
-        .setAttribute("style", `width: ${newColWidth} !important`);
+        .querySelector(".extra-services")
+        ?.setAttribute("style", `width: ${newColWidth} !important`);
 };
 
 const displayPaperVenue = (paper) => {
