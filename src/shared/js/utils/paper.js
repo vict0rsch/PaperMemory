@@ -707,7 +707,10 @@ const findPaperForProperty = (papers, source, match, prop = "id") =>
  * @param {string} url The url to use in order to find a matching paper
  * @returns {string} The id of the paper found.
  */
-const parseIdFromUrl = async (url) => {
+const parseIdFromUrl = async (url, tab = null) => {
+    if (tab) {
+        return urlToWebsiteId(url);
+    }
     let idForUrl;
 
     const hashedUrl = miniHash(url);
@@ -868,6 +871,8 @@ const parseIdFromUrl = async (url) => {
         idForUrl = findPaperForProperty(papers, "rsc", miniHash(rscId));
     } else if (is.localFile) {
         idForUrl = is.localFile;
+    } else if (is.parsedWebsite) {
+        idForUrl = is.parsedWebsite.id;
     } else {
         throw new Error("unknown paper url");
     }
