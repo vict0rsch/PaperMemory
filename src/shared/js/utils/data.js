@@ -15,7 +15,7 @@ const migrateData = async (papers, manifestDataVersion, store = true) => {
     }
     const currentVersion = papers["__dataVersion"] || -1;
     var deleteIds = [];
-    const latestDataVersion = 502;
+    const latestDataVersion = 509;
 
     let newPapers = { ...papers };
 
@@ -114,6 +114,20 @@ const migrateData = async (papers, manifestDataVersion, store = true) => {
                         "/doi/pdf/abs/",
                         "/doi/pdf/"
                     );
+                }
+            }
+
+            if (currentVersion < 509) {
+                // fix semanticscholar venues
+                info("Applying migration 0.5.9");
+                if (papers[id].venue?.toLowerCase().includes("arxiv")) {
+                    delete papers[id].venue;
+                    papers[id].note = papers[id].note
+                        .replace(
+                            /accepted\s*@\s*arxiv\.org.+semanticscholar\.org\]/gi,
+                            ""
+                        )
+                        .trim();
                 }
             }
         }
