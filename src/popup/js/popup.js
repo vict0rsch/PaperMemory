@@ -127,7 +127,7 @@ const setStandardPopupClicks = () => {
  * + Add event listeners (clicks and keyboard)
  * @param {str} url Currently focused and active tab's url.
  */
-const popupMain = async (url, is, manualTrigger = false) => {
+const popupMain = async (url, is, manualTrigger = false, tab = null) => {
     console.log(navigator.userAgent);
     if (navigator.userAgent === "PuppeteerAgent") {
         info("Is puppet");
@@ -287,6 +287,34 @@ const popupMain = async (url, is, manualTrigger = false) => {
         if (prefs.checkDirectOpen) {
             dispatch("memory-switch", "click");
         }
+        const allowWebsiteParsing = tab && global.state.prefs.checkWebsiteParsing;
+        console.log("allowWebsiteParsing: ", allowWebsiteParsing);
+        if (allowWebsiteParsing) {
+            const websiteParsingHtml = /* html */ `
+                <div id="website-trigger-wrapper">
+                    <div id="website-trigger-btn">Parse current website</div>
+                    <div id="website-loader-container" class="pm-container" style='display: none;'>
+                        <div class="sk-folding-cube">
+                            <div class="sk-cube1 sk-cube"></div>
+                            <div class="sk-cube2 sk-cube"></div>
+                            <div class="sk-cube4 sk-cube"></div>
+                            <div class="sk-cube3 sk-cube"></div>
+                        </div>
+                    </div>
+                    <div id="website-parsing-error"></div>
+                </div>`;
+            setHTML("webite-parsing-root", websiteParsingHtml);
+            showId("webite-parsing-root");
+            addListener("website-trigger-btn", "click", async () => {
+                hideId("website-trigger-btn");
+                showId("website-loader-container");
+                hideId("website-parsing-error");
+                await addOrUpdatePaper({ tab, url: tab.url });
+                hideId("website-loader-container");
+                hideId("notArxiv");
+                popupMain(tab.url, await isPaper(tab.url), true, null);
+            });
+        }
     }
 };
 
@@ -320,7 +348,7 @@ if (window.location.href.includes("popup")) {
         hideId("memory-spinner");
         showId("memory-switch");
         makeMemoryHTML();
-        popupMain(url, is);
+        popupMain(url, is, false, tabs[0]);
         if (navigator.userAgent.search("Firefox") > -1) {
             hideId("overwrite-container");
         }
