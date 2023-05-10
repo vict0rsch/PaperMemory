@@ -290,7 +290,9 @@ const focusExistingOrCreateNewPaperTab = (paper, fromMemoryItem) => {
             }
         }
 
-        global.state.papers[paper.id].count += 1;
+        global.state.papers[paper.id] = updatePaperVisits(
+            global.state.papers[paper.id]
+        );
         chrome.storage.local.set({ papers: global.state.papers });
     });
 };

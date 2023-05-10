@@ -54,9 +54,13 @@ const handleAddItemToFavorites = (e) => {
 const handleMemoryOpenLocal = (e) => {
     const id = eventId(e);
     const file = global.state.files[id];
+    const paper = global.state.papers[id];
+    global.state.papers[id] = updatePaperVisits(paper);
+    setStorage("papers", global.state.papers);
     if (file && (file.id || file.id === 0)) {
         chrome.downloads.open(file.id);
     }
+    window?.close && window.close();
 };
 
 const handleTextareaFocus = () => {
@@ -356,7 +360,11 @@ const handlePopupKeydown = (e) => {
         dispatch(findEl(id, "memory-delete"), "click");
     } else if (key === "Enter") {
         // open paper
-        dispatch(findEl(id, "memory-item-link"), "click");
+        const target =
+            (global.state.prefs.checkEnterLocalPdf &&
+                findEl(id, "memory-item-openLocal")) ||
+            findEl(id, "memory-item-link");
+        dispatch(target, "click");
     } else if (key === "Escape") {
         // close memory
         e.preventDefault();

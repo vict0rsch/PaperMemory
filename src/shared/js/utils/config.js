@@ -91,6 +91,7 @@ global.prefsCheckNames = [
     "checkPdfOnly",
     "checkNoAuto",
     "checkMdYearVenue",
+    "checkEnterLocalPdf",
 ];
 /**
  * Menu check names which should not default to true but to false
