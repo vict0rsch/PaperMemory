@@ -131,7 +131,7 @@ const migrateData = async (papers, manifestDataVersion, store = true) => {
                 // fix semanticscholar venues
                 if (papers[id].venue?.toLowerCase().includes("arxiv")) {
                     info("Applying migration 0.5.9 to", papers[id]);
-                    delete papers[id].venue;
+                    papers[id].venue = "";
                     papers[id].note = papers[id].note
                         .replace(
                             /accepted\s*@\s*arxiv\.org.+semanticscholar\.org\]/gi,
