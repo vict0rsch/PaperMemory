@@ -529,6 +529,7 @@ code {
 
 #popup-code-link {
     font-size: 1.05rem;
+    max-width: 95%;
 }
 .popup-form-note-textarea {
     width: 85%;
@@ -668,7 +669,7 @@ button.changed {
 
 #whats-new-container {
     position: absolute;
-    top: -65px;
+    top: -40px;
     right: 0px;
     cursor: pointer;
 }
@@ -792,6 +793,22 @@ button.changed {
     background-color: rgb(151, 16, 16);
 }
 
+#website-trigger-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 24px;
+}
+#website-trigger-btn {
+    background-color: var(--red);
+    color: white;
+    padding: 8px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+}
+#website-trigger-btn:hover {
+    background-color: rgb(181, 46, 46);
+}
 #ascii-art-div {
     font-family: "Fira Code", monospace;
     font-size: 0.6rem;
