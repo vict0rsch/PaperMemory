@@ -294,6 +294,32 @@ const getPopupPaperIconsHTML = (paper, currentUrl, is) => {
         </div>`;
     }
 
+    let vanity = "";
+    if (global.state.prefs.checkVanity && paper.source === "arxiv") {
+        vanity = /*html*/ `
+        <div
+            tabindex="0"
+            class="memory-item-svg-div"
+            id="popup-memory-item-vanity--${id}"
+            title="Open on Vanity"
+        >
+            ${tablerSvg("vanity", "", ["popup-click-svg"])}
+        </div>`;
+    }
+
+    let ar5iv = "";
+    if (global.state.prefs.checkAr5iv && paper.source === "arxiv") {
+        ar5iv = /*html*/ `
+        <div
+            tabindex="0"
+            class="memory-item-svg-div"
+            id="popup-memory-item-ar5iv--${id}"
+            title="Open on ar5iv"
+        >
+            ${tablerSvg("ar5iv", "", ["popup-click-svg"])}
+        </div>`;
+    }
+
     const download =
         global.state.prefs.checkStore && (is.localFile || is.stored)
             ? /*html*/ `
@@ -316,7 +342,7 @@ const getPopupPaperIconsHTML = (paper, currentUrl, is) => {
             ${tablerSvg("file-download", "", ["popup-click-svg"])}
         </div>
     `;
-    return /*html*/ `${scirate}
+    return /*html*/ `${scirate} ${vanity} ${ar5iv}
         <div
             tabindex="0"
             class="memory-item-svg-div"
