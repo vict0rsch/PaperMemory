@@ -167,7 +167,18 @@ const editManualWebsite = (parsedPaper, url) => {
         }
 
         // check values are valid
-        const updatedPaper = { ...parsedPaper, title, author, year, note };
+        let updatedPaper = { ...parsedPaper, title, author, year, note };
+        const citationKey = `${miniHash(
+            author.split(" and ")[0].split(" ").last()
+        )}${year}${firstNonStopLowercase(title)}`;
+        bibtexToObject(updatedPaper.bibtex);
+        updatedPaper.bibtex = bibtexToString({
+            ...bibtexToObject(updatedPaper.bibtex),
+            author,
+            year,
+            title,
+            citationKey,
+        });
         const { warnings, paper } = validatePaper(updatedPaper);
 
         // Display warnings if any
