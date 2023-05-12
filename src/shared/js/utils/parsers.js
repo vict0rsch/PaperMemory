@@ -1326,7 +1326,8 @@ const makeWebsitePaper = async (tab) => {
             ])
     );
 
-    const author = og.site_name || parseUrl(url).hostname.capitalize();
+    const author =
+        og.site_name || parseUrl(url).hostname.replace("www.", "").capitalize();
     const codeLink = url;
     const year = new Date().getFullYear() + "";
     const id = `Website_${urlToWebsiteId(url)}`;
