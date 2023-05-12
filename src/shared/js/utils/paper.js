@@ -5,6 +5,7 @@
  * Also checks for local files in the PaperMemoryStore
  *
  * @param {string} url the url to check
+ * @param {boolean} noStored if true, don't check for local files
  * @returns {object} boolean map from sources.
  */
 const isPaper = async (url, noStored = false) => {
@@ -27,7 +28,8 @@ const isPaper = async (url, noStored = false) => {
     }
     // is the url a local file in the memory?
     is.localFile = isKnownLocalFile(url);
-    is.stored = noStored ? false : await findLocalFile(url);
+    is.stored = noStored ? false : (await findLocalFile(url)) ?? false;
+    is.parsedWebsite = global.state.papers[`Website_${urlToWebsiteId(url)}`] ?? false;
     return is;
 };
 
@@ -168,6 +170,10 @@ const paperToAbs = (paper) => {
             abs = pdf.replace("/articlepdf/", "/articlelanding/");
             break;
 
+        case "website":
+            abs = paper.pdfLink;
+            break;
+
         default:
             abs = "https://xkcd.com/1969/";
             break;
@@ -272,6 +278,10 @@ const paperToPDF = (paper) => {
             break;
 
         case "rsc":
+            break;
+
+        case "website":
+            abs = paper.pdfLink;
             break;
 
         default:
@@ -469,6 +479,7 @@ const addOrUpdatePaper = async ({
     url,
     is,
     prefs,
+    tab,
     store = true,
     contentScriptCallbacks = { update: () => {}, preprints: () => {} },
 }) => {
@@ -482,7 +493,7 @@ const addOrUpdatePaper = async ({
 
     // Extract id from url
     global.state.papers = (await getStorage("papers")) ?? {};
-    const id = await parseIdFromUrl(url);
+    const id = await parseIdFromUrl(url, tab);
     const paperExists = global.state.papers.hasOwnProperty(id);
 
     if (
@@ -495,7 +506,7 @@ const addOrUpdatePaper = async ({
         isNew = false;
     } else {
         // Or create a new one if it does not
-        let newPaper = await makePaper(is, url);
+        let newPaper = await makePaper(is, url, tab);
         if (!newPaper) {
             return;
         }
@@ -624,7 +635,11 @@ const addOrUpdatePaper = async ({
                 // new paper
                 store
                     ? logOk("Added '" + paper.title + "' to your Memory!")
-                    : warn("Discovered '" + paper.title + "' but did not store it.");
+                    : warn(
+                          "Discovered '" +
+                              paper.title +
+                              "' but did not store it (`store` is false)."
+                      );
                 log("paper: ", paper);
 
                 notifText = "Added to your Memory";
@@ -706,7 +721,10 @@ const findPaperForProperty = (papers, source, match, prop = "id") =>
  * @param {string} url The url to use in order to find a matching paper
  * @returns {string} The id of the paper found.
  */
-const parseIdFromUrl = async (url) => {
+const parseIdFromUrl = async (url, tab = null) => {
+    if (tab) {
+        return urlToWebsiteId(url);
+    }
     let idForUrl;
 
     const hashedUrl = miniHash(url);
@@ -867,6 +885,8 @@ const parseIdFromUrl = async (url) => {
         idForUrl = findPaperForProperty(papers, "rsc", miniHash(rscId));
     } else if (is.localFile) {
         idForUrl = is.localFile;
+    } else if (is.parsedWebsite) {
+        idForUrl = is.parsedWebsite.id;
     } else {
         throw new Error("unknown paper url");
     }

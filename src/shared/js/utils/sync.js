@@ -72,10 +72,12 @@ const shouldSync = async () => !!(await getStorage("syncState"));
 const initSyncAndState = async ({
     papers = null,
     isContentScript = false,
+    forceInit = false,
     stateIsReady = () => {},
     remoteIsReady = () => {},
 } = {}) => {
-    !global.state.dataVersion && (await initState({ papers, isContentScript }));
+    (!global.state.dataVersion || forceInit) &&
+        (await initState({ papers, isContentScript }));
 
     stateIsReady();
 

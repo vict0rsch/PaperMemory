@@ -94,6 +94,7 @@ global.prefsCheckNames = [
     "checkNoAuto",
     "checkMdYearVenue",
     "checkEnterLocalPdf",
+    "checkWebsiteParsing",
 ];
 /**
  * Menu check names which should not default to true but to false
@@ -108,6 +109,7 @@ global.prefsCheckDefaultFalse = [
     "checkPdfOnly",
     "checkNoAuto",
     "checkMdYearVenue",
+    "checkWebsiteParsing",
 ];
 /**
  * All keys to retrieve from the menu, the checkboxes + the custom pdf function
@@ -179,6 +181,7 @@ global.knownPaperPages = {
         ),
         "link.springer.com/content/pdf/",
     ],
+    website: [], // special case, manual parsing of arbitrary websites
     wiley: [
         (url) =>
             Boolean(

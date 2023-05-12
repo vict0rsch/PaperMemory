@@ -1,6 +1,7 @@
 :root {
     --background: #222a35;
     --lighterBackground: #323942;
+    --ligthBackground: #4b535c;
     --codeBackground: #5a5a5a;
     --lightestBackground: #788089;
     --dimColor: #8d9cac;
@@ -152,7 +153,9 @@ button:not(.select2-selection__choice__remove):hover,
 .form-note-textarea,
 .popup-form-note-textarea,
 .form-code-input,
-#auto-tags-container input {
+#auto-tags-container input,
+#manual-website-form input,
+#manual-website-form textarea {
     color: var(--color);
     background: var(--lighterBackground);
 }

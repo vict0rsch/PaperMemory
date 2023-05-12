@@ -1,8 +1,8 @@
 (async () => {
     const theme = async () => {
         return new Promise((resolve, reject) => {
-            chrome.storage.local.get("checkDarkMode", (data) => {
-                resolve(data && data["checkDarkMode"]);
+            chrome.storage.local.get("prefs", ({ prefs }) => {
+                resolve(prefs && prefs.checkDarkMode);
             });
         });
     };
