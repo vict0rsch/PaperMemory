@@ -43,6 +43,20 @@ const getMemoryItemHTML = (paper, titles) => {
             </div>`
         : ``;
 
+    const codeEditDiv =
+        paper.source === "website"
+            ? ""
+            : /*html*/ `
+            <div class="flex-center-start">
+                <span class="label">Code:</span>
+                <input
+                    type="text"
+                    class="form-code-input"
+                    value="${paper.codeLink || ""}"
+                    placeholder="Add link"
+                />
+            </div>`;
+
     return /*html*/ `
         <div
             class="memory-container ${favoriteClass}"
@@ -135,15 +149,7 @@ const getMemoryItemHTML = (paper, titles) => {
             <div class="extended-item" style="display: none">
                 <div class="item-note">
                     <form class="form-note">
-                        <div class="flex-center-start">
-                            <span class="label">Code:</span>
-                            <input
-                                type="text"
-                                class="form-code-input"
-                                value="${paper.codeLink || ""}"
-                                placeholder="Add link"
-                            />
-                        </div>
+                        ${codeEditDiv}
                         <div class="flex-center-start">
                             <span class="label">Note:</span>
                             <textarea
@@ -181,6 +187,20 @@ const getPopupEditFormHTML = (paper) => {
     const checked = "";
     const displayId = getDisplayId(paper.id);
 
+    const codeEditDiv =
+        paper.source === "website"
+            ? ""
+            : /*html*/ `<div class="flex-center-start w-100 mr-0">
+                    <span class="label">Code:</span>
+                    <input
+                        id="popup-form-codeLink--${id}"
+                        type="text"
+                        class="form-code-input mt-0 noMemoryOnA"
+                        value="${paper.codeLink || ""}"
+                        placeholder="Add link"
+                    />
+                </div>`;
+
     return /*html*/ ` <div
         style="max-width: 100%; display: flex; justify-content: space-between; align-items: center; padding: 4px 16px;"
     >
@@ -202,16 +222,7 @@ const getPopupEditFormHTML = (paper) => {
                 id="popup-form-note--${id}"
                 style="width: 100%; display: flex; justify-content: space-between; align-items: center; margin-top: 8px; flex-direction: column;"
             >
-                <div class="flex-center-start w-100 mr-0">
-                    <span class="label">Code:</span>
-                    <input
-                        id="popup-form-codeLink--${id}"
-                        type="text"
-                        class="form-code-input mt-0 noMemoryOnA"
-                        value="${paper.codeLink || ""}"
-                        placeholder="Add link"
-                    />
-                </div>
+                ${codeEditDiv}
                 <div class="flex-center-start w-100 mr-0">
                     <span class="label">Note:</span>
                     <textarea
