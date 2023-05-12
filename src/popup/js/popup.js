@@ -155,9 +155,16 @@ const editManualWebsite = (parsedPaper, url) => {
 
         // Find input values
         const title = val("manual-website-title");
-        const author = val("manual-website-author");
+        let author = val("manual-website-author");
         const year = val("manual-website-year");
         const note = val("manual-website-note");
+
+        if (author.includes(",")) {
+            author = author
+                .split(",")
+                .map((a) => a.trim())
+                .join(" and ");
+        }
 
         // check values are valid
         const updatedPaper = { ...parsedPaper, title, author, year, note };
