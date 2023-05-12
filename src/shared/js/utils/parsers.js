@@ -1313,7 +1313,6 @@ const makeRSCPaper = async (url) => {
 };
 
 const makeWebsitePaper = async (tab) => {
-    console.log("tab: ", tab);
     const url = tab.url;
     const dom = await fetchDom(url);
     const og = Object.fromEntries(
