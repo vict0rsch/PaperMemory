@@ -57,6 +57,10 @@ const showPopupModal = (name) => {
     });
 };
 
+const closePopupModal = () => {
+    style("popup-modal-wrapper", "display", "none");
+};
+
 /**
  * Creates click events on the popup
  */
@@ -103,14 +107,12 @@ const setStandardPopupClicks = () => {
             });
         }
     });
-    addListener("close-popup-modal", "click", () => {
-        style("popup-modal-wrapper", "display", "none");
-    });
+    addListener("close-popup-modal", "click", closePopupModal);
 
     // When the user clicks anywhere outside of the modal, close it
     addListener(window, "click", (event) => {
         if (event.target === findEl("popup-modal-wrapper")) {
-            style("popup-modal-wrapper", "display", "none");
+            closePopupModal();
         }
     });
 
@@ -121,7 +123,8 @@ const setStandardPopupClicks = () => {
     addListener("memory-switch", "click", handleMemorySwitchClick);
 };
 
-const editManualWebsite = (parsedPaper) => {
+const editManualWebsite = (parsedPaper, url) => {
+    hideId("manual-website-validation");
     showPopupModal("manual-website");
     showId("website-trigger-btn");
 
@@ -130,22 +133,37 @@ const editManualWebsite = (parsedPaper) => {
         findEl(`manual-website-${key}`).value = parsedPaper[key] ?? "";
     }
     setHTML("manual-website-url", parsedPaper.codeLink);
-    addListener("manual-website-submit", "click", async () => {
+    addListener("manual-website-form", "submit", async (e) => {
+        e.preventDefault();
+        hideId("manual-website-validation");
+
         const title = val("manual-website-title");
         const author = val("manual-website-author");
         const year = val("manual-website-year");
         const note = val("manual-website-note");
+
         const updatedPaper = { ...parsedPaper, title, author, year, note };
         const { warnings, paper } = validatePaper(updatedPaper);
-        if (warnings.length) {
-            // todo: handle warnings
+
+        let validationHTML = "";
+        for (const key of Object.keys(warnings)) {
+            for (const warning of warnings[key]) {
+                validationHTML += `<li>${warning}</li>`;
+            }
         }
-        global.state.papers[paper.id] = paper;
-        await setStorage("papers", global.state.papers);
-        hideId("website-trigger-btn");
-        hideId("notArxiv");
-        popupMain(tab.url, await isPaper(tab.url), true, null);
-        closeModal();
+        if (validationHTML.length > 0) {
+            validationHTML = `<ul>${validationHTML}</ul>`;
+            setHTML("manual-website-validation", validationHTML);
+            showId("manual-website-validation");
+        } else {
+            global.state.papers[paper.id] = paper;
+            await setStorage("papers", global.state.papers);
+            hideId("website-trigger-btn");
+            hideId("notArxiv");
+            popupMain(url, await isPaper(url), true, null);
+            closePopupModal();
+        }
+        return false;
     });
 };
 
@@ -301,7 +319,7 @@ const popupMain = async (url, is, manualTrigger = false, tab = null) => {
             copyAndConfirmMemoryItem(id, bibtex, "Bibtex citation copied!", true);
         });
         addListener(`popup-memory-item-openLocal--${id}`, "click", async () => {
-            const file = await findLocalFile(paper);
+            const file = (await findLocalFile(paper)) || global.state.files[paper.id];
             if (file) {
                 chrome.downloads.open(file.id);
             } else {
@@ -319,7 +337,6 @@ const popupMain = async (url, is, manualTrigger = false, tab = null) => {
         // -----  Manual Website Parsing  -----
         // ------------------------------------
         const allowWebsiteParsing = tab && global.state.prefs.checkWebsiteParsing;
-        console.log("allowWebsiteParsing: ", allowWebsiteParsing);
         if (allowWebsiteParsing) {
             const websiteParsingHtml = /* html */ `
                 <div id="website-trigger-wrapper">
@@ -357,7 +374,7 @@ const popupMain = async (url, is, manualTrigger = false, tab = null) => {
                     );
                 }
                 hideId("website-loader-container");
-                update?.paper && editManualWebsite(update.paper);
+                update?.paper && editManualWebsite(update.paper, url);
             });
         }
     }
