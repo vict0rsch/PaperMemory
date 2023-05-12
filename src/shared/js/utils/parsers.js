@@ -1327,7 +1327,6 @@ const makeWebsitePaper = async (tab) => {
 
     const author =
         og.site_name || parseUrl(url).hostname.replace("www.", "").capitalize();
-    const codeLink = url;
     const year = new Date().getFullYear() + "";
     const id = `Website_${urlToWebsiteId(url)}`;
     const note = og.description || "";
@@ -1344,7 +1343,7 @@ const makeWebsitePaper = async (tab) => {
         note = {Accessed ${accessDate}}
     }`;
     const bibtex = bibtexToString(bibtexToObject(bib));
-    return { author, bibtex, id, key, note, pdfLink, codeLink, title, venue, year };
+    return { author, bibtex, id, key, note, pdfLink, title, venue, year };
 };
 
 // -------------------------------

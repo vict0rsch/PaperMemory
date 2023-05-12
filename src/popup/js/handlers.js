@@ -21,6 +21,12 @@ const handleOpenItemCodeLink = (e) => {
     focusExistingOrCreateNewCodeTab(url);
 };
 
+const handleOpenItemWebsiteURL = (e) => {
+    const id = eventId(e);
+    const url = global.state.papers[id].pdfLink;
+    focusExistingOrCreateNewCodeTab(url);
+};
+
 const handleCopyMarkdownLink = async (e) => {
     const id = eventId(e);
     const prefs = global.state.prefs;

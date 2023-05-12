@@ -20,7 +20,17 @@ const getMemoryItemHTML = (paper, titles) => {
 
     let codeDiv = /*html*/ `
         <small class="memory-item-faded">
-            <span class="memory-code-link"> ${paper.codeLink || ""} </span>
+
+            <div class="memory-code-link"> ${
+                paper.codeLink.replace(/^https?:\/\//, "") || ""
+            } </div>
+            <div class="memory-website-url">
+                ${
+                    (paper.source == "website" &&
+                        paper.pdfLink.replace(/^https?:\/\//, "")) ||
+                    ""
+                }
+            </div>
         </small>
     `;
     let noteDiv = /*html*/ `<div class="memory-note-div memory-item-faded"></div>`;
@@ -33,7 +43,7 @@ const getMemoryItemHTML = (paper, titles) => {
         `;
     }
 
-    let openLocalDiv = global.state.files.hasOwnProperty(paper.id)
+    const openLocalDiv = global.state.files.hasOwnProperty(paper.id)
         ? /*html*/ `
             <div
                 class="memory-item-openLocal memory-item-svg-div"
@@ -43,18 +53,15 @@ const getMemoryItemHTML = (paper, titles) => {
             </div>`
         : ``;
 
-    const codeEditDiv =
+    const openLinkDiv =
         paper.source === "website"
             ? ""
             : /*html*/ `
-            <div class="flex-center-start">
-                <span class="label">Code:</span>
-                <input
-                    type="text"
-                    class="form-code-input"
-                    value="${paper.codeLink || ""}"
-                    placeholder="Add link"
-                />
+            <div
+                class="memory-item-link memory-item-svg-div"
+                title=${titles.pdfLink}
+            >
+                ${tablerSvg("external-link", "", ["memory-icon-svg"])}
             </div>`;
 
     return /*html*/ `
@@ -112,12 +119,7 @@ const getMemoryItemHTML = (paper, titles) => {
                     </small>
                 </div>
 
-                <div
-                    class="memory-item-link memory-item-svg-div"
-                    title=${titles.pdfLink}
-                >
-                    ${tablerSvg("external-link", "", ["memory-icon-svg"])}
-                </div>
+                ${openLinkDiv}
 
                 ${openLocalDiv}
 
@@ -149,7 +151,15 @@ const getMemoryItemHTML = (paper, titles) => {
             <div class="extended-item" style="display: none">
                 <div class="item-note">
                     <form class="form-note">
-                        ${codeEditDiv}
+                        <div class="flex-center-start">
+                            <span class="label">Code:</span>
+                            <input
+                                type="text"
+                                class="form-code-input"
+                                value="${paper.codeLink || ""}"
+                                placeholder="Add link"
+                            />
+                        </div>
                         <div class="flex-center-start">
                             <span class="label">Note:</span>
                             <textarea
@@ -187,20 +197,6 @@ const getPopupEditFormHTML = (paper) => {
     const checked = "";
     const displayId = getDisplayId(paper.id);
 
-    const codeEditDiv =
-        paper.source === "website"
-            ? ""
-            : /*html*/ `<div class="flex-center-start w-100 mr-0">
-                    <span class="label">Code:</span>
-                    <input
-                        id="popup-form-codeLink--${id}"
-                        type="text"
-                        class="form-code-input mt-0 noMemoryOnA"
-                        value="${paper.codeLink || ""}"
-                        placeholder="Add link"
-                    />
-                </div>`;
-
     return /*html*/ ` <div
         style="max-width: 100%; display: flex; justify-content: space-between; align-items: center; padding: 4px 16px;"
     >
@@ -222,12 +218,21 @@ const getPopupEditFormHTML = (paper) => {
                 id="popup-form-note--${id}"
                 style="width: 100%; display: flex; justify-content: space-between; align-items: center; margin-top: 8px; flex-direction: column;"
             >
-                ${codeEditDiv}
+                <div class="flex-center-start w-100 mr-0">
+                    <span class="label">Code:</span>
+                    <input
+                        id="popup-form-codeLink--${id}"
+                        type="text"
+                        class="form-code-input mt-0"
+                        value="${paper.codeLink || ""}"
+                        placeholder="Add code link"
+                    />
+                </div>
                 <div class="flex-center-start w-100 mr-0">
                     <span class="label">Note:</span>
                     <textarea
                         rows="2"
-                        class="noMemoryOnA popup-form-note-textarea"
+                        class="popup-form-note-textarea"
                         id="popup-form-note-textarea--${id}"
                         placeholder="Anything to note?"
                     >

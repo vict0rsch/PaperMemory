@@ -171,7 +171,7 @@ const paperToAbs = (paper) => {
             break;
 
         case "website":
-            abs = paper.codeLink;
+            abs = paper.pdfLink;
             break;
 
         default:
@@ -281,7 +281,7 @@ const paperToPDF = (paper) => {
             break;
 
         case "website":
-            abs = paper.codeLink;
+            abs = paper.pdfLink;
             break;
 
         default:

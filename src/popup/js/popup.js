@@ -294,8 +294,12 @@ const popupMain = async (url, is, manualTrigger = false, tab = null) => {
         setTextId("popup-paper-title", paper.title.replaceAll("\n", ""));
         setTextId("popup-authors", cutAuthors(paper.author, 350).replace(/({|})/g, ""));
         if (paper.codeLink) {
-            showId("popup-code-link");
             setTextId("popup-code-link", paper.codeLink.replace(/^https?:\/\//, ""));
+            showId("popup-code-link");
+        }
+        if (paper.source === "website") {
+            setTextId("popup-website-url", paper.pdfLink.replace(/^https?:\/\//, ""));
+            showId("popup-website-url");
         }
 
         // ----------------------------------
@@ -339,6 +343,12 @@ const popupMain = async (url, is, manualTrigger = false, tab = null) => {
             const codeLink = findEl(`popup-code-link`).textContent;
             if (codeLink) {
                 focusExistingOrCreateNewCodeTab(codeLink);
+            }
+        });
+        addListener(`popup-website-url`, "click", () => {
+            const url = findEl(`popup-website-url`).textContent;
+            if (url) {
+                focusExistingOrCreateNewCodeTab(url);
             }
         });
         addListener(`popup-memory-item-copy-link--${id}`, "click", () => {

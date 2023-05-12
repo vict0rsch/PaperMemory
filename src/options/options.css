@@ -150,7 +150,7 @@ input {
 #framework-select,
 #export-tags-format,
 #export-tags-operator {
-    border-radius: 4px;
+    border-radius: var(--round);
     padding: 6px 12px;
     background-color: var(--color);
 }
@@ -222,7 +222,7 @@ input {
 .paper-update-item {
     width: calc(100% - 2rem);
     border: 1px solid;
-    border-radius: 8px;
+    border-radius: var(--rounder);
     padding: 2rem;
     margin-left: 2rem;
     margin-bottom: 1rem;
