@@ -424,6 +424,13 @@ const validatePaper = (paper, log = true) => {
             type: "string",
             desc: "the paper's date of addition to the Memory",
             default: (p) => new Date().toJSON(),
+            validation: (p) => {
+                try {
+                    const d = new Date(p);
+                } catch (error) {
+                    return `Invalid addDate (could not parse as date: ${error})`;
+                }
+            },
         },
         author: {
             type: "string",
@@ -432,6 +439,13 @@ const validatePaper = (paper, log = true) => {
         bibtex: {
             type: "string",
             desc: "BibTex citation with new lines (`\n`)",
+            validation: (p) => {
+                try {
+                    bibtexToObject(p);
+                } catch (error) {
+                    return `Invalid BibTex: ${error}`;
+                }
+            },
         },
         code: {
             type: "object",
@@ -444,11 +458,23 @@ const validatePaper = (paper, log = true) => {
             type: "string",
             desc: "the paper's code link",
             default: (p) => "",
+            validation: (p) => {
+                try {
+                    parseUrl(p);
+                } catch (error) {
+                    return `Invalid codeLink (${p}): ${error}`;
+                }
+            },
         },
         count: {
             type: "number",
             desc: "the paper's number of visits",
             default: (p) => 1,
+            validation: (p) => {
+                if (p < 0) {
+                    return `Invalid count (${p}): must be >= 0`;
+                }
+            },
         },
         extras: {
             type: "object",
@@ -496,6 +522,12 @@ const validatePaper = (paper, log = true) => {
         source: {
             type: "string",
             desc: "the paper's source i.e. where it was added to the memory from",
+            validation: (p) => {
+                const sources = Object.keys(global.knownPaperPages);
+                if (sources.indexOf(p) < 0) {
+                    return `Unknown source ${p}`;
+                }
+            },
         },
         tags: {
             type: "array[string]",
@@ -511,10 +543,16 @@ const validatePaper = (paper, log = true) => {
         year: {
             type: "string",
             desc: "year of publication",
+            validation: (p) => {
+                // test regex: year has 4 digits exactly
+                if (!/^\d{4}$/.test(p)) {
+                    return `Invalid year (${p}): must be 4 digits exactly`;
+                }
+            },
         },
     };
 
-    let warns = [];
+    let warns = {};
 
     for (const key in expectedKeys) {
         if (!paper.hasOwnProperty(key)) {
@@ -527,7 +565,7 @@ const validatePaper = (paper, log = true) => {
                     defaultValue
                 )}' (${paper.id})`;
                 // stores the update message. If `log` is true, also log the message
-                warns.push(message);
+                warns[key].push(message);
                 log && console.warn(message);
             } else if (!expectedKeys[key].optional) {
                 // There's no default function for the missing attribute.
@@ -546,7 +584,7 @@ const validatePaper = (paper, log = true) => {
                     // wrong type: store (and log?) warning.
                     // This is not a deal breaker, just a warning.
                     message = `➤ ${key} should be of type ${expectedType} not ${keyType} (${paper.id})`;
-                    warns.push(message);
+                    warns[key].push(message);
                     log && console.warn(message);
                 }
             } else {
@@ -562,32 +600,37 @@ const validatePaper = (paper, log = true) => {
                             if (keyType !== subType) {
                                 // sub-type mismatch: warning
                                 message = `➤ ${key} should contain ${subType} not ${keyType} (${paper.id})`;
-                                warns.push(message);
+                                warns[key].push(message);
                                 log && console.warn(message);
                             }
                         }
                     } else {
                         // the attribute is not an array: warning
                         message = `${key} should be an array (${paper.id})`;
-                        warns.push(message);
+                        warns[key].push(message);
                         log && console.warn(message);
                     }
                 } else if (Object(paper[key]) !== paper[key]) {
                     // it should be an object
                     message = `${key} should be an object (${paper.id})`;
-                    warns.push(message);
+                    warns[key].push(message);
                     log && console.warn(message);
                 }
             }
         }
     }
 
-    // check the paper's source is valid
-    const sources = Object.keys(global.knownPaperPages);
-    if (sources.indexOf(paper.source) < 0) {
-        message = `Unknown source ${paper.source} (${paper.id})`;
-        warns.push(message);
-        console.warn(message);
+    for (const key in expectedKeys) {
+        if (expectedKeys[key].validation) {
+            const validation = expectedKeys[key].validation(paper[key]);
+            if (validation) {
+                if (!warns[key]) {
+                    warns[key] = [];
+                }
+                warns[key].push(validation);
+                log && console.warn(validation);
+            }
+        }
     }
 
     return { warnings: warns, paper: paper };
@@ -634,7 +677,11 @@ const prepareOverwriteData = async (data) => {
             if (!id.startsWith("__")) {
                 paperWarnings = validatePaper(papersToWrite[id]).warnings;
                 if (paperWarnings && paperWarnings.length > 0) {
-                    warning += "<br/>" + paperWarnings.join("<br/>");
+                    warning +=
+                        "<br/>" +
+                        Object.entries(paperWarnings)
+                            .map((k, v) => `<h5>${k}</h5>${v.join("<br/>")}`)
+                            .join("<br/>");
                 }
             }
         }
