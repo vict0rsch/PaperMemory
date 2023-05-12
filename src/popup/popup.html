@@ -882,16 +882,21 @@
 					<div class="form-group">
 						<label for="manual-website-author">Author:</label>
 						<input type="text" id="manual-website-author" name="author" class="form-control" required>
+						<p class="form-field-info">Author list, comma-separated, firstname first.</p>
 					</div>
 					<div class="form-group">
 						<label for="manual-website-year">Year:</label>
 						<input type="text" id="manual-website-year" name="year" class="form-control" required>
+						<p class="form-field-info">4 digits year of publication</p>
 					</div>
 					<div class="form-group">
 						<label for="manual-website-note">Note:</label>
-						<textarea type="text" id="manual-website-note" name="note" class="form-control" rows="5">
+						<textarea type="text" id="manual-website-note" name="note" class="form-control"
+							rows="5"></textarea>
+						<p class="form-field-info">Default, if any, is provided by the website.</p>
 					</div>
-					<button type="submit" class="btn btn-primary">Save</button>
+					<div id="manual-website-validation"></div>
+					<button class="btn btn-primary">Save</button>
 				</form>
 			</div>
 

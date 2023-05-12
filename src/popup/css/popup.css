@@ -819,8 +819,9 @@ button.changed {
 #manual-website-form .form-group {
     display: flex;
     align-items: center;
-    margin-bottom: 8px;
+    margin-bottom: 30px;
     width: 100%;
+    position: relative;
 }
 #manual-website-form label {
     width: 60px;
@@ -847,6 +848,19 @@ button.changed {
     width: 50%;
     margin-top: 8px;
     padding: 8px;
+}
+#manual-website-validation {
+    color: orangered;
+}
+.form-field-info {
+    position: absolute;
+    left: 60px;
+    margin: 0;
+    bottom: -15px;
+    display: block;
+    font-size: 0.56rem;
+    font-style: italic;
+    font-family: "Fira Code";
 }
 #ascii-art-div {
     font-family: "Fira Code", monospace;
