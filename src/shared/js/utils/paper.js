@@ -5,6 +5,7 @@
  * Also checks for local files in the PaperMemoryStore
  *
  * @param {string} url the url to check
+ * @param {boolean} noStored if true, don't check for local files
  * @returns {object} boolean map from sources.
  */
 const isPaper = async (url, noStored = false) => {
@@ -27,8 +28,8 @@ const isPaper = async (url, noStored = false) => {
     }
     // is the url a local file in the memory?
     is.localFile = isKnownLocalFile(url);
-    is.stored = noStored ? false : await findLocalFile(url);
-    is.parsedWebsite = global.state.papers[`Website_${urlToWebsiteId(url)}`];
+    is.stored = noStored ? false : (await findLocalFile(url)) ?? false;
+    is.parsedWebsite = global.state.papers[`Website_${urlToWebsiteId(url)}`] ?? false;
     return is;
 };
 
@@ -169,6 +170,10 @@ const paperToAbs = (paper) => {
             abs = pdf.replace("/articlepdf/", "/articlelanding/");
             break;
 
+        case "website":
+            abs = paper.codeLink;
+            break;
+
         default:
             abs = "https://xkcd.com/1969/";
             break;
@@ -273,6 +278,10 @@ const paperToPDF = (paper) => {
             break;
 
         case "rsc":
+            break;
+
+        case "website":
+            abs = paper.codeLink;
             break;
 
         default:
@@ -626,7 +635,11 @@ const addOrUpdatePaper = async ({
                 // new paper
                 store
                     ? logOk("Added '" + paper.title + "' to your Memory!")
-                    : warn("Discovered '" + paper.title + "' but did not store it.");
+                    : warn(
+                          "Discovered '" +
+                              paper.title +
+                              "' but did not store it (`store` is false)."
+                      );
                 log("paper: ", paper);
 
                 notifText = "Added to your Memory";
