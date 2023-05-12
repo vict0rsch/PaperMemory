@@ -233,12 +233,13 @@ const popupMain = async (url, is, manualTrigger = false, tab = null) => {
         }
     });
 
+    console.log("manualTrigger: ", manualTrigger);
     if (manualTrigger) {
         // manual trigger: do not re-create standard listeners
         // but update the current state and rebuild the Memory's HTML
         hideId("memory-switch");
         showId("memory-spinner");
-        await initSyncAndState();
+        await initSyncAndState({ forceInit: true });
         hideId("memory-spinner");
         showId("memory-switch");
         makeMemoryHTML();
