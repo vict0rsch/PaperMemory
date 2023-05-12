@@ -121,6 +121,34 @@ const setStandardPopupClicks = () => {
     addListener("memory-switch", "click", handleMemorySwitchClick);
 };
 
+const editManualWebsite = (parsedPaper) => {
+    showPopupModal("manual-website");
+    showId("website-trigger-btn");
+
+    const formKeys = ["author", "title", "year", "url", "note"];
+    for (const key of formKeys) {
+        findEl(`manual-website-${key}`).value = parsedPaper[key] ?? "";
+    }
+    setHTML("manual-website-url", parsedPaper.codeLink);
+    addListener("manual-website-submit", "click", async () => {
+        const title = val("manual-website-title");
+        const author = val("manual-website-author");
+        const year = val("manual-website-year");
+        const note = val("manual-website-note");
+        const updatedPaper = { ...parsedPaper, title, author, year, note };
+        const { warnings, paper } = validatePaper(updatedPaper);
+        if (warnings.length) {
+            // todo: handle warnings
+        }
+        global.state.papers[paper.id] = paper;
+        await setStorage("papers", global.state.papers);
+        hideId("website-trigger-btn");
+        hideId("notArxiv");
+        popupMain(tab.url, await isPaper(tab.url), true, null);
+        closeModal();
+    });
+};
+
 /**
  * Main function when opening the window:
  * + Display the appropriate html depending on whether the user is currently looking at a paper
