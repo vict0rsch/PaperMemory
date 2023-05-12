@@ -46,6 +46,10 @@ const getAndTrackPopupMenuChecks = (prefs, prefsCheckNames) => {
     }
 };
 
+/**
+ * Shows a modal with the given name
+ * @param {string} name The name of the modal to show
+ */
 const showPopupModal = (name) => {
     document.querySelectorAll(".popup-modal-content").forEach(hideId);
     showId(`modal-${name}-content`, "contents");
@@ -57,6 +61,9 @@ const showPopupModal = (name) => {
     });
 };
 
+/**
+ * Closes the popup modal
+ */
 const closePopupModal = () => {
     style("popup-modal-wrapper", "display", "none");
 };
@@ -123,28 +130,40 @@ const setStandardPopupClicks = () => {
     addListener("memory-switch", "click", handleMemorySwitchClick);
 };
 
+/**
+ * Displays the paper edit modal and setup validation
+ * @param {Object} parsedPaper the parsed paper from addOrUpdatePaper
+ * @param {string} url the url of the parsed paper
+ */
 const editManualWebsite = (parsedPaper, url) => {
+    // Open modal and form
     hideId("manual-website-validation");
     showPopupModal("manual-website");
     showId("website-trigger-btn");
 
+    // Set inputs to parsed values
     const formKeys = ["author", "title", "year", "url", "note"];
     for (const key of formKeys) {
         findEl(`manual-website-${key}`).value = parsedPaper[key] ?? "";
     }
     setHTML("manual-website-url", parsedPaper.codeLink);
+
+    // Set the form's submit event / user confirmation
     addListener("manual-website-form", "submit", async (e) => {
         e.preventDefault();
         hideId("manual-website-validation");
 
+        // Find input values
         const title = val("manual-website-title");
         const author = val("manual-website-author");
         const year = val("manual-website-year");
         const note = val("manual-website-note");
 
+        // check values are valid
         const updatedPaper = { ...parsedPaper, title, author, year, note };
         const { warnings, paper } = validatePaper(updatedPaper);
 
+        // Display warnings if any
         let validationHTML = "";
         for (const key of Object.keys(warnings)) {
             for (const warning of warnings[key]) {
@@ -152,10 +171,12 @@ const editManualWebsite = (parsedPaper, url) => {
             }
         }
         if (validationHTML.length > 0) {
+            // Display warinngs -> don't store paper yet
             validationHTML = `<ul>${validationHTML}</ul>`;
             setHTML("manual-website-validation", validationHTML);
             showId("manual-website-validation");
         } else {
+            // No warnings -> store paper
             global.state.papers[paper.id] = paper;
             await setStorage("papers", global.state.papers);
             hideId("website-trigger-btn");
@@ -338,6 +359,7 @@ const popupMain = async (url, is, manualTrigger = false, tab = null) => {
         // ------------------------------------
         const allowWebsiteParsing = tab && global.state.prefs.checkWebsiteParsing;
         if (allowWebsiteParsing) {
+            // Add website parsing button, loader and error div
             const websiteParsingHtml = /* html */ `
                 <div id="website-trigger-wrapper">
                     <div id="website-trigger-btn">Parse current website</div>
@@ -358,6 +380,7 @@ const popupMain = async (url, is, manualTrigger = false, tab = null) => {
                 showId("website-loader-container");
                 hideId("website-parsing-error");
                 let update;
+                // auto parse Paper
                 try {
                     update = await addOrUpdatePaper({
                         tab,
@@ -374,6 +397,7 @@ const popupMain = async (url, is, manualTrigger = false, tab = null) => {
                     );
                 }
                 hideId("website-loader-container");
+                // check with user before storing
                 update?.paper && editManualWebsite(update.paper, url);
             });
         }
