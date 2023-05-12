@@ -870,6 +870,30 @@
 				<p>If you want to keep the feature as is, let's go and discuss on <a
 						href="https://github.com/vict0rsch/PaperMemory/issues/109">Issue #109</a>!</p>
 			</div>
+			<div id="modal-manual-website-content" class="popup-modal-content">
+				<!-- A form to update the title, author, note and year of a parsed paper -->
+				<h3>Confirm or edit parsed data</h3>
+				<p id="manual-website-url"></p>
+				<form id="manual-website-form" class="form">
+					<div class="form-group">
+						<label for="manual-website-title">Title:</label>
+						<input type="text" id="manual-website-title" name="title" class="form-control" required>
+					</div>
+					<div class="form-group">
+						<label for="manual-website-author">Author:</label>
+						<input type="text" id="manual-website-author" name="author" class="form-control" required>
+					</div>
+					<div class="form-group">
+						<label for="manual-website-year">Year:</label>
+						<input type="text" id="manual-website-year" name="year" class="form-control" required>
+					</div>
+					<div class="form-group">
+						<label for="manual-website-note">Note:</label>
+						<textarea type="text" id="manual-website-note" name="note" class="form-control" rows="5">
+					</div>
+					<button type="submit" class="btn btn-primary">Save</button>
+				</form>
+			</div>
 
 		</div>
 
