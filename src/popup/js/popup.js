@@ -344,12 +344,15 @@ const popupMain = async (url, is, manualTrigger = false, tab = null) => {
             const codeLink = findEl(`popup-code-link`).textContent;
             if (codeLink) {
                 focusExistingOrCreateNewCodeTab(codeLink);
+                global.close && global.close();
             }
         });
-        addListener(`popup-website-url`, "click", () => {
+        addListener(`popup-website-url`, "click", (e) => {
             const url = findEl(`popup-website-url`).textContent;
+            console.log("url: ", url);
             if (url) {
                 focusExistingOrCreateNewCodeTab(url);
+                global.close && global.close();
             }
         });
         addListener(`popup-memory-item-copy-link--${id}`, "click", () => {
