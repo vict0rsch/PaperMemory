@@ -809,6 +809,45 @@ button.changed {
 #website-trigger-btn:hover {
     background-color: rgb(181, 46, 46);
 }
+
+#manual-website-form {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+#manual-website-form .form-group {
+    display: flex;
+    align-items: center;
+    margin-bottom: 8px;
+    width: 100%;
+}
+#manual-website-form label {
+    width: 60px;
+    /* font-size: 0.8rem; */
+    font-family: "Fira Code", monospace;
+}
+#manual-website-form input,
+#manual-website-form textarea {
+    width: calc(100% - 50px);
+    padding: 6px 8px;
+    border-radius: 4px;
+    border: 1px solid;
+    background: var(--ligthBackground) !important;
+    font-size: 0.8rem;
+}
+#manual-website-url {
+    max-width: 95%;
+    font-size: 0.7rem;
+    font-family: "Fira Code", monospace;
+    margin-bottom: 24px;
+    overflow-wrap: anywhere;
+}
+#manual-website-form button {
+    width: 50%;
+    margin-top: 8px;
+    padding: 8px;
+}
 #ascii-art-div {
     font-family: "Fira Code", monospace;
     font-size: 0.6rem;
