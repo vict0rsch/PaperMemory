@@ -287,6 +287,9 @@ const popupMain = async (url, is, manualTrigger = false, tab = null) => {
         if (prefs.checkDirectOpen) {
             dispatch("memory-switch", "click");
         }
+        // ------------------------------------
+        // -----  Manual Website Parsing  -----
+        // ------------------------------------
         const allowWebsiteParsing = tab && global.state.prefs.checkWebsiteParsing;
         console.log("allowWebsiteParsing: ", allowWebsiteParsing);
         if (allowWebsiteParsing) {
@@ -309,10 +312,24 @@ const popupMain = async (url, is, manualTrigger = false, tab = null) => {
                 hideId("website-trigger-btn");
                 showId("website-loader-container");
                 hideId("website-parsing-error");
-                await addOrUpdatePaper({ tab, url: tab.url });
+                let update;
+                try {
+                    update = await addOrUpdatePaper({
+                        tab,
+                        url: tab.url,
+                        store: false,
+                    });
+                } catch (error) {
+                    console.log("error: ", error);
+                    hideId("website-loader-container");
+                    showId("website-parsing-error");
+                    setHTML(
+                        "website-parsing-error",
+                        `<h3>Error</h3><div>${error}</div>`
+                    );
+                }
                 hideId("website-loader-container");
-                hideId("notArxiv");
-                popupMain(tab.url, await isPaper(tab.url), true, null);
+                update?.paper && editManualWebsite(update.paper);
             });
         }
     }
