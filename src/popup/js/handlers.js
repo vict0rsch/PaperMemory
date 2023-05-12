@@ -310,10 +310,8 @@ const handlePopupKeydown = (e) => {
         if (key === "a") {
             // a opens the arxiv memory
             const focused = queryAll(document, ":focus");
-            if (focused && focused.length) {
-                if (focused.some((el) => hasClass(el, "noMemoryOnA"))) {
-                    return;
-                }
+            if (focused.some((el) => ["INPUT", "TEXTAREA"].includes(el.tagName))) {
+                return;
             }
             global.state.papers && dispatch("memory-switch", "click");
         } else if (key === "Enter") {
