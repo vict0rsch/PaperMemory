@@ -177,6 +177,7 @@ global.knownPaperPages = {
         ),
         "link.springer.com/content/pdf/",
     ],
+    website: [], // special case, manual parsing of arbitrary websites
     wiley: [
         (url) =>
             Boolean(
