@@ -21,6 +21,12 @@ const handleOpenItemCodeLink = (e) => {
     focusExistingOrCreateNewCodeTab(url);
 };
 
+const handleOpenItemWebsiteURL = (e) => {
+    const id = eventId(e);
+    const url = global.state.papers[id].pdfLink;
+    focusExistingOrCreateNewCodeTab(url);
+};
+
 const handleCopyMarkdownLink = async (e) => {
     const id = eventId(e);
     const prefs = global.state.prefs;
@@ -310,10 +316,8 @@ const handlePopupKeydown = (e) => {
         if (key === "a") {
             // a opens the arxiv memory
             const focused = queryAll(document, ":focus");
-            if (focused && focused.length) {
-                if (focused.some((el) => hasClass(el, "noMemoryOnA"))) {
-                    return;
-                }
+            if (focused.some((el) => ["INPUT", "TEXTAREA"].includes(el.tagName))) {
+                return;
             }
             global.state.papers && dispatch("memory-switch", "click");
         } else if (key === "Enter") {

@@ -20,7 +20,17 @@ const getMemoryItemHTML = (paper, titles) => {
 
     let codeDiv = /*html*/ `
         <small class="memory-item-faded">
-            <span class="memory-code-link"> ${paper.codeLink || ""} </span>
+
+            <div class="memory-code-link"> ${
+                paper.codeLink.replace(/^https?:\/\//, "") || ""
+            } </div>
+            <div class="memory-website-url">
+                ${
+                    (paper.source == "website" &&
+                        paper.pdfLink.replace(/^https?:\/\//, "")) ||
+                    ""
+                }
+            </div>
         </small>
     `;
     let noteDiv = /*html*/ `<div class="memory-note-div memory-item-faded"></div>`;
@@ -33,7 +43,7 @@ const getMemoryItemHTML = (paper, titles) => {
         `;
     }
 
-    let openLocalDiv = global.state.files.hasOwnProperty(paper.id)
+    const openLocalDiv = global.state.files.hasOwnProperty(paper.id)
         ? /*html*/ `
             <div
                 class="memory-item-openLocal memory-item-svg-div"
@@ -42,6 +52,17 @@ const getMemoryItemHTML = (paper, titles) => {
                 ${tablerSvg("vocabulary", "", ["memory-icon-svg"])}
             </div>`
         : ``;
+
+    const openLinkDiv =
+        paper.source === "website"
+            ? ""
+            : /*html*/ `
+            <div
+                class="memory-item-link memory-item-svg-div"
+                title=${titles.pdfLink}
+            >
+                ${tablerSvg("external-link", "", ["memory-icon-svg"])}
+            </div>`;
 
     return /*html*/ `
         <div
@@ -98,12 +119,7 @@ const getMemoryItemHTML = (paper, titles) => {
                     </small>
                 </div>
 
-                <div
-                    class="memory-item-link memory-item-svg-div"
-                    title=${titles.pdfLink}
-                >
-                    ${tablerSvg("external-link", "", ["memory-icon-svg"])}
-                </div>
+                ${openLinkDiv}
 
                 ${openLocalDiv}
 
@@ -207,16 +223,16 @@ const getPopupEditFormHTML = (paper) => {
                     <input
                         id="popup-form-codeLink--${id}"
                         type="text"
-                        class="form-code-input mt-0 noMemoryOnA"
+                        class="form-code-input mt-0"
                         value="${paper.codeLink || ""}"
-                        placeholder="Add link"
+                        placeholder="Add code link"
                     />
                 </div>
                 <div class="flex-center-start w-100 mr-0">
                     <span class="label">Note:</span>
                     <textarea
                         rows="2"
-                        class="noMemoryOnA popup-form-note-textarea"
+                        class="popup-form-note-textarea"
                         id="popup-form-note-textarea--${id}"
                         placeholder="Anything to note?"
                     >
@@ -295,7 +311,8 @@ const getPopupPaperIconsHTML = (paper, currentUrl, is) => {
     }
 
     const download =
-        global.state.prefs.checkStore && (is.localFile || is.stored)
+        global.state.prefs.checkStore &&
+        (is.localFile || is.stored || global.state.files.hasOwnProperty(paper.id))
             ? /*html*/ `
         <div
             tabindex="0"
@@ -316,15 +333,20 @@ const getPopupPaperIconsHTML = (paper, currentUrl, is) => {
             ${tablerSvg("file-download", "", ["popup-click-svg"])}
         </div>
     `;
-    return /*html*/ `${scirate}
-        <div
+    const paperLink =
+        paper.source === "website"
+            ? ""
+            : /*html*/ `<div
             tabindex="0"
             class="memory-item-svg-div"
             id="popup-memory-item-link--${id}"
             title="Open Paper ${name} Page"
         >
             ${tablerSvg("external-link", "", ["popup-click-svg"])}
-        </div>
+        </div>`;
+
+    return /*html*/ `${scirate}
+        ${paperLink}
         <div
             tabindex="0"
             class="memory-item-svg-div"

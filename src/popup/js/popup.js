@@ -46,6 +46,10 @@ const getAndTrackPopupMenuChecks = (prefs, prefsCheckNames) => {
     }
 };
 
+/**
+ * Shows a modal with the given name
+ * @param {string} name The name of the modal to show
+ */
 const showPopupModal = (name) => {
     document.querySelectorAll(".popup-modal-content").forEach(hideId);
     showId(`modal-${name}-content`, "contents");
@@ -55,6 +59,13 @@ const showPopupModal = (name) => {
             chrome.tabs.create({ url: el.getAttribute("href") });
         });
     });
+};
+
+/**
+ * Closes the popup modal
+ */
+const closePopupModal = () => {
+    style("popup-modal-wrapper", "display", "none");
 };
 
 /**
@@ -103,14 +114,12 @@ const setStandardPopupClicks = () => {
             });
         }
     });
-    addListener("close-popup-modal", "click", () => {
-        style("popup-modal-wrapper", "display", "none");
-    });
+    addListener("close-popup-modal", "click", closePopupModal);
 
     // When the user clicks anywhere outside of the modal, close it
     addListener(window, "click", (event) => {
         if (event.target === findEl("popup-modal-wrapper")) {
-            style("popup-modal-wrapper", "display", "none");
+            closePopupModal();
         }
     });
 
@@ -122,12 +131,88 @@ const setStandardPopupClicks = () => {
 };
 
 /**
+ * Displays the paper edit modal and setup validation
+ * @param {Object} parsedPaper the parsed paper from addOrUpdatePaper
+ * @param {string} url the url of the parsed paper
+ */
+const editManualWebsite = (parsedPaper, url) => {
+    // Open modal and form
+    hideId("manual-website-validation");
+    showPopupModal("manual-website");
+    showId("website-trigger-btn");
+
+    // Set inputs to parsed values
+    const formKeys = ["author", "title", "year", "url", "note"];
+    for (const key of formKeys) {
+        findEl(`manual-website-${key}`).value = parsedPaper[key] ?? "";
+    }
+    setHTML("manual-website-url", parsedPaper.codeLink);
+
+    // Set the form's submit event / user confirmation
+    addListener("manual-website-form", "submit", async (e) => {
+        e.preventDefault();
+        hideId("manual-website-validation");
+
+        // Find input values
+        const title = val("manual-website-title");
+        let author = val("manual-website-author");
+        const year = val("manual-website-year");
+        const note = val("manual-website-note");
+
+        if (author.includes(",")) {
+            author = author
+                .split(",")
+                .map((a) => a.trim())
+                .join(" and ");
+        }
+
+        // check values are valid
+        let updatedPaper = { ...parsedPaper, title, author, year, note };
+        const citationKey = `${miniHash(
+            author.split(" and ")[0].split(" ").last()
+        )}${year}${firstNonStopLowercase(title)}`;
+        bibtexToObject(updatedPaper.bibtex);
+        updatedPaper.bibtex = bibtexToString({
+            ...bibtexToObject(updatedPaper.bibtex),
+            author,
+            year,
+            title,
+            citationKey,
+        });
+        const { warnings, paper } = validatePaper(updatedPaper);
+
+        // Display warnings if any
+        let validationHTML = "";
+        for (const key of Object.keys(warnings)) {
+            for (const warning of warnings[key]) {
+                validationHTML += `<li>${warning}</li>`;
+            }
+        }
+        if (validationHTML.length > 0) {
+            // Display warinngs -> don't store paper yet
+            validationHTML = `<ul>${validationHTML}</ul>`;
+            setHTML("manual-website-validation", validationHTML);
+            showId("manual-website-validation");
+        } else {
+            // No warnings -> store paper
+            global.state.papers[paper.id] = paper;
+            await setStorage("papers", global.state.papers);
+            hideId("website-trigger-btn");
+            hideId("notArxiv");
+            popupMain(url, await isPaper(url), true, null);
+            closePopupModal();
+        }
+        return false;
+    });
+};
+
+/**
  * Main function when opening the window:
  * + Display the appropriate html depending on whether the user is currently looking at a paper
  * + Add event listeners (clicks and keyboard)
  * @param {str} url Currently focused and active tab's url.
  */
-const popupMain = async (url, is, manualTrigger = false) => {
+const popupMain = async (url, is, manualTrigger = false, tab = null) => {
     console.log(navigator.userAgent);
     if (navigator.userAgent === "PuppeteerAgent") {
         info("Is puppet");
@@ -148,12 +233,13 @@ const popupMain = async (url, is, manualTrigger = false) => {
         }
     });
 
+    console.log("manualTrigger: ", manualTrigger);
     if (manualTrigger) {
         // manual trigger: do not re-create standard listeners
         // but update the current state and rebuild the Memory's HTML
         hideId("memory-switch");
         showId("memory-spinner");
-        await initSyncAndState();
+        await initSyncAndState({ forceInit: true });
         hideId("memory-spinner");
         showId("memory-switch");
         makeMemoryHTML();
@@ -209,8 +295,12 @@ const popupMain = async (url, is, manualTrigger = false) => {
         setTextId("popup-paper-title", paper.title.replaceAll("\n", ""));
         setTextId("popup-authors", cutAuthors(paper.author, 350).replace(/({|})/g, ""));
         if (paper.codeLink) {
-            showId("popup-code-link");
             setTextId("popup-code-link", paper.codeLink.replace(/^https?:\/\//, ""));
+            showId("popup-code-link");
+        }
+        if (paper.source === "website") {
+            setTextId("popup-website-url", paper.pdfLink.replace(/^https?:\/\//, ""));
+            showId("popup-website-url");
         }
 
         // ----------------------------------
@@ -256,6 +346,12 @@ const popupMain = async (url, is, manualTrigger = false) => {
                 focusExistingOrCreateNewCodeTab(codeLink);
             }
         });
+        addListener(`popup-website-url`, "click", () => {
+            const url = findEl(`popup-website-url`).textContent;
+            if (url) {
+                focusExistingOrCreateNewCodeTab(url);
+            }
+        });
         addListener(`popup-memory-item-copy-link--${id}`, "click", () => {
             const link = prefs.checkPreferPdf ? paperToPDF(paper) : paperToAbs(paper);
             const text = prefs.checkPreferPdf ? "PDF" : "Abstract";
@@ -273,7 +369,7 @@ const popupMain = async (url, is, manualTrigger = false) => {
             copyAndConfirmMemoryItem(id, bibtex, "Bibtex citation copied!", true);
         });
         addListener(`popup-memory-item-openLocal--${id}`, "click", async () => {
-            const file = await findLocalFile(paper);
+            const file = (await findLocalFile(paper)) || global.state.files[paper.id];
             if (file) {
                 chrome.downloads.open(file.id);
             } else {
@@ -286,6 +382,53 @@ const popupMain = async (url, is, manualTrigger = false) => {
     } else {
         if (prefs.checkDirectOpen) {
             dispatch("memory-switch", "click");
+        }
+        // ------------------------------------
+        // -----  Manual Website Parsing  -----
+        // ------------------------------------
+        const allowWebsiteParsing = tab && global.state.prefs.checkWebsiteParsing;
+        if (allowWebsiteParsing) {
+            // Add website parsing button, loader and error div
+            const websiteParsingHtml = /* html */ `
+                <div id="website-trigger-wrapper">
+                    <div id="website-trigger-btn">Parse current website</div>
+                    <div id="website-loader-container" class="pm-container" style='display: none;'>
+                        <div class="sk-folding-cube">
+                            <div class="sk-cube1 sk-cube"></div>
+                            <div class="sk-cube2 sk-cube"></div>
+                            <div class="sk-cube4 sk-cube"></div>
+                            <div class="sk-cube3 sk-cube"></div>
+                        </div>
+                    </div>
+                    <div id="website-parsing-error"></div>
+                </div>`;
+            setHTML("webite-parsing-root", websiteParsingHtml);
+            showId("webite-parsing-root");
+            addListener("website-trigger-btn", "click", async () => {
+                hideId("website-trigger-btn");
+                showId("website-loader-container");
+                hideId("website-parsing-error");
+                let update;
+                // auto parse Paper
+                try {
+                    update = await addOrUpdatePaper({
+                        tab,
+                        url: tab.url,
+                        store: false,
+                    });
+                } catch (error) {
+                    console.log("error: ", error);
+                    hideId("website-loader-container");
+                    showId("website-parsing-error");
+                    setHTML(
+                        "website-parsing-error",
+                        `<h3>Error</h3><div>${error}</div>`
+                    );
+                }
+                hideId("website-loader-container");
+                // check with user before storing
+                update?.paper && editManualWebsite(update.paper, url);
+            });
         }
     }
 };
@@ -320,7 +463,7 @@ if (window.location.href.includes("popup")) {
         hideId("memory-spinner");
         showId("memory-switch");
         makeMemoryHTML();
-        popupMain(url, is);
+        popupMain(url, is, false, tabs[0]);
         if (navigator.userAgent.search("Firefox") > -1) {
             hideId("overwrite-container");
         }

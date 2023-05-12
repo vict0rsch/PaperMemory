@@ -675,6 +675,8 @@ const displayMemoryTable = (pagination = 0) => {
     addEventToClass(".memory-item-link", "click", handleOpenItemLink);
     // Open code page
     addEventToClass(".memory-code-link", "click", handleOpenItemCodeLink);
+    // Open Website URL
+    addEventToClass(".memory-website-url", "click", handleOpenItemWebsiteURL);
     // Copy markdown link
     addEventToClass(".memory-item-md", "click", handleCopyMarkdownLink);
     // Copy bibtex citation

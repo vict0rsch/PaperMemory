@@ -20,7 +20,15 @@
 
 	<link rel="stylesheet" type="text/css" href="../css/select2.min.css">
 	<link rel="stylesheet" type="text/css" href="../../shared/css/bootstrap-utilities.min.css">
+
+	<!-- @if DEV -->
+	<link rel="stylesheet" type="text/css" href="../../shared/css/vars.css">
+	<link rel="stylesheet" type="text/css" href="../../popup/css/options.css">
+	<link rel="stylesheet" type="text/css" href="../../popup/css/popup.css">
+	<link rel="stylesheet" type="text/css" href="../../shared/css/loader.css">
+	<!-- @else -->
 	<link rel="stylesheet" type="text/css" href="popup.min.css">
+	<!-- @endif -->
 
 	<script defer src="../../shared/min/jquery.min.js"></script>
 	<script defer src="../js/select2.min.js"></script>
@@ -83,6 +91,8 @@
 					class="code-font">User
 					Guide</button></p>
 
+			<div id="webite-parsing-root" style="display: none; width: 100%;"> </div>
+
 			<div id="whats-new-container">
 				<div class="d-relative">
 					<svg width="34" height="34" viewBox="0 0 24 24" stroke-width="1" fill="none" stroke-linecap="round"
@@ -104,6 +114,7 @@
 			<p id="popup-authors"></p>
 
 			<a style="display: none" class="mt-0" id="popup-code-link"></a>
+			<a style="display: none" class="mt-0" id="popup-website-url"></a>
 
 			<div style="width: 75%; margin-bottom: 28px; position: relative;">
 				<div style="display: flex; justify-content: space-evenly; align-items: center;" id="popup-copy-icons">
@@ -197,6 +208,10 @@
 			<input class="switch" type="checkbox" id="checkStore" name="checkStore" value="checkStore">
 			<label for="checkStore">Download pdfs to PaperMemory's folder in your Downloads to be able to open them
 				instead of re-downloading. More about this in the options page (see below)</label><br><br>
+			<input class="switch" type="checkbox" id="checkWebsiteParsing" name="checkWebsiteParsing"
+				value="checkWebsiteParsing">
+			<label for="checkWebsiteParsing">Enable parsing of arbitrary website by adding a button in the popup. This
+				is still very experimental, see #146 on Github.</label><br><br>
 		</div>
 
 		<h3 class="mt-4">⋗ Advanced</h3>
@@ -855,6 +870,35 @@
 				<p>If you're happy with the vision for this feature, you don't have anything to do about it.</p>
 				<p>If you want to keep the feature as is, let's go and discuss on <a
 						href="https://github.com/vict0rsch/PaperMemory/issues/109">Issue #109</a>!</p>
+			</div>
+			<div id="modal-manual-website-content" class="popup-modal-content">
+				<!-- A form to update the title, author, note and year of a parsed paper -->
+				<h3>Confirm or edit parsed data</h3>
+				<p id="manual-website-url"></p>
+				<form id="manual-website-form" class="form">
+					<div class="form-group">
+						<label for="manual-website-title">Title:</label>
+						<input type="text" id="manual-website-title" name="title" class="form-control" required>
+					</div>
+					<div class="form-group">
+						<label for="manual-website-author">Author:</label>
+						<input type="text" id="manual-website-author" name="author" class="form-control" required>
+						<p class="form-field-info">Author list, comma-separated, firstname first.</p>
+					</div>
+					<div class="form-group">
+						<label for="manual-website-year">Year:</label>
+						<input type="text" id="manual-website-year" name="year" class="form-control" required>
+						<p class="form-field-info">4 digits year of publication</p>
+					</div>
+					<div class="form-group">
+						<label for="manual-website-note">Note:</label>
+						<textarea type="text" id="manual-website-note" name="note" class="form-control"
+							rows="5"></textarea>
+						<p class="form-field-info">Default, if any, is provided by the website.</p>
+					</div>
+					<div id="manual-website-validation"></div>
+					<button class="btn btn-primary">Save</button>
+				</form>
 			</div>
 
 		</div>
