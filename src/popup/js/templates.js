@@ -295,7 +295,8 @@ const getPopupPaperIconsHTML = (paper, currentUrl, is) => {
     }
 
     const download =
-        global.state.prefs.checkStore && (is.localFile || is.stored)
+        global.state.prefs.checkStore &&
+        (is.localFile || is.stored || global.state.files.hasOwnProperty(paper.id))
             ? /*html*/ `
         <div
             tabindex="0"
@@ -316,15 +317,20 @@ const getPopupPaperIconsHTML = (paper, currentUrl, is) => {
             ${tablerSvg("file-download", "", ["popup-click-svg"])}
         </div>
     `;
-    return /*html*/ `${scirate}
-        <div
+    const paperLink =
+        paper.source === "website"
+            ? ""
+            : /*html*/ `<div
             tabindex="0"
             class="memory-item-svg-div"
             id="popup-memory-item-link--${id}"
             title="Open Paper ${name} Page"
         >
             ${tablerSvg("external-link", "", ["popup-click-svg"])}
-        </div>
+        </div>`;
+
+    return /*html*/ `${scirate}
+        ${paperLink}
         <div
             tabindex="0"
             class="memory-item-svg-div"
