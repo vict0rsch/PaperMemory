@@ -284,11 +284,7 @@ const extractDataFromDCMetaTags = (dom) => {
 };
 
 const makeArxivPaper = async (url) => {
-    const arxivId = noParamUrl(url)
-        .replace("/abs/", "/pdf/")
-        .split("/pdf/")[1]
-        .replace(".pdf", "")
-        .split("v")[0];
+    const arxivId = arxivIdFromURL(url)
     const response = await fetchArxivXML(arxivId);
     const xmlData = await response.text();
     var doc = new DOMParser().parseFromString(xmlData.replaceAll("\n", ""), "text/xml");

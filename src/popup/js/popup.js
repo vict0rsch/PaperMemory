@@ -311,6 +311,11 @@ const popupMain = async (url, is, manualTrigger = false, tab = null) => {
         setHTML("popup-memory-edit", getPopupEditFormHTML(paper));
         setHTML("popup-copy-icons", getPopupPaperIconsHTML(paper, url, is));
         findEl(`checkFavorite--${id}`).checked = paper.favorite;
+        let extraDivWidth = 0;
+        for (const p of ["checkScirate", "checkVanity", "checkAr5iv"]) {
+            if (prefs[p]) extraDivWidth += 5;
+        }
+        style("popup-icons-container", "width", `${75 + extraDivWidth}%`);
 
         // --------------------------
         // -----  Paper  edits  -----
@@ -330,9 +335,21 @@ const popupMain = async (url, is, manualTrigger = false, tab = null) => {
         // -----  SVG clicks  -----
         // ------------------------
         addListener(`popup-memory-item-scirate--${id}`, "click", () => {
-            const arxivId = paper.id.split("-").last().replace("_", "/");
+            const arxivId = arxivIdFromPaperID(paper.id);
             const scirateURL = `https://scirate.com/arxiv/${arxivId}`;
             chrome.tabs.update({ url: scirateURL });
+            window.close();
+        });
+        addListener(`popup-memory-item-vanity--${id}`, "click", () => {
+            const arxivId = arxivIdFromPaperID(paper.id);
+            const vanityURL = `https://www.arxiv-vanity.com/papers/${arxivId}`;
+            chrome.tabs.update({ url: vanityURL });
+            window.close();
+        });
+        addListener(`popup-memory-item-ar5iv--${id}`, "click", () => {
+            const arxivId = arxivIdFromPaperID(paper.id);
+            const ar5ivURL = `https://ar5iv.labs.arxiv.org/html/${arxivId}`;
+            chrome.tabs.update({ url: ar5ivURL });
             window.close();
         });
         addListener(`popup-memory-item-link--${id}`, "click", () => {
@@ -361,8 +378,6 @@ const popupMain = async (url, is, manualTrigger = false, tab = null) => {
             copyAndConfirmMemoryItem(id, link, `${text} link copied!`, true);
         });
         addListener(`popup-memory-item-md--${id}`, "click", () => {
-            const prefs = global.state.prefs;
-            console.log("state.prefs: ", state.prefs);
             const md = makeMdLink(paper, prefs);
             const text = prefs.checkPreferPdf ? "PDF" : "Abstract";
             copyAndConfirmMemoryItem(id, md, `Markdown link to ${text} copied!`, true);

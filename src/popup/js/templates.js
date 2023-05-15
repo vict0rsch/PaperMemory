@@ -64,6 +64,39 @@ const getMemoryItemHTML = (paper, titles) => {
                 ${tablerSvg("external-link", "", ["memory-icon-svg"])}
             </div>`;
 
+    let scirate = "";
+    if (global.state.prefs.checkScirate && paper.source === "arxiv") {
+        scirate = /*html*/ `
+        <div
+            class="memory-item-scirate memory-item-svg-div"
+            title="Open on SciRate"
+        >
+            ${tablerSvg("messages", "", ["memory-icon-svg"])}
+        </div>`;
+    }
+
+    let vanity = "";
+    if (global.state.prefs.checkVanity && paper.source === "arxiv") {
+        vanity = /*html*/ `
+        <div
+            class="memory-item-vanity memory-item-svg-div"
+            title="Open on Vanity"
+        >
+            ${tablerSvg("vanity", "", ["memory-icon-svg"])}
+        </div>`;
+    }
+
+    let ar5iv = "";
+    if (global.state.prefs.checkAr5iv && paper.source === "arxiv") {
+        ar5iv = /*html*/ `
+        <div
+            class="memory-item-ar5iv memory-item-svg-div"
+            title="Open on ar5iv"
+        >
+            ${tablerSvg("ar5iv", "", ["memory-icon-svg"])}
+        </div>`;
+    }
+
     return /*html*/ `
         <div
             class="memory-container ${favoriteClass}"
@@ -119,9 +152,12 @@ const getMemoryItemHTML = (paper, titles) => {
                     </small>
                 </div>
 
-                ${openLinkDiv}
-
                 ${openLocalDiv}
+                ${openLinkDiv}
+                ${scirate}
+                ${vanity}
+                ${ar5iv}
+
 
                 <div
                     class="memory-item-copy-link memory-item-svg-div"
@@ -310,6 +346,32 @@ const getPopupPaperIconsHTML = (paper, currentUrl, is) => {
         </div>`;
     }
 
+    let vanity = "";
+    if (global.state.prefs.checkVanity && paper.source === "arxiv") {
+        vanity = /*html*/ `
+        <div
+            tabindex="0"
+            class="memory-item-svg-div"
+            id="popup-memory-item-vanity--${id}"
+            title="Open on Vanity"
+        >
+            ${tablerSvg("vanity", "", ["popup-click-svg"])}
+        </div>`;
+    }
+
+    let ar5iv = "";
+    if (global.state.prefs.checkAr5iv && paper.source === "arxiv") {
+        ar5iv = /*html*/ `
+        <div
+            tabindex="0"
+            class="memory-item-svg-div"
+            id="popup-memory-item-ar5iv--${id}"
+            title="Open on ar5iv"
+        >
+            ${tablerSvg("ar5iv", "", ["popup-click-svg"])}
+        </div>`;
+    }
+
     const download =
         global.state.prefs.checkStore &&
         (is.localFile || is.stored || global.state.files.hasOwnProperty(paper.id))
@@ -333,6 +395,7 @@ const getPopupPaperIconsHTML = (paper, currentUrl, is) => {
             ${tablerSvg("file-download", "", ["popup-click-svg"])}
         </div>
     `;
+
     const paperLink =
         paper.source === "website"
             ? ""
@@ -345,7 +408,7 @@ const getPopupPaperIconsHTML = (paper, currentUrl, is) => {
             ${tablerSvg("external-link", "", ["popup-click-svg"])}
         </div>`;
 
-    return /*html*/ `${scirate}
+    return /*html*/ `${scirate} ${vanity} ${ar5iv}
         ${paperLink}
         <div
             tabindex="0"

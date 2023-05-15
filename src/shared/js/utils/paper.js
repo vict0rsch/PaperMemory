@@ -737,12 +737,7 @@ const parseIdFromUrl = async (url, tab = null) => {
     const papers = Object.values(cleanPapers(global.state.papers));
 
     if (is.arxiv) {
-        let arxivId = noParamUrl(url)
-            .replace("/abs/", "/pdf/")
-            .split("/pdf/")[1]
-            .replace(".pdf", "")
-            .split("v")[0]
-            .replace("/", "_");
+        let arxivId = arxivIdFromURL(url);
         idForUrl = `Arxiv-${arxivId}`;
 
         const existingIds = Object.values(global.state.titleHashToIds).find((ids) =>
