@@ -142,7 +142,7 @@ const editManualWebsite = (parsedPaper, url) => {
     showId("website-trigger-btn");
 
     // Set inputs to parsed values
-    const formKeys = ["author", "title", "year", "url", "note"];
+    const formKeys = ["author", "title", "year", "url", "note", "pdfLink"];
     for (const key of formKeys) {
         findEl(`manual-website-${key}`).value = parsedPaper[key] ?? "";
     }
@@ -158,6 +158,7 @@ const editManualWebsite = (parsedPaper, url) => {
         let author = val("manual-website-author");
         const year = val("manual-website-year");
         const note = val("manual-website-note");
+        const pdfLink = val("manual-website-pdfLink");
 
         if (author.includes(",")) {
             author = author
@@ -167,17 +168,17 @@ const editManualWebsite = (parsedPaper, url) => {
         }
 
         // check values are valid
-        let updatedPaper = { ...parsedPaper, title, author, year, note };
+        let updatedPaper = { ...parsedPaper, title, author, year, note, pdfLink };
         const citationKey = `${miniHash(
             author.split(" and ")[0].split(" ").last()
         )}${year}${firstNonStopLowercase(title)}`;
-        bibtexToObject(updatedPaper.bibtex);
         updatedPaper.bibtex = bibtexToString({
             ...bibtexToObject(updatedPaper.bibtex),
             author,
             year,
             title,
             citationKey,
+            url: pdfLink,
         });
         const { warnings, paper } = validatePaper(updatedPaper);
 
