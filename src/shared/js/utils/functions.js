@@ -793,6 +793,8 @@ const arxivIdFromURL = (url) =>
         ? url.split("arxiv-vanity.com/papers/")[1].match(/\d+\.\d+/)[0]
         : url.includes("ar5iv.labs.arxiv.org/html/")
         ? url.split("ar5iv.labs.arxiv.org/html/")[1].match(/\d+\.\d+/)[0]
+        : url.includes("huggingface.co/papers/")
+        ? url.split("huggingface.co/papers/")[1].match(/\d+\.\d+/)[0]
         : noParamUrl(url)
               .replace("/abs/", "/pdf/")
               .split("/pdf/")[1]
