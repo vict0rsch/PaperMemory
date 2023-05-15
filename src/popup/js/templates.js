@@ -97,6 +97,17 @@ const getMemoryItemHTML = (paper, titles) => {
         </div>`;
     }
 
+    let huggingface = "";
+    if (global.state.prefs.checkHuggingface && paper.source === "arxiv") {
+        huggingface = /*html*/ `
+        <div
+            class="memory-item-huggingface memory-item-svg-div"
+            title="Open on HuggingFace Papers"
+        >
+            ${tablerSvg("huggingface", "", ["memory-icon-svg"])}
+        </div>`;
+    }
+
     return /*html*/ `
         <div
             class="memory-container ${favoriteClass}"
@@ -154,6 +165,7 @@ const getMemoryItemHTML = (paper, titles) => {
 
                 ${openLocalDiv}
                 ${openLinkDiv}
+                ${huggingface}
                 ${scirate}
                 ${vanity}
                 ${ar5iv}
@@ -372,6 +384,19 @@ const getPopupPaperIconsHTML = (paper, currentUrl, is) => {
         </div>`;
     }
 
+    let huggingface = "";
+    if (global.state.prefs.checkHuggingface && paper.source === "arxiv") {
+        huggingface = /*html*/ `
+        <div
+            tabindex="0"
+            class="memory-item-svg-div"
+            id="popup-memory-item-huggingface--${id}"
+            title="Open on HuggingFace Papers"
+        >
+            ${tablerSvg("huggingface", "", ["popup-click-svg"])}
+        </div>`;
+    }
+
     const download =
         global.state.prefs.checkStore &&
         (is.localFile || is.stored || global.state.files.hasOwnProperty(paper.id))
@@ -408,8 +433,11 @@ const getPopupPaperIconsHTML = (paper, currentUrl, is) => {
             ${tablerSvg("external-link", "", ["popup-click-svg"])}
         </div>`;
 
-    return /*html*/ `${scirate} ${vanity} ${ar5iv}
+    return /*html*/ `
         ${paperLink}
+        ${huggingface}
+        ${scirate}
+        ${vanity} ${ar5iv}
         <div
             tabindex="0"
             class="memory-item-svg-div"
