@@ -753,10 +753,8 @@ const noParamUrl = (url) => {
 
 const urlToWebsiteId = (url) =>
     miniHash(
-        noParamUrl(url)
-            .replace("https://", "")
-            .replace("http://", "")
-            .replace("www.", "")
+        // noParamUrl(url)
+        url.replace("https://", "").replace("http://", "").replace("www.", "")
     );
 
 const silentPromiseTimeout = (prom, time = 5000) => {

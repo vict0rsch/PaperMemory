@@ -178,36 +178,42 @@ const copyAndConfirmMemoryItem = (id, textToCopy, feedbackText, isPopup) => {
  * tab matches the codeLink, a new tab is created
  * @param {string} codeLink URL of the code repository to open
  */
-const focusExistingOrCreateNewCodeTab = (codeLink) => {
-    codeLink = codeLink.replace("http://", "https://");
-    if (!codeLink.startsWith("https://")) {
-        codeLink = "https://" + codeLink;
-    }
-    const { origin } = new URL(codeLink);
-    chrome.tabs.query({ url: `${origin}/*` }, (tabs) => {
-        for (const tab of tabs) {
-            if (tab.url.includes(codeLink)) {
-                const tabUpdateProperties = { active: true };
-                const windowUpdateProperties = { focused: true };
-                chrome.windows.getCurrent((w) => {
-                    if (w.id !== tab.windowId) {
-                        chrome.windows.update(
-                            tab.windowId,
-                            windowUpdateProperties,
-                            () => {
-                                chrome.tabs.update(tab.id, tabUpdateProperties);
-                            }
-                        );
-                    } else {
-                        chrome.tabs.update(tab.id, tabUpdateProperties);
-                    }
-                });
-                return;
-            }
+const focusExistingOrCreateNewCodeTab = (codeLink) =>
+    new Promise((resolve) => {
+        codeLink = codeLink.replace("http://", "https://");
+        if (!codeLink.startsWith("https://")) {
+            codeLink = "https://" + codeLink;
         }
-        chrome.tabs.create({ url: codeLink });
+        const { origin } = new URL(codeLink);
+        chrome.tabs.query({ url: `${origin}/*` }, (tabs) => {
+            for (const tab of tabs) {
+                if (tab.url.includes(codeLink)) {
+                    const tabUpdateProperties = { active: true };
+                    const windowUpdateProperties = { focused: true };
+                    chrome.windows.getCurrent((w) => {
+                        if (w.id !== tab.windowId) {
+                            chrome.windows.update(
+                                tab.windowId,
+                                windowUpdateProperties,
+                                () => {
+                                    chrome.tabs.update(tab.id, tabUpdateProperties);
+                                    resolve();
+                                }
+                            );
+                        } else {
+                            chrome.tabs.update(tab.id, tabUpdateProperties);
+                            resolve();
+                        }
+                    });
+                    resolve();
+                    return;
+                }
+            }
+            chrome.tabs.create({ url: codeLink });
+            resolve();
+        });
+        resolve();
     });
-};
 
 /**
  * Looks for an open tab to the paper: either its local or online pdf, or html page.
