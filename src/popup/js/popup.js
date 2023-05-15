@@ -312,7 +312,12 @@ const popupMain = async (url, is, manualTrigger = false, tab = null) => {
         setHTML("popup-copy-icons", getPopupPaperIconsHTML(paper, url, is));
         findEl(`checkFavorite--${id}`).checked = paper.favorite;
         let extraDivWidth = 0;
-        for (const p of ["checkScirate", "checkVanity", "checkAr5iv"]) {
+        for (const p of [
+            "checkScirate",
+            "checkVanity",
+            "checkAr5iv",
+            "checkHugginface",
+        ]) {
             if (prefs[p]) extraDivWidth += 5;
         }
         style("popup-icons-container", "width", `${75 + extraDivWidth}%`);
@@ -350,6 +355,12 @@ const popupMain = async (url, is, manualTrigger = false, tab = null) => {
             const arxivId = arxivIdFromPaperID(paper.id);
             const ar5ivURL = `https://ar5iv.labs.arxiv.org/html/${arxivId}`;
             chrome.tabs.update({ url: ar5ivURL });
+            window.close();
+        });
+        addListener(`popup-memory-item-huggingface--${id}`, "click", () => {
+            const arxivId = arxivIdFromPaperID(paper.id);
+            const huggingfaceURL = `https://huggingface.co/papers/${arxivId}`;
+            chrome.tabs.update({ url: huggingfaceURL });
             window.close();
         });
         addListener(`popup-memory-item-link--${id}`, "click", () => {
