@@ -786,6 +786,20 @@ const toSingleSpace = (str) => str.replace(/\s\s+/g, " ");
 
 const arxivIdFromPaperID = (paperId) => paperId.split("-").last().replace("_", "/");
 
+const arxivIdFromURL = (url) =>
+    url.includes("scirate.com/arxiv/")
+        ? url.split("scirate.com/arxiv/")[1].match(/\d+\.\d+/)[0]
+        : url.includes("arxiv-vanity.com/papers/")
+        ? url.split("arxiv-vanity.com/papers/")[1].match(/\d+\.\d+/)[0]
+        : url.includes("ar5iv.labs.arxiv.org/html/")
+        ? url.split("ar5iv.labs.arxiv.org/html/")[1].match(/\d+\.\d+/)[0]
+        : noParamUrl(url)
+              .replace("/abs/", "/pdf/")
+              .split("/pdf/")[1]
+              .replace(".pdf", "")
+              .split("v")[0]
+              .replace("/", "_");
+
 if (typeof module !== "undefined" && module.exports != null) {
     var dummyModule = module;
     dummyModule.exports = {

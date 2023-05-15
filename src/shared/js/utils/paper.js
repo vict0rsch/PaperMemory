@@ -737,18 +737,7 @@ const parseIdFromUrl = async (url, tab = null) => {
     const papers = Object.values(cleanPapers(global.state.papers));
 
     if (is.arxiv) {
-        let arxivId = url.includes("scirate.com/arxiv/")
-            ? url.split("scirate.com/arxiv/")[1].match(/\d+\.\d+/)[0]
-            : url.includes("arxiv-vanity.com/papers/")
-            ? url.split("arxiv-vanity.com/papers/")[1].match(/\d+\.\d+/)[0]
-            : url.includes("ar5iv.labs.arxiv.org/html/")
-            ? url.split("ar5iv.labs.arxiv.org/html/")[1].match(/\d+\.\d+/)[0]
-            : noParamUrl(url)
-                  .replace("/abs/", "/pdf/")
-                  .split("/pdf/")[1]
-                  .replace(".pdf", "")
-                  .split("v")[0]
-                  .replace("/", "_");
+        let arxivId = arxivIdFromURL(url);
         idForUrl = `Arxiv-${arxivId}`;
 
         const existingIds = Object.values(global.state.titleHashToIds).find((ids) =>
