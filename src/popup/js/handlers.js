@@ -25,7 +25,7 @@ const handleOpenItemScirate = (e) => {
 const handleOpenItemVanity = (e) => {
     const id = eventId(e);
     const arxivId = global.state.papers[id].id.split("-").last().replace("_", "/");
-    const vanityURL = `https://arxiv-vanity.com/papers/${arxivId}`;
+    const vanityURL = `https://www.arxiv-vanity.com/papers/${arxivId}`;
     focusExistingOrCreateNewCodeTab(vanityURL);
     global.state.papers[id] = updatePaperVisits(global.state.papers[id]);
     setStorage("papers", global.state.papers);

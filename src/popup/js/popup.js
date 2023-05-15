@@ -337,7 +337,7 @@ const popupMain = async (url, is, manualTrigger = false, tab = null) => {
         });
         addListener(`popup-memory-item-vanity--${id}`, "click", () => {
             const arxivId = paper.id.split("-").last().replace("_", "/");
-            const vanityURL = `https://arxiv-vanity.com/papers/${arxivId}`;
+            const vanityURL = `https://www.arxiv-vanity.com/papers/${arxivId}`;
             chrome.tabs.update({ url: vanityURL });
             window.close();
         });
