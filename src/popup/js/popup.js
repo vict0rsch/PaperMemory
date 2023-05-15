@@ -341,19 +341,18 @@ const popupMain = async (url, is, manualTrigger = false, tab = null) => {
             chrome.tabs.update({ url: isPdfUrl(url) ? absURL : pdfURL });
             window.close();
         });
-        addListener(`popup-code-link`, "click", () => {
+        addListener(`popup-code-link`, "click", async () => {
             const codeLink = findEl(`popup-code-link`).textContent;
             if (codeLink) {
-                focusExistingOrCreateNewCodeTab(codeLink);
+                await focusExistingOrCreateNewCodeTab(codeLink);
                 global.close && global.close();
             }
         });
-        addListener(`popup-website-url`, "click", (e) => {
+        addListener(`popup-website-url`, "click", async (e) => {
             const url = findEl(`popup-website-url`).textContent;
-            console.log("url: ", url);
             if (url) {
-                focusExistingOrCreateNewCodeTab(url);
-                global.close && global.close();
+                await focusExistingOrCreateNewCodeTab(url);
+                // global.close && global.close();
             }
         });
         addListener(`popup-memory-item-copy-link--${id}`, "click", () => {
