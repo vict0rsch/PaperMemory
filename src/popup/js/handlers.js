@@ -19,12 +19,14 @@ const handleOpenItemCodeLink = (e) => {
     const id = eventId(e);
     const url = global.state.papers[id].codeLink;
     focusExistingOrCreateNewCodeTab(url);
+    global.close && global.close();
 };
 
 const handleOpenItemWebsiteURL = (e) => {
     const id = eventId(e);
     const url = global.state.papers[id].pdfLink;
     focusExistingOrCreateNewCodeTab(url);
+    global.close && global.close();
 };
 
 const handleCopyMarkdownLink = async (e) => {
