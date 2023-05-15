@@ -14,6 +14,30 @@ const handleOpenItemLink = (e) => {
     const id = eventId(e);
     focusExistingOrCreateNewPaperTab(global.state.papers[id], true);
 };
+const handleOpenItemScirate = (e) => {
+    const id = eventId(e);
+    const arxivId = paper.id.split("-").last().replace("_", "/");
+    const scirateURL = `https://scirate.com/arxiv/${arxivId}`;
+    focusExistingOrCreateNewCodeTab(scirateURL);
+    global.state.papers[id] = updatePaperVisits(global.state.papers[id]);
+    setStorage("papers", global.state.papers);
+};
+const handleOpenItemVanity = (e) => {
+    const id = eventId(e);
+    const arxivId = global.state.papers[id].id.split("-").last().replace("_", "/");
+    const vanityURL = `https://arxiv-vanity.com/papers/${arxivId}`;
+    focusExistingOrCreateNewCodeTab(vanityURL);
+    global.state.papers[id] = updatePaperVisits(global.state.papers[id]);
+    setStorage("papers", global.state.papers);
+};
+const handleOpenItemAr5iv = (e) => {
+    const id = eventId(e);
+    const arxivId = paper.id.split("-").last().replace("_", "/");
+    const ar5ivURL = `https://ar5iv.labs.arxiv.org/html/${arxivId}`;
+    focusExistingOrCreateNewCodeTab(ar5ivURL);
+    global.state.papers[id] = updatePaperVisits(global.state.papers[id]);
+    setStorage("papers", global.state.papers);
+};
 
 const handleOpenItemCodeLink = (e) => {
     const id = eventId(e);
