@@ -552,12 +552,13 @@ const arxiv = async (checks) => {
     if (!isArxivAbs) return;
 
     const id = await parseIdFromUrl(url);
+    const previousHTML = document.querySelector(".extra-services .full-text").innerHTML;
+    const pmTitle = '<h2 id="pm-col-title">PaperMemory:</h2>';
     document.querySelector(".extra-services .full-text").innerHTML = /*html*/ `
-        <div>${document
-            .querySelector(".extra-services .full-text")
-            .innerHTML.replace('<h2 id="pm-col-title">PaperMemory:</h2>', "")}</div>
+        <div>${previousHTML}</div>
         <div id="pm-download-wrapper" class="pm-container">
-            <div id="pm-header" style="width: 100%"><h2 id="pm-col-title">PaperMemory:</h2>
+            <div id="pm-header" style="width: 100%">
+                ${previousHTML.includes(pmTitle) ? "" : pmTitle}
                 <div id="pm-header-content"></div>
             </div>
         </div>
