@@ -367,9 +367,11 @@ const handlePopupKeydown = (e) => {
     } else if (key === "Enter") {
         // open paper
         const target =
-            (global.state.prefs.checkEnterLocalPdf &&
-                findEl(id, "memory-item-openLocal")) ||
-            findEl(id, "memory-item-link");
+            global.state.papers[id].source === "website"
+                ? findEl(id, "memory-website-url")
+                : (global.state.prefs.checkEnterLocalPdf &&
+                      findEl(id, "memory-item-openLocal")) ||
+                  findEl(id, "memory-item-link");
         dispatch(target, "click");
     } else if (key === "Escape") {
         // close memory
