@@ -311,6 +311,11 @@ const popupMain = async (url, is, manualTrigger = false, tab = null) => {
         setHTML("popup-memory-edit", getPopupEditFormHTML(paper));
         setHTML("popup-copy-icons", getPopupPaperIconsHTML(paper, url, is));
         findEl(`checkFavorite--${id}`).checked = paper.favorite;
+        let extraDivWidth = 0;
+        for (const p of ["checkScirate", "checkVanity", "checkAr5iv"]) {
+            if (prefs[p]) extraDivWidth += 5;
+        }
+        style("popup-icons-container", "width", `${75 + extraDivWidth}%`);
 
         // --------------------------
         // -----  Paper  edits  -----
@@ -373,8 +378,6 @@ const popupMain = async (url, is, manualTrigger = false, tab = null) => {
             copyAndConfirmMemoryItem(id, link, `${text} link copied!`, true);
         });
         addListener(`popup-memory-item-md--${id}`, "click", () => {
-            const prefs = global.state.prefs;
-            console.log("state.prefs: ", state.prefs);
             const md = makeMdLink(paper, prefs);
             const text = prefs.checkPreferPdf ? "PDF" : "Abstract";
             copyAndConfirmMemoryItem(id, md, `Markdown link to ${text} copied!`, true);
