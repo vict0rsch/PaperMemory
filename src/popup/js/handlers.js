@@ -15,18 +15,18 @@ const handleOpenItemLink = (e) => {
     focusExistingOrCreateNewPaperTab(global.state.papers[id], true);
 };
 
-const handleOpenItemCodeLink = (e) => {
+const handleOpenItemCodeLink = async (e) => {
     const id = eventId(e);
     const url = global.state.papers[id].codeLink;
-    focusExistingOrCreateNewCodeTab(url);
-    global.close && global.close();
+    await focusExistingOrCreateNewCodeTab(url);
 };
 
-const handleOpenItemWebsiteURL = (e) => {
+const handleOpenItemWebsiteURL = async (e) => {
     const id = eventId(e);
     const url = global.state.papers[id].pdfLink;
-    focusExistingOrCreateNewCodeTab(url);
-    global.close && global.close();
+    global.state.papers[id] = updatePaperVisits(global.state.papers[id]);
+    await setStorage("papers", global.state.papers);
+    await focusExistingOrCreateNewCodeTab(url);
 };
 
 const handleCopyMarkdownLink = async (e) => {
@@ -367,9 +367,11 @@ const handlePopupKeydown = (e) => {
     } else if (key === "Enter") {
         // open paper
         const target =
-            (global.state.prefs.checkEnterLocalPdf &&
-                findEl(id, "memory-item-openLocal")) ||
-            findEl(id, "memory-item-link");
+            global.state.papers[id].source === "website"
+                ? findEl(id, "memory-website-url")
+                : (global.state.prefs.checkEnterLocalPdf &&
+                      findEl(id, "memory-item-openLocal")) ||
+                  findEl(id, "memory-item-link");
         dispatch(target, "click");
     } else if (key === "Escape") {
         // close memory
