@@ -16,7 +16,7 @@ const handleOpenItemLink = (e) => {
 };
 const handleOpenItemScirate = (e) => {
     const id = eventId(e);
-    const arxivId = paper.id.split("-").last().replace("_", "/");
+    const arxivId = arxivIdFromPaperID(global.state.papers[id].id);
     const scirateURL = `https://scirate.com/arxiv/${arxivId}`;
     focusExistingOrCreateNewCodeTab(scirateURL);
     global.state.papers[id] = updatePaperVisits(global.state.papers[id]);
@@ -24,7 +24,7 @@ const handleOpenItemScirate = (e) => {
 };
 const handleOpenItemVanity = (e) => {
     const id = eventId(e);
-    const arxivId = global.state.papers[id].id.split("-").last().replace("_", "/");
+    const arxivId = arxivIdFromPaperID(global.state.papers[id].id);
     const vanityURL = `https://www.arxiv-vanity.com/papers/${arxivId}`;
     focusExistingOrCreateNewCodeTab(vanityURL);
     global.state.papers[id] = updatePaperVisits(global.state.papers[id]);
@@ -32,7 +32,7 @@ const handleOpenItemVanity = (e) => {
 };
 const handleOpenItemAr5iv = (e) => {
     const id = eventId(e);
-    const arxivId = paper.id.split("-").last().replace("_", "/");
+    const arxivId = arxivIdFromPaperID(global.state.papers[id].id);
     const ar5ivURL = `https://ar5iv.labs.arxiv.org/html/${arxivId}`;
     focusExistingOrCreateNewCodeTab(ar5ivURL);
     global.state.papers[id] = updatePaperVisits(global.state.papers[id]);

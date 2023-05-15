@@ -784,6 +784,8 @@ const spaceCamelCase = (str) =>
 
 const toSingleSpace = (str) => str.replace(/\s\s+/g, " ");
 
+const arxivIdFromPaperID = (paperId) => paperId.split("-").last().replace("_", "/");
+
 if (typeof module !== "undefined" && module.exports != null) {
     var dummyModule = module;
     dummyModule.exports = {

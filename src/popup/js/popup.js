@@ -330,19 +330,19 @@ const popupMain = async (url, is, manualTrigger = false, tab = null) => {
         // -----  SVG clicks  -----
         // ------------------------
         addListener(`popup-memory-item-scirate--${id}`, "click", () => {
-            const arxivId = paper.id.split("-").last().replace("_", "/");
+            const arxivId = arxivIdFromPaperID(paper.id);
             const scirateURL = `https://scirate.com/arxiv/${arxivId}`;
             chrome.tabs.update({ url: scirateURL });
             window.close();
         });
         addListener(`popup-memory-item-vanity--${id}`, "click", () => {
-            const arxivId = paper.id.split("-").last().replace("_", "/");
+            const arxivId = arxivIdFromPaperID(paper.id);
             const vanityURL = `https://www.arxiv-vanity.com/papers/${arxivId}`;
             chrome.tabs.update({ url: vanityURL });
             window.close();
         });
         addListener(`popup-memory-item-ar5iv--${id}`, "click", () => {
-            const arxivId = paper.id.split("-").last().replace("_", "/");
+            const arxivId = arxivIdFromPaperID(paper.id);
             const ar5ivURL = `https://ar5iv.labs.arxiv.org/html/${arxivId}`;
             chrome.tabs.update({ url: ar5ivURL });
             window.close();
