@@ -673,6 +673,12 @@ const displayMemoryTable = (pagination = 0) => {
     addEventToClass(".memory-delete", "click", handleDeleteItem);
     // Open paper page
     addEventToClass(".memory-item-link", "click", handleOpenItemLink);
+    // Open on Scirate
+    addEventToClass(".memory-item-scirate", "click", handleOpenItemScirate);
+    // Open on Arxiv Vanity
+    addEventToClass(".memory-item-vanity", "click", handleOpenItemVanity);
+    // Open on Ar5iv
+    addEventToClass(".memory-item-ar5iv", "click", handleOpenItemAr5iv);
     // Open code page
     addEventToClass(".memory-code-link", "click", handleOpenItemCodeLink);
     // Open Website URL
