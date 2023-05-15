@@ -64,6 +64,39 @@ const getMemoryItemHTML = (paper, titles) => {
                 ${tablerSvg("external-link", "", ["memory-icon-svg"])}
             </div>`;
 
+    let scirate = "";
+    if (global.state.prefs.checkScirate && paper.source === "arxiv") {
+        scirate = /*html*/ `
+        <div
+            class="memory-item-scirate memory-item-svg-div"
+            title="Open on SciRate"
+        >
+            ${tablerSvg("messages", "", ["memory-icon-svg"])}
+        </div>`;
+    }
+
+    let vanity = "";
+    if (global.state.prefs.checkVanity && paper.source === "arxiv") {
+        vanity = /*html*/ `
+        <div
+            class="memory-item-vanity memory-item-svg-div"
+            title="Open on Vanity"
+        >
+            ${tablerSvg("vanity", "", ["memory-icon-svg"])}
+        </div>`;
+    }
+
+    let ar5iv = "";
+    if (global.state.prefs.checkAr5iv && paper.source === "arxiv") {
+        ar5iv = /*html*/ `
+        <div
+            class="memory-item-ar5iv memory-item-svg-div"
+            title="Open on ar5iv"
+        >
+            ${tablerSvg("ar5iv", "", ["memory-icon-svg"])}
+        </div>`;
+    }
+
     return /*html*/ `
         <div
             class="memory-container ${favoriteClass}"
@@ -119,9 +152,12 @@ const getMemoryItemHTML = (paper, titles) => {
                     </small>
                 </div>
 
-                ${openLinkDiv}
-
                 ${openLocalDiv}
+                ${openLinkDiv}
+                ${scirate}
+                ${vanity}
+                ${ar5iv}
+
 
                 <div
                     class="memory-item-copy-link memory-item-svg-div"
