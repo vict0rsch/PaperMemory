@@ -511,8 +511,11 @@ const tablerSvg = (pathName, id, classNames) => {
 
         case "huggingface":
             return `<img
-                src="https://huggingface.co/datasets/huggingface/brand-assets/resolve/main/hf-logo.svg"
-                style="filter: grayscale(1)"
+                src="${chrome.runtime.getURL(
+                    global.state.prefs.checkDarkMode
+                        ? "src/shared/hf-logo-transparent-darktheme.svg"
+                        : "src/shared/hf-logo-transparent-lighttheme.svg"
+                )}"
                 ${id}
                 ${classNames}
             >`;
