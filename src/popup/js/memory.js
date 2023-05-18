@@ -685,6 +685,8 @@ const displayMemoryTable = (pagination = 0) => {
     addEventToClass(".memory-item-vanity", "click", handleOpenItemVanity);
     // Open on Ar5iv
     addEventToClass(".memory-item-ar5iv", "click", handleOpenItemAr5iv);
+    // Open on Huggingface Papers
+    addEventToClass(".memory-item-huggingface", "click", handleOpenItemHuggingface);
     // Open code page
     addEventToClass(".memory-code-link", "click", handleOpenItemCodeLink);
     // Open Website URL

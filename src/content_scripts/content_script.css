@@ -221,3 +221,8 @@
 #pm-code-link {
     word-break: break-all;
 }
+#pm-hf-label {
+    margin: auto;
+    margin-left: 8px;
+    color: grey;
+}

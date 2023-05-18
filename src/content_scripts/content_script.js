@@ -542,6 +542,32 @@ const displayPaperCode = (paper) => {
     findEl("pm-extras")?.insertAdjacentHTML("afterbegin", code);
 };
 
+const huggingfacePapers = (paper, url) => {
+    if (!paper || !paper.venue) return;
+    if (!url || !url.includes("huggingface.co/papers/")) return;
+
+    const venueDiv = /*html*/ `
+        <div id="pm-publication-wrapper">
+            <div id="pm-publication-venue">
+                <span id="pm-venue-name">${paper.venue}</span>
+                <span id="pm-venue-year">${bibtexToObject(paper.bibtex).year}</span>
+                <span id="pm-hf-label">(PaperMemory)</span>
+            </div>
+        </div>`;
+    abstractH2 = [...document.querySelectorAll("h2")].find(
+        (h) => h.innerText.trim() === "Abstract"
+    );
+    console.log("abstractH2: ", abstractH2);
+    if (!abstractH2) {
+        log("Missing 'Abstract' h2 title on HuggingFace paper page.");
+    }
+    const authorDiv = abstractH2.parentElement.previousElementSibling;
+    log("Adding venue to HuggingFace paper page.");
+    setTimeout(() => {
+        [...authorDiv.childNodes].last().insertAdjacentHTML("beforeend", venueDiv);
+    }, 100);
+};
+
 const arxiv = async (checks) => {
     const { checkMd, checkBib, checkDownload, checkStore } = checks;
     global.state.titleFunction = (await getTitleFunction()).titleFunction;
@@ -552,10 +578,13 @@ const arxiv = async (checks) => {
     if (!isArxivAbs) return;
 
     const id = await parseIdFromUrl(url);
+    const previousHTML = document.querySelector(".extra-services .full-text").innerHTML;
+    const pmTitle = '<h2 id="pm-col-title">PaperMemory:</h2>';
     document.querySelector(".extra-services .full-text").innerHTML = /*html*/ `
-        <div>${document.querySelector(".extra-services .full-text").innerHTML}</div>
+        <div>${previousHTML}</div>
         <div id="pm-download-wrapper" class="pm-container">
-            <div id="pm-header" style="width: 100%"><h2 id="pm-col-title">PaperMemory:</h2>
+            <div id="pm-header" style="width: 100%">
+                ${previousHTML.includes(pmTitle) ? "" : pmTitle}
                 <div id="pm-header-content"></div>
             </div>
         </div>
@@ -728,6 +757,7 @@ const tryArxivDisplay = async ({
 
         // display arxiv paper metadata
         await arxiv(prefs);
+        huggingfacePapers(paper, url);
 
         // wait for publication databases to be queried
         if (preprintsPromise) {

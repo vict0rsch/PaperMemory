@@ -509,6 +509,17 @@ const tablerSvg = (pathName, id, classNames) => {
                 <line x1="5" y1="12" x2="11" y2="12" />
             </svg>`;
 
+        case "huggingface":
+            return `<img
+                src="${chrome.runtime.getURL(
+                    global.state.prefs.checkDarkMode
+                        ? "src/shared/hf-logo-transparent-darktheme.svg"
+                        : "src/shared/hf-logo-transparent-lighttheme.svg"
+                )}"
+                ${id}
+                ${classNames}
+            >`;
+
         default:
             return "";
     }
@@ -793,6 +804,8 @@ const arxivIdFromURL = (url) =>
         ? url.split("arxiv-vanity.com/papers/")[1].match(/\d+\.\d+/)[0]
         : url.includes("ar5iv.labs.arxiv.org/html/")
         ? url.split("ar5iv.labs.arxiv.org/html/")[1].match(/\d+\.\d+/)[0]
+        : url.includes("huggingface.co/papers/")
+        ? url.split("huggingface.co/papers/")[1].match(/\d+\.\d+/)[0]
         : noParamUrl(url)
               .replace("/abs/", "/pdf/")
               .split("/pdf/")[1]

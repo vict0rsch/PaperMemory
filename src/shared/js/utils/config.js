@@ -88,6 +88,7 @@ global.prefsCheckNames = [
     "checkScirate",
     "checkVanity",
     "checkAr5iv",
+    "checkHuggingface",
     "checkOfficialRepos",
     "checkPreferPdf",
     "checkPdfOnly",
@@ -105,6 +106,7 @@ global.prefsCheckDefaultFalse = [
     "checkScirate",
     "checkVanity",
     "checkAr5iv",
+    "checkHuggingface",
     "checkOfficialRepos",
     "checkPdfOnly",
     "checkNoAuto",
@@ -148,6 +150,9 @@ global.knownPaperPages = {
         "scirate.com/arxiv/",
         "ar5iv.labs.arxiv.org/html/",
         "arxiv-vanity.com/papers/",
+        (url) =>
+            url.includes("huggingface.co/papers/") &&
+            url.split("huggingface.co/papers/")[1].match(/\d+\.\d+/),
     ],
     biorxiv: ["biorxiv.org/content"],
     cvf: ["openaccess.thecvf.com/content"],

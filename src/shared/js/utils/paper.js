@@ -20,6 +20,7 @@ const isPaper = async (url, noStored = false) => {
                 if (url.includes(path)) {
                     // known path: store as true
                     is[source] = true;
+                    break;
                 }
             } else if (typeof path === "function") {
                 is[source] = path(url);

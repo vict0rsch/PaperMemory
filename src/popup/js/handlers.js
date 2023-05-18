@@ -38,6 +38,14 @@ const handleOpenItemAr5iv = (e) => {
     global.state.papers[id] = updatePaperVisits(global.state.papers[id]);
     setStorage("papers", global.state.papers);
 };
+const handleOpenItemHuggingface = (e) => {
+    const id = eventId(e);
+    const arxivId = arxivIdFromPaperID(global.state.papers[id].id);
+    const huggingFaceURL = `https://huggingface.co/papers/${arxivId}`;
+    focusExistingOrCreateNewCodeTab(huggingFaceURL);
+    global.state.papers[id] = updatePaperVisits(global.state.papers[id]);
+    setStorage("papers", global.state.papers);
+};
 
 const handleOpenItemCodeLink = async (e) => {
     const id = eventId(e);
