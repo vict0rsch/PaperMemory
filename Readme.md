@@ -61,7 +61,9 @@ This browser extension allows you to automatically store research papers you rea
 
 ## Supported venues
 
-* Arxiv (PaperMemory will try to find if a pre-print has been published and create a corresponding `note` to the paper (see [preprints](#preprints)))
+* Arxiv 
+  * PaperMemory will try to find if a pre-print has been published and create a corresponding `note` to the paper (see [preprints](#preprints))
+  * Also detects and matches papers from [huggingface.co/papers](https://huggingface.co/papers), [arxiv-vanity.com](https://arxiv-vanity.com), [ar5iv.org](https://ar5iv.org) and [scirate.com/](https://scirate.com/)
 * BioRxiv
 * NeurIPS
 * Open Review (ICLR etc.)
