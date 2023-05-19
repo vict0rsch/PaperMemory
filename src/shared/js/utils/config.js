@@ -29,6 +29,12 @@ if (typeof window !== "undefined") {
 }
 
 /**
+ * Set uninstall URL
+ */
+chrome?.runtime?.setUninstallURL &&
+    chrome?.runtime?.setUninstallURL("https://forms.gle/1JSV8PcxQugRmsd46");
+
+/**
  * The popup's global state to store data across functions
  */
 global.state = {
