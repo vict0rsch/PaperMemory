@@ -129,7 +129,9 @@ Share ideas 💡 in [issues](https://github.com/vict0rsch/PaperMemory/issues) an
 
 * **Keyboard** navigation:
   * Open the popup:
-    * `cmd/ctrl + shift + e`
+    * `cmd + shift + e` on Mac
+    * `ctrl + shift + m` on Linux & Windows
+    * See the extension's `User Guide` for customization
   * Open the Memory
     * `a` from the popup's home will open it
     * navigate to the bottom left button with `tab` and hit `enter`
@@ -166,7 +168,7 @@ Share ideas 💡 in [issues](https://github.com/vict0rsch/PaperMemory/issues) an
 
 By default, and _if_ they are not already attributed, the following keyboard shortcuts are available:
 
-* `cmd/ctrl + shift + e` will open PaperMemory's popup
+* `cmd + shift + e` will open PaperMemory's popup on a Mac, `ctrl + shift + m` on Linux & Windows.
 * `cmd/ctrl + shift + s` will try to download the pdf of the current paper. If you have enabled this feature in the menu, the paper will be downloaded in your PaperMemoryStore (see thee advanced options page for more info)
 * `cmd/ctrl + shift + l` will trigger the manual parsing of a paper if you have disabled automatic paper detection in the menu
 
