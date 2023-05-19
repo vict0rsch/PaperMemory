@@ -18,7 +18,7 @@
 
 [![](https://img.shields.io/chrome-web-store/stars/hmebhknlgddhfbbdhgplnillngljgmdi)](https://chrome.google.com/webstore/detail/paper-memory/hmebhknlgddhfbbdhgplnillngljgmdi)
 [![](https://img.shields.io/badge/buy%20me-a%20coffee%20%E2%98%95%EF%B8%8F-FFDD03)](https://www.buymeacoffee.com/vict0rsch)
-[![](https://img.shields.io/badge/Source%20%5BWIP%5D-v0.5.10-important)](https://github.com/vict0rsch/PaperMemory)
+[![](https://img.shields.io/badge/Source%20%5BWIP%5D-v0.5.11-important)](https://github.com/vict0rsch/PaperMemory)
 [![](https://img.shields.io/badge/Release-v0.5.10-A41716)](https://github.com/vict0rsch/PaperMemory/tree/0.5.10)
 
 <br/>
@@ -61,7 +61,7 @@ This browser extension allows you to automatically store research papers you rea
 
 ## Supported venues
 
-* Arxiv 
+* Arxiv
   * PaperMemory will try to find if a pre-print has been published and create a corresponding `note` to the paper (see [preprints](#preprints))
   * Also detects and matches papers from [huggingface.co/papers](https://huggingface.co/papers), [arxiv-vanity.com](https://arxiv-vanity.com), [ar5iv.org](https://ar5iv.org) and [scirate.com/](https://scirate.com/)
 * BioRxiv
@@ -129,7 +129,9 @@ Share ideas 💡 in [issues](https://github.com/vict0rsch/PaperMemory/issues) an
 
 * **Keyboard** navigation:
   * Open the popup:
-    * `cmd/ctrl + shift + e`
+    * `cmd + shift + e` on Mac
+    * `ctrl + shift + m` on Linux & Windows
+    * See the extension's `User Guide` for customization
   * Open the Memory
     * `a` from the popup's home will open it
     * navigate to the bottom left button with `tab` and hit `enter`
@@ -166,7 +168,7 @@ Share ideas 💡 in [issues](https://github.com/vict0rsch/PaperMemory/issues) an
 
 By default, and _if_ they are not already attributed, the following keyboard shortcuts are available:
 
-* `cmd/ctrl + shift + e` will open PaperMemory's popup
+* `cmd + shift + e` will open PaperMemory's popup on a Mac, `ctrl + shift + m` on Linux & Windows.
 * `cmd/ctrl + shift + s` will try to download the pdf of the current paper. If you have enabled this feature in the menu, the paper will be downloaded in your PaperMemoryStore (see thee advanced options page for more info)
 * `cmd/ctrl + shift + l` will trigger the manual parsing of a paper if you have disabled automatic paper detection in the menu
 

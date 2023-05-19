@@ -111,7 +111,6 @@ global.prefsCheckDefaultFalse = [
     "checkPdfOnly",
     "checkNoAuto",
     "checkMdYearVenue",
-    "checkWebsiteParsing",
 ];
 /**
  * All keys to retrieve from the menu, the checkboxes + the custom pdf function
