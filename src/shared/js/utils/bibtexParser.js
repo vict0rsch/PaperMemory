@@ -335,7 +335,7 @@ const bibtexToString = (bibtex) => {
     for (const key in bibtex) {
         if (bibtex.hasOwnProperty(key) && bibtex[key]) {
             const value = bibtex[key].replaceAll(/\s+/g, " ").trim();
-            bkey = key + " ".repeat(keyLen - key.length);
+            const bkey = key + " ".repeat(keyLen - key.length);
             bstr += `\t${bkey} = {${value}},\n`;
         }
     }

@@ -73,7 +73,14 @@ const handleCopyMarkdownLink = async (e) => {
 const handleCopyBibtex = (e) => {
     const id = eventId(e);
     const bibtex = global.state.papers[id].bibtex;
-    copyAndConfirmMemoryItem(id, bibtexToString(bibtex), "Bibtex copied!");
+    let bibobj = bibtexToObject(bibtex);
+    if (!bibobj.hasOwnProperty("url")) {
+        bibobj.url = paperToAbs(global.state.papers[id]);
+    }
+    if (!bibobj.hasOwnProperty("pdf")) {
+        bibobj.pdf = paperToPDF(global.state.papers[id]);
+    }
+    copyAndConfirmMemoryItem(id, bibtexToString(bibobj), "Bibtex copied!");
 };
 
 const handleCopyPDFLink = async (e) => {

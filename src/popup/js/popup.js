@@ -394,7 +394,15 @@ const popupMain = async (url, is, manualTrigger = false, tab = null) => {
             copyAndConfirmMemoryItem(id, md, `Markdown link to ${text} copied!`, true);
         });
         addListener(`popup-memory-item-bibtex--${id}`, "click", () => {
-            const bibtex = bibtexToString(global.state.papers[id].bibtex);
+            let bibtex = global.state.papers[id].bibtex;
+            let bibobj = bibtexToObject(bibtex);
+            if (!bibobj.hasOwnProperty("url")) {
+                bibobj.url = paperToAbs(global.state.papers[id]);
+            }
+            if (!bibobj.hasOwnProperty("pdf")) {
+                bibobj.pdf = paperToPDF(global.state.papers[id]);
+            }
+            bibtex = bibtexToString(bibobj);
             copyAndConfirmMemoryItem(id, bibtex, "Bibtex citation copied!", true);
         });
         addListener(`popup-memory-item-openLocal--${id}`, "click", async () => {
