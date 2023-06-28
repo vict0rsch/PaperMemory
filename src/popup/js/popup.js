@@ -198,9 +198,10 @@ const editManualWebsite = (parsedPaper, url) => {
             // No warnings -> store paper
             global.state.papers[paper.id] = paper;
             await setStorage("papers", global.state.papers);
+            await pushToRemote();
+            popupMain(url, await isPaper(url), true, null);
             hideId("website-trigger-btn");
             hideId("notArxiv");
-            popupMain(url, await isPaper(url), true, null);
             closePopupModal();
         }
         return false;
