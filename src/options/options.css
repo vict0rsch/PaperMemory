@@ -588,7 +588,7 @@ input {
 
 /* Modal Content/Box */
 #modal-contents {
-    background-color: #fefefe;
+    background-color: var(--lighterBackground);
     padding: 20px 35px;
     border-radius: var(--rounder);
     width: 60%; /* Could be more or less, depending on screen size */
