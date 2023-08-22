@@ -15,7 +15,7 @@ const migrateData = async (papers, manifestDataVersion, store = true) => {
     }
     const currentVersion = papers["__dataVersion"] || -1;
     var deleteIds = [];
-    const latestDataVersion = 510;
+    const latestDataVersion = 513;
 
     let newPapers = { ...papers };
 
@@ -153,6 +153,17 @@ const migrateData = async (papers, manifestDataVersion, store = true) => {
                 if (papers[id].venue === undefined) {
                     papers[id].venue = "";
                     migrationSummaries[id].push("(m509) venue undefined to ''");
+                }
+            }
+
+            if (currentVersion < 513) {
+                if (papers[id].source === "iop") {
+                    const oldId = id;
+                    const doi = id.split("_")[1];
+                    const newId = oldId.split("_")[0] + "_" + miniHash(doi);
+                    papers[newId] = { ...papers[oldId] };
+                    deleteIds.push(oldId);
+                    migrationSummaries[id].push("(m513) iop doi-in-id to minihash");
                 }
             }
         }
