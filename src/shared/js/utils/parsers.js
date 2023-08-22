@@ -1508,8 +1508,7 @@ const trySemanticScholar = async (paper) => {
                     let venue = match.venue
                         .trim()
                         .replace(/^\d{4}/, "")
-                        .trim()
-                        .capitalize(true);
+                        .trim();
                     if (venue.indexOf(" ") < 0) venue = venue.toUpperCase();
                     const year = (match.year + "").trim();
                     const note = `Accepted @ ${venue} (${year}) -- [semanticscholar.org]`;
