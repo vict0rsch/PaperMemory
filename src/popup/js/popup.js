@@ -2,7 +2,7 @@
  * Close the menu's overlay: slide div up and update button svg
  */
 const closeMenu = () => {
-    let classes = ["tabler-icon", "menu-svg"];
+    let classes = ["pm-tabler-icon", "menu-svg"];
 
     slideUp("menu-container", 300);
     setHTML("menu-switch", tablerSvg("settings", "menu-switch-svg", classes));
@@ -14,7 +14,7 @@ const closeMenu = () => {
  * Open the menu's overlay: slide div down and update button svg
  */
 const openMenu = () => {
-    let classes = ["tabler-icon", "menu-svg"];
+    let classes = ["pm-tabler-icon", "menu-svg"];
     slideDown("menu-container", 300);
     dispatch("menu-switch", "blur");
     setHTML("menu-switch", tablerSvg("circle-x", "close-menu-btn", classes));

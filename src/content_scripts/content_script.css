@@ -69,7 +69,7 @@
     font-style: italic;
 }
 
-.tabler-icon {
+.pm-tabler-icon {
     height: 40px;
     width: 40px;
     color: rgb(0, 119, 255);
@@ -81,7 +81,7 @@
     margin-right: 13px;
 }
 
-.tabler-icon:hover {
+.pm-tabler-icon:hover {
     transform: scale(1.2);
     /* background: rgba(34, 50, 84, 0.05); */
 }
