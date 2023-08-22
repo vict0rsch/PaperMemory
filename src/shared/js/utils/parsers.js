@@ -284,7 +284,7 @@ const extractDataFromDCMetaTags = (dom) => {
 };
 
 const makeArxivPaper = async (url) => {
-    const arxivId = arxivIdFromURL(url)
+    const arxivId = arxivIdFromURL(url);
     const response = await fetchArxivXML(arxivId);
     const xmlData = await response.text();
     var doc = new DOMParser().parseFromString(xmlData.replaceAll("\n", ""), "text/xml");
@@ -577,10 +577,6 @@ const makePMLRPaper = async (url) => {
 
     const dom = await fetchDom(absURL);
 
-    const bibURL = dom
-        .getElementById("button-bibtex1")
-        .getAttribute("onclick")
-        .match(/https.+\.bib/)[0];
     const bibtexRaw = dom
         .getElementById("bibtex")
         .innerText.replaceAll("\t", " ")
