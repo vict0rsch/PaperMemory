@@ -800,7 +800,7 @@ const parseIdFromUrl = async (url, tab = null) => {
         idForUrl = `ACS_${doi}`;
     } else if (is.iop) {
         url = noParamUrl(url).replace(/\/pdf$/, "");
-        const doi = miniHash(url.split("/article/")[1]);
+        const doi = miniHash(url.split("/article/")[1].split("/meta")[0]);
         idForUrl = `IOPscience_${doi}`;
     } else if (is.jmlr) {
         if (url.endsWith(".pdf")) {

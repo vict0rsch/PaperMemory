@@ -807,8 +807,8 @@ const makeIOPPaper = async (url) => {
     const pdfLink = url + "/pdf";
     const venue = data.journal;
     const note = `Published @ ${venue} (${year})`;
-    const doi = url.split("/article/").last();
-    const id = `IOPscience_${doi.replaceAll(".", "").replaceAll("/", "")}`;
+    const doi = url.split("/article/").last().split("/meta")[0];
+    const id = `IOPscience_${miniHash(doi)}`;
     return { author, bibtex, id, key, note, pdfLink, title, venue, year };
 };
 
