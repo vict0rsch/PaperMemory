@@ -267,7 +267,7 @@ const svg = (name) => {
             </svg>`;
         case "clipboard-default":
             return /*html*/ `<svg
-                class="copy-feedback tabler-icon"
+                class="copy-feedback pm-tabler-icon"
                 xmlns="http://www.w3.org/2000/svg"
                 width="64"
                 height="32"
@@ -291,7 +291,7 @@ const svg = (name) => {
         case "clipboard-default-ok":
             return /*html*/ `<svg
                 xmlns="http://www.w3.org/2000/svg"
-                class="tabler-icon copy-feedback-ok"
+                class="pm-tabler-icon copy-feedback-ok"
                 style="display:none"
                 width="64" height="64" viewBox="0 0 24 24"
                 stroke-width="1.25" stroke="rgb(0, 200, 84)" fill="none"
