@@ -871,11 +871,7 @@ const makePMCPaper = async (url) => {
     if (isPdfUrl(url)) {
         pdfLink = url;
     } else {
-        const doiParts = data.DOI.split("/")[1].split("-");
-        const did = doiParts[0].match(/\d+/)[0];
-        const yid = doiParts[1].replace(doiParts[1].match(/^0*/)[0], "");
-        const did2 = doiParts[2].replace(doiParts[2].match(/^0*/)[0], "");
-        pdfLink = absUrl + `/pdf/${did}_${yid}_Article_${did2}.pdf`;
+        pdfLink = `${absUrl}/pdf`;
     }
 
     const note = `Published @ ${venue} (${year})`;
