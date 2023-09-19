@@ -842,8 +842,8 @@ const makePMCPaper = async (url) => {
     const api = "https://api.ncbi.nlm.nih.gov/lit/ctxp/v1/pmc/?format=csl&id=";
     const data = await (await fetch(`${api}${pmcid}&download=true`)).json();
     const year = data["epub-date"]
-        ? data["epub-date"]["date-parts"][0][0]
-        : data.issued["date-parts"][0][0];
+        ? data["epub-date"]["date-parts"][0][0] + ""
+        : data.issued["date-parts"][0][0] + "";
     const author = data.author.map((a) => `${a.given} ${a.family}`).join(" and ");
     const venue = data["container-title"]
         .split(" ")
