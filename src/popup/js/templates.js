@@ -178,7 +178,18 @@ const getMemoryItemHTML = (paper, titles) => {
                     ${tablerSvg("link", "", ["memory-icon-svg"])}
                 </div>
 
-                <div class="memory-item-md memory-item-svg-div" title=${titles.copyMd}>
+                <div
+                    class="memory-item-copy-hyperlink memory-item-svg-div"
+                    title='${titles.copyHypeLink}'
+                >
+                    ${tablerSvg("device-desktop-code", "", ["memory-icon-svg"])}
+                </div>
+
+
+
+                <div class="memory-item-md memory-item-svg-div" title='${
+                    titles.copyMd
+                }'>
                     ${tablerSvg("markdown", "", ["memory-icon-svg"])}
                 </div>
 
@@ -445,6 +456,14 @@ const getPopupPaperIconsHTML = (paper, currentUrl, is) => {
             title="Copy link to paper"
         >
             ${tablerSvg("link", "", ["popup-click-svg"])}
+        </div>
+        <div
+            tabindex="0"
+            class="memory-item-svg-div"
+            id="popup-memory-item-copy-hyperlink--${id}"
+            title="Copy hyperlink to paper"
+        >
+            ${tablerSvg("device-desktop-code", "", ["popup-click-svg"])}
         </div>
 
         <div
