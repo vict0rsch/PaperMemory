@@ -13,8 +13,8 @@ const getMemoryItemHTML = (paper, titles) => {
     const tagOptions = getTagsOptions(paper);
     const favoriteClass = paper.favorite ? "favorite" : "";
     // titles behave differently in build/watch mode. This works in build
-    titles.pdfLink = `Open link to ${paper.title}`;
-    titles.copyLink = `Open link to the paper's ${
+    titles.pdfLink = `Open tab to ${paper.title}`;
+    titles.copyLink = `Copy URL to the paper's ${
         global.state.prefs.checkPreferPdf ? "PDF" : "abstract"
     }`;
 
@@ -47,7 +47,7 @@ const getMemoryItemHTML = (paper, titles) => {
         ? /*html*/ `
             <div
                 class="memory-item-openLocal memory-item-svg-div"
-                title=${titles.openLocal}
+                title='${titles.openLocal}'
             >
                 ${tablerSvg("vocabulary", "", ["memory-icon-svg"])}
             </div>`
@@ -59,7 +59,7 @@ const getMemoryItemHTML = (paper, titles) => {
             : /*html*/ `
             <div
                 class="memory-item-link memory-item-svg-div"
-                title=${titles.pdfLink}
+                title='${titles.pdfLink}'
             >
                 ${tablerSvg("external-link", "", ["memory-icon-svg"])}
             </div>`;
@@ -153,7 +153,7 @@ const getMemoryItemHTML = (paper, titles) => {
                 <div class="d-flex align-items-center">
                     <div
                         class="memory-item-edit memory-item-svg-div me-2"
-                        title=${titles.edit}
+                        title='${titles.edit}'
                     >
                         ${tablerSvg("writing", "", ["memory-icon-svg"])}
                     </div>
@@ -173,7 +173,7 @@ const getMemoryItemHTML = (paper, titles) => {
 
                 <div
                     class="memory-item-copy-link memory-item-svg-div"
-                    title=${titles.copyLink}
+                    title='${titles.copyLink}'
                 >
                     ${tablerSvg("link", "", ["memory-icon-svg"])}
                 </div>
@@ -184,14 +184,14 @@ const getMemoryItemHTML = (paper, titles) => {
 
                 <div
                     class="memory-item-bibtex memory-item-svg-div"
-                    title=${titles.copyBibtext}
+                    title='${titles.copyBibtext}'
                 >
                     ${tablerSvg("math-function", "", ["memory-icon-svg"])}
                 </div>
 
                 <span style="display: none" class="memory-item-feedback"></span>
 
-                <div title=${titles.visits} class="memory-item-faded memory-visits">
+                <div title='${titles.visits}' class="memory-item-faded memory-visits">
                     Visits: ${paper.count}
                 </div>
             </div>
