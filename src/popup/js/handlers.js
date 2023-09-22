@@ -92,6 +92,15 @@ const handleCopyPDFLink = async (e) => {
     copyAndConfirmMemoryItem(id, link, `${text} link copied!`);
 };
 
+const handleCopyHyperLink = async (e) => {
+    const id = eventId(e);
+    const prefs = global.state.prefs;
+    const paper = global.state.papers[id];
+    const link = prefs.checkPreferPdf ? paperToPDF(paper) : paperToAbs(paper);
+    const text = prefs.checkPreferPdf ? "PDF" : "Abstract";
+    copyAndConfirmMemoryItem(id, link, `Hyperlink copied!`, false, paper.title);
+};
+
 const handleAddItemToFavorites = (e) => {
     const id = eventId(e);
     const isFavorite = hasClass(`memory-container--${id}`, "favorite");

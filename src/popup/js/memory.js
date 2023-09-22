@@ -159,8 +159,19 @@ const showConfirmDeleteModal = (id) => {
  * @param {string} feedbackText Text to display as feedback
  * @param {boolean} isPopup If the action took place in the main popup or in the memory
  */
-const copyAndConfirmMemoryItem = (id, textToCopy, feedbackText, isPopup) => {
-    copyTextToClipboard(textToCopy);
+const copyAndConfirmMemoryItem = (
+    id,
+    textToCopy,
+    feedbackText,
+    isPopup,
+    hyperLinkTitle
+) => {
+    console.log("hyperLinkTitle: ", hyperLinkTitle);
+    if (!hyperLinkTitle) {
+        copyTextToClipboard(textToCopy);
+    } else {
+        copyHyperLinkToClipboard(textToCopy, hyperLinkTitle);
+    }
     const element = isPopup
         ? findEl(`popup-feedback-copied`)
         : findEl(id, "memory-item-feedback");
@@ -647,6 +658,8 @@ const displayMemoryTable = (pagination = 0) => {
         copyBibtext: "Copy Bibtex citation",
         visits: "Number of times you have opened this paper",
         openLocal: "Open downloaded pdf",
+        copyLink: "Copy paper url",
+        copyHypeLink: "Copy url as hyperlink",
     };
 
     // Add relevant sorted papers (papersList may be smaller than sortedPapers
@@ -697,7 +710,9 @@ const displayMemoryTable = (pagination = 0) => {
     addEventToClass(".memory-item-bibtex", "click", handleCopyBibtex);
     // Copy pdf link
     addEventToClass(".memory-item-copy-link", "click", handleCopyPDFLink);
-    // Copy pdf link
+    // Copy hyperlink
+    addEventToClass(".memory-item-copy-hyperlink", "click", handleCopyHyperLink);
+    // Open local file
     addEventToClass(".memory-item-openLocal", "click", handleMemoryOpenLocal);
     // Add to favorites
     addEventToClass(".memory-item-favorite", "click", handleAddItemToFavorites);

@@ -191,6 +191,25 @@ const copyTextToClipboard = (text) => {
     );
 };
 
+copyHyperLinkToClipboard = (url, title) => {
+    if (!navigator.clipboard) {
+        fallbackCopyTextToClipboard(url);
+        return;
+    }
+    const linkHtml = `<a href="${url}">${title}</a>`;
+    const type = "text/html";
+    const blob = new Blob([linkHtml], { type });
+    // Copy the blob to the clipboard
+    navigator.clipboard
+        .write([new ClipboardItem({ [type]: blob })])
+
+        // Optional but recommended. Check the result of the async operation
+        .then(
+            () => log("Async: Copying to clipboard was successful!"),
+            (err) => console.error("Async: Could not copy text: ", err)
+        );
+};
+
 const parseUrl = (url) => {
     var a = document.createElement("a");
     a.href = url;
@@ -507,6 +526,15 @@ const tablerSvg = (pathName, id, classNames) => {
                 <path d="M13 17c1.5 0 3 -2 4 -3.5s2.5 -3.5 4 -3.5" />
                 <path d="M3 19c0 1.5 .5 2 2 2s2 -4 3 -9s1.5 -9 3 -9s2 .5 2 2" />
                 <line x1="5" y1="12" x2="11" y2="12" />
+            </svg>`;
+        case "device-desktop-code":
+            return `<svg viewBox="0 0 24 24" ${id} ${classNames}>
+                <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                <path d="M12.5 16h-8.5a1 1 0 0 1 -1 -1v-10a1 1 0 0 1 1 -1h16a1 1 0 0 1 1 1v8"></path>
+                <path d="M7 20h4"></path>
+                <path d="M9 16v4"></path>
+                <path d="M20 21l2 -2l-2 -2"></path>
+                <path d="M17 17l-2 2l2 2"></path>
             </svg>`;
 
         case "huggingface":
