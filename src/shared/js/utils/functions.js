@@ -527,6 +527,15 @@ const tablerSvg = (pathName, id, classNames) => {
                 <path d="M3 19c0 1.5 .5 2 2 2s2 -4 3 -9s1.5 -9 3 -9s2 .5 2 2" />
                 <line x1="5" y1="12" x2="11" y2="12" />
             </svg>`;
+        case "device-desktop-code":
+            return `<svg viewBox="0 0 24 24" ${id} ${classNames}>
+                <path stroke="none" d="M0 0h24v24H0z" fill="none"></path>
+                <path d="M12.5 16h-8.5a1 1 0 0 1 -1 -1v-10a1 1 0 0 1 1 -1h16a1 1 0 0 1 1 1v8"></path>
+                <path d="M7 20h4"></path>
+                <path d="M9 16v4"></path>
+                <path d="M20 21l2 -2l-2 -2"></path>
+                <path d="M17 17l-2 2l2 2"></path>
+            </svg>`;
 
         case "huggingface":
             return `<img
