@@ -191,6 +191,25 @@ const copyTextToClipboard = (text) => {
     );
 };
 
+copyHyperLinkToClipboard = (url, title) => {
+    if (!navigator.clipboard) {
+        fallbackCopyTextToClipboard(url);
+        return;
+    }
+    const linkHtml = `<a href="${url}">${title}</a>`;
+    const type = "text/html";
+    const blob = new Blob([linkHtml], { type });
+    // Copy the blob to the clipboard
+    navigator.clipboard
+        .write([new ClipboardItem({ [type]: blob })])
+
+        // Optional but recommended. Check the result of the async operation
+        .then(
+            () => log("Async: Copying to clipboard was successful!"),
+            (err) => console.error("Async: Could not copy text: ", err)
+        );
+};
+
 const parseUrl = (url) => {
     var a = document.createElement("a");
     a.href = url;
