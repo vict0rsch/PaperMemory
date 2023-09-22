@@ -389,6 +389,17 @@ const popupMain = async (url, is, manualTrigger = false, tab = null) => {
             const text = prefs.checkPreferPdf ? "PDF" : "Abstract";
             copyAndConfirmMemoryItem(id, link, `${text} link copied!`, true);
         });
+        addListener(`popup-memory-item-copy-hyperlink--${id}`, "click", () => {
+            const link = prefs.checkPreferPdf ? paperToPDF(paper) : paperToAbs(paper);
+            const text = prefs.checkPreferPdf ? "PDF" : "Abstract";
+            copyAndConfirmMemoryItem(
+                id,
+                link,
+                `${text} hyperlink copied!`,
+                true,
+                paper.title
+            );
+        });
         addListener(`popup-memory-item-md--${id}`, "click", () => {
             const md = makeMdLink(paper, prefs);
             const text = prefs.checkPreferPdf ? "PDF" : "Abstract";
