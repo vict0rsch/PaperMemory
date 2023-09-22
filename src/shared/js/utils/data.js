@@ -566,6 +566,9 @@ const validatePaper = (paper, log = true) => {
     let warns = {};
 
     for (const key in expectedKeys) {
+        if (!warns[key]) {
+            warns[key] = [];
+        }
         if (!paper.hasOwnProperty(key)) {
             // the paper is missing the attribute `key`
             if (expectedKeys[key].default) {

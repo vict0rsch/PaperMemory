@@ -842,8 +842,8 @@ const makePMCPaper = async (url) => {
     const api = "https://api.ncbi.nlm.nih.gov/lit/ctxp/v1/pmc/?format=csl&id=";
     const data = await (await fetch(`${api}${pmcid}&download=true`)).json();
     const year = data["epub-date"]
-        ? data["epub-date"]["date-parts"][0][0]
-        : data.issued["date-parts"][0][0];
+        ? data["epub-date"]["date-parts"][0][0] + ""
+        : data.issued["date-parts"][0][0] + "";
     const author = data.author.map((a) => `${a.given} ${a.family}`).join(" and ");
     const venue = data["container-title"]
         .split(" ")
@@ -871,11 +871,7 @@ const makePMCPaper = async (url) => {
     if (isPdfUrl(url)) {
         pdfLink = url;
     } else {
-        const doiParts = data.DOI.split("/")[1].split("-");
-        const did = doiParts[0].match(/\d+/)[0];
-        const yid = doiParts[1].replace(doiParts[1].match(/^0*/)[0], "");
-        const did2 = doiParts[2].replace(doiParts[2].match(/^0*/)[0], "");
-        pdfLink = absUrl + `/pdf/${did}_${yid}_Article_${did2}.pdf`;
+        pdfLink = `${absUrl}/pdf`;
     }
 
     const note = `Published @ ${venue} (${year})`;
