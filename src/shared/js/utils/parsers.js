@@ -267,7 +267,7 @@ const extractDataFromDCMetaTags = (dom) => {
     const key = `${
         author.split(" and ")[0].split(" ")[1]
     }${year}${firstNonStopLowercase(title)}`.toLowerCase();
-    const doi = getMetaContent({ name: "dc.Date", scheme: "doi" }, dom);
+    const doi = getMetaContent({ scheme: "doi" }, dom);
     const bibtex = bibtexToString({
         citationKey: key,
         entryType: "article",
