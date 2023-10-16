@@ -508,7 +508,7 @@ const startMatching = async (papersToMatch) => {
         setHTML("matching-status-title", paper.title);
         changeProgress(parseInt((idx / papersToMatch.length) * 100));
 
-        var bibtex, venue, note, code;
+        var bibtex, venue, note, code, match;
 
         setHTML("matching-status-provider", "paperswithcode.org ...");
         pwcMatch = await tryPWCMatch(paper);
@@ -520,19 +520,35 @@ const startMatching = async (papersToMatch) => {
 
         if (!venue) {
             setHTML("matching-status-provider", "dblp.org ...");
-            dblpMatch = await tryDBLP(paper);
-            console.log("dblpMatch: ", dblpMatch);
-            bibtex = dblpMatch?.bibtex;
-            venue = dblpMatch?.venue;
-            note = !paper.note && dblpMatch?.note;
+            match = await tryDBLP(paper);
+            console.log("dblpMatch: ", match);
+            bibtex = match?.bibtex;
+            venue = match?.venue;
+            note = !paper.note && match?.note;
         }
 
         if (!venue) {
             setHTML("matching-status-provider", "crossref.org ...");
-            crossRefMatch = await tryCrossRef(paper);
-            console.log("crossRefMatch: ", crossRefMatch);
-            venue = dblpMatch?.venue;
-            note = !paper.note && dblpMatch?.note;
+            match = await tryCrossRef(paper);
+            console.log("crossRefMatch: ", match);
+            venue = match?.venue;
+            note = !paper.note && match?.note;
+        }
+
+        if (!venue) {
+            setHTML("matching-status-provider", "semanticscholar.org ...");
+            match = await trySemanticScholar(paper);
+            console.log("semanticScholarMatch: ", match);
+            venue = match?.venue;
+            note = !paper.note && match?.note;
+        }
+
+        if (!venue) {
+            setHTML("matching-status-provider", "scholar.google.com ...");
+            match = await tryCrossRef(paper);
+            console.log("googleScholarMatch: ", match);
+            venue = match?.venue;
+            note = !paper.note && match?.note;
         }
         if (venue || code) {
             addPreprintUpdate({ bibtex, venue, note, codeLink: code, paper });
