@@ -43,10 +43,15 @@ const setListeners = () => {
         });
 
         console.log("arxivs: ", arxivs);
-        setHTML(
-            "n-arxivs",
-            `Matching ${arxivs.length} arXiv entries, out of ${parsed.length} total entries:`
-        );
+        arxivs.length
+            ? setHTML(
+                  "n-arxivs",
+                  `Matching ${arxivs.length} arXiv entries, out of ${parsed.length} total entries:`
+              )
+            : setHTML(
+                  "n-arxivs",
+                  `No arXiv entries found in ${parsed.length} total entries.`
+              );
         const matched = arxivs.length ? await matchItems(arxivs) : [];
         showPapers(parsed, matched, arxivIndices);
         addListener("show-only-matches", "change", () => {
@@ -132,6 +137,14 @@ const matchItems = async (papersToMatch) => {
     showId("matching-progress-container", "flex");
     setHTML("matching-status-total", papersToMatch.length);
     showId("match-bib-stop", "flex");
+    setHTML(
+        "matching-status",
+        `<div id="matching-status-title"></div>
+            <div>
+                Looking for publications on <span id="matching-status-provider"></span>
+            </div>
+        </div>`
+    );
 
     const progressbar = document.querySelector("#matching-progress-bar");
     const changeProgress = (progress) => {
@@ -142,6 +155,8 @@ const matchItems = async (papersToMatch) => {
     const keepKeys = val("keep-keys");
 
     let matchedBibtexStrs = [];
+    let sources = [];
+    let venues = [];
 
     for (const [idx, paper] of papersToMatch.entries()) {
         setHTML("matching-status-index", idx + 1);
@@ -151,41 +166,57 @@ const matchItems = async (papersToMatch) => {
         );
         changeProgress(parseInt((idx / papersToMatch.length) * 100));
 
-        let bibtex, match;
+        let bibtex, match, source, venue;
 
         if (!bibtex) {
             setHTML("matching-status-provider", "dblp.org ...");
             match = await tryDBLP(paper);
             match?.bibtex && console.log("dblpMatch: ", match);
             bibtex = match?.bibtex;
+            venue = match?.venue;
+            source = "DBLP";
         }
-
-        if (!bibtex) {
-            setHTML("matching-status-provider", "crossref.org ...");
-            match = await tryCrossRef(paper);
-            match?.bibtex && console.log("crossRefMatch: ", match);
-            bibtex = match?.bibtex;
-        }
-
         if (!bibtex) {
             setHTML("matching-status-provider", "semanticscholar.org ...");
             match = await trySemanticScholar(paper);
             match?.bibtex && console.log("semanticScholarMatch: ", match);
             bibtex = match?.bibtex;
+            venue = match?.venue;
+            source = "Semantic Scholar";
         }
-
         if (!bibtex) {
             setHTML("matching-status-provider", "scholar.google.com ...");
-            match = await tryCrossRef(paper);
+            match = await tryGoogleScholar(paper);
             match?.bibtex && console.log("googleScholarMatch: ", match);
             bibtex = match?.bibtex;
+            venue = match?.venue;
+            source = "Google Scholar";
         }
+        if (!bibtex) {
+            setHTML("matching-status-provider", "crossref.org ...");
+            match = await tryCrossRef(paper);
+            venue = match.venue;
+            if (venue) {
+                paper.journal = venue;
+                for (const [key, value] of paper.entries()) {
+                    if ((value + "").toLowerCase().includes("arxiv")) {
+                        delete paper[key];
+                    }
+                }
+                bibtex = bibtexToString(paper);
+                source = "CrossRef";
+            }
+            match?.venue && console.log("crossRefMatch: ", match);
+        }
+
         if (bibtex) {
             if (keepKeys) {
                 bibtex = setKey(bibtex, paper.citationKey);
             }
+            sources.push(source);
+            venues.push(venue);
             matchedBibtexStrs.push(bibtex);
-            updateMatchedTitles(matchedBibtexStrs);
+            updateMatchedTitles(matchedBibtexStrs, sources, venues);
         } else {
             matchedBibtexStrs.push(null);
         }
@@ -203,20 +234,25 @@ const matchItems = async (papersToMatch) => {
     return matchedBibtexStrs;
 };
 
-const updateMatchedTitles = (matchedBibtexStrs) => {
+const updateMatchedTitles = (matchedBibtexStrs, sources, venues) => {
     const entries = matchedBibtexStrs.filter((e) => e).map(bibtexToObject);
     const keys = entries.map((e) => e.citationKey);
     const titles = entries.map((e) => e.title.replaceAll("{", "").replaceAll("}", ""));
     const htmls = ["<table id='result-titles-table'>"];
     for (const [idx, title] of titles.entries()) {
         htmls.push(
-            `<tr><th class="match-citation-key">${keys[idx]}</th><th class='match-title'>${title}</th></tr>`
+            `<tr>
+                <th class="match-citation-key">${keys[idx]}</th>
+                <th class='match-title'>${title}</th>
+                <th class="match-venue">${venues[idx]}</th>
+                <th class="match-source">${sources[idx]}</th>
+            </tr>`
         );
     }
     htmls.push("</table>");
     setHTML(
         "matched-list",
-        `<h2>Papers matched: ${entries.length}</h2>` + htmls.join("")
+        `<h2>Papers successfully matched: ${entries.length}</h2>` + htmls.join("")
     );
 };
 
