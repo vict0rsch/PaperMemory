@@ -17,6 +17,7 @@ const setListeners = () => {
     bibMatcher.addEventListener("click", async () => {
         const text = document.getElementById("bib-text").value;
         let parsed = parseBibText(text);
+        resetMatchResults();
         console.log("parsed: ", parsed);
         let arxivIndices = [];
         let arxivs = [];
@@ -46,48 +47,72 @@ const setListeners = () => {
             "n-arxivs",
             `Matching ${arxivs.length} arXiv entries, out of ${parsed.length} total entries:`
         );
-        showId("match-bib-stop", "flex");
-        const matched = arxivs.length && (await matchItems(arxivs));
-        const nMatched = matched.filter((e) => e).length;
-        const found =
-            nMatched > 1 ? `Found ${nMatched} matches` : `Found ${nMatched} match`;
-        const showOnlyMatches = document.getElementById("show-only-matches").checked;
-        if (showOnlyMatches && nMatched) {
-            const html = matched
-                .filter((e) => e)
-                .map(bibtexToString)
-                .join("<br/>");
-            setHTML("match-results-title", found + " (showing only matches)");
-            showId("match-results");
-            setHTML("match-results", html);
-            showId("copy-results");
-        } else if (nMatched) {
-            let htmls = [];
-            for (const [idx, entry] of parsed.entries()) {
-                if (arxivIndices.includes(idx)) {
-                    if (matched[arxivIndices.indexOf(idx)]) {
-                        htmls.push(bibtexToString(matched[arxivIndices.indexOf(idx)]));
-                    } else {
-                        htmls.push(bibtexToString(entry));
-                    }
+        const matched = arxivs.length ? await matchItems(arxivs) : [];
+        showPapers(parsed, matched, arxivIndices);
+        addListener("show-only-matches", "change", () => {
+            showPapers(parsed, matched, arxivIndices);
+        });
+    });
+};
+
+const resetMatchResults = () => {
+    setHTML("match-results-title", "");
+    hideId("result-controls");
+    hideId("match-results");
+    setHTML("match-results", "");
+    hideId("bib-header");
+    setHTML("bib-desc", "");
+};
+
+const showPapers = (parsed, matched, arxivIndices) => {
+    const nMatched = matched.filter((e) => e).length;
+    const found =
+        nMatched > 1 ? `Found ${nMatched} matches` : `Found ${nMatched} match`;
+    if (!nMatched) {
+        showId("match-results");
+        setHTML("match-results", "");
+        return;
+    }
+    const showOnlyMatches = val("show-only-matches");
+    const desc = showOnlyMatches
+        ? `<p>Showing only ${nMatched} new matched entries</p>`
+        : `<p>Showing all ${parsed.length} entries (with ${nMatched} updated match${
+              nMatched > 1 ? "s" : ""
+          })</p>`;
+    if (showOnlyMatches && nMatched) {
+        const html = matched
+            .filter((e) => e)
+            .map(bibtexToString)
+            .join("<br/>");
+        setHTML("match-results-title", found + " (showing only matches)");
+        showId("match-results");
+        setHTML("match-results", html);
+        showId("result-controls", "flex");
+    } else if (nMatched) {
+        let htmls = [];
+        for (const [idx, entry] of parsed.entries()) {
+            if (arxivIndices.includes(idx)) {
+                if (matched[arxivIndices.indexOf(idx)]) {
+                    htmls.push(bibtexToString(matched[arxivIndices.indexOf(idx)]));
                 } else {
                     htmls.push(bibtexToString(entry));
                 }
+            } else {
+                htmls.push(bibtexToString(entry));
             }
-            const html = htmls.join("<br/>");
-            setHTML(
-                "match-results-title",
-                found + ` (showing all ${parsed.length} entries)`
-            );
-            showId("match-results");
-            setHTML("match-results", html);
-            showId("copy-results");
-        } else {
-            setHTML("match-results-title", found);
-            showId("match-results");
-            setHTML("match-results", "");
         }
-    });
+        const html = htmls.join("<br/>");
+        setHTML(
+            "match-results-title",
+            found + ` (showing all ${parsed.length} entries)`
+        );
+        showId("match-results");
+        setHTML("match-results", html);
+        showId("result-controls", "flex");
+    }
+    showId("bib-header");
+    setHTML("match-results-title", found);
+    setHTML("bib-desc", desc);
 };
 
 const parseBibText = (text) => {
@@ -100,6 +125,7 @@ const parseBibText = (text) => {
 const matchItems = async (papersToMatch) => {
     showId("matching-progress-container", "flex");
     setHTML("matching-status-total", papersToMatch.length);
+    showId("match-bib-stop", "flex");
 
     const progressbar = document.querySelector("#matching-progress-bar");
 
@@ -111,8 +137,6 @@ const matchItems = async (papersToMatch) => {
     let matchedBibtexStrs = [];
 
     for (const [idx, paper] of papersToMatch.entries()) {
-        console.log("idx: ", idx);
-        console.log("paper: ", paper);
         setHTML("matching-status-index", idx + 1);
         setHTML(
             "matching-status-title",
@@ -125,7 +149,7 @@ const matchItems = async (papersToMatch) => {
         if (!venue) {
             setHTML("matching-status-provider", "dblp.org ...");
             match = await tryDBLP(paper);
-            console.log("dblpMatch: ", match);
+            match.venue && console.log("dblpMatch: ", match);
             bibtex = match?.bibtex;
             venue = match?.venue;
         }
@@ -133,26 +157,25 @@ const matchItems = async (papersToMatch) => {
         if (!venue) {
             setHTML("matching-status-provider", "crossref.org ...");
             match = await tryCrossRef(paper);
-            console.log("crossRefMatch: ", match);
+            match.venue && console.log("crossRefMatch: ", match);
             venue = match?.venue;
         }
 
         if (!venue) {
             setHTML("matching-status-provider", "semanticscholar.org ...");
             match = await trySemanticScholar(paper);
-            console.log("semanticScholarMatch: ", match);
+            match.venue && console.log("semanticScholarMatch: ", match);
             venue = match?.venue;
         }
 
         if (!venue) {
             setHTML("matching-status-provider", "scholar.google.com ...");
             match = await tryCrossRef(paper);
-            console.log("googleScholarMatch: ", match);
+            match.venue && console.log("googleScholarMatch: ", match);
             venue = match?.venue;
         }
         if (venue) {
             matchedBibtexStrs.push(match.bibtex);
-            console.log("matchedBibtexStrs: ", matchedBibtexStrs);
             updateMatchedTitles(matchedBibtexStrs);
         } else {
             matchedBibtexStrs.push(null);
@@ -181,7 +204,10 @@ const updateMatchedTitles = (matchedBibtexStrs) => {
         );
     }
     htmls.push("</table>");
-    setHTML("matched-list", "<h2>Papers matched:</h2>" + htmls.join(""));
+    setHTML(
+        "matched-list",
+        `<h2>Papers matched: ${entries.length}</h2>` + htmls.join("")
+    );
 };
 
 (async () => {

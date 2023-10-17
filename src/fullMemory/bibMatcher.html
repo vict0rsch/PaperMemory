@@ -55,20 +55,21 @@
             <br /><br />
             <div class="col-12">
                 <div class="row">
-                    <div class="col-12 col-xl-6 option-item">
-                        <input type="checkbox" id="keep-keys" checked>
-                        <label for="keep-keys">Keep citation keys</label>
-                        <span class="option-help">When a pre-print is matched to a publication, the latter may have a
+                    <div class="col-12 option-item d-flex-center-center">
+                        <div class="d-flex-center-center">
+                            <input type="checkbox" id="keep-keys" checked class="switch"
+                                style="min-width: 38px">&nbsp;&nbsp;
+                            <label for="keep-keys" style="min-width: 150px">Keep citation keys</label>
+                        </div>
+                        <br />
+                        <div class="option-help d-flex-center-center">When a pre-print is matched to a publication, the
+                            latter may have a
                             standard citation key. You can either update the entry's citation key or use the new one.
-                            Note that if you use the new one, your existing citations will be broken.</span>
+                            Note that if you use the new one, your existing citations will be broken.</div>
                     </div>
-                    <div class="col-12 col-xl-6 option-item">
-                        <input type="checkbox" id="show-only-matches">
-                        <label for="show-only-matches">Show only matched items</label>
-                        <span class="option-help">You can choose to EITHER (default) get the same list of references,
-                            with matched items updated (easier to copy-paste a full bibliography) OR just see the new
-                            matches </span>
-                    </div>
+                    <!-- <div class="col-12 col-xl-6 option-item">
+
+                    </div> -->
 
                 </div>
             </div>
@@ -99,10 +100,16 @@
 
         <div class="row mb-5">
             <div id="matched-list"> </div>
-            <h2 id="match-results-title"></h2>
             <br />
-            <button id="copy-results" style="display: none;">Copy to clipboard</button>
-            <br />
+            <h2 id="bib-header" style="display: none;">Your Bibliography</h2>
+            <div id="result-controls" class="d-flex-center-center" style="display: none;">
+                <div class="d-flex-center-center">
+                    <input class="switch" type="checkbox" id="show-only-matches" name="Show only matches">
+                    <label for="show-only-matches">Show only new matched entries</label>
+                </div>
+                <button id="copy-results">Copy to clipboard</button>
+            </div>
+            <p id="bib-desc"></p>
             <pre id="match-results" style="display: none;">
             </pre>
         </div>
