@@ -122,17 +122,24 @@ const parseBibText = (text) => {
     return b.getEntries();
 };
 
+const setKey = (bibtex, key) => {
+    const obj = bibtexToObject(bibtex);
+    obj.citationKey = key;
+    return bibtexToString(obj);
+};
+
 const matchItems = async (papersToMatch) => {
     showId("matching-progress-container", "flex");
     setHTML("matching-status-total", papersToMatch.length);
     showId("match-bib-stop", "flex");
 
     const progressbar = document.querySelector("#matching-progress-bar");
-
     const changeProgress = (progress) => {
         progressbar.style.width = `${progress}%`;
     };
     changeProgress(0);
+
+    const keepKeys = val("keep-keys");
 
     let matchedBibtexStrs = [];
 
@@ -149,31 +156,34 @@ const matchItems = async (papersToMatch) => {
         if (!bibtex) {
             setHTML("matching-status-provider", "dblp.org ...");
             match = await tryDBLP(paper);
-            match.bibtex && console.log("dblpMatch: ", match);
+            match?.bibtex && console.log("dblpMatch: ", match);
             bibtex = match?.bibtex;
         }
 
         if (!bibtex) {
             setHTML("matching-status-provider", "crossref.org ...");
             match = await tryCrossRef(paper);
-            match.bibtex && console.log("crossRefMatch: ", match);
+            match?.bibtex && console.log("crossRefMatch: ", match);
             bibtex = match?.bibtex;
         }
 
         if (!bibtex) {
             setHTML("matching-status-provider", "semanticscholar.org ...");
             match = await trySemanticScholar(paper);
-            match.bibtex && console.log("semanticScholarMatch: ", match);
+            match?.bibtex && console.log("semanticScholarMatch: ", match);
             bibtex = match?.bibtex;
         }
 
         if (!bibtex) {
             setHTML("matching-status-provider", "scholar.google.com ...");
             match = await tryCrossRef(paper);
-            match.bibtex && console.log("googleScholarMatch: ", match);
+            match?.bibtex && console.log("googleScholarMatch: ", match);
             bibtex = match?.bibtex;
         }
         if (bibtex) {
+            if (keepKeys) {
+                bibtex = setKey(bibtex, paper.citationKey);
+            }
             matchedBibtexStrs.push(bibtex);
             updateMatchedTitles(matchedBibtexStrs);
         } else {
@@ -187,6 +197,7 @@ const matchItems = async (papersToMatch) => {
             return matchedBibtexStrs;
         }
     }
+    hideId("match-bib-stop");
     changeProgress(100);
     setHTML("matching-status", "All done!<br/><br/>");
     return matchedBibtexStrs;
