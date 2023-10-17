@@ -144,38 +144,37 @@ const matchItems = async (papersToMatch) => {
         );
         changeProgress(parseInt((idx / papersToMatch.length) * 100));
 
-        let bibtex, venue, match;
+        let bibtex, match;
 
-        if (!venue) {
+        if (!bibtex) {
             setHTML("matching-status-provider", "dblp.org ...");
             match = await tryDBLP(paper);
-            match.venue && console.log("dblpMatch: ", match);
+            match.bibtex && console.log("dblpMatch: ", match);
             bibtex = match?.bibtex;
-            venue = match?.venue;
         }
 
-        if (!venue) {
+        if (!bibtex) {
             setHTML("matching-status-provider", "crossref.org ...");
             match = await tryCrossRef(paper);
-            match.venue && console.log("crossRefMatch: ", match);
-            venue = match?.venue;
+            match.bibtex && console.log("crossRefMatch: ", match);
+            bibtex = match?.bibtex;
         }
 
-        if (!venue) {
+        if (!bibtex) {
             setHTML("matching-status-provider", "semanticscholar.org ...");
             match = await trySemanticScholar(paper);
-            match.venue && console.log("semanticScholarMatch: ", match);
-            venue = match?.venue;
+            match.bibtex && console.log("semanticScholarMatch: ", match);
+            bibtex = match?.bibtex;
         }
 
-        if (!venue) {
+        if (!bibtex) {
             setHTML("matching-status-provider", "scholar.google.com ...");
             match = await tryCrossRef(paper);
-            match.venue && console.log("googleScholarMatch: ", match);
-            venue = match?.venue;
+            match.bibtex && console.log("googleScholarMatch: ", match);
+            bibtex = match?.bibtex;
         }
-        if (venue) {
-            matchedBibtexStrs.push(match.bibtex);
+        if (bibtex) {
+            matchedBibtexStrs.push(bibtex);
             updateMatchedTitles(matchedBibtexStrs);
         } else {
             matchedBibtexStrs.push(null);
