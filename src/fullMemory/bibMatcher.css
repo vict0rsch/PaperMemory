@@ -1,0 +1,266 @@
+/*
+---------------------
+-----  Globals  -----
+---------------------
+*/
+:root {
+    --maxWidth: 1000px;
+    --color: unset;
+}
+body {
+    margin: 0;
+    font-family: "Yantramanav";
+    font-weight: 400;
+}
+
+svg {
+    stroke-width: 1.15;
+    stroke: #7c7f8b;
+    fill: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+code {
+    font-family: "Fira Code", monospace !important;
+    color: inherit !important;
+    padding: 1px 4px;
+    vertical-align: text-top;
+    border-radius: var(--round);
+    background-color: rgb(238, 238, 238);
+}
+
+.pm-tabler-icon {
+    height: 32px;
+    width: 32px;
+    color: var(--red);
+    stroke-width: 1px;
+}
+
+h2,
+h3,
+h4,
+h5,
+h6 {
+    padding-top: 1.5rem;
+}
+
+/*
+--------------------
+-----  Header  -----
+--------------------
+*/
+#header {
+    background-color: var(--red);
+    padding: 12px;
+    color: white;
+    display: flex;
+    justify-content: start;
+    align-items: center;
+    border-radius: 0 0 75% 0/50%;
+    box-shadow: 14px 30px 122px -30px rgba(0, 0, 0, 0.75);
+}
+#header-wrapper {
+    max-width: var(--maxWidth);
+    margin: auto;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+#header-wrapper h1 {
+    font-weight: 300;
+}
+#header-icon {
+    stroke: white;
+    margin-left: 1rem;
+}
+
+#toc {
+    text-align: center;
+    max-width: 75%;
+    margin: auto;
+    margin-top: 2rem;
+    font-size: 1.2rem;
+}
+
+.toc-item {
+    display: inline-block;
+}
+
+/*
+---------------------
+-----  Content  -----
+---------------------
+*/
+#content {
+    max-width: var(--maxWidth);
+    margin: auto;
+    padding: 32px;
+}
+
+hr {
+    border: none;
+    border-top: 1px solid var(--lighterColor);
+    margin: 4rem;
+}
+
+textarea {
+    border-radius: var(--round);
+    border: 1px solid #aaaaaa;
+    font-family: "Yantramanav";
+    padding: 6px;
+}
+
+button,
+.file-upload-label {
+    border: 1px solid var(--red);
+    border-radius: var(--rounder);
+    padding: 4px 6px;
+    background-color: white;
+    transition: all ease 200ms;
+    cursor: pointer;
+}
+button:disabled,
+.file-upload-label:disabled {
+    cursor: not-allowed;
+    pointer-events: none;
+    border-color: #e7a9a9;
+}
+
+button:hover,
+.file-upload-label:hover {
+    border-color: var(--red);
+    background-color: rgb(253, 235, 235);
+}
+
+input {
+    border-radius: var(--round);
+    border: 1px solid #aaa;
+    margin-top: 8px;
+    line-height: 1.1rem;
+    padding: 6px;
+    margin-bottom: 4px;
+}
+
+/*
+-----------------------------
+-----  Matcher options  -----
+-----------------------------
+*/
+.option-item {
+    margin-bottom: 1rem;
+    margin-top: 1rem;
+}
+
+.option-help {
+    margin-left: 1rem;
+    color: #7c7f8b;
+}
+
+#match-bib,
+#match-bib-stop,
+#copy-results {
+    max-width: 200px;
+    margin: auto;
+}
+#bib-text {
+    max-width: 100%;
+    margin: 1rem;
+}
+
+#match-results {
+    padding: 1rem;
+    border: 1px solid #ff4754;
+    border-radius: var(--round);
+}
+#copy-results {
+    background-color: rgb(86, 168, 86);
+    margin: 2rem auto;
+    color: white;
+}
+#copy-results:hover {
+    color: wheat;
+    background-color: rgb(86, 168, 86, 0.8);
+}
+.match-citation-key {
+    color: #7c7f8b;
+    padding-right: 0.5rem;
+    font-family: "Fira Code", monospace;
+    font-size: 0.85rem;
+    font-weight: 400;
+}
+.match-title {
+    font-weight: 400;
+}
+#match-bib-stop {
+    display: flex;
+    height: 34px;
+    align-items: center;
+    justify-content: center;
+}
+#match-bib-stop:hover {
+    background-color: rgb(253, 235, 235);
+}
+/*
+----------------------
+-----  Progress  -----
+----------------------
+*/
+
+.progress-container {
+    margin: 30px;
+    margin-top: 0;
+    height: 0.8rem;
+    width: 40%;
+    border-radius: 0.4rem;
+    background: #000;
+}
+
+.progress-container .progress {
+    height: 100%;
+    width: 0;
+    border-radius: 0.4rem;
+    background: #ff4754;
+    transition: width 0.4s ease;
+}
+
+#matching-progress-container {
+    display: flex;
+    justify-content: space-evenly;
+    align-items: center;
+    width: 100%;
+    padding-top: 24px;
+}
+
+#matching-status-title {
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+    display: inline-block;
+    max-width: 100%;
+}
+
+#matching-status {
+    width: 60%;
+    min-width: 60%;
+    max-width: 60%;
+}
+.loader {
+    width: 16px;
+    height: 16px;
+    border: 3px solid #fff;
+    border-bottom-color: transparent;
+    border-radius: 50%;
+    display: inline-block;
+    box-sizing: border-box;
+    animation: rotation 1s linear infinite;
+}
+
+@keyframes rotation {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
