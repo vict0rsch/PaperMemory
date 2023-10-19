@@ -994,7 +994,7 @@ const makeACMPaper = async (url) => {
             year,
             publisher: "Association for Computing Machinery",
             address: "New York, NY, USA",
-            url: url.replace("/doi/pdf/", "/doi/"),
+            url: noParamUrl(url).replace("/doi/pdf/", "/doi/"),
         });
     }
     const id = `ACM-${year}_${miniHash(doi)}`;
