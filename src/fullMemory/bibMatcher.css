@@ -165,6 +165,7 @@ input {
 #match-bib,
 #match-bib-stop,
 #copy-results {
+    width: 150px;
     max-width: 200px;
     margin: auto;
 }
@@ -193,7 +194,7 @@ input {
     font-size: 0.85rem;
     font-weight: 400;
 }
-.match-source {
+.match-venue {
     font-style: italic;
 }
 
@@ -234,6 +235,25 @@ th {
 -----  Progress  -----
 ----------------------
 */
+#matching-feedback-container {
+    display: block;
+    padding: 2rem 1rem;
+    background: linear-gradient(45deg, #f5e1e1, #fbecca);
+    border-radius: 8px;
+    box-shadow: 6px 5px 9px 4px #f6f6f6;
+}
+#matched-list-container {
+    display: block;
+    padding: 0rem 1rem 1rem;
+    background: linear-gradient(45deg, #fbecca, #f5e1e1);
+    border-radius: 8px;
+    box-shadow: 6px 5px 9px 4px #f6f6f6;
+}
+#your-bib-container {
+    padding: 0rem 1rem 1rem;
+    /* border-radius: 8px; */
+    /* box-shadow: 6px 5px 9px 4px #f6f6f6; */
+}
 
 .progress-container {
     margin: 30px;

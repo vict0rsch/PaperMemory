@@ -3,7 +3,7 @@
 
 <head>
     <title>PaperMemory BibMatcher</title>
-    <script src="../shared/min/theme.min.js"></script>
+    <!-- <script src="../shared/min/theme.min.js"></script> -->
     <style>
         @import url("https://fonts.googleapis.com/css2?family=Yantramanav:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;1,600&display=swap");
         @import url("https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;500;600;700&display=swap");
@@ -29,20 +29,23 @@
         </div>
     </div>
     <div id="content" class="container">
-        <p style="margin-bottom: 3rem;">
-            Paste the content of your <code>.bib</code> file and PaperMemory will automatically match the Arxiv entries
-            to publications by
-            fetching information from DBLP, Semantic Scholar, CrossRef and Google Scholar.
-        </p>
+        <div class="row">
+            <div class="col-12">
+                <p style="margin-bottom: 3rem;">
+                    Paste the content of your <code>.bib</code> file and PaperMemory will automatically match the Arxiv
+                    entries
+                    to publications by
+                    fetching information from DBLP, Semantic Scholar, CrossRef and Google Scholar.
+                </p>
 
-        <p><strong style="color: rgb(169, 37, 37)">Warning:</strong> the matching procedure produces an output which
-            does
-            <strong>NOT</strong> maintain comments. Select
-            matched
-            entries one by one if you want to keep your initial comment structure.
-        </p>
-
-        <div class="row mb-5">
+                <p><strong style="color: rgb(169, 37, 37)">Warning:</strong> the matching procedure produces an output
+                    which
+                    does
+                    <strong>NOT</strong> maintain comments. Select
+                    matched
+                    entries one by one if you want to keep your initial comment structure.
+                </p>
+            </div>
             <div class="col-12">
                 <textarea class="w-100" id="bib-text" placeholder="@article{foo2023bar, ..." rows="12"></textarea>
             </div>
@@ -71,15 +74,16 @@
                     <pre id="bibmatch-errors"></pre>
                 </div>
             </div>
-            <button id="match-bib" class="mt-4">Match</button>
-            <button id="match-bib-stop" style="background-color: rgb(216, 71, 100); display: none;"
-                class="mt-4">STOP</button>
+            <div class="col-12 d-flex-center-center">
+                <button id="match-bib" class="mt-4">Match</button>
+                <button id="match-bib-stop" style="background-color: rgb(255 113 113); display: none;"
+                    class="mt-4">Stop</button>
+            </div>
         </div>
 
-
-        <div class="row" id="matching-feedback-container">
+        <div class="row mt-5" id="matching-feedback-container" style="display: none;">
             <div>
-                <p id="n-arxivs"></p>
+                <span id="n-arxivs"></span>
             </div>
             <div id="matching-progress-container" style="display: none;">
                 <div class="progress-container">
@@ -97,20 +101,22 @@
             </div>
         </div>
 
-        <div class="row mb-5">
-            <div id="matched-list"> </div>
-            <br />
-            <h2 id="bib-header" style="display: none;">Your Bibliography</h2>
-            <div id="result-controls" class="d-flex-center-center" style="display: none;">
-                <div class="d-flex-center-center">
-                    <input class="switch" type="checkbox" id="show-only-matches" name="Show only matches">
-                    <label for="show-only-matches">Show only new matched entries</label>
+        <div class="row mt-5" id="matched-list-container" style="display: none;">
+            <div class="col-12" id="matched-list"> </div>
+        </div>
+        <div class="row mt-4" id="your-bib-container" style="display: none;">
+            <div class="col-12">
+                <h2 id="bib-header" style="display: none;">Your Bibliography</h2>
+                <div id="result-controls" class="d-flex-center-center" style="display: none;">
+                    <div class="d-flex-center-center">
+                        <input class="switch" type="checkbox" id="show-only-matches" name="Show only matches">
+                        <label for="show-only-matches">Show only new matched entries</label>
+                    </div>
+                    <button id="copy-results">Copy to clipboard</button>
                 </div>
-                <button id="copy-results">Copy to clipboard</button>
+                <p id="bib-desc"></p>
+                <pre id="match-results" style="display: none;"></pre>
             </div>
-            <p id="bib-desc"></p>
-            <pre id="match-results" style="display: none;">
-            </pre>
         </div>
 
 

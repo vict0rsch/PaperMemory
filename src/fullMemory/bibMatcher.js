@@ -69,9 +69,9 @@ const setListeners = () => {
                   `No arXiv entries found in ${parsed.length} total entries.`
               );
         const matched = arxivs.length ? await matchItems(arxivs) : [];
-        showPapers(parsed, matched, arxivIndices);
+        showBibliography(parsed, matched, arxivIndices);
         addListener("show-only-matches", "change", () => {
-            showPapers(parsed, matched, arxivIndices);
+            showBibliography(parsed, matched, arxivIndices);
         });
     });
 };
@@ -85,18 +85,20 @@ const resetMatchResults = () => {
     hideId("errors-container");
     setHTML("bibmatch-errors", "");
     hideId("matching-feedback-container");
+    hideId("matched-list-container");
+    hideId("your-bib-container");
 };
 
-const showPapers = (parsed, matched, arxivIndices) => {
+const showBibliography = (parsed, matched, arxivIndices) => {
     const nMatched = matched.filter((e) => e).length;
-    if (!nMatched) return;
+    if (!parsed.length) return;
     const showOnlyMatches = val("show-only-matches");
     const desc = showOnlyMatches
         ? `<p>Showing only ${nMatched} new matched entries</p>`
         : `<p>Showing all ${parsed.length} entries (with ${nMatched} updated match${
               nMatched > 1 ? "s" : ""
           })</p>`;
-    if (showOnlyMatches && nMatched) {
+    if (showOnlyMatches) {
         const html = matched
             .filter((e) => e)
             .map(bibtexToString)
@@ -104,7 +106,7 @@ const showPapers = (parsed, matched, arxivIndices) => {
         showId("match-results");
         setHTML("match-results", html);
         showId("result-controls", "flex");
-    } else if (nMatched) {
+    } else {
         let htmls = [];
         for (const [idx, entry] of parsed.entries()) {
             if (arxivIndices.includes(idx)) {
@@ -122,6 +124,7 @@ const showPapers = (parsed, matched, arxivIndices) => {
         setHTML("match-results", html);
         showId("result-controls", "flex");
     }
+    showId("your-bib-container");
     showId("bib-header");
     setHTML("bib-desc", desc);
 };
@@ -146,6 +149,7 @@ const showError = (msg) => {
 
 const matchItems = async (papersToMatch) => {
     showId("matching-progress-container", "flex");
+    showId("matching-feedback-container", "flex");
     setHTML("matching-status-total", papersToMatch.length);
     showId("match-bib-stop", "flex");
     setHTML(
@@ -231,6 +235,11 @@ const matchItems = async (papersToMatch) => {
         } else {
             matchedBibtexStrs.push(null);
         }
+
+        if (idx === 0) {
+            showId("matched-list-container", "flex");
+        }
+
         if (STOPMATCH) {
             STOPMATCH = false;
             setHTML("matching-status", "Interrupted<br/><br/>");
@@ -254,7 +263,7 @@ const updateMatchedTitles = (matchedBibtexStrs, sources, venues) => {
         const titles = entries.map((e) =>
             e.title.replaceAll("{", "").replaceAll("}", "")
         );
-        htmls.push("<table id='result-titles-table'>");
+        htmls.push("<table id='result-titles-table' class='w-100'>");
         for (const [idx, title] of titles.entries()) {
             htmls.push(
                 `<tr>
@@ -269,10 +278,11 @@ const updateMatchedTitles = (matchedBibtexStrs, sources, venues) => {
     }
     setHTML(
         "matched-list",
-        `<h2>Papers successfully matched: ${entries.length}</h2>` + htmls.join("")
+        `<h4>Papers successfully matched: ${entries.length}</h4>` + htmls.join("")
     );
 };
 
 (async () => {
+    resetMatchResults();
     setListeners();
 })();
