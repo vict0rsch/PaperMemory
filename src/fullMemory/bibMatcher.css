@@ -168,10 +168,6 @@ input {
     max-width: 200px;
     margin: auto;
 }
-#bib-text {
-    max-width: 100%;
-    margin: 1rem;
-}
 
 #match-results {
     padding: 1rem;
@@ -295,6 +291,19 @@ th {
     100% {
         transform: rotate(360deg);
     }
+}
+
+/*
+--------------------
+-----  Errors  -----
+--------------------
+*/
+
+#bibmatch-errors {
+    background: #ececec;
+    border: 2px solid orange;
+    padding: 16px;
+    border-radius: 4px;
 }
 
 /*

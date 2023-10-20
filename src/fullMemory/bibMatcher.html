@@ -28,7 +28,7 @@
             </svg>
         </div>
     </div>
-    <div id="content">
+    <div id="content" class="container">
         <p style="margin-bottom: 3rem;">
             Paste the content of your <code>.bib</code> file and PaperMemory will automatically match the Arxiv entries
             to publications by
@@ -43,9 +43,9 @@
         </p>
 
         <div class="row mb-5">
-            <textarea id="bib-text" placeholder="@article{foo2023bar, ..." rows="12
-            "></textarea>
-            <br /><br />
+            <div class="col-12">
+                <textarea class="w-100" id="bib-text" placeholder="@article{foo2023bar, ..." rows="12"></textarea>
+            </div>
             <div class="col-12">
                 <div class="row">
                     <div class="col-12 option-item d-flex-center-center">
@@ -66,12 +66,18 @@
 
                 </div>
             </div>
+            <div class="col-12" id="errors-container" style="display: none;">
+                <div class="row">
+                    <pre id="bibmatch-errors"></pre>
+                </div>
+            </div>
             <button id="match-bib" class="mt-4">Match</button>
             <button id="match-bib-stop" style="background-color: rgb(216, 71, 100); display: none;"
                 class="mt-4">STOP</button>
         </div>
 
-        <div class="row">
+
+        <div class="row" id="matching-feedback-container">
             <div>
                 <p id="n-arxivs"></p>
             </div>

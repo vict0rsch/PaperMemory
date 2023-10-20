@@ -1,23 +1,38 @@
 var STOPMATCH = false;
 
 const setListeners = () => {
-    const stopMatch = document.getElementById("match-bib-stop");
-    stopMatch.addEventListener("click", () => {
+    addListener("match-bib-stop", "click", () => {
         STOPMATCH = true;
         setHTML("match-bib-stop", '<span class="loader"></span>');
     });
-    document.getElementById("copy-results").addEventListener("click", () => {
-        copyTextToClipboard(document.getElementById("match-results").innerText);
+    addListener("copy-results", "click", () => {
+        copyTextToClipboard(findEl("match-results").innerText);
         setHTML("copy-results", "Copied!");
         setTimeout(() => {
             setHTML("copy-results", "Copy to clipboard");
         }, 1500);
     });
-    const bibMatcher = document.getElementById("match-bib");
-    bibMatcher.addEventListener("click", async () => {
-        const text = document.getElementById("bib-text").value;
-        let parsed = parseBibText(text);
+    addListener("bib-text", "keydown", (e) => {
+        if (document.activeElement === findEl("bib-text")) {
+            if ((e.metaKey || e.ctrlKey) && e.keyCode == 13) {
+                dispatch("match-bib", "click");
+                findEl("match-bib").focus();
+            }
+        }
+    });
+    addListener("match-bib", "click", async () => {
         resetMatchResults();
+        const text = findEl("bib-text").value;
+        let parsed, stop;
+
+        try {
+            parsed = parseBibText(text);
+        } catch (error) {
+            showError(error);
+            stop = true;
+        }
+        if (stop) return;
+
         console.log("parsed: ", parsed);
         let arxivIndices = [];
         let arxivs = [];
@@ -43,6 +58,7 @@ const setListeners = () => {
         });
 
         console.log("arxivs: ", arxivs);
+        showId("matching-feedback-container");
         arxivs.length
             ? setHTML(
                   "n-arxivs",
@@ -61,23 +77,19 @@ const setListeners = () => {
 };
 
 const resetMatchResults = () => {
-    setHTML("match-results-title", "");
     hideId("result-controls");
     hideId("match-results");
     setHTML("match-results", "");
     hideId("bib-header");
     setHTML("bib-desc", "");
+    hideId("errors-container");
+    setHTML("bibmatch-errors", "");
+    hideId("matching-feedback-container");
 };
 
 const showPapers = (parsed, matched, arxivIndices) => {
     const nMatched = matched.filter((e) => e).length;
-    const found =
-        nMatched > 1 ? `Found ${nMatched} matches` : `Found ${nMatched} match`;
-    if (!nMatched) {
-        showId("match-results");
-        setHTML("match-results", "");
-        return;
-    }
+    if (!nMatched) return;
     const showOnlyMatches = val("show-only-matches");
     const desc = showOnlyMatches
         ? `<p>Showing only ${nMatched} new matched entries</p>`
@@ -89,7 +101,6 @@ const showPapers = (parsed, matched, arxivIndices) => {
             .filter((e) => e)
             .map(bibtexToString)
             .join("<br/>");
-        setHTML("match-results-title", found + " (showing only matches)");
         showId("match-results");
         setHTML("match-results", html);
         showId("result-controls", "flex");
@@ -107,16 +118,11 @@ const showPapers = (parsed, matched, arxivIndices) => {
             }
         }
         const html = htmls.join("<br/>");
-        setHTML(
-            "match-results-title",
-            found + ` (showing all ${parsed.length} entries)`
-        );
         showId("match-results");
         setHTML("match-results", html);
         showId("result-controls", "flex");
     }
     showId("bib-header");
-    setHTML("match-results-title", found);
     setHTML("bib-desc", desc);
 };
 
@@ -131,6 +137,11 @@ const setKey = (bibtex, key) => {
     const obj = bibtexToObject(bibtex);
     obj.citationKey = key;
     return bibtexToString(obj);
+};
+
+const showError = (msg) => {
+    showId("errors-container");
+    setHTML("bibmatch-errors", msg);
 };
 
 const matchItems = async (papersToMatch) => {
@@ -228,6 +239,7 @@ const matchItems = async (papersToMatch) => {
             return matchedBibtexStrs;
         }
     }
+    updateMatchedTitles(matchedBibtexStrs, sources, venues);
     hideId("match-bib-stop");
     changeProgress(100);
     setHTML("matching-status", "All done!<br/><br/>");
@@ -235,21 +247,26 @@ const matchItems = async (papersToMatch) => {
 };
 
 const updateMatchedTitles = (matchedBibtexStrs, sources, venues) => {
+    const htmls = [];
     const entries = matchedBibtexStrs.filter((e) => e).map(bibtexToObject);
-    const keys = entries.map((e) => e.citationKey);
-    const titles = entries.map((e) => e.title.replaceAll("{", "").replaceAll("}", ""));
-    const htmls = ["<table id='result-titles-table'>"];
-    for (const [idx, title] of titles.entries()) {
-        htmls.push(
-            `<tr>
-                <th class="match-citation-key">${keys[idx]}</th>
-                <th class='match-title'>${title}</th>
-                <th class="match-venue">${venues[idx]}</th>
-                <th class="match-source">${sources[idx]}</th>
-            </tr>`
+    if (entries.length) {
+        const keys = entries.map((e) => e.citationKey);
+        const titles = entries.map((e) =>
+            e.title.replaceAll("{", "").replaceAll("}", "")
         );
+        htmls.push("<table id='result-titles-table'>");
+        for (const [idx, title] of titles.entries()) {
+            htmls.push(
+                `<tr>
+                    <th class="match-citation-key">${keys[idx]}</th>
+                    <th class='match-title'>${title}</th>
+                    <th class="match-venue">${venues[idx]}</th>
+                    <th class="match-source">${sources[idx]}</th>
+                </tr>`
+            );
+        }
+        htmls.push("</table>");
     }
-    htmls.push("</table>");
     setHTML(
         "matched-list",
         `<h2>Papers successfully matched: ${entries.length}</h2>` + htmls.join("")
