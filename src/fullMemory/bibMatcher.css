@@ -242,26 +242,21 @@ th {
     border-radius: 8px;
     box-shadow: 6px 5px 9px 4px #f6f6f6;
 }
-#matched-list-container {
+#your-bib-container {
     display: block;
     padding: 0rem 1rem 1rem;
     background: linear-gradient(45deg, #fbecca, #f5e1e1);
     border-radius: 8px;
     box-shadow: 6px 5px 9px 4px #f6f6f6;
 }
-#your-bib-container {
-    padding: 0rem 1rem 1rem;
-    /* border-radius: 8px; */
-    /* box-shadow: 6px 5px 9px 4px #f6f6f6; */
-}
 
 .progress-container {
-    margin: 30px;
+    /* margin: 30px; */
     margin-top: 0;
     height: 0.8rem;
-    width: 40%;
     border-radius: 0.4rem;
     background: #000;
+    padding: 0;
 }
 
 .progress-container .progress {
@@ -272,14 +267,6 @@ th {
     transition: width 0.4s ease;
 }
 
-#matching-progress-container {
-    display: flex;
-    justify-content: space-evenly;
-    align-items: center;
-    width: 100%;
-    padding-top: 24px;
-}
-
 #matching-status-title {
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -288,11 +275,6 @@ th {
     max-width: 100%;
 }
 
-#matching-status {
-    width: 60%;
-    min-width: 60%;
-    max-width: 60%;
-}
 .loader {
     width: 16px;
     height: 16px;
@@ -339,7 +321,7 @@ th {
         --focus: 2px rgba(254, 39, 39, 0.596);
         --border: #c5aaaa;
         --border-hover: #b94141;
-        --background: #fff;
+        --background: #fff0;
         --disabled: #f9e1e1;
         --disabled-inner: #f9e1e1;
         -webkit-appearance: none;

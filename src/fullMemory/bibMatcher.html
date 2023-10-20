@@ -82,29 +82,31 @@
         </div>
 
         <div class="row mt-5" id="matching-feedback-container" style="display: none;">
-            <div>
+            <div class="col-12">
                 <span id="n-arxivs"></span>
             </div>
-            <div id="matching-progress-container" style="display: none;">
-                <div class="progress-container">
-                    <div class="progress" id="matching-progress-bar"></div>
-                    <div style="padding: 8px; text-align: center;">
-                        <span id="matching-status-index"></span> / <span id="matching-status-total"></span>
+            <div id="matching-progress-container" style="display: none;" class="col-12">
+                <div class="row mt-3">
+                    <div class="col-6">
+                        <div class="progress-container">
+                            <div class="progress" id="matching-progress-bar"></div>
+                        </div>
+                        <div style="padding: 8px; text-align: center;">
+                            <span id="matching-status-index"></span> / <span id="matching-status-total"></span>
+                        </div>
                     </div>
-                </div>
-                <div id="matching-status">
-                    <div id="matching-status-title"></div>
-                    <div>
-                        Looking for publications on <span id="matching-status-provider"></span>
+                    <div id="matching-status" class="col-6">
+                        <div id="matching-status-title"></div>
+                        <div>
+                            Looking for publications on <span id="matching-status-provider"></span>
+                        </div>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <div class="row mt-5" id="matched-list-container" style="display: none;">
             <div class="col-12" id="matched-list"> </div>
         </div>
-        <div class="row mt-4" id="your-bib-container" style="display: none;">
+        <div class="row mt-5" id="your-bib-container" style="display: none;">
             <div class="col-12">
                 <h2 id="bib-header" style="display: none;">Your Bibliography</h2>
                 <div id="result-controls" class="d-flex-center-center" style="display: none;">

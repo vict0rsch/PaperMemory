@@ -148,7 +148,7 @@ const showError = (msg) => {
 };
 
 const matchItems = async (papersToMatch) => {
-    showId("matching-progress-container", "flex");
+    showId("matching-progress-container");
     showId("matching-feedback-container", "flex");
     setHTML("matching-status-total", papersToMatch.length);
     showId("match-bib-stop", "flex");
