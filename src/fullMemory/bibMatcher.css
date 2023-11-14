@@ -238,16 +238,27 @@ th {
 #matching-feedback-container {
     display: block;
     padding: 2rem 1rem;
-    background: linear-gradient(45deg, #f5e1e1, #fbecca);
+    background: #fafafa;
+    /* background: linear-gradient(45deg, #f5e1e1, #fbecca); */
     border-radius: 8px;
     box-shadow: 6px 5px 9px 4px #f6f6f6;
 }
 #your-bib-container {
     display: block;
     padding: 0rem 1rem 1rem;
-    background: linear-gradient(45deg, #fbecca, #f5e1e1);
+    background: #fafafa;
+    /* background: linear-gradient(45deg, #fbecca, #f5e1e1); */
     border-radius: 8px;
     box-shadow: 6px 5px 9px 4px #f6f6f6;
+}
+#match-params-container {
+    display: block;
+    padding: 2rem 1rem;
+    background: #fafafa;
+    /* background: linear-gradient(45deg, #f5e1e1, #fbecca); */
+    border-radius: 8px;
+    box-shadow: 6px 5px 9px 4px #f6f6f6;
+    margin-top: 2rem;
 }
 
 .progress-container {
