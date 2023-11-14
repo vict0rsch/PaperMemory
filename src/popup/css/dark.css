@@ -2,7 +2,7 @@
     --background: #222a35;
     --lighterBackground: #323942;
     --ligthBackground: #4b535c;
-    --codeBackground: #5a5a5a;
+    --codeBackground: #3c3c3f;
     --lightestBackground: #788089;
     --dimColor: #8d9cac;
     --noteColor: #aeb8c2;
@@ -237,4 +237,35 @@ button:not(.select2-selection__choice__remove):hover,
     color: var(--color) !important;
     stroke: var(--color) !important;
     fill: var(--background) !important;
+}
+
+/*
+------------------------
+-----  BibMatcher  -----
+------------------------
+*/
+
+#matching-feedback-container,
+#your-bib-container,
+#match-params-container {
+    background: var(--lighterBackground);
+    /* color: var(--color); */
+    box-shadow: 6px 5px 9px 4px #1e2632;
+}
+.option-help {
+    color: var(--dimColor);
+}
+#bib-text,
+#match-results {
+    background: var(--codeBackground);
+    color: var(--color);
+}
+#copy-results {
+    color: black;
+}
+#match-bib-stop {
+    color: var(--red);
+}
+#bib-text::placeholder {
+    color: #aaa;
 }
