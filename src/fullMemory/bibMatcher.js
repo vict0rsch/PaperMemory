@@ -232,7 +232,7 @@ const matchItems = async (papersToMatch) => {
 
         apiTimeout && idx > 0 && (await sleep(2000));
 
-        const { bibtex, source, venue } = await matchPaper({ paper });
+        let { bibtex, source, venue } = await matchPaper(paper);
 
         if (bibtex) {
             if (keepKeys) {
