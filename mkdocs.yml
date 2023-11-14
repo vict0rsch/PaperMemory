@@ -1,0 +1,28 @@
+site_name: PaperMemory
+site_url: https://vict0rsch.github.io/papermemory
+theme:
+  name: material
+  palette:
+    scheme: slate
+    primary: custom
+  font:
+    text: Yantramanav
+    code: Fira Code
+  icon:
+    logo: material/lightning-bolt-outline
+  features:
+    - navigation.instant
+    - navigation.instant.prefetch
+    - navigation.instant.progress
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - navigation.path
+    - toc.follow
+    - toc.integrate
+    - search.suggest
+    - search.highlight
+extra_css:
+  - stylesheets/extra.css
+plugins:
+  - search
+  - social
