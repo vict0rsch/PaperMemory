@@ -102,6 +102,12 @@ h6 {
     margin: auto;
     padding: 32px;
 }
+#bib-text {
+    font-size: 0.75rem;
+    font-family: "Fira Code", monospace;
+    background: #f1f1f1;
+    color: #333;
+}
 
 hr {
     border: none;
