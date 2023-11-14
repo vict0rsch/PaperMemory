@@ -29,7 +29,7 @@
         </div>
     </div>
     <div id="content" class="container">
-        <div class="row">
+        <div class="row" id="match-params-container">
             <div class="col-12">
                 <p style="margin-bottom: 3rem;">
                     Paste the content of your <code>.bib</code> file and PaperMemory will automatically match the Arxiv
@@ -73,7 +73,8 @@
                     </div>
                     <div class="col-12 option-item d-flex-center-center">
                         <div class="d-flex-center-center">
-                            <input type="checkbox" id="api-timeout" class="switch" style="min-width: 38px">&nbsp;&nbsp;
+                            <input type="checkbox" id="api-timeout" checked class="switch"
+                                style="min-width: 38px">&nbsp;&nbsp;
                             <label for="api-timeout" style="min-width: 150px">Wait for 2s between queries</label>
                         </div>
                         <br />
@@ -128,7 +129,7 @@
         </div>
         <div class="row mt-5" id="your-bib-container" style="display: none;">
             <div class="col-12">
-                <h2 id="bib-header" style="display: none;">Your Bibliography</h2>
+                <h2 id="your-bibliography" style="display: none;">Your Bibliography</h2>
                 <div id="result-controls" class="d-flex-center-center" style="display: none;">
                     <div class="d-flex-center-center">
                         <input class="switch" type="checkbox" id="show-only-matches" name="Show only matches">

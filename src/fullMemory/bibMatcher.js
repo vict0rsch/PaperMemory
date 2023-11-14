@@ -69,6 +69,10 @@ const setListeners = () => {
                   `No arXiv entries found in ${parsed.length} total entries.`
               );
         const matched = arxivs.length ? await matchItems(arxivs) : [];
+        matched.length &&
+            setTimeout(() => {
+                findEl("papers-successfully-matched")?.scrollIntoView(true);
+            }, 250);
         showBibliography(parsed, matched, arxivIndices);
         addListener("show-only-matches", "change", () => {
             showBibliography(parsed, matched, arxivIndices);
@@ -80,7 +84,7 @@ const resetMatchResults = () => {
     hideId("result-controls");
     hideId("match-results");
     setHTML("match-results", "");
-    hideId("bib-header");
+    hideId("your-bibliography");
     setHTML("bib-desc", "");
     hideId("errors-container");
     setHTML("bibmatch-errors", "");
@@ -125,7 +129,7 @@ const showBibliography = (parsed, matched, arxivIndices) => {
         showId("result-controls", "flex");
     }
     showId("your-bib-container");
-    showId("bib-header");
+    showId("your-bibliography");
     setHTML("bib-desc", desc);
 };
 
@@ -288,7 +292,8 @@ const updateMatchedTitles = (matchedBibtexStrs, sources, venues) => {
     }
     setHTML(
         "matched-list",
-        `<h4>Papers successfully matched: ${entries.length}</h4>` + htmls.join("")
+        `<h4 id="papers-successfully-matched">Papers successfully matched: ${entries.length}</h4>` +
+            htmls.join("")
     );
 };
 
