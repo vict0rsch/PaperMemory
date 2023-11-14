@@ -6,7 +6,7 @@
     🏪 Official stores
     <br/>
     <a href="https://chrome.google.com/webstore/detail/arxivtools/hmebhknlgddhfbbdhgplnillngljgmdi">
-        <strong>Chrome & Brave</strong>
+        <strong>Chrome & Brave & Edge</strong>
     </a>
     &nbsp;•&nbsp;
     <a href="https://addons.mozilla.org/en-US/firefox/addon/paper-memory/">
@@ -172,7 +172,7 @@ By default, and _if_ they are not already attributed, the following keyboard sho
 * `cmd/ctrl + shift + s` will try to download the pdf of the current paper. If you have enabled this feature in the menu, the paper will be downloaded in your PaperMemoryStore (see thee advanced options page for more info)
 * `cmd/ctrl + shift + l` will trigger the manual parsing of a paper if you have disabled automatic paper detection in the menu
 
-All those shortcuts can be changed/set from `chrome://extensions/shortcuts` or `about:addons` (Firefox).
+All those shortcuts can be changed/set from `chrome://extensions/shortcuts` (Chrome, Brave, Edge) or `about:addons` (Firefox).
 
 ## Guides
 
