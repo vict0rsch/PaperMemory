@@ -147,6 +147,54 @@ const showError = (msg) => {
     setHTML("bibmatch-errors", msg);
 };
 
+const sleep = async (duration) =>
+    new Promise((resolve) => setTimeout(resolve, duration));
+
+const matchPaper = async (paper) => {
+    let bibtex, match, source, venue;
+
+    setHTML("matching-status-provider", "dblp.org ...");
+    match = await tryDBLP(paper);
+    match?.bibtex && console.log("dblpMatch: ", match);
+    bibtex = match?.bibtex;
+    venue = match?.venue;
+    source = "DBLP";
+
+    if (!bibtex) {
+        setHTML("matching-status-provider", "semanticscholar.org ...");
+        match = await trySemanticScholar(paper);
+        match?.bibtex && console.log("semanticScholarMatch: ", match);
+        bibtex = match?.bibtex;
+        venue = match?.venue;
+        source = "Semantic Scholar";
+    }
+    if (!bibtex) {
+        setHTML("matching-status-provider", "scholar.google.com ...");
+        match = await tryGoogleScholar(paper);
+        match?.bibtex && console.log("googleScholarMatch: ", match);
+        bibtex = match?.bibtex;
+        venue = match?.venue;
+        source = "Google Scholar";
+    }
+    if (!bibtex) {
+        setHTML("matching-status-provider", "crossref.org ...");
+        match = await tryCrossRef(paper);
+        venue = match.venue;
+        if (venue) {
+            paper.journal = venue;
+            for (const [key, value] of paper.entries()) {
+                if ((value + "").toLowerCase().includes("arxiv")) {
+                    delete paper[key];
+                }
+            }
+            bibtex = bibtexToString(paper);
+            source = "CrossRef";
+        }
+        match?.venue && console.log("crossRefMatch: ", match);
+    }
+    return { bibtex, match, source, venue };
+};
+
 const matchItems = async (papersToMatch) => {
     showId("matching-progress-container");
     showId("matching-feedback-container", "flex");
@@ -168,6 +216,7 @@ const matchItems = async (papersToMatch) => {
     changeProgress(0);
 
     const keepKeys = val("keep-keys");
+    const apiTimeout = val("api-timeout");
 
     let matchedBibtexStrs = [];
     let sources = [];
@@ -181,48 +230,9 @@ const matchItems = async (papersToMatch) => {
         );
         changeProgress(parseInt((idx / papersToMatch.length) * 100));
 
-        let bibtex, match, source, venue;
+        apiTimeout && idx > 0 && (await sleep(2000));
 
-        if (!bibtex) {
-            setHTML("matching-status-provider", "dblp.org ...");
-            match = await tryDBLP(paper);
-            match?.bibtex && console.log("dblpMatch: ", match);
-            bibtex = match?.bibtex;
-            venue = match?.venue;
-            source = "DBLP";
-        }
-        if (!bibtex) {
-            setHTML("matching-status-provider", "semanticscholar.org ...");
-            match = await trySemanticScholar(paper);
-            match?.bibtex && console.log("semanticScholarMatch: ", match);
-            bibtex = match?.bibtex;
-            venue = match?.venue;
-            source = "Semantic Scholar";
-        }
-        if (!bibtex) {
-            setHTML("matching-status-provider", "scholar.google.com ...");
-            match = await tryGoogleScholar(paper);
-            match?.bibtex && console.log("googleScholarMatch: ", match);
-            bibtex = match?.bibtex;
-            venue = match?.venue;
-            source = "Google Scholar";
-        }
-        if (!bibtex) {
-            setHTML("matching-status-provider", "crossref.org ...");
-            match = await tryCrossRef(paper);
-            venue = match.venue;
-            if (venue) {
-                paper.journal = venue;
-                for (const [key, value] of paper.entries()) {
-                    if ((value + "").toLowerCase().includes("arxiv")) {
-                        delete paper[key];
-                    }
-                }
-                bibtex = bibtexToString(paper);
-                source = "CrossRef";
-            }
-            match?.venue && console.log("crossRefMatch: ", match);
-        }
+        const { bibtex, source, venue } = await matchPaper({ paper });
 
         if (bibtex) {
             if (keepKeys) {
