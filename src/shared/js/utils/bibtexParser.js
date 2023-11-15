@@ -289,10 +289,30 @@ function BibtexParser() {
         });
     };
 
+    this.cleanCitationKey = function () {
+        // "hern{\\'a}ndez-garc{\\'\\i}a2021rethinking" -> "hernandez-garcia2021rethinking"
+        const start = this.pos;
+        const end = start + this.input.slice(start).indexOf(",");
+
+        const left = this.input.slice(0, start);
+        const right = this.input.slice(end);
+
+        const citationKey = this.input.slice(start, end);
+        const openingParts = citationKey.split("{");
+        let newCitationKey = openingParts[0];
+        for (var i = 1; i < openingParts.length; i++) {
+            const closingParts = openingParts[i].split("}");
+            newCitationKey += closingParts[0].replace(/\W/g, "") + closingParts[1];
+        }
+        newCitationKey = newCitationKey.replace(/\s+/g, "");
+        this.input = left + newCitationKey + right;
+    };
+
     this.bibtex = function () {
         while (this.matchAt()) {
             var d = this.directive();
             this.match("{");
+            this.cleanCitationKey();
             if (d.toUpperCase() == "@STRING") {
                 this.string();
             } else if (d.toUpperCase() == "@PREAMBLE") {
@@ -325,6 +345,13 @@ const bibtexToObject = (bibtex) => {
 const bibtexToString = (bibtex) => {
     if (typeof bibtex === "string") {
         bibtex = bibtexToObject(bibtex);
+    }
+    if (bibtex.hasOwnProperty("entryTags")) {
+        bibtex = {
+            ...bibtex.entryTags,
+            entryType: bibtex.entryType,
+            citationKey: bibtex.citationKey,
+        };
     }
 
     bibtex = { ...bibtex };
