@@ -1,5 +1,9 @@
+# https://squidfunk.github.io/mkdocs-material
+# $ pip install "mkdocs-material[imaging]"
+# $ mkdocs serve
+
 site_name: PaperMemory
-site_url: https://vict0rsch.github.io/papermemory
+site_url: https://vict0rs.ch/PaperMemory
 theme:
   name: material
   palette:
