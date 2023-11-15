@@ -486,6 +486,7 @@ code {
 .memory-note-div {
     font-size: 0.8rem;
     margin-top: 4px;
+    word-wrap: break-word;
 }
 
 .edit-note-item {

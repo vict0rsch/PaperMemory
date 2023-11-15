@@ -9,3 +9,6 @@
 [data-md-color-scheme="slate"] {
     --md-typeset-a-color: #cf1919;
 }
+#homesection img {
+    max-width: 400px;
+}

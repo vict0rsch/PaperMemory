@@ -4,6 +4,8 @@
 
 site_name: PaperMemory
 site_url: https://vict0rs.ch/PaperMemory
+repo_url: https://github.com/vict0rsch/PaperMemory
+
 theme:
   name: material
   palette:
@@ -14,6 +16,8 @@ theme:
     code: Fira Code
   icon:
     logo: material/lightning-bolt-outline
+  favicon: assets/favicon-192x192.png
+  custom_dir: docs/overrides
   features:
     - navigation.instant
     - navigation.instant.prefetch
@@ -25,8 +29,29 @@ theme:
     - toc.integrate
     - search.suggest
     - search.highlight
+    - navigation.footer
+    - content.tooltips
 extra_css:
   - stylesheets/extra.css
 plugins:
   - search
   - social
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/vict0rsch/PaperMemory
+    - icon: fontawesome/brands/x-twitter
+      link: https://x.com/vict0rsch
+markdown_extensions:
+  - admonition
+  - pymdownx.keys
+  - pymdownx.smartsymbols
+  - abbr
+  - attr_list
+  - pymdownx.snippets
+  - md_in_html
+nav:
+  - Home: index.md
+  - Getting Started: getting-started.md
+  - Features: features.md
+  - FAQ: faq.md
