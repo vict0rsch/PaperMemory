@@ -108,8 +108,14 @@ const migrateData = async (papers, manifestDataVersion, store = true) => {
             }
             if (currentVersion < 450) {
                 if (!papers[id].hasOwnProperty("venue")) {
-                    papers[id].venue = await makeVenue(papers[id]);
-                    migrationSummaries[id].push("(m450) venue from id");
+                    try {
+                        papers[id].venue = await makeVenue(papers[id]);
+                        migrationSummaries[id].push("(m450) venue from id");
+                    } catch (error) {
+                        logError(error);
+                        papers[id].venue = "";
+                        migrationSummaries[id].push("(m450) ERROR in venue from id");
+                    }
                 }
             }
             if (currentVersion < 502) {
