@@ -6,10 +6,13 @@
 
 ### Browser Stores
 
+<br>
+<br>
 
 <p align="center" markdown>
 [:fontawesome-brands-chrome: Chrome / :simple-brave: Brave / :fontawesome-brands-edge: Edge](https://chromewebstore.google.com/detail/paper-memory/hmebhknlgddhfbbdhgplnillngljgmdi?pli=1){ .md-button .md-button--primary }
 </p>
+<br>
 <p align="center" markdown>
   [:fontawesome-brands-firefox-browser: Firefox](https://addons.mozilla.org/en-US/firefox/addon/paper-memory/){ .md-button .md-button--primary }
 </p>

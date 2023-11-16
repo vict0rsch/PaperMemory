@@ -8,11 +8,14 @@ template: home.html
 
 This documentation / showcase is **WORK IN PROGESS**
 
-<div class="flex-container">
-    <h1 style="color: white; max-width: 400px; padding-right: 1rem;">
-        <strong style="color: red">PaperMemory</strong> automatically records and organizes papers your read, without ever leaving your browser.
-    </h1>
-    <img src="assets/home_slideshow.gif"/>
+<div class="flex-container" markdown>
+<div markdown>
+<h1 style="color: white; max-width: 400px; padding-right: 1rem;">
+    <strong style="color: red">PaperMemory</strong> automatically records and organizes papers your read, without ever leaving your browser.
+</h1>
+[:octicons-arrow-right-24: Get the extension](getting-started.md){ .md-button .md-button--primary }
+</div>
+<img src="assets/home_slideshow.gif"/>
 </div>
 
 <br/>
@@ -35,7 +38,7 @@ PaperMemory is designed to be a fast, lightweight and user-friendly in-browser r
 
     By querying SemanticScholar, DBLP and CrossRef, PaperMemory can discover the proper publication of Arxiv pre-prints.
 
-    [:octicons-arrow-right-24: Getting started](getting-started.md)
+    [:octicons-arrow-right-24: Preprint Matching](features.md#preprint-matching)
 
     ---
 
@@ -44,7 +47,7 @@ PaperMemory is designed to be a fast, lightweight and user-friendly in-browser r
 
     Using the PapersWithCode API, PaperMemory will store code repositories with papers in your Memory.
 
-    [:octicons-arrow-right-24: Getting started](getting-started.md)
+    [:octicons-arrow-right-24: Code discovery](features.md#code-discovery)
 
     ---
 
