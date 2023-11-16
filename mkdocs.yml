@@ -11,11 +11,12 @@ theme:
   palette:
     scheme: slate
     primary: custom
+    accent: deep orange
   font:
     text: Yantramanav
     code: Fira Code
   icon:
-    logo: material/lightning-bolt-outline
+    logo: tabler/bolt
   favicon: assets/favicon-192x192.png
   custom_dir: docs/overrides
   features:
@@ -31,6 +32,7 @@ theme:
     - search.highlight
     - navigation.footer
     - content.tooltips
+    - content.tabs.link
 extra_css:
   - stylesheets/extra.css
 plugins:
@@ -50,8 +52,26 @@ markdown_extensions:
   - attr_list
   - pymdownx.snippets
   - md_in_html
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+      options:
+        custom_icons:
+          - docs/overrides/.icons
+  - pymdownx.inlinehilite
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+  - toc:
+      permalink: true
 nav:
   - Home: index.md
   - Getting Started: getting-started.md
   - Features: features.md
+  - Configuration: configuration.md
   - FAQ: faq.md
+  - About: about.md

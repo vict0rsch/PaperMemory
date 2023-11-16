@@ -10,5 +10,21 @@
     --md-typeset-a-color: #cf1919;
 }
 #homesection img {
-    max-width: 400px;
+    max-width: 700px;
+    width: 100%;
+}
+
+.icon-tabler {
+    fill: none !important;
+}
+
+.demo-gif {
+    max-width: 600px !important;
+    margin: 0 2rem;
+    width: 100%;
+}
+.advanced-screenshot {
+    max-width: 700px !important;
+    margin: 0 2rem;
+    width: 100%;
 }
