@@ -18,7 +18,7 @@ theme:
   # icon:
   #   logo: tabler/bolt
   favicon: assets/favicon-192x192.png
-  # custom_dir: docs/overrides
+  custom_dir: docs/overrides
   features:
     - navigation.instant
     - navigation.instant.prefetch
