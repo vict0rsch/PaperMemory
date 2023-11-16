@@ -3,7 +3,7 @@ title: PaperMemory
 hide:
   - toc
   - navigation
-# template: home.html
+template: home.html
 ---
 
 This documentation / showcase is **WORK IN PROGESS**
@@ -83,29 +83,3 @@ PaperMemory is designed to be a fast, lightweight and user-friendly in-browser r
     [:octicons-arrow-right-24: All features](features.md)
 
     ---
-
-<!--
-<div class="flex-container" style="margin: auto; max-width: 80%">
-    <div style="width: 100%; padding-right: 3rem;">
-        <p>
-        feature description feature description feature description feature description feature description feature description
-        </p>
-        <p>
-        feature description feature description feature description
-        </p>
-    </div>
-    <img src="https://dummyimage.com/300x400/"/>
-</div>
-
-<div class="flex-container" style="margin: auto; max-width: 80%">
-    <img src="https://dummyimage.com/500x400/"/>
-    <div style="width: 100%; padding-left: 3rem;">
-        <p>
-        feature description feature description feature description feature description feature description feature description
-        </p>
-        <p>
-        feature description feature description feature description
-        </p>
-    </div>
-</div> -->
-
