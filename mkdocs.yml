@@ -15,8 +15,8 @@ theme:
   font:
     text: Yantramanav
     code: Fira Code
-  # icon:
-  #   logo: tabler/bolt
+  icon:
+    logo: tabler/bolt
   favicon: assets/favicon-192x192.png
   custom_dir: docs/overrides
   features:
