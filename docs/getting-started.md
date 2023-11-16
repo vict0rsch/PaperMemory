@@ -55,7 +55,7 @@ Your main interface to PaperMemory is its popup. You can open it by clicking on 
 
 !!! info "Keyboard Shortcuts"
 
-    You can customize keyboard shortcuts (or verify that they work), see [Configuration](../configuration#keyboard-shortcuts)
+    You can customize keyboard shortcuts (or verify that they work), see [Configuration](configuration.md#keyboard-shortcuts)
 
 <p style="clear: both;" />
 
@@ -75,7 +75,7 @@ By clicking on the popup bottom-right :octicons-gear-16: symbol, you can open th
 
 Open your Memory (*i.e.* the list of your papers) by clicking on the popup bottom-left :material-folder-multiple-outline:{ color="red" } button.
 
-In the search bar, you can search by title or author, prefix by `t:` to search for tags or by `y:` to search by year. More information in [Searching for papers](../features#searching).
+In the search bar, you can search by title or author, prefix by `t:` to search for tags or by `y:` to search by year. More information in [Searching for papers](features.md#searching).
 
 You can also
 
@@ -106,7 +106,7 @@ When on a known article's page, PaperMemory will display its meta-data (title, a
 
 ![Popup](assets/bibMatcher.gif){ align=right .advanced-screenshot }
 
-At the bottom of the Popup Menu, click on the *PaperMemory BibMatcher* link to open a tool that allows you to seamlessly match Arxiv references in your `.bib` file to actual publications, using the PaperMemory's [preprint matching feature](../features#preprint-matching).
+At the bottom of the Popup Menu, click on the *PaperMemory BibMatcher* link to open a tool that allows you to seamlessly match Arxiv references in your `.bib` file to actual publications, using the PaperMemory's [preprint matching feature](features.md#preprint-matching).
 
 <p style="clear: both;" />
 
@@ -121,7 +121,7 @@ More customization options and features are available in the advanced options pa
 * Right click on the extension's button in your browser toolbar and select *Options*
 * Open the Popup Menu, scroll down and click on *Options page*.
 
-More details in [Configuration](../configuration#advanced-options).
+More details in [Configuration](configuration.md#advanced-options).
 
 <p style="clear: both;" />
 

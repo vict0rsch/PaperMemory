@@ -26,7 +26,7 @@ PaperMemory is designed to be a fast, lightweight and user-friendly in-browser r
 
     Papers are stored in your Memory, you can them search them, tag them, take personal notes etc. This is all one click away from your browser's extension store (:fontawesome-brands-chrome: Chrome / :simple-brave: Brave / :fontawesome-brands-firefox-browser: Firefox / :fontawesome-brands-edge: Edge).
 
-    [:octicons-arrow-right-24: Getting started](getting-started)
+    [:octicons-arrow-right-24: Getting started](getting-started.md)
 
     ---
 
@@ -35,7 +35,7 @@ PaperMemory is designed to be a fast, lightweight and user-friendly in-browser r
 
     By querying SemanticScholar, DBLP and CrossRef, PaperMemory can discover the proper publication of Arxiv pre-prints.
 
-    [:octicons-arrow-right-24: Getting started](getting-started)
+    [:octicons-arrow-right-24: Getting started](getting-started.md)
 
     ---
 
@@ -44,7 +44,7 @@ PaperMemory is designed to be a fast, lightweight and user-friendly in-browser r
 
     Using the PapersWithCode API, PaperMemory will store code repositories with papers in your Memory.
 
-    [:octicons-arrow-right-24: Getting started](getting-started)
+    [:octicons-arrow-right-24: Getting started](getting-started.md)
 
     ---
 
@@ -53,7 +53,7 @@ PaperMemory is designed to be a fast, lightweight and user-friendly in-browser r
 
     Download the paper directly to your PaperMemoryStore, see the publication venue, copy a markdown link `[title](url)` or a BibTex entry.
 
-    [:octicons-arrow-right-24: Arxiv Enhancements](features#arxiv-enhancements)
+    [:octicons-arrow-right-24: Arxiv Enhancements](features.md#arxiv-enhancements)
 
     ---
 
@@ -62,7 +62,7 @@ PaperMemory is designed to be a fast, lightweight and user-friendly in-browser r
 
     Export papers as BibTex entries from the extension, or group exports by tag. You can even use PaperMemory to update the ArXiv entries of a stand-alone `.bib` file.
 
-    [:octicons-arrow-right-24: Bibliography tools](features#bibliography-tools)
+    [:octicons-arrow-right-24: Bibliography tools](features.md#bibliography-tools)
 
     ---
 
@@ -71,7 +71,7 @@ PaperMemory is designed to be a fast, lightweight and user-friendly in-browser r
 
     Change the theme to light or dark, control the default link copied to your clipboard, add links to SciRate / HuggingFace Papers / Ar5iv / ArxivSanity, trigger parsing manually, export / import papers etc.
 
-    [:octicons-arrow-right-24: Configuration](configuration)
+    [:octicons-arrow-right-24: Configuration](configuration.md)
 
     ---
 
@@ -80,7 +80,7 @@ PaperMemory is designed to be a fast, lightweight and user-friendly in-browser r
 
     Github Gist synchronization, regex-based automatic paper tagging, arbitrary website parsing to record Blog posts or dataset websites, etc.
 
-    [:octicons-arrow-right-24: All features](features)
+    [:octicons-arrow-right-24: All features](features.md)
 
     ---
 
