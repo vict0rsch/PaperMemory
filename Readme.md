@@ -44,7 +44,7 @@ This browser extension allows you to automatically store research papers you rea
 9. 🏛️ **Export your data** as a `.json` file or a `.bib` full BibTex export
 
 <br/>
-
+<!--
 <p align="center">
 <img width="800" src="https://github.com/vict0rsch/PaperMemory/blob/master/extra/imgs/display.png?raw=true"/>
 <br/>
@@ -53,7 +53,7 @@ This browser extension allows you to automatically store research papers you rea
 <br/>
 <br/>
 <img width="800" src="https://github.com/vict0rsch/PaperMemory/blob/master/extra/imgs/d2.gif?raw=true"/>
-</p>
+</p> -->
 
 ---
 
@@ -110,13 +110,13 @@ Customize features in the menu:
 
 
 <p align="center">
-  <img width="400" src="https://github.com/vict0rsch/PaperMemory/blob/master/extra/imgs/menu_concat.png?raw=true">
+  <!-- <img width="400" src="https://github.com/vict0rsch/PaperMemory/blob/master/extra/imgs/menu_concat.png?raw=true"> -->
 </p>
 
 Switch between Light and Dark mode
 
 <p align="center">
-<img src="https://github.com/vict0rsch/PaperMemory/blob/master/extra/imgs/lightdark.png?raw=true">
+<!-- <img src="https://github.com/vict0rsch/PaperMemory/blob/master/extra/imgs/lightdark.png?raw=true"> -->
 </p>
 
 
