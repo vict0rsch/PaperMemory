@@ -12,6 +12,7 @@ This documentation / showcase is **WORK IN PROGESS**
     <h1 style="color: white; max-width: 400px; padding-right: 1rem;">
         <strong style="color: red">PaperMemory</strong> automatically records and organizes papers your read, without ever leaving your browser.
     </h1>
+    <img src="assets/home_slideshow.gif"/>
 </div>
 
 <br/>

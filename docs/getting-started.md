@@ -2,6 +2,7 @@
 
 ## Installation
 
+![Demo Gif](assets/d2.gif){ align=right .demo-gif }
 
 ### Browser Stores
 
@@ -44,6 +45,7 @@
 ### Popup
 
 
+![Popup](assets/popup.png){ align=right }
 
 Your main interface to PaperMemory is its popup. You can open it by clicking on the PaperMemory extension icon or using the default keyboard shortcut ++ctrl+shift+"E"++ or ++cmd+shift+"E"++.
 
@@ -60,6 +62,7 @@ Your main interface to PaperMemory is its popup. You can open it by clicking on 
 
 ### Popup Menu
 
+![Popup](assets/menu.png){ align=right }
 
 By clicking on the popup bottom-right :octicons-gear-16: symbol, you can open the customization menu.
 
@@ -68,6 +71,7 @@ By clicking on the popup bottom-right :octicons-gear-16: symbol, you can open th
 
 ### Memory
 
+![Popup](assets/memory.png){ align=right }
 
 Open your Memory (*i.e.* the list of your papers) by clicking on the popup bottom-left :material-folder-multiple-outline:{ color="red" } button.
 
@@ -77,14 +81,14 @@ You can also
 
 <div class="annotate" markdown>
 
-*  Mark a paper as Favourite
-*  Edit the paper's tags, code link and note
-*  open a downloaded PDF
-*  Go to the paper's online page (1)
+* :tabler-star: Mark a paper as Favourite
+* :tabler-writing: Edit the paper's tags, code link and note
+* :tabler-vocabulary: open a downloaded PDF
+* :tabler-external-link: Go to the paper's online page (1)
 * :octicons-link-24: Copy the link to the paper (1)
-*  Copy a formatted hyperlink (for emails for instance)
+* :tabler-device-desktop-code: Copy a formatted hyperlink (for emails for instance)
 * :material-language-markdown-outline: Copy a `[$title]($url)` Markdown-formatted link (1)
-*  Copy a BibTex entry for your `.bib` bibliography.
+* :tabler-math-function: Copy a BibTex entry for your `.bib` bibliography.
 
 </div>
 
@@ -92,13 +96,15 @@ You can also
 
 ### Paper page
 
+![Popup](assets/paper.png){ align=right .advanced-screenshot }
 
-When on a known article's page, PaperMemory will display its meta-data (title, authors, code link), similar actions as in the memory () and customization options.
+When on a known article's page, PaperMemory will display its meta-data (title, authors, code link), similar actions as in the memory (:tabler-writing:, :tabler-vocabulary:, :tabler-external-link:, :octicons-link-24:, :tabler-device-desktop-code:, :material-language-markdown-outline:, :tabler-math-function:) and customization options.
 
 <p style="clear: both;" />
 
 ### BibMatcher
 
+![Popup](assets/bibMatcher.gif){ align=right .advanced-screenshot }
 
 At the bottom of the Popup Menu, click on the *PaperMemory BibMatcher* link to open a tool that allows you to seamlessly match Arxiv references in your `.bib` file to actual publications, using the PaperMemory's [preprint matching feature](features.md#preprint-matching).
 
@@ -108,6 +114,7 @@ At the bottom of the Popup Menu, click on the *PaperMemory BibMatcher* link to o
 
 ### Advanced Options
 
+![Popup](assets/advanced.png){ align=right .advanced-screenshot }
 
 More customization options and features are available in the advanced options page:
 
