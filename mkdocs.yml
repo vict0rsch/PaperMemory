@@ -1,0 +1,82 @@
+# https://squidfunk.github.io/mkdocs-material
+# $ pip install "mkdocs-material[imaging]"
+# $ mkdocs serve
+
+site_name: PaperMemory
+site_url: https://papermemory.org
+repo_url: https://github.com/vict0rsch/PaperMemory
+
+theme:
+  name: material
+  palette:
+    scheme: slate
+    primary: custom
+    accent: deep orange
+  font:
+    text: Yantramanav
+    code: Fira Code
+  logo: assets/bolt-white.svg
+  favicon: assets/favicon-192x192.png
+  custom_dir: docs/overrides
+  features:
+    - content.code.select
+    - content.tabs.link
+    - content.tooltips
+    - navigation.footer
+    - navigation.instant
+    - navigation.instant.prefetch
+    - navigation.instant.progress
+    - navigation.path
+    - navigation.tabs
+    - navigation.tabs.sticky
+    - search.highlight
+    - search.suggest
+    - toc.follow
+    - toc.integrate
+extra_css:
+  - stylesheets/extra.css
+plugins:
+  - search
+  - social:
+      cards_layout_options:
+        background_color: "#b31b1b"
+        font_family: Yantramanav
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/vict0rsch/PaperMemory
+    - icon: fontawesome/brands/x-twitter
+      link: https://x.com/vict0rsch
+markdown_extensions:
+  - abbr
+  - admonition
+  - attr_list
+  - def_list
+  - md_in_html
+  - pymdownx.details
+  - pymdownx.inlinehilite
+  - pymdownx.keys
+  - pymdownx.smartsymbols
+  - pymdownx.snippets
+  - pymdownx.superfences
+  - pymdownx.highlight:
+      anchor_linenums: true
+      line_spans: __span
+      pygments_lang_class: true
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+      options:
+        custom_icons:
+          - docs/overrides/.icons
+  - pymdownx.tabbed:
+      alternate_style: true
+  - toc:
+      permalink: true
+nav:
+  - Home: index.md
+  - Getting Started: getting-started.md
+  - Features: features.md
+  - Configuration: configuration.md
+  - FAQ: faq.md
+  - About: about.md

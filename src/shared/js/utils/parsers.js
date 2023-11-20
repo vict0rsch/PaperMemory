@@ -322,9 +322,11 @@ const makeArxivPaper = async (url) => {
 
 const makeNeuripsPaper = async (url) => {
     if (url.endsWith(".pdf")) {
-        url = url.replace("/file/", "/hash/").replace("-Paper.pdf", "-Abstract.html");
+        url = url
+            .replace("/file/", "/hash/")
+            .replace(/-Paper(.*)\.pdf/, "-Abstract$1.html");
     }
-    const hash = url.split("/").slice(-1)[0].replace("-Paper.pdf", "");
+    const hash = url.split("/").slice(-1)[0].split("-Paper")[0];
 
     const dom = await fetchDom(url);
 

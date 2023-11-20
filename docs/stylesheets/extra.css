@@ -1,0 +1,36 @@
+:root {
+    --md-primary-fg-color: #b31b1b;
+    --md-primary-fg-color--light: #ecb7b7;
+    --md-primary-fg-color--dark: #7d0109;
+}
+[data-md-color-scheme="slate"] {
+    --md-hue: 225;
+}
+[data-md-color-scheme="slate"] {
+    --md-typeset-a-color: #cf1919;
+}
+#homesection img {
+    max-width: 600px;
+    width: 100%;
+}
+
+.icon-tabler {
+    fill: none !important;
+}
+
+.demo-gif {
+    max-width: 600px !important;
+    margin: 0 2rem;
+    width: 100%;
+}
+.advanced-screenshot {
+    max-width: 700px !important;
+    margin: 0 2rem;
+    width: 100%;
+}
+
+.popup-display {
+    max-width: 400px !important;
+    margin: 0 2rem;
+    width: 100%;
+}

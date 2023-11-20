@@ -790,11 +790,16 @@ const noParamUrl = (url) => {
     return url.split("?")[0].split("#")[0];
 };
 
-const urlToWebsiteId = (url) =>
-    miniHash(
-        // noParamUrl(url)
+const urlToWebsiteId = (url) => {
+    const last = url.split("/").last();
+    if (last.includes("#")) {
+        const n = url.split("#").length - 1;
+        url = url.split("#").slice(0, n).join("#");
+    }
+    return miniHash(
         url.replace("https://", "").replace("http://", "").replace("www.", "")
     );
+};
 
 const silentPromiseTimeout = (prom, time = 5000) => {
     // https://advancedweb.hu/how-to-add-timeout-to-a-promise-in-javascript/
