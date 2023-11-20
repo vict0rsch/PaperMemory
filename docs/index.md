@@ -15,7 +15,7 @@ This documentation / showcase is **WORK IN PROGESS**
 </h1>
 [:octicons-arrow-right-24: Get the extension](getting-started.md){ .md-button .md-button--primary }
 </div>
-<img src="assets/home_slideshow.gif"/>
+<img src="assets/d2.gif"/>
 </div>
 
 <br/>
