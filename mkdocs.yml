@@ -3,7 +3,7 @@
 # $ mkdocs serve
 
 site_name: PaperMemory
-site_url: https://vict0rs.ch/PaperMemory
+site_url: papermemory.org
 repo_url: https://github.com/vict0rsch/PaperMemory
 
 theme:
