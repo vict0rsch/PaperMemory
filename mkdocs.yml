@@ -21,19 +21,19 @@ theme:
   favicon: assets/favicon-192x192.png
   custom_dir: docs/overrides
   features:
+    - content.tabs.link
+    - content.tooltips
+    - navigation.footer
     - navigation.instant
     - navigation.instant.prefetch
     - navigation.instant.progress
+    - navigation.path
     - navigation.tabs
     - navigation.tabs.sticky
-    - navigation.path
+    - search.highlight
+    - search.suggest
     - toc.follow
     - toc.integrate
-    - search.suggest
-    - search.highlight
-    - navigation.footer
-    - content.tooltips
-    - content.tabs.link
 extra_css:
   - stylesheets/extra.css
 plugins:
@@ -46,13 +46,17 @@ extra:
     - icon: fontawesome/brands/x-twitter
       link: https://x.com/vict0rsch
 markdown_extensions:
+  - abbr
   - admonition
+  - attr_list
+  - def_list
+  - md_in_html
+  - pymdownx.details
+  - pymdownx.inlinehilite
   - pymdownx.keys
   - pymdownx.smartsymbols
-  - abbr
-  - attr_list
   - pymdownx.snippets
-  - md_in_html
+  - pymdownx.superfences
   - pymdownx.highlight:
       anchor_linenums: true
       line_spans: __span
@@ -63,8 +67,6 @@ markdown_extensions:
       options:
         custom_icons:
           - docs/overrides/.icons
-  - pymdownx.inlinehilite
-  - pymdownx.superfences
   - pymdownx.tabbed:
       alternate_style: true
   - toc:
