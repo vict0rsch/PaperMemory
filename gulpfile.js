@@ -136,6 +136,7 @@ function createArchive(cb) {
     return src([
         "./**",
         "!extra/**",
+        "!docs/**",
         "!test/**",
         "!coverage/**",
         "!node_modules/**",
