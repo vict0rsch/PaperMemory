@@ -77,7 +77,7 @@ const handleCopyBibtex = (e) => {
     if (!bibobj.hasOwnProperty("url")) {
         bibobj.url = paperToAbs(global.state.papers[id]);
     }
-    if (!bibobj.hasOwnProperty("pdf")) {
+    if (!bibobj.hasOwnProperty("pdf") && global.state.papers[id].source !== "website") {
         bibobj.pdf = paperToPDF(global.state.papers[id]);
     }
     copyAndConfirmMemoryItem(id, bibtexToString(bibobj), "Bibtex copied!");
