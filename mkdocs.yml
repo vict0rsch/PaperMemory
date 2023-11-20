@@ -3,7 +3,7 @@
 # $ mkdocs serve
 
 site_name: PaperMemory
-site_url: papermemory.org
+site_url: https://papermemory.org
 repo_url: https://github.com/vict0rsch/PaperMemory
 
 theme:
@@ -16,8 +16,8 @@ theme:
     text: Yantramanav
     code: Fira Code
   icon:
-    logo: material/lightning-bolt-outline
-    # logo: tabler/bolt
+    # logo: material/lightning-bolt-outline
+    logo: tabler/bolt
   favicon: assets/favicon-192x192.png
   custom_dir: docs/overrides
   features:
@@ -39,7 +39,10 @@ extra_css:
   - stylesheets/extra.css
 plugins:
   - search
-  - social
+  - social:
+      cards_layout_options:
+        background_color: "#b31b1b"
+        font_family: Yantramanav
 extra:
   social:
     - icon: fontawesome/brands/github

@@ -1,3 +1,7 @@
+---
+description: About PaperMemory and its developper.
+---
+
 # About PaperMemory
 
 PaperMemory is developped as a Free and Open Software by [vict0rsch](https://vict0rs.ch).

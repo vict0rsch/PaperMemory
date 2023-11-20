@@ -1,3 +1,7 @@
+---
+description: "PaperMemory's core features: illustrations and explanations."
+---
+
 # Features
 
 ## User Guides

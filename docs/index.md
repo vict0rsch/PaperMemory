@@ -1,9 +1,10 @@
 ---
-title: PaperMemory
+title: Welcome to PaperMemory's documentation.
 hide:
   - toc
   - navigation
 template: home.html
+description: PaperMemory is your fast, automated and user-friendly in-browser reference manager, with tons of features to make your life easier.
 ---
 
 This documentation / showcase is **WORK IN PROGESS**
@@ -19,7 +20,7 @@ This documentation / showcase is **WORK IN PROGESS**
 </div>
 
 <br/>
-PaperMemory is designed to be a fast, lightweight and user-friendly in-browser reference manager, with tons of features to make your life easier.
+PaperMemory is designed to be a fast, automated and user-friendly in-browser reference manager, with tons of features to make your life easier.
 <br/>
 <br/>
 

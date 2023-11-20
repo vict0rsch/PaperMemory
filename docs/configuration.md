@@ -1,3 +1,8 @@
+---
+description: PaperMemory's configuration and documentation.
+icon: octicons/gear-16
+---
+
 # Configuring PaperMemory
 
 ## Keyboard Shortcuts

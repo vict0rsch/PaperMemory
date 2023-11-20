@@ -1,3 +1,7 @@
+---
+description: "Install PaperMemory and visualize its core features that make your paper management smooth and smart."
+---
+
 # Getting Started
 
 ## Installation
