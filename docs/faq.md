@@ -26,7 +26,17 @@ It's all stored locally in your browser's local storage. If you want to transfer
 
 ### How can I export all or some papers?
 
+Check out the [Advanced Options](./getting-started.md#advanced-options)'s *Data Management* section, you can export:
 
+* your full PaperMemory data as `.json` file
+* your full bibliography as `.bib`  file (or `.json`)
+* papers based on the tags you'be assigned them as a `.bib` file
+
+### Can I reference my PDF in PaperMemory?
+
+If you want to associate a PDF file to a paper in your PaperMemoryStore that is not downloaded from PaperMemory (for instance, it is behind a paywall), you can **download it to `~/Downloads/PaperMemoryStore/`** (maybe you're reading the paper on Sci-Hub you thief 🙃) provided the file's name contains the **paper's title** (not counting non-alphanumeric characters and case-insensitive).
+
+Because of limitations Browser Extensions face, a file **must** be _downloaded from the Browser to the folder_ in order to be detected. This means that if someone sends you a pdf over Slack or if you move a file to the PaperMemoryStore folder for instance, you won't be able to match it to a PaperMemory item.
 
 ### How do I resolve duplicates?
 
@@ -39,8 +49,10 @@ It's all stored locally in your browser's local storage. If you want to transfer
 Sure! In the extension popup's menu, there's a link at the bottom to the full-page memory. You can also just go to this url (Thanks @kaixin96!):
 
 ```bash
-# copy-paste this url
+# Copy-paste this url (Chrome / Brave / Edge):
 chrome-extension://ehchlpggdaffcncbeopdopnndhdjelbc/src/fullMemory/fullMemory.html
+# Firefox:
+moz-extension://05b6ef8a-7314-4c1d-a519-80f48a5794a6/src/fullMemory/fullMemory.html
 ```
 
 ### Can I exclude a paper source?
@@ -48,8 +60,10 @@ chrome-extension://ehchlpggdaffcncbeopdopnndhdjelbc/src/fullMemory/fullMemory.ht
 Yep. In the extension popup's advanced options page: right-click the extension's icon and click on `Options`. Or click on the link at the bottom of the popup menu. Or go to this url (Thanks @kaixin96!):
 
 ```bash
-# copy-paste this url
+# Copy-paste this url (Chrome / Brave / Edge):
 chrome-extension://ehchlpggdaffcncbeopdopnndhdjelbc/src/options/options.html
+# Firefox:
+moz-extension://05b6ef8a-7314-4c1d-a519-80f48a5794a6/src/options/options.html
 ```
 
 ### Are there data backups?
