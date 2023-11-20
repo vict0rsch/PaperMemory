@@ -1,18 +1,16 @@
 ---
-title: Welcome to PaperMemory's documentation.
+title: Simple, fast & automated in-browser reference manager.
 hide:
   - toc
   - navigation
 template: home.html
-description: PaperMemory is your fast, automated and user-friendly in-browser reference manager, with tons of features to make your life easier.
+description: PaperMemory automatically records and organizes the papers you read, without ever leaving your browser.
 ---
-
-This documentation / showcase is **WORK IN PROGESS**
 
 <div class="flex-container" markdown>
 <div markdown>
 <h1 style="color: white; max-width: 400px; padding-right: 1rem;">
-    <strong style="color: red">PaperMemory</strong> automatically records and organizes papers your read, without ever leaving your browser.
+    <strong style="color: red">PaperMemory</strong> automatically records and organizes the papers you read, without ever leaving your browser.
 </h1>
 [:octicons-arrow-right-24: Get the extension](getting-started.md){ .md-button .md-button--primary }
 </div>
