@@ -234,7 +234,7 @@ const matchItems = async (papersToMatch) => {
         );
         changeProgress(parseInt((idx / papersToMatch.length) * 100));
 
-        apiTimeout && idx > 0 && (await sleep(2000));
+        apiTimeout && idx > 0 && (await sleep(3000));
 
         let { bibtex, source, venue } = await matchPaper(paper);
 

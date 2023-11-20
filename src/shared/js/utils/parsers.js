@@ -447,6 +447,19 @@ const makeOpenReviewPaper = async (url) => {
     const noteJson = await getOpenReviewNoteJSON(url);
     const forumJson = await getOpenReviewForumJSON(url);
 
+    if (noteJson.status === 403 && noteJson.name === "ForbiddenError") {
+        logError(
+            dedent(`Error parsing OpenReview url ${url}.
+            Most likely because this entry is protected and you do not have the rights to access it.
+
+            1/ Make sure you are logged in.
+            2/ Alternatively, this may be due to OpenReview changing the visibility of this paper.
+
+            Try accessing this URL manually to make sure.`)
+        );
+        throw Error(noteJson.message);
+    }
+
     var paper = noteJson.notes[0];
     var forum = forumJson.notes;
 
