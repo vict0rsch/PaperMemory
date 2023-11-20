@@ -16,7 +16,7 @@ In general there can be 2 reasons:
 ### How do you match Arxiv.org pre-prints to actual publications?
 
 
-It's all there: [preprints](#preprints) 😃
+It's all there: [preprints](features.md#preprint-matching) 😃
 
 Contributions and ideas on how to improve the process and potentially add publication sources from titles or arxiv `id` are welcome!
 
@@ -26,7 +26,7 @@ It's all stored locally in your browser's local storage. If you want to transfer
 
 ### How can I export all or some papers?
 
-Check out the [Advanced Options](./getting-started.md#advanced-options)'s *Data Management* section, you can export:
+Check out the [Advanced Options](./configuration.md#advanced-options)'s *Data Management* section, you can export:
 
 * your full PaperMemory data as `.json` file
 * your full bibliography as `.bib`  file (or `.json`)
