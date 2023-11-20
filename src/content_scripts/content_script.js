@@ -570,7 +570,6 @@ const huggingfacePapers = (paper, url) => {
 
 const arxiv = async (checks) => {
     const { checkMd, checkBib, checkDownload, checkStore } = checks;
-    global.state.titleFunction = (await getTitleFunction()).titleFunction;
 
     const url = window.location.href;
     const isArxivAbs = url.includes("https://arxiv.org/abs/");

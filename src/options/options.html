@@ -216,48 +216,6 @@
         <hr>
 
         <div class="section">
-            <h2 id="custom-title-function">Custom title function</h2>
-            <p>Provide a Javascript function code to produce a "title" from a <code>paper</code> object. This function
-                <em>must</em> return a <code>string</code> which will be used to 1/ Change the webpage titles 2/ Name
-                the pdf files you download with Paper Memory. The <code>.pdf</code> extension will be added
-                automatically, you need not include it in the returned string.
-            </p>
-            <p>Note that not all characters are usable for file names <a
-                    href="https://superuser.com/questions/358855/what-characters-are-safe-in-cross-platform-file-names-for-linux-windows-and-os">depending
-                    on your os</a>.</p>
-            <p>In order for PaperMemory to know one of its items has been downloaded, it will match downloaded pdf file
-                names to in-memory paper titles. If you remove the title from the downloaded file names, PaperMemory
-                will
-                not be able to do this anymore and may miss stored papers.</p>
-            <p>For illustration, an example from your memory is displayed after the code input.</p>
-            <div class="row">
-
-                <div class="col-6">
-                    <textarea id="custom-title-textarea" style="font-family: 'Fira Code'; font-size: 0.8rem;"
-                        class="w-100 mb-2" rows="7"></textarea>
-                    <div class="flex-center-evenly mb-3">
-                        <button id="custom-title-save">Save function</button>
-                        <button id="custom-title-default">Back to default</button>
-                    </div>
-                    <div id="custom-title-feedback"></div>
-                </div>
-                <div class="col-6">
-                    Example paper :
-                    <code id="custom-title-example"></code><span id="another-paper">(try another)</span>
-                    <br />
-                    <br />
-                    <span>Available keys:</span>
-                    <span id="paper-available-keys"></span>
-                </div>
-                <div class="col-12 mt-3">Result: <br /><code id="custom-title-result"></code></div>
-
-            </div>
-
-        </div>
-
-        <hr>
-
-        <div class="section">
             <h2 id="data-management">Data Management</h2>
 
             <p>You can export your Memory as a <code>json</code> file or as a bibliography.</p>

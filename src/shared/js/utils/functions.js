@@ -811,15 +811,6 @@ const silentPromiseTimeout = (prom, time = 5000) => {
 };
 
 const shouldWarn = async (warningName, callback = () => {}) => {
-    if (warningName === "pdf-title") {
-        const code = await getStorage("titleFunctionCode");
-        if (code && code !== global.defaultTitleFunctionCode) {
-            const warnings = (await getStorage("userWarnings")) ?? {};
-            if (!warnings[warningName]) {
-                return callback(true);
-            }
-        }
-    }
     return callback(false);
 };
 
