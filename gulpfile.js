@@ -138,10 +138,12 @@ function createArchive(cb) {
         "!extra/**",
         "!docs/**",
         "!test/**",
+        "!site/**",
         "!coverage/**",
         "!node_modules/**",
         "!./.vscode/**",
         "!keys.json",
+        "!yarn.lock",
     ])
         .pipe(zip(archiveName))
         .pipe(dest(archiveFolder));
