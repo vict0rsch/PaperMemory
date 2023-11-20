@@ -823,6 +823,10 @@ const spaceCamelCase = (str) =>
 
 const toSingleSpace = (str) => str.replace(/\s\s+/g, " ");
 
+const dedent = (str) => {
+    return ("" + str).replace(/(\n)\s+/g, "$1");
+};
+
 const arxivIdFromPaperID = (paperId) => paperId.split("-").last().replace("_", "/");
 
 const arxivIdFromURL = (url) =>

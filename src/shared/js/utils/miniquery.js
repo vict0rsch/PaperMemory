@@ -37,14 +37,14 @@ const fadeIn = (el, display = "block", duration = 250, callback = () => {}) => {
 };
 
 const val = (el, value) => {
+    if (typeof el === "string") {
+        el = findEl(el);
+    }
     if (el instanceof HTMLInputElement && el.type === "checkbox") {
         if (typeof value === "undefined") {
             return el.checked;
         }
         el.checked = value;
-    }
-    if (typeof el === "string") {
-        el = findEl(el);
     }
     if (typeof value === "undefined") {
         return el ? el.value : "";

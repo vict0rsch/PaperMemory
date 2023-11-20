@@ -263,6 +263,12 @@ const popupMain = async (url, is, manualTrigger = false, tab = null) => {
             url: chrome.extension.getURL("src/fullMemory/fullMemory.html"),
         });
     });
+    // Set BibMatcher page link
+    addListener("bib-matcher", "click", () => {
+        chrome.tabs.create({
+            url: chrome.extension.getURL("src/bibMatcher/bibMatcher.html"),
+        });
+    });
 
     // Set PDF title function
     // setAndHandleCustomPDFFunction(menu);

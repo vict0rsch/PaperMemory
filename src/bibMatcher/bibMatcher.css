@@ -1,0 +1,451 @@
+/*
+---------------------
+-----  Globals  -----
+---------------------
+*/
+:root {
+    --maxWidth: 1000px;
+    --color: unset;
+}
+body {
+    margin: 0;
+    font-family: "Yantramanav";
+    font-weight: 400;
+}
+
+svg {
+    stroke-width: 1.15;
+    stroke: #7c7f8b;
+    fill: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+code {
+    font-family: "Fira Code", monospace !important;
+    color: inherit !important;
+    padding: 1px 4px;
+    vertical-align: text-top;
+    border-radius: var(--round);
+    background-color: rgb(238, 238, 238);
+}
+
+.pm-tabler-icon {
+    height: 32px;
+    width: 32px;
+    color: var(--red);
+    stroke-width: 1px;
+}
+
+h2,
+h3,
+h4,
+h5,
+h6 {
+    padding-top: 1.5rem;
+}
+
+.d-flex-center-center {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+/*
+--------------------
+-----  Header  -----
+--------------------
+*/
+#header {
+    background-color: var(--red);
+    padding: 12px;
+    color: white;
+    display: flex;
+    justify-content: start;
+    align-items: center;
+    border-radius: 0 0 75% 0/50%;
+    box-shadow: 14px 30px 122px -30px rgba(0, 0, 0, 0.75);
+}
+#header-wrapper {
+    max-width: var(--maxWidth);
+    margin: auto;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+#header-wrapper h1 {
+    font-weight: 300;
+}
+#header-icon {
+    stroke: white;
+    margin-left: 1rem;
+}
+
+#toc {
+    text-align: center;
+    max-width: 75%;
+    margin: auto;
+    margin-top: 2rem;
+    font-size: 1.2rem;
+}
+
+.toc-item {
+    display: inline-block;
+}
+
+/*
+---------------------
+-----  Content  -----
+---------------------
+*/
+#content {
+    max-width: var(--maxWidth);
+    margin: auto;
+    padding: 32px;
+}
+#bib-text {
+    font-size: 0.75rem;
+    font-family: "Fira Code", monospace;
+    background: #f1f1f1;
+    color: #333;
+}
+
+hr {
+    border: none;
+    border-top: 1px solid var(--lighterColor);
+    margin: 4rem;
+}
+
+textarea {
+    border-radius: var(--round);
+    border: 1px solid #aaaaaa;
+    font-family: "Yantramanav";
+    padding: 6px;
+}
+
+button,
+.file-upload-label {
+    border: 1px solid var(--red);
+    border-radius: var(--rounder);
+    padding: 4px 6px;
+    background-color: white;
+    transition: all ease 200ms;
+    cursor: pointer;
+}
+button:disabled,
+.file-upload-label:disabled {
+    cursor: not-allowed;
+    pointer-events: none;
+    border-color: #e7a9a9;
+}
+
+button:hover,
+.file-upload-label:hover {
+    border-color: var(--red);
+    background-color: rgb(253, 235, 235);
+}
+
+input {
+    border-radius: var(--round);
+    border: 1px solid #aaa;
+    margin-top: 8px;
+    line-height: 1.1rem;
+    padding: 6px;
+    margin-bottom: 4px;
+}
+
+/*
+-----------------------------
+-----  Matcher options  -----
+-----------------------------
+*/
+.option-item {
+    margin-bottom: 1rem;
+    margin-top: 1rem;
+}
+
+.option-help {
+    margin-left: 1rem;
+    color: #7c7f8b;
+}
+
+#match-bib,
+#match-bib-stop,
+#copy-results {
+    width: 150px;
+    max-width: 200px;
+    margin: auto;
+}
+
+#match-results {
+    padding: 1rem;
+    border: 1px solid #ff4754;
+    border-radius: var(--round);
+    font-size: 0.75rem;
+}
+#copy-results {
+    background-color: rgb(86, 168, 86);
+    margin: 2rem auto;
+    color: white;
+    padding: 4px 8px;
+    width: 200px;
+}
+#copy-results:hover {
+    color: wheat;
+    background-color: rgb(86, 168, 86, 0.8);
+}
+.match-citation-key,
+.match-source {
+    color: #7c7f8b;
+    padding-right: 0.5rem;
+    font-family: "Fira Code", monospace;
+    font-size: 0.85rem;
+    font-weight: 400;
+}
+.match-venue {
+    font-style: italic;
+}
+
+.match-title,
+.match-source,
+.match-venue {
+    font-weight: 400;
+}
+#match-bib-stop {
+    display: flex;
+    height: 34px;
+    align-items: center;
+    justify-content: center;
+}
+#match-bib-stop:hover {
+    background-color: rgb(253, 235, 235);
+}
+#bib-desc {
+    font-style: italic;
+    color: #7c7f8b;
+}
+table {
+    border-collapse: collapse;
+}
+
+table tr {
+    border-bottom: 1px solid rgb(228, 228, 228);
+}
+
+table tr:last-child {
+    border: 0;
+}
+th {
+    padding: 8px 2px;
+}
+/*
+----------------------
+-----  Progress  -----
+----------------------
+*/
+#matching-feedback-container {
+    display: block;
+    padding: 2rem 1rem;
+    background: #fafafa;
+    /* background: linear-gradient(45deg, #f5e1e1, #fbecca); */
+    border-radius: 8px;
+    box-shadow: 6px 5px 9px 4px #f6f6f6;
+}
+#your-bib-container {
+    display: block;
+    padding: 0rem 1rem 1rem;
+    background: #fafafa;
+    /* background: linear-gradient(45deg, #fbecca, #f5e1e1); */
+    border-radius: 8px;
+    box-shadow: 6px 5px 9px 4px #f6f6f6;
+}
+#match-params-container {
+    display: block;
+    padding: 2rem 1rem;
+    background: #fafafa;
+    /* background: linear-gradient(45deg, #f5e1e1, #fbecca); */
+    border-radius: 8px;
+    box-shadow: 6px 5px 9px 4px #f6f6f6;
+    margin-top: 2rem;
+}
+
+.progress-container {
+    /* margin: 30px; */
+    margin-top: 0;
+    height: 0.8rem;
+    border-radius: 0.4rem;
+    background: #000;
+    padding: 0;
+}
+
+.progress-container .progress {
+    height: 100%;
+    width: 0;
+    border-radius: 0.4rem;
+    background: #ff4754;
+    transition: width 0.4s ease;
+}
+
+#matching-status-title {
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+    display: inline-block;
+    max-width: 100%;
+}
+
+.loader {
+    width: 16px;
+    height: 16px;
+    border: 3px solid #fff;
+    border-bottom-color: transparent;
+    border-radius: 50%;
+    display: inline-block;
+    box-sizing: border-box;
+    animation: rotation 1s linear infinite;
+}
+
+@keyframes rotation {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}
+
+/*
+--------------------
+-----  Errors  -----
+--------------------
+*/
+
+#bibmatch-errors {
+    background: #ececec;
+    border: 2px solid orange;
+    padding: 16px;
+    border-radius: 4px;
+}
+
+/*
+------------------------
+-----  Checkboxes  -----
+------------------------
+*/
+
+@supports (-webkit-appearance: none) or (-moz-appearance: none) {
+    input[type="checkbox"] {
+        --active: rgb(201, 19, 19, 0.65);
+        --active-inner: #fff;
+        --focus: 2px rgba(254, 39, 39, 0.596);
+        --border: #c5aaaa;
+        --border-hover: #b94141;
+        --background: #fff0;
+        --disabled: #f9e1e1;
+        --disabled-inner: #f9e1e1;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        height: 21px;
+        outline: none;
+        display: inline-block;
+        vertical-align: top;
+        position: relative;
+        margin: 0;
+        cursor: pointer;
+        border: 1px solid var(--bc, var(--border));
+        background: var(--b, var(--background));
+        -webkit-transition: background 0.3s, border-color 0.3s, box-shadow 0.2s;
+        transition: background 0.3s, border-color 0.3s, box-shadow 0.2s;
+    }
+
+    input[type="checkbox"]:after {
+        content: "";
+        display: block;
+        left: 0;
+        top: 0;
+        position: absolute;
+        -webkit-transition: opacity var(--d-o, 0.2s),
+            -webkit-transform var(--d-t, 0.3s) var(--d-t-e, ease);
+        transition: opacity var(--d-o, 0.2s),
+            -webkit-transform var(--d-t, 0.3s) var(--d-t-e, ease);
+        transition: transform var(--d-t, 0.3s) var(--d-t-e, ease),
+            opacity var(--d-o, 0.2s);
+        transition: transform var(--d-t, 0.3s) var(--d-t-e, ease),
+            opacity var(--d-o, 0.2s),
+            -webkit-transform var(--d-t, 0.3s) var(--d-t-e, ease);
+    }
+
+    input[type="checkbox"]:checked {
+        --b: var(--active);
+        --bc: var(--active);
+        --d-o: 0.3s;
+        --d-t: 0.6s;
+        --d-t-e: cubic-bezier(0.2, 0.85, 0.32, 1.2);
+    }
+
+    input[type="checkbox"]:disabled {
+        --b: var(--disabled);
+        cursor: not-allowed;
+        opacity: 0.9;
+    }
+
+    input[type="checkbox"]:disabled:checked {
+        --b: var(--disabled-inner);
+        --bc: var(--border);
+    }
+
+    input[type="checkbox"]:disabled + label {
+        cursor: not-allowed;
+    }
+
+    input[type="checkbox"]:hover:not(:checked):not(:disabled) {
+        --bc: var(--border-hover);
+    }
+
+    input[type="checkbox"]:focus {
+        box-shadow: 0 0 0 var(--focus);
+    }
+
+    input[type="checkbox"]:not(.switch) {
+        width: 21px;
+    }
+
+    input[type="checkbox"]:not(.switch):after {
+        opacity: var(--o, 0);
+    }
+
+    input[type="checkbox"]:not(.switch):checked {
+        --o: 1;
+    }
+
+    input[type="checkbox"] + label {
+        display: inline-block;
+        cursor: pointer;
+        vertical-align: sub;
+        margin-left: 4px;
+    }
+
+    input[type="checkbox"].switch {
+        width: 38px;
+        border-radius: 11px;
+    }
+
+    input[type="checkbox"].switch:after {
+        left: 2px;
+        top: 2px;
+        border-radius: 50%;
+        width: 15px;
+        height: 15px;
+        background: var(--ab, var(--border));
+        -webkit-transform: translateX(var(--x, 0));
+        transform: translateX(var(--x, 0));
+    }
+
+    input[type="checkbox"].switch:checked {
+        --ab: var(--active-inner);
+        --x: 17px;
+    }
+
+    input[type="checkbox"].switch:disabled:not(:checked):after {
+        opacity: 0.6;
+    }
+}

@@ -83,11 +83,12 @@ const fetchText = async (url) => {
 const fetchJSON = async (url) => {
     try {
         const response = await fetch(url);
+        const status = response.status;
         const data = response.ok ? await response.json() : null;
-        return data;
+        return { data, status };
     } catch (error) {
         console.log("fetchJSON error:", error);
-        return null;
+        return {};
     }
 };
 
@@ -194,35 +195,35 @@ const extractCrossrefData = (crossrefResponse) => {
 };
 
 const fetchCrossRefDataForDoi = async (doi) => {
-    const crossrefResponse = await fetchJSON(
+    const { data, status } = await fetchJSON(
         `https://api.crossref.org/works/${doi}?mailto=schmidtv%40mila.quebec`
     );
-    return extractCrossrefData(crossrefResponse);
+    return { data: extractCrossrefData(data), status };
 };
 
 const fetchSemanticScholarDataForDoi = async (doi) => {
-    const ssResponse = await fetchJSON(
+    const { data } = await fetchJSON(
         `https://api.semanticscholar.org/graph/v1/paper/${doi}?fields=venue,year,authors,title`
     );
 
     let bibData;
-    if (ssResponse) {
+    if (data) {
         bibData = {};
-        if (ssResponse.venue) {
-            bibData.venue = ssResponse.venue;
+        if (data.venue) {
+            bibData.venue = data.venue;
         }
-        if (ssResponse.year) {
-            bibData.year = ssResponse.year;
+        if (data.year) {
+            bibData.year = data.year;
         }
-        if (ssResponse.authors) {
-            bibData.author = ssResponse.authors.map((a) => a.name).join(" and ");
+        if (data.authors) {
+            bibData.author = data.authors.map((a) => a.name).join(" and ");
         }
-        if (ssResponse.title) {
-            bibData.title = ssResponse.title;
+        if (data.title) {
+            bibData.title = data.title;
         }
-        const citationKey = `${miniHash(
-            ssResponse.authors[0].name
-        )}${firstNonStopLowercase(bibData.title)}`;
+        const citationKey = `${miniHash(data.authors[0].name)}${firstNonStopLowercase(
+            bibData.title
+        )}`;
         const bibtex = bibtexToString({
             entryType: "article",
             citationKey,
@@ -443,6 +444,19 @@ const makeOpenReviewBibTex = (paper, url) => {
 const makeOpenReviewPaper = async (url) => {
     const noteJson = await getOpenReviewNoteJSON(url);
     const forumJson = await getOpenReviewForumJSON(url);
+
+    if (noteJson.status === 403 && noteJson.name === "ForbiddenError") {
+        logError(
+            dedent(`Error parsing OpenReview url ${url}.
+            Most likely because this entry is protected and you do not have the rights to access it.
+
+            1/ Make sure you are logged in.
+            2/ Alternatively, this may be due to OpenReview changing the visibility of this paper.
+
+            Try accessing this URL manually to make sure.`)
+        );
+        throw Error(noteJson.message);
+    }
 
     var paper = noteJson.notes[0];
     var forum = forumJson.notes;
@@ -994,7 +1008,7 @@ const makeACMPaper = async (url) => {
             year,
             publisher: "Association for Computing Machinery",
             address: "New York, NY, USA",
-            url: url.replace("/doi/pdf/", "/doi/"),
+            url: noParamUrl(url).replace("/doi/pdf/", "/doi/"),
         });
     }
     const id = `ACM-${year}_${miniHash(doi)}`;
@@ -1056,7 +1070,7 @@ const makeSpringerPaper = async (url) => {
     }
     const doi = url.split(`/${springerType}/`)[1].split("?")[0].replace(".pdf", "");
 
-    const data = await fetchCrossRefDataForDoi(doi);
+    const { data } = await fetchCrossRefDataForDoi(doi);
 
     if (!data) {
         throw new Error("Aborting Springer paper parsing, see error above");
@@ -1183,7 +1197,7 @@ const makeSciencePaper = async (url) => {
     pdfLink = `https://science.org/doi/pdf/${doi}`;
     absUrl = `https://science.org/doi/full/${doi}`;
 
-    const data = await fetchCrossRefDataForDoi(doi);
+    const { data } = await fetchCrossRefDataForDoi(doi);
     if (data) {
         ({ author, bibtex, title, venue, year } = data);
         key = data.citationKey;
@@ -1228,7 +1242,7 @@ const makeIHEPPaper = async (url) => {
     if (url.includes("/files/")) {
         const hash = url.split("/files/")[1].split("/")[0];
         const api = `https://inspirehep.net/api/literature?q=documents.key:${hash}`;
-        const results = await fetchJSON(api);
+        const results = (await fetchJSON(api)).data;
         data = results.hits.hits.find(
             (h) => !!h.metadata.documents.find((d) => d.key === hash)
         );
@@ -1248,9 +1262,9 @@ const makeIHEPPaper = async (url) => {
         `https://inspirehep.net/api/literature/${num}?format=bibtex`
     );
     if (!data) {
-        data = await fetchJSON(
+        ({ data } = await fetchJSON(
             `https://inspirehep.net/api/literature/${num}?format=json`
-        );
+        ));
     }
     const bibObj = bibtexToObject(bibtex);
     let title = bibObj.title ?? data.metadata.titles[0].title;
@@ -1401,7 +1415,7 @@ const tryCrossRef = async (paper) => {
 
         // compare matched item's title to the paper's title
         const crossTitle = json.message.items[0].title[0]
-            .toLowerCase()
+            ?.toLowerCase()
             .replaceAll("\n", " ")
             .replaceAll(/\s\s+/g, " ");
         const refTitle = paper.title
@@ -1434,7 +1448,13 @@ const tryDBLP = async (paper) => {
     try {
         const title = encodeURI(paper.title);
         const api = `https://dblp.org/search/publ/api?q=${title}&format=json`;
-        const json = await fetch(api).then((response) => response.json());
+        const response = await fetch(api);
+
+        if (response.status === 429) {
+            return { note: null, status: 429 };
+        }
+
+        const json = await response.json();
 
         if (
             !json.result ||
@@ -1452,7 +1472,7 @@ const tryDBLP = async (paper) => {
         for (const hit of hits) {
             const hitTitle = decodeHtml(
                 hit.info.title
-                    .toLowerCase()
+                    ?.toLowerCase()
                     .replaceAll("\n", " ")
                     .replaceAll(".", "")
                     .replaceAll(/\s\s+/g, " ")
@@ -1486,11 +1506,12 @@ const tryDBLP = async (paper) => {
 
 const trySemanticScholar = async (paper) => {
     try {
-        const matches = await fetchJSON(
+        const { data, status } = await fetchJSON(
             `https://api.semanticscholar.org/graph/v1/paper/search?query=${encodeURI(
                 paper.title
             )}&fields=title,venue,year,authors,externalIds,url&limit=50`
         );
+        const matches = data;
 
         if (matches && matches.data && matches.data.length > 0) {
             for (const match of matches.data) {
@@ -1526,7 +1547,7 @@ const trySemanticScholar = async (paper) => {
                         doi,
                         bibSource: `Semantic Scholar ${match.url}`,
                     });
-                    return { venue, note, bibtex };
+                    return { venue, note, bibtex, status };
                 }
             }
         }

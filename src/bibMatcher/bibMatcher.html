@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>PaperMemory BibMatcher</title>
+    <script src="../shared/min/theme.min.js"></script>
+    <style>
+        @import url("https://fonts.googleapis.com/css2?family=Yantramanav:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;1,600&display=swap");
+        @import url("https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;500;600;700&display=swap");
+    </style>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <link rel="stylesheet" type="text/css" href="../shared/css/vars.css">
+    <link rel="stylesheet" type="text/css" href="../shared/css/loader.css">
+    <link rel="stylesheet" type="text/css" href="../popup/css/select2.min.css">
+    <link rel="stylesheet" type="text/css" href="../options/github.min.css">
+    <link rel="stylesheet" type="text/css" href="bibMatcher.css">
+</head>
+
+<body>
+
+    <div id="header">
+        <div id="header-wrapper">
+            <h1>Bib Matcher</h1>
+            <svg viewBox="0 0 24 24" class="pm-tabler-icon ml-3" id="header-icon">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                <polyline points="13 3 13 10 19 10 11 21 11 14 5 14 13 3" />
+            </svg>
+        </div>
+    </div>
+    <div id="content" class="container">
+        <div class="row" id="match-params-container">
+            <div class="col-12">
+                <p style="margin-bottom: 3rem;">
+                    Paste the content of your <code>.bib</code> file and PaperMemory will automatically match the Arxiv
+                    entries
+                    to publications by
+                    fetching information from DBLP, Semantic Scholar, CrossRef and Google Scholar.
+                </p>
+
+                <p>
+                    The matching procedure is identical to the one you can trigger to match your PaperMemory ArXiv
+                    entries in the
+                    <a href="../options/options.html#preprint-matching" target="_blank">
+                        Advanced Options
+                    </a>
+                </p>
+
+                <p><strong style="color: rgb(224, 50, 50)">Warning:</strong> the matching procedure produces an output
+                    which
+                    does
+                    <strong>NOT</strong> maintain comments. Select
+                    matched
+                    entries one by one if you want to keep your initial comment structure.
+                </p>
+            </div>
+            <div class="col-12">
+                <textarea class="w-100" id="bib-text" placeholder="@article{foo2023bar, ..." rows="12"></textarea>
+            </div>
+            <div class="col-12">
+                <div class="row">
+                    <div class="col-12 option-item d-flex-center-center">
+                        <div class="d-flex-center-center">
+                            <input type="checkbox" id="keep-keys" checked class="switch"
+                                style="min-width: 38px">&nbsp;&nbsp;
+                            <label for="keep-keys" style="min-width: 150px">Keep citation keys</label>
+                        </div>
+                        <br />
+                        <div class="option-help d-flex-center-center">When a pre-print is matched to a publication, the
+                            latter may have a
+                            standard citation key. You can either update the entry's citation key or use the new one.
+                            Note that if you use the new one, your existing citations will be broken.</div>
+                    </div>
+                    <div class="col-12 option-item d-flex-center-center">
+                        <div class="d-flex-center-center">
+                            <input type="checkbox" id="api-timeout" checked class="switch"
+                                style="min-width: 38px">&nbsp;&nbsp;
+                            <label for="api-timeout" style="min-width: 150px">Wait for 3s between queries</label>
+                        </div>
+                        <br />
+                        <div class="option-help d-flex-center-center">Data providers protect their APIs by restricting
+                            the
+                            number of queries per seconds you can make. PaperMemory's BibMatcher may iterate too fast
+                            over your entries, reaching the API rate limits. Adding a timeout between requests slows
+                            down the matching process but increases your matching rate.</div>
+                    </div>
+                    <!-- <div class="col-12 col-xl-6 option-item">
+
+                    </div> -->
+
+                </div>
+            </div>
+            <div class="col-12" id="errors-container" style="display: none;">
+                <div class="row">
+                    <pre id="bibmatch-errors"></pre>
+                </div>
+            </div>
+            <div class="col-12 d-flex-center-center">
+                <button id="match-bib" class="mt-4">Match</button>
+                <button id="match-bib-stop" style="background-color: rgb(255 113 113); display: none;"
+                    class="mt-4">Stop</button>
+            </div>
+        </div>
+
+        <div class="row mt-5" id="matching-feedback-container" style="display: none;">
+            <div class="col-12">
+                <span id="n-arxivs"></span>
+            </div>
+            <div id="matching-progress-container" style="display: none;" class="col-12">
+                <div class="row mt-3">
+                    <div class="col-6">
+                        <div class="progress-container">
+                            <div class="progress" id="matching-progress-bar"></div>
+                        </div>
+                        <div style="padding: 8px; text-align: center;">
+                            <span id="matching-status-index"></span> / <span id="matching-status-total"></span>
+                        </div>
+                    </div>
+                    <div id="matching-status" class="col-6">
+                        <div id="matching-status-title"></div>
+                        <div>
+                            Looking for publications on <span id="matching-status-provider"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12" id="matched-list"> </div>
+        </div>
+        <div class="row mt-5" id="your-bib-container" style="display: none;">
+            <div class="col-12">
+                <h2 id="your-bibliography" style="display: none;">Your Bibliography</h2>
+                <div id="result-controls" class="d-flex-center-center" style="display: none;">
+                    <div class="d-flex-center-center">
+                        <input class="switch" type="checkbox" id="show-only-matches" name="Show only matches">
+                        <label for="show-only-matches">Show only new matched entries</label>
+                    </div>
+                    <button id="copy-results">Copy to clipboard</button>
+                </div>
+                <p id="bib-desc"></p>
+                <pre id="match-results" style="display: none;"></pre>
+            </div>
+        </div>
+
+
+        <div class="section">
+
+        </div>
+
+    </div>
+
+    <script src="../shared/min/jquery.min.js"></script>
+    <script src="../popup/js/select2.min.js"></script>
+    <script src="../options/highlight.min.js"></script>
+    <script src="../shared/min/utils.min.js"></script>
+    <script src="bibMatcher.js"></script>
+</body>
+
+</html>

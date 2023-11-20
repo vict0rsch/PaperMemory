@@ -108,8 +108,14 @@ const migrateData = async (papers, manifestDataVersion, store = true) => {
             }
             if (currentVersion < 450) {
                 if (!papers[id].hasOwnProperty("venue")) {
-                    papers[id].venue = await makeVenue(papers[id]);
-                    migrationSummaries[id].push("(m450) venue from id");
+                    try {
+                        papers[id].venue = await makeVenue(papers[id]);
+                        migrationSummaries[id].push("(m450) venue from id");
+                    } catch (error) {
+                        logError(error);
+                        papers[id].venue = "";
+                        migrationSummaries[id].push("(m450) ERROR in venue from id");
+                    }
                 }
             }
             if (currentVersion < 502) {
@@ -446,6 +452,17 @@ const validatePaper = (paper, log = true) => {
         author: {
             type: "string",
             desc: "` and `-separated authors `${firstName} ${lastName}`",
+            validation: (p) => {
+                if (!p) {
+                    throw Error(
+                        `No author: ${p} for paper ${paper.id}:\n${JSON.stringify(
+                            paper,
+                            null,
+                            2
+                        )}\nFix the json file and try again.\n`
+                    );
+                }
+            },
         },
         bibtex: {
             type: "string",
@@ -454,7 +471,7 @@ const validatePaper = (paper, log = true) => {
                 try {
                     bibtexToObject(p);
                 } catch (error) {
-                    return `Invalid BibTex: ${error}`;
+                    return `Invalid BibTex: ${error} :\n${p}`;
                 }
             },
         },
@@ -544,6 +561,21 @@ const validatePaper = (paper, log = true) => {
             type: "array[string]",
             desc: "the user's tags for this paper",
             default: (p) => [],
+        },
+        title: {
+            type: "string",
+            desc: "the paper's title",
+            validation: (p) => {
+                if (!p) {
+                    throw Error(
+                        `No title: ${p} for paper ${paper.id}:\n${JSON.stringify(
+                            paper,
+                            null,
+                            2
+                        )}\nFix the json file and try again.\n`
+                    );
+                }
+            },
         },
         venue: {
             type: "string",
@@ -642,7 +674,7 @@ const validatePaper = (paper, log = true) => {
                     warns[key] = [];
                 }
                 warns[key].push(validation);
-                log && console.warn(validation);
+                log && console.warn(validation + ` (${paper.id})`);
             }
         }
     }
