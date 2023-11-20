@@ -263,6 +263,10 @@ button:not(.select2-selection__choice__remove):hover,
 #copy-results {
     color: black;
 }
+#copy-results:hover {
+    color: black;
+    background-color: rgb(86, 168, 86, 0.8);
+}
 #match-bib-stop {
     color: var(--red);
 }
