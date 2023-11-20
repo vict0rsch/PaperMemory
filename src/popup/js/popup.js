@@ -102,6 +102,7 @@ const setStandardPopupClicks = () => {
         showPopupModal("keyboard");
     });
     shouldWarn("pdf-title", (displayWarning) => {
+        // keep as demo ; remove when another shouldWarn is added
         if (displayWarning) {
             showId("warning-button");
             addListener("warning-button", "click", async () => {

@@ -57,7 +57,16 @@ global.state = {
     sortedPapers: [], // [papers]
     sortKey: "",
     titleHashToIds: {}, // (miniHash(title) -> [ids])
+    titleFunction: null, // function(paper) => string
     urlHashToId: {}, // (miniHash(url) => id)
+};
+
+global.state.titleFunction = (paper) => {
+    const title = paper.title.replaceAll("\n", "");
+    const id = paper.id;
+    let name = `${title} - ${id}`;
+    name = name.replaceAll(":", " ").replace(/\\s\\s+/g, " ");
+    return name;
 };
 
 global.descendingSortKeys = [
@@ -253,13 +262,6 @@ global.consolHeaderStyle =
  */
 global.fuzzyTitleMatchMinDist = 4;
 
-global.defaultTitleFunctionCode = `
-(paper) => {\n
-    const title = paper.title.replaceAll("\\n", '');\n
-    const id = paper.id;\n
-    let name = \`\${title} - \${id}\`;\n
-    name = name.replaceAll(":", " ").replace(/\\s\\s+/g, " ");\n
-    return name\n};`;
 global.storeReadme = `
 /!\\ Warning: This folder has been created automatically by your PaperMemory browser extension.\n
 /!\\ It has to stay in your downloads for PaperMemory to be able to access your papers.\n
@@ -422,7 +424,6 @@ if (typeof module !== "undefined" && module.exports != null) {
         overridePMLRConfs: global.overridePMLRConfs,
         overrideDBLPVenues: global.overrideDBLPVenues,
         fuzzyTitleMatchMinDist: global.fuzzyTitleMatchMinDist,
-        defaultTitleFunctionCode: global.defaultTitleFunctionCode,
         storeReadme: global.storeReadme,
         englishStopWords: global.englishStopWords,
         journalAbbreviations: global.journalAbbreviations,

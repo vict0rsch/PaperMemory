@@ -31,10 +31,6 @@ const initState = async ({ papers, isContentScript, print = true } = {}) => {
     print && log("Time to parse data version (s): " + duration(times));
     times.unshift(Date.now());
 
-    global.state.titleFunction = (await getTitleFunction()).titleFunction;
-    print && log("Time to make title function (s): " + duration(times));
-    times.unshift(Date.now());
-
     weeklyBackup();
     print && log("Time to backup papers (weekly) (s): " + duration(times));
     times.unshift(Date.now());
@@ -188,65 +184,6 @@ const getExamplePaper = async (idx) => {
 };
 
 /**
- * Tries to parse the text input by the user to define the function that takes
- * a paper in order to create the custom page title / pdf filename.
- * If there is an error, it uses the built-in function from global.defaultTitleFunctionCode.
- * @param {string} code The string describing the code function.
- * @returns {function} Either the user's function if it runs without errors, or the built-in
- * formatting function
- */
-const getTitleFunction = async (code = null) => {
-    let titleFunction;
-    if (!code) {
-        // no code provided: load it from storage
-        code = await getStorage("titleFunctionCode");
-    }
-    if (typeof code === "undefined") {
-        // no code provided and no code in storage: use the built-in function code
-        code = global.defaultTitleFunctionCode;
-    }
-
-    let errorMessage;
-
-    try {
-        // eval the code into a function
-        titleFunction = eval(code);
-    } catch (error) {
-        // there was an error evaluating the code: use the built-in function
-        errorMessage = `Error parsing the title function: ${error}`;
-        log("Error parsing the title function. Function string then error:");
-        log(code);
-        log(error);
-        titleFunction = eval(global.defaultTitleFunctionCode);
-        code = global.defaultTitleFunctionCode;
-    }
-
-    try {
-        // test the loaded title function on a paper
-        const examplePaper = await getExamplePaper(0);
-        const result = titleFunction(examplePaper);
-        // assert the result is a string
-        if (typeof result !== "string") {
-            throw new Error(`Result ${result} is not a string`);
-        }
-    } catch (error) {
-        // there was an error running the title function: use the built-in function
-        errorMessage = `Error executing the title function: ${error}`;
-        log("Error testing the user's title function. Function string then error:");
-        log(code);
-        log(error);
-        titleFunction = eval(global.defaultTitleFunctionCode);
-        code = global.defaultTitleFunctionCode;
-    }
-
-    return {
-        titleFunction: titleFunction, // the function to use
-        code: code.trim(), // the code to store in storage
-        errorMessage: errorMessage, // potential error message
-    };
-};
-
-/**
  * Uses the state-loaded title function to get the title of a paper.
  *
  * @param {string || object} paperOrId the paper for which to get the title
@@ -263,16 +200,7 @@ const stateTitleFunction = (paperOrId) => {
             return "Unknown ID";
         }
     }
-    let name;
-    try {
-        // try using the state-loaded title function
-        name = global.state.titleFunction(paper);
-    } catch (error) {
-        // there was an error: use the built-in function
-        log("Error in stateTitleFunction:", error);
-        name = eval(global.defaultTitleFunctionCode)(paper);
-    }
-    // make sure there's no new line and no double spaces in the title
+    const name = global.state.titleFunction(paper);
     return name.replaceAll("\n", " ").replace(/\s\s+/g, " ");
 };
 
@@ -368,7 +296,6 @@ if (typeof module !== "undefined" && module.exports != null) {
     dummyModule.exports = {
         initState,
         getExamplePaper,
-        getTitleFunction,
         stateTitleFunction,
         updateDuplicatedUrls,
         addPaperToTitleHashToId,
