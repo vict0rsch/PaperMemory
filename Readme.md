@@ -50,13 +50,13 @@ Share ideas 💡 in [issues](https://github.com/vict0rsch/PaperMemory/issues) an
 <br/>
 
 <p align="center">
-<img width="800" src="https://github.com/vict0rsch/PaperMemory/blob/master/extra/imgs/display.png?raw=true"/>
+<img width="800" src="https://github.com/vict0rsch/PaperMemory/blob/master/docs/assets/display.png?raw=true"/>
 <br/>
 <br/>
-<img width="800" src="https://github.com/vict0rsch/PaperMemory/blob/master/extra/imgs/home_slideshow.gif?raw=true"/>
+<img width="800" src="https://github.com/vict0rsch/PaperMemory/blob/master/docs/assets/home_slideshow.gif?raw=true"/>
 <br/>
 <br/>
-<img width="800" src="https://github.com/vict0rsch/PaperMemory/blob/master/extra/imgs/d2.gif?raw=true"/>
+<img width="800" src="https://github.com/vict0rsch/PaperMemory/blob/master/docs/assets/d2.gif?raw=true"/>
 </p>
 
 ---
