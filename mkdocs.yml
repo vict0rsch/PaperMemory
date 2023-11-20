@@ -21,6 +21,7 @@ theme:
   favicon: assets/favicon-192x192.png
   custom_dir: docs/overrides
   features:
+    - content.code.select
     - content.tabs.link
     - content.tooltips
     - navigation.footer
