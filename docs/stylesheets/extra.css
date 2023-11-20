@@ -10,7 +10,7 @@
     --md-typeset-a-color: #cf1919;
 }
 #homesection img {
-    max-width: 700px;
+    max-width: 600px;
     width: 100%;
 }
 
@@ -25,6 +25,12 @@
 }
 .advanced-screenshot {
     max-width: 700px !important;
+    margin: 0 2rem;
+    width: 100%;
+}
+
+.popup-display {
+    max-width: 400px !important;
     margin: 0 2rem;
     width: 100%;
 }
