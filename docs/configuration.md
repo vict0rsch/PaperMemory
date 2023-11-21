@@ -21,7 +21,7 @@ By default, and _if_ they are not already attributed, the following keyboard sho
     * :fontawesome-brands-apple: / :fontawesome-brands-windows: / :fontawesome-brands-linux: ▶️ ++ctrl+shift+"S"++
     * If you have enabled this feature in the menu, the paper will be downloaded in your PaperMemoryStore (see thee [below](#paper-memory-store)).
 * Trigger paper parsing
-    * :fontawesome-brands-apple: / :fontawesome-brands-windows: / :fontawesome-brands-linux: ▶️ ++ctrl+shift+"L"++
+    * :fontawesome-brands-apple: / :fontawesome-brands-windows: / :fontawesome-brands-linux: ▶️ ++ctrl+shift+"P"++
     * Trigger the manual parsing of a paper if you have disabled automatic paper detection [in the menu](#disable-automatic-parsing).
 
 !!! info "Customization & Issues"
