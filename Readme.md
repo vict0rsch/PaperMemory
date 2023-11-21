@@ -102,11 +102,13 @@ Share ideas 💡 in [issues](https://github.com/vict0rsch/PaperMemory/issues) an
 * [Sci-Hub](#ad-hoc-pdfs)
 * [Add more](https://github.com/vict0rsch/PaperMemory/issues/13)
 
-[About finding published papers from preprints](#preprints)
+[[📑] About finding published papers from preprints](https://papermemory.org/features/#preprint-matching)
 
 ## Privacy
 
 All the data collected is stored locally on your computer and you can export it to `json` it from the options page.
+
+[[📑] More on Privacy](https://papermemory.org/features/#privacy)
 
 ## Feature requests
 
@@ -114,38 +116,23 @@ I'm regularly adding feature ideas in the [issues](https://github.com/vict0rsch/
 
 ## Customization
 
-Customize features in the menu:
+Checkout [[📑] All configuration options](https://papermemory.org/configuration/). Here's a quick overview:
 
+**a.** Customize features in the menu:
 
 <p align="center">
   <img width="400" src="https://github.com/vict0rsch/PaperMemory/blob/master/extra/imgs/menu_concat.png?raw=true">
 </p>
 
-Switch between Light and Dark mode
+**b.** Switch between Light and Dark mode
 
 <p align="center">
 <img src="https://github.com/vict0rsch/PaperMemory/blob/master/extra/imgs/lightdark.png?raw=true">
 </p>
 
+**c.** Advanced options
 
-
-
-## Keyboard Shortcuts
-
-
-## User Guides
-
-<p align="center">
-<img src="https://raw.github.com/vict0rsch/PaperMemory/master/extra/imgs/guide-arrows.png?raw=true">
-</p>
-
-<p align="center">
-<img src="https://raw.github.com/vict0rsch/PaperMemory/master/extra/imgs/guide-memory.png?raw=true">
-</p>
-
-## Advanced
-
-In the extension's `options` (right click on the icon or in the popup's menu) you will find advanced customization features:
+In the extension's [[📑] `options`](https://papermemory.org/configuration/#advanced-options) (right click on the icon or in the popup's menu) you will find advanced customization features:
 
 * **Auto-tagging**: add tags to papers based on regexs matched on authors and titles
 * **Source filtering**: filter out some paper sources you don't want to record papers from
@@ -157,7 +144,26 @@ In the extension's `options` (right click on the icon or in the popup's menu) yo
   <img src="https://raw.github.com/vict0rsch/PaperMemory/master/extra/imgs/opt_concat.png?raw=true">
 </p>
 
+
+## Keyboard Shortcuts
+
+Use `cmd/ctrl+shift+e` to open PaperMemory.
+
+See other [[📑] other keyboard shortcuts and how to customize them](https://papermemory.org/configuration/#keyboard-shortcuts), and [[📑] keyboard navigation](https://papermemory.org/configuration/#keyboard-navigation).
+
+## User Guides
+
+<p align="center">
+<img src="https://raw.github.com/vict0rsch/PaperMemory/master/extra/imgs/guide-arrows.png?raw=true">
+</p>
+
+<p align="center">
+<img src="https://raw.github.com/vict0rsch/PaperMemory/master/extra/imgs/guide-memory.png?raw=true">
+</p>
+
 ## Install from source
+
+Refer to [[📑] the documentation](https://papermemory.org/getting-started/#from-source).
 
 ## Preprints
 
@@ -167,12 +173,18 @@ My approach with PaperMemory is to try and notify you that a publication likely 
 
 There's room for improvement here^, please contact me (an issue will do) if you want to help.
 
+More on preprint matching [[📑] in the documentation](https://papermemory.org/features/#preprint-matching).
+
 ## Discovering Code repositories
 
 PaperMemory uses the PapersWithCode API in order to discover code repositories 🖥️
 
+See [[📑] how it works](https://papermemory.org/features/#code-repositories).
+
 
 ## FAQ
+
+[[📑] Frequently asked questions](https://papermemory.org/faq/).
 
 ## Todo
 
