@@ -77,6 +77,11 @@ const setStandardPopupClicks = () => {
             url: "https://github.com/vict0rsch/PaperMemory",
         });
     });
+    addListener("helpDocsLink", "click", () => {
+        chrome.tabs.create({
+            url: "https://papermemory.org",
+        });
+    });
 
     addListener("whats-new-container", "click", () => {
         chrome.storage.local.get("whatsnew", ({ whatsnew }) => {
