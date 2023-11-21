@@ -32,7 +32,7 @@ As much as possible, I try to avoid using external libraries. But I'll acknowled
 
 Fun fact: make pretty commits with [`gitmopy`](https://github.com/vict0rsch/gitmopy)
 
-<p align="center">
+<p align="center" markdown>
 ![Gitmopy](assets/gitmopy.png)
 </p>
 
