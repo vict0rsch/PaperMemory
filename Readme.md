@@ -118,19 +118,25 @@ I'm regularly adding feature ideas in the [issues](https://github.com/vict0rsch/
 
 Checkout [📑—All configuration options](https://papermemory.org/configuration/). Here's a quick overview:
 
-**a.** Customize features in the menu:
+<br/>
+
+**a. Customize features in the menu:**
 
 <p align="center">
   <img width="400" src="https://github.com/vict0rsch/PaperMemory/blob/master/extra/imgs/menu_concat.png?raw=true">
 </p>
 
-**b.** Switch between Light and Dark mode
+<br/>
+
+**b. Switch between Light and Dark mode**
 
 <p align="center">
 <img src="https://github.com/vict0rsch/PaperMemory/blob/master/extra/imgs/lightdark.png?raw=true">
 </p>
 
-**c.** Advanced options
+<br/>
+
+**c. Advanced options**
 
 In the extension's [📑—`options`](https://papermemory.org/configuration/#advanced-options) (right click on the icon or in the popup's menu) you will find advanced customization features:
 
