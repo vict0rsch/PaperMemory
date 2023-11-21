@@ -32,7 +32,7 @@
 <br/>
 
 <p align="center">
- <a href="#supported-venues">Supported Venues</a> &nbsp;•&nbsp; <a href="#customization">Customization</a> &nbsp;•&nbsp; <a href="#keyboard-navigation">Keyboard Navigation</a> &nbsp;•&nbsp; <a href="#guides">User Guide</a> &nbsp;•&nbsp; <a href="#advanced">Advanced features</a> &nbsp;•&nbsp; <a href="#install-from-source-brave--chrome">Install from source</a> &nbsp;•&nbsp; <a href="#preprints">About preprints</a> &nbsp;•&nbsp; <a href="#discovering-code-repositories">Discovering code Repositories</a> &nbsp;•&nbsp; <a href="#faq">FAQ</a>
+ <a href="#supported-venues">Supported Venues</a> &nbsp;•&nbsp; <a href="#customization">Customization</a> &nbsp;•&nbsp; <a href="#keyboard-shortcuts">Keyboard Shortcuts</a> &nbsp;•&nbsp; <a href="#guides">User Guide</a> &nbsp;•&nbsp; <a href="#install-from-source">Install from source</a> &nbsp;•&nbsp; <a href="#preprints">About preprints</a> &nbsp;•&nbsp; <a href="#discovering-code-repositories">Discovering code Repositories</a> &nbsp;•&nbsp; <a href="#faq">FAQ</a>
 </p>
 
 An **automated**, web-based and minimalist reference manager that also finds code repositories and published versions of preprints.
@@ -102,13 +102,13 @@ Share ideas 💡 in [issues](https://github.com/vict0rsch/PaperMemory/issues) an
 * [Sci-Hub](#ad-hoc-pdfs)
 * [Add more](https://github.com/vict0rsch/PaperMemory/issues/13)
 
-[[📑] About finding published papers from preprints](https://papermemory.org/features/#preprint-matching)
+[📑—About finding published papers from preprints](https://papermemory.org/features/#preprint-matching)
 
 ## Privacy
 
 All the data collected is stored locally on your computer and you can export it to `json` it from the options page.
 
-[[📑] More on Privacy](https://papermemory.org/features/#privacy)
+[📑—More on Privacy](https://papermemory.org/features/#privacy)
 
 ## Feature requests
 
@@ -116,7 +116,7 @@ I'm regularly adding feature ideas in the [issues](https://github.com/vict0rsch/
 
 ## Customization
 
-Checkout [[📑] All configuration options](https://papermemory.org/configuration/). Here's a quick overview:
+Checkout [📑—All configuration options](https://papermemory.org/configuration/). Here's a quick overview:
 
 **a.** Customize features in the menu:
 
@@ -132,7 +132,7 @@ Checkout [[📑] All configuration options](https://papermemory.org/configuratio
 
 **c.** Advanced options
 
-In the extension's [[📑] `options`](https://papermemory.org/configuration/#advanced-options) (right click on the icon or in the popup's menu) you will find advanced customization features:
+In the extension's [📑—`options`](https://papermemory.org/configuration/#advanced-options) (right click on the icon or in the popup's menu) you will find advanced customization features:
 
 * **Auto-tagging**: add tags to papers based on regexs matched on authors and titles
 * **Source filtering**: filter out some paper sources you don't want to record papers from
@@ -149,7 +149,7 @@ In the extension's [[📑] `options`](https://papermemory.org/configuration/#adv
 
 Use `cmd/ctrl+shift+e` to open PaperMemory.
 
-See other [[📑] other keyboard shortcuts and how to customize them](https://papermemory.org/configuration/#keyboard-shortcuts), and [[📑] keyboard navigation](https://papermemory.org/configuration/#keyboard-navigation).
+See other [📑—other keyboard shortcuts and how to customize them](https://papermemory.org/configuration/#keyboard-shortcuts), and [📑—keyboard navigation](https://papermemory.org/configuration/#keyboard-navigation).
 
 ## User Guides
 
@@ -163,7 +163,7 @@ See other [[📑] other keyboard shortcuts and how to customize them](https://pa
 
 ## Install from source
 
-Refer to [[📑] the documentation](https://papermemory.org/getting-started/#from-source).
+Refer to [📑—the documentation](https://papermemory.org/getting-started/#from-source).
 
 ## Preprints
 
@@ -173,18 +173,18 @@ My approach with PaperMemory is to try and notify you that a publication likely 
 
 There's room for improvement here^, please contact me (an issue will do) if you want to help.
 
-More on preprint matching [[📑] in the documentation](https://papermemory.org/features/#preprint-matching).
+More on preprint matching [📑—in the documentation](https://papermemory.org/features/#preprint-matching).
 
 ## Discovering Code repositories
 
 PaperMemory uses the PapersWithCode API in order to discover code repositories 🖥️
 
-See [[📑] how it works](https://papermemory.org/features/#code-repositories).
+See [📑—how it works](https://papermemory.org/features/#code-repositories).
 
 
 ## FAQ
 
-[[📑] Frequently asked questions](https://papermemory.org/faq/).
+[📑—Frequently asked questions](https://papermemory.org/faq/).
 
 ## Todo
 
