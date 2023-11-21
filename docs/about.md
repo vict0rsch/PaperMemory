@@ -19,3 +19,21 @@ Share ideas 💡 or bugs 🐛 in [issues](https://github.com/vict0rsch/PaperMemo
 ## If you want to help
 
 I'm always looking for feedback, beta-testers or help with the development (:simple-javascript: / :simple-html5: / :simple-css3:). Do reach out @ `vsch [at] pm [dot] me` or in [issues](https://github.com/vict0rsch/PaperMemory/issues), there's often some low hanging fruit which need help with. Or contribute your own ideas in a :material-source-pull: PR :mechanical_arm:.
+
+## Development
+
+As much as possible, I try to avoid using external libraries. But I'll acknowledge:
+
+* [Tabler Icons](https://tabler-icons.io/)
+* [Gulp](https://gulpjs.com/)
+* [Gifox](https://gifox.app/)
+* [Shottr](https://shottr.cc/)
+* [Puppeteer](https://pptr.dev/)
+
+Fun fact: make pretty commits with [`gitmopy`](https://github.com/vict0rsch/gitmopy)
+
+<p align="center">
+![Gitmopy](assets/gitmopy.png)
+</p>
+
+
