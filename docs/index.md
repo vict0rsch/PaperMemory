@@ -1,5 +1,5 @@
 ---
-title: Simple, fast & automated in-browser reference manager.
+title: Simple & automated in-browser reference manager.
 hide:
   - toc
   - navigation
