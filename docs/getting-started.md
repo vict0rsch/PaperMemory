@@ -1,5 +1,6 @@
 ---
 description: "Install PaperMemory and visualize its core features that make your paper management smooth and smart."
+icon: octicons/rocket-16
 ---
 
 # Getting Started
@@ -58,7 +59,8 @@ description: "Install PaperMemory and visualize its core features that make your
 Your main interface to PaperMemory is its popup. You can open it by clicking on the PaperMemory extension icon or using the default keyboard shortcut:
 
 * ++cmd+shift+"E"++ (:fontawesome-brands-apple:)
-* ++ctrl+shift+"M"++ (:fontawesome-brands-windows: / :fontawesome-brands-linux:)
+* ++ctrl+shift+"E"++ (:fontawesome-brands-windows:)
+* ++ctrl+shift+"M"++ (:fontawesome-brands-linux:)
 
 !!! tip "User Guide"
 
@@ -107,9 +109,9 @@ You can also
 
 </div>
 
-1.  This will lead you to the paper's PDF or Abstract, depending on your settings in the Popup Menu.
-2.  This will copy the paper's PDF or Abstract, depending on your settings in the Popup Menu.
-3.  The URL used will be the paper's PDF or Abstract, depending on your settings in the Popup Menu.
+1.  This will lead you to the paper's PDF or Abstract, depending on your settings in the :octicons-gear-16: Popup Menu.
+2.  This will copy the paper's PDF or Abstract, depending on your settings in the :octicons-gear-16: Popup Menu.
+3.  The URL used will be the paper's PDF or Abstract, depending on your settings in the :octicons-gear-16: Popup Menu.
 
 <p style="clear: both;" />
 
@@ -131,7 +133,7 @@ When on a known article's page, PaperMemory will display its meta-data (title, a
 
 Update your `.bib` file with actual published references.
 
-At the bottom of the Popup Menu, click on the *PaperMemory BibMatcher* link to open a tool that allows you to seamlessly match Arxiv references in your `.bib` file to actual publications, using the PaperMemory's [preprint matching feature](features.md#preprint-matching).
+At the bottom of the :octicons-gear-16: Popup Menu, click on the *PaperMemory BibMatcher* link to open a tool that allows you to seamlessly match Arxiv references in your `.bib` file to actual publications, using the PaperMemory's [preprint matching feature](features.md#preprint-matching).
 
 <p style="clear: both;" />
 
@@ -144,7 +146,7 @@ At the bottom of the Popup Menu, click on the *PaperMemory BibMatcher* link to o
 More customization options and features are available in the advanced options page:
 
 * Right click on the extension's button in your browser toolbar and select *Options*
-* Open the Popup Menu, scroll down and click on *Options page*.
+* Open the :octicons-gear-16: Popup Menu, scroll down and click on *Options page*.
 
 More details in [Configuration](configuration.md#advanced-options).
 

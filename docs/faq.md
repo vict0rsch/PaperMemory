@@ -1,5 +1,6 @@
 ---
 description: PaperMemory's Frequently Asked Questions
+icon: octicons/question-16
 ---
 
 # FAQ
@@ -61,7 +62,7 @@ moz-extension://05b6ef8a-7314-4c1d-a519-80f48a5794a6/src/fullMemory/fullMemory.h
 
 ### Can I exclude a paper source?
 
-Yep. In the extension popup's advanced options page: right-click the extension's icon and click on `Options`. Or click on the link at the bottom of the popup menu. Or go to this url (Thanks @kaixin96!):
+Yep. In the extension popup's advanced options page: right-click the extension's icon and click on `Options`. Or click on the link at the bottom of the :octicons-gear-16: popup menu. Or go to this url (Thanks @kaixin96!):
 
 ```bash
 # Copy-paste this url (Chrome / Brave / Edge):

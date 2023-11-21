@@ -1,5 +1,6 @@
 ---
 description: "PaperMemory's core features: illustrations and explanations."
+icon: octicons/gift-16
 ---
 
 # Features
@@ -239,7 +240,7 @@ PaperMemory can store pdfs in your Downloads folder and use this file instead of
 
 How it works:
 
-* Enable the feature from the Popup Menu
+* Enable the feature from the :octicons-gear-16: Popup Menu
 * Click on the :tabler-file-download: Download button in the PaperMemory popup when reading a paper
 * The extension creates a `PaperMemoryStore/` folder in your `Downloads/`
 * PDFs are stored in there

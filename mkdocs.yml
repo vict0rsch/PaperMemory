@@ -33,6 +33,7 @@ theme:
     - search.suggest
     - toc.follow
     - toc.integrate
+    - navigation.top
 extra_css:
   - stylesheets/extra.css
 plugins:

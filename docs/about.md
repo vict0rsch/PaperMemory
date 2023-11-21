@@ -1,5 +1,6 @@
 ---
 description: About PaperMemory and its developper.
+icon: octicons/info-16
 ---
 
 # About PaperMemory

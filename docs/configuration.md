@@ -9,11 +9,24 @@ icon: octicons/gear-16
 
 By default, and _if_ they are not already attributed, the following keyboard shortcuts are available:
 
-* ++cmd+shift+"E"++ will open PaperMemory's popup on a **Mac**, ++ctrl+shift+"M"++ on **Linux & Windows**.
-* ++cmd++ / ++ctrl++ + ++shift+"S"++ will try to download the pdf of the current paper. If you have enabled this feature in the menu, the paper will be downloaded in your PaperMemoryStore (see thee advanced options page for more info)
-* ++cmd++ / ++ctrl++ + ++shift+"L"++ will trigger the manual parsing of a paper if you have disabled automatic paper detection in the menu
+!!! note ":fontawesome-brands-apple:"
 
-All those shortcuts can be changed/set from `chrome://extensions/shortcuts` (:fontawesome-brands-chrome: Chrome / :simple-brave: Brave / :fontawesome-brands-edge: Edge) or `about:addons` (:fontawesome-brands-firefox-browser: Firefox).
+    Replace ++ctrl++ by ++cmd++ on a Mac.
+
+
+* Open the PaperMemory Popup
+    * :fontawesome-brands-apple: / :fontawesome-brands-windows: ▶️ ++ctrl+shift+"E"++
+    * :fontawesome-brands-linux: ▶️ ++ctrl+shift+"M"++
+* Download PDF of current paper
+    * :fontawesome-brands-apple: / :fontawesome-brands-windows: / :fontawesome-brands-linux: ▶️ ++ctrl+shift+"S"++
+    * If you have enabled this feature in the menu, the paper will be downloaded in your PaperMemoryStore (see thee [below](#paper-memory-store)).
+* Trigger paper parsing
+    * :fontawesome-brands-apple: / :fontawesome-brands-windows: / :fontawesome-brands-linux: ▶️ ++ctrl+shift+"L"++
+    * Trigger the manual parsing of a paper if you have disabled automatic paper detection [in the menu](#disable-automatic-parsing).
+
+!!! info "Customization & Issues"
+
+    All those shortcuts can be verified, changed or removed from `chrome://extensions/shortcuts` (:fontawesome-brands-chrome: Chrome / :simple-brave: Brave / :fontawesome-brands-edge: Edge) or `about:addons` (:fontawesome-brands-firefox-browser: Firefox).
 
 ### Keyboard Navigation
 
@@ -114,7 +127,7 @@ The following :fontawesome-solid-toggle-on: items are displayed in PaperMemory's
 
 :   Prevent PaperMemory from recording *all* papers, but only those of which you open the PDF.
 
-`Disable automatic recording of papers. You will have to manually open the popup and click a button`
+`Disable automatic recording of papers. You will have to manually open the popup and click a button`{ #disable-automatic-parsing }
 
 :   Prevent PaperMemory from recording *any* paper, you will have to trigger the parsing from the Popup or the [Keyboard Shortcut](./configuration.md#keyboard-shortcuts).
 
@@ -122,7 +135,7 @@ The following :fontawesome-solid-toggle-on: items are displayed in PaperMemory's
 
 :   Choose to open the local PDF file you have in your `Downloads/` (if any) instead of opening the online version of the PDF, when pressing ++enter++ on a paper in your Memory.
 
-`Download pdfs to PaperMemory's folder in your Downloads to be able to open them instead of re-downloading.`
+`Download pdfs to PaperMemory's folder in your Downloads to be able to open them instead of re-downloading.`{ #paper-memory-store }
 
 :   Enable the `PaperMemoryStore/` folder in your `Downloads/` to enable PaperMemory to handle local files instead of re-downloading online PDFs every time.
 
@@ -139,7 +152,7 @@ The following :fontawesome-solid-toggle-on: items are displayed in PaperMemory's
 More customization options and features are available in the **Advanced Options page**:
 
 * Right click on the extension's button in your browser toolbar and select *Options*
-* Open the Popup Menu, scroll down and click on *Options page*.
+* Open the :octicons-gear-16: Popup Menu, scroll down and click on *Options page*.
 * Paste one of those URLs in your address bar
   ```bash
   # Chrome / Brave / Edge:

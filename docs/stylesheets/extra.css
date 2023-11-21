@@ -14,6 +14,10 @@
     width: 100%;
 }
 
+.md-grid {
+    max-width: 1300px;
+}
+
 .icon-tabler {
     fill: none !important;
 }
@@ -24,7 +28,7 @@
     width: 100%;
 }
 .advanced-screenshot {
-    max-width: 700px !important;
+    max-width: 600px !important;
     margin: 0 2rem;
     width: 100%;
 }
@@ -33,4 +37,14 @@
     max-width: 400px !important;
     margin: 0 2rem;
     width: 100%;
+}
+
+.md-nav__item--active svg {
+    width: 1.4rem;
+    height: 1.1rem;
+}
+
+.md-nav__item--active a {
+    display: flex;
+    align-items: center;
 }
