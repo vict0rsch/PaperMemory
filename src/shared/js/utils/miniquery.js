@@ -235,7 +235,10 @@ const slideToggle = (el, duration = 500, complete = () => {}) => {
     }
 };
 
-const queryAll = (dom, selector) => [...dom.querySelectorAll(selector)];
+const queryAll = (dom, selector) =>
+    selector
+        ? [...dom.querySelectorAll(selector)]
+        : [...document.querySelectorAll(dom)];
 
 const createElementFromHTML = (htmlString) => {
     var div = document.createElement("div");

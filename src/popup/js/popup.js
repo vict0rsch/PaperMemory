@@ -72,14 +72,9 @@ const closePopupModal = () => {
  * Creates click events on the popup
  */
 const setStandardPopupClicks = () => {
-    addListener("helpGithubLink", "click", () => {
-        chrome.tabs.create({
-            url: "https://github.com/vict0rsch/PaperMemory",
-        });
-    });
-    addListener("helpDocsLink", "click", () => {
-        chrome.tabs.create({
-            url: "https://papermemory.org",
+    queryAll(".link-in-new-tab").forEach((el) => {
+        addListener(el, "click", () => {
+            chrome.tabs.create({ url: el.getAttribute("href") });
         });
     });
 

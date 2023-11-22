@@ -16,6 +16,17 @@ body {
     position: relative;
 }
 
+.d-flex-center-center {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+.d-flex-center-start {
+    display: flex;
+    align-items: center;
+    justify-content: start;
+}
+
 .pm-loader {
     animation: rotation 1.3s infinite linear;
     height: 50px;
