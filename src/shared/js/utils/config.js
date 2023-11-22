@@ -180,6 +180,7 @@ global.knownPaperPages = {
     ],
     iop: ["iopscience.iop.org/article/"],
     jmlr: [(url) => url.includes("jmlr.org/papers/v") && !url.endsWith("/")],
+    mdpi: [(url) => /mdpi\.com\/\d+-.+/gi.test(url)],
     nature: ["nature.com/articles/"],
     neurips: ["neurips.cc/paper/", "neurips.cc/paper_files/paper/", "nips.cc/paper/"],
     openreview: [

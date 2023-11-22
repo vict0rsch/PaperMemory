@@ -1393,6 +1393,26 @@ const makeWebsitePaper = async (tab) => {
     return { author, bibtex, id, key, note, pdfLink, title, venue, year };
 };
 
+const makeMDPIPaper = async (url) => {
+    url = noParamUrl(url);
+    if (url.split("/").last().startsWith("pdf")) {
+        url = url.split("/").slice(0, -1).join("/");
+    }
+    if (url.endsWith("/notes")) {
+        url = url.replace("/notes", "");
+    }
+    if (url.endsWith("/reprints")) {
+        url = url.replace("/reprints", "");
+    }
+    const dom = await fetchDom(url);
+    let { author, year, publisher, title, venue, key, doi, bibtex, note, pdfLink } =
+        extractDataFromDCMetaTags(dom);
+
+    const id = `MDPI-${year}_${miniHash(url.split("mdpi.com/")[1])}`;
+
+    return { author, bibtex, id, key, note, pdfLink, title, venue, year, doi };
+};
+
 // -------------------------------
 // -----  PREPRINT MATCHING  -----
 // -------------------------------
@@ -1842,6 +1862,11 @@ const makePaper = async (is, url, tab = false) => {
         paper = await makeRSCPaper(url);
         if (paper) {
             paper.source = "rsc";
+        }
+    } else if (is.mdpi) {
+        paper = await makeMDPIPaper(url);
+        if (paper) {
+            paper.source = "mdpi";
         }
     } else {
         throw new Error("Unknown paper source: " + JSON.stringify({ is, url }));

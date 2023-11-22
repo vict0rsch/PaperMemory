@@ -175,6 +175,10 @@ const paperToAbs = (paper) => {
             abs = paper.pdfLink;
             break;
 
+        case "mdpi":
+            abs = paper.pdfLink.split("/pdf")[0];
+            break;
+
         default:
             abs = "https://xkcd.com/1969/";
             break;
@@ -279,6 +283,9 @@ const paperToPDF = (paper) => {
             break;
 
         case "rsc":
+            break;
+
+        case "mdpi":
             break;
 
         case "website":
@@ -879,6 +886,15 @@ const parseIdFromUrl = async (url, tab = null) => {
     } else if (is.rsc) {
         const rscId = noParamUrl(url).split("/").last();
         idForUrl = findPaperForProperty(papers, "rsc", miniHash(rscId));
+    } else if (is.mdpi) {
+        const mdpiId = noParamUrl(
+            url
+                .split("mdpi.com/")[1]
+                .split("/pdf")[0]
+                .split("/reprints")[0]
+                .split("/notes")[0]
+        );
+        idForUrl = findPaperForProperty(papers, "mdpi", miniHash(mdpiId));
     } else if (is.localFile) {
         idForUrl = is.localFile;
     } else if (is.parsedWebsite) {
