@@ -1,5 +1,9 @@
 const logTrace = typeof LOGTRACE !== "undefined" && LOGTRACE;
 
+/** Function to log to console with a prefix
+ * @param {any} args The list of arguments to log
+ * @returns {void}
+ */
 const log = (...args) => {
     if (logTrace) {
         const stack = new Error().stack;
@@ -68,19 +72,47 @@ const log = (...args) => {
     );
 };
 
+/** Log an info message in blue
+ * @param {any} args The list of arguments to log
+ * @returns {void}
+ */
 const info = (...args) => log(...["[info]", ...args]);
 
+/** Log a warning message in yellow
+ * @param {any} args The list of arguments to log
+ * @returns {void}
+ * */
 const warn = (...args) => log(...["[warn]", ...args]);
 
+/** Log a debug message in purple
+ * @param {any} args The list of arguments to log
+ * @returns {void}
+ * */
 const debug = (...args) => log(...["[debug]", ...args]);
 
+/** Log a success message in green
+ * @param {any} args The list of arguments to log
+ * @returns {void}
+ */
 const logOk = (...args) => log(...["[ok]", ...args]);
 
+/** Log an error message in red
+ * @param {any} args The list of arguments to log
+ * @returns {void}
+ * */
 const logError = (...args) => log(...["[error]", ...args]);
 
+/** Create a group of logs in the console
+ *  @param {string} text The text to display in the group
+ */
 const consoleHeader = (text) =>
     console.groupCollapsed(`%c${text}`, global.consolHeaderStyle);
 
+/** Gets the string to display from a paper's id, typically
+ * splitting on _ and taking the first part
+ * @param {string} id The id of the paper
+ * @returns {string} The string to display
+ */
 const getDisplayId = (id) => {
     const baseId = id;
     id = id.split("_")[0].split(".")[0];
@@ -109,9 +141,17 @@ const getDisplayId = (id) => {
     return id;
 };
 
+/** Whether or not a variable is an object
+ * @param {any} obj The variable to test
+ * @returns {boolean} Whether or not the variable is an object
+ */
 const isObject = (obj) =>
     typeof obj === "object" && !Array.isArray(obj) && obj !== null;
 
+/** Whether or not this url leads to a pdf
+ * @param {string} url The url to test
+ * @returns {boolean} Whether or not the url leads to a pdf
+ */
 const isPdfUrl = (url) => {
     return (
         url.endsWith(".pdf") ||
@@ -123,6 +163,11 @@ const isPdfUrl = (url) => {
     );
 };
 
+/** Delay the execution of a function for sometime and reset the timer if called again
+ * @param {function} fn The function to delay
+ * @param {number} ms The number of milliseconds to delay the function
+ * @returns {function} The delayed function
+ */
 function delay(fn, ms) {
     // https://stackoverflow.com/questions/1909441/how-to-delay-the-keyup-handler-until-the-user-stops-typing
     let timer = 0;
@@ -132,12 +177,23 @@ function delay(fn, ms) {
     };
 }
 
+/** Remove the `__dataVersion` property from a dict of papers
+ * @param {Object} papers The dict of papers to clean
+ * @returns {Object} The cleaned dict of papers
+ */
 const cleanPapers = (papers) => {
     let cleaned = { ...papers };
     delete cleaned["__dataVersion"];
     return cleaned;
 };
 
+/**
+ * Gets the lowercased first non english stop word from a title using the
+ * global english stop words set in config.js. If no stop words are found,
+ * the first word is returned.
+ * @param {string} title The title to get the first non stop word from
+ * @returns {string} The first non stop word
+ */
 const firstNonStopLowercase = (title) => {
     let t = title.toLowerCase();
     let words = t.split(" ").map(miniHash);
@@ -148,10 +204,21 @@ const firstNonStopLowercase = (title) => {
     return words[0];
 };
 
+/** Custom simple hash function that returns a lowercase string
+ * with no special characters (only letters and numbers are allowed)
+ * @param {string} str The string to hash
+ * @returns {string} The hashed string
+ */
 const miniHash = (str) => {
     return str.toLowerCase().replace(/\W/g, "");
 };
 
+/**
+ * Fallback method to copy some text to the clipboard if the user's browser
+ * does not support the Clipboard API (navigator.clipboard)
+ * @param {string} text The text to copy to the clipboard
+ * @returns {void}
+ */
 const fallbackCopyTextToClipboard = (text) => {
     var textArea = document.createElement("textarea");
     textArea.value = text;
@@ -176,6 +243,11 @@ const fallbackCopyTextToClipboard = (text) => {
     document.body.removeChild(textArea);
 };
 
+/** Copy some text to the clipboard using the Clipboard API,
+ * if available, or fallback to the fallbackCopyTextToClipboard function
+ * @param {string} text The text to copy to the clipboard
+ * @returns {void}
+ * */
 const copyTextToClipboard = (text) => {
     if (!navigator.clipboard) {
         fallbackCopyTextToClipboard(text);
@@ -191,6 +263,12 @@ const copyTextToClipboard = (text) => {
     );
 };
 
+/** Copy a hyperlink to the clipboard using the Clipboard API,
+ * if available, or fallback to the fallbackCopyTextToClipboard function
+ * @param {string} url The url to copy to the clipboard
+ * @param {string} title The title of the url to copy to the clipboard
+ * @returns {void}
+ * */
 copyHyperLinkToClipboard = (url, title) => {
     if (!navigator.clipboard) {
         fallbackCopyTextToClipboard(url);
@@ -210,12 +288,23 @@ copyHyperLinkToClipboard = (url, title) => {
         );
 };
 
+/**
+ * Parse a url and return an object with the url's components
+ * @param {string} url The url to parse
+ * @returns {HTMLAnchorElement} The parsed url
+ */
 const parseUrl = (url) => {
     var a = document.createElement("a");
     a.href = url;
     return a;
 };
 
+/** Download a file to the user's computer
+ * @param {string} content The content of the file to download
+ * @param {string} fileName The name of the file to download
+ * @param {string} contentType The type of the file to download
+ * @returns {void}
+ * */
 const downloadTextFile = (content, fileName, contentType) => {
     var a = document.createElement("a");
     if (contentType === "text/plain") {
@@ -230,10 +319,22 @@ const downloadTextFile = (content, fileName, contentType) => {
     a.click();
 };
 
+/**
+ * Get the id of a paper from a click event inside a .memory-container for
+ * a memory item.
+ * @param {Event} e The click event
+ * @returns {string} The id of the paper
+ */
 const eventId = (e) => {
     return e.target.closest(".memory-container").id.split("--")[1];
 };
 
+/**
+ * Download a file from a url
+ * @param {string} fileURL The url of the file to download
+ * @param {string} fileName The name of the file to download
+ * @returns {void}
+ * */
 const downloadFile = (fileURL, fileName) => {
     // for non-IE
     if (!window.ActiveXObject) {
@@ -268,6 +369,11 @@ const downloadFile = (fileURL, fileName) => {
     }
 };
 
+/**
+ * Computes a hash code from a string
+ * @param {string} s The string to hash
+ * @returns {number} The hash code
+ * */
 const hashCode = (s) => {
     return s.split("").reduce((a, b) => {
         a = (a << 5) - a + b.charCodeAt(0);
@@ -764,6 +870,11 @@ const sendMessageToBackground = (payload) =>
         });
     });
 
+/**
+ * Returns the list of files stored by the extension in the user's
+ * PaperMemoryStore/ folder
+ * @returns {Promise} Promise that resolves the list of stored files
+ */
 const getStoredFiles = () =>
     new Promise((resolve) => {
         chrome.downloads.search(
@@ -790,6 +901,11 @@ const noParamUrl = (url) => {
     return url.split("?")[0].split("#")[0];
 };
 
+/**
+ * get a hash of a website's url, ignoring the protocol, www, and trailing #
+ * @param {string} url
+ * @returns {string} hash of the url
+ */
 const urlToWebsiteId = (url) => {
     const last = url.split("/").last();
     if (last.includes("#")) {
@@ -801,6 +917,12 @@ const urlToWebsiteId = (url) => {
     );
 };
 
+/**
+ * Wraps a promise in a timeout to resolve it after a given time
+ * @param {Promise} prom The promise to wrap
+ * @param {number} time The time after which to resolve the promise
+ * @returns {Promise} The wrapped promise
+ */
 const silentPromiseTimeout = (prom, time = 5000) => {
     // https://advancedweb.hu/how-to-add-timeout-to-a-promise-in-javascript/
     let timer;
@@ -810,21 +932,55 @@ const silentPromiseTimeout = (prom, time = 5000) => {
     ]).finally(() => clearTimeout(timer));
 };
 
+/**
+ * Checks whether a warning should be shown to the user
+ * @param {string} warningName Name of the warning to check
+ * @param {function} callback Function to call if the warning should be shown
+ * @returns {Promise} Promise that resolves the callback
+ */
 const shouldWarn = async (warningName, callback = () => {}) => {
     return callback(false);
 };
 
+/**
+ * Converts a camelCase string to same case with spaces
+ * eg: "camelCase" -> "camel Case"
+ * @param {string} str
+ * @returns {string} camelCase string with spaces
+ */
 const spaceCamelCase = (str) =>
     str.replace(/([A-Z](?=[a-z]+)|[A-Z]+(?![a-z]))/g, " $1").trim();
 
+/**
+ * Replaces multiple spaces with a single space
+ * @param {string} str
+ * @returns {string} string with single spaces
+ */
 const toSingleSpace = (str) => str.replace(/\s\s+/g, " ");
 
+/**
+ * Dedents a string by removing leading spaces
+ * @param {string} str
+ * @returns {string} dedented string
+ */
 const dedent = (str) => {
     return ("" + str).replace(/(\n)\s+/g, "$1");
 };
 
+/**
+ * Returns the ArXiv ID from a paper ID
+ * eg: "Arxiv-2306.11715" -> "2306.11715"
+ * @param {string} paperId
+ * @returns {string} ArXiv ID
+ */
 const arxivIdFromPaperID = (paperId) => paperId.split("-").last().replace("_", "/");
 
+/**
+ * Returns the ArXiv ID for a URL from: arxiv.org, arxiv-vanity.com, ar5iv.labs.arxiv.org
+ * huggingface.co/papers/
+ * @param {string} url The URL to parse
+ * @returns {string} ArXiv ID
+ */
 const arxivIdFromURL = (url) =>
     url.includes("scirate.com/arxiv/")
         ? url.split("scirate.com/arxiv/")[1].match(/\d+\.\d+/)[0]

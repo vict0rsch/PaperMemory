@@ -10,6 +10,13 @@ const findEl = (elOrId, memoryItemClass) => {
     return findEl(`memory-container--${elOrId}`).querySelector(`.${memoryItemClass}`);
 };
 
+/**
+ * Fade out an element
+ * @param {HTMLElement} el
+ * @param {number} duration
+ * @param {function} callback
+ * @returns {void}
+ */
 const fadeOut = (el, duration = 250, callback = () => {}) => {
     el = findEl(el);
     el.style.transition = `${duration}ms`;
@@ -20,6 +27,14 @@ const fadeOut = (el, duration = 250, callback = () => {}) => {
     }, duration);
 };
 
+/**
+ * Fade in an element
+ * @param {HTMLElement} el
+ * @param {string} display
+ * @param {number} duration
+ * @param {function} callback
+ * @returns {void}
+ */
 const fadeIn = (el, display = "block", duration = 250, callback = () => {}) => {
     el = findEl(el);
     el.style.opacity = 0;
@@ -36,6 +51,12 @@ const fadeIn = (el, display = "block", duration = 250, callback = () => {}) => {
     }, 0);
 };
 
+/**
+ * Get or set value of an element
+ * @param {string | HTMLElement} el
+ * @param {string} value
+ * @returns {string}
+ */
 const val = (el, value) => {
     if (typeof el === "string") {
         el = findEl(el);
@@ -52,21 +73,48 @@ const val = (el, value) => {
     if (el) el.value = value;
 };
 
-const showId = (id, display = "block") => {
-    let el = findEl(id);
+/** Show an element (or find it with findEl if el is a string)
+ *  by setting its display property to the given value (default: "block")
+ * @param {string | HTMLElement} el
+ * @param {string} display
+ * @returns {void}
+ * */
+const showId = (el, display = "block") => {
+    if (typeof el === "string") {
+        el = findEl(el);
+    }
     if (el) el.style.display = display;
 };
 
-const hideId = (id) => {
-    el = findEl(id);
+/** Hide an element (or find it with findEl if el is a string)
+ * by setting its display property to "none"
+ * @param {string | HTMLElement} el
+ * @returns {void}
+ * */
+const hideId = (el) => {
+    if (typeof el === "string") {
+        el = findEl(el);
+    }
     if (el) el.style.display = "none";
 };
 
-const setTextId = (id, text) => {
-    let el = findEl(id);
+/** Set innerText of an element (or find it with findEl if el is a string)
+ * @param {string | HTMLElement} el
+ * @param {string} text
+ * @returns {void}
+ * */
+const setTextId = (el, text) => {
+    if (typeof el === "string") {
+        el = findEl(el);
+    }
     if (el) el.innerText = text;
 };
 
+/** Set innerHTML of an element (or find it with findEl if el is a string)
+ * @param {string | HTMLElement} el
+ * @param {string} html
+ * @returns {void}
+ * */
 const setHTML = (el, html) => {
     if (typeof el === "string") {
         el = findEl(el);
@@ -74,6 +122,11 @@ const setHTML = (el, html) => {
     if (el) el.innerHTML = html;
 };
 
+/** Dispatch an event on an element (or find it with findEl if el is a string)
+ * @param {string | HTMLElement} el
+ * @param {string | Event} event
+ * @returns {void}
+ * */
 const dispatch = (el, event) => {
     if (typeof el === "string") {
         el = findEl(el);
@@ -91,6 +144,12 @@ const dispatch = (el, event) => {
     el && el.dispatchEvent(event);
 };
 
+/** Check if an element (or find it with findEl if el is a string)
+ * has a given class
+ * @param {string | HTMLElement} elOrId
+ * @param {string} className
+ * @returns {boolean}
+ * */
 const hasClass = (elOrId, className) => {
     let el;
     if (typeof elOrId === "string") {
@@ -101,6 +160,11 @@ const hasClass = (elOrId, className) => {
     if (el) return el.classList.contains(className);
 };
 
+/** Add a class to an element (or find it with findEl if el is a string)
+ * @param {string | HTMLElement} elOrId
+ * @param {string} className
+ * @returns {void}
+ * */
 const addClass = (elOrId, className) => {
     let el;
     if (typeof elOrId === "string") {
@@ -112,6 +176,11 @@ const addClass = (elOrId, className) => {
     el && el.classList.add(className);
 };
 
+/** Remove a class from an element (or find it with findEl if el is a string)
+ * @param {string | HTMLElement} elOrId
+ * @param {string} className
+ * @returns {void}
+ * */
 const removeClass = (elOrId, className) => {
     let el;
     if (typeof elOrId === "string") {
@@ -123,6 +192,12 @@ const removeClass = (elOrId, className) => {
     if (el) el.classList.remove(className);
 };
 
+/** Add an event listener to an element (or find it with findEl if el is a string)
+ * @param {string | HTMLElement} el
+ * @param {string} event
+ * @param {function} listener
+ * @returns {void}
+ * */
 const addListener = (el, event, listener) => {
     if (typeof el === "string") {
         el = findEl(el);
@@ -130,6 +205,11 @@ const addListener = (el, event, listener) => {
     el && el.addEventListener(event, listener);
 };
 
+/** Set placeholder of an element (or find it with findEl if el is a string)
+ * @param {string | HTMLElement} el
+ * @param {string} text
+ * @returns {void}
+ * */
 const setPlaceholder = (el, text) => {
     if (typeof el === "string") {
         el = findEl(el);
@@ -137,6 +217,12 @@ const setPlaceholder = (el, text) => {
     if (el && typeof el.placeholder !== "undefined") el.placeholder = text;
 };
 
+/** Get or set style of an element (or find it with findEl if el is a string)
+ * @param {string | HTMLElement} el
+ * @param {string} key
+ * @param {string} value
+ * @returns {string}
+ * */
 const style = (el, key, value) => {
     if (typeof el === "string") {
         el = findEl(el);
@@ -149,6 +235,11 @@ const style = (el, key, value) => {
     }
 };
 
+/** Disable an element (or find it with findEl if el is a string)
+ * @param {string | HTMLElement} el
+ * @param {boolean} isDisabled
+ * @returns {void}
+ * */
 const disable = (el, isDisabled = true) => {
     if (typeof el === "string") {
         el = findEl(el);
@@ -156,7 +247,13 @@ const disable = (el, isDisabled = true) => {
     if (el) el.disabled = isDisabled;
 };
 
-// https://w3bits.com/labs/javascript-slidetoggle/
+/** Slide up an element (or find it with findEl if el is a string)
+ *  https://w3bits.com/labs/javascript-slidetoggle/
+ * @param {string | HTMLElement} el
+ * @param {number} duration
+ * @param {function} complete
+ * @returns {void}
+ * */
 const slideUp = (el, duration = 250, complete = () => {}) => {
     if (typeof el === "string") {
         el = findEl(el);
@@ -189,7 +286,13 @@ const slideUp = (el, duration = 250, complete = () => {}) => {
     }, duration);
 };
 
-// https://w3bits.com/labs/javascript-slidetoggle/
+/** Slide down an element (or find it with findEl if el is a string)
+ *  https://w3bits.com/labs/javascript-slidetoggle/
+ * @param {string | HTMLElement} el
+ * @param {number} duration
+ * @param {function} complete
+ * @returns {void}
+ * */
 const slideDown = (el, duration = 500, complete = () => {}) => {
     if (typeof el === "string") {
         el = findEl(el);
@@ -226,15 +329,6 @@ const slideDown = (el, duration = 500, complete = () => {}) => {
     }, duration);
 };
 
-// https://w3bits.com/labs/javascript-slidetoggle/
-const slideToggle = (el, duration = 500, complete = () => {}) => {
-    if (window.getComputedStyle(el).display === "none") {
-        return slideDown(el, duration, complete);
-    } else {
-        return slideUp(el, duration, complete);
-    }
-};
-
 /**
  * Get all elements matching selector within dom or document if dom is not provided
  * in form of an array
@@ -247,6 +341,10 @@ const queryAll = (selector, dom) =>
         ? [...dom.querySelectorAll(selector)]
         : [...document.querySelectorAll(selector)];
 
+/** Create an element from an HTML string
+ * @param {string} htmlString
+ * @returns {HTMLElement}
+ * */
 const createElementFromHTML = (htmlString) => {
     var div = document.createElement("div");
     div.innerHTML = htmlString.trim();
@@ -255,6 +353,12 @@ const createElementFromHTML = (htmlString) => {
     return div.firstChild;
 };
 
+/** Add an event listener to all elements with a given class
+ * @param {string} className
+ * @param {string} eventName
+ * @param {function} fn
+ * @returns {void}
+ * */
 const addEventToClass = (className, eventName, fn) => {
     if (!className.startsWith(".")) className = "." + className;
     document.querySelectorAll(className).forEach((el) => {
@@ -286,7 +390,6 @@ if (typeof module !== "undefined" && module.exports != null) {
         disable,
         slideUp,
         slideDown,
-        slideToggle,
         queryAll,
         addEventToClass,
         createElementFromHTML,
