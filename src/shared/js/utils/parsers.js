@@ -235,40 +235,83 @@ const fetchSemanticScholarDataForDoi = async (doi) => {
     return bibData;
 };
 
-const getMetaContent = (selectors, dom, all = false) => {
-    const selector =
-        "meta" +
-        Object.entries(selectors)
-            .map(([k, v]) => `[${k}='${v}']`)
-            .join("");
-    let target;
-    if (all) {
-        return queryAll(dom, selector)
-            .map((el) => el.getAttribute("content") ?? "")
-            .map(spaceCamelCase)
-            .map(toSingleSpace);
+const getMetaContent = ({ selector, dom, all = false, pure = false }) => {
+    let query = "";
+    // account for dc.Creator | dc.creator, dc.Date | dc.date, etc.
+    for (const [k, v] of Object.entries(selector)) {
+        query += `meta[${k}='${v}']`;
+        if (v.startsWith("dc.")) {
+            let newStart;
+            const field = v.split("dc.")[1];
+            const start = field[0];
+            if (start === start.toLowerCase()) {
+                newStart = start.toUpperCase();
+            } else {
+                newStart = start.toLowerCase();
+            }
+            query += `,meta[${k}='dc.${newStart + field.slice(1)}']`;
+        }
     }
-    return toSingleSpace(
-        spaceCamelCase(dom.querySelector(selector)?.getAttribute("content") ?? "")
-    );
+    if (all) {
+        const candidate = queryAll(dom, query).map(
+            (el) => el.getAttribute("content") ?? ""
+        );
+        if (pure) return candidate;
+        return candidate.map(spaceCamelCase).map(toSingleSpace);
+    }
+
+    const candidate = dom.querySelector(query)?.getAttribute("content") ?? "";
+    if (pure) return candidate;
+    return toSingleSpace(spaceCamelCase(candidate));
 };
 
 const extractDataFromDCMetaTags = (dom) => {
-    const author = getMetaContent({ name: "dc.Creator" }, dom, true).join(" and ");
+    const author = getMetaContent({
+        selector: { name: "dc.Creator" },
+        dom,
+        all: true,
+    }).join(" and ");
+
     if (!author) {
         return null;
     }
-    const year = getMetaContent({ name: "dc.Date" }, dom).split("-")[0];
-    const publisher = getMetaContent({ name: "dc.Publisher" }, dom).replaceAll(
-        "\n",
-        " "
-    );
-    const title = getMetaContent({ name: "dc.Title" }, dom);
-    const venue = getMetaContent({ name: "citation_journal_title" }, dom);
-    const key = `${
-        author.split(" and ")[0].split(" ")[1]
-    }${year}${firstNonStopLowercase(title)}`.toLowerCase();
-    const doi = getMetaContent({ scheme: "doi" }, dom);
+
+    const year = getMetaContent({
+        selector: { name: "dc.Date" },
+        dom,
+    }).split("-")[0];
+    const publisher = getMetaContent({
+        selector: { name: "dc.Publisher" },
+        dom,
+    }).replaceAll("\n", " ");
+    const title = getMetaContent({
+        selector: { name: "dc.Title" },
+        dom,
+    });
+    const venue = getMetaContent({
+        selector: { name: "citation_journal_title" },
+        dom,
+    });
+    const pdfLink = getMetaContent({
+        selector: { name: "citation_pdf_url" },
+        dom,
+        pure: true,
+    });
+    const doi =
+        getMetaContent({
+            selector: { scheme: "doi" },
+            dom,
+        }) ||
+        getMetaContent({
+            selector: { name: "citation_doi" },
+            dom,
+        });
+    const key = `${author
+        .split(" and ")[0]
+        .split(" ")
+        .find(
+            (v, k) => k >= 1 && miniHash(v).length > 1 // ignore middle initials
+        )}${year}${firstNonStopLowercase(title)}`.toLowerCase();
     const bibtex = bibtexToString({
         citationKey: key,
         entryType: "article",
@@ -281,7 +324,7 @@ const extractDataFromDCMetaTags = (dom) => {
     });
     const note = `Published @ ${venue} (${year})`;
 
-    return { author, year, publisher, title, venue, key, doi, bibtex, note };
+    return { author, year, publisher, title, venue, key, doi, bibtex, pdfLink, note };
 };
 
 const makeArxivPaper = async (url) => {
