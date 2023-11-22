@@ -235,10 +235,17 @@ const slideToggle = (el, duration = 500, complete = () => {}) => {
     }
 };
 
-const queryAll = (dom, selector) =>
-    selector
+/**
+ * Get all elements matching selector within dom or document if dom is not provided
+ * in form of an array
+ * @param {string} selector
+ * @param {HTMLElement} dom
+ * @returns {HTMLElement[]}
+ */
+const queryAll = (selector, dom) =>
+    dom
         ? [...dom.querySelectorAll(selector)]
-        : [...document.querySelectorAll(dom)];
+        : [...document.querySelectorAll(selector)];
 
 const createElementFromHTML = (htmlString) => {
     var div = document.createElement("div");

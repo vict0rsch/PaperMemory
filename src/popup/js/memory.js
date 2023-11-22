@@ -610,7 +610,7 @@ const updatePaperTags = (id, elementId) => {
             updateTagOptions(id);
             // update the displayed tags for this paper
             updatePaperTagsHTML(id);
-            const tagEls = queryAll(findEl(id, "tag-list"), ".memory-tag");
+            const tagEls = queryAll(".memory-tag", findEl(id, "tag-list"));
             for (const el of tagEls) {
                 addListener(el, "click", handleTagClick);
             }

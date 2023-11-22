@@ -365,7 +365,7 @@ const handlePopupKeydown = (e) => {
     if (!global.state.memoryIsOpen) {
         if (key === "a") {
             // a opens the arxiv memory
-            const focused = queryAll(document, ":focus");
+            const focused = queryAll(":focus");
             if (focused.some((el) => ["INPUT", "TEXTAREA"].includes(el.tagName))) {
                 return;
             }

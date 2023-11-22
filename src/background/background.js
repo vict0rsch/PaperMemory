@@ -108,7 +108,7 @@ const fetchGSData = async (paper) => {
         var resultsDom = await fetchDom(
             `https://scholar.google.com/scholar?q=${encodeURI(paper.title)}&hl=en`
         );
-        const result = queryAll(resultsDom, "#gs_res_ccl_mid h3.gs_rt")
+        const result = queryAll("#gs_res_ccl_mid h3.gs_rt", resultsDom)
             .map((h3, idx) => [
                 miniHash(h3.innerText.toLowerCase().replace("[pdf]", "")),
                 idx,
@@ -122,7 +122,7 @@ const fetchGSData = async (paper) => {
             const citeDom = await fetchDom(
                 `https://scholar.google.fr/scholar?q=info:${dataId}:scholar.google.com/&output=cite&scirp=0&hl=en`
             );
-            const bibURL = queryAll(citeDom, "a.gs_citi")
+            const bibURL = queryAll("a.gs_citi", citeDom)
                 .find((a) => a.innerText.toLowerCase() === "bibtex")
                 ?.getAttribute("href");
             if (bibURL) {

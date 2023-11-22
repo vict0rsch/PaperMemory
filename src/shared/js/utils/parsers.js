@@ -253,7 +253,7 @@ const getMetaContent = ({ selector, dom, all = false, pure = false }) => {
         }
     }
     if (all) {
-        const candidate = queryAll(dom, query).map(
+        const candidate = queryAll(query, dom).map(
             (el) => el.getAttribute("content") ?? ""
         );
         if (pure) return candidate;
@@ -333,7 +333,7 @@ const makeArxivPaper = async (url) => {
     const xmlData = await response.text();
     var doc = new DOMParser().parseFromString(xmlData.replaceAll("\n", ""), "text/xml");
 
-    const authors = queryAll(doc, "author name").map((el) => el.innerHTML);
+    const authors = queryAll("author name", doc).map((el) => el.innerHTML);
     const author = authors.join(" and ");
 
     const pdfLink = [...doc.getElementsByTagName("link")]
@@ -385,10 +385,10 @@ const makeNeuripsPaper = async (url) => {
         author = flipAndAuthors(author);
         key = citationKey;
     } else {
-        const paragraphs = queryAll(dom, ".container-fluid .col p");
+        const paragraphs = queryAll(".container-fluid .col p", dom);
 
         title = dom.getElementsByTagName("h4")[0].innerHTML;
-        const h4Authors = queryAll(document, "h4").filter(
+        const h4Authors = queryAll("h4", dom).filter(
             (h) => h.innerText === "Authors"
         )[0];
 
@@ -676,7 +676,7 @@ const makePMLRPaper = async (url) => {
 };
 
 const findACLValue = (dom, key) => {
-    const dt = queryAll(dom, "dt").filter((v) => v.innerText.includes(key))[0];
+    const dt = queryAll("dt", dom).filter((v) => v.innerText.includes(key))[0];
     return dt.nextElementSibling.innerText;
 };
 
@@ -728,8 +728,8 @@ const makePNASPaper = async (url) => {
 
     const title = dom.getElementsByTagName("h1")[0].innerText;
     const author = queryAll(
-        dom,
-        ".authors span[property='author'] a:not([property='email']):not(.orcid-id)"
+        ".authors span[property='author'] a:not([property='email']):not(.orcid-id)",
+        dom
     )
         .filter((el) => !el.getAttribute("href").includes("mailto:"))
         .map((el) => el.innerText)
@@ -780,7 +780,7 @@ const makeNaturePaper = async (url) => {
     const dom = await fetchDom(url);
 
     const title = dom.querySelector("h1.c-article-title").innerText;
-    const author = queryAll(dom, "ul.c-article-author-list li")
+    const author = queryAll("ul.c-article-author-list li", dom)
         .map((a) =>
             a.innerText
                 .replace(/(\ ?,)|&|…|\d/g, "")
@@ -853,7 +853,7 @@ const makeIOPPaper = async (url) => {
     url = url.split("#")[0];
     if (url.endsWith("/pdf")) url = url.slice(0, -4);
     const dom = await fetchDom(url);
-    const bibtexPath = queryAll(dom, ".btn-multi-block a")
+    const bibtexPath = queryAll(".btn-multi-block a", dom)
         .filter((a) => a.innerText === "BibTeX")
         .map((a) => a.getAttribute("href"))[0];
     const citeUrl = `https://${parseUrl(url).host}${bibtexPath}`;
@@ -1032,8 +1032,8 @@ const makeACMPaper = async (url) => {
     } else {
         title = dom.querySelector(".citation__title").innerText;
         author = queryAll(
-            dom,
-            "ul[ariaa-label='authors'] li.loa__item .loa__author-name"
+            "ul[ariaa-label='authors'] li.loa__item .loa__author-name",
+            dom
         )
             .map((el) => el.innerText.replace(",", "").trim())
             .join(" and ");
@@ -1177,7 +1177,7 @@ const makeWileyPaper = async (url) => {
     const absLink = pdfLink.replace("/doi/pdf/", "/doi/abs/");
     const dom = await fetchDom(absLink);
 
-    const author = queryAll("meta[name=citation_author]")
+    const author = queryAll("meta[name=citation_author]", dom)
         .map((m) => m.getAttribute("content"))
         .join(" and ");
     const venue = dom

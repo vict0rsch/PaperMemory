@@ -30,7 +30,7 @@ const parseAuthor = (page) => {
             }, 800);
         });
         let citeCounter = {};
-        queryAll(document, ".gsc_a_ac.gs_ibl")
+        queryAll(".gsc_a_ac.gs_ibl")
             .map((e) => e.innerText)
             .forEach((t) => {
                 if (!citeCounter.hasOwnProperty(t)) {
@@ -39,7 +39,7 @@ const parseAuthor = (page) => {
                 citeCounter[t] += 1;
             });
         let yearCounter = {};
-        queryAll(document, "#gsc_a_b .gsc_a_y")
+        queryAll("#gsc_a_b .gsc_a_y")
             .map((e) => e.innerText)
             .forEach((t) => {
                 if (!yearCounter.hasOwnProperty(t)) {
@@ -53,10 +53,10 @@ const parseAuthor = (page) => {
             .join(" ")
             .trim()
             .replace(/[^\w\s_-]/g, "");
-        const [total, h, i10] = queryAll(document, "#gsc_rsb_st .gsc_rsb_std")
+        const [total, h, i10] = queryAll("#gsc_rsb_st .gsc_rsb_std")
             .filter((v, i) => i % 2 === 0)
             .map((e) => e.innerText);
-        const tags = queryAll(document, "#gsc_prf_i .gsc_prf_inta.gs_ibl").map((a) =>
+        const tags = queryAll("#gsc_prf_i .gsc_prf_inta.gs_ibl").map((a) =>
             a.innerText.toLowerCase()
         );
         const id = window.location.href.match(/user=(\w+)&?/)[1];
