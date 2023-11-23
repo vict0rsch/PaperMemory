@@ -75,7 +75,7 @@ const fetchText = async (url) => {
         const text = response.ok ? await response.text() : "";
         return text.trim();
     } catch (error) {
-        console.log("fetchText error:", error);
+        logError("fetchText error:", error);
         return "";
     }
 };
@@ -87,7 +87,7 @@ const fetchJSON = async (url) => {
         const data = response.ok ? await response.json() : null;
         return { data, status };
     } catch (error) {
-        console.log("fetchJSON error:", error);
+        logError("fetchJSON error:", error);
         return {};
     }
 };
@@ -486,6 +486,29 @@ const makeOpenReviewBibTex = (paper, url) => {
     return bibtex;
 };
 
+/**
+ * Extracts the value of the `value` key in the `content` object of a paper
+ * returned by the OpenReview API v2.
+ * Eg. v1: { content: { title: "My title" }
+ * Eg. v2: { content: { title: { value: "My title" } }
+ * @param {Object} paper - A paper returned by the OpenReview API v2 or v1.
+ * @returns {Object} The paper with the `value` key extracted from the `content` object.
+ */
+const extractAPIv2ContentValue = (paper) => {
+    const content = {};
+    let isV2 = false;
+    for (const [k, v] of Object.entries(paper.content)) {
+        if (v && v.value) {
+            content[k] = v.value;
+            isV2 = true;
+        } else {
+            content[k] = v;
+        }
+    }
+    paper.content = content;
+    return { isV2, paper };
+};
+
 const makeOpenReviewPaper = async (url) => {
     const noteJson = await getOpenReviewNoteJSON(url);
     const forumJson = await getOpenReviewForumJSON(url);
@@ -501,13 +524,19 @@ const makeOpenReviewPaper = async (url) => {
             Try accessing this URL manually to make sure.`)
         );
         throw Error(noteJson.message);
+    } else if (noteJson.status === 404 && noteJson.name === "NotFoundError") {
+        logError(dedent(`Error parsing OpenReview url ${url}.`));
+        throw Error(noteJson.message);
     }
 
     var paper = noteJson.notes[0];
+    let isV2 = false;
     var forum = forumJson.notes;
 
+    ({ isV2, paper } = extractAPIv2ContentValue(paper));
+
     const title = paper.content.title;
-    const author = paper.content.authors.join(" and ");
+    const author = (paper.content.authors || paper.content.authors.value).join(" and ");
     const bibtex = bibtexToString(
         paper.content._bibtex || makeOpenReviewBibTex(paper, url)
     );
@@ -526,7 +555,7 @@ const makeOpenReviewPaper = async (url) => {
         }
     }
 
-    const confParts = paper.invitation.split("/");
+    const confParts = paper.invitation?.split("/") || paper.domain.split("/");
     let organizer = confParts[0].split(".")[0];
     let event = confParts
         .slice(1)
@@ -553,18 +582,20 @@ const makeOpenReviewPaper = async (url) => {
 
     let candidates, decision, note;
 
-    candidates = forum.filter((r) => {
-        return (
-            r &&
-            r.content &&
-            ["Final Decision", "Paper Decision", "Acceptance Decision"].indexOf(
-                r.content.title
-            ) > -1
-        );
-    });
+    candidates = isV2
+        ? forum.filter((r) => r?.content?.recommendation?.value)
+        : forum.filter(
+              (r) =>
+                  ["Final Decision", "Paper Decision", "Acceptance Decision"].indexOf(
+                      r?.content?.title
+                  ) > -1
+          );
     let venue = "";
     if (candidates && candidates.length > 0) {
-        decision = candidates[0].content.decision
+        decision = isV2
+            ? candidates[0].content.recommendation.value
+            : candidates[0].content.decision;
+        decision = decision
             .split(" ")
             .map((v, i) => {
                 return i === 0 ? v + "ed" : v;
@@ -833,7 +864,6 @@ const makeNaturePaper = async (url) => {
 const makeACSPaper = async (url) => {
     url = url.replace("pubs.acs.org/doi/pdf/", "pubs.acs.org/doi/").split("?")[0];
     const doi = url.replace("/abs/", "/").split("/doi/")[1];
-    console.log("doi: ", doi);
     const citeUrl = `https://pubs.acs.org/action/downloadCitation?doi=${doi}&include=cit&format=bibtex&direct=true`;
     const bibtex = await fetchText(citeUrl);
     const data = bibtexToObject(bibtex);
@@ -1067,7 +1097,6 @@ const makeIEEEPaper = async (url) => {
             .split("/stamp/stamp.jsp?tp=&arnumber=")[1]
             .match(/\d+/)[0];
         url = `https://ieeexplore.ieee.org/document/${articleId}/`;
-        console.log("url: ", url);
     }
     const dom = await fetchDom(url);
     const metadata = JSON.parse(
