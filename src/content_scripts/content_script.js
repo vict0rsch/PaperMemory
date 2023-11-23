@@ -327,6 +327,12 @@ const svg = (name) => {
     }
 };
 
+/** Whether or not to ignore the current paper based on its `is` object
+ * and the dictionary of sources to ignore
+ * @param {object} is The `is` object of the current paper
+ * @param {object} ignoreSources The dictionary of sources to ignore
+ * @returns {boolean} Whether or not to ignore the current paper
+ * */
 const ignorePaper = (is, ignoreSources) => {
     const sources = Object.entries(ignoreSources)
         .filter(([name, ignore]) => ignore)
@@ -431,6 +437,7 @@ const contentScriptMain = async ({
  * Slides a div in then out, bottom right, with some text to give the user
  * a feedback on some action performed
  * @param {string} text the text to display in the slider div
+ * @returns {void}
  */
 const feedback = (text, paper = null) => {
     if (document.readyState === "loading") {
@@ -505,6 +512,11 @@ const feedback = (text, paper = null) => {
     });
 };
 
+/**
+ * Changes the width of the arxiv columns: left is smaller, right is bigger
+ * @param {string} newColWidth the new width of the left column
+ * @returns {void}
+ */
 const adjustArxivColWidth = (newColWidth = "33%") => {
     document
         .querySelector(".leftcolumn")
@@ -514,6 +526,10 @@ const adjustArxivColWidth = (newColWidth = "33%") => {
         ?.setAttribute("style", `width: ${newColWidth} !important`);
 };
 
+/** Adds a paper's venue html element to the arxiv page
+ * @param {object} paper The paper object
+ * @returns {void}
+ * */
 const displayPaperVenue = (paper) => {
     if (!paper.venue) {
         return;
@@ -529,6 +545,10 @@ const displayPaperVenue = (paper) => {
     findEl("pm-header-content")?.insertAdjacentHTML("afterbegin", venueDiv);
 };
 
+/** Adds a paper's code html element to the arxiv page
+ * @param {object} paper The paper object
+ * @returns {void}
+ * */
 const displayPaperCode = (paper) => {
     if (!paper.codeLink) {
         return;
@@ -542,6 +562,11 @@ const displayPaperCode = (paper) => {
     findEl("pm-extras")?.insertAdjacentHTML("afterbegin", code);
 };
 
+/**
+ * Adds the venue badge to HuggingFace paper pages
+ * @param {object} paper The paper object
+ * @param {string} url The current url
+ */
 const huggingfacePapers = (paper, url) => {
     if (!paper || !paper.venue) return;
     if (!url || !url.includes("huggingface.co/papers/")) return;
@@ -557,7 +582,6 @@ const huggingfacePapers = (paper, url) => {
     abstractH2 = [...document.querySelectorAll("h2")].find(
         (h) => h.innerText.trim() === "Abstract"
     );
-    console.log("abstractH2: ", abstractH2);
     if (!abstractH2) {
         log("Missing 'Abstract' h2 title on HuggingFace paper page.");
     }
@@ -568,6 +592,11 @@ const huggingfacePapers = (paper, url) => {
     }, 100);
 };
 
+/**
+ * Handle the ArXiv UI enhancements
+ * @param {object} checks The user's stored preferences regarding menu options
+ * @returns {void}
+ * */
 const arxiv = async (checks) => {
     const { checkMd, checkBib, checkDownload, checkStore } = checks;
 
