@@ -598,7 +598,7 @@ const makeOpenReviewPaper = async (url) => {
         decision = decision
             .split(" ")
             .map((v, i) => {
-                return i === 0 ? v + "ed" : v;
+                return i === 0 ? cleanStr(v) + "ed" : v;
             })
             .join(" ");
         note = `${decision} @ ${conf} (${year})`;

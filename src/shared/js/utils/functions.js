@@ -976,6 +976,13 @@ const dedent = (str) => {
 const arxivIdFromPaperID = (paperId) => paperId.split("-").last().replace("_", "/");
 
 /**
+ * Delete non-alphanumerical characters except spaces
+ * @param {string} str - The string to clean
+ * @returns {string} The cleaned string
+ */
+const cleanStr = (str) => str.replace(/[^a-zA-Z0-9 ]/g, "");
+
+/**
  * Returns the ArXiv ID for a URL from: arxiv.org, arxiv-vanity.com, ar5iv.labs.arxiv.org
  * huggingface.co/papers/
  * @param {string} url The URL to parse
