@@ -1,15 +1,9 @@
-const getMemoryItemVenue = (paper) => {
-    let html = "";
-    if (!paper.venue) {
-        return html;
-    }
-    return /*html*/ `
-        <span class="memory-item-venue">
-           &nbsp;|&nbsp;${paper.venue} ${paper.year}
-        </span>
-    `;
-};
-
+/**
+ * Return a formatted HTML string describing some metadata about a paper
+ * added date, last open date, number of visits, venue if available
+ * @param {object} paper A paper object
+ * @returns {string} HTML string
+ */
 const getPaperinfoTitle = (paper) => {
     const addDate = new Date(paper.addDate).toLocaleString().replace(",", "");
     const lastOpenDate = new Date(paper.lastOpenDate).toLocaleString().replace(",", "");
