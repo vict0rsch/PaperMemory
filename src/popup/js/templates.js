@@ -10,14 +10,24 @@ const getMemoryItemVenue = (paper) => {
     `;
 };
 
+const getPaperinfoTitle = (paper) => {
+    const addDate = new Date(paper.addDate).toLocaleString().replace(",", "");
+    const lastOpenDate = new Date(paper.lastOpenDate).toLocaleString().replace(",", "");
+
+    let infoTitle = `Added ${addDate}\nLast open ${lastOpenDate}\nVisits: ${paper.count}`;
+    if (paper.venue) {
+        infoTitle += `\n<strong>${paper.venue} ${paper.year}</strong>`;
+    }
+    infoTitle = infoTitle.replaceAll("\n", "<br/>");
+    return infoTitle;
+};
+
 /**
  * Return a formatted HTML string from a paper
  * @param {object} paper A paper object
  * @returns HTML string
  */
 const getMemoryItemHTML = (paper, titles) => {
-    const addDate = new Date(paper.addDate).toLocaleString().replace(",", "");
-    const lastOpenDate = new Date(paper.lastOpenDate).toLocaleString().replace(",", "");
     const displayId = getDisplayId(paper.id);
     const note = paper.note || "";
     const id = paper.id;
@@ -120,11 +130,7 @@ const getMemoryItemHTML = (paper, titles) => {
         </div>`;
     }
 
-    let infoTitle = `Added ${addDate}\nLast open ${lastOpenDate}\nVisits: ${paper.count}`;
-    if (paper.venue) {
-        infoTitle += `\n<strong>${paper.venue} ${paper.year}</strong>`;
-    }
-    infoTitle = infoTitle.replaceAll("\n", "<br/>");
+    const infoTitle = getPaperinfoTitle(paper);
 
     return /*html*/ `
         <div

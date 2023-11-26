@@ -475,21 +475,22 @@ const handlePopupDeletePaper = (id) => () => {
     showConfirmDeleteModal(id);
 };
 
-const showTitleTooltip = (id) => {
-    const div = findEl(id, ".title-tooltip");
+const showTitleTooltip = (id, isPopup) => {
+    const div = isPopup ? findEl("popup-title-tooltip") : findEl(id, ".title-tooltip");
     style(div, "display", "block");
 };
-const hideTitleTooltip = (id) => {
-    const div = findEl(id, ".title-tooltip");
+const hideTitleTooltip = (id, isPopup) => {
+    const div = isPopup ? findEl("popup-title-tooltip") : findEl(id, ".title-tooltip");
     style(div, "display", "none");
 };
 
-const getHandleTitleTooltip = (func, delay) => {
+const getHandleTitleTooltip = (func, delay, isPopup) => {
+    console.log("delay: ", delay);
     return (e) => {
-        const id = eventId(e);
+        const id = isPopup ? global.state.currentId : eventId(e);
         let timerId = global.state.timerIdMap.get(e.target) ?? 0;
         clearTimeout(timerId);
-        timerId = setTimeout(() => func(id), delay);
+        timerId = setTimeout(() => func(id, isPopup), delay);
         global.state.timerIdMap.set(e.target, timerId);
     };
 };

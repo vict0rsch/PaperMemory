@@ -220,6 +220,7 @@ button:not(.select2-selection__choice__remove):hover,
 .memory-item-feedback {
     color: var(--green);
 }
+#popup-title-tooltip,
 .title-tooltip {
     box-shadow: 2px 2px 6px #252525;
     background: var(--lightBackground);

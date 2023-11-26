@@ -642,6 +642,7 @@ code {
     width: 1rem;
     height: 1rem;
 }
+#popup-title-tooltip,
 .title-tooltip {
     position: absolute;
     background: var(--lighterBackground);
@@ -653,6 +654,7 @@ code {
     font-weight: 300;
     font-size: 0.8rem;
     z-index: 999;
+    text-align: left;
     width: max-content;
 }
 .expand-memory-authors {
