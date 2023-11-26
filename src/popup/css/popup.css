@@ -655,6 +655,9 @@ code {
     z-index: 999;
     width: max-content;
 }
+.expand-memory-authors {
+    cursor: pointer;
+}
 
 svg.favorite {
     stroke-width: 2px !important;

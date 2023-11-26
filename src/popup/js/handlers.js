@@ -476,11 +476,11 @@ const handlePopupDeletePaper = (id) => () => {
 };
 
 const showTitleTooltip = (id) => {
-    const div = findEl(`memory-container--${id}`).querySelector(".title-tooltip");
+    const div = findEl(id, ".title-tooltip");
     style(div, "display", "block");
 };
 const hideTitleTooltip = (id) => {
-    const div = findEl(`memory-container--${id}`).querySelector(".title-tooltip");
+    const div = findEl(id, ".title-tooltip");
     style(div, "display", "none");
 };
 
@@ -492,4 +492,10 @@ const getHandleTitleTooltip = (func, delay) => {
         timerId = setTimeout(() => func(id), delay);
         global.state.timerIdMap.set(e.target, timerId);
     };
+};
+
+const handleExpandAuthors = (e) => {
+    const id = eventId(e);
+    const authors = findEl(id, "memory-authors");
+    setHTML(authors, cutAuthors(global.state.papers[id].author, 100000));
 };

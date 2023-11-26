@@ -1,13 +1,14 @@
 /**
  * Find an element by element id, or with class memoryItemClass for paper with a given id
  * @param {string} id The  id for the element to find or the paper in the memory
- * @param {string} memoryItemClass The class of the element to find within the container with id^
+ * @param {string} memoryItemClass The class of the element to find within the container with id memory-container--{id}. The leading dot is optional.
  * @returns {HTMLElement}
  */
 const findEl = (elOrId, memoryItemClass) => {
     if (typeof memoryItemClass === "undefined")
         return typeof elOrId === "string" ? document.getElementById(elOrId) : elOrId;
-    return findEl(`memory-container--${elOrId}`).querySelector(`.${memoryItemClass}`);
+    if (!memoryItemClass.startsWith(".")) memoryItemClass = "." + memoryItemClass;
+    return findEl(`memory-container--${elOrId}`).querySelector(memoryItemClass);
 };
 
 /**

@@ -735,6 +735,8 @@ const displayMemoryTable = (pagination = 0) => {
         "mouseleave",
         getHandleTitleTooltip(hideTitleTooltip, 500)
     );
+    // expand authorlist on click
+    addEventToClass(".expand-memory-authors", "click", handleExpandAuthors);
 
     // Put cursor at the end of the textarea's text on focus
     // (default puts the cursor at the beginning of the text)

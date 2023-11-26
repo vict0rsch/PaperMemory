@@ -848,14 +848,15 @@ const cutAuthors = (text, maxLen, separator) => {
     let cutAuthors = "";
     const authArray = text.split(" and ");
     const lastAuthor = authArray[authArray.length - 1];
-    for (const candidate of authArray) {
+    for (const [c, candidate] of authArray.entries()) {
         if (
             5 +
                 cutAuthors.length +
                 separator.length +
                 candidate.length +
                 lastAuthor.length <
-            maxLen
+                maxLen ||
+            c == authArray.length - 1
         ) {
             if (cutAuthors) {
                 cutAuthors += ", " + candidate;
@@ -863,7 +864,8 @@ const cutAuthors = (text, maxLen, separator) => {
                 cutAuthors = candidate;
             }
         } else {
-            cutAuthors += " ... " + lastAuthor;
+            cutAuthors +=
+                " <span class='expand-memory-authors'>...</span> " + lastAuthor;
             break;
         }
     }
