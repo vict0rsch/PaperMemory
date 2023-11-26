@@ -1,3 +1,15 @@
+const getMemoryItemVenue = (paper) => {
+    let html = "";
+    if (!paper.venue) {
+        return html;
+    }
+    return /*html*/ `
+        <span class="memory-item-venue">
+           &nbsp;|&nbsp;${paper.venue} ${paper.year}
+        </span>
+    `;
+};
+
 /**
  * Return a formatted HTML string from a paper
  * @param {object} paper A paper object
@@ -108,16 +120,19 @@ const getMemoryItemHTML = (paper, titles) => {
         </div>`;
     }
 
+    let infoTitle = `Added ${addDate}\nLast open ${lastOpenDate}\nVisits: ${paper.count}`;
+    if (paper.venue) {
+        infoTitle += `\n<strong>${paper.venue} ${paper.year}</strong>`;
+    }
+    infoTitle = infoTitle.replaceAll("\n", "<br/>");
+
     return /*html*/ `
         <div
             class="memory-container ${favoriteClass}"
             tabindex="0"
             id="memory-container--${id}"
         >
-            <h4
-                class="memory-title"
-                title="Added ${addDate}&#13;&#10;Last open ${lastOpenDate}"
-            >
+            <h4 class="memory-title">
                 <span class="memory-item-favorite">
                     ${tablerSvg("star", "", [
                         "memory-item-favorite-svg",
@@ -125,6 +140,9 @@ const getMemoryItemHTML = (paper, titles) => {
                     ])}
                 </span>
                 ${paper.title}
+                <div class="title-tooltip" style="display: none;">
+                    ${infoTitle}
+                </div>
             </h4>
             <div class="my-1 mx-0">
                 <small class="tag-list">
@@ -202,9 +220,6 @@ const getMemoryItemHTML = (paper, titles) => {
 
                 <span style="display: none" class="memory-item-feedback"></span>
 
-                <div title='${titles.visits}' class="memory-item-faded memory-visits">
-                    Visits: ${paper.count}
-                </div>
             </div>
 
             <div class="extended-item" style="display: none">

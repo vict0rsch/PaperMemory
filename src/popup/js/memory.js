@@ -724,6 +724,17 @@ const displayMemoryTable = (pagination = 0) => {
     addEventToClass(".memory-tag", "click", handleTagClick);
     // Monitor form changes
     setFormChangeListener(undefined, false);
+    // show / remove title tooltip
+    addEventToClass(
+        ".memory-title",
+        "mouseenter",
+        getHandleTitleTooltip(showTitleTooltip, 1500)
+    );
+    addEventToClass(
+        ".memory-title",
+        "mouseleave",
+        getHandleTitleTooltip(hideTitleTooltip, 500)
+    );
 
     // Put cursor at the end of the textarea's text on focus
     // (default puts the cursor at the beginning of the text)

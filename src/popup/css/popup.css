@@ -475,7 +475,14 @@ code {
     color: rgba(54, 54, 54, 0.7);
 }
 
-.memory-authors {
+.memory-item-venue {
+    font-size: 0.9rem;
+    font-weight: 300 !important;
+    margin-bottom: 4px;
+}
+
+.memory-authors,
+.memory-item-venue {
     color: rgba(41, 41, 41, 1);
 }
 #popup-authors {
@@ -585,8 +592,7 @@ code {
     border-radius: var(--round);
     cursor: pointer;
 }
-.memory-display-id,
-.memory-visits {
+.memory-display-id {
     font-size: 0.7rem;
 }
 
@@ -626,6 +632,28 @@ code {
     position: absolute;
     bottom: -5px;
     left: -2px;
+}
+.memory-item-info {
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    margin-left: 4px;
+    width: 1rem;
+    height: 1rem;
+}
+.title-tooltip {
+    position: absolute;
+    background: var(--lighterBackground);
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 1rem;
+    border-radius: 4px;
+    box-shadow: 2px 2px 6px #bdbdbd;
+    font-weight: 300;
+    font-size: 0.8rem;
+    z-index: 999;
+    width: max-content;
 }
 
 svg.favorite {
@@ -864,7 +892,7 @@ button.changed {
     padding: 6px 8px;
     border-radius: var(--round);
     border: 1px solid;
-    background: var(--ligthBackground) !important;
+    background: var(--lightBackground) !important;
     font-size: 0.8rem;
 }
 #manual-website-url {

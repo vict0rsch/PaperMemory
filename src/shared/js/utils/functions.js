@@ -129,13 +129,19 @@ const getDisplayId = (id) => {
                     .map((j) => j[0].toUpperCase())
                     .join("")}`;
             }
-            id += `-${paper.year}`;
+            if (!id.includes(paper.year + "")) {
+                id += `-${paper.year}`;
+            }
         }
         if (paper.source === "acs") {
-            id += `-${paper.year}`;
+            if (!id.includes(paper.year + "")) {
+                id += `-${paper.year}`;
+            }
         }
         if (paper.source === "iop") {
-            id += `-${paper.year}`;
+            if (!id.includes(paper.year + "")) {
+                id += `-${paper.year}`;
+            }
         }
     }
     return id;
@@ -641,6 +647,12 @@ const tablerSvg = (pathName, id, classNames) => {
                 <path d="M9 16v4"></path>
                 <path d="M20 21l2 -2l-2 -2"></path>
                 <path d="M17 17l-2 2l2 2"></path>
+            </svg>`;
+        case "info-square-rounded":
+            return `<svg viewBox="0 0 24 24" ${id} ${classNames}>
+                <path stroke="none" d="M0 0h24v24H0z" fill="none"/>
+                <path d="M12 9h.01" /><path d="M11 12h1v4h1" />
+                <path d="M12 3c7.2 0 9 1.8 9 9s-1.8 9 -9 9s-9 -1.8 -9 -9s1.8 -9 9 -9z" />
             </svg>`;
 
         case "huggingface":

@@ -1,7 +1,7 @@
 :root {
     --background: #222a35;
     --lighterBackground: #323942;
-    --ligthBackground: #4b535c;
+    --lightBackground: #4b535c;
     --codeBackground: #3c3c3f;
     --lightestBackground: #788089;
     --dimColor: #8d9cac;
@@ -198,13 +198,11 @@ button:not(.select2-selection__choice__remove):hover,
 .memory-note-div {
     color: var(--noteColor);
 }
-.memory-authors {
+.memory-authors,
+.memory-item-venue {
     color: var(--dimColor);
 }
 .memory-display-id {
-    color: var(--dimColor);
-}
-.memory-visits {
     color: var(--dimColor);
 }
 .memory-code-link {
@@ -221,6 +219,10 @@ button:not(.select2-selection__choice__remove):hover,
 }
 .memory-item-feedback {
     color: var(--green);
+}
+.title-tooltip {
+    box-shadow: 2px 2px 6px #252525;
+    background: var(--lightBackground);
 }
 
 /*

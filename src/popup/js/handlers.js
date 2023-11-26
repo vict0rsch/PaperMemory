@@ -474,3 +474,22 @@ const handlePopupSaveEdits = (id) => {
 const handlePopupDeletePaper = (id) => () => {
     showConfirmDeleteModal(id);
 };
+
+const showTitleTooltip = (id) => {
+    const div = findEl(`memory-container--${id}`).querySelector(".title-tooltip");
+    style(div, "display", "block");
+};
+const hideTitleTooltip = (id) => {
+    const div = findEl(`memory-container--${id}`).querySelector(".title-tooltip");
+    style(div, "display", "none");
+};
+
+const getHandleTitleTooltip = (func, delay) => {
+    return (e) => {
+        const id = eventId(e);
+        let timerId = global.state.timerIdMap.get(e.target) ?? 0;
+        clearTimeout(timerId);
+        timerId = setTimeout(() => func(id), delay);
+        global.state.timerIdMap.set(e.target, timerId);
+    };
+};
