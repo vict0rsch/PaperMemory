@@ -561,8 +561,8 @@ const startMatching = async (papersToMatch) => {
 const setupPreprintMatching = async () => {
     const papers = (await getStorage("papers")) ?? {};
     const papersToMatch = Object.values(cleanPapers(papers))
-        .filter((paper) => !paper.venue) // randomize
-        .map((value) => ({ value, sort: Math.random() }))
+        .filter((paper) => !paper.venue && paper.source !== "website")
+        .map((value) => ({ value, sort: Math.random() })) // randomize
         .sort((a, b) => a.sort - b.sort)
         .map(({ value }) => value);
     setHTML("preprints-number", papersToMatch.length);
