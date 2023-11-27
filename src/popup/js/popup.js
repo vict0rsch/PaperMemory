@@ -301,7 +301,11 @@ const popupMain = async (url, is, manualTrigger = false, tab = null) => {
         // -----------------------------
         // -----  Fill Paper Data  -----
         // -----------------------------
-        setTextId("popup-paper-title", paper.title.replaceAll("\n", ""));
+        setHTML(
+            "popup-paper-title",
+            paper.title.replaceAll("\n", "") +
+                '<div id="popup-title-tooltip" style="display: none;">'
+        );
         setTextId("popup-authors", cutAuthors(paper.author, 350).replace(/({|})/g, ""));
         if (paper.codeLink) {
             setTextId("popup-code-link", paper.codeLink.replace(/^https?:\/\//, ""));
@@ -318,6 +322,7 @@ const popupMain = async (url, is, manualTrigger = false, tab = null) => {
         log("Popup paper:", paper);
         setHTML("popup-memory-edit", getPopupEditFormHTML(paper));
         setHTML("popup-copy-icons", getPopupPaperIconsHTML(paper, url, is));
+        setHTML("popup-title-tooltip", getPaperinfoTitle(paper));
         findEl(`checkFavorite--${id}`).checked = paper.favorite;
         let extraDivWidth = 0;
         for (const p of [
@@ -343,6 +348,16 @@ const popupMain = async (url, is, manualTrigger = false, tab = null) => {
         });
         setFormChangeListener(id, true);
         addListener("popup-delete-paper", "click", handlePopupDeletePaper(id));
+        addListener(
+            "popup-paper-title",
+            "mouseenter",
+            getHandleTitleTooltip(showTitleTooltip, 1500, true)
+        );
+        addListener(
+            "popup-paper-title",
+            "mouseleave",
+            getHandleTitleTooltip(hideTitleTooltip, 500, true)
+        );
 
         // ------------------------
         // -----  SVG clicks  -----

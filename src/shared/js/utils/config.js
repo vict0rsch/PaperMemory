@@ -56,6 +56,7 @@ global.state = {
     showFavorites: false,
     sortedPapers: [], // [papers]
     sortKey: "",
+    timerIdMap: new WeakMap(), // memory titlte tooltips
     titleHashToIds: {}, // (miniHash(title) -> [ids])
     titleFunction: null, // function(paper) => string
     urlHashToId: {}, // (miniHash(url) => id)
@@ -180,6 +181,7 @@ global.knownPaperPages = {
     ],
     iop: ["iopscience.iop.org/article/"],
     jmlr: [(url) => url.includes("jmlr.org/papers/v") && !url.endsWith("/")],
+    mdpi: [(url) => /mdpi\.com\/\d+-.+/gi.test(url)],
     nature: ["nature.com/articles/"],
     neurips: ["neurips.cc/paper/", "neurips.cc/paper_files/paper/", "nips.cc/paper/"],
     openreview: [

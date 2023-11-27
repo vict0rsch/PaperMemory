@@ -610,7 +610,7 @@ const updatePaperTags = (id, elementId) => {
             updateTagOptions(id);
             // update the displayed tags for this paper
             updatePaperTagsHTML(id);
-            const tagEls = queryAll(findEl(id, "tag-list"), ".memory-tag");
+            const tagEls = queryAll(".memory-tag", findEl(id, "tag-list"));
             for (const el of tagEls) {
                 addListener(el, "click", handleTagClick);
             }
@@ -724,6 +724,19 @@ const displayMemoryTable = (pagination = 0) => {
     addEventToClass(".memory-tag", "click", handleTagClick);
     // Monitor form changes
     setFormChangeListener(undefined, false);
+    // show / remove title tooltip
+    addEventToClass(
+        ".memory-title",
+        "mouseenter",
+        getHandleTitleTooltip(showTitleTooltip, 1500)
+    );
+    addEventToClass(
+        ".memory-title",
+        "mouseleave",
+        getHandleTitleTooltip(hideTitleTooltip, 500)
+    );
+    // expand authorlist on click
+    addEventToClass(".expand-memory-authors", "click", handleExpandAuthors);
 
     // Put cursor at the end of the textarea's text on focus
     // (default puts the cursor at the beginning of the text)

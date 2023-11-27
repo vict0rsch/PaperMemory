@@ -90,17 +90,29 @@ const urlIsAKnownPdfSource = (url) => {
 const fetchOpenReviewNoteJSON = async (url) => {
     const id = url.match(/id=([\w-])+/)[0].replace("id=", "");
     const api = `https://api.openreview.net/notes?id=${id}`;
-    return fetch(api).then((response) => {
-        return response.json();
-    });
+    let response = await fetch(api);
+    let json = await response.json();
+    if (json["status"] === 404) {
+        warn("Note not found in api.openreview.net, trying api2.openreview.net...");
+        const api2 = `https://api2.openreview.net/notes?id=${id}`;
+        response = await fetch(api2);
+        json = await response.json();
+    }
+    return json;
 };
 
 const fetchOpenReviewForumJSON = async (url) => {
     const id = url.match(/id=([\w-])+/)[0].replace("id=", "");
     const api = `https://api.openreview.net/notes?forum=${id}`;
-    return fetch(api).then((response) => {
-        return response.json();
-    });
+    let response = await fetch(api);
+    let json = await response.json();
+    if (json["status"] === 404 || json["notes"].length === 0) {
+        warn("Forum not found in api.openreview.net, trying api2.openreview.net...");
+        const api2 = `https://api2.openreview.net/notes?forum=${id}`;
+        response = await fetch(api2);
+        json = await response.json();
+    }
+    return json;
 };
 
 const fetchGSData = async (paper) => {
@@ -108,7 +120,7 @@ const fetchGSData = async (paper) => {
         var resultsDom = await fetchDom(
             `https://scholar.google.com/scholar?q=${encodeURI(paper.title)}&hl=en`
         );
-        const result = queryAll(resultsDom, "#gs_res_ccl_mid h3.gs_rt")
+        const result = queryAll("#gs_res_ccl_mid h3.gs_rt", resultsDom)
             .map((h3, idx) => [
                 miniHash(h3.innerText.toLowerCase().replace("[pdf]", "")),
                 idx,
@@ -122,7 +134,7 @@ const fetchGSData = async (paper) => {
             const citeDom = await fetchDom(
                 `https://scholar.google.fr/scholar?q=info:${dataId}:scholar.google.com/&output=cite&scirp=0&hl=en`
             );
-            const bibURL = queryAll(citeDom, "a.gs_citi")
+            const bibURL = queryAll("a.gs_citi", citeDom)
                 .find((a) => a.innerText.toLowerCase() === "bibtex")
                 ?.getAttribute("href");
             if (bibURL) {

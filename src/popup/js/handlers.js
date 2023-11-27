@@ -365,7 +365,7 @@ const handlePopupKeydown = (e) => {
     if (!global.state.memoryIsOpen) {
         if (key === "a") {
             // a opens the arxiv memory
-            const focused = queryAll(document, ":focus");
+            const focused = queryAll(":focus");
             if (focused.some((el) => ["INPUT", "TEXTAREA"].includes(el.tagName))) {
                 return;
             }
@@ -473,4 +473,30 @@ const handlePopupSaveEdits = (id) => {
 
 const handlePopupDeletePaper = (id) => () => {
     showConfirmDeleteModal(id);
+};
+
+const showTitleTooltip = (id, isPopup) => {
+    const div = isPopup ? findEl("popup-title-tooltip") : findEl(id, ".title-tooltip");
+    style(div, "display", "block");
+};
+const hideTitleTooltip = (id, isPopup) => {
+    const div = isPopup ? findEl("popup-title-tooltip") : findEl(id, ".title-tooltip");
+    style(div, "display", "none");
+};
+
+const getHandleTitleTooltip = (func, delay, isPopup) => {
+    console.log("delay: ", delay);
+    return (e) => {
+        const id = isPopup ? global.state.currentId : eventId(e);
+        let timerId = global.state.timerIdMap.get(e.target) ?? 0;
+        clearTimeout(timerId);
+        timerId = setTimeout(() => func(id, isPopup), delay);
+        global.state.timerIdMap.set(e.target, timerId);
+    };
+};
+
+const handleExpandAuthors = (e) => {
+    const id = eventId(e);
+    const authors = findEl(id, "memory-authors");
+    setHTML(authors, cutAuthors(global.state.papers[id].author, 100000));
 };
