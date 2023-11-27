@@ -74,6 +74,10 @@ textarea {
     border-radius: 0 0 75% 0/50%;
     box-shadow: 14px 30px 122px -30px rgba(0, 0, 0, 0.75);
 }
+#popup-header a {
+    color: white !important;
+    text-decoration: none;
+}
 
 #filter-favorites {
     height: 32px;

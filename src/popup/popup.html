@@ -59,7 +59,11 @@
 <body>
 
 	<div id="popup-header">
-		<h1>PaperMemory</h1>
+		<h1 title="https://papermemory.org">
+			<a class="link-in-new-tab" href="https://papermemory.org">
+				PaperMemory
+			</a>
+		</h1>
 		<svg viewBox="0 0 24 24" class="pm-tabler-icon ml-3" id="header-icon">
 			<path stroke="none" d="M0 0h24v24H0z" fill="none" />
 			<polyline points="13 3 13 10 19 10 11 21 11 14 5 14 13 3" />
@@ -500,12 +504,12 @@
 				<ul>
 					<li><strong>Current: </strong><a
 							href="https://github.com/vict0rsch/PaperMemory/releases/tag/0.6.1">0.6.1</a>
-						<em>(2023-11-26)</em>
+						<em>(2023-11-27)</em>
 						<ul>
 							<li>[feature] A new BibMatcher tool to match arxiv references in a <code>.bib</code> file to
 								actual publications</li>
-							<li>[feature] PaperMemory has a new website! <a
-									href="https://papermemory.org">papermemory.org</a></li>
+							<li>[feature] PaperMemory has a new website! <a class="link-in-new-tab"
+									href="https://papermemory.org" style="margin-top: unset;">papermemory.org</a></li>
 							<li>[feature] You can now copy a hyperref link to cite a paper in an email displaying the
 								title and linking to the URL.</li>
 							<li>[feature] Add a tooltip on paper titles to show some more metadata (including
@@ -513,9 +517,11 @@
 							<li>[Feature] Long author lists can now be expanded on clicking on the "..." symbol in the
 								Memory list</li>
 						</ul>
+						<br />
 						<ul>
 							<li>[new source] Parse papers from <strong>MDPI</strong> journals.</li>
 						</ul>
+						<br />
 						<ul>
 							<li>[dev] Deprecate custom title function as announced for months.</li>
 							<li>[dev] Fix a bug in OpenReview and PubMed Central paper parsing procedures.</li>
@@ -592,8 +598,7 @@
 							<li>[dev] Improve IEEE parsing</li>
 						</ul>
 					</li>
-					<li><strong>Current: </strong><a
-							href="https://github.com/vict0rsch/PaperMemory/releases/tag/0.5.5">0.5.5</a>
+					<li><a href="https://github.com/vict0rsch/PaperMemory/releases/tag/0.5.5">0.5.5</a>
 						<em>(2022-06-09)</em>
 						<ul>
 							<li>[dev] Fix ACM parsing</li>
