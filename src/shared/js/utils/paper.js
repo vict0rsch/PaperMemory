@@ -849,7 +849,7 @@ const parseIdFromUrl = async (url, tab = null) => {
             }
             type = "content/pdf";
         }
-        let doi = url.split(`/${type}/`)[1].split("?")[0].replace(".pdf", "");
+        let doi = noParamUrl(url).split(`/${type}/`)[1].replace(".pdf", "");
         idForUrl = findPaperForProperty(papers, "springer", miniHash(doi));
     } else if (is.aps) {
         const [journal, type] = parseUrl(url.split("#")[0])
