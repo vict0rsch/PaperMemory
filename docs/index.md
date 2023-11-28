@@ -26,7 +26,9 @@ PaperMemory is designed to be a fast, automated and user-friendly in-browser ref
 -   :fontawesome-solid-wand-magic-sparkles:{ .lg .middle } __Parse papers you open automatically__
 
 
-    Papers are stored in your Memory, you can them search them, tag them, take personal notes etc. This is all one click away from your browser's extension store (:fontawesome-brands-chrome: Chrome / :simple-brave: Brave / :fontawesome-brands-firefox-browser: Firefox / :fontawesome-brands-edge: Edge).
+    Papers are stored in your Memory automatically, without a click. You can then search them, tag them, take personal notes etc.
+
+    See the main features and get PaperMemory from your browser's extension store (:fontawesome-brands-chrome: Chrome / :simple-brave: Brave / :fontawesome-brands-firefox-browser: Firefox / :fontawesome-brands-edge: Edge):
 
     [:octicons-arrow-right-24: Getting started](getting-started.md)
 
@@ -41,10 +43,23 @@ PaperMemory is designed to be a fast, automated and user-friendly in-browser ref
 
     ---
 
+-   :octicons-share-android-16:{ .lg .middle } __You live in your browser? So do your papers__
+
+
+    Share papers to your favorite apps by copying:
+
+    * a :tabler-math-function: **BibTex entry** for :simple-overleaf: Overleaf
+    * a :material-language-markdown-outline: **Markdown link** `[title](url)` link for :simple-github: Github, :material-file-document-outline: HackMD or :simple-notion: Notion
+    * a :tabler-device-desktop-code: **HyperText link** for :octicons-mail-24: emails, :simple-googledocs: Google Docs, :simple-slack: Slack, etc.
+
+    [:octicons-arrow-right-24: Memory buttons](getting-started.md#memory)
+
+    ---
+
 -   :fontawesome-solid-file-code:{ .lg .middle } __Discover code repositories__
 
 
-    Using the PapersWithCode API, PaperMemory will store code repositories with papers in your Memory.
+    Using the PapersWithCode API, PaperMemory will match code repositories with papers in your Memory.
 
     [:octicons-arrow-right-24: Code discovery](features.md#code-discovery)
 
@@ -53,7 +68,7 @@ PaperMemory is designed to be a fast, automated and user-friendly in-browser ref
 -   :simple-arxiv:{ .lg .middle } __Enhance ArXiv.org__
 
 
-    Download the paper directly to your PaperMemoryStore, see the publication venue, copy a markdown link `[title](url)` or a BibTex entry.
+    Display the actual pubication venue of published papers, a link to the code repository, copy the BibTex entry etc.
 
     [:octicons-arrow-right-24: Arxiv Enhancements](features.md#arxiv-enhancements)
 
@@ -62,7 +77,7 @@ PaperMemory is designed to be a fast, automated and user-friendly in-browser ref
 -   :material-square-root-box:{ .lg .middle } __Instantly copy `.bib`-compatible bibliography entries__
 
 
-    Export papers as BibTex entries from the extension, or group exports by tag. You can even use PaperMemory to update the ArXiv entries of a stand-alone `.bib` file.
+    Export a paper's BibTex entry directly from the extension, or bulk export BibTex entries by paper tag. You can even use PaperMemory to update the ArXiv entries of a stand-alone `.bib` file.
 
     [:octicons-arrow-right-24: Bibliography tools](features.md#bibliography-tools)
 

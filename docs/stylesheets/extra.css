@@ -23,7 +23,7 @@
 }
 
 .demo-gif {
-    max-width: 600px !important;
+    max-width: 650px !important;
     margin: 0 2rem;
     width: 100%;
 }
@@ -47,4 +47,7 @@
 .md-nav__item--active a {
     display: flex;
     align-items: center;
+}
+img {
+    border-radius: 8px;
 }

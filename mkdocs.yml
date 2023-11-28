@@ -54,12 +54,15 @@ markdown_extensions:
   - attr_list
   - def_list
   - md_in_html
+  - pymdownx.caret
   - pymdownx.details
   - pymdownx.inlinehilite
   - pymdownx.keys
+  - pymdownx.mark
   - pymdownx.smartsymbols
   - pymdownx.snippets
   - pymdownx.superfences
+  - pymdownx.tilde
   - pymdownx.highlight:
       anchor_linenums: true
       line_spans: __span
