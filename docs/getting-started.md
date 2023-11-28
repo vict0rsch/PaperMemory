@@ -103,7 +103,7 @@ You can also
 * :tabler-vocabulary: open a downloaded PDF
 * :tabler-external-link: Go to the paper's online page (1)
 * :octicons-link-24: Copy the link to the paper (2)
-* :tabler-device-desktop-code: Copy a formatted hyperlink (for emails for instance)
+* :tabler-device-desktop-code: Copy a formatted hyperlink (to share papers in emails, Google Docs or Slack for instance)
 * :material-language-markdown-outline: Copy a `[$title]($url)` Markdown-formatted link (3)
 * :tabler-math-function: Copy a BibTex entry for your `.bib` bibliography.
 
