@@ -660,6 +660,7 @@ code {
     z-index: 999;
     text-align: left;
     width: max-content;
+    max-width: 350px;
 }
 .expand-memory-authors {
     cursor: pointer;
