@@ -269,6 +269,33 @@ const copyTextToClipboard = (text) => {
     );
 };
 
+/** Paste richly formatted text.
+ *
+ * @param {string} rich - the text formatted as HTML
+ * @param {string} plain - a plain text fallback
+ */
+async function pasteRich(rich, plain) {
+    if (typeof ClipboardItem !== "undefined") {
+        // Shiny new Clipboard API, not fully supported in Firefox.
+        // https://developer.mozilla.org/en-US/docs/Web/API/Clipboard_API#browser_compatibility
+        const html = new Blob([rich], { type: "text/html" });
+        const text = new Blob([plain], { type: "text/plain" });
+        const data = new ClipboardItem({ "text/html": html, "text/plain": text });
+        await navigator.clipboard.write([data]);
+    } else {
+        // Fallback using the deprecated `document.execCommand`.
+        // https://developer.mozilla.org/en-US/docs/Web/API/Document/execCommand#browser_compatibility
+        const cb = (e) => {
+            e.clipboardData.setData("text/html", rich);
+            e.clipboardData.setData("text/plain", plain);
+            e.preventDefault();
+        };
+        document.addEventListener("copy", cb);
+        document.execCommand("copy");
+        document.removeEventListener("copy", cb);
+    }
+}
+
 /** Copy a hyperlink to the clipboard using the Clipboard API,
  * if available, or fallback to the fallbackCopyTextToClipboard function
  * @param {string} url The url to copy to the clipboard
@@ -276,22 +303,8 @@ const copyTextToClipboard = (text) => {
  * @returns {void}
  * */
 copyHyperLinkToClipboard = (url, title) => {
-    if (!navigator.clipboard) {
-        fallbackCopyTextToClipboard(url);
-        return;
-    }
     const linkHtml = `<a href="${url}">${title}</a>`;
-    const type = "text/html";
-    const blob = new Blob([linkHtml], { type });
-    // Copy the blob to the clipboard
-    navigator.clipboard
-        .write([new ClipboardItem({ [type]: blob })])
-
-        // Optional but recommended. Check the result of the async operation
-        .then(
-            () => log("Async: Copying to clipboard was successful!"),
-            (err) => console.error("Async: Could not copy text: ", err)
-        );
+    pasteRich(linkHtml, `${title} ${url}`);
 };
 
 /**

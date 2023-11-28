@@ -406,15 +406,15 @@ const popupMain = async (url, is, manualTrigger = false, tab = null) => {
                 // global.close && global.close();
             }
         });
-        addListener(`popup-memory-item-copy-link--${id}`, "click", () => {
+        addListener(`popup-memory-item-copy-link--${id}`, "click", async () => {
             const link = prefs.checkPreferPdf ? paperToPDF(paper) : paperToAbs(paper);
             const text = prefs.checkPreferPdf ? "PDF" : "Abstract";
-            copyAndConfirmMemoryItem(id, link, `${text} link copied!`, true);
+            await copyAndConfirmMemoryItem(id, link, `${text} link copied!`, true);
         });
-        addListener(`popup-memory-item-copy-hyperlink--${id}`, "click", () => {
+        addListener(`popup-memory-item-copy-hyperlink--${id}`, "click", async () => {
             const link = prefs.checkPreferPdf ? paperToPDF(paper) : paperToAbs(paper);
             const text = prefs.checkPreferPdf ? "PDF" : "Abstract";
-            copyAndConfirmMemoryItem(
+            await copyAndConfirmMemoryItem(
                 id,
                 link,
                 `${text} hyperlink copied!`,
@@ -422,12 +422,17 @@ const popupMain = async (url, is, manualTrigger = false, tab = null) => {
                 paper.title
             );
         });
-        addListener(`popup-memory-item-md--${id}`, "click", () => {
+        addListener(`popup-memory-item-md--${id}`, "click", async () => {
             const md = makeMdLink(paper, prefs);
             const text = prefs.checkPreferPdf ? "PDF" : "Abstract";
-            copyAndConfirmMemoryItem(id, md, `Markdown link to ${text} copied!`, true);
+            await copyAndConfirmMemoryItem(
+                id,
+                md,
+                `Markdown link to ${text} copied!`,
+                true
+            );
         });
-        addListener(`popup-memory-item-bibtex--${id}`, "click", () => {
+        addListener(`popup-memory-item-bibtex--${id}`, "click", async () => {
             let bibtex = global.state.papers[id].bibtex;
             let bibobj = bibtexToObject(bibtex);
             if (!bibobj.hasOwnProperty("url")) {
@@ -437,7 +442,7 @@ const popupMain = async (url, is, manualTrigger = false, tab = null) => {
                 bibobj.pdf = paperToPDF(global.state.papers[id]);
             }
             bibtex = bibtexToString(bibobj);
-            copyAndConfirmMemoryItem(id, bibtex, "Bibtex citation copied!", true);
+            await copyAndConfirmMemoryItem(id, bibtex, "Bibtex citation copied!", true);
         });
         addListener(`popup-memory-item-openLocal--${id}`, "click", async () => {
             const file = (await findLocalFile(paper)) || global.state.files[paper.id];

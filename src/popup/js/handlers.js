@@ -67,10 +67,10 @@ const handleCopyMarkdownLink = async (e) => {
     const text = prefs.checkPreferPdf ? "PDF" : "Abstract";
     const paper = global.state.papers[id];
     const md = makeMdLink(paper, prefs);
-    copyAndConfirmMemoryItem(id, md, `Markdown ${text} link copied!`);
+    await copyAndConfirmMemoryItem(id, md, `Markdown ${text} link copied!`);
 };
 
-const handleCopyBibtex = (e) => {
+const handleCopyBibtex = async (e) => {
     const id = eventId(e);
     const bibtex = global.state.papers[id].bibtex;
     let bibobj = bibtexToObject(bibtex);
@@ -80,7 +80,7 @@ const handleCopyBibtex = (e) => {
     if (!bibobj.hasOwnProperty("pdf") && global.state.papers[id].source !== "website") {
         bibobj.pdf = paperToPDF(global.state.papers[id]);
     }
-    copyAndConfirmMemoryItem(id, bibtexToString(bibobj), "Bibtex copied!");
+    await copyAndConfirmMemoryItem(id, bibtexToString(bibobj), "Bibtex copied!");
 };
 
 const handleCopyPDFLink = async (e) => {
@@ -89,7 +89,7 @@ const handleCopyPDFLink = async (e) => {
     const paper = global.state.papers[id];
     const link = prefs.checkPreferPdf ? paperToPDF(paper) : paperToAbs(paper);
     const text = prefs.checkPreferPdf ? "PDF" : "Abstract";
-    copyAndConfirmMemoryItem(id, link, `${text} link copied!`);
+    await copyAndConfirmMemoryItem(id, link, `${text} link copied!`);
 };
 
 const handleCopyHyperLink = async (e) => {
@@ -97,8 +97,7 @@ const handleCopyHyperLink = async (e) => {
     const prefs = global.state.prefs;
     const paper = global.state.papers[id];
     const link = prefs.checkPreferPdf ? paperToPDF(paper) : paperToAbs(paper);
-    const text = prefs.checkPreferPdf ? "PDF" : "Abstract";
-    copyAndConfirmMemoryItem(id, link, `Hyperlink copied!`, false, paper.title);
+    await copyAndConfirmMemoryItem(id, link, `Hyperlink copied!`, false, paper.title);
 };
 
 const handleAddItemToFavorites = (e) => {
