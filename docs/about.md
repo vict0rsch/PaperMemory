@@ -30,6 +30,7 @@ As much as possible, I try to avoid using external libraries. But I'll acknowled
 * [Gifox](https://gifox.app/)
 * [Shottr](https://shottr.cc/)
 * [Puppeteer](https://pptr.dev/)
+* [Material for Mkdocs](https://squidfunk.github.io/mkdocs-material/)
 
 Fun fact: make pretty commits with [`gitmopy`](https://github.com/vict0rsch/gitmopy)
 
