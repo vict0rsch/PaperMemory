@@ -178,6 +178,9 @@ const paperToAbs = (paper) => {
         case "mdpi":
             abs = paper.pdfLink.split("/pdf")[0];
             break;
+        case "oup":
+            abs = `https://doi.org/${paper.doi}`;
+            break;
 
         default:
             abs = "https://xkcd.com/1969/";
@@ -286,6 +289,9 @@ const paperToPDF = (paper) => {
             break;
 
         case "mdpi":
+            break;
+
+        case "oup":
             break;
 
         case "website":
@@ -895,6 +901,13 @@ const parseIdFromUrl = async (url, tab = null) => {
                 .split("/notes")[0]
         );
         idForUrl = findPaperForProperty(papers, "mdpi", miniHash(mdpiId));
+    } else if (is.oup) {
+        url = noParamUrl(url).split("https://academic.oup.com/").last();
+        if (isPdfUrl(url)) {
+            url = url.split("/").slice(0, -1).join("/");
+        }
+        const num = url.split("/").slice(2).join("");
+        idForUrl = findPaperForProperty(papers, "oup", miniHash(num));
     } else if (is.localFile) {
         idForUrl = is.localFile;
     } else if (is.parsedWebsite) {
