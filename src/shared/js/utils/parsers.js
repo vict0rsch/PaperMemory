@@ -1458,7 +1458,7 @@ const makeOUPPaper = async (url) => {
     const key = citationKey;
     const num = url.split("https://academic.oup.com/")[1].split("/").slice(2).join("");
     const id = `OUP-${year}_${miniHash(num)}`;
-    const pdfLink = eprint ?? url;
+    const pdfLink = eprint?.replaceAll("\\", "") ?? url;
 
     return { author, bibtex, id, key, note, pdfLink, title, venue, year, doi };
 };
