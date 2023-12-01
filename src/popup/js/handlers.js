@@ -484,7 +484,6 @@ const hideTitleTooltip = (id, isPopup) => {
 };
 
 const getHandleTitleTooltip = (func, delay, isPopup) => {
-    console.log("delay: ", delay);
     return (e) => {
         const id = isPopup ? global.state.currentId : eventId(e);
         let timerId = global.state.timerIdMap.get(e.target) ?? 0;

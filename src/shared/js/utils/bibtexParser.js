@@ -329,6 +329,30 @@ function BibtexParser() {
     };
 }
 
+/**
+ * Removes surrounding braces of `{some title is wrapped}`
+ * but not of `{some} title is {wrapped}`
+ * @param {string} str
+ * @returns {string} str without surrounding braces
+ */
+const safeRemoveSurroundingBraces = (str) => {
+    let opened = 0;
+    let closed = 0;
+    let remove = true;
+    for (const c of str.slice(1, -1)) {
+        if (c === "{") opened++;
+        if (c === "}") closed++;
+        if (closed > opened) {
+            remove = false;
+            break;
+        }
+    }
+    if (remove) {
+        return str.slice(1, -1);
+    }
+    return str;
+};
+
 const bibtexToObject = (bibtex) => {
     var b = new BibtexParser();
     b.setInput(bibtex);
@@ -339,6 +363,11 @@ const bibtexToObject = (bibtex) => {
         entryType: entry.entryType,
         citationKey: entry.citationKey,
     };
+    for (const [key, value] of Object.entries(obj)) {
+        if (value.startsWith("{") && value.endsWith("}")) {
+            obj[key] = safeRemoveSurroundingBraces(value);
+        }
+    }
     return obj;
 };
 
@@ -361,7 +390,10 @@ const bibtexToString = (bibtex) => {
     const keyLen = Math.max(...Object.keys(bibtex).map((k) => k.length));
     for (const key in bibtex) {
         if (bibtex.hasOwnProperty(key) && bibtex[key]) {
-            const value = bibtex[key].replaceAll(/\s+/g, " ").trim();
+            let value = bibtex[key].replaceAll(/\s+/g, " ").trim();
+            if (value.startsWith("{") && value.endsWith("}")) {
+                value = safeRemoveSurroundingBraces(value);
+            }
             const bkey = key + " ".repeat(keyLen - key.length);
             bstr += `\t${bkey} = {${value}},\n`;
         }

@@ -1442,6 +1442,26 @@ const makeMDPIPaper = async (url) => {
     return { author, bibtex, id, key, note, pdfLink, title, venue, year, doi };
 };
 
+const makeOUPPaper = async (url) => {
+    url = noParamUrl(url);
+    const resourceId = url.split("/").last();
+    let bibtex = await fetchText(
+        `https://academic.oup.com/Citation/Download?resourceId=${resourceId}&resourceType=3&citationFormat=2`
+    );
+    const paper = bibtexToObject(bibtex);
+    delete paper.abstract;
+    bibtex = bibtexToString(paper);
+    let { title, year, author, journal, doi, citationKey, eprint } = paper;
+    author = flipAndAuthors(author);
+    const venue = journal;
+    const note = `Published @ ${venue} (${year})`;
+    const key = citationKey;
+    const num = url.split("https://academic.oup.com/")[1].split("/").slice(2).join("");
+    const id = `OUP-${year}_${miniHash(num)}`;
+    const pdfLink = eprint?.replaceAll("\\", "") ?? url;
+
+    return { author, bibtex, id, key, note, pdfLink, title, venue, year, doi };
+};
 // -------------------------------
 // -----  PREPRINT MATCHING  -----
 // -------------------------------
@@ -1897,6 +1917,11 @@ const makePaper = async (is, url, tab = false) => {
         paper = await makeMDPIPaper(url);
         if (paper) {
             paper.source = "mdpi";
+        }
+    } else if (is.oup) {
+        paper = await makeOUPPaper(url);
+        if (paper) {
+            paper.source = "oup";
         }
     } else {
         throw new Error("Unknown paper source: " + JSON.stringify({ is, url }));

@@ -189,6 +189,13 @@ global.knownPaperPages = {
         "openreview.net/pdf",
         "openreview.net/attachment",
     ],
+    oup: [
+        (url) =>
+            (url
+                .split("https://academic.oup.com/")[1]
+                ?.split("/")[1]
+                ?.indexOf("article") ?? -1) >= 0,
+    ],
     plos: [(url) => /journals\.plos\.org\/.+\/article.+id=/gi.test(url)],
     pmc: ["ncbi.nlm.nih.gov/pmc/articles/PMC"],
     pmlr: ["proceedings.mlr.press/"],
