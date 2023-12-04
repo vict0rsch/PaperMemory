@@ -1462,6 +1462,26 @@ const makeOUPPaper = async (url) => {
 
     return { author, bibtex, id, key, note, pdfLink, title, venue, year, doi };
 };
+
+const makerHALPaper = async (url) => {
+    url = noParamUrl(url).replace(/(hal\.science\/\w+-\d+)(v\d+)?(\/document)?/, "$1"); // remove version
+    const halId = url.split("/").last();
+    const bibURL = `https://hal.science/${halId}/bibtex`;
+    let bibtex = await fetchText(bibURL);
+    const paper = bibtexToObject(bibtex);
+    let { title, year, journal, author, doi, pdf } = paper;
+
+    const venue = journal;
+    const note = venue ? `Published @ ${venue} (${year})` : "";
+    const key = paper.citationKey;
+    author = flipAndAuthors(author);
+    bibtex = bibtexToString(bibtex);
+    const id = `HAL-${year}_${miniHash(halId)}`;
+    const pdfLink = pdf ?? url;
+
+    return { author, bibtex, id, key, note, pdfLink, title, venue, year, doi };
+};
+
 // -------------------------------
 // -----  PREPRINT MATCHING  -----
 // -------------------------------
@@ -1941,6 +1961,11 @@ const makePaper = async (is, url, tab = false) => {
         paper = await makeOUPPaper(url);
         if (paper) {
             paper.source = "oup";
+        }
+    } else if (is.hal) {
+        paper = await makerHALPaper(url);
+        if (paper) {
+            paper.source = "hal";
         }
     } else {
         throw new Error("Unknown paper source: " + JSON.stringify({ is, url }));
