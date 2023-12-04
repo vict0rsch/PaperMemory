@@ -8,7 +8,10 @@ const getPaperinfoTitle = (paper) => {
     const addDate = new Date(paper.addDate).toLocaleString().replace(",", "");
     const lastOpenDate = new Date(paper.lastOpenDate).toLocaleString().replace(",", "");
 
-    let infoTitle = `Added ${addDate}\nLast open ${lastOpenDate}\nVisits: ${paper.count}`;
+    let infoTitle = `Added ${addDate}\n`;
+    infoTitle += `Last open ${lastOpenDate}\n`;
+    infoTitle += `Visits: ${paper.count}\n`;
+    infoTitle += `Source: ${global.knownPaperPages[paper.source].name}\n`;
     if (paper.venue) {
         infoTitle += `\n<strong>${paper.venue} ${paper.year}</strong>`;
     }
