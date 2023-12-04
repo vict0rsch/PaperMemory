@@ -675,7 +675,7 @@ const addOrUpdatePaper = async ({
         // anyway: try and update note with actual publication
         if (!paper.note || !paper.venue || paper.author.toLowerCase() === "anonymous") {
             const preprintMatch = await tryPreprintMatch(paper);
-            for (const key of ["note", "venue", "bibtex"]) {
+            for (const key of ["note", "venue", "bibtex", "doi"]) {
                 if (!paper[key] || key === "bibtex") {
                     const value = preprintMatch[key] ?? pwc[key];
                     if (value) {

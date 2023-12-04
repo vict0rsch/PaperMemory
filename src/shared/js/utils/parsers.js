@@ -1676,16 +1676,35 @@ const tryGoogleScholar = async (paper) => {
     return resp;
 };
 
+const tryUnpaywall = async (paper) => {
+    const url = `https://api.unpaywall.org/v2/search?query=${encodeURI(
+        paper.title
+    )}&is_oa=true&email=papermemory+${parseInt(Math.random() * 1000)}@gmail.com`;
+    const { data, status } = await fetchJSON(url);
+    if (data && status === 200) {
+        const match = data.results?.find(
+            (m) => miniHash(m.response.title) === miniHash(paper.title)
+        );
+        if (match) {
+            const venue = match.journal_name;
+            const note = `Accepted @ ${venue} (${match.year}) -- [unpaywall.org]`;
+            const doi = match.doi;
+            return { venue, note, doi };
+        }
+    }
+};
+
 const tryPreprintMatch = async (paper, tryPwc = false) => {
-    let note, venue, bibtex, code;
+    let note, venue, bibtex, code, doi;
     let matches = {};
 
-    let names = ["DBLP", "SemanticScholar", "CrossRef", "GoogleScholar"];
+    let names = ["DBLP", "SemanticScholar", "CrossRef", "GoogleScholar", "Unpaywall"];
     let matchPromises = [
         silentPromiseTimeout(tryGoogleScholar(paper)),
         silentPromiseTimeout(trySemanticScholar(paper)),
         silentPromiseTimeout(tryCrossRef(paper)),
         silentPromiseTimeout(tryDBLP(paper)),
+        silentPromiseTimeout(tryUnpaywall(paper)),
     ];
 
     if (tryPwc) {
@@ -1695,7 +1714,7 @@ const tryPreprintMatch = async (paper, tryPwc = false) => {
 
     for (const [n, name] of Object.entries(names)) {
         matches[name] = await matchPromises[n];
-        ({ note, venue, bibtex } = matches[name] ?? {});
+        ({ note, venue, bibtex, doi } = matches[name] ?? {});
         if (note) {
             break;
         } else {
@@ -1713,7 +1732,7 @@ const tryPreprintMatch = async (paper, tryPwc = false) => {
         }
     }
 
-    return { note, venue, bibtex, code };
+    return { note, venue, bibtex, code, doi };
 };
 
 // -----------------------------
@@ -1998,5 +2017,6 @@ if (typeof module !== "undefined" && module.exports != null) {
         tryPreprintMatch,
         tryPWCMatch,
         trySemanticScholar,
+        tryUnpaywall,
     };
 }

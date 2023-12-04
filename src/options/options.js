@@ -544,6 +544,14 @@ const startMatching = async (papersToMatch) => {
         }
 
         if (!venue) {
+            setHTML("matching-status-provider", "unpaywall.org ...");
+            match = await tryUnpaywall(paper);
+            console.log("unpaywallMatch: ", match);
+            venue = match?.venue;
+            note = !paper.note && match?.note;
+        }
+
+        if (!venue) {
             setHTML("matching-status-provider", "scholar.google.com ...");
             match = await tryCrossRef(paper);
             console.log("googleScholarMatch: ", match);
