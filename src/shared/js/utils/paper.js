@@ -12,18 +12,18 @@ const isPaper = async (url, noStored = false) => {
     let is = {};
     if (!url) return is;
     for (const source in global.knownPaperPages) {
-        const paths = global.knownPaperPages[source];
+        const patterns = global.knownPaperPages[source].patterns;
         // default source status: false
         is[source] = false;
-        for (const path of paths) {
-            if (typeof path === "string") {
-                if (url.includes(path)) {
-                    // known path: store as true
+        for (const pattern of patterns) {
+            if (typeof pattern === "string") {
+                if (url.includes(pattern)) {
+                    // known pattern: store as true
                     is[source] = true;
                     break;
                 }
-            } else if (typeof path === "function") {
-                is[source] = path(url);
+            } else if (typeof pattern === "function") {
+                is[source] = pattern(url);
             }
         }
     }
@@ -908,12 +908,19 @@ const parseIdFromUrl = async (url, tab = null) => {
         }
         const num = url.split("/").slice(2).join("");
         idForUrl = findPaperForProperty(papers, "oup", miniHash(num));
+    } else if (is.hal) {
+        url = noParamUrl(url).replace(
+            /(hal\.science\/\w+-\d+)(v\d+)?(\/document)?/,
+            "$1"
+        );
+        const halId = url.split("/").last();
+        idForUrl = findPaperForProperty(papers, "hal", miniHash(halId));
     } else if (is.localFile) {
         idForUrl = is.localFile;
     } else if (is.parsedWebsite) {
         idForUrl = is.parsedWebsite.id;
     } else {
-        throw new Error("unknown paper url");
+        throw new Error("unknown paper url. Is: " + JSON.stringify(is));
     }
 
     return idForUrl;

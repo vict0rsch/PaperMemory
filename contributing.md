@@ -2,7 +2,7 @@
 
 ## About
 
-PaperMemory is pure JS+HTML with minimal dependencies: no framework, (almost) no external dependencies so it's easy to help :) 
+PaperMemory is pure JS+HTML with minimal dependencies: no framework, (almost) no external dependencies so it's easy to help :)
 
 The only external deps. are [`select2.js`](https://select2.org/) which requires `JQuery` and some of the latter here and there (but I'm working on getting rid of it, replacing it with a simple set of helper functions in `src/shared/utils/miniquery.js`).
 
@@ -42,7 +42,7 @@ Note: the file loaded in the popup is `src/popup/min/popup.min.html`, *not* `src
 
 ### Refreshing the extension
 
-Once you load the local extension as an unpackaged extension, changes that affect the popup will directly take effect, no need to refresh anything. 
+Once you load the local extension as an unpackaged extension, changes that affect the popup will directly take effect, no need to refresh anything.
 
 **Content scripts** however, are loaded and not binded to the source so you _have to_ refresh the extension in the settings (and then any web page you want to see changes on) for those to be taken into account.
 
@@ -79,7 +79,7 @@ Once you load the local extension as an unpackaged extension, changes that affec
     │   │   └── minified scripts
     │   ├── popup.html  ➤➤➤ Main HTML file
     └── shared
-        ├── jquery.min.js ➤➤➤ JQuery lib. Do not modify. 
+        ├── jquery.min.js ➤➤➤ JQuery lib. Do not modify.
         ├── utils ➤➤➤ Shared utility functions minified together in this order into utils.min.js
         │   ├── bibtexParser.js ➤➤➤ Class to parse bibtex strings into objects
         │   ├── config.js       ➤➤➤ Constants / State variables used throughout out the code
@@ -102,10 +102,10 @@ TODO
 
 The following functions and constants should be updated:
 
-* `config.js:global.knownPaperPages` with `source: [array of url matches to trigger paper parsing, or boolean functions taking it as input]`
+* `config.js:global.knownPaperPages` with `source: {patterns: [array of url matches to trigger paper parsing, or boolean functions taking it as input], name: displayName}`
   * will be used by `paper.js:isPaper()` to determine whether `content_script.js` should parse the current page into a paper with `addOrUpdatePaper()` (or update the existing one's visits count) and `popup.js` to display the current paper
 * `parsers.js:makePaper()` to create a new entry
-  * Typically, add a parser function in `parsers.js`  
+  * Typically, add a parser function in `parsers.js`
 * `state:parseIdFromUrl()`
 * `paper.js:paperToAbs()` and `paper.js:paperToPDF()` to enable to pdf<->webpage button
 * `functions.js:getDisplayId()` if necessary
@@ -137,7 +137,7 @@ The following functions and constants should be updated:
             1. Same as memory items but when on a paper's page
     4. The menu still works
         1. It can open
-        2. Changes in configurations are working and persisted  
+        2. Changes in configurations are working and persisted
     5. Notable edge case: modifying a paper when on its page:
         1. Changes in the memory should be reflected in the popup and vice-versa
 2. Document functions (docstrings & comments)
