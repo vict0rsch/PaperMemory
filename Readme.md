@@ -178,7 +178,7 @@ Refer to [📑—the documentation](https://papermemory.org/getting-started/#fro
 
 There currently exists, to my knowledge, no centralized source for matching a preprint to its subsequent published article. This makes it really hard to try and implement best practices in terms of citing published papers rather than their preprint.
 
-My approach with PaperMemory is to try and notify you that a publication likely exists by utilizing the `note` field. You will occasionally notice `Accepted @ X` in a Paper's notes. This will be added automatically if you are on a known published venue's website (as Nature, PMLR or NeurIPS) but also from DBLB, CrossRef.org, SemanticScholar.org or Google Scholar.
+My approach with PaperMemory is to try and notify you that a publication likely exists by utilizing the `note` field. You will occasionally notice `Accepted @ X` in a Paper's notes. This will be added automatically if you are on a known published venue's website (as Nature, PMLR or NeurIPS) but also from DBLB, CrossRef.org, SemanticScholar.org, Unpaywall.org or Google Scholar.
 
 There's room for improvement here^, please contact me (an issue will do) if you want to help.
 

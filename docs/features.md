@@ -166,7 +166,7 @@ You can search for (partial) terms:
 
 There currently exists, to my knowledge, no centralized source for matching a preprint to its subsequent published article. This makes it really hard to try and implement best practices in terms of citing published papers rather than their preprint.
 
-My approach with PaperMemory is to try and notify you that a publication likely exists by utilizing the `note` field. You will occasionally notice `Accepted @ X` in a Paper's notes. This will be added automatically if you are on a known published venue's website (as Nature, PMLR or NeurIPS) but also from PapersWithCode, DBLP.org SemanticScholar.org CrossRef.org
+My approach with PaperMemory is to try and notify you that a publication likely exists by utilizing the `note` field. You will occasionally notice `Accepted @ X` in a Paper's notes. This will be added automatically if you are on a known published venue's website (as Nature, PMLR or NeurIPS) but also from PapersWithCode, DBLP.org SemanticScholar.org, CrossRef.org and Unpaywall.org.
 
 ??? example "How it works"
 
@@ -204,6 +204,12 @@ My approach with PaperMemory is to try and notify you that a publication likely 
         * If it does, a note is added as: `Accepted @ ${items.event.name} -- [crossref.org]`
 
             * Try for instance [Attention-Guided Generative Adversarial Networks for Unsupervised Image-to-Image Translation](http://arxiv.org/pdf/1903.12296v3)
+
+    * [Unpaywall.org](https://unpaywall.org)
+
+        * A query is sent to their [api](https://unpaywall.org/products/api) searching for papers
+        * Amongst `response.results`, we're looking for an exact title match.
+        * If there's one, a to the paper note is added as: `Accepted @ ${result.journal_name} -- [unpaywall.org]`
 
     There's room for improvement here^, please contact me (an issue will do) if you want to help
 
