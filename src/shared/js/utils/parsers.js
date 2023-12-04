@@ -1705,7 +1705,7 @@ const tryUnpaywall = async (paper) => {
         const match = data.results?.find(
             (m) => miniHash(m.response.title) === miniHash(paper.title)
         );
-        if (match) {
+        if (match && match.journal_name) {
             const venue = match.journal_name;
             const note = `Accepted @ ${venue} (${match.year}) -- [unpaywall.org]`;
             const doi = match.doi;
