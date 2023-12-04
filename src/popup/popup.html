@@ -333,7 +333,7 @@
 				<input id="memory-search" placeholder="Search" type="text" autocomplete="off">
 				<span id="memory-search-clear-icon">&times;</span>
 			</div>
-			<span tabindex="0" id="filter-favorites" title="Show favorites only" class="rounded">
+			<span tabindex="-1" id="filter-favorites" title="Show favorites only" class="rounded">
 				<svg viewBox="0 0 24 24" style="vertical-align: bottom; height: 22px; width: 32px">
 					<path stroke="none" d="M0 0h24v24H0z" fill="none" />
 					<path
@@ -341,7 +341,7 @@
 				</svg>
 
 			</span>
-			<select style="width: 30%;" id="memory-select">
+			<select tabindex="-1" style="width: 30%;" id="memory-select">
 				<option value="lastOpenDate">Last Open</option>
 				<option value="addDate">Last Added</option>
 				<option value="year">Year</option>
@@ -349,7 +349,7 @@
 				<option value="count"># Visits</option>
 				<option value="id">ID</option>
 			</select>
-			<span tabindex="0" id="memory-sort-arrow">
+			<span tabindex="-1" id="memory-sort-arrow">
 				<svg viewBox="0 0 24 24" class="memory-sort-arrow-svg" id="memory-sort-arrow-down">
 					<path stroke="none" d="M0 0h24v24H0z" fill="none" />
 					<line x1="12" y1="5" x2="12" y2="19" />
