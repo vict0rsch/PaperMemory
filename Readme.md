@@ -98,6 +98,9 @@ Share ideas 💡 in [issues](https://github.com/vict0rsch/PaperMemory/issues) an
 * Science (Science, Science Immunology, Science Robotics etc.)
 * FrontiersIn (Frontiers in Neuroscience, Frontiers in Neuroscience, Frontiers in Microbiology etc.)
 * PLOS
+* MDPI
+* Oxford University Press
+* HAL Archives ouvertes
 * Royal Society of Chemistry
 * [Sci-Hub](#ad-hoc-pdfs)
 * [Add more](https://github.com/vict0rsch/PaperMemory/issues/13)
