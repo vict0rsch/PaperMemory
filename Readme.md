@@ -102,7 +102,7 @@ Share ideas 💡 in [issues](https://github.com/vict0rsch/PaperMemory/issues) an
 * Oxford University Press
 * HAL Archives ouvertes
 * Royal Society of Chemistry
-* [Sci-Hub](#ad-hoc-pdfs)
+* [Sci-Hub](https://papermemory.org/faq/#can-i-reference-my-pdf-in-papermemory)
 * [Add more](https://github.com/vict0rsch/PaperMemory/issues/13)
 
 [📑—About finding published papers from preprints](https://papermemory.org/features/#preprint-matching)
