@@ -1,3 +1,5 @@
+const infoSpan = (k, ml) =>
+    `<span class="paper-info-span">${padRight(k, ml, "&nbsp;")}</span>`;
 /**
  * Return a formatted HTML string describing some metadata about a paper
  * added date, last open date, number of visits, venue if available
@@ -7,13 +9,17 @@
 const getPaperinfoTitle = (paper) => {
     const addDate = new Date(paper.addDate).toLocaleString().replace(",", "");
     const lastOpenDate = new Date(paper.lastOpenDate).toLocaleString().replace(",", "");
-
-    let infoTitle = `Added ${addDate}\n`;
-    infoTitle += `Last open ${lastOpenDate}\n`;
-    infoTitle += `Visits: ${paper.count}\n`;
-    infoTitle += `Source: ${global.knownPaperPages[paper.source].name}\n`;
+    const ml = "Publication".length + 1;
+    let infoTitle = `${infoSpan("Added", ml)} ${addDate}\n`;
+    infoTitle += `${infoSpan("Last open", ml)} ${lastOpenDate}\n`;
+    infoTitle += `${infoSpan("Visits", ml)} ${paper.count}\n`;
+    infoTitle += `${infoSpan("Source", ml)} ${
+        global.knownPaperPages[paper.source].name
+    }\n`;
     if (paper.venue) {
-        infoTitle += `\n<strong>${paper.venue} ${paper.year}</strong>`;
+        infoTitle += `${infoSpan("Publication", ml)} <strong>${paper.venue} ${
+            paper.year
+        }</strong>`;
     }
     infoTitle = infoTitle.replaceAll("\n", "<br/>");
     return infoTitle;
