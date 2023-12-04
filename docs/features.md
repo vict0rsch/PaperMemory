@@ -66,6 +66,9 @@ Whenever possible, PaperMemory queries the API the provider offers. If they don'
     * FrontiersIn (Frontiers in Neuroscience, Frontiers in Neuroscience, Frontiers in Microbiology etc.)
     * PLOS
     * Royal Society of Chemistry
+    * MDPI
+    * Oxford University Press
+    * HAL Archives ouvertes
     * [Sci-Hub](./faq.md#can-i-reference-my-pdf-in-papermemory)
     * [Add more](https://github.com/vict0rsch/PaperMemory/issues/13)
 
