@@ -283,7 +283,7 @@ input {
     display: inline-block;
 }
 .source-container:not(:last-child) {
-    min-width: 49%;
+    min-width: 33%;
 }
 .source-wrapper {
     display: flex;

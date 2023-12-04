@@ -26,7 +26,7 @@
 
 [![](https://img.shields.io/chrome-web-store/stars/hmebhknlgddhfbbdhgplnillngljgmdi)](https://chrome.google.com/webstore/detail/paper-memory/hmebhknlgddhfbbdhgplnillngljgmdi)
 [![](https://img.shields.io/badge/buy%20me-a%20coffee%20%E2%98%95%EF%B8%8F-FFDD03)](https://www.buymeacoffee.com/vict0rsch)
-[![](https://img.shields.io/badge/Source%20%5BWIP%5D-v0.6.1-important)](https://github.com/vict0rsch/PaperMemory)
+[![](https://img.shields.io/badge/Source%20%5BWIP%5D-v0.7.0-important)](https://github.com/vict0rsch/PaperMemory)
 [![](https://img.shields.io/badge/Release-v0.6.0-A41716)](https://github.com/vict0rsch/PaperMemory/tree/0.6.0)
 
 <br/>
@@ -98,8 +98,11 @@ Share ideas 💡 in [issues](https://github.com/vict0rsch/PaperMemory/issues) an
 * Science (Science, Science Immunology, Science Robotics etc.)
 * FrontiersIn (Frontiers in Neuroscience, Frontiers in Neuroscience, Frontiers in Microbiology etc.)
 * PLOS
+* MDPI
+* Oxford University Press
+* HAL Archives ouvertes
 * Royal Society of Chemistry
-* [Sci-Hub](#ad-hoc-pdfs)
+* [Sci-Hub](https://papermemory.org/faq/#can-i-reference-my-pdf-in-papermemory)
 * [Add more](https://github.com/vict0rsch/PaperMemory/issues/13)
 
 [📑—About finding published papers from preprints](https://papermemory.org/features/#preprint-matching)
@@ -175,7 +178,7 @@ Refer to [📑—the documentation](https://papermemory.org/getting-started/#fro
 
 There currently exists, to my knowledge, no centralized source for matching a preprint to its subsequent published article. This makes it really hard to try and implement best practices in terms of citing published papers rather than their preprint.
 
-My approach with PaperMemory is to try and notify you that a publication likely exists by utilizing the `note` field. You will occasionally notice `Accepted @ X` in a Paper's notes. This will be added automatically if you are on a known published venue's website (as Nature, PMLR or NeurIPS) but also from DBLB, CrossRef.org, SemanticScholar.org or Google Scholar.
+My approach with PaperMemory is to try and notify you that a publication likely exists by utilizing the `note` field. You will occasionally notice `Accepted @ X` in a Paper's notes. This will be added automatically if you are on a known published venue's website (as Nature, PMLR or NeurIPS) but also from DBLB, CrossRef.org, SemanticScholar.org, Unpaywall.org or Google Scholar.
 
 There's room for improvement here^, please contact me (an issue will do) if you want to help.
 

@@ -79,14 +79,6 @@ try {
 } catch (e) {}
 `;
 
-const urlIsAKnownPdfSource = (url) => {
-    if (!url) return false;
-    const pdfPages = Object.values(global.knownPaperPages).map((v) =>
-        v.filter((u) => typeof u === "string").last()
-    );
-    return pdfPages.some((p) => url.includes(p));
-};
-
 const fetchOpenReviewNoteJSON = async (url) => {
     const id = url.match(/id=([\w-])+/)[0].replace("id=", "");
     const api = `https://api.openreview.net/notes?id=${id}`;

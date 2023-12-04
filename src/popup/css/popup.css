@@ -665,6 +665,10 @@ code {
 .expand-memory-authors {
     cursor: pointer;
 }
+.paper-info-span {
+    font-family: "Fira Code", monospace;
+    font-size: 0.7rem;
+}
 
 svg.favorite {
     stroke-width: 2px !important;

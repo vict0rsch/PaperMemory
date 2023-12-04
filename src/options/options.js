@@ -544,6 +544,14 @@ const startMatching = async (papersToMatch) => {
         }
 
         if (!venue) {
+            setHTML("matching-status-provider", "unpaywall.org ...");
+            match = await tryUnpaywall(paper);
+            console.log("unpaywallMatch: ", match);
+            venue = match?.venue;
+            note = !paper.note && match?.note;
+        }
+
+        if (!venue) {
             setHTML("matching-status-provider", "scholar.google.com ...");
             match = await tryCrossRef(paper);
             console.log("googleScholarMatch: ", match);
@@ -805,18 +813,20 @@ const setupDataManagement = () => {
 // -----  Select Sources  -----
 // ----------------------------
 
-const makeSource = ([key, name], idx) => {
+const makeSource = ([key, sourceDict], idx) => {
+    if (key === "website") return "";
+    const display = sourceDict.name.split("(")[0].trim();
     return /*html*/ `
     <div class="source-container">
         <div class="source-wrapper">
             <input class="switch source-switch" type="checkbox" id="source-${key}" name="${key}" value="${key}">
-            <label for="${key}">${name}</label><br><br>
+            <label for="${key}">${display}</label><br><br>
         </div>
     </div>`;
 };
 
 const setupSourcesSelection = async () => {
-    const sources = global.sourcesNames;
+    const sources = global.knownPaperPages;
     const table = Object.entries(sources).map(makeSource).join("");
     setHTML("select-sources-container", table);
 

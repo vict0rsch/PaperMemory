@@ -302,9 +302,23 @@ async function pasteRich(rich, plain) {
  * @param {string} title The title of the url to copy to the clipboard
  * @returns {void}
  * */
-copyHyperLinkToClipboard = (url, title) => {
+const copyHyperLinkToClipboard = (url, title) => {
     const linkHtml = `<a href="${url}">${title}</a>`;
     pasteRich(linkHtml, `${title} ${url}`);
+};
+
+/**
+ * Pad a string with a character on the right. Character is " " by default.
+ * @param {string} str The string to pad
+ * @param {number} length The length of the padded string
+ * @param {string} char The character to pad with
+ * @returns {string} The padded string
+ */
+const padRight = (str, length, char) => {
+    if (typeof char === "undefined") {
+        char = " ";
+    }
+    return str.length < length ? str + char.repeat(length - str.length) : str;
 };
 
 /**

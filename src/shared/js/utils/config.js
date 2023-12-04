@@ -155,96 +155,168 @@ global.preprintSources = ["arxiv", "biorxiv"];
  *           (open an issue if that's problematic)
  */
 global.knownPaperPages = {
-    acl: ["aclanthology.org/"],
-    acm: ["dl.acm.org/doi/"],
-    aps: [(url) => Boolean(url.match(/journals\.aps\.org\/\w+\/(abstract|pdf)\//g))],
-    acs: ["pubs.acs.org/doi/"],
-    arxiv: [
-        "arxiv.org/abs/",
-        "arxiv.org/pdf/",
-        "scirate.com/arxiv/",
-        "ar5iv.labs.arxiv.org/html/",
-        "arxiv-vanity.com/papers/",
-        (url) =>
-            url.includes("huggingface.co/papers/") &&
-            url.split("huggingface.co/papers/")[1].match(/\d+\.\d+/),
-    ],
-    biorxiv: ["biorxiv.org/content"],
-    cvf: ["openaccess.thecvf.com/content"],
-    frontiers: ["frontiersin.org/articles"],
-    ihep: ["inspirehep.net/literature/", "inspirehep.net/files/"],
-    ijcai: [(url) => /ijcai\.org\/proceedings\/\d{4}\/\d+/gi.test(url)],
-    ieee: [
-        "ieeexplore.ieee.org/document/",
-        "ieeexplore.ieee.org/abstract/document/",
-        "ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=",
-    ],
-    iop: ["iopscience.iop.org/article/"],
-    jmlr: [(url) => url.includes("jmlr.org/papers/v") && !url.endsWith("/")],
-    mdpi: [(url) => /mdpi\.com\/\d+-.+/gi.test(url)],
-    nature: ["nature.com/articles/"],
-    neurips: ["neurips.cc/paper/", "neurips.cc/paper_files/paper/", "nips.cc/paper/"],
-    openreview: [
-        "openreview.net/forum",
-        "openreview.net/pdf",
-        "openreview.net/attachment",
-    ],
-    oup: [
-        (url) =>
-            (url
-                .split("https://academic.oup.com/")[1]
-                ?.split("/")[1]
-                ?.indexOf("article") ?? -1) >= 0,
-    ],
-    plos: [(url) => /journals\.plos\.org\/.+\/article.+id=/gi.test(url)],
-    pmc: ["ncbi.nlm.nih.gov/pmc/articles/PMC"],
-    pmlr: ["proceedings.mlr.press/"],
-    pnas: ["pnas.org/content/", "pnas.org/doi/"],
-    rsc: ["pubs.rsc.org/en/content/article"],
-    science: [
-        (url) => Boolean(url.match(/science\.org\/doi\/?(abs|full|pdf|epdf)?\//g)),
-    ],
-    sciencedirect: [
-        "sciencedirect.com/science/article/pii/",
-        "sciencedirect.com/science/article/abs/pii/",
-        "reader.elsevier.com/reader/sd/pii/",
-    ],
-    springer: [
-        ...global.sourceExtras.springer.types.map(
-            (type) => `link.springer.com/${type}/`
-        ),
-        "link.springer.com/content/pdf/",
-    ],
-    website: [], // special case, manual parsing of arbitrary websites
-    wiley: [
-        (url) =>
-            Boolean(
-                url.match(/onlinelibrary\.wiley\.com\/doi\/(abs|full|pdf|epdf)\//g)
+    acl: {
+        patterns: ["aclanthology.org/"],
+        name: "ACL Anthology (Association for Computational Linguistics)",
+    },
+    acm: {
+        patterns: ["dl.acm.org/doi/"],
+        name: "ACM (Association for Computing Machinery)",
+    },
+    aps: {
+        patterns: [
+            (url) => Boolean(url.match(/journals\.aps\.org\/\w+\/(abstract|pdf)\//g)),
+        ],
+        name: "APS (American Physical Society)",
+    },
+    acs: {
+        patterns: ["pubs.acs.org/doi/"],
+        name: "ACS (American Chemical Society)",
+    },
+    arxiv: {
+        patterns: [
+            "arxiv.org/abs/",
+            "arxiv.org/pdf/",
+            "scirate.com/arxiv/",
+            "ar5iv.labs.arxiv.org/html/",
+            "arxiv-vanity.com/papers/",
+            (url) =>
+                url.includes("huggingface.co/papers/") &&
+                url.split("huggingface.co/papers/")[1].match(/\d+\.\d+/),
+        ],
+        name: "ArXiv",
+    },
+    biorxiv: {
+        patterns: ["biorxiv.org/content"],
+        name: "BioRxiv",
+    },
+    cvf: {
+        patterns: ["openaccess.thecvf.com/content"],
+        name: "CVF (Computer Vision Foundation)",
+    },
+    frontiers: {
+        patterns: ["frontiersin.org/articles"],
+        name: "Frontiers",
+    },
+    hal: {
+        patterns: [(url) => /hal\.science\/\w+-\d+(v\d+)?(\/document)?$/gi.test(url)],
+        name: "HAL",
+    },
+    ihep: {
+        patterns: ["inspirehep.net/literature/", "inspirehep.net/files/"],
+        name: "IHEP (INSPIRE - High Energy Physics)",
+    },
+    ijcai: {
+        patterns: [(url) => /ijcai\.org\/proceedings\/\d{4}\/\d+/gi.test(url)],
+        name: "IJCAI (International Joint Conferences on Artificial Intelligence)",
+    },
+    ieee: {
+        patterns: [
+            "ieeexplore.ieee.org/document/",
+            "ieeexplore.ieee.org/abstract/document/",
+            "ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=",
+        ],
+        name: "IEEE (Institute of Electrical and Electronics Engineers)",
+    },
+    iop: {
+        patterns: ["iopscience.iop.org/article/"],
+        name: "IOP (Institute Of Physics)",
+    },
+    jmlr: {
+        patterns: [(url) => url.includes("jmlr.org/papers/v") && !url.endsWith("/")],
+        name: "JMLR (Journal of Machine Learning Research)",
+    },
+    mdpi: {
+        patterns: [(url) => /mdpi\.com\/\d+-.+/gi.test(url)],
+        name: "MDPI (Multidisciplinary Digital Publishing Institute)",
+    },
+    nature: {
+        patterns: ["nature.com/articles/"],
+        name: "Nature",
+    },
+    neurips: {
+        patterns: [
+            "neurips.cc/paper/",
+            "neurips.cc/paper_files/paper/",
+            "nips.cc/paper/",
+        ],
+        name: "NeurIPS (Neural Information Processing Systems)",
+    },
+    openreview: {
+        patterns: [
+            "openreview.net/forum",
+            "openreview.net/pdf",
+            "openreview.net/attachment",
+        ],
+        name: "OpenReview",
+    },
+    oup: {
+        patterns: [
+            (url) =>
+                (url
+                    .split("https://academic.oup.com/")[1]
+                    ?.split("/")[1]
+                    ?.indexOf("article") ?? -1) >= 0,
+        ],
+        name: "OUP (Oxford University Press)",
+    },
+    plos: {
+        patterns: [(url) => /journals\.plos\.org\/.+\/article.+id=/gi.test(url)],
+        name: "PLOS (Public Library of Science)",
+    },
+    pmc: {
+        patterns: ["ncbi.nlm.nih.gov/pmc/articles/PMC"],
+        name: "PMC (PubMed Central)",
+    },
+    pmlr: {
+        patterns: ["proceedings.mlr.press/"],
+        name: "PMLR (Proceedings of Machine Learning Research)",
+    },
+    pnas: {
+        patterns: ["pnas.org/content/", "pnas.org/doi/"],
+        name: "PNAS (Proceedings of the National Academy of Sciences)",
+    },
+    rsc: {
+        patterns: ["pubs.rsc.org/en/content/article"],
+        name: "RSC (Royal Society of Chemistry)",
+    },
+    science: {
+        patterns: [
+            (url) => Boolean(url.match(/science\.org\/doi\/?(abs|full|pdf|epdf)?\//g)),
+        ],
+        name: "Science",
+    },
+    sciencedirect: {
+        patterns: [
+            "sciencedirect.com/science/article/pii/",
+            "sciencedirect.com/science/article/abs/pii/",
+            "reader.elsevier.com/reader/sd/pii/",
+        ],
+        name: "ScienceDirect",
+    },
+    springer: {
+        patterns: [
+            ...global.sourceExtras.springer.types.map(
+                (type) => `link.springer.com/${type}/`
             ),
-    ],
-};
-
-global.sourcesNames = {
-    acl: "Association for Computational Linguistics (ACL)",
-    acm: "Association for Computing Machinery (ACM)",
-    acs: "American Chemical Society (ACS)",
-    aps: "American Physical Society",
-    arxiv: "ArXiv",
-    biorxiv: "BioRxiv",
-    cvf: "Computer Vision Foundation (CVF)",
-    ijcai: "International Joint Conferences on Artificial Intelligence (IJCAI)",
-    iop: "Institute Of Physics (IOP)",
-    jmlr: "Journal of Machine Learning Research (JMLR)",
-    nature: "Nature",
-    neurips: "NeurIPS",
-    openreview: "OpenReview",
-    pmc: "PubMed Central",
-    pmlr: "Proceedings of Machine Learning Research (PMLR)",
-    pnas: "Proceedings of the National Academy of Sciences (PNAS)",
-    science: "Science",
-    sciencedirect: "ScienceDirect",
-    springer: "Springer",
-    wiley: "Wiley",
+            "link.springer.com/content/pdf/",
+        ],
+        name: "Springer",
+    },
+    website: {
+        // special case, manual parsing of arbitrary websites
+        patterns: [],
+        name: "Manually parsed website",
+    },
+    wiley: {
+        patterns: [
+            (url) =>
+                Boolean(
+                    url.match(/onlinelibrary\.wiley\.com\/doi\/(abs|full|pdf|epdf)\//g)
+                ),
+        ],
+        name: "Wiley",
+    },
 };
 
 global.overrideORConfs = {
@@ -428,7 +500,6 @@ if (typeof module !== "undefined" && module.exports != null) {
         sourceExtras: global.sourceExtras,
         preprintSources: global.preprintSources,
         knownPaperPages: global.knownPaperPages,
-        sourcesNames: global.sourcesNames,
         overrideORConfs: global.overrideORConfs,
         overridePMLRConfs: global.overridePMLRConfs,
         overrideDBLPVenues: global.overrideDBLPVenues,

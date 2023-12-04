@@ -196,6 +196,22 @@ const matchPaper = async (paper) => {
         }
         match?.venue && console.log("crossRefMatch: ", match);
     }
+    if (!bibtex) {
+        setHTML("matching-status-provider", "unpaywall.org ...");
+        match = await tryUnpaywall(paper);
+        venue = match.venue;
+        if (venue) {
+            paper.journal = venue;
+            for (const [key, value] of paper.entries()) {
+                if ((value + "").toLowerCase().includes("arxiv")) {
+                    delete paper[key];
+                }
+            }
+            bibtex = bibtexToString(paper);
+            source = "Unpaywall";
+        }
+        match?.venue && console.log("unpaywallMatch: ", match);
+    }
     return { bibtex, match, source, venue };
 };
 

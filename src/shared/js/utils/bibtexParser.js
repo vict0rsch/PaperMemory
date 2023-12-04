@@ -367,6 +367,11 @@ const bibtexToObject = (bibtex) => {
         if (value.startsWith("{") && value.endsWith("}")) {
             obj[key] = safeRemoveSurroundingBraces(value);
         }
+        // turn uppercase entry keys into lowercase
+        if (key === key.toUpperCase()) {
+            obj[key.toLowerCase()] = obj[key];
+            delete obj[key];
+        }
     }
     return obj;
 };
