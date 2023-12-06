@@ -1048,6 +1048,7 @@ const makeIJCAIPaper = async (url) => {
 
 const makeACMPaper = async (url) => {
     let pdfLink;
+    url = noParamUrl(url);
     if (isPdfUrl(url)) {
         pdfLink = url;
     } else {

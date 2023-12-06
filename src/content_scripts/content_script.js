@@ -354,6 +354,7 @@ const contentScriptMain = async ({
     manualTrigger = false,
     paperUpdateDoneCallbacks = {},
 } = {}) => {
+    console.log("url: ", url);
     if (!stateIsReady) {
         let remoteReadyPromise;
         const stateReadyPromise = new Promise((stateResolve) => {
@@ -816,7 +817,7 @@ const tryArxivDisplay = async ({
 
 (async () => {
     var prefs, paper;
-    var paperPromise, preprintsPromise;
+    var paperPromise, preprintsPromise, paperResolve, preprintsResolve;
     const url = window.location.href;
 
     // state will be initialized if the source is known
@@ -865,10 +866,12 @@ const tryArxivDisplay = async ({
     // 2 Promises:
     //   1. fetch paper data
     //   2. fetch preprints data
-    preprintsPromise = new Promise(async (preprintsResolve) => {
-        paperPromise = new Promise(async (paperResolve) => {
+    preprintsPromise = new Promise(async (pre) => {
+        preprintsResolve = pre;
+        paperPromise = new Promise(async (par) => {
             // if the url is associated to a known source: trigger
             // the main functions.
+            paperResolve = par;
             if (await isSourceURL(url, true)) {
                 contentScriptMain({
                     url,

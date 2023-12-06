@@ -1,28 +1,46 @@
+try {
+    importScripts(
+        "../shared/js/utils/gist.js",
+        "../shared/js/utils/miniquery.js",
+        "../shared/js/utils/config.js",
+        "../shared/js/utils/levenshtein.js",
+        "../shared/js/utils/bibtexParser.js",
+        "../shared/js/utils/functions.js",
+        "../shared/js/utils/sync.js",
+        "../shared/js/utils/data.js",
+        "../shared/js/utils/paper.js",
+        "../shared/js/utils/state.js",
+        "../shared/js/utils/parsers.js"
+    );
+} catch (e) {
+    console.error(e);
+}
+
 var paperTitles = {};
 var MAX_TITLE_UPDATES = 100;
 var tabStatuses = {};
 
 const badgeOk = () => {
-    chrome.browserAction.setBadgeText({ text: "OK!" });
-    chrome.browserAction.setBadgeBackgroundColor({ color: "rgb(68, 164, 68)" });
+    chrome.action.setBadgeText({ text: "OK!" });
+    chrome.action.setBadgeBackgroundColor({ color: "rgb(68, 164, 68)" });
 };
 
 const badgeWait = (text) => {
-    chrome.browserAction.setBadgeText({ text });
-    chrome.browserAction.setBadgeBackgroundColor({ color: "rgb(189, 127, 10)" });
+    chrome.action.setBadgeText({ text });
+    chrome.action.setBadgeBackgroundColor({ color: "rgb(189, 127, 10)" });
 };
 
 const badgeError = () => {
-    chrome.browserAction.setBadgeText({ text: "Error" });
-    chrome.browserAction.setBadgeBackgroundColor({ color: "rgb(195, 40, 56)" });
+    chrome.action.setBadgeText({ text: "Error" });
+    chrome.action.setBadgeBackgroundColor({ color: "rgb(195, 40, 56)" });
 };
 
 const badgeClear = (preventTimeout = false) => {
     if (preventTimeout) {
-        chrome.browserAction.setBadgeText({ text: "" });
+        chrome.action.setBadgeText({ text: "" });
     } else {
         setTimeout(() => {
-            chrome.browserAction.setBadgeText({ text: "" });
+            chrome.action.setBadgeText({ text: "" });
         }, 2000);
     }
 };
@@ -37,9 +55,8 @@ const initGist = async () => {
     badgeWait("Init...");
     const { ok, error, payload } = await getGist();
     if (ok) {
-        global.state.gist = payload.gist;
-        global.state.gistDataFile = await getDataFile(global.state.gist);
-        await global.state.gistDataFile.fetchLatest();
+        global.state.gistFile = payload.file;
+        global.state.gistId = payload.gistId;
         const duration = (Date.now() - start) / 1e3;
         logOk(`Sync successfully enabled (${duration}s).`);
         badgeOk();
@@ -240,8 +257,8 @@ const pullSyncPapers = async () => {
         const start = Date.now();
         consoleHeader(`Pulling ${String.fromCodePoint("0x23EC")}`);
         log("Pulling from Github...");
-        await global.state.gistDataFile.fetchLatest();
-        const remotePapers = global.state.gistDataFile.content;
+        global.state.gistData = await getDataForGistFile(global.state.gistFile);
+        const remotePapers = global.state.gistData;
         log("Pulled papers:", remotePapers);
         const duration = (Date.now() - start) / 1e3;
         info(`Pulling from Github... Done (${duration}s)!`);
@@ -264,11 +281,10 @@ const pushSyncPapers = async () => {
         consoleHeader(`Pushing ${String.fromCodePoint("0x23EB")}`);
         log("Writing to Github...");
         badgeWait("Push...");
-        chrome.browserAction.setBadgeBackgroundColor({ color: "rgb(189, 127, 10)" });
+        chrome.action.setBadgeBackgroundColor({ color: "rgb(189, 127, 10)" });
         const papers = (await getStorage("papers")) ?? {};
         log("Papers to write: ", papers);
-        await global.state.gistDataFile.overwrite(JSON.stringify(papers, null, ""));
-        await global.state.gistDataFile.save();
+        await updateGist(global.state.gistFile, papers, global.state.gistId);
         const duration = (Date.now() - start) / 1e3;
         log(`Writing to Github... Done (${duration}s)!`);
         badgeOk();
@@ -336,7 +352,8 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
             const paperTitle = paperTitles[tab.url];
             if (paperTitle && tab.title !== paperTitle) {
                 console.log(">>> Setting tab title to :", paperTitle);
-                chrome.tabs.executeScript(tabId, {
+                chrome.scripting.executeScript({
+                    target: { tabId },
                     code: `
                         ${setTitleCode(paperTitle)};
                         ${setFaviconCode};

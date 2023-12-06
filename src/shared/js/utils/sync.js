@@ -1,33 +1,58 @@
 const getGist = async (pat, store = true) => {
-    if (!pat) {
-        pat = await getStorage("syncPAT");
-    }
-    if (!pat) {
-        setStorage("syncState", false);
-        return {
-            ok: false,
-            payload: "noPAT",
-        };
-    }
-
-    const isTest = await getStorage("syncTest");
-
-    const appIdentifier = isTest ? "TestsPaperMemorySync" : "PaperMemorySync";
-
-    const githubGist = new GithubGist.default({
-        appIdentifier,
-        personalAccessToken: pat,
-        isPublic: false,
-    });
-
     try {
-        await githubGist.touch();
+        // await githubGist.touch();
+        if (!pat) {
+            pat = await getStorage("syncPAT");
+        }
+        if (!pat) {
+            setStorage("syncState", false);
+            return {
+                ok: false,
+                payload: "noPAT",
+            };
+        }
+
+        const isTest = await getStorage("syncTest");
+
+        const fileName = isTest
+            ? "TestsPaperMemorySync"
+            : "DO_NO_EDIT__PaperMemorySyncV2.json";
+        const description = "Automated PaperMemory sync Gist. Do not edit manually.";
+
+        const requestWithAuth = octokitRequest.defaults({
+            headers: {
+                authorization: `token ${pat}`,
+                "X-GitHub-Api-Version": "2022-11-28",
+            },
+        });
+
+        const gists = await requestWithAuth("GET /gists");
+
+        let gist = gists.data?.find(
+            (gist) => gist.description === description && gist.files[fileName]
+        );
+
+        if (!gist) {
+            info("No Gist found. Creating new one...");
+            const response = await requestWithAuth("POST /gists", {
+                description,
+                files: {
+                    [fileName]: {
+                        content: JSON.stringify(await getStorage("papers")),
+                    },
+                },
+                public: false,
+            });
+            gist = response.data;
+        }
+        file = gist.files[fileName];
+        const gistId = gist.id;
         store && (await setStorage("syncPAT", pat));
-        return { ok: true, payload: { gist: githubGist, pat } };
+        return { ok: true, payload: { file, pat, gistId } };
     } catch (e) {
-        console.log(e.response.data.message);
+        console.log(e);
         warn("Because of the error ^ syncing is now disabled.");
-        setStorage("syncState", false);
+        // setStorage("syncState", false);
         return {
             ok: false,
             payload: "wrongPAT",
@@ -36,14 +61,38 @@ const getGist = async (pat, store = true) => {
     }
 };
 
-const getDataFile = async (gist) => {
-    const fileName = "PaperMemory-sync-data.json";
-    let dataFile = gist.getFile(fileName);
-    if (!dataFile) {
-        gist.createFile(fileName);
-        dataFile = gist.getFile(fileName);
+const getDataForGistFile = async (file) => {
+    if (file.filename.endsWith(".json")) {
+        const { data, status } = await fetchJSON(file.raw_url);
+        return data;
     }
-    return dataFile;
+    return await fetchText(file.raw_url);
+};
+
+const updateGist = async (file, papers, gistId) => {
+    const pat = await getStorage("syncPAT");
+    if (!pat) {
+        info("(updateGist) No PAT found. Syncing is now disabled.");
+        setStorage("syncState", false);
+        return {
+            ok: false,
+            payload: "noPAT",
+        };
+    }
+    const requestWithAuth = octokitRequest.defaults({
+        headers: {
+            authorization: `token ${pat}`,
+            "X-GitHub-Api-Version": "2022-11-28",
+        },
+    });
+    return await requestWithAuth(`PATCH /gists/${gistId}`, {
+        gist_id: gistId,
+        files: {
+            [file.filename]: {
+                content: JSON.stringify(papers, null, ""),
+            },
+        },
+    });
 };
 
 const pushToRemote = async () => await sendMessageToBackground({ type: "writeSync" });

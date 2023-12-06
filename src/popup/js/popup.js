@@ -261,13 +261,13 @@ const popupMain = async (url, is, manualTrigger = false, tab = null) => {
     // Set fullMemory page link
     addListener("full-memory", "click", () => {
         chrome.tabs.create({
-            url: chrome.extension.getURL("src/fullMemory/fullMemory.html"),
+            url: chrome.runtime.getURL("src/fullMemory/fullMemory.html"),
         });
     });
     // Set BibMatcher page link
     addListener("bib-matcher", "click", () => {
         chrome.tabs.create({
-            url: chrome.extension.getURL("src/bibMatcher/bibMatcher.html"),
+            url: chrome.runtime.getURL("src/bibMatcher/bibMatcher.html"),
         });
     });
 
