@@ -1,22 +1,46 @@
+const getPat = async (patError) => {
+    const pat = await getStorage("syncPAT");
+    if (!pat) {
+        warn("No PAT found. Aborting and disabling sync.");
+        await setStorage("syncState", false);
+        if (patError) {
+            throw new Error("No PAT found.");
+        }
+    }
+    return pat;
+};
+
+const getIdentifier = async () => {
+    const browserName = await getBrowserName();
+    let syncId = await getStorage("syncId");
+    if (!syncId) {
+        syncId = getRandomToken();
+        syncId = `${browserName}-${syncId}`;
+        info("No syncId found. Creating new one: ", syncId);
+        await setStorage("syncId", syncId);
+    }
+    return syncId;
+};
+
 /**
  * Gets the default content of the PaperMemory sync Gist file.
  * If the file does not exist, it will be created.
- * @param {string} pat - Personal Access Token (will be retrieved if not provided)
- * @param {boolean} store - Whether to store the PAT in the browser storage
+ * @param {object} options - Options object
+ * @param {string} options.pat - Personal Access Token (will be retrieved if not provided)
+ * @param {boolean} options.store - Whether to store the PAT in the browser storage
+ * @param {boolean} options.patError - Whether to raise an error if no PAT
  * @returns {Promise<{ ok: boolean, payload: { file: { filename: string, raw_url: string, content: object }, pat: string, gistId: string } }>}
  */
-const getGist = async (pat, store = true) => {
+const getGist = async (options) => {
+    options = options ?? {};
+    let pat = options.pat;
+    let store = options.store ?? true;
+    let patError = options.patError ?? true;
     try {
-        if (!pat) {
-            pat = await getStorage("syncPAT");
-        }
-        if (!pat) {
-            setStorage("syncState", false);
-            return { ok: false, payload: "noPAT" };
-        }
+        if (!pat) pat = await getPat(patError);
 
         const isTest = await getStorage("syncTest");
-        const fileName = isTest
+        const filename = isTest
             ? "TestsPaperMemorySync"
             : "DO_NO_EDIT__PaperMemorySyncV2.json";
         const description = "Automated PaperMemory sync Gist. Do not edit manually.";
@@ -30,21 +54,21 @@ const getGist = async (pat, store = true) => {
         const gists = await requestWithAuth("GET /gists");
 
         let gist = gists.data?.find(
-            (gist) => gist.description === description && gist.files[fileName]
+            (gist) => gist.description === description && gist.files[filename]
         );
 
         if (!gist) {
             info("No Gist found. Creating new one...");
             const papers = await getStorage("papers");
             gist = await createGistWithFile({
-                filename: fileName,
+                filename,
                 pat,
                 description,
                 content: papers,
             });
             if (!gist) return { ok: false, payload: "wrongPAT" };
         }
-        file = gist.files[fileName];
+        file = gist.files[filename];
         const gistId = gist.id;
         store && (await setStorage("syncPAT", pat));
         return { ok: true, payload: { file, pat, gistId } };
@@ -72,20 +96,16 @@ const createGistWithFile = async ({
     content,
     description = "Automated PaperMemory sync Gist. Do not edit manually.",
 }) => {
+    if (typeof file === "undefined") {
+        throw new Error("No file provided.");
+    }
     if (typeof content !== "string") {
         content = JSON.stringify(content, null, "");
     }
     if (typeof file === "string") {
         file = { filename: file };
     }
-    if (!pat) {
-        pat = await getStorage("syncPAT");
-    }
-    if (!pat) {
-        warn("(createGistWithFile) No PAT found. Aborting and disabling sync.");
-        setStorage("syncState", false);
-        return;
-    }
+    if (!pat) pat = await getPat();
     const requestWithAuth = octokitRequest.defaults({
         headers: {
             authorization: `token ${pat}`,
@@ -94,34 +114,46 @@ const createGistWithFile = async ({
     });
     const response = await requestWithAuth("POST /gists", {
         description,
-        files: { [filename]: { content } },
+        files: { [file.filename]: { content } },
         public: false,
     });
     return response.data;
 };
 
 /**
- * Get the content of a Gist file. Accept `file:{filename, raw_url}` object or `filename` and `url` strings.
+ * Get the content of a Gist file (from `gistId`). Accept `file:{filename, raw_url}`
+ * object or `filename` and `url` strings.
+ * If `gistId` is not provided, it will query all gists and find the first one with the file.
  * The PAT will be retrieved from the browser storage if not provided.
  * @param {object} options - Options object
- * @param {string} options.file - File name or object with `filename` property and `raw_url` property
- * @param {string} options.filename - File Name (will be ignored if `file` is provided)
- * @param {string} options.url - Raw URL of the file (will be ignored if `file` is provided)
+ * @param {string} options.file - File name or object with `filename` property
  * @param {string} options.pat - Personal Access Token (will be retrieved if not provided)
+ * @param {gistId} options.gistId - ID of the Gist. Will query all gists and find the first one with the file if not provided.
  * @returns {Promise<object>} - The content of the file
  */
-const getDataForGistFile = async ({ file, filename, url }) => {
-    if (typeof file === "undefined") {
-        if (typeof url === "undefined") {
-            throw new Error("No file or url provided.");
-        }
-        if (typeof filename === "undefined") {
-            throw new Error("No filename provided.");
-        }
+const getDataForGistFile = async ({ file, pat, gistId }) => {
+    if (typeof file === "string") {
         file = { filename: file };
-    } else if (typeof filename !== "undefined" || typeof url !== "undefined") {
-        warn("`file` argument has precedence over `filename` or `url`.");
     }
+    if (!pat) pat = await getPat();
+
+    const requestWithAuth = octokitRequest.defaults({
+        headers: {
+            authorization: `token ${pat}`,
+            "X-GitHub-Api-Version": "2022-11-28",
+        },
+    });
+    let gist;
+    if (!gistId) {
+        const resp = await requestWithAuth("GET /gists");
+        const gists = resp.data;
+        gist = gists?.find((gist) => gist.files[file.filename]);
+    } else {
+        const resp = await requestWithAuth(`GET /gists/${gistId}`);
+        gist = resp.data;
+    }
+    file = gist.files[file.filename];
+
     if (file.filename.endsWith(".json")) {
         const { data, status } = await fetchJSON(file.raw_url);
         return data;
@@ -140,12 +172,8 @@ const getDataForGistFile = async ({ file, filename, url }) => {
  * @returns {Promise<object>} - The Gist object
  */
 const updateGistFile = async ({ file, content, gistId, pat }) => {
-    if (!pat) pat = await getStorage("syncPAT");
-    if (!pat) {
-        warn("(updateGistFile) No PAT found. Aborting and disabling sync.");
-        setStorage("syncState", false);
-        return { ok: false, payload: "noPAT" };
-    }
+    if (!pat) pat = await getPat();
+
     if (typeof content !== "string") {
         content = JSON.stringify(content, null, "");
     }
@@ -159,7 +187,6 @@ const updateGistFile = async ({ file, content, gistId, pat }) => {
         },
     });
     return await requestWithAuth(`PATCH /gists/${gistId}`, {
-        gist_id: gistId,
         files: { [file.filename]: { content } },
     });
 };
@@ -286,4 +313,73 @@ const errorSyncLoader = async () => {
     setTimeout(() => {
         hideId("sync-popup-feedback");
     }, 2000);
+};
+
+/**
+ * Delete a gist from its id
+ * @param {string} gistId ID of the User's gist to delete
+ * @returns {Promise} Promise from the request
+ */
+const deleteGist = async ({ gistId, pat }) => {
+    if (!pat) pat = await getPat();
+    const requestWithAuth = octokitRequest.defaults({
+        headers: {
+            authorization: `token ${pat}`,
+            "X-GitHub-Api-Version": "2022-11-28",
+        },
+    });
+    return await requestWithAuth(`DELETE /gists/${gistId}`);
+};
+
+const sleep = async (duration) =>
+    new Promise((resolve) => setTimeout(resolve, duration));
+
+const measureCacheTime = async ({ maxTime = 1e5 }) => {
+    const randomId = Math.random().toString(36).substring(7);
+    const filename = `PaperMemory-cache-test-${randomId}.json`;
+    const description = "PaperMemory cache test. You *can* delete this.";
+    const content = { test: "test", data: { counter: 0 } };
+    const gist = await createGistWithFile({
+        file: filename,
+        content,
+        description,
+    });
+    console.log("Test gist: ", gist);
+    const gistId = gist.id;
+    try {
+        const file = gist.files[filename];
+
+        content.data.counter++;
+        const updateResp = await updateGistFile({ file, content, gistId });
+        console.log("updateResp: ", updateResp);
+        const start = Date.now();
+        let time;
+        let iter = 0;
+
+        while (true) {
+            const data = await getDataForGistFile({ file, gistId });
+            console.log("");
+            console.log("data: ", data);
+            time = (Date.now() - start) / 1e3;
+            console.log("Time: ", time, "at iteration: ", iter);
+            if (data.data.counter === 1) {
+                break;
+            }
+            await sleep(500);
+            if (time > maxTime) {
+                break;
+            }
+            iter++;
+        }
+        if (time > maxTime) {
+            warn("Cache time too long: > maxTime=", maxTime, "ms");
+            return;
+        }
+        info(`Cache time: ${time}s`);
+    } catch (e) {
+        console.log(e);
+    } finally {
+        info("Deleting test gist...");
+        await deleteGist({ gistId });
+    }
 };

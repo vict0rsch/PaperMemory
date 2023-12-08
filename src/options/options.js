@@ -10,11 +10,6 @@ function getRandomInt(max) {
     return Math.floor(Math.random() * max);
 }
 
-const sleep = async (timeout) =>
-    new Promise((resolve) => {
-        setTimeout(resolve, timeout);
-    });
-
 const isValidHttpUrl = (string) => {
     let url;
 
@@ -861,7 +856,9 @@ const setupSourcesSelection = async () => {
 
 const setupSync = async () => {
     showId("pat-loader");
-    const { ok, payload, error } = await getGist();
+    const { ok, payload, error } = (await shouldSync())
+        ? await getGist({ patError: false })
+        : { ok: true, payload: { pat: (await getStorage("syncPAT")) ?? "" } };
     hideId("pat-loader");
 
     if (!ok) {
@@ -888,7 +885,7 @@ const setupSync = async () => {
             await toggleSync({ hideAll: true });
             return;
         }
-        const { ok, payload, error } = await getGist(pat);
+        const { ok, payload, error } = await getGist({ pat });
         if (!ok) {
             logError(error);
             setHTML("pat-feedback", error.response.data.message);
@@ -908,8 +905,8 @@ const setupSync = async () => {
         if (!c) return;
         const pat = "";
         setStorage("syncPAT", pat);
+        setStorage("syncState", false);
         val("pat-input", pat);
-        await sendMessageToBackground({ type: "restartGist" });
         toggleSync();
     });
 
@@ -925,7 +922,7 @@ const setupSync = async () => {
             return;
         }
         const { file, pat, gistId } = payload;
-        const data = await getDataForGistFile({ file });
+        const data = await getDataForGistFile({ file, gistId });
         let userChoice = "no-remote";
         if (data) {
             console.log("Existing data file content:", data);

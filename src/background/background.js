@@ -64,6 +64,7 @@ const initGist = async () => {
         global.state.gistId = payload.gistId;
         const duration = (Date.now() - start) / 1e3;
         logOk(`Sync successfully enabled (${duration}s).`);
+        info(`Using gist: ${payload.gistId}`);
         badgeOk();
     } else {
         logError("[initGist]", error || payload);
@@ -260,12 +261,22 @@ const pullSyncPapers = async () => {
     try {
         badgeWait("Pull...");
         const start = Date.now();
+        const localSyncID = await getIdentifier();
         consoleHeader(`Pulling ${String.fromCodePoint("0x23EC")}`);
         log("Pulling from Github...");
         global.state.gistData = await getDataForGistFile({
             file: global.state.gistFile,
+            gistid: global.state.gistId,
         });
-        const remotePapers = global.state.gistData;
+        const remoteSyncId = global.state.gistData["__syncId"];
+        delete global.state.gistData["__syncId"];
+        const remotePapers =
+            remoteSyncId === localSyncID
+                ? (await getStorage("papers")) ?? {}
+                : global.state.gistData;
+        if (remoteSyncId === localSyncID) {
+            warn("Pulled sync data from same device, ignoring.");
+        }
         log("Pulled papers:", remotePapers);
         const duration = (Date.now() - start) / 1e3;
         info(`Pulling from Github... Done (${duration}s)!`);
@@ -283,6 +294,7 @@ const pullSyncPapers = async () => {
 
 const pushSyncPapers = async () => {
     if (!(await shouldSync())) return;
+    const identifier = await getIdentifier();
     try {
         const start = Date.now();
         consoleHeader(`Pushing ${String.fromCodePoint("0x23EB")}`);
@@ -290,11 +302,13 @@ const pushSyncPapers = async () => {
         badgeWait("Push...");
         chrome.action.setBadgeBackgroundColor({ color: "rgb(189, 127, 10)" });
         const papers = (await getStorage("papers")) ?? {};
+        const syncId = await getIdentifier();
         log("Papers to write: ", papers);
+        papers["__syncId"] = syncId;
         await updateGistFile({
             file: global.state.gistFile,
             content: papers,
-            gistid: global.state.gistId,
+            gistId: global.state.gistId,
         });
         const duration = (Date.now() - start) / 1e3;
         log(`Writing to Github... Done (${duration}s)!`);
