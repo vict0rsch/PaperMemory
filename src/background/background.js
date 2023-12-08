@@ -1,3 +1,8 @@
+/**
+ * @todo Better error PAT error handling (e.g. when PAT is invalid or expired)
+ * @todo Better docstrings for background.js
+ */
+
 try {
     importScripts(
         "../shared/js/utils/octokit.bundle.js",
@@ -61,7 +66,7 @@ const initGist = async () => {
         logOk(`Sync successfully enabled (${duration}s).`);
         badgeOk();
     } else {
-        logError("[initGist]", error);
+        logError("[initGist]", error || payload);
         badgeError();
     }
     badgeClear();
@@ -257,7 +262,9 @@ const pullSyncPapers = async () => {
         const start = Date.now();
         consoleHeader(`Pulling ${String.fromCodePoint("0x23EC")}`);
         log("Pulling from Github...");
-        global.state.gistData = await getDataForGistFile(global.state.gistFile);
+        global.state.gistData = await getDataForGistFile({
+            file: global.state.gistFile,
+        });
         const remotePapers = global.state.gistData;
         log("Pulled papers:", remotePapers);
         const duration = (Date.now() - start) / 1e3;
@@ -284,7 +291,11 @@ const pushSyncPapers = async () => {
         chrome.action.setBadgeBackgroundColor({ color: "rgb(189, 127, 10)" });
         const papers = (await getStorage("papers")) ?? {};
         log("Papers to write: ", papers);
-        await updateGist(global.state.gistFile, papers, global.state.gistId);
+        await updateGistFile({
+            file: global.state.gistFile,
+            content: papers,
+            gistid: global.state.gistId,
+        });
         const duration = (Date.now() - start) / 1e3;
         log(`Writing to Github... Done (${duration}s)!`);
         badgeOk();

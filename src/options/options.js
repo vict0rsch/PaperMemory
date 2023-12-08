@@ -925,7 +925,7 @@ const setupSync = async () => {
             return;
         }
         const { file, pat, gistId } = payload;
-        const data = await getDataForGistFile(file);
+        const data = await getDataForGistFile({ file });
         let userChoice = "no-remote";
         if (data) {
             console.log("Existing data file content:", data);
@@ -949,7 +949,7 @@ const setupSync = async () => {
                         "text/json"
                     );
                 }
-                await updateGist(file, global.state.papers, gistId);
+                await updateGistFile({ file, content: global.state.papers, gistId });
                 await setSyncOk();
             } else if (userChoice === "local-remote") {
                 // overwrite local data with remote data
@@ -1033,7 +1033,7 @@ const setupSync = async () => {
                         );
                     }
                     await setStorage("papers", papersToWrite);
-                    await updateGist(file, papersToWrite, gistId);
+                    await updateGistFile({ file, content: papersToWrite, gistId });
                     await setSyncOk();
                 } else {
                     setHTML("overwriteRemoteFeedback", message);
