@@ -36,7 +36,7 @@ function popupJS() {
 function utilsJS() {
     return (
         src([
-            "src/shared/js/utils/gist.js",
+            "src/shared/js/utils/octokit.bundle.js",
             "src/shared/js/utils/miniquery.js",
             "src/shared/js/utils/config.js",
             "src/shared/js/utils/levenshtein.js",

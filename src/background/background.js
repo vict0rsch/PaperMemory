@@ -1,6 +1,6 @@
 try {
     importScripts(
-        "../shared/js/utils/gist.js",
+        "../shared/js/utils/octokit.bundle.js",
         "../shared/js/utils/miniquery.js",
         "../shared/js/utils/config.js",
         "../shared/js/utils/levenshtein.js",
