@@ -6,23 +6,36 @@ const infoSpan = (k, ml) =>
  * @param {object} paper A paper object
  * @returns {string} HTML string
  */
-const getPaperinfoTitle = (paper) => {
+const getPaperInfoTable = (paper) => {
     const addDate = new Date(paper.addDate).toLocaleString().replace(",", "");
     const lastOpenDate = new Date(paper.lastOpenDate).toLocaleString().replace(",", "");
     const ml = "Publication".length + 1;
-    let infoTitle = `${infoSpan("Added", ml)} ${addDate}\n`;
-    infoTitle += `${infoSpan("Last open", ml)} ${lastOpenDate}\n`;
-    infoTitle += `${infoSpan("Visits", ml)} ${paper.count}\n`;
-    infoTitle += `${infoSpan("Source", ml)} ${
-        global.knownPaperPages[paper.source].name
-    }\n`;
-    if (paper.venue) {
-        infoTitle += `${infoSpan("Publication", ml)} <strong>${paper.venue} ${
-            paper.year
-        }</strong>`;
-    }
-    infoTitle = infoTitle.replaceAll("\n", "<br/>");
-    return infoTitle;
+    const tableData = [
+        ["Added", addDate],
+        ["Last open", lastOpenDate],
+        ["Visits", paper.count],
+        ["Source", global.knownPaperPages[paper.source].name],
+    ];
+    if (paper.venue)
+        tableData.push([
+            "Publication",
+            `<strong>${paper.venue} ${paper.year}</strong>`,
+        ]);
+    return /*html*/ `
+        <table class="paper-info-table">
+            ${tableData
+                .map((row) => {
+                    return /*html*/ `
+                        <tr>
+                            <td>${infoSpan(row[0], ml)}</td>
+                            <td>:</td>
+                            <td>${row[1]}</td>
+                        </tr>
+                    `;
+                })
+                .join("")}
+        </table>
+    `;
 };
 
 /**
@@ -133,7 +146,7 @@ const getMemoryItemHTML = (paper, titles) => {
         </div>`;
     }
 
-    const infoTitle = getPaperinfoTitle(paper);
+    const titleInfoTable = getPaperInfoTable(paper);
 
     return /*html*/ `
         <div
@@ -150,7 +163,7 @@ const getMemoryItemHTML = (paper, titles) => {
                 </span>
                 ${paper.title}
                 <div class="title-tooltip" style="display: none;">
-                    ${infoTitle}
+                    ${titleInfoTable}
                 </div>
             </h4>
             <div class="my-1 mx-0">

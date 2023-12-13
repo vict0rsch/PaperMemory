@@ -322,7 +322,7 @@ const popupMain = async (url, is, manualTrigger = false, tab = null) => {
         log("Popup paper:", paper);
         setHTML("popup-memory-edit", getPopupEditFormHTML(paper));
         setHTML("popup-copy-icons", getPopupPaperIconsHTML(paper, url, is));
-        setHTML("popup-title-tooltip", getPaperinfoTitle(paper));
+        setHTML("popup-title-tooltip", getPaperInfoTable(paper));
         findEl(`checkFavorite--${id}`).checked = paper.favorite;
         let extraDivWidth = 0;
         for (const p of [

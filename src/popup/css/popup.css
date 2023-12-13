@@ -662,6 +662,10 @@ code {
     width: max-content;
     max-width: 350px;
 }
+.title-tooltip tr,
+.title-popup-tooltip tr {
+    vertical-align: top;
+}
 .expand-memory-authors {
     cursor: pointer;
 }
