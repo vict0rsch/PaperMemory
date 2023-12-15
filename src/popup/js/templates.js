@@ -1,5 +1,3 @@
-const infoSpan = (k, ml) =>
-    `<span class="paper-info-span">${padRight(k, ml, "&nbsp;")}</span>`;
 /**
  * Return a formatted HTML string describing some metadata about a paper
  * added date, last open date, number of visits, venue if available
@@ -27,9 +25,8 @@ const getPaperInfoTable = (paper) => {
                 .map((row) => {
                     return /*html*/ `
                         <tr>
-                            <td>${infoSpan(row[0], ml)}</td>
-                            <td>:</td>
-                            <td>${row[1]}</td>
+                            <td><div class="info-table-key">${row[0]}</div></td>
+                            <td><div class="info-table-value">${row[1]}</div></td>
                         </tr>
                     `;
                 })

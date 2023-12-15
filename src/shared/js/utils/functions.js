@@ -308,20 +308,6 @@ const copyHyperLinkToClipboard = (url, title) => {
 };
 
 /**
- * Pad a string with a character on the right. Character is " " by default.
- * @param {string} str The string to pad
- * @param {number} length The length of the padded string
- * @param {string} char The character to pad with
- * @returns {string} The padded string
- */
-const padRight = (str, length, char) => {
-    if (typeof char === "undefined") {
-        char = " ";
-    }
-    return str.length < length ? str + char.repeat(length - str.length) : str;
-};
-
-/**
  * Parse a url and return an object with the url's components
  * @param {string} url The url to parse
  * @returns {HTMLAnchorElement} The parsed url

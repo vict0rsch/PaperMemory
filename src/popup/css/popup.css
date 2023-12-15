@@ -666,6 +666,31 @@ code {
 .title-popup-tooltip tr {
     vertical-align: top;
 }
+.title-tooltip table,
+.title-popup-tooltip table {
+    width: 100%;
+}
+.title-tooltip td:not(:last-child),
+.title-popup-tooltip td:not(:last-child) {
+    padding-right: 12px;
+}
+/* https://stackoverflow.com/questions/20319908/dynamic-number-of-dots-for-cell-padding-via-css */
+.title-tooltip td > div,
+.title-popup-tooltip td > div {
+    overflow: hidden;
+    position: relative;
+}
+.title-tooltip td:not(:last-child) > div:after,
+.title-popup-tooltip td:not(:last-child) > div:after {
+    content: "........................";
+    position: absolute;
+    font-weight: 100;
+    font-size: 12px;
+    bottom: 0px;
+    letter-spacing: 4px;
+    margin-left: 4px;
+}
+
 .expand-memory-authors {
     cursor: pointer;
 }
