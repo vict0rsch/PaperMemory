@@ -833,7 +833,7 @@ const makeNaturePaper = async (url) => {
     ];
     let doi;
     for (const doiClass of doiClasses) {
-        doi = document.querySelector(doiClass)?.innerText.split("https://doi.org/")[1];
+        doi = querySelector(doiClass)?.innerText.split("https://doi.org/")[1];
         if (doi) break;
     }
     if (!doi) {

@@ -229,7 +229,7 @@ const matchItems = async (papersToMatch) => {
         </div>`
     );
 
-    const progressbar = document.querySelector("#matching-progress-bar");
+    const progressbar = querySelector("#matching-progress-bar");
     const changeProgress = (progress) => {
         progressbar.style.width = `${progress}%`;
     };

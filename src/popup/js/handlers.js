@@ -203,9 +203,7 @@ const handleMemorySelectChange = (e) => {
 };
 
 const handleMemorySortArrow = (e) => {
-    if (
-        document.querySelector("#memory-sort-arrow svg").id === "memory-sort-arrow-down"
-    ) {
+    if (querySelector("#memory-sort-arrow svg").id === "memory-sort-arrow-down") {
         setMemorySortArrow("up");
     } else {
         setMemorySortArrow("down");
@@ -235,7 +233,7 @@ const handleFilterFavorites = () => {
             val("memory-select", "lastOpenDate");
             global.state.sortKey = "lastOpenDate";
         }
-        document.querySelector(`#memory-select option[value="favoriteDate"]`).remove();
+        querySelector(`#memory-select option[value="favoriteDate"]`).remove();
         sortMemory();
         setMemorySortArrow("down");
 
@@ -355,7 +353,7 @@ const handlePopupKeydown = (e) => {
             e.preventDefault();
             closeMenu();
         } else if (key === "Enter") {
-            let el = document.querySelector("#menu-switch:focus");
+            let el = querySelector("#menu-switch:focus");
             if (el) closeMenu();
         }
         return;
@@ -371,7 +369,7 @@ const handlePopupKeydown = (e) => {
             global.state.papers && dispatch("memory-switch", "click");
         } else if (key === "Enter") {
             // enter on the arxiv memory button opens it
-            let focused = document.querySelector(":focus");
+            let focused = querySelector(":focus");
             // if (!focused || !focused.length < 1) return;
             if (focused.id === "memory-switch-open") {
                 dispatch("memory-switch", "click");
@@ -389,12 +387,12 @@ const handlePopupKeydown = (e) => {
 
     if (key === "Enter") {
         // enable Enter on favorites and sort arrows
-        const favoriteBtn = document.querySelector("#filter-favorites:focus");
+        const favoriteBtn = querySelector("#filter-favorites:focus");
         if (favoriteBtn) {
             dispatch("filter-favorites", "click");
             return;
         }
-        const arrowBtn = document.querySelector("#memory-sort-arrow:focus");
+        const arrowBtn = querySelector("#memory-sort-arrow:focus");
         if (arrowBtn && key === "Enter") {
             dispatch("memory-sort-arrow", "click");
             return;
@@ -402,7 +400,7 @@ const handlePopupKeydown = (e) => {
     }
 
     let id;
-    const paperItem = document.querySelector(".memory-container:focus");
+    const paperItem = querySelector(".memory-container:focus");
     if (key !== "Escape") {
         if (!paperItem) return;
         id = paperItem.id.split("--")[1];

@@ -170,7 +170,7 @@ const handleParseImportJson = async (e) => {
             return;
         }
 
-        const progressbar = document.querySelector("#import-json-progress-bar");
+        const progressbar = querySelector("#import-json-progress-bar");
 
         const changeProgress = (progress) => {
             progressbar.style.width = `${progress}%`;
@@ -491,7 +491,7 @@ const startMatching = async (papersToMatch) => {
     showId("matching-progress-container", "flex");
     setHTML("matching-status-total", papersToMatch.length);
 
-    const progressbar = document.querySelector("#manual-parsing-progress-bar");
+    const progressbar = querySelector("#manual-parsing-progress-bar");
 
     const changeProgress = (progress) => {
         progressbar.style.width = `${progress}%`;
@@ -1110,7 +1110,7 @@ const toggleSync = async ({ hideAll = false } = {}) => {
 // ---------------------
 
 const makeSideBar = () => {
-    const sections = [...document.querySelectorAll(".section")].filter(
+    const sections = queryAll(".section").filter(
         (section) => !!section.querySelector("h2")
     );
     const lis = sections.map((section) => {
@@ -1132,13 +1132,13 @@ const makeSideBar = () => {
 
         return `<li class="nav-item"><a class="nav-link" href="#${id}">${title}</a>${ul}</li>`;
     });
-    setHTML(document.querySelector("nav ul"), lis.join(""));
+    setHTML(querySelector("nav ul"), lis.join(""));
 };
 
 const setupSidebar = async () => {
     makeSideBar();
-    var toc = document.querySelector(".toc");
-    var tocPath = document.querySelector(".toc-marker path");
+    var toc = querySelector(".toc");
+    var tocPath = querySelector(".toc-marker path");
     var tocItems;
 
     // Factor of screen size that the element must cross
@@ -1262,7 +1262,7 @@ const setupSidebar = async () => {
 // -------------------
 
 const showOptionsModal = (name) => {
-    document.querySelectorAll(".modal-content-div").forEach(hideId);
+    queryAll(".modal-content-div").forEach(hideId);
     showId(`modal-${name}-content`, "contents");
     style("modal-wrapper", "display", "flex");
     document.body.style.overflow = "hidden";

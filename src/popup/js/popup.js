@@ -51,7 +51,7 @@ const getAndTrackPopupMenuChecks = (prefs, prefsCheckNames) => {
  * @param {string} name The name of the modal to show
  */
 const showPopupModal = (name) => {
-    document.querySelectorAll(".popup-modal-content").forEach(hideId);
+    queryAll(".popup-modal-content").forEach(hideId);
     showId(`modal-${name}-content`, "contents");
     style("popup-modal-wrapper", "display", "flex");
     [...document.getElementsByTagName("a")].forEach((el) => {

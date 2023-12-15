@@ -580,9 +580,7 @@ const huggingfacePapers = (paper, url) => {
                 <span id="pm-hf-label">(PaperMemory)</span>
             </div>
         </div>`;
-    abstractH2 = [...document.querySelectorAll("h2")].find(
-        (h) => h.innerText.trim() === "Abstract"
-    );
+    abstractH2 = queryAll("h2").find((h) => h.innerText.trim() === "Abstract");
     if (!abstractH2) {
         log("Missing 'Abstract' h2 title on HuggingFace paper page.");
     }
@@ -607,9 +605,9 @@ const arxiv = async (checks) => {
     if (!isArxivAbs) return;
 
     const id = await parseIdFromUrl(url);
-    const previousHTML = document.querySelector(".extra-services .full-text").innerHTML;
+    const previousHTML = querySelector(".extra-services .full-text").innerHTML;
     const pmTitle = '<h2 id="pm-col-title">PaperMemory:</h2>';
-    document.querySelector(".extra-services .full-text").innerHTML = /*html*/ `
+    querySelector(".extra-services .full-text").innerHTML = /*html*/ `
         <div>${previousHTML}</div>
         <div id="pm-download-wrapper" class="pm-container">
             <div id="pm-header" style="width: 100%">
@@ -619,7 +617,7 @@ const arxiv = async (checks) => {
         </div>
         <div id="pm-extras"></div>
     `;
-    const pdfUrl = document.querySelector(".abs-button.download-pdf").href;
+    const pdfUrl = querySelector(".abs-button.download-pdf").href;
     const arxivPMDiv = findEl("pm-extras");
 
     // -----------------------------
@@ -727,42 +725,32 @@ const arxiv = async (checks) => {
 
         findEl("loader-container").remove();
         arxivPMDiv.insertAdjacentHTML("beforeend", bibtexDiv);
-        addListener(
-            document.querySelector("#texHeader .copy-feedback"),
-            "click",
-            (e) => {
-                $("#texHeader .copy-feedback").fadeOut(200, () => {
-                    $("#texHeader .copy-feedback-ok").fadeIn(200, () => {
-                        setTimeout(() => {
-                            $("#texHeader .copy-feedback-ok").fadeOut(200, () => {
-                                $("#texHeader .copy-feedback").fadeIn(200);
-                            });
-                        }, 1500);
-                    });
+        addListener(querySelector("#texHeader .copy-feedback"), "click", (e) => {
+            $("#texHeader .copy-feedback").fadeOut(200, () => {
+                $("#texHeader .copy-feedback-ok").fadeIn(200, () => {
+                    setTimeout(() => {
+                        $("#texHeader .copy-feedback-ok").fadeOut(200, () => {
+                            $("#texHeader .copy-feedback").fadeIn(200);
+                        });
+                    }, 1500);
                 });
-                copyTextToClipboard(findEl("pm-bibtex-textarea").innerText);
-                feedback("Bibtex Citation Copied!");
-            }
-        );
-        addListener(
-            document.querySelector("#markdown-header .copy-feedback"),
-            "click",
-            (e) => {
-                $("#markdown-header .copy-feedback").fadeOut(200, () => {
-                    $("#markdown-header .copy-feedback-ok").fadeIn(200, () => {
-                        setTimeout(() => {
-                            $("#markdown-header .copy-feedback-ok").fadeOut(200, () => {
-                                $("#markdown-header .copy-feedback").fadeIn(200);
-                            });
-                        }, 1500);
-                    });
+            });
+            copyTextToClipboard(findEl("pm-bibtex-textarea").innerText);
+            feedback("Bibtex Citation Copied!");
+        });
+        addListener(querySelector("#markdown-header .copy-feedback"), "click", (e) => {
+            $("#markdown-header .copy-feedback").fadeOut(200, () => {
+                $("#markdown-header .copy-feedback-ok").fadeIn(200, () => {
+                    setTimeout(() => {
+                        $("#markdown-header .copy-feedback-ok").fadeOut(200, () => {
+                            $("#markdown-header .copy-feedback").fadeIn(200);
+                        });
+                    }, 1500);
                 });
-                copyTextToClipboard(
-                    findEl("markdown-link").innerText.replaceAll("\n", "")
-                );
-                feedback("Markdown Link Copied!");
-            }
-        );
+            });
+            copyTextToClipboard(findEl("markdown-link").innerText.replaceAll("\n", ""));
+            feedback("Markdown Link Copied!");
+        });
     }
 };
 
