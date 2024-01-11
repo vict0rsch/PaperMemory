@@ -383,3 +383,28 @@ const measureCacheTime = async ({ maxTime = 1e5 }) => {
         await deleteGist({ gistId });
     }
 };
+
+// ----------------------------------------------------
+// -----  TESTS: modules for node.js environment  -----
+// ----------------------------------------------------
+if (typeof module !== "undefined" && module.exports != null) {
+    var dummyModule = module;
+    dummyModule.exports = {
+        getPat,
+        getIdentifier,
+        getGist,
+        createGistWithFile,
+        getDataForGistFile,
+        updateGistFile,
+        pushToRemote,
+        pullFromRemote,
+        shouldSync,
+        initSyncAndState,
+        startSyncLoader,
+        successSyncLoader,
+        errorSyncLoader,
+        deleteGist,
+        sleep,
+        measureCacheTime,
+    };
+}

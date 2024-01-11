@@ -424,6 +424,8 @@ const extractAuthor = (bibtex) =>
 if (typeof module !== "undefined" && module.exports != null) {
     var dummyModule = module;
     dummyModule.exports = {
+        BibtexParser,
+        safeRemoveSurroundingBraces,
         bibtexToObject,
         bibtexToString,
         extractBibtexValue,

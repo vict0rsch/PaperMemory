@@ -850,5 +850,6 @@ if (typeof module !== "undefined" && module.exports != null) {
         validatePaper,
         prepareOverwriteData,
         makeVenue,
+        makeTitleHashToIdList,
     };
 }

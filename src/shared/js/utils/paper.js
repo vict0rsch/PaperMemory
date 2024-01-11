@@ -1000,10 +1000,11 @@ if (typeof module !== "undefined" && module.exports != null) {
         matchPapersToFiles,
         matchAllFilesToPapers,
         mergePapers,
+        updatePaperVisits,
         addOrUpdatePaper,
+        findPaperForProperty,
         parseIdFromUrl,
         isKnownLocalFile,
         makeMdLink,
-        updatePaperVisits,
     };
 }

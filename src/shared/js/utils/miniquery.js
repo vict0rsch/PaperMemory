@@ -401,7 +401,8 @@ if (typeof module !== "undefined" && module.exports != null) {
         slideUp,
         slideDown,
         queryAll,
-        addEventToClass,
+        querySelector,
         createElementFromHTML,
+        addEventToClass,
     };
 }

@@ -294,7 +294,11 @@ const downloadPaperPdf = async (paper) => {
 if (typeof module !== "undefined" && module.exports != null) {
     var dummyModule = module;
     dummyModule.exports = {
+        duration,
         initState,
+        sortMemory,
+        orderPapers,
+        makeTags,
         getExamplePaper,
         stateTitleFunction,
         updateDuplicatedUrls,
