@@ -39,7 +39,6 @@ function utilsJS() {
             "src/shared/js/utils/octokit.bundle.js",
             "src/shared/js/utils/miniquery.js",
             "src/shared/js/utils/config.js",
-            "src/shared/js/utils/levenshtein.js",
             "src/shared/js/utils/bibtexParser.js",
             "src/shared/js/utils/functions.js",
             "src/shared/js/utils/sync.js",

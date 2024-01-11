@@ -8,7 +8,6 @@ try {
         "../shared/js/utils/octokit.bundle.js",
         "../shared/js/utils/miniquery.js",
         "../shared/js/utils/config.js",
-        "../shared/js/utils/levenshtein.js",
         "../shared/js/utils/bibtexParser.js",
         "../shared/js/utils/functions.js",
         "../shared/js/utils/sync.js",
