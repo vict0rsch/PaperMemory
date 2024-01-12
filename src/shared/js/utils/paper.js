@@ -20,11 +20,11 @@ const isPaper = async (url, noStored = false) => {
                 if (url.includes(pattern)) {
                     // known pattern: store as true
                     is[source] = true;
-                    break;
                 }
             } else if (typeof pattern === "function") {
                 is[source] = pattern(url);
             }
+            if (is[source]) break;
         }
     }
     // is the url a local file in the memory?
@@ -178,8 +178,19 @@ const paperToAbs = (paper) => {
         case "mdpi":
             abs = paper.pdfLink.split("/pdf")[0];
             break;
+
         case "oup":
             abs = `https://doi.org/${paper.doi}`;
+            break;
+
+        case "hal":
+            abs = pdf.split("/file/")[0].split("/document")[0];
+            break;
+
+        case "chemrxiv":
+            abs = `https://chemrxiv.org/engage/chemrxiv/article-details/${
+                pdf.split("/item/")[1].split("/")[0]
+            }`;
             break;
 
         default:
@@ -294,8 +305,13 @@ const paperToPDF = (paper) => {
         case "oup":
             break;
 
+        case "hal":
+            break;
+
+        case "chemrxiv":
+            break;
+
         case "website":
-            abs = paper.pdfLink;
             break;
 
         default:
@@ -915,11 +931,16 @@ const parseIdFromUrl = async (url, tab = null) => {
         idForUrl = findPaperForProperty(papers, "oup", miniHash(num));
     } else if (is.hal) {
         url = noParamUrl(url).replace(
-            /(hal\.science\/\w+-\d+)(v\d+)?(\/document)?/,
+            /(hal\.science\/\w+-\d+)(v\d+)?((\/document|\/file\/.+\.pdf))?/,
             "$1"
         );
         const halId = url.split("/").last();
         idForUrl = findPaperForProperty(papers, "hal", miniHash(halId));
+    } else if (is.chemrxiv) {
+        chemRxivId = isPdfUrl(url)
+            ? (chemRxivId = url.split("/item/")[1].split("/")[0])
+            : (chemRxivId = noParamUrl(url).split("/").last());
+        idForUrl = findPaperForProperty(papers, "chemrxiv", miniHash(chemRxivId));
     } else if (is.localFile) {
         idForUrl = is.localFile;
     } else if (is.parsedWebsite) {

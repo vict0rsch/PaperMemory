@@ -399,8 +399,10 @@ const bibtexToString = (bibtex) => {
             if (value.startsWith("{") && value.endsWith("}")) {
                 value = safeRemoveSurroundingBraces(value);
             }
-            const bkey = key + " ".repeat(keyLen - key.length);
-            bstr += `\t${bkey} = {${value}},\n`;
+            if (value.length > 0) {
+                const bkey = key + " ".repeat(keyLen - key.length);
+                bstr += `\t${bkey} = {${value}},\n`;
+            }
         }
     }
     return (bstr.slice(0, -2) + "\n}").replaceAll("\t", "  ").replaceAll("--", "-");

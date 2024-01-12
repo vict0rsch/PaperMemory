@@ -235,21 +235,29 @@ const fetchSemanticScholarDataForDoi = async (doi) => {
     return bibData;
 };
 
-const getMetaContent = ({ selector, dom, all = false, pure = false }) => {
+// get all dc variations
+const getDCPatterns = (value) => {
+    const spec = value.slice(3);
+    const lowers = ["dc.", "DC:", "DC.", "dc:"].map((v) => v + spec.toLowerCase());
+    const caps = ["dc.", "DC:", "DC.", "dc:"].map((v) => v + spec.capitalize());
+    return [...lowers, ...caps];
+};
+const getMetaContent = ({
+    selector,
+    dom,
+    all = false,
+    pure = false,
+    dcpattern = null,
+}) => {
     let query = "";
-    // account for dc.Creator | dc.creator, dc.Date | dc.date, etc.
     for (const [k, v] of Object.entries(selector)) {
-        query += `meta[${k}='${v}']`;
-        if (v.startsWith("dc.")) {
-            let newStart;
-            const field = v.split("dc.")[1];
-            const start = field[0];
-            if (start === start.toLowerCase()) {
-                newStart = start.toUpperCase();
-            } else {
-                newStart = start.toLowerCase();
-            }
-            query += `,meta[${k}='dc.${newStart + field.slice(1)}']`;
+        if (!/dc\W/.test(v.toLowerCase())) {
+            // not a dc key
+            query += `meta[${k}='${v}']`;
+        } else {
+            query += getDCPatterns(v)
+                .map((dcp) => `meta[${k}='${dcp}']`)
+                .join(",");
         }
     }
     if (all) {
@@ -266,37 +274,67 @@ const getMetaContent = ({ selector, dom, all = false, pure = false }) => {
 };
 
 const extractDataFromDCMetaTags = (dom) => {
-    const author = getMetaContent({
-        selector: { name: "dc.Creator" },
-        dom,
-        all: true,
-    }).join(" and ");
+    let author =
+        getMetaContent({
+            selector: { name: "dc.Creator" },
+            dom,
+            all: true,
+        }).join(" and ") ||
+        getMetaContent({
+            selector: { name: "citation_author" },
+            dom,
+            all: true,
+        }).join(" and ");
 
     if (!author) {
         return null;
     }
 
-    const year = getMetaContent({
-        selector: { name: "dc.Date" },
-        dom,
-    }).split("-")[0];
-    const publisher = getMetaContent({
-        selector: { name: "dc.Publisher" },
-        dom,
-    }).replaceAll("\n", " ");
-    const title = getMetaContent({
-        selector: { name: "dc.Title" },
-        dom,
-    });
+    const year = (
+        getMetaContent({
+            selector: { name: "dc.Date" },
+            dom,
+        }) ||
+        getMetaContent({
+            selector: { name: "citation_publication_date" },
+            dom,
+        })
+    )
+        .split("-")[0] // account for YYYY-MM-DD
+        .split("/")[0]; // account for YYYY/MM/DD
+
+    const publisher =
+        getMetaContent({
+            selector: { name: "dc.Publisher" },
+            dom,
+        }).replaceAll("\n", " ") ||
+        getMetaContent({
+            selector: { property: "og:site_name" },
+            dom,
+            pure: true,
+        });
+
+    const title =
+        getMetaContent({
+            selector: { name: "dc.Title" },
+            dom,
+        }) ||
+        getMetaContent({
+            selector: { name: "citation_title" },
+            dom,
+        });
+
     const venue = getMetaContent({
         selector: { name: "citation_journal_title" },
         dom,
     });
+
     const pdfLink = getMetaContent({
         selector: { name: "citation_pdf_url" },
         dom,
         pure: true,
     });
+
     const doi =
         getMetaContent({
             selector: { scheme: "doi" },
@@ -306,6 +344,7 @@ const extractDataFromDCMetaTags = (dom) => {
             selector: { name: "citation_doi" },
             dom,
         });
+
     const key = `${author
         .split(" and ")[0]
         .split(" ")
@@ -322,7 +361,7 @@ const extractDataFromDCMetaTags = (dom) => {
         publisher,
         journal: venue,
     });
-    const note = `Published @ ${venue} (${year})`;
+    const note = venue ? `Published @ ${venue} (${year})` : "";
 
     return { author, year, publisher, title, venue, key, doi, bibtex, pdfLink, note };
 };
@@ -1483,6 +1522,22 @@ const makerHALPaper = async (url) => {
     return { author, bibtex, id, key, note, pdfLink, title, venue, year, doi };
 };
 
+const makeChemRxivPaper = async (url) => {
+    let chemRxivId;
+    let absUrl = url;
+    if (isPdfUrl(url)) {
+        chemRxivId = url.split("/item/")[1].split("/")[0];
+        absUrl = "https://chemrxiv.org/engage/chemrxiv/article-details/" + chemRxivId;
+    } else {
+        chemRxivId = noParamUrl(url).split("/").last();
+    }
+    const dom = await fetchDom(absUrl);
+    const { author, year, publisher, title, venue, key, doi, bibtex, pdfLink, note } =
+        extractDataFromDCMetaTags(dom);
+    const id = `ChemRxiv-${year}_${miniHash(chemRxivId)}`;
+    return { author, bibtex, id, key, note, pdfLink, title, venue, year, doi };
+};
+
 // -------------------------------
 // -----  PREPRINT MATCHING  -----
 // -------------------------------
@@ -1967,6 +2022,11 @@ const makePaper = async (is, url, tab = false) => {
         paper = await makerHALPaper(url);
         if (paper) {
             paper.source = "hal";
+        }
+    } else if (is.chemrxiv) {
+        paper = await makeChemRxivPaper(url);
+        if (paper) {
+            paper.source = "chemrxiv";
         }
     } else {
         throw new Error("Unknown paper source: " + JSON.stringify({ is, url }));

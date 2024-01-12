@@ -201,6 +201,16 @@ global.knownPaperPages = {
         patterns: ["biorxiv.org/content"],
         name: "BioRxiv",
     },
+    chemrxiv: {
+        patterns: [
+            "chemrxiv.org/engage/chemrxiv/article-details/",
+            (url) =>
+                url.includes(
+                    "https://chemrxiv.org/engage/api-gateway/chemrxiv/assets"
+                ) && url.endsWith(".pdf"),
+        ],
+        name: "ChemRxiv",
+    },
     cvf: {
         patterns: ["openaccess.thecvf.com/content"],
         name: "CVF (Computer Vision Foundation)",
@@ -210,7 +220,10 @@ global.knownPaperPages = {
         name: "Frontiers",
     },
     hal: {
-        patterns: [(url) => /hal\.science\/\w+-\d+(v\d+)?(\/document)?$/gi.test(url)],
+        patterns: [
+            (url) => /hal\.science\/\w+-\d+(v\d+)?(\/document)?$/gi.test(url),
+            (url) => /hal\.science\/\w+-\d+(v\d+)?\/file\/.+\.pdf$/gi.test(url),
+        ],
         name: "HAL",
     },
     ihep: {
