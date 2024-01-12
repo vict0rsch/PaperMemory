@@ -187,6 +187,12 @@ const paperToAbs = (paper) => {
             abs = pdf.split("/file/")[0].split("/document")[0];
             break;
 
+        case "chemrxiv":
+            abs = `https://chemrxiv.org/engage/chemrxiv/article-details/${
+                pdf.split("/item/")[1].split("/")[0]
+            }`;
+            break;
+
         default:
             abs = "https://xkcd.com/1969/";
             break;
@@ -299,8 +305,13 @@ const paperToPDF = (paper) => {
         case "oup":
             break;
 
+        case "hal":
+            break;
+
+        case "chemrxiv":
+            break;
+
         case "website":
-            abs = paper.pdfLink;
             break;
 
         default:
@@ -925,6 +936,11 @@ const parseIdFromUrl = async (url, tab = null) => {
         );
         const halId = url.split("/").last();
         idForUrl = findPaperForProperty(papers, "hal", miniHash(halId));
+    } else if (is.chemrxiv) {
+        chemRxivId = isPdfUrl(url)
+            ? (chemRxivId = url.split("/item/")[1].split("/")[0])
+            : (chemRxivId = noParamUrl(url).split("/").last());
+        idForUrl = findPaperForProperty(papers, "chemrxiv", miniHash(chemRxivId));
     } else if (is.localFile) {
         idForUrl = is.localFile;
     } else if (is.parsedWebsite) {

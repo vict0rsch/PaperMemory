@@ -201,6 +201,16 @@ global.knownPaperPages = {
         patterns: ["biorxiv.org/content"],
         name: "BioRxiv",
     },
+    chemrxiv: {
+        patterns: [
+            "chemrxiv.org/engage/chemrxiv/article-details/",
+            (url) =>
+                url.includes(
+                    "https://chemrxiv.org/engage/api-gateway/chemrxiv/assets"
+                ) && url.endsWith(".pdf"),
+        ],
+        name: "ChemRxiv",
+    },
     cvf: {
         patterns: ["openaccess.thecvf.com/content"],
         name: "CVF (Computer Vision Foundation)",
