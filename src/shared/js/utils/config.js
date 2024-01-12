@@ -210,7 +210,10 @@ global.knownPaperPages = {
         name: "Frontiers",
     },
     hal: {
-        patterns: [(url) => /hal\.science\/\w+-\d+(v\d+)?(\/document)?$/gi.test(url)],
+        patterns: [
+            (url) => /hal\.science\/\w+-\d+(v\d+)?(\/document)?$/gi.test(url),
+            (url) => /hal\.science\/\w+-\d+(v\d+)?\/file\/.+\.pdf$/gi.test(url),
+        ],
         name: "HAL",
     },
     ihep: {

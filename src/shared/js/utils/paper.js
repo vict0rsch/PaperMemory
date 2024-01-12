@@ -178,8 +178,13 @@ const paperToAbs = (paper) => {
         case "mdpi":
             abs = paper.pdfLink.split("/pdf")[0];
             break;
+
         case "oup":
             abs = `https://doi.org/${paper.doi}`;
+            break;
+
+        case "hal":
+            abs = pdf.split("/file/")[0].split("/document")[0];
             break;
 
         default:
@@ -915,7 +920,7 @@ const parseIdFromUrl = async (url, tab = null) => {
         idForUrl = findPaperForProperty(papers, "oup", miniHash(num));
     } else if (is.hal) {
         url = noParamUrl(url).replace(
-            /(hal\.science\/\w+-\d+)(v\d+)?(\/document)?/,
+            /(hal\.science\/\w+-\d+)(v\d+)?((\/document|\/file\/.+\.pdf))?/,
             "$1"
         );
         const halId = url.split("/").last();
