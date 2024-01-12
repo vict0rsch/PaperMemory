@@ -26,13 +26,13 @@
     [
         {
             "type": "publication",
-            "url": "https://www.pnas.org/doi/full/10.1073/pnas.1900358116",
-            "name": "turbulent"
+            "url": "https://proceedings.mlr.press/v70/ravanbakhsh17a.html",
+            "name": "equivariance"
         },
         {
-            "type": "publication",
-            "url": "https://www.pnas.org/content/116/18/8667",
-            "name": "turbulent"
+            "type": "preprint",
+            "url": "https://arxiv.org/abs/1702.08389",
+            "name": "equivariance"
         }
     ],
     [
