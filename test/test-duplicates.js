@@ -11,7 +11,13 @@ const {
     visitPaperPage,
 } = require("./browser");
 
-const { loadPaperMemoryUtils, sleep, readJSON } = require("./utilsForTests");
+const {
+    loadPaperMemoryUtils,
+    sleep,
+    readURLs,
+    readDuplicates,
+    root,
+} = require("./utilsForTests");
 
 // make all functions in utils.min.js available in the `global` scope
 loadPaperMemoryUtils();
@@ -30,6 +36,8 @@ const singleOrder = process.env.singleOrder ?? "";
 const singleName = process.env.singleName ?? "";
 // ignore pre-duplicate sources (','-separated sources as per ./data/urls.json)
 let ignoreSources = process.env.ignoreSources ?? [];
+// float to go to next paper page if the previous does not respond (-1: wait)
+const pageTimeout = parseFloat(process.env.pageTimeout ?? 500);
 
 console.log("Test params:");
 console.log("    keepOpen      : ", keepOpen);
@@ -37,6 +45,7 @@ console.log("    dump          : ", dump);
 console.log("    singleOrder   : ", singleOrder);
 console.log("    singleName    : ", singleName);
 console.log("    ignoreSources : ", ignoreSources);
+console.log("    pageTimeout   : ", pageTimeout);
 
 // check env vars
 
@@ -55,15 +64,19 @@ if (singleOrder && orders.indexOf(singleOrder) === -1) {
 // make non-duplicated items to visit before known duplicates:
 // select the first item of each source and format it as duplicates
 // (= [{url: string}])
-const preDuplicates = Object.entries(readJSON("./data/urls.json"))
+let preDuplicates = Object.entries(readURLs())
     .filter(([source, urls]) => !ignoreSources.includes(source))
     .map(([source, urls]) => urls)
     .filter((urls) => urls.length < 3 || !urls[2].botPrevention)
     .map((urls) => [{ url: urls[0] }]);
 
+if (singleName) {
+    preDuplicates = [];
+}
+
 console.log(`\nUsing ${preDuplicates.length} pre-duplicates`);
 
-const allDuplicates = readJSON("./data/duplicates.json").filter(
+const allDuplicates = readDuplicates().filter(
     (duplicates) => !singleName || duplicates[0].name === singleName
 );
 
@@ -114,7 +127,10 @@ describe("Paper de-duplication", function () {
                     // visit the paper urls
                     for (const dup of duplicates) {
                         console.log(`      (${n + 1}/${nUrls}) visiting ${dup.url}`);
-                        await visitPaperPage(browser, dup.url, { keepOpen });
+                        await visitPaperPage(browser, dup.url, {
+                            keepOpen,
+                            timeout: pageTimeout,
+                        });
                         n += 1;
                     }
                 }
@@ -129,7 +145,7 @@ describe("Paper de-duplication", function () {
 
                 if (dump) {
                     // dump this data for human analysis
-                    const fname = `./tmp/duplicate-memory-${new Date()}.json`;
+                    const fname = `${root}/test/tmp/duplicate-memory-${new Date()}.json`;
                     fs.writeFileSync(fname, JSON.stringify(memoryState, null, 2));
                 }
             });
