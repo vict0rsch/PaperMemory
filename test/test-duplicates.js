@@ -17,6 +17,7 @@ const {
     readURLs,
     readDuplicates,
     root,
+    loadConfig,
 } = require("./utilsForTests");
 
 // make all functions in utils.min.js available in the `global` scope
@@ -26,18 +27,8 @@ loadPaperMemoryUtils();
 // -----  Global constants to parametrize the tests  -----
 // -------------------------------------------------------
 
-// keep pages and browser open at the end of tests to inspect
-const keepOpen = Boolean(process.env.keepOpen ?? false);
-// write the state to ./tmp as a JSON file
-const dump = Boolean(process.env.dump) ?? false;
-// only run tests for a specific publication<->preprint order
-const singleOrder = process.env.singleOrder ?? "";
-// only run tests for a specific named duplicate
-const singleName = process.env.singleName ?? "";
-// ignore pre-duplicate sources (','-separated sources as per ./data/urls.json)
-let ignoreSources = process.env.ignoreSources ?? [];
-// float to go to next paper page if the previous does not respond (-1: wait)
-const pageTimeout = parseFloat(process.env.pageTimeout ?? 500);
+let { keepOpen, dump, singleOrder, singleName, ignoreSources, pageTimeout } =
+    loadConfig();
 
 console.log("Test params:");
 console.log("    keepOpen      : ", keepOpen);
@@ -68,7 +59,11 @@ let preDuplicates = Object.entries(readURLs())
     .filter(([source, urls]) => !ignoreSources.includes(source))
     .map(([source, urls]) => urls)
     .filter((urls) => urls.length < 3 || !urls[2].botPrevention)
-    .map((urls) => [{ url: urls[0] }]);
+    .map((urls) => [{ url: urls[0] }])
+    .map((value) => ({ value, sort: Math.random() })) // shuffle
+    .sort((a, b) => a.sort - b.sort)
+    .map(({ value }) => value)
+    .slice(0, 5); // get 5 random items
 
 if (singleName) {
     preDuplicates = [];

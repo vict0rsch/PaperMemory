@@ -1,0 +1,52 @@
+# ---------------------
+# Config file for tests
+# ---------------------
+
+# Keep tab open after paper is parsed?
+# |> test-storage, test-duplicates
+keepOpen:
+  type: bool
+  defaultValue: true
+
+# Timeout between paper pages (ms)
+# |> test-storage, test-duplicates
+pageTimeout:
+  type: int
+  defaultValue: 1000
+
+# Max number of sources to iterate through for debug. -1 is all sources.
+# |> test-storage, test-duplicates
+maxSources:
+  type: int
+  defaultValue: -1
+
+# Whether or not to dump the parsed memory to a JSON file in test/tmp
+# |> test-storage, test-duplicates
+dump:
+  type: bool
+  defaultValue: true
+
+# Which sources to test (,-separated)
+# |> test-storage, test-duplicates
+onlySources:
+  type: comma-separated-str
+  defaultValue: ""
+
+# Only test one parsing order
+# |> test-storage: "abs;pdf" or "pdf;abs"
+# |> test-duplicates: "pre;pub" or "pub;pre"
+singleOrder:
+  type: str
+  defaultValue: ""
+
+# Only test one name see test/data/duplicates.json for options
+# |> test-duplicates
+singleName:
+  type: str
+  defaultValue: ""
+
+# Ignore these sources (,-separated)
+# |> test-storage, test-duplicates
+ignoreSources:
+  type: comma-separated-str
+  defaultValue: ""
