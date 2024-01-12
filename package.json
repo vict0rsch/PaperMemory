@@ -8,15 +8,22 @@
     "src"
   ],
   "scripts": {
-    "test": "gulp build && ./node_modules/.bin/mocha test-*.js",
-    "test-cov": "gulp build && ./node_modules/.bin/nyc --reporter=text ../node_modules/.bin/mocha test-*.js",
-    "test-storage": "keepOpen=1 gulp build && ./node_modules/.bin/mocha test-storage.js",
-    "test-duplicates": "gulp build && ./node_modules/.bin/mocha test-duplicates.js",
-    "test-sync": "gulp build && ./node_modules/.bin/mocha test-sync.js",
-    "test-no-browser": "gulp build && ./node_modules/.bin/mocha 'test-!(storage|duplicates|sync)*.js'",
-    "test-no-browser-no-build": "./node_modules/.bin/mocha 'test-!(storage|duplicates|sync)*.js'",
-    "test-no-browser-no-build-cov": "./node_modules/.bin/nyc --reporter=text ../node_modules/.bin/mocha 'test-!(storage|duplicates|sync)*.js'",
-    "screenshots": "node_modules/.bin/mocha test/screenshots.js"
+    "pretest": "echo 'Make sure to be in dev mode ($gulp dev)'",
+    "test": "./node_modules/.bin/mocha test/test-*.js",
+    "pretest-cov": "echo 'Make sure to be in dev mode ($gulp dev)'",
+    "test-cov": "./node_modules/.bin/nyc --reporter=text ./node_modules/.bin/mocha test/test-*.js",
+    "pretest-storage": "echo 'Make sure to be in dev mode ($gulp dev)'",
+    "test-storage": "./node_modules/.bin/mocha test/test-storage.js",
+    "pretest-duplicates": "echo 'Make sure to be in dev mode ($gulp dev)'",
+    "test-duplicates": "./node_modules/.bin/mocha test/test-duplicates.js",
+    "pretest-sync": "echo 'Make sure to be in dev mode ($gulp dev)'",
+    "test-sync": "./node_modules/.bin/mocha test/test-sync.js",
+    "pretest-no-browser": "echo 'Make sure to be in dev mode ($gulp dev)'",
+    "test-no-browser": "./node_modules/.bin/mocha 'test/test-!(storage|duplicates|sync)*.js'",
+    "pretest-no-browser-cov": "echo 'Make sure to be in dev mode ($gulp dev)'",
+    "test-no-browser-cov": "./node_modules/.bin/nyc --reporter=text ./node_modules/.bin/mocha 'test/test-!(storage|duplicates|sync)*.js'",
+    "prescreenshots": "echo 'Make sure to be in dev mode ($gulp dev)'",
+    "screenshots": "./node_modules/.bin/mocha test/screenshots.js"
   },
   "repository": {
     "type": "git",
