@@ -7,7 +7,6 @@
 const getPaperInfoTable = (paper) => {
     const addDate = new Date(paper.addDate).toLocaleString().replace(",", "");
     const lastOpenDate = new Date(paper.lastOpenDate).toLocaleString().replace(",", "");
-    const ml = "Publication".length + 1;
     const tableData = [
         ["Added", addDate],
         ["Last open", lastOpenDate],
@@ -40,13 +39,14 @@ const getPaperInfoTable = (paper) => {
  * @param {object} paper A paper object
  * @returns HTML string
  */
-const getMemoryItemHTML = (paper, titles) => {
+const getMemoryItemHTML = (paper) => {
     const displayId = getDisplayId(paper.id);
     const note = paper.note || "";
     const id = paper.id;
     const tags = new Set(paper.tags);
     const tagOptions = getTagsOptions(paper);
     const favoriteClass = paper.favorite ? "favorite" : "";
+    const titles = { ...global.svgActionsHoverTitles };
     // titles behave differently in build/watch mode. This works in build
     titles.pdfLink = `Open tab to ${paper.title}`;
     titles.copyLink = `Copy URL to the paper's ${

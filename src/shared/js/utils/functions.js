@@ -1,3 +1,6 @@
+/**
+ * Whether or not to log the error trace to the console
+ */
 const logTrace = typeof LOGTRACE !== "undefined" && LOGTRACE;
 
 /** Function to log to console with a prefix

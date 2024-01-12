@@ -648,13 +648,15 @@ const addOrUpdatePaper = async ({
         if (isNew || pwc.codeLink) {
             if (isNew) {
                 // new paper
-                store
-                    ? logOk("Added '" + paper.title + "' to your Memory!")
-                    : warn(
-                          "Discovered '" +
-                              paper.title +
-                              "' but did not store it (`store` is false)."
-                      );
+                if (store) {
+                    logOk("Added '" + paper.title + "' to your Memory!");
+                } else {
+                    warn(
+                        "Discovered '" +
+                            paper.title +
+                            "' but did not store it (`store` is false)."
+                    );
+                }
                 log("paper: ", paper);
 
                 notifText = "Added to your Memory";
@@ -705,7 +707,9 @@ const addOrUpdatePaper = async ({
             // record updated paper if store is true
             if (store && !global.state.deleted[paper.id])
                 global.state.papers[paper.id] = paper;
-            chrome.storage.local.set({ papers: global.state.papers });
+            await new Promise((resolve) =>
+                chrome.storage.local.set({ papers: global.state.papers }, resolve)
+            );
         }
         // tell the content script the pre-print matching procedure has finished
         contentScriptCallbacks["preprints"](paper);
