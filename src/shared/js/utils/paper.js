@@ -20,11 +20,11 @@ const isPaper = async (url, noStored = false) => {
                 if (url.includes(pattern)) {
                     // known pattern: store as true
                     is[source] = true;
-                    break;
                 }
             } else if (typeof pattern === "function") {
                 is[source] = pattern(url);
             }
+            if (is[source]) break;
         }
     }
     // is the url a local file in the memory?
