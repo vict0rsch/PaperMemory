@@ -143,7 +143,10 @@
     ],
     "sciencedirect": [
         "https://www.sciencedirect.com/science/article/pii/S2589721721000349",
-        "https://reader.elsevier.com/reader/sd/pii/S2589721721000349"
+        "https://reader.elsevier.com/reader/sd/pii/S2589721721000349",
+        {
+            "botPrevention": true
+        }
     ],
     "springer": [
         "https://link.springer.com/article/10.1007/s41095-022-0271-y",
