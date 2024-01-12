@@ -3,15 +3,19 @@
   "version": "0.5.3",
   "description": "<br/>",
   "main": "gulpfile.js",
+  "moduleDirectories": [
+    "node_modules",
+    "src"
+  ],
   "scripts": {
-    "test": "gulp build && cd test/ && ../node_modules/.bin/mocha test-*.js",
-    "test-cov": "gulp build && cd test/ && ../node_modules/.bin/nyc --reporter=text ../node_modules/.bin/mocha test-*.js",
-    "test-storage": "gulp build && cd test/ && ../node_modules/.bin/mocha test-storage.js",
-    "test-duplicates": "gulp build && cd test/ && ../node_modules/.bin/mocha test-duplicates.js",
-    "test-sync": "gulp build && cd test/ && ../node_modules/.bin/mocha test-sync.js",
-    "test-no-browser": "gulp build && cd test/ && ../node_modules/.bin/mocha 'test-!(storage|duplicates|sync)*.js'",
-    "test-no-browser-no-build": "cd test/ && ../node_modules/.bin/mocha 'test-!(storage|duplicates|sync)*.js'",
-    "test-no-browser-no-build-cov": "cd test/ && ../node_modules/.bin/nyc --reporter=text ../node_modules/.bin/mocha 'test-!(storage|duplicates|sync)*.js'",
+    "test": "gulp build && ./node_modules/.bin/mocha test-*.js",
+    "test-cov": "gulp build && ./node_modules/.bin/nyc --reporter=text ../node_modules/.bin/mocha test-*.js",
+    "test-storage": "keepOpen=1 gulp build && ./node_modules/.bin/mocha test-storage.js",
+    "test-duplicates": "gulp build && ./node_modules/.bin/mocha test-duplicates.js",
+    "test-sync": "gulp build && ./node_modules/.bin/mocha test-sync.js",
+    "test-no-browser": "gulp build && ./node_modules/.bin/mocha 'test-!(storage|duplicates|sync)*.js'",
+    "test-no-browser-no-build": "./node_modules/.bin/mocha 'test-!(storage|duplicates|sync)*.js'",
+    "test-no-browser-no-build-cov": "./node_modules/.bin/nyc --reporter=text ../node_modules/.bin/mocha 'test-!(storage|duplicates|sync)*.js'",
     "screenshots": "node_modules/.bin/mocha test/screenshots.js"
   },
   "repository": {
@@ -44,7 +48,8 @@
     "jsdom": "^23.0.1",
     "mocha": "^10.2.0",
     "nyc": "^15.1.0",
-    "puppeteer": "^21.6.0",
+    "ora": "^5.4.1",
+    "puppeteer": "^18.2.1",
     "readline-sync": "^1.4.10",
     "uuid": "^9.0.1"
   }
