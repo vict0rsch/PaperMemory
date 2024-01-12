@@ -524,6 +524,7 @@ const addOrUpdatePaper = async ({
         if (!newPaper) {
             return;
         }
+        global.state.titleHashToIds = makeTitleHashToIdList(global.state.papers);
         const existingId = findFuzzyPaperMatch(global.state.titleHashToIds, newPaper);
         if (existingId && store) {
             // Update paper as already it exists

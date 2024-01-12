@@ -833,6 +833,24 @@ const makeVenue = async (paper) => {
     return venue;
 };
 
+/**
+ * Creates a dictionary mapping a paper's title hash to a list of paper ids
+ * with the same title.
+ * @param {object} papers The papers dict to hash
+ * @returns {object} The title hash to ids dict
+ */
+const makeTitleHashToIdList = (papers) => {
+    const titleHashToIds = {};
+    for (const [id, paper] of Object.entries(cleanPapers(papers))) {
+        const hashed = miniHash(paper.title);
+        if (!titleHashToIds.hasOwnProperty(hashed)) {
+            titleHashToIds[hashed] = [];
+        }
+        titleHashToIds[hashed].push(id);
+    }
+    return titleHashToIds;
+};
+
 if (typeof module !== "undefined" && module.exports != null) {
     var dummyModule = module;
     dummyModule.exports = {

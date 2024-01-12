@@ -1,3 +1,8 @@
+/**
+ * Compute the duration between now and the first element of the times array in seconds.
+ * @param {array} times Array of times to compute the duration from
+ * @returns
+ */
 const duration = (times) => (Date.now() - times[0]) / 1e3;
 /**
  * Function to initialize the app's state.
@@ -54,14 +59,7 @@ const initState = async ({ papers, isContentScript, print = true } = {}) => {
     print && log("Time to retrieve sources to urlHashToId (s): " + duration(times));
     times.unshift(Date.now());
 
-    global.state.titleHashToIds = {};
-    for (const [id, paper] of Object.entries(cleanPapers(papers))) {
-        const hashed = miniHash(paper.title);
-        if (!global.state.titleHashToIds.hasOwnProperty(hashed)) {
-            global.state.titleHashToIds[hashed] = [];
-        }
-        global.state.titleHashToIds[hashed].push(id);
-    }
+    global.state.titleHashToIds = makeTitleHashToIdList(papers);
     print && log("Time to hash titles (s): " + duration(times));
     times.unshift(Date.now());
 
