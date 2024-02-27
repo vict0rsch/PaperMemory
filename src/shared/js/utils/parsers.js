@@ -1598,10 +1598,10 @@ const tryCrossRef = async (paper) => {
         // assert the response is valid
         if (json.status !== "ok") {
             log(`[Crossref] ${api} returned ${json.message.status}`);
-            return { note: null };
+            return {};
         }
         // assert there is a (loose) match
-        if (json.message.items.length === 0) return { note: null };
+        if (json.message.items.length === 0) return {};
 
         // compare matched item's title to the paper's title
         const crossTitle = json.message.items[0].title[0]
@@ -1613,13 +1613,13 @@ const tryCrossRef = async (paper) => {
             .replaceAll("\n", " ")
             .replaceAll(/\s\s+/g, " ");
         if (crossTitle !== refTitle) {
-            return { note: null };
+            return {};
         }
 
         // assert the matched item has an event with a name
         // (this may be too restrictive for journals, to improve)
         if (!json.message.items[0].event || !json.message.items[0].event.name) {
-            return { note: null };
+            return {};
         }
 
         // return the note
@@ -1628,9 +1628,9 @@ const tryCrossRef = async (paper) => {
         const note = `Accepted @ ${venue} -- [crossref.org]`;
         return { venue, note };
     } catch (error) {
-        // something went wrong, log the error, return {note: null}
+        // something went wrong, log the error, return {}
         logError("[Crossref]", error);
-        return { note: null };
+        return {};
     }
 };
 
@@ -1641,7 +1641,7 @@ const tryDBLP = async (paper) => {
         const response = await fetch(api);
 
         if (response.status === 429) {
-            return { note: null, status: 429 };
+            return { status: 429 };
         }
 
         const json = await response.json();
@@ -1652,7 +1652,7 @@ const tryDBLP = async (paper) => {
             !json.result.hits.hit ||
             !json.result.hits.hit.length
         ) {
-            return { note: null };
+            return {};
         }
 
         const hits = json.result.hits.hit.sort(
@@ -1686,11 +1686,11 @@ const tryDBLP = async (paper) => {
                 return { venue, note, bibtex };
             }
         }
-        return { note: null };
+        return {};
     } catch (error) {
-        // something went wrong, log the error, return {note: null}
+        // something went wrong, log the error, return {}
         logError("[DBLP]", error);
-        return { note: null };
+        return {};
     }
 };
 
@@ -1699,7 +1699,7 @@ const trySemanticScholar = async (paper) => {
         const { data, status } = await fetchJSON(
             `https://api.semanticscholar.org/graph/v1/paper/search?query=${encodeURI(
                 paper.title
-            )}&fields=title,venue,year,authors,externalIds,url&limit=50`
+            )}&fields=title,venue,year,authors,externalIds,url&limit=5`
         );
         const matches = data;
 
@@ -1742,9 +1742,11 @@ const trySemanticScholar = async (paper) => {
                 }
             }
         }
+        return { status };
     } catch (error) {
         logError("[SemanticScholar]", error);
     }
+    return { status: 404 };
 };
 
 const tryGoogleScholar = async (paper) => {
@@ -1768,6 +1770,7 @@ const tryUnpaywall = async (paper) => {
             return { venue, note, doi };
         }
     }
+    return { status };
 };
 
 const tryPreprintMatch = async (paper, tryPwc = false) => {
