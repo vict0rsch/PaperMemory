@@ -216,10 +216,14 @@ const firstNonStopLowercase = (title) => {
 /** Custom simple hash function that returns a lowercase string
  * with no special characters (only letters and numbers are allowed)
  * @param {string} str The string to hash
+ * @param {string} replace The string to replace non-alphanumeric characters with (default is "")
  * @returns {string} The hashed string
  */
-const miniHash = (str) => {
-    return str.toLowerCase().replace(/\W/g, "");
+const miniHash = (str, replace) => {
+    if (typeof replace === "undefined") {
+        replace = "";
+    }
+    return str.toLowerCase().replace(/\W/g, replace);
 };
 
 /**
