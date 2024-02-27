@@ -51,7 +51,7 @@ const getAndTrackPopupMenuChecks = (prefs, prefsCheckNames) => {
  * @param {string} name The name of the modal to show
  */
 const showPopupModal = (name) => {
-    document.querySelectorAll(".popup-modal-content").forEach(hideId);
+    queryAll(".popup-modal-content").forEach(hideId);
     showId(`modal-${name}-content`, "contents");
     style("popup-modal-wrapper", "display", "flex");
     [...document.getElementsByTagName("a")].forEach((el) => {
@@ -261,13 +261,13 @@ const popupMain = async (url, is, manualTrigger = false, tab = null) => {
     // Set fullMemory page link
     addListener("full-memory", "click", () => {
         chrome.tabs.create({
-            url: chrome.extension.getURL("src/fullMemory/fullMemory.html"),
+            url: chrome.runtime.getURL("src/fullMemory/fullMemory.html"),
         });
     });
     // Set BibMatcher page link
     addListener("bib-matcher", "click", () => {
         chrome.tabs.create({
-            url: chrome.extension.getURL("src/bibMatcher/bibMatcher.html"),
+            url: chrome.runtime.getURL("src/bibMatcher/bibMatcher.html"),
         });
     });
 
@@ -322,7 +322,7 @@ const popupMain = async (url, is, manualTrigger = false, tab = null) => {
         log("Popup paper:", paper);
         setHTML("popup-memory-edit", getPopupEditFormHTML(paper));
         setHTML("popup-copy-icons", getPopupPaperIconsHTML(paper, url, is));
-        setHTML("popup-title-tooltip", getPaperinfoTitle(paper));
+        setHTML("popup-title-tooltip", getPaperInfoTable(paper));
         findEl(`checkFavorite--${id}`).checked = paper.favorite;
         let extraDivWidth = 0;
         for (const p of [

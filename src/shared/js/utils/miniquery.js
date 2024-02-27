@@ -342,6 +342,15 @@ const queryAll = (selector, dom) =>
         ? [...dom.querySelectorAll(selector)]
         : [...document.querySelectorAll(selector)];
 
+/**
+ * Get first element matching selector within dom or document if dom is not provided
+ * @param {string} selector
+ * @param {HTMLElement} dom
+ * @returns {HTMLElement}
+ */
+const querySelector = (selector, dom) =>
+    dom ? dom.querySelector(selector) : document.querySelector(selector);
+
 /** Create an element from an HTML string
  * @param {string} htmlString
  * @returns {HTMLElement}
@@ -362,7 +371,7 @@ const createElementFromHTML = (htmlString) => {
  * */
 const addEventToClass = (className, eventName, fn) => {
     if (!className.startsWith(".")) className = "." + className;
-    document.querySelectorAll(className).forEach((el) => {
+    queryAll(className).forEach((el) => {
         el.addEventListener(eventName, fn);
     });
 };
@@ -392,7 +401,8 @@ if (typeof module !== "undefined" && module.exports != null) {
         slideUp,
         slideDown,
         queryAll,
-        addEventToClass,
+        querySelector,
         createElementFromHTML,
+        addEventToClass,
     };
 }

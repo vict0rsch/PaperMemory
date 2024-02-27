@@ -152,7 +152,12 @@ input {
     padding: 6px;
     margin-bottom: 4px;
 }
-
+#status-info {
+    color: darkgoldenrod;
+}
+#html-status-codes {
+    font-style: italic;
+}
 /*
 -----------------------------
 -----  Matcher options  -----

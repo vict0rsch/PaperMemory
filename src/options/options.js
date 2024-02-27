@@ -10,11 +10,6 @@ function getRandomInt(max) {
     return Math.floor(Math.random() * max);
 }
 
-const sleep = async (timeout) =>
-    new Promise((resolve) => {
-        setTimeout(resolve, timeout);
-    });
-
 const isValidHttpUrl = (string) => {
     let url;
 
@@ -175,7 +170,7 @@ const handleParseImportJson = async (e) => {
             return;
         }
 
-        const progressbar = document.querySelector("#import-json-progress-bar");
+        const progressbar = querySelector("#import-json-progress-bar");
 
         const changeProgress = (progress) => {
             progressbar.style.width = `${progress}%`;
@@ -496,7 +491,7 @@ const startMatching = async (papersToMatch) => {
     showId("matching-progress-container", "flex");
     setHTML("matching-status-total", papersToMatch.length);
 
-    const progressbar = document.querySelector("#manual-parsing-progress-bar");
+    const progressbar = querySelector("#manual-parsing-progress-bar");
 
     const changeProgress = (progress) => {
         progressbar.style.width = `${progress}%`;
@@ -861,7 +856,9 @@ const setupSourcesSelection = async () => {
 
 const setupSync = async () => {
     showId("pat-loader");
-    const { ok, payload, error } = await getGist();
+    const { ok, payload, error } = (await shouldSync())
+        ? await getGist({ patError: false })
+        : { ok: true, payload: { pat: (await getStorage("syncPAT")) ?? "" } };
     hideId("pat-loader");
 
     if (!ok) {
@@ -871,7 +868,7 @@ const setupSync = async () => {
         hideId("pat-loader");
         await toggleSync({ hideAll: true });
     } else {
-        const { gist, pat } = payload;
+        const { pat } = payload;
         val("pat-input", pat);
         await toggleSync();
     }
@@ -888,15 +885,15 @@ const setupSync = async () => {
             await toggleSync({ hideAll: true });
             return;
         }
-        const { ok, payload, error } = await getGist(pat);
+        const { ok, payload, error } = await getGist({ pat });
         if (!ok) {
-            console.log(error);
+            logError(error);
             setHTML("pat-feedback", error.response.data.message);
         } else {
-            const { gist, pat } = payload;
-            console.log("Gist ID", gist.id);
-            console.log("Github Owner Username", gist.ownerUsername);
-            console.log("Personal Access Token", pat);
+            const { file, pat, gistId } = payload;
+            log("Gist ID", gistId);
+            log("Data URL", file.raw_url);
+            log("Personal Access Token", pat);
             setHTML("pat-feedback", "Ok! Token is valid.");
             toggleSync();
         }
@@ -908,8 +905,8 @@ const setupSync = async () => {
         if (!c) return;
         const pat = "";
         setStorage("syncPAT", pat);
+        setStorage("syncState", false);
         val("pat-input", pat);
-        await sendMessageToBackground({ type: "restartGist" });
         toggleSync();
     });
 
@@ -924,11 +921,11 @@ const setupSync = async () => {
             alert("Your Personal Access Token is invalid.\n\n" + (error ?? ""));
             return;
         }
-        const { gist } = payload;
-        const dataFile = await getDataFile(gist);
+        const { file, pat, gistId } = payload;
+        const data = await getDataForGistFile({ file, gistId });
         let userChoice = "no-remote";
-        if (dataFile.content) {
-            console.log("Existing data file content:", dataFile.content);
+        if (data) {
+            console.log("Existing data file content:", data);
             userChoice = await getSyncStrategy();
             if (!userChoice) {
                 hideId("sync-loader");
@@ -944,20 +941,17 @@ const setupSync = async () => {
                     const date = now.toLocaleDateString().replaceAll("/", ".");
                     const time = now.toLocaleTimeString().replaceAll(":", ".");
                     downloadTextFile(
-                        JSON.stringify(dataFile.content),
+                        JSON.stringify(data),
                         `PaperMemory-remote-data-backup-${date}-${time}.json`,
                         "text/json"
                     );
                 }
-                const papersString = JSON.stringify(global.state.papers, null, "");
-                console.log("dataFile: ", dataFile);
-                dataFile.overwrite(papersString);
-                await dataFile.save();
+                await updateGistFile({ file, content: global.state.papers, gistId });
                 await setSyncOk();
             } else if (userChoice === "local-remote") {
                 // overwrite local data with remote data
                 dispatch("download-arxivmemory", "click");
-                const remotePapers = dataFile.content;
+                const remotePapers = data;
                 const { success, message, warning, papersToWrite } =
                     await prepareOverwriteData(remotePapers);
                 if (success) {
@@ -984,7 +978,7 @@ const setupSync = async () => {
                 const date = now.toLocaleDateString().replaceAll("/", ".");
                 const time = now.toLocaleTimeString().replaceAll(":", ".");
                 downloadTextFile(
-                    JSON.stringify(dataFile.content),
+                    JSON.stringify(data),
                     `PaperMemory-merge--remote-data-backup-${date}-${time}.json`,
                     "text/json"
                 );
@@ -994,7 +988,7 @@ const setupSync = async () => {
                     "text/json"
                 );
                 let mergedPapers = {};
-                const remotePapers = dataFile.content;
+                const remotePapers = data;
                 const localPapers = await getStorage("papers");
                 const remoteVersion = remotePapers["__dataVersion"];
                 const localVersion = localPapers["__dataVersion"];
@@ -1036,8 +1030,7 @@ const setupSync = async () => {
                         );
                     }
                     await setStorage("papers", papersToWrite);
-                    await dataFile.overwrite(JSON.stringify(papersToWrite, null, ""));
-                    await dataFile.save();
+                    await updateGistFile({ file, content: papersToWrite, gistId });
                     await setSyncOk();
                 } else {
                     setHTML("overwriteRemoteFeedback", message);
@@ -1117,7 +1110,7 @@ const toggleSync = async ({ hideAll = false } = {}) => {
 // ---------------------
 
 const makeSideBar = () => {
-    const sections = [...document.querySelectorAll(".section")].filter(
+    const sections = queryAll(".section").filter(
         (section) => !!section.querySelector("h2")
     );
     const lis = sections.map((section) => {
@@ -1139,13 +1132,13 @@ const makeSideBar = () => {
 
         return `<li class="nav-item"><a class="nav-link" href="#${id}">${title}</a>${ul}</li>`;
     });
-    setHTML(document.querySelector("nav ul"), lis.join(""));
+    setHTML(querySelector("nav ul"), lis.join(""));
 };
 
 const setupSidebar = async () => {
     makeSideBar();
-    var toc = document.querySelector(".toc");
-    var tocPath = document.querySelector(".toc-marker path");
+    var toc = querySelector(".toc");
+    var tocPath = querySelector(".toc-marker path");
     var tocItems;
 
     // Factor of screen size that the element must cross
@@ -1269,7 +1262,7 @@ const setupSidebar = async () => {
 // -------------------
 
 const showOptionsModal = (name) => {
-    document.querySelectorAll(".modal-content-div").forEach(hideId);
+    queryAll(".modal-content-div").forEach(hideId);
     showId(`modal-${name}-content`, "contents");
     style("modal-wrapper", "display", "flex");
     document.body.style.overflow = "hidden";

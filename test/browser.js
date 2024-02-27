@@ -1,15 +1,14 @@
 const puppeteer = require("puppeteer");
+const { sleep, root } = require("./utilsForTests");
+const fs = require("fs");
 
 exports.makeBrowser = async (windowSize = "1200,900") => {
-    const browserFetcher = puppeteer.createBrowserFetcher();
-    const revisionInfo = await browserFetcher.download("818858");
     const browser = await puppeteer.launch({
-        executablePath: revisionInfo.executablePath,
         headless: false,
         ignoreHTTPSErrors: true,
         ignoreDefaultArgs: ["--disable-extensions"],
         args: [
-            "--load-extension=../",
+            `--load-extension=${root}`,
             `--window-size=${windowSize}`,
             "--user-agent=PuppeteerAgent",
         ],
@@ -40,22 +39,15 @@ exports.visitPaperPage = async (browser, target, options = {}) => {
     const opts = { ...defaults, ...options };
 
     const p = opts.page || (await browser.newPage());
-
-    const paperIsStored = new Promise((resolve) => {
-        p.on(
-            "console",
-            (msg) => msg.text().match(/\[PM\]\s*Done processing paper/) && resolve()
-        );
-        opts.timeout && opts.timeout > 0 && setTimeout(resolve, opts.timeout);
-    });
-    // asynchronously go to url
-    p.goto(target);
-    const pageIsLoaded = new Promise((resolve) => {
-        p.once("load", resolve);
-        opts.timeout && opts.timeout > 0 && setTimeout(resolve, opts.timeout);
-    });
-    await pageIsLoaded;
+    const paperIsStored = new Promise(
+        (resolve) =>
+            p.on("console", (msg) =>
+                msg.text().match(/\[PM\]\s*Done processing paper/)
+            ) && resolve()
+    );
+    await p.goto(target);
     await paperIsStored;
+    opts.timeout && opts.timeout > 0 && (await sleep(opts.timeout));
     !opts.keepOpen && (await p.close());
 };
 

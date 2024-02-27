@@ -1,20 +1,19 @@
 {
   "name": "Paper Memory",
-  "version": "0.7.1",
-  "manifest_version": 2,
+  "version": "1.0.0",
+  "manifest_version": 3,
   "description": "Automatically record papers and their codes from Arxiv, OpenReview & more! Organize your library with tags, links and quick notes.",
   "homepage_url": "https://papermemory.org",
   "icons": {
     "192": "icons/favicon-192x192.png"
   },
-  "content_security_policy": "script-src 'self' 'unsafe-eval'; object-src 'self'",
-  "background": {
-    "scripts": [
-      "src/shared/min/utils.min.js",
-      "src/background/background.js"
-    ]
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'"
   },
-  "browser_action": {
+  "background": {
+    "service_worker": "src/background/background.js"
+  },
+  "action": {
     "default_icon": "icons/favicon-192x192.png",
     "default_title": "PaperMemory",
     "default_popup": "src/popup/min/popup.min.html"
@@ -50,7 +49,8 @@
     "storage",
     "unlimitedStorage",
     "downloads",
-    "downloads.open"
+    "downloads.open",
+    "scripting"
   ],
   "content_scripts": [
     {
@@ -64,7 +64,7 @@
         "src/shared/js/utils/miniquery.js",
         "src/shared/js/utils/config.js",
         "src/shared/js/utils/functions.js",
-        "src/shared/js/utils/gist.js",
+        "src/shared/js/utils/octokit.bundle.js",
         "src/shared/js/utils/sync.js",
         "src/shared/js/utils/data.js",
         "src/shared/js/utils/paper.js",
@@ -80,6 +80,13 @@
     }
   ],
   "web_accessible_resources": [
-    "src/data/*.json"
+    {
+      "resources": [
+        "src/data/*.json"
+      ],
+      "matches": [
+        "<all_urls>"
+      ]
+    }
   ]
 }

@@ -1,28 +1,37 @@
-const infoSpan = (k, ml) =>
-    `<span class="paper-info-span">${padRight(k, ml, "&nbsp;")}</span>`;
 /**
  * Return a formatted HTML string describing some metadata about a paper
  * added date, last open date, number of visits, venue if available
  * @param {object} paper A paper object
  * @returns {string} HTML string
  */
-const getPaperinfoTitle = (paper) => {
+const getPaperInfoTable = (paper) => {
     const addDate = new Date(paper.addDate).toLocaleString().replace(",", "");
     const lastOpenDate = new Date(paper.lastOpenDate).toLocaleString().replace(",", "");
-    const ml = "Publication".length + 1;
-    let infoTitle = `${infoSpan("Added", ml)} ${addDate}\n`;
-    infoTitle += `${infoSpan("Last open", ml)} ${lastOpenDate}\n`;
-    infoTitle += `${infoSpan("Visits", ml)} ${paper.count}\n`;
-    infoTitle += `${infoSpan("Source", ml)} ${
-        global.knownPaperPages[paper.source].name
-    }\n`;
-    if (paper.venue) {
-        infoTitle += `${infoSpan("Publication", ml)} <strong>${paper.venue} ${
-            paper.year
-        }</strong>`;
-    }
-    infoTitle = infoTitle.replaceAll("\n", "<br/>");
-    return infoTitle;
+    const tableData = [
+        ["Added", addDate],
+        ["Last open", lastOpenDate],
+        ["Visits", paper.count],
+        ["Source", global.knownPaperPages[paper.source].name],
+    ];
+    if (paper.venue)
+        tableData.push([
+            "Publication",
+            `<strong>${paper.venue} ${paper.year}</strong>`,
+        ]);
+    return /*html*/ `
+        <table class="paper-info-table">
+            ${tableData
+                .map((row) => {
+                    return /*html*/ `
+                        <tr>
+                            <td><div class="info-table-key">${row[0]}</div></td>
+                            <td><div class="info-table-value">${row[1]}</div></td>
+                        </tr>
+                    `;
+                })
+                .join("")}
+        </table>
+    `;
 };
 
 /**
@@ -30,13 +39,14 @@ const getPaperinfoTitle = (paper) => {
  * @param {object} paper A paper object
  * @returns HTML string
  */
-const getMemoryItemHTML = (paper, titles) => {
+const getMemoryItemHTML = (paper) => {
     const displayId = getDisplayId(paper.id);
     const note = paper.note || "";
     const id = paper.id;
     const tags = new Set(paper.tags);
     const tagOptions = getTagsOptions(paper);
     const favoriteClass = paper.favorite ? "favorite" : "";
+    const titles = { ...global.svgActionsHoverTitles };
     // titles behave differently in build/watch mode. This works in build
     titles.pdfLink = `Open tab to ${paper.title}`;
     titles.copyLink = `Copy URL to the paper's ${
@@ -133,7 +143,7 @@ const getMemoryItemHTML = (paper, titles) => {
         </div>`;
     }
 
-    const infoTitle = getPaperinfoTitle(paper);
+    const titleInfoTable = getPaperInfoTable(paper);
 
     return /*html*/ `
         <div
@@ -150,7 +160,7 @@ const getMemoryItemHTML = (paper, titles) => {
                 </span>
                 ${paper.title}
                 <div class="title-tooltip" style="display: none;">
-                    ${infoTitle}
+                    ${titleInfoTable}
                 </div>
             </h4>
             <div class="my-1 mx-0">

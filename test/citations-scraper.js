@@ -11,7 +11,7 @@ const waitForLoad = (page) =>
 const getTotalCitations = (page) => {
     return page.evaluate(() => {
         return Promise.resolve(
-            parseInt(document.querySelector("#gsc_rsb_st .gsc_rsb_std").innerText)
+            parseInt(querySelector("#gsc_rsb_st .gsc_rsb_std").innerText)
         );
     });
 };
@@ -20,12 +20,12 @@ const parseAuthor = (page) => {
     return page.evaluate(async () => {
         await new Promise((resolve) => {
             var interval = setInterval(() => {
-                if (document.querySelector("#gsc_bpf_more").disabled) {
+                if (querySelector("#gsc_bpf_more").disabled) {
                     clearInterval(interval);
                     console.info("No more papers!");
                     resolve();
                 } else {
-                    document.querySelector("#gsc_bpf_more").click();
+                    querySelector("#gsc_bpf_more").click();
                 }
             }, 800);
         });

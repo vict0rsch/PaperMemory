@@ -13,7 +13,7 @@ const {
     visitPaperPage,
 } = require("./browser");
 
-const { readJSON } = require("./utilsForTests");
+const { readURLs, root, loadConfig } = require("./utilsForTests");
 
 const { allAttributes } = require("./processMemory");
 
@@ -21,26 +21,21 @@ const { allAttributes } = require("./processMemory");
 // -----  Global constants to parametrize the tests  -----
 // -------------------------------------------------------
 
-// run tests for a maximum number of distinct sources
-const maxSources = process.env.maxSources ?? -1;
-// float to go to next paper page if the previous does not respond (-1: wait)
-const pageTimeout = parseFloat(process.env.pageTimeout ?? -1);
-// only run tests for a specific paper source (as per ./data/urls.json)
-const singleSource = process.env.singleSource?.toLowerCase() ?? false;
-// keep pages and browser open at the end of tests to inspect
-const keepOpen = !!(process.env.keepOpen ?? false);
-// write the memory to ./tmp as a JSON file
-const dump = !!(process.env.dump ?? false);
-// only run tests for a specific abstract<->pdf order
-const singleOrder = process.env.singleOrder ?? false;
-// ignore sources to parse papers from (','-separated sources as per ./data/urls.json)
-let ignoreSources = process.env.ignoreSources ?? [];
+var {
+    onlySources,
+    maxSources,
+    pageTimeout,
+    keepOpen,
+    dump,
+    singleOrder,
+    ignoreSources,
+} = loadConfig();
 
 // check env vars
 var orders = ["abs;pdf", "pdf;abs"];
 
-if (maxSources > 0 && singleSource) {
-    throw new Error("Please specify either maxSources xor singleSource");
+if (maxSources > 0 && sources) {
+    throw new Error("Please specify either maxSources xor sources");
 }
 
 if (singleOrder && orders.indexOf(singleOrder) === -1) {
@@ -56,7 +51,7 @@ if (typeof ignoreSources === "string") {
 console.log("Test params:");
 console.log("    pageTimeout   : ", pageTimeout);
 console.log("    maxSources    : ", maxSources);
-console.log("    singleSource  : ", singleSource);
+console.log("    onlySources   : ", onlySources);
 console.log("    keepOpen      : ", keepOpen);
 console.log("    dump          : ", dump);
 console.log("    singleOrder   : ", singleOrder);
@@ -80,11 +75,18 @@ describe("Test paper detection and storage", function () {
     var browser, memoryPapers, dataVersion;
 
     // load tests configurations
-    var urls = readJSON("./data/urls.json");
+    var urls = readURLs();
+    console.log(
+        "onlySources && onlySources.length > 0: ",
+        onlySources && onlySources.length > 0
+    );
+    console.log("onlySources: ", onlySources);
     if (maxSources > 0) {
         urls = Object.fromEntries(Object.entries(urls).slice(0, maxSources));
-    } else if (singleSource) {
-        urls = { [singleSource]: urls[singleSource] };
+    } else if (onlySources && onlySources.length > 0) {
+        urls = Object.fromEntries(
+            Object.entries(urls).filter(([source, v]) => onlySources.includes(source))
+        );
     }
 
     if (ignoreSources && ignoreSources.length > 0) {
@@ -100,7 +102,7 @@ describe("Test paper detection and storage", function () {
         if (targets.length === 3 && targets[2].botPrevention) {
             console.log(
                 `\n>>> Skipping test for ${source} because its website ` +
-                    `prevents automated browsing`
+                    `prevents automated browsing. Remember to test manually.`
             );
             delete urls[source];
         } else if (targets.length === 3 && targets[2].noPdf) {
@@ -174,14 +176,13 @@ describe("Test paper detection and storage", function () {
                 // go to the extension's popup url
                 const page = await browser.newPage();
                 await page.goto(extensionPopupURL);
-                await page.waitForTimeout(1e3);
 
                 // retrieve the data parsed by PaperMemory
                 memoryPapers = await getMemoryPapers(page);
 
                 if (dump) {
                     // dump this data for human analysis
-                    const fname = `./tmp/memory-${new Date()}.json`;
+                    const fname = `${root}/test/tmp/memory-${new Date()}.json`;
                     fs.writeFileSync(fname, JSON.stringify(memoryPapers, null, 2));
                 }
 
@@ -203,22 +204,12 @@ describe("Test paper detection and storage", function () {
                     expect(memorySources).toEqual(refSources);
                 });
 
-                it("Pdf and Abstract are matched to the same Memory item", async function () {
+                it("Pdf and Abstract are matched to the same Memory item (count is 2 --or 3 to account for redirections--)", async function () {
                     const filteredSources = sources.filter(
                         (s) => !ignoreSingleOrder(s, urls, order)
                     );
                     const memoryCounts = allAttributes(memoryPapers, "count");
-                    const memorySources = allAttributes(memoryPapers, "source");
-                    const memoryCountsBySource = Object.fromEntries(
-                        [...Array(filteredSources.length).keys()].map((i) => [
-                            memorySources[i],
-                            memoryCounts[i],
-                        ])
-                    );
-                    const refCountsBySource = Object.fromEntries(
-                        filteredSources.map((s) => [s, 2])
-                    );
-                    expect(memoryCountsBySource).toEqual(refCountsBySource);
+                    expect(memoryCounts.every((c) => c >= 2)).toBeTruthy();
                 });
 
                 it("No undefined keys", async function () {
@@ -252,7 +243,7 @@ describe("Test paper detection and storage", function () {
 
                         it("#count is 2", function () {
                             const paper = paperForSource(source, memoryPapers);
-                            expect(paper.count).toEqual(2);
+                            expect(paper.count).toBeGreaterThanOrEqual(2);
                         });
 
                         // more tests parameterized in the 3rd item in the list for this source

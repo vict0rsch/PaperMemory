@@ -1,3 +1,6 @@
+/**
+ * Whether or not to log the error trace to the console
+ */
 const logTrace = typeof LOGTRACE !== "undefined" && LOGTRACE;
 
 /** Function to log to console with a prefix
@@ -213,10 +216,14 @@ const firstNonStopLowercase = (title) => {
 /** Custom simple hash function that returns a lowercase string
  * with no special characters (only letters and numbers are allowed)
  * @param {string} str The string to hash
+ * @param {string} replace The string to replace non-alphanumeric characters with (default is "")
  * @returns {string} The hashed string
  */
-const miniHash = (str) => {
-    return str.toLowerCase().replace(/\W/g, "");
+const miniHash = (str, replace) => {
+    if (typeof replace === "undefined") {
+        replace = "";
+    }
+    return str.toLowerCase().replace(/\W/g, replace);
 };
 
 /**
@@ -305,20 +312,6 @@ async function pasteRich(rich, plain) {
 const copyHyperLinkToClipboard = (url, title) => {
     const linkHtml = `<a href="${url}">${title}</a>`;
     pasteRich(linkHtml, `${title} ${url}`);
-};
-
-/**
- * Pad a string with a character on the right. Character is " " by default.
- * @param {string} str The string to pad
- * @param {number} length The length of the padded string
- * @param {string} char The character to pad with
- * @returns {string} The padded string
- */
-const padRight = (str, length, char) => {
-    if (typeof char === "undefined") {
-        char = " ";
-    }
-    return str.length < length ? str + char.repeat(length - str.length) : str;
 };
 
 /**
@@ -1045,23 +1038,73 @@ const arxivIdFromURL = (url) =>
               .split("v")[0]
               .replace("/", "_");
 
+const getBrowserName = async () => {
+    let browserName = navigator.appName;
+    const nAgt = navigator.userAgent;
+
+    // In Opera, the true version is after "OPR" or after "Version"
+    if ((verOffset = nAgt.indexOf("OPR")) != -1) {
+        browserName = "Opera";
+    } else if ((navigator.brave && (await navigator.brave.isBrave())) || false) {
+        browserName = "Brave";
+    }
+    // In MS Edge, the true version is after "Edg" in userAgent
+    else if ((verOffset = nAgt.indexOf("Edg")) != -1) {
+        browserName = "Microsoft Edge";
+    }
+    // In MSIE, the true version is after "MSIE" in userAgent
+    else if ((verOffset = nAgt.indexOf("MSIE")) != -1) {
+        browserName = "Microsoft Internet Explorer";
+    }
+    // In Chrome, the true version is after "Chrome"
+    else if ((verOffset = nAgt.indexOf("Chrome")) != -1) {
+        browserName = "Chrome";
+    }
+    // In Safari, the true version is after "Safari" or after "Version"
+    else if ((verOffset = nAgt.indexOf("Safari")) != -1) {
+        browserName = "Safari";
+    }
+    // In Firefox, the true version is after "Firefox"
+    else if ((verOffset = nAgt.indexOf("Firefox")) != -1) {
+        browserName = "Firefox";
+    }
+
+    return browserName;
+};
+
+function getRandomToken() {
+    // https://stackoverflow.com/questions/23822170/getting-unique-clientid-from-chrome-extension
+    // E.g. 8 * 32 = 256 bits token
+    var randomPool = new Uint8Array(32);
+    crypto.getRandomValues(randomPool);
+    var hex = "";
+    for (var i = 0; i < randomPool.length; ++i) {
+        hex += randomPool[i].toString(16);
+    }
+    // E.g. db18458e2782b2b77e36769c569e263a53885a9944dd0a861e5064eac16f1a
+    return hex;
+}
+
 if (typeof module !== "undefined" && module.exports != null) {
     var dummyModule = module;
     dummyModule.exports = {
+        logTrace,
         log,
         info,
-        logError,
-        logOk,
-        debug,
         warn,
+        debug,
+        logOk,
+        logError,
+        consoleHeader,
         getDisplayId,
         isObject,
         isPdfUrl,
-        delay,
         cleanPapers,
         firstNonStopLowercase,
+        miniHash,
         fallbackCopyTextToClipboard,
         copyTextToClipboard,
+        copyHyperLinkToClipboard,
         parseUrl,
         downloadTextFile,
         eventId,
@@ -1080,11 +1123,16 @@ if (typeof module !== "undefined" && module.exports != null) {
         cutAuthors,
         sendMessageToBackground,
         getStoredFiles,
-        miniHash,
         noParamUrl,
+        urlToWebsiteId,
         silentPromiseTimeout,
         shouldWarn,
         spaceCamelCase,
         toSingleSpace,
+        dedent,
+        arxivIdFromPaperID,
+        cleanStr,
+        arxivIdFromURL,
+        getBrowserName,
     };
 }

@@ -20,11 +20,11 @@ const isPaper = async (url, noStored = false) => {
                 if (url.includes(pattern)) {
                     // known pattern: store as true
                     is[source] = true;
-                    break;
                 }
             } else if (typeof pattern === "function") {
                 is[source] = pattern(url);
             }
+            if (is[source]) break;
         }
     }
     // is the url a local file in the memory?
@@ -178,8 +178,19 @@ const paperToAbs = (paper) => {
         case "mdpi":
             abs = paper.pdfLink.split("/pdf")[0];
             break;
+
         case "oup":
             abs = `https://doi.org/${paper.doi}`;
+            break;
+
+        case "hal":
+            abs = pdf.split("/file/")[0].split("/document")[0];
+            break;
+
+        case "chemrxiv":
+            abs = `https://chemrxiv.org/engage/chemrxiv/article-details/${
+                pdf.split("/item/")[1].split("/")[0]
+            }`;
             break;
 
         default:
@@ -294,8 +305,13 @@ const paperToPDF = (paper) => {
         case "oup":
             break;
 
+        case "hal":
+            break;
+
+        case "chemrxiv":
+            break;
+
         case "website":
-            abs = paper.pdfLink;
             break;
 
         default:
@@ -524,6 +540,7 @@ const addOrUpdatePaper = async ({
         if (!newPaper) {
             return;
         }
+        global.state.titleHashToIds = makeTitleHashToIdList(global.state.papers);
         const existingId = findFuzzyPaperMatch(global.state.titleHashToIds, newPaper);
         if (existingId && store) {
             // Update paper as already it exists
@@ -647,13 +664,15 @@ const addOrUpdatePaper = async ({
         if (isNew || pwc.codeLink) {
             if (isNew) {
                 // new paper
-                store
-                    ? logOk("Added '" + paper.title + "' to your Memory!")
-                    : warn(
-                          "Discovered '" +
-                              paper.title +
-                              "' but did not store it (`store` is false)."
-                      );
+                if (store) {
+                    logOk("Added '" + paper.title + "' to your Memory!");
+                } else {
+                    warn(
+                        "Discovered '" +
+                            paper.title +
+                            "' but did not store it (`store` is false)."
+                    );
+                }
                 log("paper: ", paper);
 
                 notifText = "Added to your Memory";
@@ -704,7 +723,9 @@ const addOrUpdatePaper = async ({
             // record updated paper if store is true
             if (store && !global.state.deleted[paper.id])
                 global.state.papers[paper.id] = paper;
-            chrome.storage.local.set({ papers: global.state.papers });
+            await new Promise((resolve) =>
+                chrome.storage.local.set({ papers: global.state.papers }, resolve)
+            );
         }
         // tell the content script the pre-print matching procedure has finished
         contentScriptCallbacks["preprints"](paper);
@@ -910,11 +931,16 @@ const parseIdFromUrl = async (url, tab = null) => {
         idForUrl = findPaperForProperty(papers, "oup", miniHash(num));
     } else if (is.hal) {
         url = noParamUrl(url).replace(
-            /(hal\.science\/\w+-\d+)(v\d+)?(\/document)?/,
+            /(hal\.science\/\w+-\d+)(v\d+)?((\/document|\/file\/.+\.pdf))?/,
             "$1"
         );
         const halId = url.split("/").last();
         idForUrl = findPaperForProperty(papers, "hal", miniHash(halId));
+    } else if (is.chemrxiv) {
+        chemRxivId = isPdfUrl(url)
+            ? (chemRxivId = url.split("/item/")[1].split("/")[0])
+            : (chemRxivId = noParamUrl(url).split("/").last());
+        idForUrl = findPaperForProperty(papers, "chemrxiv", miniHash(chemRxivId));
     } else if (is.localFile) {
         idForUrl = is.localFile;
     } else if (is.parsedWebsite) {
@@ -1000,10 +1026,11 @@ if (typeof module !== "undefined" && module.exports != null) {
         matchPapersToFiles,
         matchAllFilesToPapers,
         mergePapers,
+        updatePaperVisits,
         addOrUpdatePaper,
+        findPaperForProperty,
         parseIdFromUrl,
         isKnownLocalFile,
         makeMdLink,
-        updatePaperVisits,
     };
 }

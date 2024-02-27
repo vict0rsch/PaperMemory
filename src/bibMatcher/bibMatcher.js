@@ -1,4 +1,5 @@
 var STOPMATCH = false;
+var DISABLE_MATCH = {};
 
 const setListeners = () => {
     addListener("match-bib-stop", "click", () => {
@@ -81,6 +82,8 @@ const setListeners = () => {
 };
 
 const resetMatchResults = () => {
+    STOPMATCH = false;
+    DISABLE_MATCH = {};
     hideId("result-controls");
     hideId("match-results");
     setHTML("match-results", "");
@@ -91,6 +94,31 @@ const resetMatchResults = () => {
     hideId("matching-feedback-container");
     hideId("matched-list-container");
     hideId("your-bib-container");
+    updateStatusInfo();
+};
+
+const updateStatusInfo = () => {
+    const display = {
+        dblp: "DBLP.org",
+        semanticscholar: "Semantic Scholar",
+        googleScholar: "Google Scholar",
+        crossref: "CrossRef",
+        unpaywall: "Unpaywall",
+    };
+    let reasons = Object.entries(DISABLE_MATCH)
+        .map(
+            ([key, value]) =>
+                `Disabling ${display[key]} for this matching process because the server returned a status of ${value}`
+        )
+        .join("<br/>");
+    if (reasons) {
+        reasons += `<br>
+            <a href='https://developer.mozilla.org/en-US/docs/Web/HTTP/Status' target='_black' id="html-status-codes">
+            About HTTP status codes
+            </a>
+            `;
+    }
+    setHTML("status-info", reasons);
 };
 
 const showBibliography = (parsed, matched, arxivIndices) => {
@@ -151,28 +179,35 @@ const showError = (msg) => {
     setHTML("bibmatch-errors", msg);
 };
 
-const sleep = async (duration) =>
-    new Promise((resolve) => setTimeout(resolve, duration));
-
 const matchPaper = async (paper) => {
     let bibtex, match, source, venue;
 
-    setHTML("matching-status-provider", "dblp.org ...");
-    match = await tryDBLP(paper);
-    match?.bibtex && console.log("dblpMatch: ", match);
-    bibtex = match?.bibtex;
-    venue = match?.venue;
-    source = "DBLP";
+    if (!DISABLE_MATCH.dblp) {
+        setHTML("matching-status-provider", "dblp.org ...");
+        match = await tryDBLP(paper);
+        match?.bibtex && console.log("dblpMatch: ", match);
+        bibtex = match?.bibtex;
+        venue = match?.venue;
+        source = "DBLP";
+        if (match.status && !("" + match.status).startsWith("2")) {
+            DISABLE_MATCH.dblp = match.status;
+            updateStatusInfo();
+        }
+    }
 
-    if (!bibtex) {
+    if (!bibtex && !DISABLE_MATCH.semanticscholar) {
         setHTML("matching-status-provider", "semanticscholar.org ...");
         match = await trySemanticScholar(paper);
         match?.bibtex && console.log("semanticScholarMatch: ", match);
         bibtex = match?.bibtex;
         venue = match?.venue;
         source = "Semantic Scholar";
+        if (match.status && !("" + match.status).startsWith("2")) {
+            DISABLE_MATCH.semanticscholar = match.status;
+            updateStatusInfo();
+        }
     }
-    if (!bibtex) {
+    if (!bibtex && !DISABLE_MATCH.googleScholar) {
         setHTML("matching-status-provider", "scholar.google.com ...");
         match = await tryGoogleScholar(paper);
         match?.bibtex && console.log("googleScholarMatch: ", match);
@@ -180,7 +215,7 @@ const matchPaper = async (paper) => {
         venue = match?.venue;
         source = "Google Scholar";
     }
-    if (!bibtex) {
+    if (!bibtex && !DISABLE_MATCH.crossref) {
         setHTML("matching-status-provider", "crossref.org ...");
         match = await tryCrossRef(paper);
         venue = match.venue;
@@ -195,11 +230,15 @@ const matchPaper = async (paper) => {
             source = "CrossRef";
         }
         match?.venue && console.log("crossRefMatch: ", match);
+        if (match.status && !("" + match.status).startsWith("2")) {
+            DISABLE_MATCH.crossref = match.status;
+            updateStatusInfo();
+        }
     }
-    if (!bibtex) {
+    if (!bibtex && !DISABLE_MATCH.unpaywall) {
         setHTML("matching-status-provider", "unpaywall.org ...");
         match = await tryUnpaywall(paper);
-        venue = match.venue;
+        venue = match?.venue;
         if (venue) {
             paper.journal = venue;
             for (const [key, value] of paper.entries()) {
@@ -211,6 +250,10 @@ const matchPaper = async (paper) => {
             source = "Unpaywall";
         }
         match?.venue && console.log("unpaywallMatch: ", match);
+        if (match.status && !("" + match.status).startsWith("2")) {
+            DISABLE_MATCH.unpaywall = match.status;
+            updateStatusInfo();
+        }
     }
     return { bibtex, match, source, venue };
 };
@@ -229,7 +272,7 @@ const matchItems = async (papersToMatch) => {
         </div>`
     );
 
-    const progressbar = document.querySelector("#matching-progress-bar");
+    const progressbar = querySelector("#matching-progress-bar");
     const changeProgress = (progress) => {
         progressbar.style.width = `${progress}%`;
     };
@@ -272,6 +315,7 @@ const matchItems = async (papersToMatch) => {
 
         if (STOPMATCH) {
             STOPMATCH = false;
+            DISABLE_MATCH = {};
             setHTML("matching-status", "Interrupted<br/><br/>");
             hideId("match-bib-stop");
             setHTML("match-bib-stop", "Stop");

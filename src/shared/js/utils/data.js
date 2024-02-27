@@ -15,7 +15,7 @@ const migrateData = async (papers, manifestDataVersion, store = true) => {
     }
     const currentVersion = papers["__dataVersion"] || -1;
     var deleteIds = [];
-    const latestDataVersion = 513;
+    const latestDataVersion = 10000;
 
     let newPapers = { ...papers };
 
@@ -170,6 +170,26 @@ const migrateData = async (papers, manifestDataVersion, store = true) => {
                     papers[newId] = { ...papers[oldId] };
                     deleteIds.push(oldId);
                     migrationSummaries[id].push("(m513) iop doi-in-id to minihash");
+                }
+            }
+            if (currentVersion < 10000) {
+                if (papers[id].source === "acm") {
+                    let b = papers[id].bibtex;
+                    const lines = b.split("\n");
+                    if (lines[0].includes("?")) {
+                        lines[0] = lines[0].split("?")[0] + ",";
+                    }
+                    b = lines.join("\n");
+                    papers[id].bibtex = b;
+                    migrationSummaries[id].push("(m10000) fix acm bibtex");
+                }
+                if (papers[id].bibtex) {
+                    const bibObj = bibtexToObject(papers[id].bibtex);
+                    if (bibObj && bibObj.hasOwnProperty("abstract")) {
+                        delete bibObj.abstract;
+                        migrationSummaries[id].push("(m10000) remove bibtex abstract");
+                        papers[id].bibtex = bibtexToString(bibObj);
+                    }
                 }
             }
         }
@@ -813,6 +833,24 @@ const makeVenue = async (paper) => {
     return venue;
 };
 
+/**
+ * Creates a dictionary mapping a paper's title hash to a list of paper ids
+ * with the same title.
+ * @param {object} papers The papers dict to hash
+ * @returns {object} The title hash to ids dict
+ */
+const makeTitleHashToIdList = (papers) => {
+    const titleHashToIds = {};
+    for (const [id, paper] of Object.entries(cleanPapers(papers))) {
+        const hashed = miniHash(paper.title);
+        if (!titleHashToIds.hasOwnProperty(hashed)) {
+            titleHashToIds[hashed] = [];
+        }
+        titleHashToIds[hashed].push(id);
+    }
+    return titleHashToIds;
+};
+
 if (typeof module !== "undefined" && module.exports != null) {
     var dummyModule = module;
     dummyModule.exports = {
@@ -830,5 +868,6 @@ if (typeof module !== "undefined" && module.exports != null) {
         validatePaper,
         prepareOverwriteData,
         makeVenue,
+        makeTitleHashToIdList,
     };
 }

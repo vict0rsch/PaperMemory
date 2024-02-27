@@ -31,7 +31,8 @@ if (typeof window !== "undefined") {
 /**
  * Set uninstall URL
  */
-chrome?.runtime?.setUninstallURL &&
+typeof chrome !== "undefined" &&
+    chrome?.runtime?.setUninstallURL &&
     chrome?.runtime?.setUninstallURL("https://forms.gle/1JSV8PcxQugRmsd46");
 
 /**
@@ -45,7 +46,7 @@ global.state = {
     ignoreSources: {}, // (source => bool)
     lastRefresh: new Date(),
     memoryIsOpen: false,
-    memoryItemsPerPage: 25,
+    memoryItemsPerPage: 10,
     menuIsOpen: false,
     papers: {}, // (id => object)
     papersList: [], // [papers]
@@ -77,6 +78,16 @@ global.descendingSortKeys = [
     "favoriteDate",
     "year",
 ];
+
+global.svgActionsHoverTitles = {
+    edit: "Edit paper details",
+    copyMd: "Copy Markdown-formatted link",
+    copyBibtext: "Copy Bibtex citation",
+    visits: "Number of times you have opened this paper",
+    openLocal: "Open downloaded pdf",
+    copyLink: "Copy paper url",
+    copyHypeLink: "Copy url as hyperlink",
+};
 
 /**
  * Shared configuration for the Tags' select2 inputs
@@ -190,6 +201,16 @@ global.knownPaperPages = {
         patterns: ["biorxiv.org/content"],
         name: "BioRxiv",
     },
+    chemrxiv: {
+        patterns: [
+            "chemrxiv.org/engage/chemrxiv/article-details/",
+            (url) =>
+                url.includes(
+                    "https://chemrxiv.org/engage/api-gateway/chemrxiv/assets"
+                ) && url.endsWith(".pdf"),
+        ],
+        name: "ChemRxiv",
+    },
     cvf: {
         patterns: ["openaccess.thecvf.com/content"],
         name: "CVF (Computer Vision Foundation)",
@@ -199,7 +220,10 @@ global.knownPaperPages = {
         name: "Frontiers",
     },
     hal: {
-        patterns: [(url) => /hal\.science\/\w+-\d+(v\d+)?(\/document)?$/gi.test(url)],
+        patterns: [
+            (url) => /hal\.science\/\w+-\d+(v\d+)?(\/document)?$/gi.test(url),
+            (url) => /hal\.science\/\w+-\d+(v\d+)?\/file\/.+\.pdf$/gi.test(url),
+        ],
         name: "HAL",
     },
     ihep: {
@@ -337,11 +361,6 @@ global.overrideDBLPVenues = {
 
 global.consolHeaderStyle =
     "@import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@300');font-family:'Fira Code' monospace;font-size:1rem;font-weight:300;display:inline-block;border:2px solid #A41716;border-radius: 4px;padding: 12px; margin: 12px;";
-
-/**
- * Minimal Levenshtein distance between two paper titles for those to be merged
- */
-global.fuzzyTitleMatchMinDist = 4;
 
 global.storeReadme = `
 /!\\ Warning: This folder has been created automatically by your PaperMemory browser extension.\n
@@ -493,6 +512,7 @@ if (typeof module !== "undefined" && module.exports != null) {
     dummyModule.exports = {
         state: global.state,
         descendingSortKeys: global.descendingSortKeys,
+        svgActionsHoverTitles: global.svgActionsHoverTitles,
         select2Options: global.select2Options,
         prefsCheckNames: global.prefsCheckNames,
         prefsCheckDefaultFalse: global.prefsCheckDefaultFalse,
@@ -503,10 +523,9 @@ if (typeof module !== "undefined" && module.exports != null) {
         overrideORConfs: global.overrideORConfs,
         overridePMLRConfs: global.overridePMLRConfs,
         overrideDBLPVenues: global.overrideDBLPVenues,
-        fuzzyTitleMatchMinDist: global.fuzzyTitleMatchMinDist,
+        consolHeaderStyle: global.consolHeaderStyle,
         storeReadme: global.storeReadme,
         englishStopWords: global.englishStopWords,
         journalAbbreviations: global.journalAbbreviations,
-        consolHeaderStyle: global.consolHeaderStyle,
     };
 }

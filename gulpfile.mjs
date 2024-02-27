@@ -1,16 +1,18 @@
-const { src, dest, parallel, watch, series } = require("gulp");
-const concat = require("gulp-concat");
-const uglify = require("gulp-uglify");
-const cleanCss = require("gulp-clean-css");
-const rename = require("gulp-rename");
-const preprocess = require("gulp-preprocess");
-const htmlmin = require("gulp-html-minifier-terser");
-const minifyJSTemplate = require("gulp-minify-html-literals");
-const readlineSync = require("readline-sync");
-const fs = require("fs");
-const zip = require("gulp-zip");
-const { v4: uuidv4 } = require("uuid");
-const debug = require("gulp-debug");
+import gulp from "gulp";
+const { src, dest, parallel, series } = gulp;
+const gwatch = gulp.watch;
+import concat from "gulp-concat";
+import uglify from "gulp-uglify";
+import cleanCss from "gulp-clean-css";
+import rename from "gulp-rename";
+import preprocess from "gulp-preprocess";
+import htmlmin from "gulp-html-minifier-terser";
+import minifyJSTemplate from "gulp-minify-html-literals";
+import readlineSync from "readline-sync";
+import fs from "fs";
+import zip from "gulp-zip";
+import { v4 as uuidv4 } from "uuid";
+// import debug from "gulp-debug";
 
 function popupJS() {
     return src([
@@ -34,12 +36,11 @@ function popupJS() {
 function utilsJS() {
     return (
         src([
+            "src/shared/js/utils/octokit.bundle.js",
             "src/shared/js/utils/miniquery.js",
             "src/shared/js/utils/config.js",
-            "src/shared/js/utils/levenshtein.js",
             "src/shared/js/utils/bibtexParser.js",
             "src/shared/js/utils/functions.js",
-            "src/shared/js/utils/gist.js",
             "src/shared/js/utils/sync.js",
             "src/shared/js/utils/data.js",
             "src/shared/js/utils/paper.js",
@@ -103,14 +104,14 @@ function popupDarkCSS() {
 }
 
 function watchFiles() {
-    watch("src/popup/js/*.js", popupJS);
-    watch("src/shared/js/theme.js", themeJS);
-    watch(
+    gwatch("src/popup/js/*.js", popupJS);
+    gwatch("src/shared/js/theme.js", themeJS);
+    gwatch(
         ["src/popup/css/*.css", "src/shared/css/*.css"],
         parallel(popupCSS, popupDarkCSS)
     );
-    watch("src/popup/*.html", popupHTMLDev);
-    watch("src/shared/js/utils/*", utilsJS);
+    gwatch("src/popup/*.html", popupHTMLDev);
+    gwatch("src/shared/js/utils/*", utilsJS);
 }
 
 function createArchive(cb) {
@@ -149,9 +150,26 @@ function createArchive(cb) {
         .pipe(dest(archiveFolder));
 }
 
-exports.build = parallel(popupJS, themeJS, utilsJS, popupCSS, popupDarkCSS, popupHTML);
-exports.dev = parallel(popupJS, themeJS, utilsJS, popupCSS, popupDarkCSS, popupHTMLDev);
-exports.watch = series(exports.dev, watchFiles);
-exports.archive = series(exports.build, createArchive);
-exports.html = series(popupHTMLDev);
-exports.popupHTMLDev = popupHTMLDev;
+export const build = parallel(
+    popupJS,
+    themeJS,
+    utilsJS,
+    popupCSS,
+    popupDarkCSS,
+    popupHTML
+);
+
+export const dev = parallel(
+    popupJS,
+    themeJS,
+    utilsJS,
+    popupCSS,
+    popupDarkCSS,
+    popupHTMLDev
+);
+
+export const watch = series(dev, watchFiles);
+
+export const archive = series(build, createArchive);
+
+export const html = series(popupHTMLDev);

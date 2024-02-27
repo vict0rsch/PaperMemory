@@ -235,21 +235,29 @@ const fetchSemanticScholarDataForDoi = async (doi) => {
     return bibData;
 };
 
-const getMetaContent = ({ selector, dom, all = false, pure = false }) => {
+// get all dc variations
+const getDCPatterns = (value) => {
+    const spec = value.slice(3);
+    const lowers = ["dc.", "DC:", "DC.", "dc:"].map((v) => v + spec.toLowerCase());
+    const caps = ["dc.", "DC:", "DC.", "dc:"].map((v) => v + spec.capitalize());
+    return [...lowers, ...caps];
+};
+const getMetaContent = ({
+    selector,
+    dom,
+    all = false,
+    pure = false,
+    dcpattern = null,
+}) => {
     let query = "";
-    // account for dc.Creator | dc.creator, dc.Date | dc.date, etc.
     for (const [k, v] of Object.entries(selector)) {
-        query += `meta[${k}='${v}']`;
-        if (v.startsWith("dc.")) {
-            let newStart;
-            const field = v.split("dc.")[1];
-            const start = field[0];
-            if (start === start.toLowerCase()) {
-                newStart = start.toUpperCase();
-            } else {
-                newStart = start.toLowerCase();
-            }
-            query += `,meta[${k}='dc.${newStart + field.slice(1)}']`;
+        if (!/dc\W/.test(v.toLowerCase())) {
+            // not a dc key
+            query += `meta[${k}='${v}']`;
+        } else {
+            query += getDCPatterns(v)
+                .map((dcp) => `meta[${k}='${dcp}']`)
+                .join(",");
         }
     }
     if (all) {
@@ -266,37 +274,67 @@ const getMetaContent = ({ selector, dom, all = false, pure = false }) => {
 };
 
 const extractDataFromDCMetaTags = (dom) => {
-    const author = getMetaContent({
-        selector: { name: "dc.Creator" },
-        dom,
-        all: true,
-    }).join(" and ");
+    let author =
+        getMetaContent({
+            selector: { name: "dc.Creator" },
+            dom,
+            all: true,
+        }).join(" and ") ||
+        getMetaContent({
+            selector: { name: "citation_author" },
+            dom,
+            all: true,
+        }).join(" and ");
 
     if (!author) {
         return null;
     }
 
-    const year = getMetaContent({
-        selector: { name: "dc.Date" },
-        dom,
-    }).split("-")[0];
-    const publisher = getMetaContent({
-        selector: { name: "dc.Publisher" },
-        dom,
-    }).replaceAll("\n", " ");
-    const title = getMetaContent({
-        selector: { name: "dc.Title" },
-        dom,
-    });
+    const year = (
+        getMetaContent({
+            selector: { name: "dc.Date" },
+            dom,
+        }) ||
+        getMetaContent({
+            selector: { name: "citation_publication_date" },
+            dom,
+        })
+    )
+        .split("-")[0] // account for YYYY-MM-DD
+        .split("/")[0]; // account for YYYY/MM/DD
+
+    const publisher =
+        getMetaContent({
+            selector: { name: "dc.Publisher" },
+            dom,
+        }).replaceAll("\n", " ") ||
+        getMetaContent({
+            selector: { property: "og:site_name" },
+            dom,
+            pure: true,
+        });
+
+    const title =
+        getMetaContent({
+            selector: { name: "dc.Title" },
+            dom,
+        }) ||
+        getMetaContent({
+            selector: { name: "citation_title" },
+            dom,
+        });
+
     const venue = getMetaContent({
         selector: { name: "citation_journal_title" },
         dom,
     });
+
     const pdfLink = getMetaContent({
         selector: { name: "citation_pdf_url" },
         dom,
         pure: true,
     });
+
     const doi =
         getMetaContent({
             selector: { scheme: "doi" },
@@ -306,6 +344,7 @@ const extractDataFromDCMetaTags = (dom) => {
             selector: { name: "citation_doi" },
             dom,
         });
+
     const key = `${author
         .split(" and ")[0]
         .split(" ")
@@ -322,7 +361,7 @@ const extractDataFromDCMetaTags = (dom) => {
         publisher,
         journal: venue,
     });
-    const note = `Published @ ${venue} (${year})`;
+    const note = venue ? `Published @ ${venue} (${year})` : "";
 
     return { author, year, publisher, title, venue, key, doi, bibtex, pdfLink, note };
 };
@@ -833,7 +872,7 @@ const makeNaturePaper = async (url) => {
     ];
     let doi;
     for (const doiClass of doiClasses) {
-        doi = document.querySelector(doiClass)?.innerText.split("https://doi.org/")[1];
+        doi = querySelector(doiClass)?.innerText.split("https://doi.org/")[1];
         if (doi) break;
     }
     if (!doi) {
@@ -1048,6 +1087,7 @@ const makeIJCAIPaper = async (url) => {
 
 const makeACMPaper = async (url) => {
     let pdfLink;
+    url = noParamUrl(url);
     if (isPdfUrl(url)) {
         pdfLink = url;
     } else {
@@ -1482,6 +1522,22 @@ const makerHALPaper = async (url) => {
     return { author, bibtex, id, key, note, pdfLink, title, venue, year, doi };
 };
 
+const makeChemRxivPaper = async (url) => {
+    let chemRxivId;
+    let absUrl = url;
+    if (isPdfUrl(url)) {
+        chemRxivId = url.split("/item/")[1].split("/")[0];
+        absUrl = "https://chemrxiv.org/engage/chemrxiv/article-details/" + chemRxivId;
+    } else {
+        chemRxivId = noParamUrl(url).split("/").last();
+    }
+    const dom = await fetchDom(absUrl);
+    const { author, year, publisher, title, venue, key, doi, bibtex, pdfLink, note } =
+        extractDataFromDCMetaTags(dom);
+    const id = `ChemRxiv-${year}_${miniHash(chemRxivId)}`;
+    return { author, bibtex, id, key, note, pdfLink, title, venue, year, doi };
+};
+
 // -------------------------------
 // -----  PREPRINT MATCHING  -----
 // -------------------------------
@@ -1542,10 +1598,10 @@ const tryCrossRef = async (paper) => {
         // assert the response is valid
         if (json.status !== "ok") {
             log(`[Crossref] ${api} returned ${json.message.status}`);
-            return { note: null };
+            return {};
         }
         // assert there is a (loose) match
-        if (json.message.items.length === 0) return { note: null };
+        if (json.message.items.length === 0) return {};
 
         // compare matched item's title to the paper's title
         const crossTitle = json.message.items[0].title[0]
@@ -1557,13 +1613,13 @@ const tryCrossRef = async (paper) => {
             .replaceAll("\n", " ")
             .replaceAll(/\s\s+/g, " ");
         if (crossTitle !== refTitle) {
-            return { note: null };
+            return {};
         }
 
         // assert the matched item has an event with a name
         // (this may be too restrictive for journals, to improve)
         if (!json.message.items[0].event || !json.message.items[0].event.name) {
-            return { note: null };
+            return {};
         }
 
         // return the note
@@ -1572,9 +1628,9 @@ const tryCrossRef = async (paper) => {
         const note = `Accepted @ ${venue} -- [crossref.org]`;
         return { venue, note };
     } catch (error) {
-        // something went wrong, log the error, return {note: null}
+        // something went wrong, log the error, return {}
         logError("[Crossref]", error);
-        return { note: null };
+        return {};
     }
 };
 
@@ -1585,7 +1641,7 @@ const tryDBLP = async (paper) => {
         const response = await fetch(api);
 
         if (response.status === 429) {
-            return { note: null, status: 429 };
+            return { status: 429 };
         }
 
         const json = await response.json();
@@ -1596,7 +1652,7 @@ const tryDBLP = async (paper) => {
             !json.result.hits.hit ||
             !json.result.hits.hit.length
         ) {
-            return { note: null };
+            return {};
         }
 
         const hits = json.result.hits.hit.sort(
@@ -1630,11 +1686,11 @@ const tryDBLP = async (paper) => {
                 return { venue, note, bibtex };
             }
         }
-        return { note: null };
+        return {};
     } catch (error) {
-        // something went wrong, log the error, return {note: null}
+        // something went wrong, log the error, return {}
         logError("[DBLP]", error);
-        return { note: null };
+        return {};
     }
 };
 
@@ -1643,7 +1699,7 @@ const trySemanticScholar = async (paper) => {
         const { data, status } = await fetchJSON(
             `https://api.semanticscholar.org/graph/v1/paper/search?query=${encodeURI(
                 paper.title
-            )}&fields=title,venue,year,authors,externalIds,url&limit=50`
+            )}&fields=title,venue,year,authors,externalIds,url&limit=5`
         );
         const matches = data;
 
@@ -1686,9 +1742,11 @@ const trySemanticScholar = async (paper) => {
                 }
             }
         }
+        return { status };
     } catch (error) {
         logError("[SemanticScholar]", error);
     }
+    return { status: 404 };
 };
 
 const tryGoogleScholar = async (paper) => {
@@ -1712,6 +1770,7 @@ const tryUnpaywall = async (paper) => {
             return { venue, note, doi };
         }
     }
+    return { status };
 };
 
 const tryPreprintMatch = async (paper, tryPwc = false) => {
@@ -1967,6 +2026,11 @@ const makePaper = async (is, url, tab = false) => {
         if (paper) {
             paper.source = "hal";
         }
+    } else if (is.chemrxiv) {
+        paper = await makeChemRxivPaper(url);
+        if (paper) {
+            paper.source = "chemrxiv";
+        }
     } else {
         throw new Error("Unknown paper source: " + JSON.stringify({ is, url }));
     }
@@ -1999,49 +2063,65 @@ const findFuzzyPaperMatch = (hashes, paper) => {
 if (typeof module !== "undefined" && module.exports != null) {
     var dummyModule = module;
     dummyModule.exports = {
-        autoTagPaper,
         decodeHtml,
-        fetchArxivXML,
-        fetchCrossRefDataForDoi,
-        fetchCvfHTML,
-        fetchDom,
-        getOpenReviewForumJSON,
-        getOpenReviewNoteJSON,
-        fetchSemanticScholarDataForDoi,
-        fetchText,
-        findACLValue,
-        findFuzzyPaperMatch,
-        flipAndAuthors,
         flipAuthor,
-        initPaper,
-        makeACLPaper,
-        makeACMPaper,
-        makeACSPaper,
-        makeAPSPaper,
+        flipAndAuthors,
+        fetchArxivXML,
+        fetchCvfHTML,
+        getOpenReviewNoteJSON,
+        getOpenReviewForumJSON,
+        fetchDom,
+        fetchText,
+        fetchJSON,
+        fetchBibtex,
+        extractCrossrefData,
+        fetchCrossRefDataForDoi,
+        fetchSemanticScholarDataForDoi,
+        getMetaContent,
+        extractDataFromDCMetaTags,
         makeArxivPaper,
-        makeBioRxivPaper,
+        makeNeuripsPaper,
         makeCVFPaper,
-        makeIEEEPaper,
-        makeIJCAIPaper,
+        makeOpenReviewBibTex,
+        extractAPIv2ContentValue,
+        makeOpenReviewPaper,
+        makeBioRxivPaper,
+        makePMLRPaper,
+        findACLValue,
+        makeACLPaper,
+        makePNASPaper,
+        makeNaturePaper,
+        makeACSPaper,
         makeIOPPaper,
         makeJMLRPaper,
-        makeNaturePaper,
-        makeNeuripsPaper,
-        makeOpenReviewBibTex,
-        makeOpenReviewPaper,
-        makePaper,
         makePMCPaper,
-        makePMLRPaper,
-        makePNASPaper,
         makePubMedPaper,
-        makePLOSPaper,
+        makeIJCAIPaper,
+        makeACMPaper,
+        makeIEEEPaper,
         makeSpringerPaper,
+        makeAPSPaper,
         makeWileyPaper,
+        makeScienceDirectPaper,
+        makeSciencePaper,
+        makeFrontiersPaper,
+        makeIHEPPaper,
+        makePLOSPaper,
+        makeRSCPaper,
+        makeWebsitePaper,
+        makeMDPIPaper,
+        makeOUPPaper,
+        makerHALPaper,
+        tryPWCMatch,
         tryCrossRef,
         tryDBLP,
-        tryPreprintMatch,
-        tryPWCMatch,
         trySemanticScholar,
+        tryGoogleScholar,
         tryUnpaywall,
+        tryPreprintMatch,
+        initPaper,
+        autoTagPaper,
+        makePaper,
+        findFuzzyPaperMatch,
     };
 }

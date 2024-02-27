@@ -456,7 +456,7 @@ const searchMemory = (letters) => {
         const note = paper.note.toLowerCase();
         const tags = paper.tags.join(" ").toLowerCase();
         const displayId = getDisplayId(paper.id).toLowerCase();
-        const venue = paper.venue.toLowerCase();
+        const venue = paper.venue?.toLowerCase() || "";
         if (
             words.every(
                 (w) =>
@@ -649,18 +649,6 @@ const displayMemoryTable = (pagination = 0) => {
         global.state.currentMemoryPagination = 0;
     }
 
-    // Define SVG hover titles:
-    // titles behave differently in build/watch mode. This works in build
-    const titles = {
-        edit: "Edit paper details",
-        copyMd: "Copy Markdown-formatted link",
-        copyBibtext: "Copy Bibtex citation",
-        visits: "Number of times you have opened this paper",
-        openLocal: "Open downloaded pdf",
-        copyLink: "Copy paper url",
-        copyHypeLink: "Copy url as hyperlink",
-    };
-
     // Add relevant sorted papers (papersList may be smaller than sortedPapers
     // depending on the search query)
     let table = [];
@@ -669,7 +657,7 @@ const displayMemoryTable = (pagination = 0) => {
         (pagination + 1) * global.state.memoryItemsPerPage
     )) {
         try {
-            table.push(getMemoryItemHTML(paper, titles));
+            table.push(getMemoryItemHTML(paper));
         } catch (error) {
             log("displayMemoryTable error:");
             log(error);

@@ -33,7 +33,7 @@
         "https://arxiv.org/abs/1703.10593",
         "https://arxiv.org/pdf/1703.10593.pdf",
         {
-            "venue": "iccv"
+            "venue": "IEEE International Conference on Computer Vision"
         }
     ],
     "biorxiv": [
@@ -129,7 +129,10 @@
     ],
     "pnas": [
         "https://www.pnas.org/doi/full/10.1073/pnas.2114679118",
-        "https://www.pnas.org/doi/pdf/10.1073/pnas.2114679118"
+        "https://www.pnas.org/doi/pdf/10.1073/pnas.2114679118",
+        {
+            "botPrevention": true
+        }
     ],
     "science": [
         "https://science.org/doi/full/10.1126/scirobotics.abm6597",
@@ -140,7 +143,10 @@
     ],
     "sciencedirect": [
         "https://www.sciencedirect.com/science/article/pii/S2589721721000349",
-        "https://reader.elsevier.com/reader/sd/pii/S2589721721000349"
+        "https://reader.elsevier.com/reader/sd/pii/S2589721721000349",
+        {
+            "botPrevention": true
+        }
     ],
     "springer": [
         "https://link.springer.com/article/10.1007/s41095-022-0271-y",

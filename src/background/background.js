@@ -1,28 +1,50 @@
+/**
+ * @todo Better error PAT error handling (e.g. when PAT is invalid or expired)
+ * @todo Better docstrings for background.js
+ */
+
+try {
+    importScripts(
+        "../shared/js/utils/octokit.bundle.js",
+        "../shared/js/utils/miniquery.js",
+        "../shared/js/utils/config.js",
+        "../shared/js/utils/bibtexParser.js",
+        "../shared/js/utils/functions.js",
+        "../shared/js/utils/sync.js",
+        "../shared/js/utils/data.js",
+        "../shared/js/utils/paper.js",
+        "../shared/js/utils/state.js",
+        "../shared/js/utils/parsers.js"
+    );
+} catch (e) {
+    console.error(e);
+}
+
 var paperTitles = {};
 var MAX_TITLE_UPDATES = 100;
 var tabStatuses = {};
 
 const badgeOk = () => {
-    chrome.browserAction.setBadgeText({ text: "OK!" });
-    chrome.browserAction.setBadgeBackgroundColor({ color: "rgb(68, 164, 68)" });
+    chrome.action.setBadgeText({ text: "OK!" });
+    chrome.action.setBadgeBackgroundColor({ color: "rgb(68, 164, 68)" });
 };
 
 const badgeWait = (text) => {
-    chrome.browserAction.setBadgeText({ text });
-    chrome.browserAction.setBadgeBackgroundColor({ color: "rgb(189, 127, 10)" });
+    chrome.action.setBadgeText({ text });
+    chrome.action.setBadgeBackgroundColor({ color: "rgb(189, 127, 10)" });
 };
 
 const badgeError = () => {
-    chrome.browserAction.setBadgeText({ text: "Error" });
-    chrome.browserAction.setBadgeBackgroundColor({ color: "rgb(195, 40, 56)" });
+    chrome.action.setBadgeText({ text: "Error" });
+    chrome.action.setBadgeBackgroundColor({ color: "rgb(195, 40, 56)" });
 };
 
 const badgeClear = (preventTimeout = false) => {
     if (preventTimeout) {
-        chrome.browserAction.setBadgeText({ text: "" });
+        chrome.action.setBadgeText({ text: "" });
     } else {
         setTimeout(() => {
-            chrome.browserAction.setBadgeText({ text: "" });
+            chrome.action.setBadgeText({ text: "" });
         }, 2000);
     }
 };
@@ -37,14 +59,14 @@ const initGist = async () => {
     badgeWait("Init...");
     const { ok, error, payload } = await getGist();
     if (ok) {
-        global.state.gist = payload.gist;
-        global.state.gistDataFile = await getDataFile(global.state.gist);
-        await global.state.gistDataFile.fetchLatest();
+        global.state.gistFile = payload.file;
+        global.state.gistId = payload.gistId;
         const duration = (Date.now() - start) / 1e3;
         logOk(`Sync successfully enabled (${duration}s).`);
+        info(`Using gist: ${payload.gistId}`);
         badgeOk();
     } else {
-        logError("[initGist]", error);
+        logError("[initGist]", error || payload);
         badgeError();
     }
     badgeClear();
@@ -109,38 +131,41 @@ const fetchOpenReviewForumJSON = async (url) => {
 
 const fetchGSData = async (paper) => {
     try {
-        var resultsDom = await fetchDom(
+        let html = await fetchText(
             `https://scholar.google.com/scholar?q=${encodeURI(paper.title)}&hl=en`
         );
-        const result = queryAll("#gs_res_ccl_mid h3.gs_rt", resultsDom)
-            .map((h3, idx) => [
-                miniHash(h3.innerText.toLowerCase().replace("[pdf]", "")),
-                idx,
-            ])
-            .find(([mh3, idx]) => mh3 === miniHash(paper.title));
-        const dataId = resultsDom
-            .querySelector(".gs_r.gs_or.gs_scl")
-            ?.getAttribute("data-aid");
-        if (result && dataId) {
-            const [, idx] = result;
-            const citeDom = await fetchDom(
-                `https://scholar.google.fr/scholar?q=info:${dataId}:scholar.google.com/&output=cite&scirp=0&hl=en`
-            );
-            const bibURL = queryAll("a.gs_citi", citeDom)
-                .find((a) => a.innerText.toLowerCase() === "bibtex")
-                ?.getAttribute("href");
-            if (bibURL) {
-                const bibtex = await fetchText(bibURL);
-                const venue = bibtexToObject(bibtex)?.journal;
-                if (
-                    venue &&
-                    !venue.toLowerCase().includes("arxiv") &&
-                    !venue.toLowerCase().includes("preprint")
-                ) {
-                    const note = `Accepted @ ${venue} -- [scholar.google.com]`;
-                    return { venue, note, bibtex: bibtexToString(bibtex) };
-                }
-            }
+        html = html.split("gs_res_ccl_mid")[1];
+        if (!html) return { note: null };
+
+        const mhtml = miniHash(html, "_");
+        const matchedLower = mhtml.match(
+            new RegExp(`_a_id__(\\w+)__href.+_${miniHash(paper.title, "_")}__a_`)
+        );
+
+        if (!matchedLower || !matchedLower[1]) return { note: null };
+
+        const dataIdLower = matchedLower[1];
+        const startIndex = mhtml.indexOf(dataIdLower);
+        if (startIndex < 0) return { note: null };
+
+        const dataId = html.substring(startIndex, startIndex + dataIdLower.length);
+
+        const citeURL = `https://scholar.google.com/scholar?q=info:${dataId}:scholar.google.com/&output=cite&scirp=0&hl=en`;
+        const citeHTML = await fetchText(citeURL);
+        const bibtexURL = citeHTML
+            .match(/<a[^>]*href="([^>]+)"[^>]*>BibTex<\/a>/i)[1]
+            ?.replaceAll("&amp;", "&");
+        if (!bibtexURL) return { note: null };
+
+        const bibtex = await fetchText(bibtexURL);
+        const venue = bibtexToObject(bibtex)?.journal;
+        if (
+            venue &&
+            !venue.toLowerCase().endsWith("xiv") &&
+            !venue.toLowerCase().includes("preprint")
+        ) {
+            const note = `Accepted @ ${venue} -- [scholar.google.com]`;
+            return { venue, note, bibtex: bibtexToString(bibtex) };
         }
         return { note: null };
     } catch (error) {
@@ -238,10 +263,22 @@ const pullSyncPapers = async () => {
     try {
         badgeWait("Pull...");
         const start = Date.now();
+        const localSyncID = await getIdentifier();
         consoleHeader(`Pulling ${String.fromCodePoint("0x23EC")}`);
         log("Pulling from Github...");
-        await global.state.gistDataFile.fetchLatest();
-        const remotePapers = global.state.gistDataFile.content;
+        global.state.gistData = await getDataForGistFile({
+            file: global.state.gistFile,
+            gistid: global.state.gistId,
+        });
+        const remoteSyncId = global.state.gistData["__syncId"];
+        delete global.state.gistData["__syncId"];
+        const remotePapers =
+            remoteSyncId === localSyncID
+                ? (await getStorage("papers")) ?? {}
+                : global.state.gistData;
+        if (remoteSyncId === localSyncID) {
+            warn("Pulled sync data from same device, ignoring.");
+        }
         log("Pulled papers:", remotePapers);
         const duration = (Date.now() - start) / 1e3;
         info(`Pulling from Github... Done (${duration}s)!`);
@@ -259,16 +296,22 @@ const pullSyncPapers = async () => {
 
 const pushSyncPapers = async () => {
     if (!(await shouldSync())) return;
+    const identifier = await getIdentifier();
     try {
         const start = Date.now();
         consoleHeader(`Pushing ${String.fromCodePoint("0x23EB")}`);
         log("Writing to Github...");
         badgeWait("Push...");
-        chrome.browserAction.setBadgeBackgroundColor({ color: "rgb(189, 127, 10)" });
+        chrome.action.setBadgeBackgroundColor({ color: "rgb(189, 127, 10)" });
         const papers = (await getStorage("papers")) ?? {};
+        const syncId = await getIdentifier();
         log("Papers to write: ", papers);
-        await global.state.gistDataFile.overwrite(JSON.stringify(papers, null, ""));
-        await global.state.gistDataFile.save();
+        papers["__syncId"] = syncId;
+        await updateGistFile({
+            file: global.state.gistFile,
+            content: papers,
+            gistId: global.state.gistId,
+        });
         const duration = (Date.now() - start) / 1e3;
         log(`Writing to Github... Done (${duration}s)!`);
         badgeOk();
@@ -336,7 +379,8 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
             const paperTitle = paperTitles[tab.url];
             if (paperTitle && tab.title !== paperTitle) {
                 console.log(">>> Setting tab title to :", paperTitle);
-                chrome.tabs.executeScript(tabId, {
+                chrome.scripting.executeScript({
+                    target: { tabId },
                     code: `
                         ${setTitleCode(paperTitle)};
                         ${setFaviconCode};
