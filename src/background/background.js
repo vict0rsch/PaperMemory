@@ -131,38 +131,41 @@ const fetchOpenReviewForumJSON = async (url) => {
 
 const fetchGSData = async (paper) => {
     try {
-        var resultsDom = await fetchDom(
+        let html = await fetchText(
             `https://scholar.google.com/scholar?q=${encodeURI(paper.title)}&hl=en`
         );
-        const result = queryAll("#gs_res_ccl_mid h3.gs_rt", resultsDom)
-            .map((h3, idx) => [
-                miniHash(h3.innerText.toLowerCase().replace("[pdf]", "")),
-                idx,
-            ])
-            .find(([mh3, idx]) => mh3 === miniHash(paper.title));
-        const dataId = resultsDom
-            .querySelector(".gs_r.gs_or.gs_scl")
-            ?.getAttribute("data-aid");
-        if (result && dataId) {
-            const [, idx] = result;
-            const citeDom = await fetchDom(
-                `https://scholar.google.fr/scholar?q=info:${dataId}:scholar.google.com/&output=cite&scirp=0&hl=en`
-            );
-            const bibURL = queryAll("a.gs_citi", citeDom)
-                .find((a) => a.innerText.toLowerCase() === "bibtex")
-                ?.getAttribute("href");
-            if (bibURL) {
-                const bibtex = await fetchText(bibURL);
-                const venue = bibtexToObject(bibtex)?.journal;
-                if (
-                    venue &&
-                    !venue.toLowerCase().includes("arxiv") &&
-                    !venue.toLowerCase().includes("preprint")
-                ) {
-                    const note = `Accepted @ ${venue} -- [scholar.google.com]`;
-                    return { venue, note, bibtex: bibtexToString(bibtex) };
-                }
-            }
+        html = html.split("gs_res_ccl_mid")[1];
+        if (!html) return { note: null };
+
+        const mhtml = miniHash(html, "_");
+        const matchedLower = mhtml.match(
+            new RegExp(`_a_id__(\\w+)__href.+_${miniHash(paper.title, "_")}__a_`)
+        );
+
+        if (!matchedLower || !matchedLower[1]) return { note: null };
+
+        const dataIdLower = matchedLower[1];
+        const startIndex = mhtml.indexOf(dataIdLower);
+        if (startIndex < 0) return { note: null };
+
+        const dataId = html.substring(startIndex, startIndex + dataIdLower.length);
+
+        const citeURL = `https://scholar.google.com/scholar?q=info:${dataId}:scholar.google.com/&output=cite&scirp=0&hl=en`;
+        const citeHTML = await fetchText(citeURL);
+        const bibtexURL = citeHTML
+            .match(/<a[^>]*href="([^>]+)"[^>]*>BibTex<\/a>/i)[1]
+            ?.replaceAll("&amp;", "&");
+        if (!bibtexURL) return { note: null };
+
+        const bibtex = await fetchText(bibtexURL);
+        const venue = bibtexToObject(bibtex)?.journal;
+        if (
+            venue &&
+            !venue.toLowerCase().endswith("xiv") &&
+            !venue.toLowerCase().includes("preprint")
+        ) {
+            const note = `Accepted @ ${venue} -- [scholar.google.com]`;
+            return { venue, note, bibtex: bibtexToString(bibtex) };
         }
         return { note: null };
     } catch (error) {
