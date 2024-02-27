@@ -1751,6 +1751,7 @@ const trySemanticScholar = async (paper) => {
 
 const tryGoogleScholar = async (paper) => {
     const resp = await sendMessageToBackground({ type: "google-scholar", paper });
+    resp.note && info("Found a Google Scholar match", resp.note);
     return resp;
 };
 
@@ -1777,7 +1778,7 @@ const tryPreprintMatch = async (paper, tryPwc = false) => {
     let note, venue, bibtex, code, doi;
     let matches = {};
 
-    let names = ["DBLP", "SemanticScholar", "CrossRef", "GoogleScholar", "Unpaywall"];
+    let names = ["GoogleScholar", "SemanticScholar", "CrossRef", "DBLP", "Unpaywall"];
     let matchPromises = [
         silentPromiseTimeout(tryGoogleScholar(paper)),
         silentPromiseTimeout(trySemanticScholar(paper)),
