@@ -17,6 +17,8 @@ try {
         "../shared/js/utils/parsers.js"
     );
 } catch (e) {
+    console.log("Error importing scripts in background.js");
+    console.log("This is OK on Firefox, but not on Chrome.");
     console.error(e);
 }
 
