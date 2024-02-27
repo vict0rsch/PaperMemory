@@ -161,7 +161,7 @@ const fetchGSData = async (paper) => {
         const venue = bibtexToObject(bibtex)?.journal;
         if (
             venue &&
-            !venue.toLowerCase().endswith("xiv") &&
+            !venue.toLowerCase().endsWith("xiv") &&
             !venue.toLowerCase().includes("preprint")
         ) {
             const note = `Accepted @ ${venue} -- [scholar.google.com]`;

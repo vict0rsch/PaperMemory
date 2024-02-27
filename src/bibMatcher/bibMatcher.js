@@ -151,9 +151,6 @@ const showError = (msg) => {
     setHTML("bibmatch-errors", msg);
 };
 
-const sleep = async (duration) =>
-    new Promise((resolve) => setTimeout(resolve, duration));
-
 const matchPaper = async (paper) => {
     let bibtex, match, source, venue;
 
