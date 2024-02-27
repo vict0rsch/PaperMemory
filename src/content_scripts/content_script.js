@@ -437,18 +437,19 @@ const arxiv = async (checks) => {
     if (!isArxivAbs) return;
 
     const id = await parseIdFromUrl(url);
-    const previousHTML = querySelector(".extra-services .full-text").innerHTML;
+    const previousHTML = querySelector(".extra-services .full-text")?.innerHTML || "";
     const pmTitle = '<h2 id="pm-col-title">PaperMemory:</h2>';
-    querySelector(".extra-services .full-text").innerHTML = /*html*/ `
-        <div>${previousHTML}</div>
+    setHTML(
+        querySelector(".extra-services .full-text"),
+        /*html*/ `<div>${previousHTML}</div>
         <div id="pm-download-wrapper" class="pm-container">
             <div id="pm-header" style="width: 100%">
                 ${previousHTML.includes(pmTitle) ? "" : pmTitle}
                 <div id="pm-header-content"></div>
             </div>
         </div>
-        <div id="pm-extras"></div>
-    `;
+        <div id="pm-extras"></div>`
+    );
     const pdfUrl = querySelector(".abs-button.download-pdf").href;
     const arxivPMDiv = findEl("pm-extras");
 
