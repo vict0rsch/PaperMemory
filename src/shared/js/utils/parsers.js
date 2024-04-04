@@ -1588,7 +1588,10 @@ const tryPWCMatch = async (paper) => {
  * @param {object} paper The paper to look for in crossref's database for an exact title match
  * @returns {string} The note for the paper as `Accepted @ ${items.event.name} -- [crossref.org]`
  */
-const tryCrossRef = async (paper) => {
+const tryCrossRef = async (paper, toBackground) => {
+    if (toBackground) {
+        return await sendMessageToBackground({ type: "try-cross-ref", paper });
+    }
     try {
         // fetch crossref' api for the paper's title
         const title = encodeURI(paper.title);
@@ -1634,7 +1637,10 @@ const tryCrossRef = async (paper) => {
     }
 };
 
-const tryDBLP = async (paper) => {
+const tryDBLP = async (paper, toBackground) => {
+    if (toBackground) {
+        return await sendMessageToBackground({ type: "try-dblp", paper });
+    }
     try {
         const title = encodeURI(paper.title);
         const api = `https://dblp.org/search/publ/api?q=${title}&format=json`;
@@ -1694,7 +1700,10 @@ const tryDBLP = async (paper) => {
     }
 };
 
-const trySemanticScholar = async (paper) => {
+const trySemanticScholar = async (paper, toBackground) => {
+    if (toBackground) {
+        return await sendMessageToBackground({ type: "try-semantic-scholar", paper });
+    }
     try {
         const { data, status } = await fetchJSON(
             `https://api.semanticscholar.org/graph/v1/paper/search?query=${encodeURI(
@@ -1755,7 +1764,10 @@ const tryGoogleScholar = async (paper) => {
     return resp;
 };
 
-const tryUnpaywall = async (paper) => {
+const tryUnpaywall = async (paper, toBackground) => {
+    if (toBackground) {
+        return await sendMessageToBackground({ type: "try-unpaywall", paper });
+    }
     const url = `https://api.unpaywall.org/v2/search?query=${encodeURI(
         paper.title
     )}&is_oa=true&email=papermemory+${parseInt(Math.random() * 1000)}@gmail.com`;
@@ -1781,7 +1793,7 @@ const tryPreprintMatch = async (paper, tryPwc = false) => {
     let names = ["GoogleScholar", "SemanticScholar", "CrossRef", "DBLP", "Unpaywall"];
     let matchPromises = [
         silentPromiseTimeout(tryGoogleScholar(paper)),
-        silentPromiseTimeout(trySemanticScholar(paper)),
+        silentPromiseTimeout(trySemanticScholar(paper, true)),
         silentPromiseTimeout(tryCrossRef(paper)),
         silentPromiseTimeout(tryDBLP(paper)),
         silentPromiseTimeout(tryUnpaywall(paper)),

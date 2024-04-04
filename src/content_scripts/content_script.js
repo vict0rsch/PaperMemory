@@ -80,6 +80,7 @@ $.extend($.easing, {
 
 var timeout = null;
 var prevent = false;
+var pdfTitleIters = 0;
 
 /**
  * Centralizes HTML svg codes
@@ -248,21 +249,19 @@ const contentScriptMain = async ({
     }
 
     if (id && prefs.checkPdfTitle) {
-        const makeTitle = async (id, url) => {
+        const makeTitle = async (id) => {
             if (!global.state.papers.hasOwnProperty(id)) return;
             const paper = global.state.papers[id];
-            title = stateTitleFunction(paper);
-            chrome.runtime.sendMessage(
-                {
-                    type: "update-title",
-                    options: { title, url },
-                },
-                () => {
-                    window.document.title = title;
-                }
-            );
+            const maxWait = 60 * 1000;
+            while (1) {
+                const waitTime = Math.min(maxWait, 250 * 2 ** pdfTitleIters);
+                await sleep(waitTime);
+                document.title = "";
+                document.title = paper.title;
+                pdfTitleIters++;
+            }
         };
-        makeTitle(id, url);
+        makeTitle(id);
     }
 };
 

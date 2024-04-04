@@ -1,8 +1,3 @@
-/**
- * @todo Better error PAT error handling (e.g. when PAT is invalid or expired)
- * @todo Better docstrings for background.js
- */
-
 try {
     importScripts(
         "../shared/js/utils/octokit.bundle.js",
@@ -89,19 +84,6 @@ if (window.location.href.startsWith("file://")){
         link.href = "https://github.com/vict0rsch/PaperMemory/blob/master/icons/favicon-192x192.png?raw=true"
     }, 350);
 }`;
-
-const setTitleCode = (title) => `
-try {
-    target = "${title}";
-    document.title = "";
-    const qtitle = document.querySelector("title");
-    qtitle && (qtitle.innerHTML = "");
-    setTimeout(() => {
-        document.title = target;
-        qtitle && (qtitle.innerHTML = target);
-    }, 10)
-} catch (e) {}
-`;
 
 const fetchOpenReviewNoteJSON = async (url) => {
     const id = url.match(/id=([\w-])+/)[0].replace("id=", "");
@@ -362,6 +344,14 @@ chrome.runtime.onMessage.addListener((payload, sender, sendResponse) => {
         fetchOpenReviewNoteJSON(payload.url).then(sendResponse);
     } else if (payload.type === "OpenReviewForumJSON") {
         fetchOpenReviewForumJSON(payload.url).then(sendResponse);
+    } else if (payload.type === "try-semantic-scholar") {
+        trySemanticScholar(payload.paper, false).then(sendResponse);
+    } else if (payload.type === "try-cross-ref") {
+        tryCrossRef(payload.paper, false).then(sendResponse);
+    } else if (payload.type === "try-dblp") {
+        tryDBLP(payload.paper, false).then(sendResponse);
+    } else if (payload.type === "try-unpaywall") {
+        tryUnpaywall(payload.paper, false).then(sendResponse);
     }
     return true;
 });
