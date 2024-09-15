@@ -7,7 +7,6 @@ import cleanCss from "gulp-clean-css";
 import rename from "gulp-rename";
 import preprocess from "gulp-preprocess";
 import htmlmin from "gulp-html-minifier-terser";
-import minifyJSTemplate from "gulp-minify-html-literals";
 import readlineSync from "readline-sync";
 import fs from "fs";
 import zip from "gulp-zip";
@@ -22,12 +21,6 @@ function popupJS() {
         "src/popup/js/popup.js",
     ])
         .pipe(concat("popup.js"))
-        .pipe(
-            minifyJSTemplate({
-                minifyOptions: { minifyCSS: false, collapseWhitespace: true },
-                shouldMinify: (template) => true,
-            })
-        )
         .pipe(uglify({ mangle: true }))
         .pipe(rename({ suffix: ".min" }))
         .pipe(dest("src/popup/min/"));
@@ -49,12 +42,6 @@ function utilsJS() {
         ])
             // .pipe(debug())
             .pipe(concat("utils.js"))
-            .pipe(
-                minifyJSTemplate({
-                    minifyOptions: { minifyCSS: false, collapseWhitespace: true },
-                    shouldMinify: (template) => true,
-                })
-            )
             .pipe(uglify({ mangle: true }))
             .pipe(rename({ suffix: ".min" }))
             .pipe(dest("src/shared/min"))
