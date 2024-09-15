@@ -10,11 +10,10 @@ The only external deps. are [`select2.js`](https://select2.org/) which requires 
 
 ## Set-up
 
-1. [Install `yarn`](https://classic.yarnpkg.com/lang/en/docs/install): Node's package manager
-2. [Install `gulp`](https://gulpjs.com/): a build tool
-3. Install dependencies: from the root of this repo `$ yarn install`
-4. Watch file changes: `$ gulp watch`
-5. Edit files!
+1. [Install `gulp`](https://gulpjs.com/): a build tool
+2. Install dependencies: from the root of this repo `$ npm install`
+3. Watch file changes: `$ gulp watch`
+4. Edit files!
 
 `gulp` mainly runs the concatenation of files into a single one (especially for css and js) and its minification.
 
