@@ -40,7 +40,7 @@
     "browserify": "^17.0.0",
     "esmify": "^2.1.1",
     "expect": "^29.7.0",
-    "glob": "^10.3.10",
+    "glob": "^11.0.1",
     "gulp": "^4.0.0",
     "gulp-clean-css": "^4.3.0",
     "gulp-concat": "^2.6.1",
