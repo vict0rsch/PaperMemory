@@ -36,7 +36,7 @@
   },
   "homepage": "https://github.com/vict0rsch/PaperMemory",
   "devDependencies": {
-    "@octokit/request": "^8.1.6",
+    "@octokit/request": "^9.2.0",
     "browserify": "^17.0.0",
     "esmify": "^2.1.1",
     "expect": "^29.7.0",
