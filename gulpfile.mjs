@@ -7,7 +7,7 @@ import cleanCss from "gulp-clean-css";
 import rename from "gulp-rename";
 import preprocess from "gulp-preprocess";
 import htmlmin from "gulp-html-minifier-terser";
-import minifyJSTemplate from "gulp-minify-html-literals";
+// import minifyJSTemplate from "gulp-minify-html-literals";
 import readlineSync from "readline-sync";
 import fs from "fs";
 import zip from "gulp-zip";
@@ -15,22 +15,24 @@ import { v4 as uuidv4 } from "uuid";
 // import debug from "gulp-debug";
 
 function popupJS() {
-    return src([
-        "src/popup/js/handlers.js",
-        "src/popup/js/templates.js",
-        "src/popup/js/memory.js",
-        "src/popup/js/popup.js",
-    ])
-        .pipe(concat("popup.js"))
-        .pipe(
-            minifyJSTemplate({
-                minifyOptions: { minifyCSS: false, collapseWhitespace: true },
-                shouldMinify: (template) => true,
-            })
-        )
-        .pipe(uglify({ mangle: true }))
-        .pipe(rename({ suffix: ".min" }))
-        .pipe(dest("src/popup/min/"));
+    return (
+        src([
+            "src/popup/js/handlers.js",
+            "src/popup/js/templates.js",
+            "src/popup/js/memory.js",
+            "src/popup/js/popup.js",
+        ])
+            .pipe(concat("popup.js"))
+            // .pipe(
+            //     minifyJSTemplate({
+            //         minifyOptions: { minifyCSS: false, collapseWhitespace: true },
+            //         shouldMinify: (template) => true,
+            //     })
+            // )
+            .pipe(uglify({ mangle: true }))
+            .pipe(rename({ suffix: ".min" }))
+            .pipe(dest("src/popup/min/"))
+    );
 }
 
 function utilsJS() {
@@ -49,12 +51,12 @@ function utilsJS() {
         ])
             // .pipe(debug())
             .pipe(concat("utils.js"))
-            .pipe(
-                minifyJSTemplate({
-                    minifyOptions: { minifyCSS: false, collapseWhitespace: true },
-                    shouldMinify: (template) => true,
-                })
-            )
+            // .pipe(
+            //     minifyJSTemplate({
+            //         minifyOptions: { minifyCSS: false, collapseWhitespace: true },
+            //         shouldMinify: (template) => true,
+            //     })
+            // )
             .pipe(uglify({ mangle: true }))
             .pipe(rename({ suffix: ".min" }))
             .pipe(dest("src/shared/min"))
