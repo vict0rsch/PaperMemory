@@ -11,6 +11,7 @@ try {
         "../shared/js/utils/state.js",
         "../shared/js/utils/parsers.js"
     );
+    console.log("Scripts loaded.");
 } catch (e) {
     console.log("Error importing scripts in background.js");
     console.log("This is OK on Firefox, but not on Chrome.");

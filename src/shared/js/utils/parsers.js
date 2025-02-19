@@ -573,15 +573,18 @@ const makeOpenReviewPaper = async (url) => {
     var forum = forumJson.notes;
 
     ({ isV2, paper } = extractAPIv2ContentValue(paper));
-
+    console.log("paper", paper);
     const title = paper.content.title;
-    const author = (paper.content.authors || paper.content.authors.value).join(" and ");
+    const author = (
+        paper.content.authors ||
+        paper.content.authors?.value || ["Anonymous"]
+    ).join(" and ");
     const bibtex = bibtexToString(
         paper.content._bibtex || makeOpenReviewBibTex(paper, url)
     );
-    const obj = bibtexToObject(bibtex);
-    const key = obj.citationKey;
-    const year = obj.year;
+    const bibObj = bibtexToObject(bibtex);
+    const key = bibObj.citationKey;
+    const year = bibObj.year;
 
     let pdfLink;
     if (paper.pdf) {
@@ -646,6 +649,10 @@ const makeOpenReviewPaper = async (url) => {
         }
     }
 
+    if (author !== "Anonymous" && !venue && bibObj.booktitle) {
+        note = `Accepted @ ${bibObj.booktitle}`;
+        venue = bibObj.booktitle;
+    }
     if (author === "Anonymous" && decision != "Rejected") {
         note = `Under review @ ${conf} (${year}) (${new Date().toLocaleDateString()})`;
     }
@@ -1102,7 +1109,7 @@ const makeACMPaper = async (url) => {
     } else {
         title = dom.querySelector(".citation__title").innerText;
         author = queryAll(
-            "ul[ariaa-label='authors'] li.loa__item .loa__author-name",
+            "ul[aria-label='authors'] li.loa__item .loa__author-name",
             dom
         )
             .map((el) => el.innerText.replace(",", "").trim())
