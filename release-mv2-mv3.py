@@ -40,11 +40,17 @@ def update_ffx_manifest(manifest, out_dir):
         "resources"
     ]
     manifest["manifest_version"] = 2
+    del manifest["host_permissions"]
+    manifest["commands"]["_execute_browser_action"] = manifest["commands"][
+        "_execute_action"
+    ].copy()
+    del manifest["commands"]["_execute_action"]
+    manifest["permissions"].append("<all_urls>")
+
     (out_dir / "manifest.json").write_text(json.dumps(manifest, indent=2))
 
 
 if __name__ == "__main__":
-
     folders = ["icons", "src"]
     files = ["LICENSE", "manifest.json"]
 
