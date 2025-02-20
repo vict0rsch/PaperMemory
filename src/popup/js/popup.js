@@ -501,8 +501,12 @@ const popupMain = async (url, is, manualTrigger = false, tab = null) => {
                         "website-parsing-error",
                         `<h3>Error</h3><div>${error}</div>`
                     );
+                    setTimeout(() => {
+                        hideId("website-loader-container");
+                        hideId("website-parsing-error");
+                        showId("website-trigger-btn");
+                    }, 3000);
                 }
-                hideId("website-loader-container");
                 // check with user before storing
                 update?.paper && editManualWebsite(update.paper, url);
             });
