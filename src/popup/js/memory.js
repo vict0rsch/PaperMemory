@@ -451,21 +451,21 @@ const searchMemory = (letters) => {
     const words = letters.toLowerCase().split(" ");
     let papersList = [];
     for (const paper of global.state.sortedPapers) {
-        const title = paper.title.toLowerCase();
-        const author = paper.author.toLowerCase();
-        const note = paper.note.toLowerCase();
-        const tags = paper.tags.join(" ").toLowerCase();
-        const displayId = getDisplayId(paper.id).toLowerCase();
-        const venue = paper.venue?.toLowerCase() || "";
+        const contentKeys = ["title", "author", "note", "tags", "displayId", "venue"];
+        const contents = contentKeys.map((key) => {
+            if (Array.isArray(paper[key])) {
+                return paper[key].join(" ").toLowerCase();
+            } else if (typeof paper[key] === "string") {
+                return paper[key].toLowerCase();
+            } else {
+                logError(`searchMemory error: non-string content for key ${key}`);
+                log(paper);
+                return "";
+            }
+        });
+
         if (
-            words.every(
-                (w) =>
-                    title.includes(w) ||
-                    author.includes(w) ||
-                    note.includes(w) ||
-                    tags.includes(w) ||
-                    displayId.includes(w) ||
-                    venue.includes(w)
+            words.every((w) => contents.some((c) => c.includes(w)))
             )
         ) {
             if (!global.state.showFavorites || paper.favorite) {
