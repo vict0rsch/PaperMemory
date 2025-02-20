@@ -187,12 +187,31 @@ const findCodesForPaper = async (request) => {
     }
     const pwcData = await fetchPWCData(arxivId, title);
     if (!pwcData) return code;
-    const { id, proceeding } = pwcData;
+    const { id, proceeding, published, conference } = pwcData;
+    info("Found a PWC proceeding paper:", pwcData);
+    let venue, year;
 
-    if (proceeding) {
-        const venue = proceeding.split("-")[0].toUpperCase();
-        const year = proceeding.split("-")[1];
-        info("Found a PWC proceeding paper:", venue, year);
+    if (conference) {
+        const confData = await fetchJSON(
+            `https://paperswithcode.com/api/v1/conferences/${conference}`
+        );
+        venue = confData?.name;
+    }
+    if (published) {
+        year = published.split("-")[0];
+    }
+
+    if (proceeding && (!year || !venue)) {
+        year = proceeding.match(/(\d{4})/)[0];
+        venue = proceeding
+            .split(year)[0]
+            .split("-")
+            .filter((p) => p)
+            .map((p) => p[0].toUpperCase() + p.slice(1))
+            .join(" ")
+            .trim();
+    }
+    if (year && venue) {
         code = {
             note: `Accepted @ ${venue} (${year}) -- [paperswithcode.com]`,
             venue,
@@ -202,17 +221,16 @@ const findCodesForPaper = async (request) => {
 
     if (!id) return code;
 
-    const codePath = `https://paperswithcode.com/api/v1/papers/${id}/repositories/`;
+    const json = await fetchJSON(
+        `https://paperswithcode.com/api/v1/papers/${id}/repositories/`
+    );
 
-    const response = await fetch(codePath);
-    const json = await response.json();
-
-    if (json["count"] < 1) {
+    if (json.data["count"] < 1) {
         log("No code found for paper.");
         return code;
     }
 
-    let codes = json["results"];
+    let codes = json.data["results"];
 
     const { pwcPrefs } = request;
     const official = pwcPrefs.hasOwnProperty("official") ? pwcPrefs.official : false;
