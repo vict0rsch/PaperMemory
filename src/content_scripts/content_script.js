@@ -80,6 +80,7 @@ $.extend($.easing, {
 
 var timeout = null;
 var prevent = false;
+var pdfTitleIters = 0;
 
 /**
  * Centralizes HTML svg codes
@@ -176,6 +177,37 @@ const ignorePaper = (is, ignoreSources) => {
 };
 
 /**
+ * Queries an element from the DOM, waiting for it to appear if necessary
+ * @param {object} opts The options for the query
+ * @param {string} opts.query The query to search for
+ * @param {number} opts.interval The interval to wait between queries
+ * @param {number} opts.iters The maximum number of iterations
+ * @param {boolean} opts.all Whether to query all elements or a single element
+ * @param {HTMLElement} opts.dom The DOM to query
+ * @returns {HTMLElement} The queried element
+ */
+const queryOrWait = async ({
+    query,
+    interval = 200,
+    iters = 50,
+    all = false,
+    dom = null,
+}) => {
+    let iter = 0;
+    const func = all ? queryAll : querySelector;
+    let el = func(query);
+    while ((all && !el.length) || (!all && !el)) {
+        await sleep(interval);
+        iter += 1;
+        if (iter > iters) {
+            break;
+        }
+        el = func(query);
+    }
+    return el;
+};
+
+/**
  * Adds markdown link, bibtex citation and download button on arxiv.
  * Also, if the current website is a known paper source (isPaper), adds or updates the current paper
  * @param {object} checks The user's stored preferences regarding menu options
@@ -248,21 +280,19 @@ const contentScriptMain = async ({
     }
 
     if (id && prefs.checkPdfTitle) {
-        const makeTitle = async (id, url) => {
+        const makeTitle = async (id) => {
             if (!global.state.papers.hasOwnProperty(id)) return;
             const paper = global.state.papers[id];
-            title = stateTitleFunction(paper);
-            chrome.runtime.sendMessage(
-                {
-                    type: "update-title",
-                    options: { title, url },
-                },
-                () => {
-                    window.document.title = title;
-                }
-            );
+            const maxWait = 60 * 1000;
+            while (1) {
+                const waitTime = Math.min(maxWait, 250 * 2 ** pdfTitleIters);
+                await sleep(waitTime);
+                document.title = "";
+                document.title = paper.title;
+                pdfTitleIters++;
+            }
         };
-        makeTitle(id, url);
+        makeTitle(id);
     }
 };
 
@@ -437,20 +467,22 @@ const arxiv = async (checks) => {
     if (!isArxivAbs) return;
 
     const id = await parseIdFromUrl(url);
-    const previousHTML = querySelector(".extra-services .full-text").innerHTML;
+    const previousHTML = querySelector(".extra-services .full-text")?.innerHTML || "";
     const pmTitle = '<h2 id="pm-col-title">PaperMemory:</h2>';
-    querySelector(".extra-services .full-text").innerHTML = /*html*/ `
-        <div>${previousHTML}</div>
+    setHTML(
+        querySelector(".extra-services .full-text"),
+        /*html*/ `<div>${previousHTML}</div>
         <div id="pm-download-wrapper" class="pm-container">
             <div id="pm-header" style="width: 100%">
                 ${previousHTML.includes(pmTitle) ? "" : pmTitle}
                 <div id="pm-header-content"></div>
             </div>
         </div>
-        <div id="pm-extras"></div>
-    `;
-    const pdfUrl = querySelector(".abs-button.download-pdf").href;
-    const arxivPMDiv = findEl("pm-extras");
+        <div id="pm-extras"></div>`
+    );
+    let pdfUrlButton = await queryOrWait({ query: ".abs-button.download-pdf" });
+    let pdfUrl = pdfUrlButton?.href;
+    const arxivPMDiv = await queryOrWait({ query: "#pm-extras" });
 
     // -----------------------------
     // -----  Download Button  -----
@@ -463,9 +495,10 @@ const arxiv = async (checks) => {
             </div>
         `;
         findEl("pm-arxiv-direct-download")?.remove();
-        document
-            .getElementById("pm-header-content")
-            .insertAdjacentHTML("beforeend", button);
+        (await queryOrWait({ query: "#pm-header-content" }))?.insertAdjacentHTML(
+            "beforeend",
+            button
+        );
         var downloadTimeout;
         addListener("arxiv-button", "click", async () => {
             removeClass("arxiv-button", "downloaded");
@@ -475,13 +508,22 @@ const arxiv = async (checks) => {
                 hasClass("arxiv-button", "downloaded") &&
                     removeClass("arxiv-button", "downloaded");
             }, 1500);
+            if (!pdfUrl) {
+                pdfUrl = querySelector(".abs-button.download-pdf")?.href;
+            }
+            if (!pdfUrl) {
+                console.error(
+                    "Could not parse the PDF URL from HTML element: `.abs-button.download-pdf`"
+                );
+                return;
+            }
             if (!global.state.papers.hasOwnProperty(id)) {
                 const title = await fetch(
                     `https://export.arxiv.org/api/query?id_list=${id.split("-")[1]}`
                 ).then((data) => {
                     return $($(data).find("entry title")[0]).text();
                 });
-                downloadFile(pdfUrl, `${title}.pdf`);
+                downloadURI(pdfUrl, `${title}.pdf`);
             } else {
                 let title = stateTitleFunction(id);
                 if (!title.endsWith(".pdf")) {
@@ -493,7 +535,7 @@ const arxiv = async (checks) => {
                           pdfUrl,
                           title,
                       })
-                    : downloadFile(pdfUrl, title);
+                    : downloadURI(pdfUrl, title);
             }
         });
     }
@@ -527,7 +569,7 @@ const arxiv = async (checks) => {
             <div id="markdown-link" class="pm-codify">${mdContent}</div>
         </div>`;
         findEl("markdown-container")?.remove();
-        arxivPMDiv.insertAdjacentHTML("beforeend", mdHtml);
+        arxivPMDiv?.insertAdjacentHTML("beforeend", mdHtml);
     }
 
     if (checkBib) {
@@ -541,7 +583,7 @@ const arxiv = async (checks) => {
                 </div>
             </div>
         `;
-        arxivPMDiv.insertAdjacentHTML("beforeend", bibLoader);
+        arxivPMDiv?.insertAdjacentHTML("beforeend", bibLoader);
         findEl("bibtexDiv")?.remove();
         const bibtexDiv = /*html*/ `
             <div id="bibtexDiv">
@@ -555,8 +597,8 @@ const arxiv = async (checks) => {
             </div>
         `;
 
-        findEl("loader-container").remove();
-        arxivPMDiv.insertAdjacentHTML("beforeend", bibtexDiv);
+        (await queryOrWait({ query: "#loader-container" }))?.remove();
+        arxivPMDiv?.insertAdjacentHTML("beforeend", bibtexDiv);
         addListener(querySelector("#texHeader .copy-feedback"), "click", (e) => {
             $("#texHeader .copy-feedback").fadeOut(200, () => {
                 $("#texHeader .copy-feedback-ok").fadeIn(200, () => {

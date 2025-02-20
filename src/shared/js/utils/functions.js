@@ -357,6 +357,28 @@ const eventId = (e) => {
 
 /**
  * Download a file from a url
+ * @param {string} url The url of the file to download
+ * @param {string} name The name of the file to download
+ * @returns {void}
+ * */
+async function downloadURI(url, name) {
+    name = name.replace(/[^\w\s]/gi, "");
+    let blob = await fetch(url).then((r) => r.blob());
+    var f = new FileReader();
+    f.readAsDataURL(blob);
+    f.onload = (d) => {
+        var uri = d.target.result;
+        var link = document.createElement("a");
+        link.download = name;
+        link.href = uri;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+}
+
+/**
+ * Download a file from a url
  * @param {string} fileURL The url of the file to download
  * @param {string} fileName The name of the file to download
  * @returns {void}
@@ -367,8 +389,7 @@ const downloadFile = (fileURL, fileName) => {
         var save = document.createElement("a");
         save.href = fileURL;
         save.target = "_blank";
-        var filename = fileURL.substring(fileURL.lastIndexOf("/") + 1);
-        save.download = fileName || filename;
+        save.download = fileName;
         if (
             navigator.userAgent.toLowerCase().match(/(ipad|iphone|safari)/) &&
             navigator.userAgent.search("Chrome") < 0
@@ -1109,6 +1130,7 @@ if (typeof module !== "undefined" && module.exports != null) {
         downloadTextFile,
         eventId,
         downloadFile,
+        downloadURI,
         hashCode,
         parseCVFUrl,
         cleanBiorxivURL,

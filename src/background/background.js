@@ -1,8 +1,3 @@
-/**
- * @todo Better error PAT error handling (e.g. when PAT is invalid or expired)
- * @todo Better docstrings for background.js
- */
-
 try {
     importScripts(
         "../shared/js/utils/octokit.bundle.js",
@@ -16,7 +11,10 @@ try {
         "../shared/js/utils/state.js",
         "../shared/js/utils/parsers.js"
     );
+    console.log("Scripts loaded.");
 } catch (e) {
+    console.log("Error importing scripts in background.js");
+    console.log("This is OK on Firefox, but not on Chrome.");
     console.error(e);
 }
 
@@ -87,19 +85,6 @@ if (window.location.href.startsWith("file://")){
         link.href = "https://github.com/vict0rsch/PaperMemory/blob/master/icons/favicon-192x192.png?raw=true"
     }, 350);
 }`;
-
-const setTitleCode = (title) => `
-try {
-    target = "${title}";
-    document.title = "";
-    const qtitle = document.querySelector("title");
-    qtitle && (qtitle.innerHTML = "");
-    setTimeout(() => {
-        document.title = target;
-        qtitle && (qtitle.innerHTML = target);
-    }, 10)
-} catch (e) {}
-`;
 
 const fetchOpenReviewNoteJSON = async (url) => {
     const id = url.match(/id=([\w-])+/)[0].replace("id=", "");
@@ -202,12 +187,31 @@ const findCodesForPaper = async (request) => {
     }
     const pwcData = await fetchPWCData(arxivId, title);
     if (!pwcData) return code;
-    const { id, proceeding } = pwcData;
+    const { id, proceeding, published, conference } = pwcData;
+    info("Found a PWC proceeding paper:", pwcData);
+    let venue, year;
 
-    if (proceeding) {
-        const venue = proceeding.split("-")[0].toUpperCase();
-        const year = proceeding.split("-")[1];
-        info("Found a PWC proceeding paper:", venue, year);
+    if (conference) {
+        const confData = await fetchJSON(
+            `https://paperswithcode.com/api/v1/conferences/${conference}`
+        );
+        venue = confData?.name;
+    }
+    if (published) {
+        year = published.split("-")[0];
+    }
+
+    if (proceeding && (!year || !venue)) {
+        year = proceeding.match(/(\d{4})/)[0];
+        venue = proceeding
+            .split(year)[0]
+            .split("-")
+            .filter((p) => p)
+            .map((p) => p[0].toUpperCase() + p.slice(1))
+            .join(" ")
+            .trim();
+    }
+    if (year && venue) {
         code = {
             note: `Accepted @ ${venue} (${year}) -- [paperswithcode.com]`,
             venue,
@@ -217,17 +221,16 @@ const findCodesForPaper = async (request) => {
 
     if (!id) return code;
 
-    const codePath = `https://paperswithcode.com/api/v1/papers/${id}/repositories/`;
+    const json = await fetchJSON(
+        `https://paperswithcode.com/api/v1/papers/${id}/repositories/`
+    );
 
-    const response = await fetch(codePath);
-    const json = await response.json();
-
-    if (json["count"] < 1) {
+    if (json.data["count"] < 1) {
         log("No code found for paper.");
         return code;
     }
 
-    let codes = json["results"];
+    let codes = json.data["results"];
 
     const { pwcPrefs } = request;
     const official = pwcPrefs.hasOwnProperty("official") ? pwcPrefs.official : false;
@@ -360,6 +363,14 @@ chrome.runtime.onMessage.addListener((payload, sender, sendResponse) => {
         fetchOpenReviewNoteJSON(payload.url).then(sendResponse);
     } else if (payload.type === "OpenReviewForumJSON") {
         fetchOpenReviewForumJSON(payload.url).then(sendResponse);
+    } else if (payload.type === "try-semantic-scholar") {
+        trySemanticScholar(payload.paper, false).then(sendResponse);
+    } else if (payload.type === "try-cross-ref") {
+        tryCrossRef(payload.paper, false).then(sendResponse);
+    } else if (payload.type === "try-dblp") {
+        tryDBLP(payload.paper, false).then(sendResponse);
+    } else if (payload.type === "try-unpaywall") {
+        tryUnpaywall(payload.paper, false).then(sendResponse);
     }
     return true;
 });

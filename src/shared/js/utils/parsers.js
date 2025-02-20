@@ -370,7 +370,10 @@ const makeArxivPaper = async (url) => {
     const arxivId = arxivIdFromURL(url);
     const response = await fetchArxivXML(arxivId);
     const xmlData = await response.text();
-    var doc = new DOMParser().parseFromString(xmlData.replaceAll("\n", ""), "text/xml");
+    const doc = new DOMParser().parseFromString(
+        xmlData.replaceAll("\n", ""),
+        "text/xml"
+    );
 
     const authors = queryAll("author name", doc).map((el) => el.innerHTML);
     const author = authors.join(" and ");
@@ -378,9 +381,10 @@ const makeArxivPaper = async (url) => {
     const pdfLink = [...doc.getElementsByTagName("link")]
         .map((l) => l.getAttribute("href"))
         .filter((h) => h.includes("arxiv.org/pdf/"))[0]
-        .replace(/v\d+\.pdf$/gi, ".pdf");
+        .replace(/v\d+(\.pdf)?$/gi, ".pdf");
 
-    const title = doc.querySelector("entry title").innerHTML;
+    let title = doc.querySelector("entry title");
+    title = title?.textContent || title?.innerText || "";
     const year = doc.querySelector("entry published").innerHTML.slice(0, 4);
     const key =
         authors[0].split(" ").last().toLowerCase() +
@@ -573,15 +577,18 @@ const makeOpenReviewPaper = async (url) => {
     var forum = forumJson.notes;
 
     ({ isV2, paper } = extractAPIv2ContentValue(paper));
-
+    console.log("paper", paper);
     const title = paper.content.title;
-    const author = (paper.content.authors || paper.content.authors.value).join(" and ");
+    const author = (
+        paper.content.authors ||
+        paper.content.authors?.value || ["Anonymous"]
+    ).join(" and ");
     const bibtex = bibtexToString(
         paper.content._bibtex || makeOpenReviewBibTex(paper, url)
     );
-    const obj = bibtexToObject(bibtex);
-    const key = obj.citationKey;
-    const year = obj.year;
+    const bibObj = bibtexToObject(bibtex);
+    const key = bibObj.citationKey;
+    const year = bibObj.year;
 
     let pdfLink;
     if (paper.pdf) {
@@ -646,6 +653,10 @@ const makeOpenReviewPaper = async (url) => {
         }
     }
 
+    if (author !== "Anonymous" && !venue && bibObj.booktitle) {
+        note = `Accepted @ ${bibObj.booktitle}`;
+        venue = bibObj.booktitle;
+    }
     if (author === "Anonymous" && decision != "Rejected") {
         note = `Under review @ ${conf} (${year}) (${new Date().toLocaleDateString()})`;
     }
@@ -1102,7 +1113,7 @@ const makeACMPaper = async (url) => {
     } else {
         title = dom.querySelector(".citation__title").innerText;
         author = queryAll(
-            "ul[ariaa-label='authors'] li.loa__item .loa__author-name",
+            "ul[aria-label='authors'] li.loa__item .loa__author-name",
             dom
         )
             .map((el) => el.innerText.replace(",", "").trim())
@@ -1588,7 +1599,10 @@ const tryPWCMatch = async (paper) => {
  * @param {object} paper The paper to look for in crossref's database for an exact title match
  * @returns {string} The note for the paper as `Accepted @ ${items.event.name} -- [crossref.org]`
  */
-const tryCrossRef = async (paper) => {
+const tryCrossRef = async (paper, toBackground) => {
+    if (toBackground) {
+        return await sendMessageToBackground({ type: "try-cross-ref", paper });
+    }
     try {
         // fetch crossref' api for the paper's title
         const title = encodeURI(paper.title);
@@ -1634,7 +1648,10 @@ const tryCrossRef = async (paper) => {
     }
 };
 
-const tryDBLP = async (paper) => {
+const tryDBLP = async (paper, toBackground) => {
+    if (toBackground) {
+        return await sendMessageToBackground({ type: "try-dblp", paper });
+    }
     try {
         const title = encodeURI(paper.title);
         const api = `https://dblp.org/search/publ/api?q=${title}&format=json`;
@@ -1694,7 +1711,10 @@ const tryDBLP = async (paper) => {
     }
 };
 
-const trySemanticScholar = async (paper) => {
+const trySemanticScholar = async (paper, toBackground) => {
+    if (toBackground) {
+        return await sendMessageToBackground({ type: "try-semantic-scholar", paper });
+    }
     try {
         const { data, status } = await fetchJSON(
             `https://api.semanticscholar.org/graph/v1/paper/search?query=${encodeURI(
@@ -1751,10 +1771,14 @@ const trySemanticScholar = async (paper) => {
 
 const tryGoogleScholar = async (paper) => {
     const resp = await sendMessageToBackground({ type: "google-scholar", paper });
+    resp.note && info("Found a Google Scholar match", resp.note);
     return resp;
 };
 
-const tryUnpaywall = async (paper) => {
+const tryUnpaywall = async (paper, toBackground) => {
+    if (toBackground) {
+        return await sendMessageToBackground({ type: "try-unpaywall", paper });
+    }
     const url = `https://api.unpaywall.org/v2/search?query=${encodeURI(
         paper.title
     )}&is_oa=true&email=papermemory+${parseInt(Math.random() * 1000)}@gmail.com`;
@@ -1777,10 +1801,10 @@ const tryPreprintMatch = async (paper, tryPwc = false) => {
     let note, venue, bibtex, code, doi;
     let matches = {};
 
-    let names = ["DBLP", "SemanticScholar", "CrossRef", "GoogleScholar", "Unpaywall"];
+    let names = ["GoogleScholar", "SemanticScholar", "CrossRef", "DBLP", "Unpaywall"];
     let matchPromises = [
         silentPromiseTimeout(tryGoogleScholar(paper)),
-        silentPromiseTimeout(trySemanticScholar(paper)),
+        silentPromiseTimeout(trySemanticScholar(paper, true)),
         silentPromiseTimeout(tryCrossRef(paper)),
         silentPromiseTimeout(tryDBLP(paper)),
         silentPromiseTimeout(tryUnpaywall(paper)),

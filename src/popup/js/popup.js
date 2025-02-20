@@ -19,6 +19,7 @@ const openMenu = () => {
     dispatch("menu-switch", "blur");
     setHTML("menu-switch", tablerSvg("circle-x", "close-menu-btn", classes));
     global.state.prefsIsOpen = true;
+    setHTML("pm-version", chrome.runtime.getManifest().version);
 };
 /**
  * Parses prefs options from the storage and adds events listeners for their change.

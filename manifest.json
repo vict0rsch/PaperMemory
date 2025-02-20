@@ -1,92 +1,86 @@
 {
-  "name": "Paper Memory",
-  "version": "1.0.0",
-  "manifest_version": 3,
-  "description": "Automatically record papers and their codes from Arxiv, OpenReview & more! Organize your library with tags, links and quick notes.",
-  "homepage_url": "https://papermemory.org",
-  "icons": {
-    "192": "icons/favicon-192x192.png"
-  },
-  "content_security_policy": {
-    "extension_pages": "script-src 'self'; object-src 'self'"
-  },
-  "background": {
-    "service_worker": "src/background/background.js"
-  },
-  "action": {
-    "default_icon": "icons/favicon-192x192.png",
-    "default_title": "PaperMemory",
-    "default_popup": "src/popup/min/popup.min.html"
-  },
-  "commands": {
-    "_execute_browser_action": {
-      "suggested_key": {
-        "default": "Ctrl+Shift+E",
-        "linux": "Ctrl+Shift+M"
-      },
-      "description": "Open PaperMemory's Popup"
+    "name": "Paper Memory",
+    "version": "1.0.0",
+    "manifest_version": 3,
+    "description": "Automatically record papers and their codes from Arxiv, OpenReview & more! Organize your library with tags, links and quick notes.",
+    "homepage_url": "https://papermemory.org",
+    "icons": {
+        "192": "icons/favicon-192x192.png"
     },
-    "manualParsing": {
-      "suggested_key": {
-        "default": "Ctrl+Shift+P"
-      },
-      "description": "Manually trigger the parsing of a paper; only available if you have disabled auto-parsing in the menu"
+    "content_security_policy": {
+        "extension_pages": "script-src 'self'; object-src 'self'"
     },
-    "downloadPdf": {
-      "suggested_key": {
-        "default": "Ctrl+Shift+S"
-      },
-      "description": "Download the pdf file for the current paper into your PaperMemoryStore"
-    }
-  },
-  "options_ui": {
-    "page": "src/options/options.html",
-    "open_in_tab": true
-  },
-  "permissions": [
-    "<all_urls>",
-    "activeTab",
-    "storage",
-    "unlimitedStorage",
-    "downloads",
-    "downloads.open",
-    "scripting"
-  ],
-  "content_scripts": [
-    {
-      "matches": [
-        "<all_urls>"
-      ],
-      "run_at": "document_start",
-      "js": [
-        "src/shared/min/jquery.min.js",
-        "src/shared/js/utils/logTrace.js",
-        "src/shared/js/utils/miniquery.js",
-        "src/shared/js/utils/config.js",
-        "src/shared/js/utils/functions.js",
-        "src/shared/js/utils/octokit.bundle.js",
-        "src/shared/js/utils/sync.js",
-        "src/shared/js/utils/data.js",
-        "src/shared/js/utils/paper.js",
-        "src/shared/js/utils/state.js",
-        "src/shared/js/utils/bibtexParser.js",
-        "src/shared/js/utils/parsers.js",
-        "src/content_scripts/content_script.js"
-      ],
-      "css": [
-        "src/shared/css/loader.css",
-        "src/content_scripts/content_script.css"
-      ]
-    }
-  ],
-  "web_accessible_resources": [
-    {
-      "resources": [
-        "src/data/*.json"
-      ],
-      "matches": [
-        "<all_urls>"
-      ]
-    }
-  ]
+    "background": {
+        "service_worker": "src/background/background.js"
+    },
+    "action": {
+        "default_icon": "icons/favicon-192x192.png",
+        "default_title": "PaperMemory",
+        "default_popup": "src/popup/min/popup.min.html"
+    },
+    "commands": {
+        "_execute_action": {
+            "suggested_key": {
+                "default": "Ctrl+Shift+E",
+                "linux": "Ctrl+Shift+M"
+            },
+            "description": "Open PaperMemory's Popup"
+        },
+        "manualParsing": {
+            "suggested_key": {
+                "default": "Ctrl+Shift+P"
+            },
+            "description": "Manually trigger the parsing of a paper; only available if you have disabled auto-parsing in the menu"
+        },
+        "downloadPdf": {
+            "suggested_key": {
+                "default": "Ctrl+Shift+S"
+            },
+            "description": "Download the pdf file for the current paper into your PaperMemoryStore"
+        }
+    },
+    "options_ui": {
+        "page": "src/options/options.html",
+        "open_in_tab": true
+    },
+    "permissions": [
+        "activeTab",
+        "storage",
+        "unlimitedStorage",
+        "downloads",
+        "downloads.open",
+        "scripting"
+    ],
+    "host_permissions": ["*://*/*"],
+    "content_scripts": [
+        {
+            "matches": ["<all_urls>"],
+            "run_at": "document_start",
+            "js": [
+                "src/shared/min/jquery.min.js",
+                "src/shared/js/utils/logTrace.js",
+                "src/shared/js/utils/miniquery.js",
+                "src/shared/js/utils/config.js",
+                "src/shared/js/utils/functions.js",
+                "src/shared/js/utils/octokit.bundle.js",
+                "src/shared/js/utils/sync.js",
+                "src/shared/js/utils/data.js",
+                "src/shared/js/utils/paper.js",
+                "src/shared/js/utils/state.js",
+                "src/shared/js/utils/bibtexParser.js",
+                "src/shared/js/utils/parsers.js",
+                "src/content_scripts/content_script.js"
+            ],
+            "css": [
+                "src/shared/css/loader.css",
+                "src/content_scripts/content_script.css"
+            ]
+        }
+    ],
+    "web_accessible_resources": [
+        {
+            "resources": ["src/data/*.json"],
+            "matches": ["<all_urls>"]
+        }
+    ]
 }

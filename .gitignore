@@ -9,3 +9,4 @@ test/tmp/
 .nyc_output/
 coverage
 .cache
+.todo
