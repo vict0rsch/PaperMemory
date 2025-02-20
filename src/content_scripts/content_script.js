@@ -523,7 +523,7 @@ const arxiv = async (checks) => {
                 ).then((data) => {
                     return $($(data).find("entry title")[0]).text();
                 });
-                downloadFile(pdfUrl, `${title}.pdf`);
+                downloadURI(pdfUrl, `${title}.pdf`);
             } else {
                 let title = stateTitleFunction(id);
                 if (!title.endsWith(".pdf")) {
@@ -535,7 +535,7 @@ const arxiv = async (checks) => {
                           pdfUrl,
                           title,
                       })
-                    : downloadFile(pdfUrl, title);
+                    : downloadURI(pdfUrl, title);
             }
         });
     }
