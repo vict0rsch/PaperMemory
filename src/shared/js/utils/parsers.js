@@ -370,7 +370,10 @@ const makeArxivPaper = async (url) => {
     const arxivId = arxivIdFromURL(url);
     const response = await fetchArxivXML(arxivId);
     const xmlData = await response.text();
-    var doc = new DOMParser().parseFromString(xmlData.replaceAll("\n", ""), "text/xml");
+    const doc = new DOMParser().parseFromString(
+        xmlData.replaceAll("\n", ""),
+        "text/xml"
+    );
 
     const authors = queryAll("author name", doc).map((el) => el.innerHTML);
     const author = authors.join(" and ");
@@ -378,9 +381,10 @@ const makeArxivPaper = async (url) => {
     const pdfLink = [...doc.getElementsByTagName("link")]
         .map((l) => l.getAttribute("href"))
         .filter((h) => h.includes("arxiv.org/pdf/"))[0]
-        .replace(/v\d+\.pdf$/gi, ".pdf");
+        .replace(/v\d+(\.pdf)?$/gi, ".pdf");
 
-    const title = doc.querySelector("entry title").innerHTML;
+    let title = doc.querySelector("entry title");
+    title = title?.textContent || title?.innerText || "";
     const year = doc.querySelector("entry published").innerHTML.slice(0, 4);
     const key =
         authors[0].split(" ").last().toLowerCase() +
