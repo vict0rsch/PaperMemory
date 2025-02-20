@@ -54,6 +54,16 @@ const fetchCvfHTML = async (url) => {
     return text;
 };
 
+const doi2BibtexObject = async (doi) => {
+    const bibtex = await fetchText(
+        `https://citation.doi.org/format?doi=${doi}&style=bibtex&lang=en-US`
+    );
+    const bibObj = bibtexToObject(bibtex);
+    delete bibObj.abstract;
+    bibObj.bibtex = bibtexToString(bibObj);
+    return bibObj;
+};
+
 const getOpenReviewNoteJSON = (url) => {
     return sendMessageToBackground({ type: "OpenReviewNoteJSON", url });
 };
