@@ -177,6 +177,37 @@ const ignorePaper = (is, ignoreSources) => {
 };
 
 /**
+ * Queries an element from the DOM, waiting for it to appear if necessary
+ * @param {object} opts The options for the query
+ * @param {string} opts.query The query to search for
+ * @param {number} opts.interval The interval to wait between queries
+ * @param {number} opts.iters The maximum number of iterations
+ * @param {boolean} opts.all Whether to query all elements or a single element
+ * @param {HTMLElement} opts.dom The DOM to query
+ * @returns {HTMLElement} The queried element
+ */
+const queryOrWait = async ({
+    query,
+    interval = 200,
+    iters = 50,
+    all = false,
+    dom = null,
+}) => {
+    let iter = 0;
+    const func = all ? queryAll : querySelector;
+    let el = func(query);
+    while ((all && !el.length) || (!all && !el)) {
+        await sleep(interval);
+        iter += 1;
+        if (iter > iters) {
+            break;
+        }
+        el = func(query);
+    }
+    return el;
+};
+
+/**
  * Adds markdown link, bibtex citation and download button on arxiv.
  * Also, if the current website is a known paper source (isPaper), adds or updates the current paper
  * @param {object} checks The user's stored preferences regarding menu options
@@ -449,8 +480,9 @@ const arxiv = async (checks) => {
         </div>
         <div id="pm-extras"></div>`
     );
-    const pdfUrl = querySelector(".abs-button.download-pdf").href;
-    const arxivPMDiv = findEl("pm-extras");
+    let pdfUrlButton = await queryOrWait({ query: ".abs-button.download-pdf" });
+    let pdfUrl = pdfUrlButton?.href;
+    const arxivPMDiv = await queryOrWait({ query: "#pm-extras" });
 
     // -----------------------------
     // -----  Download Button  -----
@@ -463,9 +495,10 @@ const arxiv = async (checks) => {
             </div>
         `;
         findEl("pm-arxiv-direct-download")?.remove();
-        document
-            .getElementById("pm-header-content")
-            .insertAdjacentHTML("beforeend", button);
+        (await queryOrWait({ query: "#pm-header-content" }))?.insertAdjacentHTML(
+            "beforeend",
+            button
+        );
         var downloadTimeout;
         addListener("arxiv-button", "click", async () => {
             removeClass("arxiv-button", "downloaded");
@@ -475,6 +508,15 @@ const arxiv = async (checks) => {
                 hasClass("arxiv-button", "downloaded") &&
                     removeClass("arxiv-button", "downloaded");
             }, 1500);
+            if (!pdfUrl) {
+                pdfUrl = querySelector(".abs-button.download-pdf")?.href;
+            }
+            if (!pdfUrl) {
+                console.error(
+                    "Could not parse the PDF URL from HTML element: `.abs-button.download-pdf`"
+                );
+                return;
+            }
             if (!global.state.papers.hasOwnProperty(id)) {
                 const title = await fetch(
                     `https://export.arxiv.org/api/query?id_list=${id.split("-")[1]}`
@@ -527,7 +569,7 @@ const arxiv = async (checks) => {
             <div id="markdown-link" class="pm-codify">${mdContent}</div>
         </div>`;
         findEl("markdown-container")?.remove();
-        arxivPMDiv.insertAdjacentHTML("beforeend", mdHtml);
+        arxivPMDiv?.insertAdjacentHTML("beforeend", mdHtml);
     }
 
     if (checkBib) {
@@ -541,7 +583,7 @@ const arxiv = async (checks) => {
                 </div>
             </div>
         `;
-        arxivPMDiv.insertAdjacentHTML("beforeend", bibLoader);
+        arxivPMDiv?.insertAdjacentHTML("beforeend", bibLoader);
         findEl("bibtexDiv")?.remove();
         const bibtexDiv = /*html*/ `
             <div id="bibtexDiv">
@@ -556,7 +598,7 @@ const arxiv = async (checks) => {
         `;
 
         findEl("loader-container").remove();
-        arxivPMDiv.insertAdjacentHTML("beforeend", bibtexDiv);
+        arxivPMDiv?.insertAdjacentHTML("beforeend", bibtexDiv);
         addListener(querySelector("#texHeader .copy-feedback"), "click", (e) => {
             $("#texHeader .copy-feedback").fadeOut(200, () => {
                 $("#texHeader .copy-feedback-ok").fadeIn(200, () => {
