@@ -54,6 +54,16 @@ const fetchCvfHTML = async (url) => {
     return text;
 };
 
+const doi2BibtexObject = async (doi) => {
+    const bibtex = await fetchText(
+        `https://citation.doi.org/format?doi=${doi}&style=bibtex&lang=en-US`
+    );
+    const bibObj = bibtexToObject(bibtex);
+    delete bibObj.abstract;
+    bibObj.bibtex = bibtexToString(bibObj);
+    return bibObj;
+};
+
 const getOpenReviewNoteJSON = (url) => {
     return sendMessageToBackground({ type: "OpenReviewNoteJSON", url });
 };
@@ -1253,47 +1263,33 @@ const makeAPSPaper = async (url) => {
 };
 
 const makeWileyPaper = async (url) => {
-    const pdfLink = url.replace(/\/doi\/(abs|epdf|full)\//g, "/doi/pdf/");
+    url = noParamUrl(url);
+    const pdfLink = url.match(/\/doi\/10\./g)
+        ? url.replace("/doi/", "/doi/pdf")
+        : url.replace(/\/doi\/(abs|epdf|full)\//g, "/doi/pdf/");
     const absLink = pdfLink.replace("/doi/pdf/", "/doi/abs/");
-    const dom = await fetchDom(absLink);
-
-    const author = queryAll("meta[name=citation_author]", dom)
-        .map((m) => m.getAttribute("content"))
-        .join(" and ");
-    const venue = dom
-        .querySelector("meta[name=citation_journal_title]")
-        .getAttribute("content");
-    const title = dom
-        .querySelector("meta[name=citation_title]")
-        .getAttribute("content");
-    const publisher = dom
-        .querySelector("meta[name=citation_publisher]")
-        .getAttribute("content");
-    const year =
-        dom
-            .querySelector("meta[name=citation_publication_date]")
-            ?.getAttribute("content")
-            ?.split("/")[0] ??
-        dom
-            .querySelector("meta[name=citation_online_date]")
-            ?.getAttribute("content")
-            ?.split("/")[0];
-    const doi = dom.querySelector("meta[name=citation_doi]").getAttribute("content");
-
-    const note = `Published @ ${venue} (${year})`;
+    const doi = absLink.split("/doi/abs/")[1];
+    const paper = await doi2BibtexObject(doi);
+    const { author, citationKey, title, year } = paper;
     const id = `Wiley-${year}_${miniHash(doi)}`;
-    const bibtex = bibtexToString({
-        citationKey: doi,
-        entryType: "article",
-        title,
+    const key = citationKey;
+    const bibtex = paper.bibtex;
+    const venue = paper.journal;
+    const publisher = paper.publisher;
+    const note = `Published @ ${venue} (${year})`;
+
+    return {
         author,
+        bibtex,
+        id,
+        key: miniHash(doi),
+        note,
+        pdfLink,
+        title,
+        venue,
         year,
         doi,
-        publisher,
-        journal: venue,
-    });
-
-    return { author, bibtex, id, key: doi, note, pdfLink, title, venue, year };
+    };
 };
 
 const makeScienceDirectPaper = async (url) => {
@@ -1856,7 +1852,7 @@ const initPaper = async (paper) => {
     paper.lastOpenDate = paper.addDate;
     paper.count = 1;
     paper.code = {};
-
+    paper.doi = paper.doi ?? bibtexToObject(paper.bibtex).doi ?? "";
     for (const k in paper) {
         if (paper.hasOwnProperty(k) && typeof paper[k] === "string") {
             paper[k] = paper[k].trim();
