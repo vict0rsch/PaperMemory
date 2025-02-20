@@ -457,17 +457,13 @@ const searchMemory = (letters) => {
                 return paper[key].join(" ").toLowerCase();
             } else if (typeof paper[key] === "string") {
                 return paper[key].toLowerCase();
-            } else {
-                logError(`searchMemory error: non-string content for key ${key}`);
-                log(paper);
-                return "";
             }
+            logError(`searchMemory: non-string & non-array content for key ${key}`);
+            log(paper);
+            return "";
         });
 
-        if (
-            words.every((w) => contents.some((c) => c.includes(w)))
-            )
-        ) {
+        if (words.every((w) => contents.some((c) => c.includes(w)))) {
             if (!global.state.showFavorites || paper.favorite) {
                 papersList.push(paper);
             }
