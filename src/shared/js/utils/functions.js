@@ -484,7 +484,7 @@ const textareaFocusEnd = (element) => {
  * Get the html string of an svg icon with id and classes
  * @param {string} pathName The name of the svg to return
  * @param {string} id Optional html id for the svg tag
- * @param {arrat} classNames An optional array of classNames to add to the svg tag
+ * @param {array} classNames An optional array of classNames to add to the svg tag
  * @returns {string} A string of html for the svg tag
  */
 const tablerSvg = (pathName, id, classNames) => {
@@ -592,7 +592,7 @@ const tablerSvg = (pathName, id, classNames) => {
             <polyline points="9 14 12 17 15 14" />
              </svg>`;
 
-        case "cirlce-x":
+        case "circle-x":
             return `<svg viewBox="0 0 24 24" ${id} ${classNames}>
 			<path stroke="none" d="M0 0h24v24H0z" fill="none" />
 			<circle cx="12" cy="12" r="9" />

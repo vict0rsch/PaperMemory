@@ -192,7 +192,7 @@ const editManualWebsite = (parsedPaper, url) => {
             }
         }
         if (validationHTML.length > 0) {
-            // Display warinngs -> don't store paper yet
+            // Display warnings -> don't store paper yet
             validationHTML = `<ul>${validationHTML}</ul>`;
             setHTML("manual-website-validation", validationHTML);
             showId("manual-website-validation");
@@ -330,7 +330,7 @@ const popupMain = async (url, is, manualTrigger = false, tab = null) => {
             "checkScirate",
             "checkVanity",
             "checkAr5iv",
-            "checkHugginface",
+            "checkHuggingface",
         ]) {
             if (prefs[p]) extraDivWidth += 5;
         }
@@ -479,8 +479,8 @@ const popupMain = async (url, is, manualTrigger = false, tab = null) => {
                     </div>
                     <div id="website-parsing-error"></div>
                 </div>`;
-            setHTML("webite-parsing-root", websiteParsingHtml);
-            showId("webite-parsing-root");
+            setHTML("website-parsing-root", websiteParsingHtml);
+            showId("website-parsing-root");
             addListener("website-trigger-btn", "click", async () => {
                 hideId("website-trigger-btn");
                 showId("website-loader-container");

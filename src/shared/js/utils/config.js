@@ -57,7 +57,7 @@ global.state = {
     showFavorites: false,
     sortedPapers: [], // [papers]
     sortKey: "",
-    timerIdMap: new WeakMap(), // memory titlte tooltips
+    timerIdMap: new WeakMap(), // memory title tooltips
     titleHashToIds: {}, // (miniHash(title) -> [ids])
     titleFunction: null, // function(paper) => string
     urlHashToId: {}, // (miniHash(url) => id)
