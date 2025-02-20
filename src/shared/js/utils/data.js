@@ -15,7 +15,7 @@ const migrateData = async (papers, manifestDataVersion, store = true) => {
     }
     const currentVersion = papers["__dataVersion"] || -1;
     var deleteIds = [];
-    const latestDataVersion = 10000;
+    const latestDataVersion = 10001;
 
     let newPapers = { ...papers };
 
@@ -189,6 +189,15 @@ const migrateData = async (papers, manifestDataVersion, store = true) => {
                         delete bibObj.abstract;
                         migrationSummaries[id].push("(m10000) remove bibtex abstract");
                         papers[id].bibtex = bibtexToString(bibObj);
+                    }
+                }
+            }
+            if (currentVersion < 10001) {
+                if (papers[id].bibtex && !papers[id].hasOwnProperty("doi")) {
+                    const doi = bibtexToObject(papers[id].bibtex).doi;
+                    if (doi) {
+                        papers[id].doi = doi;
+                        migrationSummaries[id].push("(m10001) add doi from bibtex");
                     }
                 }
             }
@@ -523,6 +532,11 @@ const validatePaper = (paper, log = true) => {
                     return `Invalid count (${p}): must be >= 0`;
                 }
             },
+        },
+        doi: {
+            type: "string",
+            desc: "the paper's doi",
+            default: (p) => bibtexToObject(p.bibtex).doi ?? "",
         },
         extras: {
             type: "object",
