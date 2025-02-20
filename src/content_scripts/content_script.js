@@ -597,7 +597,7 @@ const arxiv = async (checks) => {
             </div>
         `;
 
-        findEl("loader-container").remove();
+        (await queryOrWait({ query: "#loader-container" }))?.remove();
         arxivPMDiv?.insertAdjacentHTML("beforeend", bibtexDiv);
         addListener(querySelector("#texHeader .copy-feedback"), "click", (e) => {
             $("#texHeader .copy-feedback").fadeOut(200, () => {
