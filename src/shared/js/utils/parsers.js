@@ -1417,7 +1417,8 @@ const makePLOSPaper = async (url) => {
 };
 
 const makeRSCPaper = async (url) => {
-    const rscId = noParamUrl(url).split("/").last();
+    url = noParamUrl(url).replace("/unauth", "");
+    const rscId = url.split("/").last();
     const type = url
         .split("/")
         .find(

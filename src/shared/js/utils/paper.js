@@ -911,7 +911,7 @@ const parseIdFromUrl = async (url, tab = null) => {
         const doi = url.split("?id=").last().split("&")[0];
         idForUrl = findPaperForProperty(papers, "plos", miniHash(doi));
     } else if (is.rsc) {
-        const rscId = noParamUrl(url).split("/").last();
+        const rscId = noParamUrl(url).replace("/unauth", "").split("/").last();
         idForUrl = findPaperForProperty(papers, "rsc", miniHash(rscId));
     } else if (is.mdpi) {
         const mdpiId = noParamUrl(
