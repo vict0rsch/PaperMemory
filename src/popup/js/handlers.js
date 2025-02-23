@@ -492,7 +492,13 @@ const getHandleTitleTooltip = (func, delay, isPopup) => {
 };
 
 const handleExpandAuthors = (e) => {
-    const id = eventId(e);
-    const authors = findEl(id, "memory-authors");
-    setHTML(authors, cutAuthors(global.state.papers[id].author, 100000));
+    let id, authorsEl;
+    if (e.target.parentElement?.id === "popup-authors") {
+        id = global.state.currentId;
+        authorsEl = findEl("popup-authors");
+    } else {
+        id = eventId(e);
+        authorsEl = findEl(id, "memory-authors");
+    }
+    setHTML(authorsEl, cutAuthors(global.state.papers[id].author, 100000));
 };
