@@ -338,7 +338,7 @@ global.knownPaperPages = {
             (url) =>
                 Boolean(
                     url.match(
-                        /onlinelibrary\.wiley\.com\/doi\/(abs|full|pdf|epdf|10\.)\//g
+                        /onlinelibrary\.wiley\.com\/doi\/(abs\/|full\/|pdf\/|epdf\/|10\.)/g
                     )
                 ),
         ],
