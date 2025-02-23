@@ -310,7 +310,7 @@ const feedback = (text, paper = null) => {
     const notifTime = 3000;
     try {
         clearTimeout(timeout);
-        findEl("feedback-notif").remove();
+        findEl({ element: "feedback-notif" }).remove();
         prevent = true;
     } catch (error) {}
 
@@ -404,8 +404,11 @@ const displayPaperVenue = (paper) => {
                 <span id="pm-venue-year">${bibtexToObject(paper.bibtex).year}</span>
             </div>
         </div>`;
-    findEl("pm-publication-wrapper")?.remove();
-    findEl("pm-header-content")?.insertAdjacentHTML("afterbegin", venueDiv);
+    findEl({ element: "pm-publication-wrapper" })?.remove();
+    findEl({ element: "pm-header-content" })?.insertAdjacentHTML(
+        "afterbegin",
+        venueDiv
+    );
 };
 
 /** Adds a paper's code html element to the arxiv page
@@ -421,8 +424,8 @@ const displayPaperCode = (paper) => {
         <h3>Code:</h3> <a id="pm-code-link" href="${paper.codeLink}">${paper.codeLink}</a>
         </div>
     `;
-    findEl("pm-code")?.remove();
-    findEl("pm-extras")?.insertAdjacentHTML("afterbegin", code);
+    findEl({ element: "pm-code" })?.remove();
+    findEl({ element: "pm-extras" })?.insertAdjacentHTML("afterbegin", code);
 };
 
 /**
@@ -494,7 +497,7 @@ const arxiv = async (checks) => {
                 <div style="font-size: 0.6rem; color: #cac7c7; padding-bottom: 0.6rem;">Download to<br/>PaperMemoryStore</div>
             </div>
         `;
-        findEl("pm-arxiv-direct-download")?.remove();
+        findEl({ element: "pm-arxiv-direct-download" })?.remove();
         (await queryOrWait({ query: "#pm-header-content" }))?.insertAdjacentHTML(
             "beforeend",
             button
@@ -568,7 +571,7 @@ const arxiv = async (checks) => {
             </div>
             <div id="markdown-link" class="pm-codify">${mdContent}</div>
         </div>`;
-        findEl("markdown-container")?.remove();
+        findEl({ element: "markdown-container" })?.remove();
         arxivPMDiv?.insertAdjacentHTML("beforeend", mdHtml);
     }
 
@@ -584,7 +587,7 @@ const arxiv = async (checks) => {
             </div>
         `;
         arxivPMDiv?.insertAdjacentHTML("beforeend", bibLoader);
-        findEl("bibtexDiv")?.remove();
+        findEl({ element: "bibtexDiv" })?.remove();
         const bibtexDiv = /*html*/ `
             <div id="bibtexDiv">
                 <div id="texHeader" class="pm-sub-header">
@@ -609,7 +612,7 @@ const arxiv = async (checks) => {
                     }, 1500);
                 });
             });
-            copyTextToClipboard(findEl("pm-bibtex-textarea").innerText);
+            copyTextToClipboard(findEl({ element: "pm-bibtex-textarea" }).innerText);
             feedback("Bibtex Citation Copied!");
         });
         addListener(querySelector("#markdown-header .copy-feedback"), "click", (e) => {
@@ -622,7 +625,9 @@ const arxiv = async (checks) => {
                     }, 1500);
                 });
             });
-            copyTextToClipboard(findEl("markdown-link").innerText.replaceAll("\n", ""));
+            copyTextToClipboard(
+                findEl({ element: "markdown-link" }).innerText.replaceAll("\n", "")
+            );
             feedback("Markdown Link Copied!");
         });
     }
@@ -662,8 +667,8 @@ const tryArxivDisplay = async ({
 
         // update bibtex
         if (prefs.checkBib) {
-            if (findEl("pm-bibtex-textarea")) {
-                findEl("pm-bibtex-textarea").innerHTML = bibtexToString(
+            if (findEl({ element: "pm-bibtex-textarea" })) {
+                findEl({ element: "pm-bibtex-textarea" }).innerHTML = bibtexToString(
                     paper.bibtex
                 ).replaceAll("\t", "  ");
             }

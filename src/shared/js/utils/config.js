@@ -263,6 +263,7 @@ global.knownPaperPages = {
             "neurips.cc/paper/",
             "neurips.cc/paper_files/paper/",
             "nips.cc/paper/",
+            "nips.cc/paper_files/paper/",
         ],
         name: "NeurIPS (Neural Information Processing Systems)",
     },
@@ -337,7 +338,7 @@ global.knownPaperPages = {
             (url) =>
                 Boolean(
                     url.match(
-                        /onlinelibrary\.wiley\.com\/doi\/(abs|full|pdf|epdf|10\.)\//g
+                        /onlinelibrary\.wiley\.com\/doi\/(abs\/|full\/|pdf\/|epdf\/|10\.)/g
                     )
                 ),
         ],

@@ -136,23 +136,26 @@ const handleCancelPaperEdit = (e) => {
     e.preventDefault();
     const id = eventId(e);
     const paper = global.state.papers[id];
-    val(findEl(id, "form-note-textarea"), paper.note);
-    setHTML(findEl(id, "memory-item-tags"), getTagsOptions(paper));
-    dispatch(findEl(id, "memory-item-edit"), "click");
+    val(findEl({ paperId: id, memoryItemClass: "form-note-textarea" }), paper.note);
+    setHTML(
+        findEl({ paperId: id, memoryItemClass: "memory-item-tags" }),
+        getTagsOptions(paper)
+    );
+    dispatch(findEl({ paperId: id, memoryItemClass: "memory-item-edit" }), "click");
 };
 
 const handleTogglePaperEdit = (e) => {
     e.preventDefault();
     // find elements
     const id = eventId(e);
-    const container = findEl(`memory-container--${id}`);
-    const codeAndNote = findEl(id, "code-and-note");
-    const editPaper = findEl(id, "extended-item");
-    const tagList = findEl(id, "tag-list");
-    const authors = findEl(id, "memory-authors");
-    const tagEdit = findEl(id, "edit-tags");
-    const actions = findEl(id, "memory-item-actions");
-    const tagSelect2 = $(findEl(id, "memory-item-tags"));
+    const container = findEl({ element: `memory-container--${id}` });
+    const codeAndNote = findEl({ paperId: id, memoryItemClass: "code-and-note" });
+    const editPaper = findEl({ paperId: id, memoryItemClass: "extended-item" });
+    const tagList = findEl({ paperId: id, memoryItemClass: "tag-list" });
+    const authors = findEl({ paperId: id, memoryItemClass: "memory-authors" });
+    const tagEdit = findEl({ paperId: id, memoryItemClass: "edit-tags" });
+    const actions = findEl({ paperId: id, memoryItemClass: "memory-item-actions" });
+    const tagSelect2 = $(findEl({ paperId: id, memoryItemClass: "memory-item-tags" }));
 
     if (hasClass(container, "expand-open")) {
         // The edit form is open
@@ -216,7 +219,10 @@ const handleFilterFavorites = () => {
     const showFavorites = !global.state.showFavorites;
     global.state.showFavorites = showFavorites;
     if (showFavorites) {
-        addClass(findEl("filter-favorites").querySelector("svg"), "favorite");
+        addClass(
+            findEl({ element: "filter-favorites" }).querySelector("svg"),
+            "favorite"
+        );
         sortMemory();
         global.state.papersList = global.state.papersList.filter((p) => p.favorite);
         displayMemoryTable();
@@ -227,7 +233,10 @@ const handleFilterFavorites = () => {
         const n = global.state.papersList.length;
         setPlaceholder("memory-search", `Search ${n} entries...`);
     } else {
-        removeClass(findEl("filter-favorites").querySelector("svg"), "favorite");
+        removeClass(
+            findEl({ element: "filter-favorites" }).querySelector("svg"),
+            "favorite"
+        );
 
         if (val("memory-select") === "favoriteDate") {
             val("memory-select", "lastOpenDate");
@@ -307,7 +316,7 @@ const handleCancelModalClick = () => {
 };
 
 const handleConfirmDeleteModalClick = async (e) => {
-    const id = findEl("delete-paper-modal-hidden-id").innerHTML;
+    const id = findEl({ element: "delete-paper-modal-hidden-id" }).innerHTML;
     const title = global.state.papers[id].title;
     const url = global.state.papers[id].pdfLink;
     await deletePaperInStorage(id, global.state.papers);
@@ -408,15 +417,18 @@ const handlePopupKeydown = (e) => {
 
     if (key === "Backspace") {
         // delete
-        dispatch(findEl(id, "memory-delete"), "click");
+        dispatch(findEl({ paperId: id, memoryItemClass: "memory-delete" }), "click");
     } else if (key === "Enter") {
         // open paper
         const target =
             global.state.papers[id].source === "website"
-                ? findEl(id, "memory-website-url")
+                ? findEl({ paperId: id, memoryItemClass: "memory-website-url" })
                 : (global.state.prefs.checkEnterLocalPdf &&
-                      findEl(id, "memory-item-openLocal")) ||
-                  findEl(id, "memory-item-link");
+                      findEl({
+                          paperId: id,
+                          memoryItemClass: "memory-item-openLocal",
+                      })) ||
+                  findEl({ paperId: id, memoryItemClass: "memory-item-link" });
         dispatch(target, "click");
     } else if (key === "Escape") {
         // close memory
@@ -428,13 +440,13 @@ const handlePopupKeydown = (e) => {
         }
     } else if (key === "e") {
         // edit item
-        dispatch(findEl(id, "memory-item-edit"), "click");
+        dispatch(findEl({ paperId: id, memoryItemClass: "memory-item-edit" }), "click");
     }
 };
 
 const handlePrefsCheckChange = async (e) => {
     const key = e.target.id;
-    const checked = findEl(key).checked;
+    const checked = findEl({ element: key }).checked;
     if (global.state && global.state.prefs) {
         global.state.prefs[key] = checked;
         setStorage("prefs", global.state.prefs, function () {
@@ -473,11 +485,15 @@ const handlePopupDeletePaper = (id) => () => {
 };
 
 const showTitleTooltip = (id, isPopup) => {
-    const div = isPopup ? findEl("popup-title-tooltip") : findEl(id, ".title-tooltip");
+    const div = isPopup
+        ? findEl({ element: "popup-title-tooltip" })
+        : findEl({ paperId: id, memoryItemClass: ".title-tooltip" });
     style(div, "display", "block");
 };
 const hideTitleTooltip = (id, isPopup) => {
-    const div = isPopup ? findEl("popup-title-tooltip") : findEl(id, ".title-tooltip");
+    const div = isPopup
+        ? findEl({ element: "popup-title-tooltip" })
+        : findEl({ paperId: id, memoryItemClass: ".title-tooltip" });
     style(div, "display", "none");
 };
 
@@ -492,7 +508,13 @@ const getHandleTitleTooltip = (func, delay, isPopup) => {
 };
 
 const handleExpandAuthors = (e) => {
-    const id = eventId(e);
-    const authors = findEl(id, "memory-authors");
-    setHTML(authors, cutAuthors(global.state.papers[id].author, 100000));
+    let id, authorsEl;
+    if (e.target.parentElement?.id === "popup-authors") {
+        id = global.state.currentId;
+        authorsEl = findEl({ element: "popup-authors" });
+    } else {
+        id = eventId(e);
+        authorsEl = findEl({ paperId: id, memoryItemClass: "memory-authors" });
+    }
+    setHTML(authorsEl, cutAuthors(global.state.papers[id].author, 100000));
 };

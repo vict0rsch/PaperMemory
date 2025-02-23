@@ -35,7 +35,7 @@ const getAndTrackPopupMenuChecks = (prefs, prefsCheckNames) => {
             : global.prefsCheckDefaultFalse.indexOf(key) >= 0
             ? false
             : true;
-        const el = findEl(key);
+        const el = findEl({ element: key });
         if (el) {
             el.checked = setValues[key];
         }
@@ -120,9 +120,8 @@ const setStandardPopupClicks = () => {
 
     // When the user clicks anywhere outside of the modal, close it
     addListener(window, "click", (event) => {
-        if (event.target === findEl("popup-modal-wrapper")) {
+        if (event.target === findEl({ element: "popup-modal-wrapper" }))
             closePopupModal();
-        }
     });
 
     addListener("menu-switch", "click", () => {
@@ -146,7 +145,7 @@ const editManualWebsite = (parsedPaper, url) => {
     // Set inputs to parsed values
     const formKeys = ["author", "title", "year", "url", "note", "pdfLink"];
     for (const key of formKeys) {
-        findEl(`manual-website-${key}`).value = parsedPaper[key] ?? "";
+        findEl({ element: `manual-website-${key}` }).value = parsedPaper[key] ?? "";
     }
     setHTML("manual-website-url", parsedPaper.codeLink);
 
@@ -307,7 +306,7 @@ const popupMain = async (url, is, manualTrigger = false, tab = null) => {
             paper.title.replaceAll("\n", "") +
                 '<div id="popup-title-tooltip" style="display: none;">'
         );
-        setTextId("popup-authors", cutAuthors(paper.author, 350).replace(/({|})/g, ""));
+        setHTML("popup-authors", cutAuthors(paper.author, 200).replace(/({|})/g, ""));
         if (paper.codeLink) {
             setTextId("popup-code-link", paper.codeLink.replace(/^https?:\/\//, ""));
             showId("popup-code-link");
@@ -324,7 +323,7 @@ const popupMain = async (url, is, manualTrigger = false, tab = null) => {
         setHTML("popup-memory-edit", getPopupEditFormHTML(paper));
         setHTML("popup-copy-icons", getPopupPaperIconsHTML(paper, url, is));
         setHTML("popup-title-tooltip", getPaperInfoTable(paper));
-        findEl(`checkFavorite--${id}`).checked = paper.favorite;
+        findEl({ element: `checkFavorite--${id}` }).checked = paper.favorite;
         let extraDivWidth = 0;
         for (const p of [
             "checkScirate",
@@ -359,6 +358,7 @@ const popupMain = async (url, is, manualTrigger = false, tab = null) => {
             "mouseleave",
             getHandleTitleTooltip(hideTitleTooltip, 500, true)
         );
+        addEventToClass(".expand-paper-authors", "click", handleExpandAuthors);
 
         // ------------------------
         // -----  SVG clicks  -----
@@ -394,14 +394,14 @@ const popupMain = async (url, is, manualTrigger = false, tab = null) => {
             window.close();
         });
         addListener(`popup-code-link`, "click", async () => {
-            const codeLink = findEl(`popup-code-link`).textContent;
+            const codeLink = findEl({ element: `popup-code-link` }).textContent;
             if (codeLink) {
                 await focusExistingOrCreateNewCodeTab(codeLink);
                 global.close && global.close();
             }
         });
         addListener(`popup-website-url`, "click", async (e) => {
-            const url = findEl(`popup-website-url`).textContent;
+            const url = findEl({ element: `popup-website-url` }).textContent;
             if (url) {
                 await focusExistingOrCreateNewCodeTab(url);
                 // global.close && global.close();

@@ -277,7 +277,7 @@ function BibtexParser() {
         this.entry_body(d);
     };
 
-    this.alernativeCitationKey = function () {
+    this.alternativeCitationKey = function () {
         this.entries.forEach(function (entry) {
             if (!entry.citationKey && entry.entryTags) {
                 entry.citationKey = "";
@@ -325,7 +325,7 @@ function BibtexParser() {
             this.match("}");
         }
 
-        this.alernativeCitationKey();
+        this.alternativeCitationKey();
     };
 }
 

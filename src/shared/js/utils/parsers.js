@@ -54,16 +54,6 @@ const fetchCvfHTML = async (url) => {
     return text;
 };
 
-const doi2BibtexObject = async (doi) => {
-    const bibtex = await fetchText(
-        `https://citation.doi.org/format?doi=${doi}&style=bibtex&lang=en-US`
-    );
-    const bibObj = bibtexToObject(bibtex);
-    delete bibObj.abstract;
-    bibObj.bibtex = bibtexToString(bibObj);
-    return bibObj;
-};
-
 const getOpenReviewNoteJSON = (url) => {
     return sendMessageToBackground({ type: "OpenReviewNoteJSON", url });
 };
@@ -102,19 +92,30 @@ const fetchJSON = async (url) => {
     }
 };
 
-const fetchBibtex = async (url) => {
-    let bibtex = await fetchText(url);
+const fetchBibtex = async ({ url, doi }) => {
+    let bibtex;
+    if (url && doi) {
+        throw new Error("fetchBibtex: both url and doi provided");
+    }
+    if (doi) {
+        bibtex = await fetchText(
+            `https://citation.doi.org/format?doi=${doi}&style=bibtex&lang=en-US`
+        );
+    } else if (url) {
+        bibtex = await fetchText(url);
+    } else {
+        throw new Error("fetchBibtex: no url or doi provided");
+    }
     const bibObj = bibtexToObject(bibtex);
     delete bibObj.abstract;
     bibtex = bibtexToString(bibObj);
-    const note = `Published in ${bibObj.journal} (${bibObj.year})`;
-    return {
-        ...bibObj,
-        bibtex,
-        note,
-        venue: bibObj.journal,
-        key: bibObj.citationKey,
-    };
+    bibObj.bibtex = bibtex;
+    bibObj.key = bibObj.citationKey;
+    if (bibObj.journal) {
+        bibObj.venue = bibObj.journal;
+        bibObj.note = `Published in ${bibObj.journal} (${bibObj.year})`;
+    }
+    return bibObj;
 };
 
 // -------------------
@@ -1265,11 +1266,11 @@ const makeAPSPaper = async (url) => {
 const makeWileyPaper = async (url) => {
     url = noParamUrl(url);
     const pdfLink = url.match(/\/doi\/10\./g)
-        ? url.replace("/doi/", "/doi/pdf")
+        ? url.replace("/doi/", "/doi/pdf/")
         : url.replace(/\/doi\/(abs|epdf|full)\//g, "/doi/pdf/");
     const absLink = pdfLink.replace("/doi/pdf/", "/doi/abs/");
     const doi = absLink.split("/doi/abs/")[1];
-    const paper = await doi2BibtexObject(doi);
+    const paper = await fetchBibtex({ doi });
     const { author, citationKey, title, year } = paper;
     const id = `Wiley-${year}_${miniHash(doi)}`;
     const key = citationKey;
@@ -1404,9 +1405,7 @@ const makeIHEPPaper = async (url) => {
 
 const makePLOSPaper = async (url) => {
     const doi = url.split("?id=").last().split("&")[0];
-    let { bibtex, key, author, venue, title, note, year } = await fetchBibtex(
-        `${url.split("/article")[0]}/article/citation/bibtex?id=${doi}`
-    );
+    let { bibtex, key, author, venue, title, note, year } = await fetchBibtex({ doi });
     const pdfLink = `${url.split("/article")[0]}/article/file?id=${doi}&type=printable`;
     const section = url.split("journals.plos.org/")[1].split("/")[0];
 
@@ -1417,7 +1416,8 @@ const makePLOSPaper = async (url) => {
 };
 
 const makeRSCPaper = async (url) => {
-    const rscId = noParamUrl(url).split("/").last();
+    url = noParamUrl(url).replace("/unauth", "");
+    const rscId = url.split("/").last();
     const type = url
         .split("/")
         .find(
@@ -1427,9 +1427,9 @@ const makeRSCPaper = async (url) => {
     const pdfLink =
         type === "articlepdf" ? url : url.replace(`/article${type}/`, "/articlepdf/");
 
-    let { bibtex, key, author, venue, title, note, year, doi } = await fetchBibtex(
-        `https://pubs.rsc.org/en/content/formatedresult?markedids=${rscId}&downloadtype=article&managertype=bibtex`
-    );
+    let { bibtex, key, author, venue, title, note, year, doi } = await fetchBibtex({
+        url: `https://pubs.rsc.org/en/content/formatedresult?markedids=${rscId}&downloadtype=article&managertype=bibtex`,
+    });
     author = flipAndAuthors(author);
     const id = `RSC-${venue.replaceAll(" ", "")}_${miniHash(rscId)}`;
     return { author, bibtex, id, key, note, pdfLink, title, venue, year, doi };
