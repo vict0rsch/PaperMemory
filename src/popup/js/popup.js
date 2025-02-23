@@ -307,7 +307,7 @@ const popupMain = async (url, is, manualTrigger = false, tab = null) => {
             paper.title.replaceAll("\n", "") +
                 '<div id="popup-title-tooltip" style="display: none;">'
         );
-        setTextId("popup-authors", cutAuthors(paper.author, 350).replace(/({|})/g, ""));
+        setHTML("popup-authors", cutAuthors(paper.author, 200).replace(/({|})/g, ""));
         if (paper.codeLink) {
             setTextId("popup-code-link", paper.codeLink.replace(/^https?:\/\//, ""));
             showId("popup-code-link");
@@ -359,6 +359,7 @@ const popupMain = async (url, is, manualTrigger = false, tab = null) => {
             "mouseleave",
             getHandleTitleTooltip(hideTitleTooltip, 500, true)
         );
+        addEventToClass(".expand-paper-authors", "click", handleExpandAuthors);
 
         // ------------------------
         // -----  SVG clicks  -----
