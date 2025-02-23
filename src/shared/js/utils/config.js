@@ -263,6 +263,7 @@ global.knownPaperPages = {
             "neurips.cc/paper/",
             "neurips.cc/paper_files/paper/",
             "nips.cc/paper/",
+            "nips.cc/paper_files/paper/",
         ],
         name: "NeurIPS (Neural Information Processing Systems)",
     },
