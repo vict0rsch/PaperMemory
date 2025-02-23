@@ -906,7 +906,7 @@ const cutAuthors = (text, maxLen, separator) => {
             }
         } else {
             cutAuthors +=
-                " <span class='expand-memory-authors'>...</span> " + lastAuthor;
+                " <span class='expand-paper-authors'>...</span> " + lastAuthor;
             break;
         }
     }
