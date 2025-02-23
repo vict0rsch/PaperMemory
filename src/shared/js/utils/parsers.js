@@ -1266,7 +1266,7 @@ const makeAPSPaper = async (url) => {
 const makeWileyPaper = async (url) => {
     url = noParamUrl(url);
     const pdfLink = url.match(/\/doi\/10\./g)
-        ? url.replace("/doi/", "/doi/pdf")
+        ? url.replace("/doi/", "/doi/pdf/")
         : url.replace(/\/doi\/(abs|epdf|full)\//g, "/doi/pdf/");
     const absLink = pdfLink.replace("/doi/pdf/", "/doi/abs/");
     const doi = absLink.split("/doi/abs/")[1];
