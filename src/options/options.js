@@ -84,7 +84,7 @@ const handleSelectImportJson = () => {
     file = file[0];
     setHTML("import-json-label-filename", file.name);
     if (!file.name.endsWith(".json")) return;
-    findEl("import-json-papers-button").disabled = false;
+    findEl({ element: "import-json-papers-button" }).disabled = false;
 };
 
 const validateImportPaper = (p) => {
@@ -176,7 +176,7 @@ const handleParseImportJson = async (e) => {
             progressbar.style.width = `${progress}%`;
         };
 
-        const feedback = findEl("json-import-feedback");
+        const feedback = findEl({ element: "json-import-feedback" });
         feedback.innerHTML = "";
 
         showId("import-json-status-container", "flex");
@@ -253,17 +253,17 @@ const setupPWCPrefs = async () => {
         ? pwcPrefs.framework
         : "none";
 
-    findEl("official-repo").checked = official;
-    findEl("framework-select").value = framework;
+    findEl({ element: "official-repo" }).checked = official;
+    findEl({ element: "framework-select" }).value = framework;
 
     addListener("official-repo", "change", async (e) => {
-        const newValue = findEl("official-repo").checked;
+        const newValue = findEl({ element: "official-repo" }).checked;
         const prefs = (await getStorage("pwcPrefs")) ?? {};
         prefs.official = newValue;
         setStorage("pwcPrefs", prefs);
     });
     addListener("framework-select", "change", async (e) => {
-        const newValue = findEl("framework-select").value;
+        const newValue = findEl({ element: "framework-select" }).value;
         let prefs = (await getStorage("pwcPrefs")) ?? {};
         prefs.framework = newValue;
         setStorage("pwcPrefs", prefs);
@@ -364,7 +364,7 @@ const deleteAutoTagHandler = async (e) => {
     if (confirm("Confirm AutoTag item deletion?")) {
         newAT = newAT.filter((t) => t.id !== parseInt(i));
         setStorage("autoTags", newAT);
-        findEl(`auto-tags-item--${i}`).remove();
+        findEl({ element: `auto-tags-item--${i}` }).remove();
     }
 };
 
@@ -400,7 +400,9 @@ const saveNewAutoTagItem = async () => {
     log("Saving new autoTag item: ", at);
     autoTags.push(at);
     setStorage("autoTags", autoTags, () => {
-        const items = findEl("auto-tags-list").getElementsByClassName("auto-tags-item");
+        const items = findEl({ element: "auto-tags-list" }).getElementsByClassName(
+            "auto-tags-item"
+        );
         const last = [...items].last();
         last.insertAdjacentHTML("afterend", getAutoTagHTML(at));
         addListener(`auto-tags-item-save--${at.id}`, "click", updateAutoTagHandler);
@@ -462,14 +464,14 @@ const addPreprintUpdate = (update) => {
     </div>
     `;
 
-    findEl("updates-to-confirm").append(createElementFromHTML(html));
+    findEl({ element: "updates-to-confirm" }).append(createElementFromHTML(html));
 
     addListener(`puo--${paper.id}`, "click", async () => {
         await registerUpdate(update);
-        findEl(`paper-update-item--${paper.id}`).remove();
+        findEl({ element: `paper-update-item--${paper.id}` }).remove();
     });
     addListener(`puc--${paper.id}`, "click", () => {
-        findEl(`paper-update-item--${paper.id}`).remove();
+        findEl({ element: `paper-update-item--${paper.id}` }).remove();
     });
 };
 
@@ -734,13 +736,13 @@ const handleSelectOverwriteFile = () => {
     file = file[0];
     setHTML("overwrite-file-name", file.name);
     if (!file.name.endsWith(".json")) return;
-    findEl("overwrite-arxivmemory-button").disabled = false;
+    findEl({ element: "overwrite-arxivmemory-button" }).disabled = false;
 };
 
 const handleExportTagsConfirm = () => {
-    const tags = parseTags(findEl("export-tags-select"));
-    const operator = findEl("export-tags-operator").value;
-    const format = findEl("export-tags-format").value;
+    const tags = parseTags(findEl({ element: "export-tags-select" }));
+    const operator = findEl({ element: "export-tags-operator" }).value;
+    const format = findEl({ element: "export-tags-format" }).value;
 
     let papers = global.state.sortedPapers.filter((p) =>
         operator === "AND"
@@ -831,7 +833,7 @@ const setupSourcesSelection = async () => {
         ignoreSources[key] = ignoreSources.hasOwnProperty(key)
             ? ignoreSources[key]
             : false;
-        const el = findEl(`source-${key}`);
+        const el = findEl({ element: `source-${key}` });
         if (el) {
             el.checked = !ignoreSources[key];
         }
@@ -842,7 +844,7 @@ const setupSourcesSelection = async () => {
         addListener(`source-${key}`, "change", async (e) => {
             const key = e.target.id.replace("source-", "");
             let ignoreSources = (await getStorage("ignoreSources")) ?? {};
-            const el = findEl(e.target.id);
+            const el = findEl({ element: e.target.id });
             ignoreSources[key] = !el.checked;
             console.log("Updating source", key, "to", ignoreSources[key]);
             setStorage("ignoreSources", ignoreSources);
@@ -1058,7 +1060,7 @@ const getSyncStrategy = async () => {
         });
         addListener("close-modal", "click", () => done(""));
         addListener(window, "click", (event) => {
-            event.target === findEl("modal-wrapper") && done("");
+            event.target === findEl({ element: "modal-wrapper" }) && done("");
         });
     });
 };
@@ -1077,7 +1079,7 @@ const showSyncWarning = async () => {
         addListener("modal-sync-warning-cancel", "click", () => done(false));
         addListener("close-modal", "click", () => done(false));
         addListener(window, "click", (event) => {
-            event.target === findEl("modal-wrapper") && done(false);
+            event.target === findEl({ element: "modal-wrapper" }) && done(false);
         });
     });
 };
@@ -1276,7 +1278,7 @@ const closeModal = () => {
 const setupModals = () => {
     addListener("close-modal", "click", closeModal);
     addListener(window, "click", (event) => {
-        event.target === findEl("modal-wrapper") && closeModal();
+        event.target === findEl({ element: "modal-wrapper" }) && closeModal();
     });
 };
 

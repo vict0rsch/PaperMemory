@@ -1,14 +1,22 @@
 /**
- * Find an element by element id, or with class memoryItemClass for paper with a given id
- * @param {string} id The  id for the element to find or the paper in the memory
- * @param {string} memoryItemClass The class of the element to find within the container with id memory-container--{id}. The leading dot is optional.
+ * Find an element by element id (may be the element itself,
+ * in which case it its returned directly), or by finding the element
+ * with the class `memoryItemClass` inside the Memory container with
+ * id `memory-container--{paperId}`
+ * @param {object} options
+ * @param {string} options.element The id of the element to find or the element itself
+ * @param {string} options.paperId The id of the paper in the memory to find the element within
+ * @param {string} options.memoryItemClass The class of the element to find within the
+ *   container with id memory-container--{paperId}. The leading dot is optional.
  * @returns {HTMLElement}
  */
-const findEl = (elOrId, memoryItemClass) => {
-    if (typeof memoryItemClass === "undefined")
-        return typeof elOrId === "string" ? document.getElementById(elOrId) : elOrId;
+const findEl = ({ element, paperId, memoryItemClass }) => {
+    if (element)
+        return typeof element === "string" ? document.getElementById(element) : element;
     if (!memoryItemClass.startsWith(".")) memoryItemClass = "." + memoryItemClass;
-    return findEl(`memory-container--${elOrId}`).querySelector(memoryItemClass);
+    return findEl({ element: `memory-container--${paperId}` }).querySelector(
+        memoryItemClass
+    );
 };
 
 /**
@@ -19,7 +27,7 @@ const findEl = (elOrId, memoryItemClass) => {
  * @returns {void}
  */
 const fadeOut = (el, duration = 250, callback = () => {}) => {
-    el = findEl(el);
+    el = findEl({ element: el });
     el.style.transition = `${duration}ms`;
     el.style.opacity = 0;
     setTimeout(() => {
@@ -37,7 +45,7 @@ const fadeOut = (el, duration = 250, callback = () => {}) => {
  * @returns {void}
  */
 const fadeIn = (el, display = "block", duration = 250, callback = () => {}) => {
-    el = findEl(el);
+    el = findEl({ element: el });
     el.style.opacity = 0;
     if (el.style.display === "none") {
         el.style.display = display;
@@ -60,7 +68,7 @@ const fadeIn = (el, display = "block", duration = 250, callback = () => {}) => {
  */
 const val = (el, value) => {
     if (typeof el === "string") {
-        el = findEl(el);
+        el = findEl({ element: el });
     }
     if (el instanceof HTMLInputElement && el.type === "checkbox") {
         if (typeof value === "undefined") {
@@ -82,7 +90,7 @@ const val = (el, value) => {
  * */
 const showId = (el, display = "block") => {
     if (typeof el === "string") {
-        el = findEl(el);
+        el = findEl({ element: el });
     }
     if (el) el.style.display = display;
 };
@@ -94,7 +102,7 @@ const showId = (el, display = "block") => {
  * */
 const hideId = (el) => {
     if (typeof el === "string") {
-        el = findEl(el);
+        el = findEl({ element: el });
     }
     if (el) el.style.display = "none";
 };
@@ -106,7 +114,7 @@ const hideId = (el) => {
  * */
 const setTextId = (el, text) => {
     if (typeof el === "string") {
-        el = findEl(el);
+        el = findEl({ element: el });
     }
     if (el) el.innerText = text;
 };
@@ -118,7 +126,7 @@ const setTextId = (el, text) => {
  * */
 const setHTML = (el, html) => {
     if (typeof el === "string") {
-        el = findEl(el);
+        el = findEl({ element: el });
     }
     if (el) el.innerHTML = html;
 };
@@ -130,7 +138,7 @@ const setHTML = (el, html) => {
  * */
 const dispatch = (el, event) => {
     if (typeof el === "string") {
-        el = findEl(el);
+        el = findEl({ element: el });
     }
     if (typeof event === "string") {
         if (event === "focus") {
@@ -154,7 +162,7 @@ const dispatch = (el, event) => {
 const hasClass = (elOrId, className) => {
     let el;
     if (typeof elOrId === "string") {
-        el = findEl(elOrId);
+        el = findEl({ element: elOrId });
     } else {
         el = elOrId;
     }
@@ -169,7 +177,7 @@ const hasClass = (elOrId, className) => {
 const addClass = (elOrId, className) => {
     let el;
     if (typeof elOrId === "string") {
-        el = findEl(elOrId);
+        el = findEl({ element: elOrId });
     } else {
         el = elOrId;
     }
@@ -185,7 +193,7 @@ const addClass = (elOrId, className) => {
 const removeClass = (elOrId, className) => {
     let el;
     if (typeof elOrId === "string") {
-        el = findEl(elOrId);
+        el = findEl({ element: elOrId });
     } else {
         el = elOrId;
     }
@@ -201,7 +209,7 @@ const removeClass = (elOrId, className) => {
  * */
 const addListener = (el, event, listener) => {
     if (typeof el === "string") {
-        el = findEl(el);
+        el = findEl({ element: el });
     }
     el && el.addEventListener(event, listener);
 };
@@ -213,7 +221,7 @@ const addListener = (el, event, listener) => {
  * */
 const setPlaceholder = (el, text) => {
     if (typeof el === "string") {
-        el = findEl(el);
+        el = findEl({ element: el });
     }
     if (el && typeof el.placeholder !== "undefined") el.placeholder = text;
 };
@@ -226,7 +234,7 @@ const setPlaceholder = (el, text) => {
  * */
 const style = (el, key, value) => {
     if (typeof el === "string") {
-        el = findEl(el);
+        el = findEl({ element: el });
     }
     if (el) {
         if (typeof value === "undefined") {
@@ -243,7 +251,7 @@ const style = (el, key, value) => {
  * */
 const disable = (el, isDisabled = true) => {
     if (typeof el === "string") {
-        el = findEl(el);
+        el = findEl({ element: el });
     }
     if (el) el.disabled = isDisabled;
 };
@@ -257,7 +265,7 @@ const disable = (el, isDisabled = true) => {
  * */
 const slideUp = (el, duration = 250, complete = () => {}) => {
     if (typeof el === "string") {
-        el = findEl(el);
+        el = findEl({ element: el });
     }
     if (!el) return;
     el.style.transitionProperty = "height, margin, padding";
@@ -296,7 +304,7 @@ const slideUp = (el, duration = 250, complete = () => {}) => {
  * */
 const slideDown = (el, duration = 500, complete = () => {}) => {
     if (typeof el === "string") {
-        el = findEl(el);
+        el = findEl({ element: el });
     }
     if (!el) return;
     el.style.removeProperty("display");
