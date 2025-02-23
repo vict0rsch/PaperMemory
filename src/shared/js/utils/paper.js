@@ -702,6 +702,12 @@ const addOrUpdatePaper = async ({
                         paper[key] = value;
                     }
                 }
+                if (key === "bibtex") {
+                    const bibObj = bibtexToObject(preprintMatch[key]);
+                    if (bibObj.year !== paper.year) {
+                        paper.year = bibObj.year;
+                    }
+                }
             }
 
             global.state.papers = (await getStorage("papers")) ?? {};
