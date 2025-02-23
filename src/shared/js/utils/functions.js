@@ -773,12 +773,12 @@ const getPaperEdits = (id, isPopup) => {
                 .getElementById(`popup-form-note--${id}`)
                 .querySelector(".form-code-input")
         );
-        tags = parseTags(findEl(`popup-item-tags--${id}`));
-        favorite = findEl(`checkFavorite--${id}`).checked;
+        tags = parseTags(findEl({ element: `popup-item-tags--${id}` }));
+        favorite = findEl({ element: `checkFavorite--${id}` }).checked;
     } else {
-        note = val(findEl(id, "form-note-textarea"));
-        codeLink = val(findEl(id, "form-code-input"));
-        tags = parseTags(findEl(id, "memory-item-tags"));
+        note = val(findEl({ paperId: id, memoryItemClass: "form-note-textarea" }));
+        codeLink = val(findEl({ paperId: id, memoryItemClass: "form-code-input" }));
+        tags = parseTags(findEl({ paperId: id, memoryItemClass: "memory-item-tags" }));
         favorite = hasClass(`memory-container--${id}`, "favorite");
     }
 

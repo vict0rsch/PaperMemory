@@ -7,23 +7,23 @@ const setListeners = () => {
         setHTML("match-bib-stop", '<span class="loader"></span>');
     });
     addListener("copy-results", "click", () => {
-        copyTextToClipboard(findEl("match-results").innerText);
+        copyTextToClipboard(findEl({ element: "match-results" }).innerText);
         setHTML("copy-results", "Copied!");
         setTimeout(() => {
             setHTML("copy-results", "Copy to clipboard");
         }, 1500);
     });
     addListener("bib-text", "keydown", (e) => {
-        if (document.activeElement === findEl("bib-text")) {
+        if (document.activeElement === findEl({ element: "bib-text" })) {
             if ((e.metaKey || e.ctrlKey) && e.keyCode == 13) {
                 dispatch("match-bib", "click");
-                findEl("match-bib").focus();
+                findEl({ element: "match-bib" }).focus();
             }
         }
     });
     addListener("match-bib", "click", async () => {
         resetMatchResults();
-        const text = findEl("bib-text").value;
+        const text = findEl({ element: "bib-text" }).value;
         let parsed, stop;
 
         try {
@@ -72,7 +72,9 @@ const setListeners = () => {
         const matched = arxivs.length ? await matchItems(arxivs) : [];
         matched.length &&
             setTimeout(() => {
-                findEl("papers-successfully-matched")?.scrollIntoView(true);
+                findEl({ element: "papers-successfully-matched" })?.scrollIntoView(
+                    true
+                );
             }, 250);
         showBibliography(parsed, matched, arxivIndices);
         addListener("show-only-matches", "change", () => {
