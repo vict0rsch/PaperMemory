@@ -15,7 +15,7 @@ const migrateData = async (papers, manifestDataVersion, store = true) => {
     }
     const currentVersion = papers["__dataVersion"] || -1;
     var deleteIds = [];
-    const latestDataVersion = 10001;
+    const latestDataVersion = 10000;
 
     let newPapers = { ...papers };
 
@@ -192,7 +192,7 @@ const migrateData = async (papers, manifestDataVersion, store = true) => {
                     }
                 }
             }
-            if (currentVersion < 10001) {
+            if (currentVersion < 10000) {
                 if (papers[id].bibtex && !papers[id].hasOwnProperty("doi")) {
                     const doi = bibtexToObject(papers[id].bibtex).doi;
                     if (doi) {
