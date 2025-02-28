@@ -113,7 +113,7 @@ const handleMemoryOpenLocal = (e) => {
     global.state.papers[id] = updatePaperVisits(paper);
     setStorage("papers", global.state.papers);
     if (file && (file.id || file.id === 0)) {
-        chrome.downloads.open(file.id);
+        chrome.downloads?.open(file.id);
     }
     window?.close && window.close();
 };

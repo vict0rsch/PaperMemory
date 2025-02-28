@@ -297,7 +297,7 @@ const focusExistingOrCreateNewPaperTab = (paper, fromMemoryItem) => {
             const hasFile = global.state.files.hasOwnProperty(paper.id);
             if (hasFile && !fromMemoryItem) {
                 // this paper has a local file
-                chrome.downloads.open(global.state.files[paper.id].id);
+                chrome.downloads?.open(global.state.files[paper.id].id);
             } else {
                 // no tab open or local file: open a new tab to the paper's pdf
                 chrome.tabs.create({

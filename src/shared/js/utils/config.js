@@ -61,6 +61,7 @@ global.state = {
     titleHashToIds: {}, // (miniHash(title) -> [ids])
     titleFunction: null, // function(paper) => string
     urlHashToId: {}, // (miniHash(url) => id)
+    isSafari: window.safari !== undefined,
 };
 
 global.state.titleFunction = (paper) => {
