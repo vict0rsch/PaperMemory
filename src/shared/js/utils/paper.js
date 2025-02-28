@@ -419,6 +419,10 @@ const matchPapersToFiles = async (papers, files) => {
 
 const matchAllFilesToPapers = () => {
     return new Promise((resolve, reject) => {
+        if (global.state.isSafari) {
+            resolve({});
+            return;
+        }
         chrome.downloads.search(
             {
                 filenameRegex: "PaperMemoryStore/.*",

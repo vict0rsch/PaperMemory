@@ -932,6 +932,10 @@ const sendMessageToBackground = (payload) =>
  */
 const getStoredFiles = () =>
     new Promise((resolve) => {
+        if (global.state.isSafari) {
+            resolve([]);
+            return;
+        }
         chrome.downloads.search(
             {
                 filenameRegex: "(PaperMemoryStore/)?.*.pdf",

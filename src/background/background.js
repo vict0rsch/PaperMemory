@@ -338,6 +338,10 @@ chrome.runtime.onMessage.addListener((payload, sender, sendResponse) => {
     } else if (payload.type === "google-scholar") {
         fetchGSData(payload.paper).then(sendResponse);
     } else if (payload.type === "download-pdf-to-store") {
+        if (global.state.isSafari) {
+            sendResponse(false);
+            return;
+        }
         getStoredFiles().then((storedFiles) => {
             if (storedFiles.length === 0) {
                 chrome.downloads.download({

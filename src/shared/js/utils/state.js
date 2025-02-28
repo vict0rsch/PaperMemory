@@ -262,7 +262,7 @@ const downloadPaperPdf = async (paper) => {
         /[\u2000-\u206F\u2E00-\u2E7F\\'!"#$%&()*+,\/:;<=>?@\[\]^`{|}~]/g;
     const spaceRegex = /\s+/g;
     title = title.replace(punctuationRegex, " ").replace(spaceRegex, " ");
-    if (global.state.prefs.checkStore) {
+    if (global.state.prefs.checkStore && !global.state.isSafari) {
         title = "PaperMemoryStore/" + title;
         const storedFiles = await getStoredFiles();
         if (storedFiles.length === 0) {

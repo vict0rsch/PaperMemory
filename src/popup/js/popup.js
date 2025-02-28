@@ -448,7 +448,7 @@ const popupMain = async (url, is, manualTrigger = false, tab = null) => {
         addListener(`popup-memory-item-openLocal--${id}`, "click", async () => {
             const file = (await findLocalFile(paper)) || global.state.files[paper.id];
             if (file) {
-                chrome.downloads.open(file.id);
+                chrome.downloads?.open(file.id);
             } else {
                 chrome.tabs.create({ url: paper.pdfLink });
             }
@@ -519,6 +519,8 @@ const popupMain = async (url, is, manualTrigger = false, tab = null) => {
 // ------------------------------
 
 const query = { active: true, lastFocusedWindow: true };
+console.log("navigator.userAgent: ", navigator.userAgent);
+console.log("state: ", global.state);
 if (window.location.href.includes("popup")) {
     chrome.tabs.query(query, async (tabs) => {
         chrome.runtime.connect({ name: "PaperMemoryPopupSync" });
