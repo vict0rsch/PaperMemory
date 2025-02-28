@@ -352,7 +352,11 @@ const handleMemorySwitchClick = () => {
 
 const handlePopupKeydown = (e) => {
     const key = e.key;
-    if (["Backspace", "Enter", "Escape", "a", "e"].indexOf(key) < 0) {
+    if (
+        ["Backspace", "Enter", "Escape", "a", "e", "o", "c", "m", "b", "h"].indexOf(
+            key
+        ) < 0
+    ) {
         return;
     }
 
@@ -441,6 +445,30 @@ const handlePopupKeydown = (e) => {
     } else if (key === "e") {
         // edit item
         dispatch(findEl({ paperId: id, memoryItemClass: "memory-item-edit" }), "click");
+    } else if (key === "o") {
+        // download pdf
+        dispatch(findEl({ paperId: id, memoryItemClass: "memory-item-link" }), "click");
+    } else if (key === "c") {
+        // copy link
+        dispatch(
+            findEl({ paperId: id, memoryItemClass: "memory-item-copy-link" }),
+            "click"
+        );
+    } else if (key === "m") {
+        // copy link
+        dispatch(findEl({ paperId: id, memoryItemClass: "memory-item-md" }), "click");
+    } else if (key === "b") {
+        // copy bibtex
+        dispatch(
+            findEl({ paperId: id, memoryItemClass: "memory-item-bibtex" }),
+            "click"
+        );
+    } else if (key === "h") {
+        // copy hyperlink
+        dispatch(
+            findEl({ paperId: id, memoryItemClass: "memory-item-copy-hyperlink" }),
+            "click"
+        );
     }
 };
 
