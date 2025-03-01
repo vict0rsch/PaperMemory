@@ -352,12 +352,22 @@ const handleMemorySwitchClick = () => {
     global.state.memoryIsOpen ? closeMemory() : openMemory();
 };
 
-const handlePopupKeydown = (e) => {
-    const key = e.key;
+const handlePopupKeydown = async (e) => {
+    let key = e.key;
     if (
-        ["Backspace", "Enter", "Escape", "a", "e", "o", "c", "m", "b", "h"].indexOf(
-            key
-        ) < 0
+        [
+            "Backspace",
+            "Enter",
+            "Escape",
+            "a",
+            "e",
+            "o",
+            "c",
+            "m",
+            "b",
+            "h",
+            "p",
+        ].indexOf(key) < 0
     ) {
         return;
     }
@@ -374,31 +384,38 @@ const handlePopupKeydown = (e) => {
         return;
     }
 
-    if (!global.state.memoryIsOpen) {
-        if (key === "a") {
-            // a opens the arxiv memory
-            const focused = queryAll(":focus");
-            if (focused.some((el) => ["INPUT", "TEXTAREA"].includes(el.tagName))) {
-                return;
-            }
-            global.state.papers && dispatch("memory-switch", "click");
-        } else if (key === "Enter") {
-            // enter on the arxiv memory button opens it
-            let focused = querySelector(":focus");
-            // if (!focused || !focused.length < 1) return;
-            if (focused.id === "memory-switch-open") {
-                dispatch("memory-switch", "click");
-            } else if (focused.id === "menu-switch") {
-                dispatch("menu-switch", "click");
-                dispatch("menu-switch", "blur");
-            } else if (hasClass(focused, "memory-item-svg-div")) {
-                dispatch(focused, "click");
-            }
-        }
+    // Menu is closed
+
+    const inputIsFocused = queryAll(":focus").some((el) =>
+        ["INPUT", "TEXTAREA"].includes(el.tagName)
+    );
+
+    if (inputIsFocused && key !== "Escape") {
         return;
     }
 
-    // Now memory is open
+    if (!global.state.memoryIsOpen) {
+        if (key === "a") {
+            // a opens the arxiv memory
+            global.state.papers && dispatch("memory-switch", "click");
+        } else if (key === "Enter") {
+            // enter on the arxiv memory button opens it
+            const focused = querySelector(":focus");
+            // if (!focused || !focused.length < 1) return;
+            if (focused?.id === "memory-switch-open") {
+                return dispatch("memory-switch", "click");
+            } else if (focused?.id === "menu-switch") {
+                dispatch("menu-switch", "click");
+                return dispatch("menu-switch", "blur");
+            } else if (hasClass(focused, "memory-item-svg-div")) {
+                return dispatch(focused, "click");
+            }
+        } else if (key === "p") {
+            if (!global.state.prefsIsOpen) {
+                return dispatch("menu-switch", "click");
+            }
+        }
+    }
 
     if (key === "Enter") {
         // enable Enter on favorites and sort arrows
@@ -414,61 +431,93 @@ const handlePopupKeydown = (e) => {
         }
     }
 
-    let id;
-    const paperItem = querySelector(".memory-container:focus");
-    if (key !== "Escape") {
-        if (!paperItem) return;
-        id = paperItem.id.split("--")[1];
+    let id, paperItem;
+    if (global.state.currentId && !global.state.memoryIsOpen) {
+        id = global.state.currentId;
+    } else {
+        paperItem = querySelector(".memory-container:focus");
+        if (key !== "Escape") {
+            if (!paperItem) return;
+            id = paperItem.id.split("--")[1];
+        }
     }
+
+    if (key === "Enter") {
+        key = await getDefaultKeyboardAction();
+    }
+
+    const localFindEl = ({ id, memoryItemClass, paperItem }) => {
+        if (paperItem) {
+            // memory select
+            return findEl({ paperId: id, memoryItemClass });
+        } else {
+            // popup select
+            return findEl({ element: `popup-${memoryItemClass}--${id}` });
+        }
+    };
 
     if (key === "Backspace") {
         // delete
-        dispatch(findEl({ paperId: id, memoryItemClass: "memory-delete" }), "click");
-    } else if (key === "Enter") {
+        dispatch(
+            localFindEl({ id, paperItem, memoryItemClass: "memory-delete" }),
+            "click"
+        );
+    } else if (key === "o") {
         // open paper
         const target =
             global.state.papers[id].source === "website"
-                ? findEl({ paperId: id, memoryItemClass: "memory-website-url" })
+                ? localFindEl({ id, paperItem, memoryItemClass: "memory-website-url" })
                 : (global.state.prefs.checkEnterLocalPdf &&
-                      findEl({
-                          paperId: id,
+                      localFindEl({
+                          id,
+                          paperItem,
                           memoryItemClass: "memory-item-openLocal",
                       })) ||
-                  findEl({ paperId: id, memoryItemClass: "memory-item-link" });
+                  localFindEl({ id, paperItem, memoryItemClass: "memory-item-link" });
         dispatch(target, "click");
     } else if (key === "Escape") {
         // close memory
-        e.preventDefault();
         if (paperItem && hasClass(paperItem, "expand-open")) {
+            e.preventDefault();
             handleTogglePaperEdit(e);
         } else {
-            closeMemory();
+            if (global.state.memoryIsOpen) {
+                e.preventDefault();
+                closeMemory();
+            }
         }
     } else if (key === "e") {
         // edit item
-        dispatch(findEl({ paperId: id, memoryItemClass: "memory-item-edit" }), "click");
-    } else if (key === "o") {
-        // download pdf
-        dispatch(findEl({ paperId: id, memoryItemClass: "memory-item-link" }), "click");
+        dispatch(
+            localFindEl({ id, paperItem, memoryItemClass: "memory-item-edit" }),
+            "click"
+        );
     } else if (key === "c") {
         // copy link
         dispatch(
-            findEl({ paperId: id, memoryItemClass: "memory-item-copy-link" }),
+            localFindEl({ id, paperItem, memoryItemClass: "memory-item-copy-link" }),
             "click"
         );
     } else if (key === "m") {
         // copy link
-        dispatch(findEl({ paperId: id, memoryItemClass: "memory-item-md" }), "click");
+        dispatch(
+            localFindEl({ id, paperItem, memoryItemClass: "memory-item-md" }),
+            "click"
+        );
     } else if (key === "b") {
         // copy bibtex
         dispatch(
-            findEl({ paperId: id, memoryItemClass: "memory-item-bibtex" }),
+            localFindEl({ id, paperItem, memoryItemClass: "memory-item-bibtex" }),
             "click"
         );
     } else if (key === "h") {
         // copy hyperlink
         dispatch(
-            findEl({ paperId: id, memoryItemClass: "memory-item-copy-hyperlink" }),
+            localFindEl({
+                id,
+                paperItem,
+                memoryItemClass: "memory-item-copy-hyperlink",
+            }),
             "click"
         );
     }
