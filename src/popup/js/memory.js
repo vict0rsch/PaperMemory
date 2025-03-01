@@ -459,8 +459,8 @@ const reverseMemory = () => {
 const searchMemory = (letters) => {
     const words = letters.toLowerCase().split(" ");
     let papersList = [];
+    const contentKeys = ["title", "author", "note", "tags", "id", "venue"];
     for (const paper of global.state.sortedPapers) {
-        const contentKeys = ["title", "author", "note", "tags", "displayId", "venue"];
         const contents = contentKeys.map((key) => {
             if (Array.isArray(paper[key])) {
                 return paper[key].join(" ").toLowerCase();
