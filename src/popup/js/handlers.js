@@ -367,6 +367,7 @@ const handlePopupKeydown = async (e) => {
             "b",
             "h",
             "p",
+            "t",
         ].indexOf(key) < 0
     ) {
         return;
@@ -518,6 +519,12 @@ const handlePopupKeydown = async (e) => {
                 paperItem,
                 memoryItemClass: "memory-item-copy-hyperlink",
             }),
+            "click"
+        );
+    } else if (key === "t") {
+        // copy title
+        dispatch(
+            localFindEl({ id, paperItem, memoryItemClass: "memory-item-copy-title" }),
             "click"
         );
     }
