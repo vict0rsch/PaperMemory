@@ -253,6 +253,8 @@ const popupMain = async (url, is, manualTrigger = false, tab = null) => {
     const prefs = await getPrefs();
     // Set checkboxes
     getAndTrackPopupMenuChecks(prefs, global.prefsCheckNames);
+    const defaultKeyboardAction = await getDefaultKeyboardAction();
+    findEl({ element: "memory-item-default-action" }).value = defaultKeyboardAction;
 
     // Set options page link
     addListener("advanced-configuration", "click", () => {
@@ -269,6 +271,10 @@ const popupMain = async (url, is, manualTrigger = false, tab = null) => {
         chrome.tabs.create({
             url: chrome.runtime.getURL("src/bibMatcher/bibMatcher.html"),
         });
+    });
+    // Set default keyboard action
+    addListener("memory-item-default-action", "change", (e) => {
+        setDefaultKeyboardAction(e.target.value);
     });
 
     // Set PDF title function

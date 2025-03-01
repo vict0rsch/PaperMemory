@@ -418,6 +418,27 @@ const getPrefs = async () => {
 };
 
 /**
+ * Retrieve the default keyboard action from storage.
+ * @returns {string} The default keyboard action.
+ */
+const getDefaultKeyboardAction = async () => {
+    let defaultAction = await getStorage("defaultKeyboardAction");
+    if (defaultAction) {
+        return defaultAction;
+    }
+    defaultAction = "o";
+    await setStorage("defaultKeyboardAction", defaultAction);
+    return defaultAction;
+};
+
+/**
+ * Set the default keyboard action.
+ * @param {string} action The default keyboard action.
+ */
+const setDefaultKeyboardAction = async (action) =>
+    setStorage("defaultKeyboardAction", action);
+
+/**
  * Turns the manifest's semantic string version into an int:
  * PaperMemory version a.b.c => data version a * 10^4 + b * 10^2 + c
  * (with 10^2 and 10^1, 0.3.1 would be lower than 0.2.12)
