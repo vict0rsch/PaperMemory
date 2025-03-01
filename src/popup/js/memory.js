@@ -719,17 +719,18 @@ const displayMemoryTable = (pagination = 0) => {
     addEventToClass(".memory-tag", "click", handleTagClick);
     // Monitor form changes
     setFormChangeListener(undefined, false);
-    // show / remove title tooltip
+    // show / remove title tooltips
     addEventToClass(
-        ".memory-title",
-        "mouseenter",
-        getHandleTitleTooltip(showTitleTooltip, 1500)
+        ".memory-display-id",
+        "click",
+        getHandleTitleTooltip(showTitleTooltip, 0)
     );
     addEventToClass(
-        ".memory-title",
+        ".memory-display-id",
         "mouseleave",
-        getHandleTitleTooltip(hideTitleTooltip, 500)
+        getHandleTitleTooltip(hideTitleTooltip, 10000)
     );
+    document.addEventListener("click", handleHideAllTitleTooltips);
     // expand authorlist on click
     addEventToClass(".expand-paper-authors", "click", handleExpandAuthors);
 

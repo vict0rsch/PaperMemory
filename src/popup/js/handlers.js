@@ -624,3 +624,12 @@ const handleExpandAuthors = (e) => {
     }
     setHTML(authorsEl, cutAuthors(global.state.papers[id].author, 100000));
 };
+
+const handleHideAllTitleTooltips = (e) => {
+    if (!e.composedPath().some((el) => el.classList?.contains("title-tooltip"))) {
+        queryAll(".title-tooltip").forEach((el) => {
+            hideId(el);
+        });
+        hideId("popup-title-tooltip");
+    }
+};

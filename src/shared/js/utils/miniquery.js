@@ -101,7 +101,7 @@ const showId = (el, display = "block") => {
  * @returns {void}
  * */
 const hideId = (el) => {
-        el = findEl({ element: el });
+    el = findEl({ element: el });
     if (el) el.style.display = "none";
 };
 

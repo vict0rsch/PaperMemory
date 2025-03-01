@@ -356,14 +356,14 @@ const popupMain = async (url, is, manualTrigger = false, tab = null) => {
         setFormChangeListener(id, true);
         addListener("popup-delete-paper", "click", handlePopupDeletePaper(id));
         addListener(
-            "popup-paper-title",
-            "mouseenter",
-            getHandleTitleTooltip(showTitleTooltip, 1500, true)
+            "popup-displayId",
+            "click",
+            getHandleTitleTooltip(showTitleTooltip, 0, true)
         );
         addListener(
-            "popup-paper-title",
+            "popup-displayId",
             "mouseleave",
-            getHandleTitleTooltip(hideTitleTooltip, 500, true)
+            getHandleTitleTooltip(hideTitleTooltip, 10000, true)
         );
         addEventToClass(".expand-paper-authors", "click", handleExpandAuthors);
 
