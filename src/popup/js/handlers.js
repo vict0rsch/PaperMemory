@@ -545,6 +545,7 @@ const handlePopupKeydown = async (e) => {
             id,
             textToCopy: title,
             feedbackText: "Title copied!",
+            isPopup: !Boolean(paperItem),
         });
     }
 };
