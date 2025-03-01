@@ -68,7 +68,11 @@ const handleCopyMarkdownLink = async (e) => {
     const text =
         paper.source === "website" ? "URL" : prefs.checkPreferPdf ? "PDF" : "Abstract";
     const md = makeMdLink(paper, prefs);
-    await copyAndConfirmMemoryItem(id, md, `Markdown ${text} link copied!`);
+    await copyAndConfirmMemoryItem({
+        id,
+        textToCopy: md,
+        feedbackText: `Markdown ${text} link copied!`,
+    });
 };
 
 const handleCopyBibtex = async (e) => {
@@ -81,7 +85,11 @@ const handleCopyBibtex = async (e) => {
     if (!bibobj.hasOwnProperty("pdf") && global.state.papers[id].source !== "website") {
         bibobj.pdf = paperToPDF(global.state.papers[id]);
     }
-    await copyAndConfirmMemoryItem(id, bibtexToString(bibobj), "Bibtex copied!");
+    await copyAndConfirmMemoryItem({
+        id,
+        textToCopy: bibtexToString(bibobj),
+        feedbackText: "Bibtex copied!",
+    });
 };
 
 const handleCopyPDFLink = async (e) => {
@@ -91,7 +99,11 @@ const handleCopyPDFLink = async (e) => {
     const link = prefs.checkPreferPdf ? paperToPDF(paper) : paperToAbs(paper);
     const text =
         paper.source === "website" ? "URL" : prefs.checkPreferPdf ? "PDF" : "Abstract";
-    await copyAndConfirmMemoryItem(id, link, `${text} link copied!`);
+    await copyAndConfirmMemoryItem({
+        id,
+        textToCopy: link,
+        feedbackText: `${text} link copied!`,
+    });
 };
 
 const handleCopyHyperLink = async (e) => {
@@ -99,7 +111,12 @@ const handleCopyHyperLink = async (e) => {
     const prefs = global.state.prefs;
     const paper = global.state.papers[id];
     const link = prefs.checkPreferPdf ? paperToPDF(paper) : paperToAbs(paper);
-    await copyAndConfirmMemoryItem(id, link, `Hyperlink copied!`, false, paper.title);
+    await copyAndConfirmMemoryItem({
+        id,
+        textToCopy: link,
+        feedbackText: `Hyperlink copied!`,
+        hyperLinkTitle: paper.title,
+    });
 };
 
 const handleAddItemToFavorites = (e) => {
@@ -523,10 +540,12 @@ const handlePopupKeydown = async (e) => {
         );
     } else if (key === "t") {
         // copy title
-        dispatch(
-            localFindEl({ id, paperItem, memoryItemClass: "memory-item-copy-title" }),
-            "click"
-        );
+        const title = global.state.papers[id].title;
+        await copyAndConfirmMemoryItem({
+            id,
+            textToCopy: title,
+            feedbackText: "Title copied!",
+        });
     }
 };
 

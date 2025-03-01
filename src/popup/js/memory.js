@@ -159,13 +159,13 @@ const showConfirmDeleteModal = (id) => {
  * @param {string} feedbackText Text to display as feedback
  * @param {boolean} isPopup If the action took place in the main popup or in the memory
  */
-const copyAndConfirmMemoryItem = async (
+const copyAndConfirmMemoryItem = async ({
     id,
     textToCopy,
     feedbackText,
-    isPopup,
-    hyperLinkTitle
-) => {
+    isPopup = false,
+    hyperLinkTitle = null,
+}) => {
     if (!hyperLinkTitle) {
         copyTextToClipboard(textToCopy);
     } else {

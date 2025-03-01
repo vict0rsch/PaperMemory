@@ -422,18 +422,28 @@ const popupMain = async (url, is, manualTrigger = false, tab = null) => {
                     : prefs.checkPreferPdf
                     ? "PDF"
                     : "Abstract";
-            await copyAndConfirmMemoryItem(id, link, `${text} link copied!`, true);
+            await copyAndConfirmMemoryItem({
+                id,
+                textToCopy: link,
+                feedbackText: `${text} link copied!`,
+                isPopup: true,
+            });
         });
         addListener(`popup-memory-item-copy-hyperlink--${id}`, "click", async () => {
             const link = prefs.checkPreferPdf ? paperToPDF(paper) : paperToAbs(paper);
-            const text = prefs.checkPreferPdf ? "PDF" : "Abstract";
-            await copyAndConfirmMemoryItem(
+            const text =
+                paper.source === "website"
+                    ? "URL"
+                    : prefs.checkPreferPdf
+                    ? "PDF"
+                    : "Abstract";
+            await copyAndConfirmMemoryItem({
                 id,
-                link,
-                `${text} hyperlink copied!`,
-                true,
-                paper.title
-            );
+                textToCopy: link,
+                feedbackText: `${text} hyperlink copied!`,
+                isPopup: true,
+                hyperLinkTitle: paper.title,
+            });
         });
         addListener(`popup-memory-item-md--${id}`, "click", async () => {
             const md = makeMdLink(paper, prefs);
@@ -443,12 +453,12 @@ const popupMain = async (url, is, manualTrigger = false, tab = null) => {
                     : prefs.checkPreferPdf
                     ? "PDF"
                     : "Abstract";
-            await copyAndConfirmMemoryItem(
+            await copyAndConfirmMemoryItem({
                 id,
-                md,
-                `Markdown link to ${text} copied!`,
-                true
-            );
+                textToCopy: md,
+                feedbackText: `Markdown ${text} copied!`,
+                isPopup: true,
+            });
         });
         addListener(`popup-memory-item-bibtex--${id}`, "click", async () => {
             let bibtex = global.state.papers[id].bibtex;
@@ -460,7 +470,12 @@ const popupMain = async (url, is, manualTrigger = false, tab = null) => {
                 bibobj.pdf = paperToPDF(global.state.papers[id]);
             }
             bibtex = bibtexToString(bibobj);
-            await copyAndConfirmMemoryItem(id, bibtex, "Bibtex citation copied!", true);
+            await copyAndConfirmMemoryItem({
+                id,
+                textToCopy: bibtex,
+                feedbackText: "Bibtex citation copied!",
+                isPopup: true,
+            });
         });
         addListener(`popup-memory-item-openLocal--${id}`, "click", async () => {
             const file = (await findLocalFile(paper)) || global.state.files[paper.id];
