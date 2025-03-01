@@ -125,9 +125,7 @@ const setTextId = (el, text) => {
  * @returns {void}
  * */
 const setHTML = (el, html) => {
-    if (typeof el === "string") {
-        el = findEl({ element: el });
-    }
+    el = findEl({ element: el });
     if (el) el.innerHTML = html;
 };
 
@@ -137,9 +135,7 @@ const setHTML = (el, html) => {
  * @returns {void}
  * */
 const dispatch = (el, event) => {
-    if (typeof el === "string") {
-        el = findEl({ element: el });
-    }
+    el = findEl({ element: el });
     if (typeof event === "string") {
         if (event === "focus") {
             el.focus();
@@ -159,14 +155,9 @@ const dispatch = (el, event) => {
  * @param {string} className
  * @returns {boolean}
  * */
-const hasClass = (elOrId, className) => {
-    let el;
-    if (typeof elOrId === "string") {
-        el = findEl({ element: elOrId });
-    } else {
-        el = elOrId;
-    }
-    if (el) return el.classList.contains(className);
+const hasClass = (el, className) => {
+    el = findEl({ element: el });
+    return el ? el.classList.contains(className) : false;
 };
 
 /** Add a class to an element (or find it with findEl if el is a string)
@@ -174,14 +165,8 @@ const hasClass = (elOrId, className) => {
  * @param {string} className
  * @returns {void}
  * */
-const addClass = (elOrId, className) => {
-    let el;
-    if (typeof elOrId === "string") {
-        el = findEl({ element: elOrId });
-    } else {
-        el = elOrId;
-    }
-
+const addClass = (el, className) => {
+    el = findEl({ element: el });
     el && el.classList.add(className);
 };
 
@@ -190,15 +175,9 @@ const addClass = (elOrId, className) => {
  * @param {string} className
  * @returns {void}
  * */
-const removeClass = (elOrId, className) => {
-    let el;
-    if (typeof elOrId === "string") {
-        el = findEl({ element: elOrId });
-    } else {
-        el = elOrId;
-    }
-
-    if (el) el.classList.remove(className);
+const removeClass = (el, className) => {
+    el = findEl({ element: el });
+    el && el.classList.remove(className);
 };
 
 /** Add an event listener to an element (or find it with findEl if el is a string)
@@ -208,9 +187,7 @@ const removeClass = (elOrId, className) => {
  * @returns {void}
  * */
 const addListener = (el, event, listener) => {
-    if (typeof el === "string") {
-        el = findEl({ element: el });
-    }
+    el = findEl({ element: el });
     el && el.addEventListener(event, listener);
 };
 
@@ -220,9 +197,7 @@ const addListener = (el, event, listener) => {
  * @returns {void}
  * */
 const setPlaceholder = (el, text) => {
-    if (typeof el === "string") {
-        el = findEl({ element: el });
-    }
+    el = findEl({ element: el });
     if (el && typeof el.placeholder !== "undefined") el.placeholder = text;
 };
 
@@ -233,9 +208,7 @@ const setPlaceholder = (el, text) => {
  * @returns {string}
  * */
 const style = (el, key, value) => {
-    if (typeof el === "string") {
-        el = findEl({ element: el });
-    }
+    el = findEl({ element: el });
     if (el) {
         if (typeof value === "undefined") {
             return el.style[key];
@@ -250,9 +223,7 @@ const style = (el, key, value) => {
  * @returns {void}
  * */
 const disable = (el, isDisabled = true) => {
-    if (typeof el === "string") {
-        el = findEl({ element: el });
-    }
+    el = findEl({ element: el });
     if (el) el.disabled = isDisabled;
 };
 
@@ -264,9 +235,7 @@ const disable = (el, isDisabled = true) => {
  * @returns {void}
  * */
 const slideUp = (el, duration = 250, complete = () => {}) => {
-    if (typeof el === "string") {
-        el = findEl({ element: el });
-    }
+    el = findEl({ element: el });
     if (!el) return;
     el.style.transitionProperty = "height, margin, padding";
     el.style.transitionDuration = duration + "ms";
@@ -303,9 +272,7 @@ const slideUp = (el, duration = 250, complete = () => {}) => {
  * @returns {void}
  * */
 const slideDown = (el, duration = 500, complete = () => {}) => {
-    if (typeof el === "string") {
-        el = findEl({ element: el });
-    }
+    el = findEl({ element: el });
     if (!el) return;
     el.style.removeProperty("display");
     let display = window.getComputedStyle(el).display;
