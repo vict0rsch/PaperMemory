@@ -67,6 +67,10 @@ input[type="checkbox"].switch:not(:checked) {
 #close-popup-modal:focus {
     color: var(--color);
 }
+#memory-item-default-action {
+    background-color: var(--lightBackground);
+    color: var(--color);
+}
 
 /*
 ---------------------

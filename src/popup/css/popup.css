@@ -172,6 +172,17 @@ code {
     max-width: 330px;
 }
 
+#options ul li,
+#options p code {
+    font-size: 0.9rem;
+}
+#options #memory-item-default-action {
+    font-size: 0.9rem;
+    border-radius: var(--rounder);
+    padding: 2px 4px;
+    border: 1px solid var(--outline);
+    background-color: var(--lightBackground);
+}
 #menu-switch-svg {
     color: rgb(43, 43, 61);
 }
