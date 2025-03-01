@@ -409,7 +409,12 @@ const popupMain = async (url, is, manualTrigger = false, tab = null) => {
         });
         addListener(`popup-memory-item-copy-link--${id}`, "click", async () => {
             const link = prefs.checkPreferPdf ? paperToPDF(paper) : paperToAbs(paper);
-            const text = prefs.checkPreferPdf ? "PDF" : "Abstract";
+            const text =
+                paper.source === "website"
+                    ? "URL"
+                    : prefs.checkPreferPdf
+                    ? "PDF"
+                    : "Abstract";
             await copyAndConfirmMemoryItem(id, link, `${text} link copied!`, true);
         });
         addListener(`popup-memory-item-copy-hyperlink--${id}`, "click", async () => {
@@ -425,7 +430,12 @@ const popupMain = async (url, is, manualTrigger = false, tab = null) => {
         });
         addListener(`popup-memory-item-md--${id}`, "click", async () => {
             const md = makeMdLink(paper, prefs);
-            const text = prefs.checkPreferPdf ? "PDF" : "Abstract";
+            const text =
+                paper.source === "website"
+                    ? "URL"
+                    : prefs.checkPreferPdf
+                    ? "PDF"
+                    : "Abstract";
             await copyAndConfirmMemoryItem(
                 id,
                 md,

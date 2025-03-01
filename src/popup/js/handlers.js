@@ -64,8 +64,9 @@ const handleOpenItemWebsiteURL = async (e) => {
 const handleCopyMarkdownLink = async (e) => {
     const id = eventId(e);
     const prefs = global.state.prefs;
-    const text = prefs.checkPreferPdf ? "PDF" : "Abstract";
     const paper = global.state.papers[id];
+    const text =
+        paper.source === "website" ? "URL" : prefs.checkPreferPdf ? "PDF" : "Abstract";
     const md = makeMdLink(paper, prefs);
     await copyAndConfirmMemoryItem(id, md, `Markdown ${text} link copied!`);
 };
@@ -88,7 +89,8 @@ const handleCopyPDFLink = async (e) => {
     const prefs = global.state.prefs;
     const paper = global.state.papers[id];
     const link = prefs.checkPreferPdf ? paperToPDF(paper) : paperToAbs(paper);
-    const text = prefs.checkPreferPdf ? "PDF" : "Abstract";
+    const text =
+        paper.source === "website" ? "URL" : prefs.checkPreferPdf ? "PDF" : "Abstract";
     await copyAndConfirmMemoryItem(id, link, `${text} link copied!`);
 };
 
