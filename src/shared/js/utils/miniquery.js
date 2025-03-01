@@ -14,7 +14,7 @@ const findEl = ({ element, paperId, memoryItemClass }) => {
     if (element)
         return typeof element === "string" ? document.getElementById(element) : element;
     if (!memoryItemClass.startsWith(".")) memoryItemClass = "." + memoryItemClass;
-    return findEl({ element: `memory-container--${paperId}` }).querySelector(
+    return findEl({ element: `memory-container--${paperId}` })?.querySelector(
         memoryItemClass
     );
 };
