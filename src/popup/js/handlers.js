@@ -390,6 +390,16 @@ const handlePopupKeydown = async (e) => {
         return;
     }
 
+    if (global.state.modalIsOpen) {
+        if (key === "Escape") {
+            e.preventDefault();
+            closePopupModal();
+        }
+        return;
+    }
+
+    // no modal is open
+
     if (global.state.prefsIsOpen) {
         if (key === "Escape") {
             // escape closes menu

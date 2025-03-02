@@ -53,6 +53,7 @@ const getAndTrackPopupMenuChecks = (prefs, prefsCheckNames) => {
  * @param {string} name The name of the modal to show
  */
 const showPopupModal = (name) => {
+    global.state.modalIsOpen = true;
     queryAll(".popup-modal-content").forEach(hideId);
     showId(`modal-${name}-content`, "contents");
     style("popup-modal-wrapper", "display", "flex");
@@ -66,7 +67,9 @@ const showPopupModal = (name) => {
 /**
  * Closes the popup modal
  */
+    global.state.modalIsOpen = false;
 const closePopupModal = () => {
+    global.state.modalIsOpen = false;
     style("popup-modal-wrapper", "display", "none");
 };
 

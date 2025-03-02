@@ -48,6 +48,7 @@ global.state = {
     memoryIsOpen: false,
     memoryItemsPerPage: 10,
     menuIsOpen: false,
+    modalIsOpen: false,
     papers: {}, // (id => object)
     papersList: [], // [papers]
     papersReady: false,
