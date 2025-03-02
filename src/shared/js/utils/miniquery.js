@@ -74,9 +74,7 @@ const fadeIn = (el, display = "block", duration = 250, callback = () => {}) => {
  * @returns {string}
  */
 const val = (el, value) => {
-    if (typeof el === "string") {
-        el = findEl({ element: el });
-    }
+    el = findEl({ element: el });
     if (el instanceof HTMLInputElement && el.type === "checkbox") {
         if (typeof value === "undefined") {
             return el.checked;
@@ -96,9 +94,7 @@ const val = (el, value) => {
  * @returns {void}
  * */
 const showId = (el, display = "block") => {
-    if (typeof el === "string") {
-        el = findEl({ element: el });
-    }
+    el = findEl({ element: el });
     if (el) el.style.display = display;
 };
 
@@ -118,9 +114,7 @@ const hideId = (el) => {
  * @returns {void}
  * */
 const setTextId = (el, text) => {
-    if (typeof el === "string") {
-        el = findEl({ element: el });
-    }
+    el = findEl({ element: el });
     if (el) el.innerText = text;
 };
 
