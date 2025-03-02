@@ -15,12 +15,44 @@ icon: octicons/gift-16
 <img src="https://raw.github.com/vict0rsch/PaperMemory/master/extra/imgs/guide-memory.png?raw=true">
 </p>
 
+## Keyboard Navigation
+
+Navigate the Popup with your keyboard:
+
+-   Open the Memory:
+    -   ++"A"++ from the popup's home will open it
+    -   navigate to the bottom left button with ++tab++ and hit ++enter++
+-   Search
+    -   Search field is automatically focused on memory open
+    -   Navigate to the top input with ++tab++ or ++shift+tab++
+    -   More info on the search syntax down in the [Searching section](#searching)
+-   Navigate papers
+    -   ++tab++ will iterate through papers down the list
+    -   ++shift+tab++ will go back up the list
+-   Edit a paper
+    -   Press ++e++ to _edit_ the paper's metadata: tags, code and note when the paper is _focused_ (from click or keyboard ++tab++ navigation)
+    -   Navigate through fields with (++shift++ +) ++tab++: tags and note if you're on a paper's page.
+    -   Press ++enter++ on the `Done` button to close the edits (they were already saved automatically)
+-   Delete a paper
+    -   Delete a focused paper with backspace
+    -   A confirmation will be prompted first don't worry
+-   Copy shortcuts
+    -   ++o++ ↦ open the paper in a new tab.
+    -   ++c++ ↦ copy the paper's link.
+    -   ++m++ ↦ copy the paper's markdown link.
+    -   ++b++ ↦ copy the paper's bibtex.
+    -   ++h++ ↦ copy the paper's hyperlink.
+    -   ++d++ ↦ show the paper's metadata.
+-   Close Memory, Menu, Modals (such as the user guide) or Popup
+    -   ++esc++ closes items up until you're back to the popup, at which point it will close the popup.
+    -   :material-alert-box-outline: This does not work in Firefox. The whole popup will close at any point with ++esc++.
+
 ## Arxiv Enhancements
 
 PaperMemory enhances paper pages on ArXiv.org to make its parsing abilities readily available without even opening the popup:
 
-* Displays the publication venue if one exists
-* Allows you to directly download a paper to your [PaperMemoryStore](#local-file-storage)
+-   Displays the publication venue if one exists
+-   Allows you to directly download a paper to your [PaperMemoryStore](#local-file-storage)
 
 ![Arxiv enhancements](assets/display.png)
 
@@ -78,7 +110,7 @@ Whenever possible, PaperMemory queries the API the provider offers. If they don'
 
 PaperMemory uses [Papers With Code](https://paperswithcode.com)'s [API](https://paperswithcode.com/api/v1/docs/) to discover code repositories for your paper.
 
-By default, PaperMemory only stores *official* code repositories. You can configure that (and a preferred framework) in the [Advanced Options](./configuration.md#advanced-options).
+By default, PaperMemory only stores _official_ code repositories. You can configure that (and a preferred framework) in the [Advanced Options](./configuration.md#advanced-options).
 
 ??? example "How it works"
 
@@ -148,19 +180,19 @@ By default, PaperMemory only stores *official* code repositories. You can config
 
 You can search for (partial) terms:
 
-* In a paper's authors, title and note.
-    * Split queries on spaces: `gan im` will look for: _all papers whose (title OR author) contain ("gan" AND "im")_
-* In a paper's code link
-    * Start the search query with `c:` to only search code links
-* Paper years
-    * Start the search query with `y: ${year}`, optionally with `,` separating requested years or starting with `>` or `<` to filter paper published after/before a given year (stricly)
-        * `y: 20,21,22` will display papers published in `2020 OR 2021 OR 2022`
-        * `y: <2015` will display papers published before (strictly) `2015`
-        * `y: >19` will display papers published after (strictly) `2019`
-* Paper tags
-    * Start the search query with `t:` to filter by tags
-    * `t: gan` will look for _all papers whose tag-list contains at least 1 tag containing "gan"_
-    * `t: gan tim` will look for _all papers whose tag-list contains (at least 1 tag containing "gan") AND (at least 1 tag containing "tim")_
+-   In a paper's authors, title and note.
+    -   Split queries on spaces: `gan im` will look for: _all papers whose (title OR author) contain ("gan" AND "im")_
+-   In a paper's code link
+    -   Start the search query with `c:` to only search code links
+-   Paper years
+    -   Start the search query with `y: ${year}`, optionally with `,` separating requested years or starting with `>` or `<` to filter paper published after/before a given year (stricly)
+        -   `y: 20,21,22` will display papers published in `2020 OR 2021 OR 2022`
+        -   `y: <2015` will display papers published before (strictly) `2015`
+        -   `y: >19` will display papers published after (strictly) `2019`
+-   Paper tags
+    -   Start the search query with `t:` to filter by tags
+    -   `t: gan` will look for _all papers whose tag-list contains at least 1 tag containing "gan"_
+    -   `t: gan tim` will look for _all papers whose tag-list contains (at least 1 tag containing "gan") AND (at least 1 tag containing "tim")_
 
 ### Preprint matching
 
@@ -213,7 +245,6 @@ My approach with PaperMemory is to try and notify you that a publication likely 
 
     There's room for improvement here^, please contact me (an issue will do) if you want to help
 
-
 ### Parsing arbitrary websites
 
 ![Parse arbitrary website gif](assets/website.gif){ align=right .demo-gif }
@@ -222,7 +253,7 @@ PaperMemory allows you to parse any website, such as blog posts, PDFs hosted on 
 
 Just hit the `Parse Current Website` button and adjust the automatically-filled fields.
 
-A *website* will be exported as a BibTex entry like:
+A _website_ will be exported as a BibTex entry like:
 
 ```
 @misc{wolfe2023history,
@@ -236,12 +267,11 @@ A *website* will be exported as a BibTex entry like:
 
 <p style="clear: both;"/>
 
-
 ## Bibliography tools
 
-* **Copy** the BibTex entry of the current paper from the Popup or any paper in your Memory by clicking the :tabler-math-function: icon
-* **Export** all papers with a given tag into a `.bib` file in the [Advanced Options](./configuration.md#advanced-options).
-* **Match** the ArXiv pre-prints of an existing `.bib` file to actual publications with PaperMemory's [BibMatcher](./getting-started.md#bibmatcher)
+-   **Copy** the BibTex entry of the current paper from the Popup or any paper in your Memory by clicking the :tabler-math-function: icon
+-   **Export** all papers with a given tag into a `.bib` file in the [Advanced Options](./configuration.md#advanced-options).
+-   **Match** the ArXiv pre-prints of an existing `.bib` file to actual publications with PaperMemory's [BibMatcher](./getting-started.md#bibmatcher)
 
 ## Local File Storage
 
@@ -249,19 +279,19 @@ PaperMemory can store pdfs in your Downloads folder and use this file instead of
 
 How it works:
 
-* Enable the feature from the :octicons-gear-16: Popup Menu
-* Click on the :tabler-file-download: Download button in the PaperMemory popup when reading a paper
-* The extension creates a `PaperMemoryStore/` folder in your `Downloads/`
-* PDFs are stored in there
-* When opening a paper from your Memory, if it is not already open in a tab, the extension will open a new tab (or your PDF reader, the Browser decides) to the local file instead of the paper's online pdf
+-   Enable the feature from the :octicons-gear-16: Popup Menu
+-   Click on the :tabler-file-download: Download button in the PaperMemory popup when reading a paper
+-   The extension creates a `PaperMemoryStore/` folder in your `Downloads/`
+-   PDFs are stored in there
+-   When opening a paper from your Memory, if it is not already open in a tab, the extension will open a new tab (or your PDF reader, the Browser decides) to the local file instead of the paper's online pdf
 
 **Limitations**:
 
 <div class="annotate" markdown>
 
-* PaperMemory can *only access folders in your Downloads* so the storage *has* to happen there
-* It relies on **title matching** to 1/ Open a local file from the Memory 2/ Detect if a currently open file is a known paper to display the Popup. Make sure to have the title in your custom title function.
-* If you move files or rename them altering the titles they may not be detected anymore (1).
+-   PaperMemory can _only access folders in your Downloads_ so the storage _has_ to happen there
+-   It relies on **title matching** to 1/ Open a local file from the Memory 2/ Detect if a currently open file is a known paper to display the Popup. Make sure to have the title in your custom title function.
+-   If you move files or rename them altering the titles they may not be detected anymore (1).
 
 </div>
 
@@ -285,7 +315,6 @@ This feature can be enabled in the [Advanced Options](./configuration.md#advance
     Syncing is meant for **sequential** use across multiple devices.
 
     Syncing does NOT turn PaperMemory into a multi-user tool: in its current state, PaperMemory will NOT handle conflicts or concurrent writes to the remote data. Any conflict will result in potential loss of data.
-
 
 ## Privacy
 
