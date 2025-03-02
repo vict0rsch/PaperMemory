@@ -67,10 +67,16 @@ const showPopupModal = (name) => {
 /**
  * Closes the popup modal
  */
-    global.state.modalIsOpen = false;
 const closePopupModal = () => {
     global.state.modalIsOpen = false;
     style("popup-modal-wrapper", "display", "none");
+};
+
+const hideAllTooltips = () => {
+    queryAll(".title-tooltip,#popup-title-tooltip").forEach((el) => {
+        hideId(el);
+    });
+    global.state.tooltipIsOpen = false;
 };
 
 /**

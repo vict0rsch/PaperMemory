@@ -385,6 +385,7 @@ const handlePopupKeydown = async (e) => {
             "h",
             "p",
             "t",
+            "d",
         ].indexOf(key) < 0
     ) {
         return;
@@ -417,10 +418,19 @@ const handlePopupKeydown = async (e) => {
     const inputIsFocused = queryAll(":focus").some((el) =>
         ["INPUT", "TEXTAREA"].includes(el.tagName)
     );
-
     if (inputIsFocused && key !== "Escape") {
         return;
     }
+
+    // no input is focused
+
+    if (key === "Escape" && global.state.tooltipIsOpen) {
+        handleHideAllTitleTooltips(e);
+        e.preventDefault();
+        return;
+    }
+
+    // no tooltip is open
 
     if (!global.state.memoryIsOpen) {
         if (key === "a") {
@@ -445,19 +455,21 @@ const handlePopupKeydown = async (e) => {
         }
     }
 
+    // Memory is open
+
     if (key === "Enter") {
         // enable Enter on favorites and sort arrows
         const favoriteBtn = querySelector("#filter-favorites:focus");
         if (favoriteBtn) {
-            dispatch("filter-favorites", "click");
-            return;
+            return dispatch("filter-favorites", "click");
         }
         const arrowBtn = querySelector("#memory-sort-arrow:focus");
-        if (arrowBtn && key === "Enter") {
-            dispatch("memory-sort-arrow", "click");
-            return;
+        if (arrowBtn) {
+            return dispatch("memory-sort-arrow", "click");
         }
     }
+
+    // Memory is open and Enter was not pressed on a button
 
     let id, paperItem;
     if (global.state.currentId && !global.state.memoryIsOpen) {
@@ -504,7 +516,7 @@ const handlePopupKeydown = async (e) => {
                   localFindEl({ id, paperItem, memoryItemClass: "memory-item-link" });
         dispatch(target, "click");
     } else if (key === "Escape") {
-        // close memory
+        // close paper edits or memory
         if (paperItem && hasClass(paperItem, "expand-open")) {
             e.preventDefault();
             handleTogglePaperEdit(e);
@@ -557,6 +569,12 @@ const handlePopupKeydown = async (e) => {
             feedbackText: "Title copied!",
             isPopup: !Boolean(paperItem),
         });
+    } else if (key === "d") {
+        // display id
+        dispatch(
+            localFindEl({ id, paperItem, memoryItemClass: "memory-display-id" }),
+            "click"
+        );
     }
 };
 
@@ -604,13 +622,18 @@ const showTitleTooltip = (id, isPopup) => {
     const div = isPopup
         ? findEl({ element: "popup-title-tooltip" })
         : findEl({ paperId: id, memoryItemClass: ".title-tooltip" });
-    style(div, "display", "block");
+    if (!div) return;
+    hideAllTooltips();
+    global.state.tooltipIsOpen = true;
+    showId(div);
 };
 const hideTitleTooltip = (id, isPopup) => {
     const div = isPopup
         ? findEl({ element: "popup-title-tooltip" })
         : findEl({ paperId: id, memoryItemClass: ".title-tooltip" });
-    style(div, "display", "none");
+    if (!div) return;
+    hideId(div);
+    global.state.tooltipIsOpen = false;
 };
 
 const getHandleTitleTooltip = (func, delay, isPopup) => {
@@ -637,9 +660,6 @@ const handleExpandAuthors = (e) => {
 
 const handleHideAllTitleTooltips = (e) => {
     if (!e.composedPath().some((el) => el.classList?.contains("title-tooltip"))) {
-        queryAll(".title-tooltip").forEach((el) => {
-            hideId(el);
-        });
-        hideId("popup-title-tooltip");
+        hideAllTooltips();
     }
 };
