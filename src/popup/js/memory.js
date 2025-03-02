@@ -730,7 +730,6 @@ const displayMemoryTable = (pagination = 0) => {
         "mouseleave",
         getHandleTitleTooltip(hideTitleTooltip, 10000)
     );
-    document.addEventListener("click", handleHideAllTitleTooltips);
     // expand authorlist on click
     addEventToClass(".expand-paper-authors", "click", handleExpandAuthors);
 

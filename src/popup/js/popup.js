@@ -558,6 +558,7 @@ if (window.location.href.includes("popup")) {
     chrome.tabs.query(query, async (tabs) => {
         chrome.runtime.connect({ name: "PaperMemoryPopupSync" });
         const url = tabs[0].url;
+        document.addEventListener("click", handleHideAllTitleTooltips);
 
         let stateReadyPromise, remoteIsReadyPromise;
         remoteIsReadyPromise = new Promise((remoteReadyResolve) => {
