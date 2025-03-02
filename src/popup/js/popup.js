@@ -64,6 +64,21 @@ const showPopupModal = (name) => {
     });
 };
 
+const fillUserGuideShortcuts = () => {
+    const ul = findEl({ element: "user-guide-shortcuts-ul" });
+    const shortcuts = findEl({ element: "menu-keyboard-shortcuts" }).querySelectorAll(
+        "li"
+    );
+    for (const shortcut of shortcuts) {
+        const key = shortcut.querySelector("code").textContent;
+        if (key === "e" || key.toLowerCase() === "backspace") {
+            continue;
+        }
+        const action = shortcut.textContent.replace(key, "").trim();
+        ul.innerHTML += `<li><code>${key}</code> ${action}</li>`;
+    }
+};
+
 /**
  * Closes the popup modal
  */
@@ -286,6 +301,7 @@ const popupMain = async (url, is, manualTrigger = false, tab = null) => {
     addListener("memory-item-default-action", "change", (e) => {
         setDefaultKeyboardAction(e.target.value);
     });
+    fillUserGuideShortcuts();
 
     // Set PDF title function
     // setAndHandleCustomPDFFunction(menu);

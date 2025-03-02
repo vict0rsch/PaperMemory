@@ -477,12 +477,15 @@
                     pressing the following keys:
                 </p>
 
-                <ul>
+                <ul id="menu-keyboard-shortcuts">
                     <li><code>o</code> ↦ open the paper in a new tab.</li>
                     <li><code>c</code> ↦ copy the paper's link.</li>
                     <li><code>m</code> ↦ copy the paper's markdown link.</li>
                     <li><code>b</code> ↦ copy the paper's bibtex.</li>
                     <li><code>h</code> ↦ copy the paper's hyperlink.</li>
+                    <li><code>d</code> ↦ show the paper's metadata.</li>
+                    <li><code>e</code> ↦ edit the paper's metadata from the memory.</li>
+                    <li><code>Backspace</code> ↦ delete the paper from the memory.</li>
                 </ul>
 
                 <p>
@@ -495,8 +498,11 @@
                         <option value="m">Copy Markdown</option>
                         <option value="b">Copy Bibtex</option>
                         <option value="h">Copy Hyperlink</option>
+                        <option value="d">Show paper's metadata</option>
+                        <option value="e">Edit paper's metadata</option>
                     </select>
                 </p>
+
                 <p>
                     You can also perform those actions ↑ when the main popup shows a
                     paper's data (i.e. when you're on a paper's web page/pdf).
@@ -719,8 +725,8 @@
                     <p style="font-size: 0.9rem">
                         Go to your settings or
                         <code>chrome://extensions/shortcuts</code> (Chrome &amp; Brave
-                        &amp; Edge) or <code>about:addons</code> ➜
-                        <em>Tools for all add-ons</em> cogwheel ➜
+                        &amp; Edge) or <code>about:addons</code> ↦
+                        <em>Tools for all add-ons</em> ⚙︎ ↦
                         <em>Manage Extension Shortcuts</em>
                         (Firefox) to set/edit these shortcuts.
                     </p>
@@ -795,32 +801,41 @@
                                     paper&#39;s metadata: tags, code and note when the
                                     paper is <em>focused</em> (from click or keyboard
                                     <code>tab</code> navigation)
-                                    <ul>
-                                        <li>
-                                            Navigate through fields with
-                                            <code>(shift+) tab</code>
-                                        </li>
-                                    </ul>
                                 </li>
                                 <li>
-                                    Press <code>enter</code> to <em>open</em> a focused
-                                    paper (<em>focus</em> an existing tab with the paper
-                                    or <em>create a new tab</em> to the paper&#39;s pdf
-                                    if it&#39;s not open already)
-                                </li>
-                                <li>
-                                    <code>backspace</code> to <em>delete</em> a focused
-                                    paper (a confirmation will be prompted first
-                                    don&#39;t worry 👮‍♀️)
+                                    Navigate through fields with
+                                    <code>(shift+) tab</code>
                                 </li>
                             </ul>
                         </li>
                         <li>
-                            Close Memory or Menu
+                            Delete a paper
                             <ul>
                                 <li>
-                                    <code>esc</code> closes the memory (or the menu --
-                                    <strong>not</strong> in Firefox)
+                                    Delete a focused paper with
+                                    <code>backspace</code>
+                                </li>
+                                <li>
+                                    A confirmation will be prompted first don&#39;t
+                                    worry
+                                </li>
+                            </ul>
+                        </li>
+                        <li>
+                            Copy shortcuts
+                            <ul id="user-guide-shortcuts-ul"></ul>
+                        </li>
+                        <li>
+                            Close Memory, Menu, Modals (such as the user guide) or Popup
+                            <ul>
+                                <li>
+                                    <code>esc</code> closes items up until you're back
+                                    to the popup, at which point it will close the
+                                    popup.
+                                </li>
+                                <li>
+                                    🚧 This does not work in Firefox. The whole popup
+                                    will close at any point with <code>esc</code>.
                                 </li>
                             </ul>
                         </li>
