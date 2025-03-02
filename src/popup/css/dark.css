@@ -41,7 +41,7 @@ body,
 #popup-feedback-copied {
     color: var(--green);
 }
-#popup-displayId {
+.popup-display-id {
     color: var(--dimColor);
 }
 a {

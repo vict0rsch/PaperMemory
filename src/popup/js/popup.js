@@ -358,13 +358,13 @@ const popupMain = async (url, is, manualTrigger = false, tab = null) => {
         });
         setFormChangeListener(id, true);
         addListener("popup-delete-paper", "click", handlePopupDeletePaper(id));
-        addListener(
-            "popup-displayId",
+        addEventToClass(
+            ".popup-display-id",
             "click",
             getHandleTitleTooltip(showTitleTooltip, 0, true)
         );
-        addListener(
-            "popup-displayId",
+        addEventToClass(
+            ".popup-display-id",
             "mouseleave",
             getHandleTitleTooltip(hideTitleTooltip, 10000, true)
         );

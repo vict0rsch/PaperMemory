@@ -370,7 +370,7 @@ ${note}</textarea
                         <path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3" />
                     </svg>
                 </div>
-                <small id="popup-displayId"> ${displayId} </small>
+                <small class="popup-display-id" id="popup-memory-display-id--${id}"> ${displayId} </small>
                 <button
                     hidden
                     class="back-to-focus"

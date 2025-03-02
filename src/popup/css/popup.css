@@ -424,7 +424,7 @@ code {
     color: green;
 }
 .memory-display-id,
-#popup-displayId {
+.popup-display-id {
     cursor: pointer;
 }
 #popup-feedback-copied {
@@ -510,7 +510,7 @@ code {
     font-weight: 300;
     color: grey;
 }
-#popup-displayId {
+.popup-display-id {
     color: gray;
 }
 
