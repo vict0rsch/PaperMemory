@@ -13,10 +13,17 @@
 const findEl = ({ element, paperId, memoryItemClass }) => {
     if (element)
         return typeof element === "string" ? document.getElementById(element) : element;
+    if (typeof memoryItemClass === "undefined") {
+        warn(`findEl: memoryItemClass is undefined ; element was: ${element}`);
+        return null;
+    }
     if (!memoryItemClass.startsWith(".")) memoryItemClass = "." + memoryItemClass;
-    return findEl({ element: `memory-container--${paperId}` })?.querySelector(
-        memoryItemClass
-    );
+    const itemContainer = findEl({ element: `memory-container--${paperId}` });
+    if (!itemContainer) {
+        warn(`findEl: memory-container--${paperId} not found`);
+        return null;
+    }
+    return itemContainer.querySelector(memoryItemClass);
 };
 
 /**
