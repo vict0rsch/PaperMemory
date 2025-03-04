@@ -61,7 +61,7 @@ PaperMemory is designed to be a fast, automated and user-friendly in-browser ref
 
     Using the PapersWithCode API, PaperMemory will match code repositories with papers in your Memory.
 
-    [:octicons-arrow-right-24: Code discovery](features.md#code-discovery)
+    [:octicons-arrow-right-24: Code discovery](features.md#code-repositories)
 
     ---
 
