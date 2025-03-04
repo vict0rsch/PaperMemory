@@ -20,6 +20,7 @@ const openMenu = () => {
     setHTML("menu-switch", tablerSvg("circle-x", "close-menu-btn", classes));
     global.state.prefsIsOpen = true;
     setHTML("pm-version", chrome.runtime.getManifest().version);
+    findEl({ element: "menu-feedback-header" }).focus();
 };
 /**
  * Parses prefs options from the storage and adds events listeners for their change.
@@ -52,6 +53,7 @@ const getAndTrackPopupMenuChecks = (prefs, prefsCheckNames) => {
  * @param {string} name The name of the modal to show
  */
 const showPopupModal = (name) => {
+    global.state.modalIsOpen = true;
     queryAll(".popup-modal-content").forEach(hideId);
     showId(`modal-${name}-content`, "contents");
     style("popup-modal-wrapper", "display", "flex");
@@ -62,11 +64,34 @@ const showPopupModal = (name) => {
     });
 };
 
+const fillUserGuideShortcuts = () => {
+    const ul = findEl({ element: "user-guide-shortcuts-ul" });
+    const shortcuts = findEl({ element: "menu-keyboard-shortcuts" }).querySelectorAll(
+        "li"
+    );
+    for (const shortcut of shortcuts) {
+        const key = shortcut.querySelector("code").textContent;
+        if (key === "e" || key.toLowerCase() === "backspace") {
+            continue;
+        }
+        const action = shortcut.textContent.replace(key, "").trim();
+        ul.innerHTML += `<li><code>${key}</code> ${action}</li>`;
+    }
+};
+
 /**
  * Closes the popup modal
  */
 const closePopupModal = () => {
+    global.state.modalIsOpen = false;
     style("popup-modal-wrapper", "display", "none");
+};
+
+const hideAllTooltips = () => {
+    queryAll(".title-tooltip,#popup-title-tooltip").forEach((el) => {
+        hideId(el);
+    });
+    global.state.tooltipIsOpen = false;
 };
 
 /**
@@ -253,6 +278,8 @@ const popupMain = async (url, is, manualTrigger = false, tab = null) => {
     const prefs = await getPrefs();
     // Set checkboxes
     getAndTrackPopupMenuChecks(prefs, global.prefsCheckNames);
+    const defaultKeyboardAction = await getDefaultKeyboardAction();
+    findEl({ element: "memory-item-default-action" }).value = defaultKeyboardAction;
 
     // Set options page link
     addListener("advanced-configuration", "click", () => {
@@ -270,6 +297,11 @@ const popupMain = async (url, is, manualTrigger = false, tab = null) => {
             url: chrome.runtime.getURL("src/bibMatcher/bibMatcher.html"),
         });
     });
+    // Set default keyboard action
+    addListener("memory-item-default-action", "change", (e) => {
+        setDefaultKeyboardAction(e.target.value);
+    });
+    fillUserGuideShortcuts();
 
     // Set PDF title function
     // setAndHandleCustomPDFFunction(menu);
@@ -348,15 +380,15 @@ const popupMain = async (url, is, manualTrigger = false, tab = null) => {
         });
         setFormChangeListener(id, true);
         addListener("popup-delete-paper", "click", handlePopupDeletePaper(id));
-        addListener(
-            "popup-paper-title",
-            "mouseenter",
-            getHandleTitleTooltip(showTitleTooltip, 1500, true)
+        addEventToClass(
+            ".popup-display-id",
+            "click",
+            getHandleTitleTooltip(showTitleTooltip, 0, true)
         );
-        addListener(
-            "popup-paper-title",
+        addEventToClass(
+            ".popup-display-id",
             "mouseleave",
-            getHandleTitleTooltip(hideTitleTooltip, 500, true)
+            getHandleTitleTooltip(hideTitleTooltip, 10000, true)
         );
         addEventToClass(".expand-paper-authors", "click", handleExpandAuthors);
 
@@ -409,29 +441,49 @@ const popupMain = async (url, is, manualTrigger = false, tab = null) => {
         });
         addListener(`popup-memory-item-copy-link--${id}`, "click", async () => {
             const link = prefs.checkPreferPdf ? paperToPDF(paper) : paperToAbs(paper);
-            const text = prefs.checkPreferPdf ? "PDF" : "Abstract";
-            await copyAndConfirmMemoryItem(id, link, `${text} link copied!`, true);
+            const text =
+                paper.source === "website"
+                    ? "URL"
+                    : prefs.checkPreferPdf
+                    ? "PDF"
+                    : "Abstract";
+            await copyAndConfirmMemoryItem({
+                id,
+                textToCopy: link,
+                feedbackText: `${text} link copied!`,
+                isPopup: true,
+            });
         });
         addListener(`popup-memory-item-copy-hyperlink--${id}`, "click", async () => {
             const link = prefs.checkPreferPdf ? paperToPDF(paper) : paperToAbs(paper);
-            const text = prefs.checkPreferPdf ? "PDF" : "Abstract";
-            await copyAndConfirmMemoryItem(
+            const text =
+                paper.source === "website"
+                    ? "URL"
+                    : prefs.checkPreferPdf
+                    ? "PDF"
+                    : "Abstract";
+            await copyAndConfirmMemoryItem({
                 id,
-                link,
-                `${text} hyperlink copied!`,
-                true,
-                paper.title
-            );
+                textToCopy: link,
+                feedbackText: `${text} hyperlink copied!`,
+                isPopup: true,
+                hyperLinkTitle: paper.title,
+            });
         });
         addListener(`popup-memory-item-md--${id}`, "click", async () => {
             const md = makeMdLink(paper, prefs);
-            const text = prefs.checkPreferPdf ? "PDF" : "Abstract";
-            await copyAndConfirmMemoryItem(
+            const text =
+                paper.source === "website"
+                    ? "URL"
+                    : prefs.checkPreferPdf
+                    ? "PDF"
+                    : "Abstract";
+            await copyAndConfirmMemoryItem({
                 id,
-                md,
-                `Markdown link to ${text} copied!`,
-                true
-            );
+                textToCopy: md,
+                feedbackText: `Markdown ${text} copied!`,
+                isPopup: true,
+            });
         });
         addListener(`popup-memory-item-bibtex--${id}`, "click", async () => {
             let bibtex = global.state.papers[id].bibtex;
@@ -443,7 +495,12 @@ const popupMain = async (url, is, manualTrigger = false, tab = null) => {
                 bibobj.pdf = paperToPDF(global.state.papers[id]);
             }
             bibtex = bibtexToString(bibobj);
-            await copyAndConfirmMemoryItem(id, bibtex, "Bibtex citation copied!", true);
+            await copyAndConfirmMemoryItem({
+                id,
+                textToCopy: bibtex,
+                feedbackText: "Bibtex citation copied!",
+                isPopup: true,
+            });
         });
         addListener(`popup-memory-item-openLocal--${id}`, "click", async () => {
             const file = (await findLocalFile(paper)) || global.state.files[paper.id];
@@ -523,6 +580,7 @@ if (window.location.href.includes("popup")) {
     chrome.tabs.query(query, async (tabs) => {
         chrome.runtime.connect({ name: "PaperMemoryPopupSync" });
         const url = tabs[0].url;
+        document.addEventListener("click", handleHideAllTitleTooltips);
 
         let stateReadyPromise, remoteIsReadyPromise;
         remoteIsReadyPromise = new Promise((remoteReadyResolve) => {

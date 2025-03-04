@@ -159,13 +159,13 @@ const showConfirmDeleteModal = (id) => {
  * @param {string} feedbackText Text to display as feedback
  * @param {boolean} isPopup If the action took place in the main popup or in the memory
  */
-const copyAndConfirmMemoryItem = async (
+const copyAndConfirmMemoryItem = async ({
     id,
     textToCopy,
     feedbackText,
-    isPopup,
-    hyperLinkTitle
-) => {
+    isPopup = false,
+    hyperLinkTitle = null,
+}) => {
     if (!hyperLinkTitle) {
         copyTextToClipboard(textToCopy);
     } else {
@@ -459,8 +459,8 @@ const reverseMemory = () => {
 const searchMemory = (letters) => {
     const words = letters.toLowerCase().split(" ");
     let papersList = [];
+    const contentKeys = ["title", "author", "note", "tags", "id", "venue"];
     for (const paper of global.state.sortedPapers) {
-        const contentKeys = ["title", "author", "note", "tags", "displayId", "venue"];
         const contents = contentKeys.map((key) => {
             if (Array.isArray(paper[key])) {
                 return paper[key].join(" ").toLowerCase();
@@ -719,16 +719,16 @@ const displayMemoryTable = (pagination = 0) => {
     addEventToClass(".memory-tag", "click", handleTagClick);
     // Monitor form changes
     setFormChangeListener(undefined, false);
-    // show / remove title tooltip
+    // show / remove title tooltips
     addEventToClass(
-        ".memory-title",
-        "mouseenter",
-        getHandleTitleTooltip(showTitleTooltip, 1500)
+        ".memory-display-id",
+        "click",
+        getHandleTitleTooltip(showTitleTooltip, 0)
     );
     addEventToClass(
-        ".memory-title",
+        ".memory-display-id",
         "mouseleave",
-        getHandleTitleTooltip(hideTitleTooltip, 500)
+        getHandleTitleTooltip(hideTitleTooltip, 10000)
     );
     // expand authorlist on click
     addEventToClass(".expand-paper-authors", "click", handleExpandAuthors);

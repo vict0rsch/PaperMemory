@@ -352,7 +352,7 @@ const downloadTextFile = (content, fileName, contentType) => {
  * @returns {string} The id of the paper
  */
 const eventId = (e) => {
-    return e.target.closest(".memory-container").id.split("--")[1];
+    return e.target.closest(".memory-container")?.id?.split("--")[1];
 };
 
 /**
