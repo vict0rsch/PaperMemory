@@ -212,3 +212,5 @@ Solution (from [MKDocs' troubleshooting guide](https://t.ly/MfX6u)):
 export DYLD_FALLBACK_LIBRARY_PATH=/opt/homebrew/lib
 mkdocs serve
 ```
+
+<!-- mkdocs gh-deploy -->
