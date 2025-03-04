@@ -10,3 +10,4 @@ test/tmp/
 coverage
 .cache
 .todo
+site/
