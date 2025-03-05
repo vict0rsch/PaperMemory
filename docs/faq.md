@@ -5,10 +5,15 @@ icon: octicons/question-16
 
 # FAQ
 
-
 ### Why does PaperMemory require access to all urls?
 
 Because Chrome & Brave will disable an extension by default when it auto-updates with new permissions. In this case, any new addition of a paper source will require new permissions to access the data necessary to parse the paper data and will therefore disable the extension until users re-enable it.
+
+### PaperMemory is not parsing PDFs in Firefox
+
+PaperMemory is not parsing PDFs in Firefox because Firefox does not treat PDFs as web pages and therefore does not execute PaperMemory automatically. You can still trigger PaperMemory manually by clicking on the extension's icon in the toolbar then the `Try manual trigger` button.
+
+More info [here](https://discourse.mozilla.org/t/content-script-not-run-for-pdf-pages/33660).
 
 ### The button to go from an abstract to its pdf does not work
 
@@ -17,9 +22,7 @@ In general there can be 2 reasons:
 1. It's a bug, it can happen, I'm sorry about this: you should raise an issue, and ideally even provide a fix in a Pull Resquest
 2. More likely, the pdf is behind a paywall and the standard `abstract -> pdf` path was redirected by the venue's website
 
-
 ### How do you match Arxiv.org pre-prints to actual publications?
-
 
 It's all there: [preprints](features.md#preprint-matching) 😃
 
@@ -31,11 +34,11 @@ It's all stored locally in your browser's local storage. If you want to transfer
 
 ### How can I export all or some papers?
 
-Check out the [Advanced Options](./configuration.md#advanced-options)'s *Data Management* section, you can export:
+Check out the [Advanced Options](./configuration.md#advanced-options)'s _Data Management_ section, you can export:
 
-* your full PaperMemory data as `.json` file
-* your full bibliography as `.bib`  file (or `.json`)
-* papers based on the tags you'be assigned them as a `.bib` file
+-   your full PaperMemory data as `.json` file
+-   your full bibliography as `.bib` file (or `.json`)
+-   papers based on the tags you'be assigned them as a `.bib` file
 
 ### Can I reference my PDF in PaperMemory?
 
@@ -45,9 +48,8 @@ Because of limitations Browser Extensions face, a file **must** be _downloaded f
 
 ### How do I resolve duplicates?
 
-* If you installed PaperMemory `<0.5.3` (May 2022) you may have duplicate papers in your Memory. The easiest way to resolve this is to go to a duplicate's page, then delete it from memory and refresh the page. The automatic de-duplication features in version `0.5.3` should handle the matching _if_ the 2 papers have the same title.
-* If you still see duplicates with PaperMemory `>=0.5.3` _and_ the 2 papers have the same title, this may be a problem with PaperMemory and you should open an issue here on Github.
-
+-   If you installed PaperMemory `<0.5.3` (May 2022) you may have duplicate papers in your Memory. The easiest way to resolve this is to go to a duplicate's page, then delete it from memory and refresh the page. The automatic de-duplication features in version `0.5.3` should handle the matching _if_ the 2 papers have the same title.
+-   If you still see duplicates with PaperMemory `>=0.5.3` _and_ the 2 papers have the same title, this may be a problem with PaperMemory and you should open an issue here on Github.
 
 ### Can I access the memory full-screen?
 
@@ -80,11 +82,11 @@ In case there's a bad bug or you mess up when overwriting your memory, PaperMemo
 3. Do the following in the Javascript Console:
 
 ```javascript
-const backups = await getStorage("weeklyBackups")
-console.log(Object.keys(backups)) // this shows you available backup dates
-const overwrite = backups["<some key from above>"]
-console.log(overwrite) // inspect this and make sure it is what you want
-setStorage("papers", overwrite) // Careful! This will overwrite the current data with the backup data
+const backups = await getStorage("weeklyBackups");
+console.log(Object.keys(backups)); // this shows you available backup dates
+const overwrite = backups["<some key from above>"];
+console.log(overwrite); // inspect this and make sure it is what you want
+setStorage("papers", overwrite); // Careful! This will overwrite the current data with the backup data
 ```
 
 Note that if you uninstall PaperMemory all your data will be gone and the only way to keep track of what was in your Memory is to export it first (in the advanced options page).
