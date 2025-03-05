@@ -2,6 +2,7 @@ import json
 import os
 import sys
 import tempfile
+from argparse import ArgumentParser
 from pathlib import Path
 from shutil import copy2, copytree, make_archive, rmtree
 
@@ -91,6 +92,10 @@ def update_ffx_manifest(manifest, out_dir):
 
 
 if __name__ == "__main__":
+    parser = ArgumentParser()
+    parser.add_argument("--force", action="store_true", help="Overwrite existing files")
+    args = parser.parse_args()
+
     # folders which will be copied from ``{root}/{folder}`` to ``{out}/{folder}``
     folders = ["icons", "src"]
     # files which will be copied from ``{root}/{file}`` to ``{out}/{file}``
@@ -119,9 +124,12 @@ if __name__ == "__main__":
         tmp_chr = zip_dir(tmp_dir, version)
         chr_candidate = out_chr / tmp_chr.name
         if chr_candidate.exists():
-            if "y" not in input(f"{chr_candidate} already exists. Overwrite? [y/N] "):
+            if not args.force and "y" not in input(
+                f"{chr_candidate} already exists. Overwrite? [y/N] "
+            ):
                 sys.exit(1)
-        chr_candidate.rename(out_chr / tmp_chr.name)
+            chr_candidate.unlink()
+        tmp_chr.rename(chr_candidate)
 
     with tempfile.TemporaryDirectory() as tmp:
         tmp_dir = Path(tmp) / "firefox"
@@ -130,8 +138,11 @@ if __name__ == "__main__":
         tmp_ffx = zip_dir(tmp_dir, version)
         ffx_candidate = out_ffx / tmp_ffx.name
         if ffx_candidate.exists():
-            if "y" not in input(f"{ffx_candidate} already exists. Overwrite? [y/N] "):
+            if not args.force and "y" not in input(
+                f"{ffx_candidate} already exists. Overwrite? [y/N] "
+            ):
                 sys.exit(1)
-        ffx_candidate.rename(out_ffx / tmp_ffx.name)
+            ffx_candidate.unlink()
+        tmp_ffx.rename(ffx_candidate)
 
     print(f"\nDone in {out}")
