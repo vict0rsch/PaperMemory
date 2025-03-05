@@ -1042,3 +1042,9 @@ summary {
     border-radius: var(--round);
     margin-left: 3px;
 }
+#ff-warning {
+    font-size: 0.8rem;
+    color: var(--red);
+    margin-bottom: 12px;
+    text-align: center;
+}
