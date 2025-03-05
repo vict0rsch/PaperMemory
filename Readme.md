@@ -27,7 +27,7 @@
 [![](https://img.shields.io/chrome-web-store/stars/hmebhknlgddhfbbdhgplnillngljgmdi)](https://chrome.google.com/webstore/detail/paper-memory/hmebhknlgddhfbbdhgplnillngljgmdi)
 [![](https://img.shields.io/badge/buy%20me-a%20coffee%20%E2%98%95%EF%B8%8F-FFDD03)](https://www.buymeacoffee.com/vict0rsch)
 [![](https://img.shields.io/badge/Source%20%5BWIP%5D-v1.0.0-important)](https://github.com/vict0rsch/PaperMemory)
-[![](https://img.shields.io/badge/Release-v0.7.0-A41716)](https://github.com/vict0rsch/PaperMemory/tree/0.6.0)
+[![](https://img.shields.io/badge/Release-v1.0.0-A41716)](https://github.com/vict0rsch/PaperMemory/tree/1.0.0)
 
 <br/>
 
@@ -73,37 +73,37 @@ Share ideas 💡 in [issues](https://github.com/vict0rsch/PaperMemory/issues) an
 
 ## Supported venues
 
-* Arxiv
-  * PaperMemory will try to find if a pre-print has been published and create a corresponding `note` to the paper (see [preprints](#preprints))
-  * Also detects and matches papers from [huggingface.co/papers](https://huggingface.co/papers), [arxiv-vanity.com](https://arxiv-vanity.com), [ar5iv.org](https://ar5iv.org) and [scirate.com/](https://scirate.com/)
-* BioRxiv
-* NeurIPS
-* Open Review (ICLR etc.)
-* Computer Vision Foundation (I/ECCV, CVPR etc.)
-* Proceedings of Machine Learning Research (PMLR) (AISTATS, ICML, CoRL, CoLT, ALT, UAI etc.)
-* Association for Computational Linguistics (ACL) (EMNLP, ACL, CoNLL, NAACL etc.)
-* Proceedings of the National Academy of Sciences (PNAS)
-* SciRate
-* Nature (Nature, Nature Communications, Nature Machine Intelligence etc.)
-* American Chemical Society (ACS)
-* IOPscience
-* PubMed Central
-* International Joint Conferences on Artificial Intelligence (IJCAI)
-* Association for Computing Machinery (ACM)
-* IEEE
-* Springer (books, chapters and, of course, articles)
-* American Physical Society (APS)
-* Wiley (Advanced Materials, InfoMat etc.)
-* Science Direct
-* Science (Science, Science Immunology, Science Robotics etc.)
-* FrontiersIn (Frontiers in Neuroscience, Frontiers in Neuroscience, Frontiers in Microbiology etc.)
-* PLOS
-* MDPI
-* Oxford University Press
-* HAL Archives ouvertes
-* Royal Society of Chemistry
-* [Sci-Hub](https://papermemory.org/faq/#can-i-reference-my-pdf-in-papermemory)
-* [Add more](https://github.com/vict0rsch/PaperMemory/issues/13)
+-   Arxiv
+    -   PaperMemory will try to find if a pre-print has been published and create a corresponding `note` to the paper (see [preprints](#preprints))
+    -   Also detects and matches papers from [huggingface.co/papers](https://huggingface.co/papers), [arxiv-vanity.com](https://arxiv-vanity.com), [ar5iv.org](https://ar5iv.org) and [scirate.com/](https://scirate.com/)
+-   BioRxiv
+-   NeurIPS
+-   Open Review (ICLR etc.)
+-   Computer Vision Foundation (I/ECCV, CVPR etc.)
+-   Proceedings of Machine Learning Research (PMLR) (AISTATS, ICML, CoRL, CoLT, ALT, UAI etc.)
+-   Association for Computational Linguistics (ACL) (EMNLP, ACL, CoNLL, NAACL etc.)
+-   Proceedings of the National Academy of Sciences (PNAS)
+-   SciRate
+-   Nature (Nature, Nature Communications, Nature Machine Intelligence etc.)
+-   American Chemical Society (ACS)
+-   IOPscience
+-   PubMed Central
+-   International Joint Conferences on Artificial Intelligence (IJCAI)
+-   Association for Computing Machinery (ACM)
+-   IEEE
+-   Springer (books, chapters and, of course, articles)
+-   American Physical Society (APS)
+-   Wiley (Advanced Materials, InfoMat etc.)
+-   Science Direct
+-   Science (Science, Science Immunology, Science Robotics etc.)
+-   FrontiersIn (Frontiers in Neuroscience, Frontiers in Neuroscience, Frontiers in Microbiology etc.)
+-   PLOS
+-   MDPI
+-   Oxford University Press
+-   HAL Archives ouvertes
+-   Royal Society of Chemistry
+-   [Sci-Hub](https://papermemory.org/faq/#can-i-reference-my-pdf-in-papermemory)
+-   [Add more](https://github.com/vict0rsch/PaperMemory/issues/13)
 
 [📑—About finding published papers from preprints](https://papermemory.org/features/#preprint-matching)
 
@@ -143,16 +143,15 @@ Checkout [📑—All configuration options](https://papermemory.org/configuratio
 
 In the extension's [📑—`options`](https://papermemory.org/configuration/#advanced-options) (right click on the icon or in the popup's menu) you will find advanced customization features:
 
-* **Auto-tagging**: add tags to papers based on regexs matched on authors and titles
-* **Source filtering**: filter out some paper sources you don't want to record papers from
-* **Custom title function**: provide Javascript code to generate your own web page titles and pdf filenames based on a paper's attributes
-* **Data management**: export/load your memory data and export the bibliography as a `.bib` file
-* **Online Synchronization**: use Github Gists to sync your papers across devices
+-   **Auto-tagging**: add tags to papers based on regexs matched on authors and titles
+-   **Source filtering**: filter out some paper sources you don't want to record papers from
+-   **Custom title function**: provide Javascript code to generate your own web page titles and pdf filenames based on a paper's attributes
+-   **Data management**: export/load your memory data and export the bibliography as a `.bib` file
+-   **Online Synchronization**: use Github Gists to sync your papers across devices
 
 <p align="center">
   <img src="https://raw.github.com/vict0rsch/PaperMemory/master/extra/imgs/opt_concat.png?raw=true">
 </p>
-
 
 ## Keyboard Shortcuts
 
@@ -190,12 +189,11 @@ PaperMemory uses the PapersWithCode API in order to discover code repositories �
 
 See [📑—how it works](https://papermemory.org/features/#code-repositories).
 
-
 ## FAQ
 
 [📑—Frequently asked questions](https://papermemory.org/faq/).
 
 ## Todo
 
-* [ ] Improve `Contributing.md`
-* [ ] Write many more tests! **Help is wanted** (it's not so hard to write unittests 😄) (see `Contributing.md`)
+-   [ ] Improve `Contributing.md`
+-   [ ] Write many more tests! **Help is wanted** (it's not so hard to write unittests 😄) (see `Contributing.md`)
