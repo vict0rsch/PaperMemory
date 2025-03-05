@@ -1,4 +1,4 @@
-try {
+if (typeof importScripts === "function") {
     importScripts(
         "../shared/js/utils/octokit.bundle.js",
         "../shared/js/utils/miniquery.js",
@@ -12,10 +12,13 @@ try {
         "../shared/js/utils/parsers.js"
     );
     console.log("Scripts loaded.");
-} catch (e) {
-    console.log("Error importing scripts in background.js");
-    console.log("This is OK on Firefox, but not on Chrome.");
-    console.error(e);
+} else {
+    const isFirefox = navigator.userAgent.search("Firefox") > -1;
+    if (!isFirefox) {
+        console.log("Error importing scripts in background.js. This is OK on Firefox.");
+    } else {
+        console.log("Error importing scripts (`importScripts`) in background.js.");
+    }
 }
 
 var paperTitles = {};
