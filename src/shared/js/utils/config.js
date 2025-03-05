@@ -48,6 +48,8 @@ global.state = {
     memoryIsOpen: false,
     memoryItemsPerPage: 10,
     menuIsOpen: false,
+    modalIsOpen: false,
+    tooltipIsOpen: false,
     papers: {}, // (id => object)
     papersList: [], // [papers]
     papersReady: false,
@@ -57,7 +59,7 @@ global.state = {
     showFavorites: false,
     sortedPapers: [], // [papers]
     sortKey: "",
-    timerIdMap: new WeakMap(), // memory titlte tooltips
+    timerIdMap: new WeakMap(), // memory title tooltips
     titleHashToIds: {}, // (miniHash(title) -> [ids])
     titleFunction: null, // function(paper) => string
     urlHashToId: {}, // (miniHash(url) => id)
@@ -263,6 +265,7 @@ global.knownPaperPages = {
             "neurips.cc/paper/",
             "neurips.cc/paper_files/paper/",
             "nips.cc/paper/",
+            "nips.cc/paper_files/paper/",
         ],
         name: "NeurIPS (Neural Information Processing Systems)",
     },
@@ -336,7 +339,9 @@ global.knownPaperPages = {
         patterns: [
             (url) =>
                 Boolean(
-                    url.match(/onlinelibrary\.wiley\.com\/doi\/(abs|full|pdf|epdf)\//g)
+                    url.match(
+                        /onlinelibrary\.wiley\.com\/doi\/(abs\/|full\/|pdf\/|epdf\/|10\.)/g
+                    )
                 ),
         ],
         name: "Wiley",

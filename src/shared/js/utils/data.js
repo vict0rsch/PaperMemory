@@ -192,6 +192,15 @@ const migrateData = async (papers, manifestDataVersion, store = true) => {
                     }
                 }
             }
+            if (currentVersion < 10000) {
+                if (papers[id].bibtex && !papers[id].hasOwnProperty("doi")) {
+                    const doi = bibtexToObject(papers[id].bibtex).doi;
+                    if (doi) {
+                        papers[id].doi = doi;
+                        migrationSummaries[id].push("(m10001) add doi from bibtex");
+                    }
+                }
+            }
         }
 
         deleteIds.forEach((id, k) => {
@@ -409,6 +418,27 @@ const getPrefs = async () => {
 };
 
 /**
+ * Retrieve the default keyboard action from storage.
+ * @returns {string} The default keyboard action.
+ */
+const getDefaultKeyboardAction = async () => {
+    let defaultAction = await getStorage("defaultKeyboardAction");
+    if (defaultAction) {
+        return defaultAction;
+    }
+    defaultAction = "o";
+    await setStorage("defaultKeyboardAction", defaultAction);
+    return defaultAction;
+};
+
+/**
+ * Set the default keyboard action.
+ * @param {string} action The default keyboard action.
+ */
+const setDefaultKeyboardAction = async (action) =>
+    setStorage("defaultKeyboardAction", action);
+
+/**
  * Turns the manifest's semantic string version into an int:
  * PaperMemory version a.b.c => data version a * 10^4 + b * 10^2 + c
  * (with 10^2 and 10^1, 0.3.1 would be lower than 0.2.12)
@@ -523,6 +553,11 @@ const validatePaper = (paper, log = true) => {
                     return `Invalid count (${p}): must be >= 0`;
                 }
             },
+        },
+        doi: {
+            type: "string",
+            desc: "the paper's doi",
+            default: (p) => bibtexToObject(p.bibtex).doi ?? "",
         },
         extras: {
             type: "object",

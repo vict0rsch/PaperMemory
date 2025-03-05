@@ -52,7 +52,7 @@ const getMemoryItemHTML = (paper) => {
     titles.copyLink = `Copy URL to the paper's ${
         global.state.prefs.checkPreferPdf ? "PDF" : "abstract"
     }`;
-
+    titles.displayId = `Click to see metadata`;
     let codeDiv = /*html*/ `
         <small class="memory-item-faded">
 
@@ -195,7 +195,9 @@ const getMemoryItemHTML = (paper) => {
                         ${tablerSvg("writing", "", ["memory-icon-svg"])}
                     </div>
 
-                    <small class="memory-item-faded memory-display-id">
+                    <small class="memory-item-faded memory-display-id" title='${
+                        titles.displayId
+                    }'>
                         ${displayId}
                     </small>
                 </div>
@@ -368,7 +370,7 @@ ${note}</textarea
                         <path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3" />
                     </svg>
                 </div>
-                <small id="popup-displayId"> ${displayId} </small>
+                <small class="popup-display-id" id="popup-memory-display-id--${id}"> ${displayId} </small>
                 <button
                     hidden
                     class="back-to-focus"

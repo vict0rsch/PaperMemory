@@ -1,0 +1,180 @@
+<div id="modal-keyboard-content" class="popup-modal-content" style="display: none">
+    <h3>Keyboard Shortcuts</h3>
+
+    <p style="font-size: 0.9rem">
+        The following shortcuts are available on your browser
+        <em>if and only if</em> they are not already assigned.
+    </p>
+    <p style="font-size: 0.9rem">
+        Go to your settings or
+        <code>chrome://extensions/shortcuts</code> (Chrome &amp; Brave &amp; Edge) or
+        <code>about:addons</code> ↦ <em>Tools for all add-ons</em> ⚙︎ ↦
+        <em>Manage Extension Shortcuts</em>
+        (Firefox) to set/edit these shortcuts.
+    </p>
+
+    <ul>
+        <li style="margin-bottom: 4px">
+            Open the popup
+            <ul style="margin-top: 2px">
+                <li><code>cmd + shift + e</code> on Mac</li>
+                <li><code>ctrl + shift + e</code> on Windows</li>
+                <li><code>ctrl + shift + m</code> on Linux</li>
+            </ul>
+        </li>
+
+        <li style="margin-bottom: 4px">
+            Trigger manual paper parsing
+            <ul style="margin-top: 2px">
+                <li><code>cmd/ctrl + shift + p</code></li>
+            </ul>
+        </li>
+        <li>
+            Download current paper's pdf
+            <ul style="margin-top: 2px">
+                <li><code>cmd/ctrl + shift + s</code></li>
+            </ul>
+        </li>
+    </ul>
+    <h3>Keyboard navigation</h3>
+    <ul>
+        <li>
+            Open the Memory
+            <ul>
+                <li><code>a</code> from the popup&#39;s home will open the Memory</li>
+                <li>
+                    navigate to the bottom left button with
+                    <code>tab</code> and hit <code>enter</code>
+                </li>
+            </ul>
+        </li>
+        <li>
+            Search
+            <ul>
+                <li>Search field is automatically focused on memory open</li>
+                <li>
+                    Navigate to the top input with <code>tab</code> or
+                    <code>shift + tab</code>
+                </li>
+            </ul>
+        </li>
+        <li>
+            Navigate papers
+            <ul>
+                <li><code>tab</code> will iterate through papers down the list</li>
+                <li><code>shift + tab</code> will go back up the list</li>
+            </ul>
+        </li>
+        <li>
+            Edit a paper
+            <ul>
+                <li>
+                    Press <code>e</code> to <em>edit</em> the paper&#39;s metadata:
+                    tags, code and note when the paper is <em>focused</em> (from click
+                    or keyboard <code>tab</code> navigation)
+                </li>
+                <li>
+                    Navigate through fields with
+                    <code>(shift+) tab</code>
+                </li>
+            </ul>
+        </li>
+        <li>
+            Delete a paper
+            <ul>
+                <li>
+                    Delete a focused paper with
+                    <code>backspace</code>
+                </li>
+                <li>A confirmation will be prompted first don&#39;t worry</li>
+            </ul>
+        </li>
+        <li>
+            Copy shortcuts
+            <ul id="user-guide-shortcuts-ul"></ul>
+        </li>
+        <li>
+            Close Memory, Menu, Modals (such as the user guide) or Popup
+            <ul>
+                <li>
+                    <code>esc</code> closes items up until you're back to the popup, at
+                    which point it will close the popup.
+                </li>
+                <li>
+                    🚧 This does not work in Firefox. The whole popup will close at any
+                    point with <code>esc</code>.
+                </li>
+            </ul>
+        </li>
+    </ul>
+    <h3>Search</h3>
+    <ul>
+        <li>
+            In a paper&#39;s authors, title and note.
+            <ul>
+                <li>
+                    Split queries on spaces: <code>gan im</code> will look for:
+                    <em
+                        >all papers whose (title OR author) contain (&quot;gan&quot; AND
+                        &quot;im&quot;)</em
+                    >
+                </li>
+            </ul>
+        </li>
+        <li>
+            In a paper&#39;s code link
+            <ul>
+                <li>
+                    Start the search query with <code>c:</code> to only search code
+                    links
+                </li>
+            </ul>
+        </li>
+        <li>
+            In a paper&#39;s tags
+            <ul>
+                <li>Start the search query with <code>t:</code> to filter by tags</li>
+                <li>
+                    <code>t: gan</code> will look for
+                    <em
+                        >all papers whose tag-list contains at least 1 tag containing
+                        &quot;gan&quot;</em
+                    >
+                </li>
+                <li>
+                    <code>t: gan tim</code> will look for
+                    <em
+                        >all papers whose tag-list contains (at least 1 tag containing
+                        &quot;gan&quot;) AND (at least 1 tag containing
+                        &quot;tim&quot;)</em
+                    >
+                </li>
+            </ul>
+        </li>
+        <li>
+            Search paper by years with <code>y: ${year}</code>
+            <ul>
+                <li>
+                    Use <code>,</code> to separate requested years or start with
+                    <code>&gt;</code> or <code>&lt;</code> to filter paper published
+                    after/before a given year (strictly)
+                    <ul>
+                        <li>
+                            <code>y: 20,21,22</code> will display papers published in
+                            <code>2020 OR 2021 OR 2022</code>
+                        </li>
+                        <li>
+                            <code>y: &lt;2015</code> will display papers published
+                            before (strictly)
+                            <code>2015</code>
+                        </li>
+                        <li>
+                            <code>y:>19</code> will display papers published after
+                            (strictly) <code>2019</code>
+                        </li>
+                    </ul>
+                </li>
+            </ul>
+        </li>
+    </ul>
+</div>

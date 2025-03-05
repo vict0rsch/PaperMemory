@@ -1,14 +1,30 @@
 /**
- * Find an element by element id, or with class memoryItemClass for paper with a given id
- * @param {string} id The  id for the element to find or the paper in the memory
- * @param {string} memoryItemClass The class of the element to find within the container with id memory-container--{id}. The leading dot is optional.
+ * Find an element by element id (may be the element itself,
+ * in which case it its returned directly), or by finding the element
+ * with the class `memoryItemClass` inside the Memory container with
+ * id `memory-container--{paperId}`
+ * @param {object} options
+ * @param {string} options.element The id of the element to find or the element itself
+ * @param {string} options.paperId The id of the paper in the memory to find the element within
+ * @param {string} options.memoryItemClass The class of the element to find within the
+ *   container with id memory-container--{paperId}. The leading dot is optional.
  * @returns {HTMLElement}
  */
-const findEl = (elOrId, memoryItemClass) => {
-    if (typeof memoryItemClass === "undefined")
-        return typeof elOrId === "string" ? document.getElementById(elOrId) : elOrId;
+const findEl = ({ element, paperId, memoryItemClass }) => {
+    if (element)
+        return typeof element === "string" ? document.getElementById(element) : element;
+    if (typeof memoryItemClass === "undefined") {
+        warn(`findEl: memoryItemClass is undefined ; element was: ${element}`);
+        return null;
+    }
     if (!memoryItemClass.startsWith(".")) memoryItemClass = "." + memoryItemClass;
-    return findEl(`memory-container--${elOrId}`).querySelector(memoryItemClass);
+    paperId = paperId.replaceAll(".", "\\.");
+    const itemContainer = findEl({ element: `memory-container--${paperId}` });
+    if (!itemContainer) {
+        warn(`findEl: memory-container--${paperId} not found`);
+        return null;
+    }
+    return itemContainer.querySelector(memoryItemClass);
 };
 
 /**
@@ -19,7 +35,7 @@ const findEl = (elOrId, memoryItemClass) => {
  * @returns {void}
  */
 const fadeOut = (el, duration = 250, callback = () => {}) => {
-    el = findEl(el);
+    el = findEl({ element: el });
     el.style.transition = `${duration}ms`;
     el.style.opacity = 0;
     setTimeout(() => {
@@ -37,7 +53,7 @@ const fadeOut = (el, duration = 250, callback = () => {}) => {
  * @returns {void}
  */
 const fadeIn = (el, display = "block", duration = 250, callback = () => {}) => {
-    el = findEl(el);
+    el = findEl({ element: el });
     el.style.opacity = 0;
     if (el.style.display === "none") {
         el.style.display = display;
@@ -59,9 +75,7 @@ const fadeIn = (el, display = "block", duration = 250, callback = () => {}) => {
  * @returns {string}
  */
 const val = (el, value) => {
-    if (typeof el === "string") {
-        el = findEl(el);
-    }
+    el = findEl({ element: el });
     if (el instanceof HTMLInputElement && el.type === "checkbox") {
         if (typeof value === "undefined") {
             return el.checked;
@@ -81,9 +95,7 @@ const val = (el, value) => {
  * @returns {void}
  * */
 const showId = (el, display = "block") => {
-    if (typeof el === "string") {
-        el = findEl(el);
-    }
+    el = findEl({ element: el });
     if (el) el.style.display = display;
 };
 
@@ -93,9 +105,7 @@ const showId = (el, display = "block") => {
  * @returns {void}
  * */
 const hideId = (el) => {
-    if (typeof el === "string") {
-        el = findEl(el);
-    }
+    el = findEl({ element: el });
     if (el) el.style.display = "none";
 };
 
@@ -105,9 +115,7 @@ const hideId = (el) => {
  * @returns {void}
  * */
 const setTextId = (el, text) => {
-    if (typeof el === "string") {
-        el = findEl(el);
-    }
+    el = findEl({ element: el });
     if (el) el.innerText = text;
 };
 
@@ -117,9 +125,7 @@ const setTextId = (el, text) => {
  * @returns {void}
  * */
 const setHTML = (el, html) => {
-    if (typeof el === "string") {
-        el = findEl(el);
-    }
+    el = findEl({ element: el });
     if (el) el.innerHTML = html;
 };
 
@@ -129,9 +135,7 @@ const setHTML = (el, html) => {
  * @returns {void}
  * */
 const dispatch = (el, event) => {
-    if (typeof el === "string") {
-        el = findEl(el);
-    }
+    el = findEl({ element: el });
     if (typeof event === "string") {
         if (event === "focus") {
             el.focus();
@@ -151,14 +155,9 @@ const dispatch = (el, event) => {
  * @param {string} className
  * @returns {boolean}
  * */
-const hasClass = (elOrId, className) => {
-    let el;
-    if (typeof elOrId === "string") {
-        el = findEl(elOrId);
-    } else {
-        el = elOrId;
-    }
-    if (el) return el.classList.contains(className);
+const hasClass = (el, className) => {
+    el = findEl({ element: el });
+    return el ? el.classList.contains(className) : false;
 };
 
 /** Add a class to an element (or find it with findEl if el is a string)
@@ -166,14 +165,8 @@ const hasClass = (elOrId, className) => {
  * @param {string} className
  * @returns {void}
  * */
-const addClass = (elOrId, className) => {
-    let el;
-    if (typeof elOrId === "string") {
-        el = findEl(elOrId);
-    } else {
-        el = elOrId;
-    }
-
+const addClass = (el, className) => {
+    el = findEl({ element: el });
     el && el.classList.add(className);
 };
 
@@ -182,15 +175,9 @@ const addClass = (elOrId, className) => {
  * @param {string} className
  * @returns {void}
  * */
-const removeClass = (elOrId, className) => {
-    let el;
-    if (typeof elOrId === "string") {
-        el = findEl(elOrId);
-    } else {
-        el = elOrId;
-    }
-
-    if (el) el.classList.remove(className);
+const removeClass = (el, className) => {
+    el = findEl({ element: el });
+    el && el.classList.remove(className);
 };
 
 /** Add an event listener to an element (or find it with findEl if el is a string)
@@ -200,9 +187,7 @@ const removeClass = (elOrId, className) => {
  * @returns {void}
  * */
 const addListener = (el, event, listener) => {
-    if (typeof el === "string") {
-        el = findEl(el);
-    }
+    el = findEl({ element: el });
     el && el.addEventListener(event, listener);
 };
 
@@ -212,9 +197,7 @@ const addListener = (el, event, listener) => {
  * @returns {void}
  * */
 const setPlaceholder = (el, text) => {
-    if (typeof el === "string") {
-        el = findEl(el);
-    }
+    el = findEl({ element: el });
     if (el && typeof el.placeholder !== "undefined") el.placeholder = text;
 };
 
@@ -225,9 +208,7 @@ const setPlaceholder = (el, text) => {
  * @returns {string}
  * */
 const style = (el, key, value) => {
-    if (typeof el === "string") {
-        el = findEl(el);
-    }
+    el = findEl({ element: el });
     if (el) {
         if (typeof value === "undefined") {
             return el.style[key];
@@ -242,9 +223,7 @@ const style = (el, key, value) => {
  * @returns {void}
  * */
 const disable = (el, isDisabled = true) => {
-    if (typeof el === "string") {
-        el = findEl(el);
-    }
+    el = findEl({ element: el });
     if (el) el.disabled = isDisabled;
 };
 
@@ -256,9 +235,7 @@ const disable = (el, isDisabled = true) => {
  * @returns {void}
  * */
 const slideUp = (el, duration = 250, complete = () => {}) => {
-    if (typeof el === "string") {
-        el = findEl(el);
-    }
+    el = findEl({ element: el });
     if (!el) return;
     el.style.transitionProperty = "height, margin, padding";
     el.style.transitionDuration = duration + "ms";
@@ -295,9 +272,7 @@ const slideUp = (el, duration = 250, complete = () => {}) => {
  * @returns {void}
  * */
 const slideDown = (el, duration = 500, complete = () => {}) => {
-    if (typeof el === "string") {
-        el = findEl(el);
-    }
+    el = findEl({ element: el });
     if (!el) return;
     el.style.removeProperty("display");
     let display = window.getComputedStyle(el).display;

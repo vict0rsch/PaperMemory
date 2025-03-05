@@ -172,6 +172,17 @@ code {
     max-width: 330px;
 }
 
+#options ul li,
+#options p code {
+    font-size: 0.9rem;
+}
+#options #memory-item-default-action {
+    font-size: 0.9rem;
+    border-radius: var(--rounder);
+    padding: 2px 4px;
+    border: 1px solid var(--outline);
+    background-color: var(--lightBackground);
+}
 #menu-switch-svg {
     color: rgb(43, 43, 61);
 }
@@ -412,6 +423,10 @@ code {
     font-size: 0.75rem;
     color: green;
 }
+.memory-display-id,
+.popup-display-id {
+    cursor: pointer;
+}
 #popup-feedback-copied {
     color: green;
     position: absolute;
@@ -495,7 +510,7 @@ code {
     font-weight: 300;
     color: grey;
 }
-#popup-displayId {
+.popup-display-id {
     color: gray;
 }
 
@@ -651,7 +666,8 @@ code {
     position: absolute;
     background: var(--lighterBackground);
     left: 50%;
-    transform: translateX(-50%);
+    top: 50%;
+    transform: translate(-50%, -50%);
     padding: 1rem;
     border-radius: 4px;
     box-shadow: 2px 2px 6px #bdbdbd;
@@ -691,7 +707,7 @@ code {
     margin-left: 4px;
 }
 
-.expand-memory-authors {
+.expand-paper-authors {
     cursor: pointer;
 }
 .paper-info-span {

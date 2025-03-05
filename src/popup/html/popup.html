@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="utf-8" />
+        <!--
+	---------------------------------------------------------------------------
+	-----  NOTE: relative paths should be relative to min/popup.min.html  -----
+	-----        NOT to popup.html                                        -----
+	---------------------------------------------------------------------------
+	-->
+
+        <script src="../../shared/min/theme.min.js"></script>
+
+        <style>
+            @import url("https://fonts.googleapis.com/css2?family=Yantramanav:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;1,600&display=swap");
+            @import url("https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;500;600;700&display=swap");
+        </style>
+
+        <link rel="stylesheet" type="text/css" href="../css/select2.min.css" />
+        <link
+            rel="stylesheet"
+            type="text/css"
+            href="../../shared/css/bootstrap-utilities.min.css"
+        />
+
+        <!-- @if DEV -->
+        <link rel="stylesheet" type="text/css" href="../../shared/css/vars.css" />
+        <link rel="stylesheet" type="text/css" href="../../popup/css/options.css" />
+        <link rel="stylesheet" type="text/css" href="../../popup/css/popup.css" />
+        <link rel="stylesheet" type="text/css" href="../../shared/css/loader.css" />
+        <!-- @else -->
+        <link rel="stylesheet" type="text/css" href="popup.min.css" />
+        <!-- @endif -->
+
+        <script defer src="../../shared/min/jquery.min.js"></script>
+        <script defer src="../js/select2.min.js"></script>
+
+        <!-- @if DEV -->
+
+        <script defer src="../../shared/js/utils/logTrace.js"></script>
+        <script defer src="../../shared/js/utils/miniquery.js"></script>
+        <script defer src="../../shared/js/utils/config.js"></script>
+        <script defer src="../../shared/js/utils/octokit.bundle.js"></script>
+        <script defer src="../../shared/js/utils/sync.js"></script>
+        <script defer src="../../shared/js/utils/functions.js"></script>
+        <script defer src="../../shared/js/utils/data.js"></script>
+        <script defer src="../../shared/js/utils/paper.js"></script>
+        <script defer src="../../shared/js/utils/state.js"></script>
+        <script defer src="../../shared/js/utils/bibtexParser.js"></script>
+        <script defer src="../../shared/js/utils/parsers.js"></script>
+        <script defer src="../js/handlers.js"></script>
+        <script defer src="../js/templates.js"></script>
+        <script defer src="../js/memory.js"></script>
+        <script defer src="../js/popup.js"></script>
+        <!-- @else -->
+        <script defer src="../../shared/min/utils.min.js"></script>
+        <script defer src="popup.min.js"></script>
+        <!-- @endif -->
+    </head>
+
+    <body>
+        <div id="popup-header">
+            <h1 title="https://papermemory.org">
+                <a class="link-in-new-tab" href="https://papermemory.org">
+                    PaperMemory
+                </a>
+            </h1>
+            <!--=include svgs/header-icon.html -->
+        </div>
+
+        <div id="popup-container">
+            <div id="notArxiv" style="display: none; position: relative">
+                <p>
+                    <strong style="color: var(--lightRed)">PaperMemory</strong>
+                    automatically records and organizes the papers you read, without
+                    ever leaving your browser.
+                </p>
+
+                <p>
+                    When opening a paper (its web page or pdf), a reference to that
+                    paper will be stored in your Memory. Supports Arxiv, Open Review,
+                    PNAS, Science, Nature
+                    <a
+                        href="https://papermemory.org/features/#venues"
+                        class="link-in-new-tab"
+                    >
+                        and more</a
+                    >!
+                </p>
+
+                <p>
+                    <a
+                        class="link-in-new-tab"
+                        href="https://github.com/vict0rsch/PaperMemory/issues/13"
+                        >Request a new venue</a
+                    >.
+                </p>
+
+                <p class="d-flex-center-start">
+                    Click on the&nbsp;
+                    <!--=include svgs/memory-switch-open-small.html -->
+                    &nbsp;Memory button below
+                    <!--=include svgs/arrow-down-left.html -->
+
+                    <span>(or press <code>a</code></span>
+                    )!
+                </p>
+                <p style="text-align: center">
+                    <button
+                        style="cursor: pointer"
+                        id="keyboardShortcuts"
+                        class="code-font"
+                    >
+                        User Guide
+                    </button>
+                </p>
+
+                <div id="website-parsing-root" style="display: none; width: 100%"></div>
+
+                <div id="whats-new-container">
+                    <div class="d-relative">
+                        <!--=include svgs/whatsnew-marker.html -->
+                        <span id="whats-new-marker" style="display: none"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div id="isArxiv" style="display: none">
+                <h3
+                    style="
+                        text-align: center;
+                        max-width: 95%;
+                        font-weight: 400;
+                        margin-bottom: 0px;
+                        margin-top: 0px;
+                        font-size: 1.1rem;
+                    "
+                    id="popup-paper-title"
+                ></h3>
+
+                <p id="popup-authors"></p>
+
+                <a style="display: none" class="mt-0" id="popup-code-link"></a>
+                <a style="display: none" class="mt-0" id="popup-website-url"></a>
+
+                <div
+                    style="width: 75%; margin-bottom: 28px; position: relative"
+                    id="popup-icons-container"
+                >
+                    <div
+                        style="
+                            display: flex;
+                            justify-content: space-evenly;
+                            align-items: center;
+                        "
+                        id="popup-copy-icons"
+                    ></div>
+                    <div style="display: none" id="popup-feedback-copied"></div>
+                </div>
+
+                <div
+                    id="popup-memory-edit"
+                    style="width: 100%; margin-bottom: 32px"
+                ></div>
+            </div>
+
+            <div>
+                <div id="warning-button" style="display: none">
+                    ⚠️ Important Notice<br />Click here
+                </div>
+            </div>
+        </div>
+
+        <!--=include menu.html -->
+
+        <div id="memory-spinner" class="pm-container">
+            <div class="sk-folding-cube">
+                <div class="sk-cube1 sk-cube"></div>
+                <div class="sk-cube2 sk-cube"></div>
+                <div class="sk-cube4 sk-cube"></div>
+                <div class="sk-cube3 sk-cube"></div>
+            </div>
+        </div>
+        <div id="memory-switch" style="display: none">
+            <!--=include svgs/memory-switch-open.html -->
+            <!--=include svgs/memory-switch-close.html -->
+        </div>
+        <div id="sync-popup-feedback" style="display: none">
+            <div id="sync-popup-syncing" style="display: none; align-items: center">
+                Syncing
+                <div
+                    class="pm-loader"
+                    style="
+                        width: 12px;
+                        height: 12px;
+                        border-width: 2px;
+                        display: inline-block;
+                        margin: auto;
+                        margin-left: 8px;
+                    "
+                ></div>
+            </div>
+            <div id="sync-popup-synced" style="display: none">Synced ✅</div>
+            <div id="sync-popup-synced" style="display: none">Sync failed ❌</div>
+        </div>
+
+        <div id="menu-switch" tabindex="0" title="Open settings" class="rounded">
+            <!--=include svgs/menu-switch.html -->
+        </div>
+
+        <div id="memory-container" style="display: none">
+            <div id="memory-filters">
+                <!-- <input id="memory-search" type="search" placeholder="search" style="width: 45%;" /> -->
+                <div class="memory-search-wrapper">
+                    <input
+                        id="memory-search"
+                        placeholder="Search"
+                        type="text"
+                        autocomplete="off"
+                    />
+                    <span id="memory-search-clear-icon">&times;</span>
+                </div>
+                <span
+                    tabindex="-1"
+                    id="filter-favorites"
+                    title="Show favorites only"
+                    class="rounded"
+                >
+                    <!--=include svgs/filter-favorites.html -->
+                </span>
+                <select tabindex="-1" style="width: 30%" id="memory-select">
+                    <option value="lastOpenDate">Last Open</option>
+                    <option value="addDate">Last Added</option>
+                    <option value="year">Year</option>
+                    <option value="title">Title</option>
+                    <option value="count"># Visits</option>
+                    <option value="id">ID</option>
+                </select>
+                <span tabindex="-1" id="memory-sort-arrow">
+                    <!--=include svgs/memory-sort-arrow.html -->
+                </span>
+            </div>
+            <div id="memory-table" width="100%"></div>
+        </div>
+
+        <div id="delete-paper-modal" style="display: none">
+            <div
+                style="
+                    width: 80%;
+                    padding: 32px 32px;
+                    text-align: center;
+                    font-size: 1.1rem;
+                "
+            >
+                Are you sure you want to delete:
+                <p id="delete-modal-title"></p>
+                ?
+            </div>
+            <div style="width: 100%; text-align: center; padding: 32px">
+                <button style="padding: 8px 16px" id="delete-paper-modal-cancel-button">
+                    Cancel
+                </button>
+                <span style="min-width: 32px"></span>
+                <button
+                    style="padding: 8px 16px"
+                    id="delete-paper-modal-confirm-button"
+                >
+                    Confirm
+                </button>
+            </div>
+            <span id="delete-paper-modal-hidden-id" style="display: none"></span>
+        </div>
+
+        <div class="popup-modal-wrapper" id="popup-modal-wrapper" style="display: none">
+            <div class="popup-modal-contents">
+                <span id="close-popup-modal">&times;</span>
+                <!--=include modals/*.html -->
+            </div>
+        </div>
+    </body>
+</html>

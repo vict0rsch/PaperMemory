@@ -1,0 +1,306 @@
+<div id="menu-container" style="display: none">
+    <a href="#" tabindex="-1" id="menu-feedback-header"></a>
+    <h3>⋗ Feedback</h3>
+
+    <p>It's the little things that make your research smoother.</p>
+
+    <p>Look at the code ; raise issues ; share improvement ideas</p>
+
+    <p>
+        <a class="link-in-new-tab" href="https://github.com/vict0rsch/PaperMemory"
+            >https://github.com/vict0rsch/PaperMemory</a
+        >
+    </p>
+    <p>
+        <em>PaperMemory version: <span id="pm-version"></span></em>
+    </p>
+
+    <h3>⋗ Help</h3>
+
+    <button class="code-font" style="font-size: 1rem" id="keyboardShortcutsMenu">
+        User guide
+    </button>
+    <br />
+    <br />
+    <p>
+        Documentation:
+        <a class="link-in-new-tab" href="https://papermemory.org">PaperMemory.org</a>
+    </p>
+
+    <h3 class="mt-4">⋗ Configuration</h3>
+
+    <div id="options">
+        <h4>Arxiv.org enhancement</h4>
+        <input
+            class="switch"
+            type="checkbox"
+            id="checkDownload"
+            name="checkDownload"
+            value="checkDownload"
+        />
+        <label for="checkDownload">Add PDF direct download button</label><br /><br />
+
+        <input
+            class="switch"
+            type="checkbox"
+            id="checkMd"
+            name="checkMd"
+            value="checkMd"
+        />
+        <label for="checkMd"> Add Markdown Link section</label><br /><br />
+
+        <input
+            class="switch"
+            type="checkbox"
+            id="checkBib"
+            name="checkBib"
+            value="checkBib"
+        />
+        <label for="checkBib"> Add BibTex citation section</label><br /><br />
+
+        <h4>User Interface</h4>
+
+        <input
+            class="switch"
+            type="checkbox"
+            id="checkFeedback"
+            name="checkFeedback"
+            value="checkFeedback"
+        />
+        <label for="checkFeedback"> Display notification when a paper is added</label
+        ><br /><br />
+
+        <input
+            class="switch"
+            type="checkbox"
+            id="checkDarkMode"
+            name="checkDarkMode"
+            value="checkDarkMode"
+        />
+        <label for="checkDarkMode">Use Dark Mode</label><br /><br />
+
+        <input
+            class="switch"
+            type="checkbox"
+            id="checkDirectOpen"
+            name="checkDirectOpen"
+            value="checkDirectOpen"
+        />
+        <label for="checkDirectOpen"
+            >Directly open the Memory when not on a Paper's page</label
+        ><br /><br />
+
+        <input
+            class="switch"
+            type="checkbox"
+            id="checkPdfTitle"
+            name="checkPdfTitle"
+            value="checkPdfTitle"
+        />
+        <label for="checkPdfTitle"> Change paper tab titles</label><br /><br />
+
+        <input
+            class="switch"
+            type="checkbox"
+            id="checkScirate"
+            name="checkScirate"
+            value="checkScirate"
+        />
+        <label for="checkScirate">Add a link to SciRate in the popup</label><br /><br />
+
+        <input
+            class="switch"
+            type="checkbox"
+            id="checkVanity"
+            name="checkVanity"
+            value="checkVanity"
+        />
+        <label for="checkVanity">Add a link to arXiv Vanity in the popup</label
+        ><br /><br />
+
+        <input
+            class="switch"
+            type="checkbox"
+            id="checkAr5iv"
+            name="checkAr5iv"
+            value="checkAr5iv"
+        />
+        <label for="checkAr5iv">Add a link to ar5iv in the popup</label><br /><br />
+
+        <input
+            class="switch"
+            type="checkbox"
+            id="checkHuggingface"
+            name="checkHuggingface"
+            value="checkHuggingface"
+        />
+        <label for="checkHuggingface"
+            >Add a link to the HuggingFace paper page in the popup (Arxiv only)</label
+        ><br /><br />
+
+        <h4>Functionalities</h4>
+
+        <input
+            class="switch"
+            type="checkbox"
+            id="checkMdYearVenue"
+            name="checkMdYearVenue"
+            value="checkMdYearVenue"
+        />
+        <label for="checkMdYearVenue"
+            >Include a paper's venue and year when available in the Markdown link</label
+        ><br /><br />
+
+        <input
+            class="switch"
+            type="checkbox"
+            id="checkPreferPdf"
+            name="checkPreferPdf"
+            value="checkPreferPdf"
+        />
+        <label for="checkPreferPdf"
+            >Favor PDFs for paper links (otherwise, links will point to a paper's
+            abstract page)</label
+        ><br /><br />
+
+        <input
+            class="switch"
+            type="checkbox"
+            id="checkPdfOnly"
+            name="checkPdfOnly"
+            value="checkPdfOnly"
+        />
+        <label for="checkPdfOnly"
+            >Only record papers on their pdf pages, not from their abstracts</label
+        ><br /><br />
+
+        <input
+            class="switch"
+            type="checkbox"
+            id="checkNoAuto"
+            name="checkNoAuto"
+            value="checkNoAuto"
+        />
+        <label for="checkNoAuto"
+            >Disable automatic recording of papers. You will have to manually open the
+            popup and click a button</label
+        ><br /><br />
+
+        <input
+            class="switch"
+            type="checkbox"
+            id="checkEnterLocalPdf"
+            name="checkEnterLocalPdf"
+            value="checkEnterLocalPdf"
+        />
+        <label for="checkEnterLocalPdf"
+            >When hitting Enter on a memory item, open a local PDF file when one is
+            available instead of the the link to the paper.</label
+        ><br /><br />
+
+        <input
+            class="switch"
+            type="checkbox"
+            id="checkStore"
+            name="checkStore"
+            value="checkStore"
+        />
+        <label for="checkStore"
+            >Download pdfs to PaperMemory's folder in your Downloads to be able to open
+            them instead of re-downloading.</label
+        ><br /><br />
+        <input
+            class="switch"
+            type="checkbox"
+            id="checkWebsiteParsing"
+            name="checkWebsiteParsing"
+            value="checkWebsiteParsing"
+        />
+        <label for="checkWebsiteParsing"
+            >Enable parsing of arbitrary website by adding a button in the popup. This
+            is still very experimental, see #146 on Github.</label
+        ><br /><br />
+
+        <h4>Keyboard Navigation</h4>
+
+        <p>Open the popup with <code>cmd/ctrl + shift + e</code> from any website.</p>
+
+        <p>
+            When on the popup press <code>a</code> to open the memory or
+            <code>p</code> to open the preferences menu.
+        </p>
+
+        <p>
+            When your memory is open, you can navigate through the papers using the
+            <code>tab</code> key. When a paper is selected, its border will be
+            highlighted. You can then perform actions on the paper by pressing the
+            following keys:
+        </p>
+
+        <ul id="menu-keyboard-shortcuts">
+            <li><code>o</code> ↦ open the paper in a new tab.</li>
+            <li><code>c</code> ↦ copy the paper's link.</li>
+            <li><code>m</code> ↦ copy the paper's markdown link.</li>
+            <li><code>b</code> ↦ copy the paper's bibtex.</li>
+            <li><code>h</code> ↦ copy the paper's hyperlink.</li>
+            <li><code>d</code> ↦ show the paper's metadata.</li>
+            <li><code>e</code> ↦ edit the paper's metadata from the memory.</li>
+            <li><code>Backspace</code> ↦ delete the paper from the memory.</li>
+        </ul>
+
+        <p>
+            Press <code>Enter</code> to execute the default action for the current
+            paper:
+
+            <select id="memory-item-default-action">
+                <option value="o">Open paper link</option>
+                <option value="c">Copy Link</option>
+                <option value="m">Copy Markdown</option>
+                <option value="b">Copy Bibtex</option>
+                <option value="h">Copy Hyperlink</option>
+                <option value="d">Show paper's metadata</option>
+                <option value="e">Edit paper's metadata</option>
+            </select>
+        </p>
+
+        <p>
+            You can also perform those actions ↑ when the main popup shows a paper's
+            data (i.e. when you're on a paper's web page/pdf).
+        </p>
+    </div>
+
+    <h3 class="mt-4">⋗ Advanced</h3>
+
+    <p>
+        Open the <a href="#" id="bib-matcher">PaperMemory BibMatcher</a> page to match
+        the ArXiv entries of your <code>.bib</code> file to a publication.
+    </p>
+
+    <p>
+        Open your <a href="#" id="full-memory">full-page memory</a> to explore papers
+        more easily, in a dedicated tab.
+    </p>
+
+    <p>
+        Open the <a href="#" id="advanced-configuration">options page</a> to access
+        advanced customization features:
+    </p>
+
+    <ul>
+        <li>
+            <p>Auto tagging papers from regex</p>
+        </li>
+        <li>
+            <p>Import papers from lists of URLs</p>
+        </li>
+        <li>
+            <p>Manage your data (export/load)</p>
+        </li>
+        <li>
+            <p>Ignore some paper sources</p>
+        </li>
+        <li>
+            <p>And more!</p>
+        </li>
+    </ul>
+</div>

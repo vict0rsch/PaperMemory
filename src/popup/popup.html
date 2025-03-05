@@ -150,7 +150,7 @@
                     </button>
                 </p>
 
-                <div id="webite-parsing-root" style="display: none; width: 100%"></div>
+                <div id="website-parsing-root" style="display: none; width: 100%"></div>
 
                 <div id="whats-new-container">
                     <div class="d-relative">
@@ -221,6 +221,7 @@
         </div>
 
         <div id="menu-container" style="display: none">
+            <a href="#" tabindex="-1" id="menu-feedback-header"></a>
             <h3>⋗ Feedback</h3>
 
             <p>It's the little things that make your research smoother.</p>
@@ -259,7 +260,7 @@
             <h3 class="mt-4">⋗ Configuration</h3>
 
             <div id="options">
-                <h5>Arxiv.org enhancement</h5>
+                <h4>Arxiv.org enhancement</h4>
                 <input
                     class="switch"
                     type="checkbox"
@@ -288,7 +289,7 @@
                 />
                 <label for="checkBib"> Add BibTex citation section</label><br /><br />
 
-                <h5>User Interface</h5>
+                <h4>User Interface</h4>
 
                 <input
                     class="switch"
@@ -372,7 +373,7 @@
                     only)</label
                 ><br /><br />
 
-                <h5>Functionalities</h5>
+                <h4>Functionalities</h4>
 
                 <input
                     class="switch"
@@ -456,6 +457,56 @@
                     >Enable parsing of arbitrary website by adding a button in the
                     popup. This is still very experimental, see #146 on Github.</label
                 ><br /><br />
+
+                <h4>Keyboard Navigation</h4>
+
+                <p>
+                    Open the popup with <code>cmd/ctrl + shift + e</code> from any
+                    website.
+                </p>
+
+                <p>
+                    When on the popup press <code>a</code> to open the memory or
+                    <code>p</code> to open the preferences menu.
+                </p>
+
+                <p>
+                    When your memory is open, you can navigate through the papers using
+                    the <code>tab</code> key. When a paper is selected, its border will
+                    be highlighted. You can then perform actions on the paper by
+                    pressing the following keys:
+                </p>
+
+                <ul id="menu-keyboard-shortcuts">
+                    <li><code>o</code> ↦ open the paper in a new tab.</li>
+                    <li><code>c</code> ↦ copy the paper's link.</li>
+                    <li><code>m</code> ↦ copy the paper's markdown link.</li>
+                    <li><code>b</code> ↦ copy the paper's bibtex.</li>
+                    <li><code>h</code> ↦ copy the paper's hyperlink.</li>
+                    <li><code>d</code> ↦ show the paper's metadata.</li>
+                    <li><code>e</code> ↦ edit the paper's metadata from the memory.</li>
+                    <li><code>Backspace</code> ↦ delete the paper from the memory.</li>
+                </ul>
+
+                <p>
+                    Press <code>Enter</code> to execute the default action for the
+                    current paper:
+
+                    <select id="memory-item-default-action">
+                        <option value="o">Open paper link</option>
+                        <option value="c">Copy Link</option>
+                        <option value="m">Copy Markdown</option>
+                        <option value="b">Copy Bibtex</option>
+                        <option value="h">Copy Hyperlink</option>
+                        <option value="d">Show paper's metadata</option>
+                        <option value="e">Edit paper's metadata</option>
+                    </select>
+                </p>
+
+                <p>
+                    You can also perform those actions ↑ when the main popup shows a
+                    paper's data (i.e. when you're on a paper's web page/pdf).
+                </p>
             </div>
 
             <h3 class="mt-4">⋗ Advanced</h3>
@@ -674,8 +725,8 @@
                     <p style="font-size: 0.9rem">
                         Go to your settings or
                         <code>chrome://extensions/shortcuts</code> (Chrome &amp; Brave
-                        &amp; Edge) or <code>about:addons</code> ➜
-                        <em>Tools for all add-ons</em> cogwheel ➜
+                        &amp; Edge) or <code>about:addons</code> ↦
+                        <em>Tools for all add-ons</em> ⚙︎ ↦
                         <em>Manage Extension Shortcuts</em>
                         (Firefox) to set/edit these shortcuts.
                     </p>
@@ -750,32 +801,41 @@
                                     paper&#39;s metadata: tags, code and note when the
                                     paper is <em>focused</em> (from click or keyboard
                                     <code>tab</code> navigation)
-                                    <ul>
-                                        <li>
-                                            Navigate through fields with
-                                            <code>(shift+) tab</code>
-                                        </li>
-                                    </ul>
                                 </li>
                                 <li>
-                                    Press <code>enter</code> to <em>open</em> a focused
-                                    paper (<em>focus</em> an existing tab with the paper
-                                    or <em>create a new tab</em> to the paper&#39;s pdf
-                                    if it&#39;s not open already)
-                                </li>
-                                <li>
-                                    <code>backspace</code> to <em>delete</em> a focused
-                                    paper (a confirmation will be prompted first
-                                    don&#39;t worry 👮‍♀️)
+                                    Navigate through fields with
+                                    <code>(shift+) tab</code>
                                 </li>
                             </ul>
                         </li>
                         <li>
-                            Close Memory or Menu
+                            Delete a paper
                             <ul>
                                 <li>
-                                    <code>esc</code> closes the memory (or the menu --
-                                    <strong>not</strong> in Firefox)
+                                    Delete a focused paper with
+                                    <code>backspace</code>
+                                </li>
+                                <li>
+                                    A confirmation will be prompted first don&#39;t
+                                    worry
+                                </li>
+                            </ul>
+                        </li>
+                        <li>
+                            Copy shortcuts
+                            <ul id="user-guide-shortcuts-ul"></ul>
+                        </li>
+                        <li>
+                            Close Memory, Menu, Modals (such as the user guide) or Popup
+                            <ul>
+                                <li>
+                                    <code>esc</code> closes items up until you're back
+                                    to the popup, at which point it will close the
+                                    popup.
+                                </li>
+                                <li>
+                                    🚧 This does not work in Firefox. The whole popup
+                                    will close at any point with <code>esc</code>.
                                 </li>
                             </ul>
                         </li>
@@ -835,7 +895,7 @@
                                     Use <code>,</code> to separate requested years or
                                     start with <code>&gt;</code> or <code>&lt;</code> to
                                     filter paper published after/before a given year
-                                    (stricly)
+                                    (strictly)
                                     <ul>
                                         <li>
                                             <code>y: 20,21,22</code> will display papers
@@ -867,6 +927,35 @@
                     <ul>
                         <li>
                             <strong>Current: </strong
+                            ><a
+                                href="https://github.com/vict0rsch/PaperMemory/releases/tag/1.0.0"
+                                >1.0.0</a
+                            >
+                            <em>(2025-03-01)</em>
+                            <ul>
+                                <li>
+                                    [feature] A tooltip with paper metadata shows up
+                                    when hovering a paper's title
+                                </li>
+                                <li>
+                                    [feature] PaperMemory is now much more usable from
+                                    your keyboard-only. See the settings for more info.
+                                </li>
+                                <li>[new source] Add ChemRxiv as a paper source</li>
+                                <li>
+                                    [dev] Major upgrade to Manifest V3 for
+                                    Chrome/Firefox/Edge compatibility
+                                </li>
+                                <li>[dev] Fix HAL parsing</li>
+                                <li>
+                                    [dev] Fix BibMatcher parsing stalling on Unpaywall
+                                </li>
+                                <li>[dev] Improve Google Scholar matching</li>
+                                <li>[dev] Improve gist handling with octokit</li>
+                                <li>[dev] Better error handling across the board</li>
+                            </ul>
+                        </li>
+                        <li>
                             ><a
                                 href="https://github.com/vict0rsch/PaperMemory/releases/tag/0.7.0"
                                 >0.7.0</a
@@ -1094,7 +1183,7 @@
                                     rightmost column
                                 </li>
                                 <li>
-                                    [feature] Use a paper's publihed Bibtex on
+                                    [feature] Use a paper's published Bibtex on
                                     arxiv.org's rightmost column
                                 </li>
                                 <li>
@@ -1194,7 +1283,7 @@
                             <em>(2022-04-19)</em>
                             <ul>
                                 <li>
-                                    [feature] Add prefered framework when discovering
+                                    [feature] Add preferred framework when discovering
                                     code repositories with PapersWithCode. Check out the
                                     options page.
                                 </li>
@@ -1218,7 +1307,7 @@
                                 <li>[new source] Add PubMed Central papers parsing</li>
                                 <li>[new source] Add IJCAI papers parsing</li>
                                 <li>[new source] Add ACM papers parsing</li>
-                                <li>[dev] Improve developper console logs</li>
+                                <li>[dev] Improve developer console logs</li>
                                 <li>[dev] Minor code improvements</li>
                             </ul>
                         </li>
@@ -1369,7 +1458,7 @@
                                     Arxiv papers into your Memory
                                 </li>
                                 <br />
-                                <li>[dev] Hotfix: Improve long codelinks display</li>
+                                <li>[dev] Hotfix: Improve long code links display</li>
                             </ul>
                         </li>
                         <li>
@@ -1438,7 +1527,7 @@
                                     function to Options
                                 </li>
                                 <li>[feature] Custom title function out of Beta</li>
-                                <li>[feature] Add auto-tagging from regexs</li>
+                                <li>[feature] Add auto-tagging from regex</li>
                                 <li>
                                     [feature] Find published versions of pre-prints on
                                     dblp.org and crossref.org
@@ -1663,7 +1752,7 @@
                     </p>
                     <p>
                         If you <em><strong>do</strong></em> however use a custom title
-                        function, be aware that this functionnality will be removed in
+                        function, be aware that this functionality will be removed in
                         version <code>0.6.0</code>.
                     </p>
 
@@ -1672,8 +1761,8 @@
                     <p>
                         The vision for this feature is to make it modular but not
                         code-based. Something like asking you for a list of attributes
-                        you want to be part of the title and potenlially lower/upper
-                        case or capitalizing.
+                        you want to be part of the title and potentially lower/upper
+                        case or capitalize.
                     </p>
                     <p>
                         This vision is not fully-shaped but I wanted to give you a

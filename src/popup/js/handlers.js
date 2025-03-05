@@ -64,10 +64,15 @@ const handleOpenItemWebsiteURL = async (e) => {
 const handleCopyMarkdownLink = async (e) => {
     const id = eventId(e);
     const prefs = global.state.prefs;
-    const text = prefs.checkPreferPdf ? "PDF" : "Abstract";
     const paper = global.state.papers[id];
+    const text =
+        paper.source === "website" ? "URL" : prefs.checkPreferPdf ? "PDF" : "Abstract";
     const md = makeMdLink(paper, prefs);
-    await copyAndConfirmMemoryItem(id, md, `Markdown ${text} link copied!`);
+    await copyAndConfirmMemoryItem({
+        id,
+        textToCopy: md,
+        feedbackText: `Markdown ${text} link copied!`,
+    });
 };
 
 const handleCopyBibtex = async (e) => {
@@ -80,7 +85,11 @@ const handleCopyBibtex = async (e) => {
     if (!bibobj.hasOwnProperty("pdf") && global.state.papers[id].source !== "website") {
         bibobj.pdf = paperToPDF(global.state.papers[id]);
     }
-    await copyAndConfirmMemoryItem(id, bibtexToString(bibobj), "Bibtex copied!");
+    await copyAndConfirmMemoryItem({
+        id,
+        textToCopy: bibtexToString(bibobj),
+        feedbackText: "Bibtex copied!",
+    });
 };
 
 const handleCopyPDFLink = async (e) => {
@@ -88,8 +97,13 @@ const handleCopyPDFLink = async (e) => {
     const prefs = global.state.prefs;
     const paper = global.state.papers[id];
     const link = prefs.checkPreferPdf ? paperToPDF(paper) : paperToAbs(paper);
-    const text = prefs.checkPreferPdf ? "PDF" : "Abstract";
-    await copyAndConfirmMemoryItem(id, link, `${text} link copied!`);
+    const text =
+        paper.source === "website" ? "URL" : prefs.checkPreferPdf ? "PDF" : "Abstract";
+    await copyAndConfirmMemoryItem({
+        id,
+        textToCopy: link,
+        feedbackText: `${text} link copied!`,
+    });
 };
 
 const handleCopyHyperLink = async (e) => {
@@ -97,7 +111,12 @@ const handleCopyHyperLink = async (e) => {
     const prefs = global.state.prefs;
     const paper = global.state.papers[id];
     const link = prefs.checkPreferPdf ? paperToPDF(paper) : paperToAbs(paper);
-    await copyAndConfirmMemoryItem(id, link, `Hyperlink copied!`, false, paper.title);
+    await copyAndConfirmMemoryItem({
+        id,
+        textToCopy: link,
+        feedbackText: `Hyperlink copied!`,
+        hyperLinkTitle: paper.title,
+    });
 };
 
 const handleAddItemToFavorites = (e) => {
@@ -136,23 +155,26 @@ const handleCancelPaperEdit = (e) => {
     e.preventDefault();
     const id = eventId(e);
     const paper = global.state.papers[id];
-    val(findEl(id, "form-note-textarea"), paper.note);
-    setHTML(findEl(id, "memory-item-tags"), getTagsOptions(paper));
-    dispatch(findEl(id, "memory-item-edit"), "click");
+    val(findEl({ paperId: id, memoryItemClass: "form-note-textarea" }), paper.note);
+    setHTML(
+        findEl({ paperId: id, memoryItemClass: "memory-item-tags" }),
+        getTagsOptions(paper)
+    );
+    dispatch(findEl({ paperId: id, memoryItemClass: "memory-item-edit" }), "click");
 };
 
 const handleTogglePaperEdit = (e) => {
     e.preventDefault();
     // find elements
     const id = eventId(e);
-    const container = findEl(`memory-container--${id}`);
-    const codeAndNote = findEl(id, "code-and-note");
-    const editPaper = findEl(id, "extended-item");
-    const tagList = findEl(id, "tag-list");
-    const authors = findEl(id, "memory-authors");
-    const tagEdit = findEl(id, "edit-tags");
-    const actions = findEl(id, "memory-item-actions");
-    const tagSelect2 = $(findEl(id, "memory-item-tags"));
+    const container = findEl({ element: `memory-container--${id}` });
+    const codeAndNote = findEl({ paperId: id, memoryItemClass: "code-and-note" });
+    const editPaper = findEl({ paperId: id, memoryItemClass: "extended-item" });
+    const tagList = findEl({ paperId: id, memoryItemClass: "tag-list" });
+    const authors = findEl({ paperId: id, memoryItemClass: "memory-authors" });
+    const tagEdit = findEl({ paperId: id, memoryItemClass: "edit-tags" });
+    const actions = findEl({ paperId: id, memoryItemClass: "memory-item-actions" });
+    const tagSelect2 = $(findEl({ paperId: id, memoryItemClass: "memory-item-tags" }));
 
     if (hasClass(container, "expand-open")) {
         // The edit form is open
@@ -216,7 +238,10 @@ const handleFilterFavorites = () => {
     const showFavorites = !global.state.showFavorites;
     global.state.showFavorites = showFavorites;
     if (showFavorites) {
-        addClass(findEl("filter-favorites").querySelector("svg"), "favorite");
+        addClass(
+            findEl({ element: "filter-favorites" }).querySelector("svg"),
+            "favorite"
+        );
         sortMemory();
         global.state.papersList = global.state.papersList.filter((p) => p.favorite);
         displayMemoryTable();
@@ -227,7 +252,10 @@ const handleFilterFavorites = () => {
         const n = global.state.papersList.length;
         setPlaceholder("memory-search", `Search ${n} entries...`);
     } else {
-        removeClass(findEl("filter-favorites").querySelector("svg"), "favorite");
+        removeClass(
+            findEl({ element: "filter-favorites" }).querySelector("svg"),
+            "favorite"
+        );
 
         if (val("memory-select") === "favoriteDate") {
             val("memory-select", "lastOpenDate");
@@ -307,7 +335,7 @@ const handleCancelModalClick = () => {
 };
 
 const handleConfirmDeleteModalClick = async (e) => {
-    const id = findEl("delete-paper-modal-hidden-id").innerHTML;
+    const id = findEl({ element: "delete-paper-modal-hidden-id" }).innerHTML;
     const title = global.state.papers[id].title;
     const url = global.state.papers[id].pdfLink;
     await deletePaperInStorage(id, global.state.papers);
@@ -341,11 +369,40 @@ const handleMemorySwitchClick = () => {
     global.state.memoryIsOpen ? closeMemory() : openMemory();
 };
 
-const handlePopupKeydown = (e) => {
-    const key = e.key;
-    if (["Backspace", "Enter", "Escape", "a", "e"].indexOf(key) < 0) {
+const handlePopupKeydown = async (e) => {
+    let key = e.key;
+    const isCtrlOrMeta = e.ctrlKey || e.metaKey;
+    const isEnter = key === "Enter" && !isCtrlOrMeta;
+    const isCmdEnter = key === "Enter" && isCtrlOrMeta;
+    if (
+        [
+            "Backspace",
+            "Enter",
+            "Escape",
+            "a",
+            "e",
+            "o",
+            "c",
+            "m",
+            "b",
+            "h",
+            "p",
+            "t",
+            "d",
+        ].indexOf(key) < 0
+    ) {
         return;
     }
+
+    if (global.state.modalIsOpen) {
+        if (key === "Escape") {
+            e.preventDefault();
+            closePopupModal();
+        }
+        return;
+    }
+
+    // no modal is open
 
     if (global.state.prefsIsOpen) {
         if (key === "Escape") {
@@ -359,82 +416,186 @@ const handlePopupKeydown = (e) => {
         return;
     }
 
-    if (!global.state.memoryIsOpen) {
-        if (key === "a") {
-            // a opens the arxiv memory
-            const focused = queryAll(":focus");
-            if (focused.some((el) => ["INPUT", "TEXTAREA"].includes(el.tagName))) {
-                return;
-            }
-            global.state.papers && dispatch("memory-switch", "click");
-        } else if (key === "Enter") {
-            // enter on the arxiv memory button opens it
-            let focused = querySelector(":focus");
-            // if (!focused || !focused.length < 1) return;
-            if (focused.id === "memory-switch-open") {
-                dispatch("memory-switch", "click");
-            } else if (focused.id === "menu-switch") {
-                dispatch("menu-switch", "click");
-                dispatch("menu-switch", "blur");
-            } else if (hasClass(focused, "memory-item-svg-div")) {
-                dispatch(focused, "click");
+    if (isCmdEnter) {
+        if (eventId(e)) {
+            const id = eventId(e);
+            const div = findEl({ paperId: id, memoryItemClass: "extended-item" });
+            const isVisible = div.style.display !== "none";
+            const doneButton = div.querySelector(".cancel-note-form");
+            if (doneButton && isVisible) {
+                doneButton.click();
             }
         }
+    }
+
+    // Menu is closed
+
+    const inputIsFocused = queryAll(":focus").some((el) =>
+        ["INPUT", "TEXTAREA"].includes(el.tagName)
+    );
+    if (inputIsFocused && key !== "Escape") {
         return;
     }
 
-    // Now memory is open
+    // no input is focused
 
-    if (key === "Enter") {
+    if (key === "Escape" && global.state.tooltipIsOpen) {
+        handleHideAllTitleTooltips(e);
+        e.preventDefault();
+        return;
+    }
+
+    // no tooltip is open
+
+    if (!global.state.memoryIsOpen) {
+        if (key === "a") {
+            // a opens the arxiv memory
+            global.state.papers && dispatch("memory-switch", "click");
+        } else if (key === "Enter") {
+            // enter on the arxiv memory button opens it
+            const focused = querySelector(":focus");
+            // if (!focused || !focused.length < 1) return;
+            if (focused?.id === "memory-switch-open") {
+                return dispatch("memory-switch", "click");
+            } else if (focused?.id === "menu-switch") {
+                dispatch("menu-switch", "click");
+                return dispatch("menu-switch", "blur");
+            } else if (hasClass(focused, "memory-item-svg-div")) {
+                return dispatch(focused, "click");
+            }
+        } else if (key === "p") {
+            if (!global.state.prefsIsOpen) {
+                return dispatch("menu-switch", "click");
+            }
+        }
+    }
+
+    // Memory is open
+
+    if (isEnter) {
         // enable Enter on favorites and sort arrows
         const favoriteBtn = querySelector("#filter-favorites:focus");
         if (favoriteBtn) {
-            dispatch("filter-favorites", "click");
-            return;
+            return dispatch("filter-favorites", "click");
         }
         const arrowBtn = querySelector("#memory-sort-arrow:focus");
-        if (arrowBtn && key === "Enter") {
-            dispatch("memory-sort-arrow", "click");
-            return;
+        if (arrowBtn) {
+            return dispatch("memory-sort-arrow", "click");
         }
     }
 
-    let id;
-    const paperItem = querySelector(".memory-container:focus");
-    if (key !== "Escape") {
-        if (!paperItem) return;
-        id = paperItem.id.split("--")[1];
+    // Memory is open and Enter was not pressed on a button
+
+    let id, paperItem;
+    if (global.state.currentId && !global.state.memoryIsOpen) {
+        id = global.state.currentId;
+    } else {
+        paperItem = querySelector(".memory-container:focus");
+        if (key !== "Escape") {
+            if (!paperItem) return;
+            id = paperItem.id.split("--")[1];
+        }
     }
+
+    if (isEnter) {
+        key = await getDefaultKeyboardAction();
+    }
+
+    const localFindEl = ({ id, memoryItemClass, paperItem }) => {
+        if (paperItem) {
+            // memory select
+            return findEl({ paperId: id, memoryItemClass });
+        } else {
+            // popup select
+            return findEl({ element: `popup-${memoryItemClass}--${id}` });
+        }
+    };
 
     if (key === "Backspace") {
         // delete
-        dispatch(findEl(id, "memory-delete"), "click");
-    } else if (key === "Enter") {
+        dispatch(
+            localFindEl({ id, paperItem, memoryItemClass: "memory-delete" }),
+            "click"
+        );
+    } else if (key === "o") {
         // open paper
         const target =
             global.state.papers[id].source === "website"
-                ? findEl(id, "memory-website-url")
+                ? localFindEl({ id, paperItem, memoryItemClass: "memory-website-url" })
                 : (global.state.prefs.checkEnterLocalPdf &&
-                      findEl(id, "memory-item-openLocal")) ||
-                  findEl(id, "memory-item-link");
+                      localFindEl({
+                          id,
+                          paperItem,
+                          memoryItemClass: "memory-item-openLocal",
+                      })) ||
+                  localFindEl({ id, paperItem, memoryItemClass: "memory-item-link" });
         dispatch(target, "click");
     } else if (key === "Escape") {
-        // close memory
-        e.preventDefault();
+        // close paper edits or memory
         if (paperItem && hasClass(paperItem, "expand-open")) {
+            e.preventDefault();
             handleTogglePaperEdit(e);
         } else {
-            closeMemory();
+            if (global.state.memoryIsOpen) {
+                e.preventDefault();
+                closeMemory();
+            }
         }
     } else if (key === "e") {
         // edit item
-        dispatch(findEl(id, "memory-item-edit"), "click");
+        dispatch(
+            localFindEl({ id, paperItem, memoryItemClass: "memory-item-edit" }),
+            "click"
+        );
+    } else if (key === "c") {
+        // copy link
+        dispatch(
+            localFindEl({ id, paperItem, memoryItemClass: "memory-item-copy-link" }),
+            "click"
+        );
+    } else if (key === "m") {
+        // copy link
+        dispatch(
+            localFindEl({ id, paperItem, memoryItemClass: "memory-item-md" }),
+            "click"
+        );
+    } else if (key === "b") {
+        // copy bibtex
+        dispatch(
+            localFindEl({ id, paperItem, memoryItemClass: "memory-item-bibtex" }),
+            "click"
+        );
+    } else if (key === "h") {
+        // copy hyperlink
+        dispatch(
+            localFindEl({
+                id,
+                paperItem,
+                memoryItemClass: "memory-item-copy-hyperlink",
+            }),
+            "click"
+        );
+    } else if (key === "t") {
+        // copy title
+        const title = global.state.papers[id].title;
+        await copyAndConfirmMemoryItem({
+            id,
+            textToCopy: title,
+            feedbackText: "Title copied!",
+            isPopup: !Boolean(paperItem),
+        });
+    } else if (key === "d") {
+        // display id
+        dispatch(
+            localFindEl({ id, paperItem, memoryItemClass: "memory-display-id" }),
+            "click"
+        );
     }
 };
 
 const handlePrefsCheckChange = async (e) => {
     const key = e.target.id;
-    const checked = findEl(key).checked;
+    const checked = findEl({ element: key }).checked;
     if (global.state && global.state.prefs) {
         global.state.prefs[key] = checked;
         setStorage("prefs", global.state.prefs, function () {
@@ -473,12 +634,21 @@ const handlePopupDeletePaper = (id) => () => {
 };
 
 const showTitleTooltip = (id, isPopup) => {
-    const div = isPopup ? findEl("popup-title-tooltip") : findEl(id, ".title-tooltip");
-    style(div, "display", "block");
+    const div = isPopup
+        ? findEl({ element: "popup-title-tooltip" })
+        : findEl({ paperId: id, memoryItemClass: ".title-tooltip" });
+    if (!div) return;
+    hideAllTooltips();
+    global.state.tooltipIsOpen = true;
+    showId(div);
 };
 const hideTitleTooltip = (id, isPopup) => {
-    const div = isPopup ? findEl("popup-title-tooltip") : findEl(id, ".title-tooltip");
-    style(div, "display", "none");
+    const div = isPopup
+        ? findEl({ element: "popup-title-tooltip" })
+        : findEl({ paperId: id, memoryItemClass: ".title-tooltip" });
+    if (!div) return;
+    hideId(div);
+    global.state.tooltipIsOpen = false;
 };
 
 const getHandleTitleTooltip = (func, delay, isPopup) => {
@@ -492,7 +662,19 @@ const getHandleTitleTooltip = (func, delay, isPopup) => {
 };
 
 const handleExpandAuthors = (e) => {
-    const id = eventId(e);
-    const authors = findEl(id, "memory-authors");
-    setHTML(authors, cutAuthors(global.state.papers[id].author, 100000));
+    let id, authorsEl;
+    if (e.target.parentElement?.id === "popup-authors") {
+        id = global.state.currentId;
+        authorsEl = findEl({ element: "popup-authors" });
+    } else {
+        id = eventId(e);
+        authorsEl = findEl({ paperId: id, memoryItemClass: "memory-authors" });
+    }
+    setHTML(authorsEl, cutAuthors(global.state.papers[id].author, 100000));
+};
+
+const handleHideAllTitleTooltips = (e) => {
+    if (!e.composedPath().some((el) => el.classList?.contains("title-tooltip"))) {
+        hideAllTooltips();
+    }
 };

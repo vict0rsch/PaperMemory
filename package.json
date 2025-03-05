@@ -1,63 +1,64 @@
 {
-  "name": "papermemory",
-  "version": "0.5.3",
-  "description": "<br/>",
-  "main": "gulpfile.js",
-  "moduleDirectories": [
-    "node_modules",
-    "src"
-  ],
-  "scripts": {
-    "pretest": "echo 'Make sure to be in dev mode ($gulp dev)'",
-    "test": "./node_modules/.bin/mocha test/test-*.js",
-    "pretest-cov": "echo 'Make sure to be in dev mode ($gulp dev)'",
-    "test-cov": "./node_modules/.bin/nyc --reporter=text ./node_modules/.bin/mocha test/test-*.js",
-    "pretest-storage": "echo 'Make sure to be in dev mode ($gulp dev)'",
-    "test-storage": "./node_modules/.bin/mocha test/test-storage.js",
-    "pretest-duplicates": "echo 'Make sure to be in dev mode ($gulp dev)'",
-    "test-duplicates": "./node_modules/.bin/mocha test/test-duplicates.js",
-    "pretest-sync": "echo 'Make sure to be in dev mode ($gulp dev)'",
-    "test-sync": "./node_modules/.bin/mocha test/test-sync.js",
-    "pretest-no-browser": "echo 'Make sure to be in dev mode ($gulp dev)'",
-    "test-no-browser": "./node_modules/.bin/mocha 'test/test-!(storage|duplicates|sync)*.js'",
-    "pretest-no-browser-cov": "echo 'Make sure to be in dev mode ($gulp dev)'",
-    "test-no-browser-cov": "./node_modules/.bin/nyc --reporter=text ./node_modules/.bin/mocha 'test/test-!(storage|duplicates|sync)*.js'",
-    "prescreenshots": "echo 'Make sure to be in dev mode ($gulp dev)'",
-    "screenshots": "./node_modules/.bin/mocha test/screenshots.js"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/vict0rsch/PaperMemory.git"
-  },
-  "author": "Victor Schmidt",
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/vict0rsch/PaperMemory/issues"
-  },
-  "homepage": "https://github.com/vict0rsch/PaperMemory",
-  "devDependencies": {
-    "@octokit/request": "^8.1.6",
-    "browserify": "^17.0.0",
-    "esmify": "^2.1.1",
-    "expect": "^29.7.0",
-    "glob": "^10.3.10",
-    "gulp": "^4.0.0",
-    "gulp-clean-css": "^4.3.0",
-    "gulp-concat": "^2.6.1",
-    "gulp-debug": "^5.0.1",
-    "gulp-html-minifier-terser": "^7.1.0",
-    "gulp-preprocess": "^4.0.2",
-    "gulp-rename": "^2.0.0",
-    "gulp-uglify": "^3.0.2",
-    "gulp-zip": "^6.0.0",
-    "heap": "^0.2.7",
-    "jsdom": "^23.0.1",
-    "mocha": "^10.2.0",
-    "nyc": "^15.1.0",
-    "ora": "^5.4.1",
-    "puppeteer": "^18.2.1",
-    "readline-sync": "^1.4.10",
-    "uuid": "^9.0.1",
-    "yaml": "^2.3.4"
-  }
+    "name": "papermemory",
+    "version": "1.0.0",
+    "description": "N/A",
+    "main": "gulpfile.js",
+    "moduleDirectories": [
+        "node_modules",
+        "src"
+    ],
+    "scripts": {
+        "pretest": "echo 'Make sure to be in dev mode ($gulp dev)'",
+        "test": "./node_modules/.bin/mocha test/test-*.js",
+        "pretest-cov": "echo 'Make sure to be in dev mode ($gulp dev)'",
+        "test-cov": "./node_modules/.bin/nyc --reporter=text ./node_modules/.bin/mocha test/test-*.js",
+        "pretest-storage": "echo 'Make sure to be in dev mode ($gulp dev)'",
+        "test-storage": "./node_modules/.bin/mocha test/test-storage.js",
+        "pretest-duplicates": "echo 'Make sure to be in dev mode ($gulp dev)'",
+        "test-duplicates": "./node_modules/.bin/mocha test/test-duplicates.js",
+        "pretest-sync": "echo 'Make sure to be in dev mode ($gulp dev)'",
+        "test-sync": "./node_modules/.bin/mocha test/test-sync.js",
+        "pretest-no-browser": "echo 'Make sure to be in dev mode ($gulp dev)'",
+        "test-no-browser": "./node_modules/.bin/mocha 'test/test-!(storage|duplicates|sync)*.js'",
+        "pretest-no-browser-cov": "echo 'Make sure to be in dev mode ($gulp dev)'",
+        "test-no-browser-cov": "./node_modules/.bin/nyc --reporter=text ./node_modules/.bin/mocha 'test/test-!(storage|duplicates|sync)*.js'",
+        "prescreenshots": "echo 'Make sure to be in dev mode ($gulp dev)'",
+        "screenshots": "./node_modules/.bin/mocha test/screenshots.js"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/vict0rsch/PaperMemory.git"
+    },
+    "author": "Victor Schmidt",
+    "license": "MIT",
+    "bugs": {
+        "url": "https://github.com/vict0rsch/PaperMemory/issues"
+    },
+    "homepage": "https://github.com/vict0rsch/PaperMemory",
+    "devDependencies": {
+        "@octokit/request": "^8.1.6",
+        "browserify": "^17.0.0",
+        "esmify": "^2.1.1",
+        "expect": "^29.7.0",
+        "glob": "^10.3.10",
+        "gulp": "^4.0.0",
+        "gulp-clean-css": "^4.3.0",
+        "gulp-concat": "^2.6.1",
+        "gulp-debug": "^5.0.1",
+        "gulp-html-minifier-terser": "^7.1.0",
+        "gulp-include": "^2.4.1",
+        "gulp-preprocess": "^4.0.2",
+        "gulp-rename": "^2.0.0",
+        "gulp-uglify": "^3.0.2",
+        "gulp-zip": "^6.0.0",
+        "heap": "^0.2.7",
+        "jsdom": "^23.0.1",
+        "mocha": "^10.2.0",
+        "nyc": "^15.1.0",
+        "ora": "^5.4.1",
+        "puppeteer": "^18.2.1",
+        "readline-sync": "^1.4.10",
+        "uuid": "^9.0.1",
+        "yaml": "^2.3.4"
+    }
 }
