@@ -12,6 +12,7 @@ import readlineSync from "readline-sync";
 import fs from "fs";
 import zip from "gulp-zip";
 import { v4 as uuidv4 } from "uuid";
+import include from "gulp-include";
 // import debug from "gulp-debug";
 
 function popupJS() {
@@ -71,16 +72,18 @@ function themeJS() {
 }
 
 function popupHTMLDev() {
-    return src(["src/popup/popup.html"])
+    return src(["src/popup/html/popup.html"])
         .pipe(preprocess({ context: { DEV: true } }))
+        .pipe(include())
         .pipe(rename("popup.min.html"))
         .pipe(htmlmin({ collapseWhitespace: true, removeComments: true }))
         .pipe(dest("src/popup/min/"));
 }
 
 function popupHTML() {
-    return src(["src/popup/popup.html"])
+    return src(["src/popup/html/popup.html"])
         .pipe(preprocess({ context: { DEV: false } }))
+        .pipe(include())
         .pipe(rename("popup.min.html"))
         .pipe(htmlmin({ collapseWhitespace: true, removeComments: true }))
         .pipe(dest("src/popup/min/"));
