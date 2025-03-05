@@ -1,3 +1,22 @@
+"""
+This script is used to release the extension for Chrome and Firefox.
+
+It will copy the files from the root directory to the output directory and
+zip the output directory into a zip file.
+
+The output directory is ``{root}/extra/archives``.
+
+The Chrome zip file is written to ``{out_dir}/chrome-{version}.zip``.
+The Firefox zip file is written to ``{out_dir}/firefox-{version}.zip``.
+
+Only the files in the ``src`` directory are copied to the output directory.
+
+The ``LICENSE`` file and the ``manifest.json`` file are copied to the output
+directory.
+
+The ``icons`` directory is copied to the output directory.
+"""
+
 import json
 import os
 import sys
@@ -93,7 +112,7 @@ def update_ffx_manifest(manifest, out_dir):
 
 if __name__ == "__main__":
     parser = ArgumentParser()
-    parser.add_argument("--force", action="store_true", help="Overwrite existing files")
+    parser.add_argument("--force", action="store_true", help="Force overwrite")
     args = parser.parse_args()
 
     # folders which will be copied from ``{root}/{folder}`` to ``{out}/{folder}``
@@ -121,28 +140,30 @@ if __name__ == "__main__":
     with tempfile.TemporaryDirectory() as tmp:
         tmp_dir = Path(tmp) / "chrome"
         copy_files(root, tmp_dir, folders, files)
-        tmp_chr = zip_dir(tmp_dir, version)
-        chr_candidate = out_chr / tmp_chr.name
+        tmp_archive = zip_dir(tmp_dir, version)
+        chr_candidate = out_chr / tmp_archive.name
         if chr_candidate.exists():
-            if not args.force and "y" not in input(
-                f"{chr_candidate} already exists. Overwrite? [y/N] "
-            ):
-                sys.exit(1)
-            chr_candidate.unlink()
-        tmp_chr.rename(chr_candidate)
+            if not args.force:
+                if "y" not in input(
+                    f"{chr_candidate} already exists. Overwrite? [y/N] "
+                ):
+                    sys.exit(1)
+        chr_candidate.unlink()
+        tmp_archive.rename(chr_candidate)
 
     with tempfile.TemporaryDirectory() as tmp:
         tmp_dir = Path(tmp) / "firefox"
         copy_files(root, tmp_dir, folders, files)
         update_ffx_manifest(manifest_ffx, tmp_dir)
-        tmp_ffx = zip_dir(tmp_dir, version)
-        ffx_candidate = out_ffx / tmp_ffx.name
+        tmp_archive = zip_dir(tmp_dir, version)
+        ffx_candidate = out_ffx / tmp_archive.name
         if ffx_candidate.exists():
-            if not args.force and "y" not in input(
-                f"{ffx_candidate} already exists. Overwrite? [y/N] "
-            ):
-                sys.exit(1)
-            ffx_candidate.unlink()
-        tmp_ffx.rename(ffx_candidate)
+            if not args.force:
+                if "y" not in input(
+                    f"{ffx_candidate} already exists. Overwrite? [y/N] "
+                ):
+                    sys.exit(1)
+        ffx_candidate.unlink()
+        tmp_archive.rename(ffx_candidate)
 
     print(f"\nDone in {out}")
