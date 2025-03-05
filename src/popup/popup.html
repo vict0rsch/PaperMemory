@@ -1698,6 +1698,24 @@
                             You disabled this paper source in the options page
                         </li>
                         <li style="margin-top: 6px">
+                            On <strong>Firefox</strong>, content scripts are not
+                            triggered on pdfs.
+                            <ul>
+                                <li>
+                                    This is not something I can do anything about, it's
+                                    a design choice by Firefox developers.
+                                </li>
+                                <li>
+                                    The extension would work on the paper's
+                                    <i>abstract</i>
+                                </li>
+                                <li>
+                                    Trigger the extension manually by clicking on the
+                                    "Try manual trigger" button in the popup.
+                                </li>
+                            </ul>
+                        </li>
+                        <li style="margin-top: 6px">
                             You deleted the paper (refresh the page to add it back)
                         </li>
                         <li style="margin-top: 6px">
@@ -1708,19 +1726,6 @@
                         <li style="margin-top: 6px">
                             There was an error parsing the paper's data (you can check
                             the console if you think this is an issue)
-                        </li>
-                        <li style="margin-top: 6px">
-                            On Firefox, content scripts are not triggered on pdfs.
-                            <ul>
-                                <li>
-                                    This is not something I can do anything about, it's
-                                    a design choice by Firefox developers.
-                                </li>
-                                <li>
-                                    The extension would work on the paper's
-                                    <i>abstract</i>
-                                </li>
-                            </ul>
                         </li>
                         <li style="margin-top: 6px">
                             You are actually not on a paper page but the extension made
