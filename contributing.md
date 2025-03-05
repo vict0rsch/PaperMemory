@@ -46,6 +46,10 @@ Once you load the local extension as an unpackaged extension, changes that affec
 
 **Content scripts** however, are loaded and not binded to the source so you _have to_ refresh the extension in the settings (and then any web page you want to see changes on) for those to be taken into account.
 
+## Loading in Firefox
+
+https://extensionworkshop.com/documentation/develop/temporary-installation-in-firefox/
+
 ## Conventions
 
 ### File structure
