@@ -1,0 +1,50 @@
+<div id="modal-noPaper-content" class="popup-modal-content">
+    <h4 style="font-size: 1rem">
+        This paper is not in your memory, and it can be for one of many reasons:
+    </h4>
+    <ul>
+        <li style="margin-top: 6px">
+            You disabled paper recording from non-pdf pages in the menu
+        </li>
+        <li style="margin-top: 6px">
+            You disabled this paper source in the options page
+        </li>
+        <li style="margin-top: 6px">
+            On <strong>Firefox</strong>, content scripts are not triggered on pdfs.
+            <ul>
+                <li>
+                    This is not something I can do anything about, it's a design choice
+                    by Firefox developers.
+                </li>
+                <li>
+                    The extension would work on the paper's
+                    <i>abstract</i>
+                </li>
+                <li>
+                    Trigger the extension manually by clicking on the "Try manual
+                    trigger" button in the popup.
+                </li>
+            </ul>
+        </li>
+        <li style="margin-top: 6px">
+            You deleted the paper (refresh the page to add it back)
+        </li>
+        <li style="margin-top: 6px">
+            Your memory was synced and the remote data did not have the paper (it was
+            deleted on another device) (refresh the page to add it back)
+        </li>
+        <li style="margin-top: 6px">
+            There was an error parsing the paper's data (you can check the console if
+            you think this is an issue)
+        </li>
+        <li style="margin-top: 6px">
+            You are actually not on a paper page but the extension made a mistake
+            thinking so, just ignore this.
+        </li>
+        <p style="font-size: 0.9rem">
+            Open an issue on
+            <a href="https://github.com/vict0rsch/PaperMemory/issues">Github</a>
+            if you think you encountered a malfunction.
+        </p>
+    </ul>
+</div>
