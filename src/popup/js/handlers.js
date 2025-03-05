@@ -371,6 +371,9 @@ const handleMemorySwitchClick = () => {
 
 const handlePopupKeydown = async (e) => {
     let key = e.key;
+    const isCtrlOrMeta = e.ctrlKey || e.metaKey;
+    const isEnter = key === "Enter" && !isCtrlOrMeta;
+    const isCmdEnter = key === "Enter" && isCtrlOrMeta;
     if (
         [
             "Backspace",
@@ -411,6 +414,18 @@ const handlePopupKeydown = async (e) => {
             if (el) closeMenu();
         }
         return;
+    }
+
+    if (isCmdEnter) {
+        if (eventId(e)) {
+            const id = eventId(e);
+            const div = findEl({ paperId: id, memoryItemClass: "extended-item" });
+            const isVisible = div.style.display !== "none";
+            const doneButton = div.querySelector(".cancel-note-form");
+            if (doneButton && isVisible) {
+                doneButton.click();
+            }
+        }
     }
 
     // Menu is closed
@@ -457,7 +472,7 @@ const handlePopupKeydown = async (e) => {
 
     // Memory is open
 
-    if (key === "Enter") {
+    if (isEnter) {
         // enable Enter on favorites and sort arrows
         const favoriteBtn = querySelector("#filter-favorites:focus");
         if (favoriteBtn) {
@@ -482,7 +497,7 @@ const handlePopupKeydown = async (e) => {
         }
     }
 
-    if (key === "Enter") {
+    if (isEnter) {
         key = await getDefaultKeyboardAction();
     }
 
