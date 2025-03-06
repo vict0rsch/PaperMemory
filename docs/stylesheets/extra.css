@@ -13,7 +13,32 @@
     max-width: 600px;
     width: 100%;
 }
-
+#keyboard-nav {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+}
+/* #keyboard-nav img {
+    max-width: 600px;
+    width: 100%;
+} */
+#keyboard-nav-text {
+    max-width: 50%;
+    width: 100%;
+    min-width: 300px;
+}
+#keyboard-nav p {
+    max-width: 50%;
+    width: 100%;
+    min-width: 300px;
+}
+/* Responsive layout - makes a one column layout instead of a two-column layout */
+@media (max-width: 800px) {
+    #keyboard-nav-text,
+    #keyboard-nav p {
+        max-width: 100%;
+    }
+}
 .md-grid {
     max-width: 1300px;
 }
