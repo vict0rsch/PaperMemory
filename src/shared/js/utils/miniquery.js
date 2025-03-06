@@ -18,7 +18,6 @@ const findEl = ({ element, paperId, memoryItemClass }) => {
         return null;
     }
     if (!memoryItemClass.startsWith(".")) memoryItemClass = "." + memoryItemClass;
-    paperId = paperId.replaceAll(".", "\\.");
     const itemContainer = findEl({ element: `memory-container--${paperId}` });
     if (!itemContainer) {
         warn(`findEl: memory-container--${paperId} not found`);
