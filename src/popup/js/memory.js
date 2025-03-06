@@ -84,12 +84,21 @@ const updatePopupPaperNoMemory = async (url) => {
             </div>
         </div>
     `;
-    const allowManualParsing =
-        navigator.userAgent.search("Firefox") > -1 || global.state.prefs.checkNoAuto;
-
+    const isFirefox = navigator.userAgent.search("Firefox") > -1;
+    const allowManualParsing = isFirefox || global.state.prefs.checkNoAuto;
+    let ff_warning = "";
+    if (isFirefox) {
+        ff_warning = /* html */ `
+            <div id="ff-warning">
+                Firefox does not support content scripts on PDFs.<br/>
+                Use the button below to parse this paper.<br/>
+            </div>
+        `;
+    }
     if (allowManualParsing) {
         noPaperHtml += /* html */ `
             <div id="manual-trigger-wrapper">
+                ${ff_warning}
                 <div id="manual-trigger-btn">Try manual trigger</div>
                 <div id="manual-loader-container" class="pm-container" style='display: none;'>
                     <div class="sk-folding-cube">
