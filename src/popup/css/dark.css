@@ -222,6 +222,9 @@ button:not(.select2-selection__choice__remove):hover,
 .memory-container svg {
     stroke: var(--buttonBackground);
 }
+.alphaxiv-icon {
+    fill: var(--buttonBackground);
+}
 .memory-item-feedback {
     color: var(--green);
 }

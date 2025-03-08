@@ -110,14 +110,14 @@ const getMemoryItemHTML = (paper) => {
         </div>`;
     }
 
-    let vanity = "";
-    if (global.state.prefs.checkVanity && paper.source === "arxiv") {
-        vanity = /*html*/ `
+    let alphaxiv = "";
+    if (global.state.prefs.checkAlphaxiv && paper.source === "arxiv") {
+        alphaxiv = /*html*/ `
         <div
-            class="memory-item-vanity memory-item-svg-div"
-            title="Open on Vanity"
+            class="memory-item-alphaxiv memory-item-svg-div"
+            title="Open on AlphaXiv"
         >
-            ${tablerSvg("vanity", "", ["memory-icon-svg"])}
+            ${tablerSvg("alphaxiv", "", ["memory-icon-svg", "alphaxiv-icon"])}
         </div>`;
     }
 
@@ -205,9 +205,9 @@ const getMemoryItemHTML = (paper) => {
                 ${openLocalDiv}
                 ${openLinkDiv}
                 ${huggingface}
-                ${scirate}
-                ${vanity}
+                ${alphaxiv}
                 ${ar5iv}
+                ${scirate}
 
 
                 <div
@@ -405,21 +405,29 @@ const getPopupPaperIconsHTML = (paper, currentUrl, is) => {
         </div>`;
     }
 
-    let vanity = "";
-    if (global.state.prefs.checkVanity && paper.source === "arxiv") {
-        vanity = /*html*/ `
+    let alphaxiv = "";
+    if (
+        global.state.prefs.checkAlphaxiv &&
+        paper.source === "arxiv" &&
+        !currentUrl.includes("alphaxiv.org")
+    ) {
+        alphaxiv = /*html*/ `
         <div
             tabindex="0"
             class="memory-item-svg-div"
-            id="popup-memory-item-vanity--${id}"
-            title="Open on Vanity"
+            id="popup-memory-item-alphaxiv--${id}"
+            title="Open on AlphaXiv"
         >
-            ${tablerSvg("vanity", "", ["popup-click-svg"])}
+            ${tablerSvg("alphaxiv", "", ["popup-click-svg", "alphaxiv-icon"])}
         </div>`;
     }
 
     let ar5iv = "";
-    if (global.state.prefs.checkAr5iv && paper.source === "arxiv") {
+    if (
+        global.state.prefs.checkAr5iv &&
+        paper.source === "arxiv" &&
+        !currentUrl.includes("ar5iv.labs.arxiv.org")
+    ) {
         ar5iv = /*html*/ `
         <div
             tabindex="0"
@@ -432,7 +440,11 @@ const getPopupPaperIconsHTML = (paper, currentUrl, is) => {
     }
 
     let huggingface = "";
-    if (global.state.prefs.checkHuggingface && paper.source === "arxiv") {
+    if (
+        global.state.prefs.checkHuggingface &&
+        paper.source === "arxiv" &&
+        !currentUrl.includes("huggingface.co/papers/")
+    ) {
         huggingface = /*html*/ `
         <div
             tabindex="0"
@@ -484,7 +496,9 @@ const getPopupPaperIconsHTML = (paper, currentUrl, is) => {
         ${paperLink}
         ${huggingface}
         ${scirate}
-        ${vanity} ${ar5iv}
+        ${alphaxiv}
+        ${ar5iv}
+
         <div
             tabindex="0"
             class="memory-item-svg-div"

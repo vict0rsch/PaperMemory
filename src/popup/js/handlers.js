@@ -22,11 +22,11 @@ const handleOpenItemScirate = (e) => {
     global.state.papers[id] = updatePaperVisits(global.state.papers[id]);
     setStorage("papers", global.state.papers);
 };
-const handleOpenItemVanity = (e) => {
+const handleOpenItemAlphaxiv = (e) => {
     const id = eventId(e);
     const arxivId = arxivIdFromPaperID(global.state.papers[id].id);
-    const vanityURL = `https://www.arxiv-vanity.com/papers/${arxivId}`;
-    focusExistingOrCreateNewCodeTab(vanityURL);
+    const alphaxivURL = `https://alphaxiv.org/abs/${arxivId}`;
+    focusExistingOrCreateNewCodeTab(alphaxivURL);
     global.state.papers[id] = updatePaperVisits(global.state.papers[id]);
     setStorage("papers", global.state.papers);
 };

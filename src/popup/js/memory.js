@@ -698,8 +698,8 @@ const displayMemoryTable = (pagination = 0) => {
     addEventToClass(".memory-item-link", "click", handleOpenItemLink);
     // Open on Scirate
     addEventToClass(".memory-item-scirate", "click", handleOpenItemScirate);
-    // Open on Arxiv Vanity
-    addEventToClass(".memory-item-vanity", "click", handleOpenItemVanity);
+    // Open on Alphaxiv
+    addEventToClass(".memory-item-alphaxiv", "click", handleOpenItemAlphaxiv);
     // Open on Ar5iv
     addEventToClass(".memory-item-ar5iv", "click", handleOpenItemAr5iv);
     // Open on Huggingface Papers

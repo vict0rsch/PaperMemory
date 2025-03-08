@@ -359,7 +359,7 @@ const popupMain = async (url, is, manualTrigger = false, tab = null) => {
         let extraDivWidth = 0;
         for (const p of [
             "checkScirate",
-            "checkVanity",
+            "checkAlphaxiv",
             "checkAr5iv",
             "checkHuggingface",
         ]) {
@@ -401,10 +401,10 @@ const popupMain = async (url, is, manualTrigger = false, tab = null) => {
             chrome.tabs.update({ url: scirateURL });
             window.close();
         });
-        addListener(`popup-memory-item-vanity--${id}`, "click", () => {
+        addListener(`popup-memory-item-alphaxiv--${id}`, "click", () => {
             const arxivId = arxivIdFromPaperID(paper.id);
-            const vanityURL = `https://www.arxiv-vanity.com/papers/${arxivId}`;
-            chrome.tabs.update({ url: vanityURL });
+            const alphaxivURL = `https://alphaxiv.org/abs/${arxivId}`;
+            chrome.tabs.update({ url: alphaxivURL });
             window.close();
         });
         addListener(`popup-memory-item-ar5iv--${id}`, "click", () => {
