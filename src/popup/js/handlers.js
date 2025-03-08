@@ -389,6 +389,10 @@ const handlePopupKeydown = async (e) => {
             "p",
             "t",
             "d",
+            "5",
+            "f",
+            "x",
+            "s",
         ].indexOf(key) < 0
     ) {
         return;
@@ -563,6 +567,30 @@ const handlePopupKeydown = async (e) => {
         // copy bibtex
         dispatch(
             localFindEl({ id, paperItem, memoryItemClass: "memory-item-bibtex" }),
+            "click"
+        );
+    } else if (key === "5") {
+        // copy pdf link
+        dispatch(
+            localFindEl({ id, paperItem, memoryItemClass: "memory-item-ar5iv" }),
+            "click"
+        );
+    } else if (key === "x") {
+        // copy pdf link
+        dispatch(
+            localFindEl({ id, paperItem, memoryItemClass: "memory-item-alphaxiv" }),
+            "click"
+        );
+    } else if (key === "f") {
+        // copy pdf link
+        dispatch(
+            localFindEl({ id, paperItem, memoryItemClass: "memory-item-huggingface" }),
+            "click"
+        );
+    } else if (key === "s") {
+        // copy pdf link
+        dispatch(
+            localFindEl({ id, paperItem, memoryItemClass: "memory-item-scirate" }),
             "click"
         );
     } else if (key === "h") {
