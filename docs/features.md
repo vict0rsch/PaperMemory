@@ -77,7 +77,7 @@ Whenever possible, PaperMemory queries the API the provider offers. If they don'
 
     * Arxiv
       * PaperMemory will try to find if a pre-print has been published and create a corresponding `note` to the paper (see [preprints](#preprint-matching))
-      * Also detects and matches papers from [huggingface.co/papers](https://huggingface.co/papers), [arxiv-vanity.com](https://arxiv-vanity.com), [ar5iv.org](https://ar5iv.org) and [scirate.com/](https://scirate.com/)
+      * Also detects and matches papers from [huggingface.co/papers](https://huggingface.co/papers), [AlphaXiv](https://alphaxiv.org), [ar5iv.org](https://ar5iv.org) and [scirate.com/](https://scirate.com/)
     * BioRxiv
     * NeurIPS
     * Open Review (ICLR etc.)

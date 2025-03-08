@@ -78,9 +78,9 @@ The following :fontawesome-solid-toggle-on: items are displayed in PaperMemory's
 
 : Add a :tabler-scirate: icon to your papers to open directly on [SciRate](https://scirate.com).
 
-`Add a link to arXiv Vanity in the popup`
+`Add a link to AlphaXiv in the popup`
 
-: Add a :tabler-arxiv-vanity: icon to your papers to open directly on [ArXiv Vanity](https://www.arxiv-vanity.com/).
+: Add a :material-alpha: icon to your papers to open directly on [AlphaXiv](https://alphaxiv.org).
 
 `Add a link to ar5iv in the popup`
 
