@@ -160,6 +160,30 @@ const svg = (name) => {
     }
 };
 
+const makePaperMemoryHTMLDiv = (paper) => {
+    return paper.venue
+        ? /*html*/ `
+         <div 
+            id="pm-container"
+            style="position: absolute; top: 10px; left: 50%; transform: translateX(-50%); font-family: 'Noto Sans','Noto Sans Fallback',sans-serif; font-size: 0.8rem;"
+        >
+            <div 
+                style="display: flex; justify-content: center; align-items: center;" 
+                id="pm-venue"
+            >
+                <span id="pm-venue-name">${paper.venue}</span>
+                <span id="pm-venue-year">${bibtexToObject(paper.bibtex).year}</span>
+            </div>
+            <p
+                style="text-align: center; font-size: 12px; color: #666; margin: 0;"
+            >
+                (PaperMemory)
+            </p>
+         </div>
+         `
+        : "";
+};
+
 const handleDefaultAction = async () => {
     const action = await getDefaultKeyboardAction();
     let id;
@@ -829,5 +853,9 @@ const tryArxivDisplay = async ({
     paper = results[0];
     if (paper) {
         tryArxivDisplay({ url, paper, preprintsPromise });
+        if (url.match(/ar5iv\.labs\.arxiv\.org/)) {
+            const pmDiv = makePaperMemoryHTMLDiv(paper);
+            document.body.insertAdjacentHTML("afterbegin", pmDiv);
+        }
     }
 })();
