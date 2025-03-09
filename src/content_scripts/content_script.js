@@ -160,6 +160,63 @@ const svg = (name) => {
     }
 };
 
+const handleDefaultAction = async () => {
+    const action = await getDefaultKeyboardAction();
+    let id;
+    try {
+        id = await parseIdFromUrl(window.location.href);
+    } catch (e) {
+        console.log("Unknown url:", window.location.href);
+    }
+    if (!id) return;
+    const e = dummyEvent(id);
+    const paper = global.state.papers[id];
+    let text;
+    if (!paper) return;
+    switch (action) {
+        case "o":
+            handleOpenItemLink(e);
+            break;
+        case "c":
+            handleCopyPDFLink(e);
+            text = "Link to paper copied!";
+            break;
+        case "m":
+            handleCopyMarkdownLink(e);
+            text = "Markdown link copied!";
+            break;
+        case "b":
+            handleCopyBibtex(e);
+            text = "Bibtex citation copied!";
+            break;
+        case "h":
+            handleCopyHyperLink(e);
+            text = "Hyperlink copied!";
+            break;
+        case "d":
+            console.log("Invalid action:", action);
+            break;
+        case "e":
+            console.log("Invalid action:", action);
+            break;
+        case "5":
+            handleOpenItemAr5iv(e);
+            break;
+        case "f":
+            handleOpenItemHuggingface(e);
+            break;
+        case "x":
+            handleOpenItemAlphaxiv(e);
+            break;
+        case "s":
+            handleOpenItemScirate(e);
+            break;
+        default:
+            warn("Unknown action:", action);
+    }
+    text && feedback(text);
+};
+
 /** Whether or not to ignore the current paper based on its `is` object
  * and the dictionary of sources to ignore
  * @param {object} is The `is` object of the current paper
@@ -727,6 +784,8 @@ const tryArxivDisplay = async ({
                     preprints: preprintsResolve,
                 },
             });
+        } else if (request.message === "defaultAction") {
+            handleDefaultAction();
         }
     });
 
