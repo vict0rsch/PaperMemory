@@ -345,6 +345,14 @@ const downloadTextFile = (content, fileName, contentType) => {
     a.click();
 };
 
+const dummyEvent = (id) => {
+    return {
+        target: {
+            closest: () => ({ id: `memory-container--${id}` }),
+        },
+    };
+};
+
 /**
  * Get the id of a paper from a click event inside a .memory-container for
  * a memory item.
