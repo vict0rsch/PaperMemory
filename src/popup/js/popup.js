@@ -428,14 +428,14 @@ const popupMain = async (url, is, manualTrigger = false, tab = null) => {
         addListener(`popup-code-link`, "click", async () => {
             const codeLink = findEl({ element: `popup-code-link` }).textContent;
             if (codeLink) {
-                await focusExistingOrCreateNewCodeTab(codeLink);
+                await focusExistingOrCreateNewURLTab(codeLink);
                 global.close && global.close();
             }
         });
         addListener(`popup-website-url`, "click", async (e) => {
             const url = findEl({ element: `popup-website-url` }).textContent;
             if (url) {
-                await focusExistingOrCreateNewCodeTab(url);
+                await focusExistingOrCreateNewURLTab(url);
                 // global.close && global.close();
             }
         });
@@ -451,7 +451,7 @@ const popupMain = async (url, is, manualTrigger = false, tab = null) => {
                 id,
                 textToCopy: link,
                 feedbackText: `${text} link copied!`,
-                isPopup: true,
+                context: "popup",
             });
         });
         addListener(`popup-memory-item-copy-hyperlink--${id}`, "click", async () => {
@@ -466,7 +466,7 @@ const popupMain = async (url, is, manualTrigger = false, tab = null) => {
                 id,
                 textToCopy: link,
                 feedbackText: `${text} hyperlink copied!`,
-                isPopup: true,
+                context: "popup",
                 hyperLinkTitle: paper.title,
             });
         });
@@ -482,7 +482,7 @@ const popupMain = async (url, is, manualTrigger = false, tab = null) => {
                 id,
                 textToCopy: md,
                 feedbackText: `Markdown ${text} copied!`,
-                isPopup: true,
+                context: "popup",
             });
         });
         addListener(`popup-memory-item-bibtex--${id}`, "click", async () => {
@@ -499,7 +499,7 @@ const popupMain = async (url, is, manualTrigger = false, tab = null) => {
                 id,
                 textToCopy: bibtex,
                 feedbackText: "Bibtex citation copied!",
-                isPopup: true,
+                context: "popup",
             });
         });
         addListener(`popup-memory-item-openLocal--${id}`, "click", async () => {

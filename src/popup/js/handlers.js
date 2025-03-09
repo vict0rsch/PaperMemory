@@ -18,7 +18,7 @@ const handleOpenItemScirate = (e) => {
     const id = eventId(e);
     const arxivId = arxivIdFromPaperID(global.state.papers[id].id);
     const scirateURL = `https://scirate.com/arxiv/${arxivId}`;
-    focusExistingOrCreateNewCodeTab(scirateURL);
+    focusExistingOrCreateNewURLTab(scirateURL);
     global.state.papers[id] = updatePaperVisits(global.state.papers[id]);
     setStorage("papers", global.state.papers);
 };
@@ -26,7 +26,7 @@ const handleOpenItemAlphaxiv = (e) => {
     const id = eventId(e);
     const arxivId = arxivIdFromPaperID(global.state.papers[id].id);
     const alphaxivURL = `https://alphaxiv.org/abs/${arxivId}`;
-    focusExistingOrCreateNewCodeTab(alphaxivURL);
+    focusExistingOrCreateNewURLTab(alphaxivURL);
     global.state.papers[id] = updatePaperVisits(global.state.papers[id]);
     setStorage("papers", global.state.papers);
 };
@@ -34,7 +34,7 @@ const handleOpenItemAr5iv = (e) => {
     const id = eventId(e);
     const arxivId = arxivIdFromPaperID(global.state.papers[id].id);
     const ar5ivURL = `https://ar5iv.labs.arxiv.org/html/${arxivId}`;
-    focusExistingOrCreateNewCodeTab(ar5ivURL);
+    focusExistingOrCreateNewURLTab(ar5ivURL);
     global.state.papers[id] = updatePaperVisits(global.state.papers[id]);
     setStorage("papers", global.state.papers);
 };
@@ -42,7 +42,7 @@ const handleOpenItemHuggingface = (e) => {
     const id = eventId(e);
     const arxivId = arxivIdFromPaperID(global.state.papers[id].id);
     const huggingFaceURL = `https://huggingface.co/papers/${arxivId}`;
-    focusExistingOrCreateNewCodeTab(huggingFaceURL);
+    focusExistingOrCreateNewURLTab(huggingFaceURL);
     global.state.papers[id] = updatePaperVisits(global.state.papers[id]);
     setStorage("papers", global.state.papers);
 };
@@ -50,7 +50,7 @@ const handleOpenItemHuggingface = (e) => {
 const handleOpenItemCodeLink = async (e) => {
     const id = eventId(e);
     const url = global.state.papers[id].codeLink;
-    await focusExistingOrCreateNewCodeTab(url);
+    await focusExistingOrCreateNewURLTab(url);
 };
 
 const handleOpenItemWebsiteURL = async (e) => {
@@ -58,7 +58,7 @@ const handleOpenItemWebsiteURL = async (e) => {
     const url = global.state.papers[id].pdfLink;
     global.state.papers[id] = updatePaperVisits(global.state.papers[id]);
     await setStorage("papers", global.state.papers);
-    await focusExistingOrCreateNewCodeTab(url);
+    await focusExistingOrCreateNewURLTab(url);
 };
 
 const handleCopyMarkdownLink = async (e) => {
@@ -610,7 +610,7 @@ const handlePopupKeydown = async (e) => {
             id,
             textToCopy: title,
             feedbackText: "Title copied!",
-            isPopup: !Boolean(paperItem),
+            context: Boolean(paperItem) ? "memory" : "popup",
         });
     } else if (key === "d") {
         // display id
