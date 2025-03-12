@@ -409,9 +409,23 @@ const popupMain = async (url, is, manualTrigger = false, tab = null) => {
         });
         addListener(`popup-memory-item-ar5iv--${id}`, "click", () => {
             const arxivId = arxivIdFromPaperID(paper.id);
-            const ar5ivURL = `https://ar5iv.labs.arxiv.org/html/${arxivId}`;
-            chrome.tabs.update({ url: ar5ivURL });
-            window.close();
+            const paperYear = 2000 + parseInt(arxivId.split(".")[0].slice(0, 2), 10);
+            const paperMonth = parseInt(arxivId.split(".")[0].slice(-2), 10);
+            const currentYear = new Date().getFullYear();
+            const currentMonth = new Date().getMonth() + 1;
+            if (paperYear === currentYear && paperMonth === currentMonth) {
+                showPopupModal("ar5iv");
+                addListener("ar5iv-modal-ok-button", "click", () => {
+                    const ar5ivURL = `https://ar5iv.labs.arxiv.org/html/${arxivId}`;
+                    chrome.tabs.update({ url: ar5ivURL });
+                    window.close();
+                });
+                addListener("ar5iv-modal-cancel-button", "click", closePopupModal);
+            } else {
+                const ar5ivURL = `https://ar5iv.labs.arxiv.org/html/${arxivId}`;
+                chrome.tabs.update({ url: ar5ivURL });
+                window.close();
+            }
         });
         addListener(`popup-memory-item-huggingface--${id}`, "click", () => {
             const arxivId = arxivIdFromPaperID(paper.id);

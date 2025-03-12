@@ -34,9 +34,24 @@ const handleOpenItemAr5iv = (e) => {
     const id = eventId(e);
     const arxivId = arxivIdFromPaperID(global.state.papers[id].id);
     const ar5ivURL = `https://ar5iv.labs.arxiv.org/html/${arxivId}`;
-    focusExistingOrCreateNewURLTab(ar5ivURL);
-    global.state.papers[id] = updatePaperVisits(global.state.papers[id]);
-    setStorage("papers", global.state.papers);
+    const paperMonth = parseInt(arxivId.split(".")[0].slice(-2), 10);
+    const paperYear = 2000 + parseInt(arxivId.split(".")[0].slice(0, 2), 10);
+    const currentMonth = new Date().getMonth() + 1;
+    const currentYear = new Date().getFullYear();
+    if (paperYear === currentYear && paperMonth === currentMonth) {
+        showPopupModal("ar5iv");
+        addListener("ar5iv-modal-ok-button", "click", () => {
+            focusExistingOrCreateNewURLTab(ar5ivURL);
+            global.state.papers[id] = updatePaperVisits(global.state.papers[id]);
+            setStorage("papers", global.state.papers);
+            closePopupModal();
+        });
+        addListener("ar5iv-modal-cancel-button", "click", closePopupModal);
+    } else {
+        focusExistingOrCreateNewURLTab(ar5ivURL);
+        global.state.papers[id] = updatePaperVisits(global.state.papers[id]);
+        setStorage("papers", global.state.papers);
+    }
 };
 const handleOpenItemHuggingface = (e) => {
     const id = eventId(e);
