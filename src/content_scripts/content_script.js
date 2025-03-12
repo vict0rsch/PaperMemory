@@ -854,8 +854,11 @@ const tryArxivDisplay = async ({
     if (paper) {
         tryArxivDisplay({ url, paper, preprintsPromise });
         if (url.match(/ar5iv\.labs\.arxiv\.org/)) {
+            log("Adding PaperMemory to ar5iv.labs.arxiv.org");
             const pmDiv = makePaperMemoryHTMLDiv(paper);
-            document.body.insertAdjacentHTML("afterbegin", pmDiv);
+            setTimeout(() => {
+                document.body.insertAdjacentHTML("afterbegin", pmDiv);
+            }, 1000);
         }
     }
 })();
