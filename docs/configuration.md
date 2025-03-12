@@ -22,6 +22,9 @@ By default, and _if_ they are not already attributed, the following keyboard sho
 -   Trigger paper parsing
     -   :fontawesome-brands-apple: / :fontawesome-brands-windows: / :fontawesome-brands-linux: ▶️ ++ctrl+shift+"P"++
     -   Trigger the manual parsing of a paper if you have disabled automatic paper detection [in the menu](#disable-automatic-parsing).
+-   Execute the default action for the current paper
+    -   :fontawesome-brands-apple: / :fontawesome-brands-windows: / :fontawesome-brands-linux: ▶️ ++alt+shift+"E"++
+    -   This will not work if the current page is not a paper's page or the current action is not available for this paper (e.g. trying to open the AlphaXiv page of a non-Arxiv paper).
 
 !!! info "Customization & Issues"
 
@@ -122,7 +125,7 @@ The following :fontawesome-solid-toggle-on: items are displayed in PaperMemory's
 
 ### Keyboard Default Action
 
-Whenever you focus a paper in your memory (through ++tab++ or click), it's border will be highlighted. This means you can now use the keyboard shortcuts described in the [Keyboard Navigation section](./features.md#keyboard-navigation).
+Whenever you focus a paper in your memory (through ++tab++ or click), its border will be highlighted. This means you can now use the keyboard shortcuts described in the [Keyboard Navigation section](./features.md#keyboard-navigation).
 
 From the Menu, you can also define a default keyboard shortcut to execute when typing ++enter++ on a paper.
 

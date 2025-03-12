@@ -238,14 +238,14 @@
         </p>
 
         <ul id="menu-keyboard-shortcuts">
-            <li><code>o</code> ↦ open the paper in a new tab.</li>
-            <li><code>c</code> ↦ copy the paper's link.</li>
-            <li><code>m</code> ↦ copy the paper's markdown link.</li>
-            <li><code>b</code> ↦ copy the paper's bibtex.</li>
-            <li><code>h</code> ↦ copy the paper's hyperlink.</li>
-            <li><code>d</code> ↦ show the paper's metadata.</li>
-            <li><code>e</code> ↦ edit the paper's metadata from the memory.</li>
-            <li><code>Backspace</code> ↦ delete the paper from the memory.</li>
+            <li><code>o</code> ↦ Open the paper in a new tab.</li>
+            <li><code>c</code> ↦ Copy the paper's link.</li>
+            <li><code>m</code> ↦ Copy the paper's markdown link.</li>
+            <li><code>b</code> ↦ Copy the paper's bibtex.</li>
+            <li><code>h</code> ↦ Copy the paper's hyperlink.</li>
+            <li><code>d</code> ↦ Show the paper's metadata.</li>
+            <li><code>e</code> ↦ Edit the paper's metadata from the memory.</li>
+            <li><code>Backspace</code> ↦ Delete the paper from the memory.</li>
             <p>
                 The following keys are available when enabled in the "User Interface
                 section" above:
@@ -261,17 +261,21 @@
             paper:
 
             <select id="memory-item-default-action">
-                <option value="o">Open paper link</option>
-                <option value="c">Copy Link</option>
-                <option value="m">Copy Markdown</option>
-                <option value="b">Copy Bibtex</option>
-                <option value="h">Copy Hyperlink</option>
-                <option value="d">Show paper's metadata</option>
                 <option value="e">Edit paper's metadata</option>
-                <option value="5">Copy Ar5iv Link</option>
-                <option value="x">Copy AlphaXiv Link</option>
-                <option value="f">Copy HuggingFace Link</option>
-                <option value="s">Copy SciRate Link</option>
+                <option value="d">Show paper's metadata</option>
+                <option value="o">Go to paper's page (PDF / Abstract)</option>
+                <optgroup label="Copy data to clipboard:">
+                    <option value="c">Copy Link</option>
+                    <option value="m">Copy Markdown</option>
+                    <option value="b">Copy Bibtex</option>
+                    <option value="h">Copy Hyperlink</option>
+                </optgroup>
+                <optgroup label="For ArXiv papers">
+                    <option value="5">Go to paper's Ar5iv page</option>
+                    <option value="x">Go to paper's AlphaXiv page</option>
+                    <option value="f">Go to paper's HuggingFace page</option>
+                    <option value="s">Go to paper's SciRate page</option>
+                </optgroup>
             </select>
         </p>
 

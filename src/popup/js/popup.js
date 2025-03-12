@@ -66,16 +66,21 @@ const showPopupModal = (name) => {
 
 const fillUserGuideShortcuts = () => {
     const ul = findEl({ element: "user-guide-shortcuts-ul" });
-    const shortcuts = findEl({ element: "menu-keyboard-shortcuts" }).querySelectorAll(
-        "li"
-    );
-    for (const shortcut of shortcuts) {
-        const key = shortcut.querySelector("code").textContent;
-        if (key === "e" || key.toLowerCase() === "backspace") {
+    const children = findEl({ element: "menu-keyboard-shortcuts" }).children;
+    for (const child of children) {
+        const key = child.querySelector("code")?.textContent;
+        if (key === "e" || key?.toLowerCase() === "backspace") {
             continue;
         }
-        const action = shortcut.textContent.replace(key, "").trim();
-        ul.innerHTML += `<li><code>${key}</code> ${action}</li>`;
+        if (child.nodeName === "P") {
+            child.style.fontSize = "0.9rem";
+            child.innerText =
+                'The following keys are available when enabled in the "User Interface" section of the Menu:';
+            child.style.marginBottom = "3px";
+            child.style.marginTop = "3px";
+            child.style.marginLeft = "-14px";
+        }
+        ul.innerHTML += child.outerHTML;
     }
 };
 

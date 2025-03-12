@@ -50,6 +50,9 @@ Navigate the Popup with your keyboard:
     -   ++x++ ↦ go to the paper's AlphaXiv page
     -   ++f++ ↦ go to the paper's HuggingFace page
     -   ++s++ ↦ go to the paper's SciRate page
+-   Set a default action for the current paper in the Menu
+    -   When a paper is focused in the popup: ++enter++ ↦ execute the default action for the current paper
+    -   Without opening PaperMemory's popup: ++alt+shift+e++ ↦ execute the default action for the current paper
 -   Close Memory, Menu, Modals (such as the user guide) or Popup - ++esc++ closes items up until you're back to the popup, at which point it will close the popup. - :material-alert-box-outline: This does not work in Firefox. The whole popup will close at any point with ++esc++.
 </div>
 <img src="../assets/keyboard-nav.png"/>
