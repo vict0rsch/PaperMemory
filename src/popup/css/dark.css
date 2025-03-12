@@ -223,7 +223,7 @@ button:not(.select2-selection__choice__remove):hover,
     stroke: var(--buttonBackground);
 }
 .alphaxiv-icon {
-    fill: var(--buttonBackground);
+    fill: var(--buttonBackground) !important;
 }
 .memory-item-feedback {
     color: var(--green);
@@ -245,9 +245,9 @@ button:not(.select2-selection__choice__remove):hover,
 #menu-switch-svg,
 .popup-click-svg,
 .memory-sort-arrow-svg {
-    color: var(--color) !important;
-    stroke: var(--color) !important;
-    fill: var(--background) !important;
+    color: var(--color);
+    stroke: var(--color);
+    fill: var(--background);
 }
 
 /*
