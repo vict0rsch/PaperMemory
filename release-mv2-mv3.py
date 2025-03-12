@@ -148,7 +148,7 @@ if __name__ == "__main__":
                     f"{chr_candidate} already exists. Overwrite? [y/N] "
                 ):
                     sys.exit(1)
-        chr_candidate.unlink()
+            chr_candidate.unlink()
         tmp_archive.rename(chr_candidate)
 
     with tempfile.TemporaryDirectory() as tmp:
@@ -163,7 +163,7 @@ if __name__ == "__main__":
                     f"{ffx_candidate} already exists. Overwrite? [y/N] "
                 ):
                     sys.exit(1)
-        ffx_candidate.unlink()
+            ffx_candidate.unlink()
         tmp_archive.rename(ffx_candidate)
 
     print(f"\nDone in {out}")
