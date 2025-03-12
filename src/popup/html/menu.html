@@ -111,11 +111,11 @@
         <input
             class="switch"
             type="checkbox"
-            id="checkVanity"
-            name="checkVanity"
-            value="checkVanity"
+            id="checkAlphaxiv"
+            name="checkAlphaxiv"
+            value="checkAlphaxiv"
         />
-        <label for="checkVanity">Add a link to arXiv Vanity in the popup</label
+        <label for="checkAlphaxiv">Add a link to AlphaXiv in the popup</label
         ><br /><br />
 
         <input
@@ -246,6 +246,14 @@
             <li><code>d</code> ↦ show the paper's metadata.</li>
             <li><code>e</code> ↦ edit the paper's metadata from the memory.</li>
             <li><code>Backspace</code> ↦ delete the paper from the memory.</li>
+            <p>
+                The following keys are available when enabled in the "User Interface
+                section" above:
+            </p>
+            <li><code>5</code> ↦ Go to a paper's Ar5iv page.</li>
+            <li><code>x</code> ↦ Go to a paper's AlphaXiv page.</li>
+            <li><code>f</code> ↦ Go to a paper's HuggingFace page.</li>
+            <li><code>s</code> ↦ Go to a paper's SciRate page.</li>
         </ul>
 
         <p>
@@ -260,6 +268,10 @@
                 <option value="h">Copy Hyperlink</option>
                 <option value="d">Show paper's metadata</option>
                 <option value="e">Edit paper's metadata</option>
+                <option value="5">Copy Ar5iv Link</option>
+                <option value="x">Copy AlphaXiv Link</option>
+                <option value="f">Copy HuggingFace Link</option>
+                <option value="s">Copy SciRate Link</option>
             </select>
         </p>
 

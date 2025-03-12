@@ -18,15 +18,15 @@ const handleOpenItemScirate = (e) => {
     const id = eventId(e);
     const arxivId = arxivIdFromPaperID(global.state.papers[id].id);
     const scirateURL = `https://scirate.com/arxiv/${arxivId}`;
-    focusExistingOrCreateNewCodeTab(scirateURL);
+    focusExistingOrCreateNewURLTab(scirateURL);
     global.state.papers[id] = updatePaperVisits(global.state.papers[id]);
     setStorage("papers", global.state.papers);
 };
-const handleOpenItemVanity = (e) => {
+const handleOpenItemAlphaxiv = (e) => {
     const id = eventId(e);
     const arxivId = arxivIdFromPaperID(global.state.papers[id].id);
-    const vanityURL = `https://www.arxiv-vanity.com/papers/${arxivId}`;
-    focusExistingOrCreateNewCodeTab(vanityURL);
+    const alphaxivURL = `https://alphaxiv.org/abs/${arxivId}`;
+    focusExistingOrCreateNewURLTab(alphaxivURL);
     global.state.papers[id] = updatePaperVisits(global.state.papers[id]);
     setStorage("papers", global.state.papers);
 };
@@ -34,15 +34,30 @@ const handleOpenItemAr5iv = (e) => {
     const id = eventId(e);
     const arxivId = arxivIdFromPaperID(global.state.papers[id].id);
     const ar5ivURL = `https://ar5iv.labs.arxiv.org/html/${arxivId}`;
-    focusExistingOrCreateNewCodeTab(ar5ivURL);
-    global.state.papers[id] = updatePaperVisits(global.state.papers[id]);
-    setStorage("papers", global.state.papers);
+    const paperMonth = parseInt(arxivId.split(".")[0].slice(-2), 10);
+    const paperYear = 2000 + parseInt(arxivId.split(".")[0].slice(0, 2), 10);
+    const currentMonth = new Date().getMonth() + 1;
+    const currentYear = new Date().getFullYear();
+    if (paperYear === currentYear && paperMonth === currentMonth) {
+        showPopupModal("ar5iv");
+        addListener("ar5iv-modal-ok-button", "click", () => {
+            focusExistingOrCreateNewURLTab(ar5ivURL);
+            global.state.papers[id] = updatePaperVisits(global.state.papers[id]);
+            setStorage("papers", global.state.papers);
+            closePopupModal();
+        });
+        addListener("ar5iv-modal-cancel-button", "click", closePopupModal);
+    } else {
+        focusExistingOrCreateNewURLTab(ar5ivURL);
+        global.state.papers[id] = updatePaperVisits(global.state.papers[id]);
+        setStorage("papers", global.state.papers);
+    }
 };
 const handleOpenItemHuggingface = (e) => {
     const id = eventId(e);
     const arxivId = arxivIdFromPaperID(global.state.papers[id].id);
     const huggingFaceURL = `https://huggingface.co/papers/${arxivId}`;
-    focusExistingOrCreateNewCodeTab(huggingFaceURL);
+    focusExistingOrCreateNewURLTab(huggingFaceURL);
     global.state.papers[id] = updatePaperVisits(global.state.papers[id]);
     setStorage("papers", global.state.papers);
 };
@@ -50,7 +65,7 @@ const handleOpenItemHuggingface = (e) => {
 const handleOpenItemCodeLink = async (e) => {
     const id = eventId(e);
     const url = global.state.papers[id].codeLink;
-    await focusExistingOrCreateNewCodeTab(url);
+    await focusExistingOrCreateNewURLTab(url);
 };
 
 const handleOpenItemWebsiteURL = async (e) => {
@@ -58,7 +73,7 @@ const handleOpenItemWebsiteURL = async (e) => {
     const url = global.state.papers[id].pdfLink;
     global.state.papers[id] = updatePaperVisits(global.state.papers[id]);
     await setStorage("papers", global.state.papers);
-    await focusExistingOrCreateNewCodeTab(url);
+    await focusExistingOrCreateNewURLTab(url);
 };
 
 const handleCopyMarkdownLink = async (e) => {
@@ -389,6 +404,10 @@ const handlePopupKeydown = async (e) => {
             "p",
             "t",
             "d",
+            "5",
+            "f",
+            "x",
+            "s",
         ].indexOf(key) < 0
     ) {
         return;
@@ -565,6 +584,30 @@ const handlePopupKeydown = async (e) => {
             localFindEl({ id, paperItem, memoryItemClass: "memory-item-bibtex" }),
             "click"
         );
+    } else if (key === "5") {
+        // copy pdf link
+        dispatch(
+            localFindEl({ id, paperItem, memoryItemClass: "memory-item-ar5iv" }),
+            "click"
+        );
+    } else if (key === "x") {
+        // copy pdf link
+        dispatch(
+            localFindEl({ id, paperItem, memoryItemClass: "memory-item-alphaxiv" }),
+            "click"
+        );
+    } else if (key === "f") {
+        // copy pdf link
+        dispatch(
+            localFindEl({ id, paperItem, memoryItemClass: "memory-item-huggingface" }),
+            "click"
+        );
+    } else if (key === "s") {
+        // copy pdf link
+        dispatch(
+            localFindEl({ id, paperItem, memoryItemClass: "memory-item-scirate" }),
+            "click"
+        );
     } else if (key === "h") {
         // copy hyperlink
         dispatch(
@@ -582,7 +625,7 @@ const handlePopupKeydown = async (e) => {
             id,
             textToCopy: title,
             feedbackText: "Title copied!",
-            isPopup: !Boolean(paperItem),
+            context: Boolean(paperItem) ? "memory" : "popup",
         });
     } else if (key === "d") {
         // display id

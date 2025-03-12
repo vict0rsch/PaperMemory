@@ -359,7 +359,7 @@ const popupMain = async (url, is, manualTrigger = false, tab = null) => {
         let extraDivWidth = 0;
         for (const p of [
             "checkScirate",
-            "checkVanity",
+            "checkAlphaxiv",
             "checkAr5iv",
             "checkHuggingface",
         ]) {
@@ -401,17 +401,31 @@ const popupMain = async (url, is, manualTrigger = false, tab = null) => {
             chrome.tabs.update({ url: scirateURL });
             window.close();
         });
-        addListener(`popup-memory-item-vanity--${id}`, "click", () => {
+        addListener(`popup-memory-item-alphaxiv--${id}`, "click", () => {
             const arxivId = arxivIdFromPaperID(paper.id);
-            const vanityURL = `https://www.arxiv-vanity.com/papers/${arxivId}`;
-            chrome.tabs.update({ url: vanityURL });
+            const alphaxivURL = `https://alphaxiv.org/abs/${arxivId}`;
+            chrome.tabs.update({ url: alphaxivURL });
             window.close();
         });
         addListener(`popup-memory-item-ar5iv--${id}`, "click", () => {
             const arxivId = arxivIdFromPaperID(paper.id);
-            const ar5ivURL = `https://ar5iv.labs.arxiv.org/html/${arxivId}`;
-            chrome.tabs.update({ url: ar5ivURL });
-            window.close();
+            const paperYear = 2000 + parseInt(arxivId.split(".")[0].slice(0, 2), 10);
+            const paperMonth = parseInt(arxivId.split(".")[0].slice(-2), 10);
+            const currentYear = new Date().getFullYear();
+            const currentMonth = new Date().getMonth() + 1;
+            if (paperYear === currentYear && paperMonth === currentMonth) {
+                showPopupModal("ar5iv");
+                addListener("ar5iv-modal-ok-button", "click", () => {
+                    const ar5ivURL = `https://ar5iv.labs.arxiv.org/html/${arxivId}`;
+                    chrome.tabs.update({ url: ar5ivURL });
+                    window.close();
+                });
+                addListener("ar5iv-modal-cancel-button", "click", closePopupModal);
+            } else {
+                const ar5ivURL = `https://ar5iv.labs.arxiv.org/html/${arxivId}`;
+                chrome.tabs.update({ url: ar5ivURL });
+                window.close();
+            }
         });
         addListener(`popup-memory-item-huggingface--${id}`, "click", () => {
             const arxivId = arxivIdFromPaperID(paper.id);
@@ -428,14 +442,14 @@ const popupMain = async (url, is, manualTrigger = false, tab = null) => {
         addListener(`popup-code-link`, "click", async () => {
             const codeLink = findEl({ element: `popup-code-link` }).textContent;
             if (codeLink) {
-                await focusExistingOrCreateNewCodeTab(codeLink);
+                await focusExistingOrCreateNewURLTab(codeLink);
                 global.close && global.close();
             }
         });
         addListener(`popup-website-url`, "click", async (e) => {
             const url = findEl({ element: `popup-website-url` }).textContent;
             if (url) {
-                await focusExistingOrCreateNewCodeTab(url);
+                await focusExistingOrCreateNewURLTab(url);
                 // global.close && global.close();
             }
         });
@@ -451,7 +465,7 @@ const popupMain = async (url, is, manualTrigger = false, tab = null) => {
                 id,
                 textToCopy: link,
                 feedbackText: `${text} link copied!`,
-                isPopup: true,
+                context: "popup",
             });
         });
         addListener(`popup-memory-item-copy-hyperlink--${id}`, "click", async () => {
@@ -466,7 +480,7 @@ const popupMain = async (url, is, manualTrigger = false, tab = null) => {
                 id,
                 textToCopy: link,
                 feedbackText: `${text} hyperlink copied!`,
-                isPopup: true,
+                context: "popup",
                 hyperLinkTitle: paper.title,
             });
         });
@@ -482,7 +496,7 @@ const popupMain = async (url, is, manualTrigger = false, tab = null) => {
                 id,
                 textToCopy: md,
                 feedbackText: `Markdown ${text} copied!`,
-                isPopup: true,
+                context: "popup",
             });
         });
         addListener(`popup-memory-item-bibtex--${id}`, "click", async () => {
@@ -499,7 +513,7 @@ const popupMain = async (url, is, manualTrigger = false, tab = null) => {
                 id,
                 textToCopy: bibtex,
                 feedbackText: "Bibtex citation copied!",
-                isPopup: true,
+                context: "popup",
             });
         });
         addListener(`popup-memory-item-openLocal--${id}`, "click", async () => {

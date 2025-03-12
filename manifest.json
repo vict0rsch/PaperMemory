@@ -37,6 +37,12 @@
                 "default": "Ctrl+Shift+S"
             },
             "description": "Download the pdf file for the current paper into your PaperMemoryStore"
+        },
+        "defaultAction": {
+            "suggested_key": {
+                "default": "Alt+Shift+E"
+            },
+            "description": "Execute PaperMemory's default action for the current paper (if available)"
         }
     },
     "options_ui": {
@@ -69,6 +75,8 @@
                 "src/shared/js/utils/state.js",
                 "src/shared/js/utils/bibtexParser.js",
                 "src/shared/js/utils/parsers.js",
+                "src/popup/js/handlers.js",
+                "src/popup/js/memory.js",
                 "src/content_scripts/content_script.js"
             ],
             "css": [

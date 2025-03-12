@@ -115,7 +115,7 @@ global.prefsCheckNames = [
     "checkDirectOpen",
     "checkStore",
     "checkScirate",
-    "checkVanity",
+    "checkAlphaxiv",
     "checkAr5iv",
     "checkHuggingface",
     "checkOfficialRepos",
@@ -133,7 +133,7 @@ global.prefsCheckDefaultFalse = [
     "checkDarkMode",
     "checkStore",
     "checkScirate",
-    "checkVanity",
+    "checkAlphaxiv",
     "checkAr5iv",
     "checkHuggingface",
     "checkOfficialRepos",
@@ -192,7 +192,8 @@ global.knownPaperPages = {
             "arxiv.org/pdf/",
             "scirate.com/arxiv/",
             "ar5iv.labs.arxiv.org/html/",
-            "arxiv-vanity.com/papers/",
+            "alphaxiv.org/abs/",
+            "alphaxiv.org/pdf/",
             (url) =>
                 url.includes("huggingface.co/papers/") &&
                 url.split("huggingface.co/papers/")[1].match(/\d+\.\d+/),

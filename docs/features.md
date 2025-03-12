@@ -45,6 +45,11 @@ Navigate the Popup with your keyboard:
     -   ++b++ ↦ copy the paper's bibtex.
     -   ++h++ ↦ copy the paper's hyperlink.
     -   ++d++ ↦ show the paper's metadata.
+-   Open ArXiv papers on alternative websites:
+    -   ++5++ ↦ go to the paper's Ar5iv page
+    -   ++x++ ↦ go to the paper's AlphaXiv page
+    -   ++f++ ↦ go to the paper's HuggingFace page
+    -   ++s++ ↦ go to the paper's SciRate page
 -   Close Memory, Menu, Modals (such as the user guide) or Popup - ++esc++ closes items up until you're back to the popup, at which point it will close the popup. - :material-alert-box-outline: This does not work in Firefox. The whole popup will close at any point with ++esc++.
 </div>
 <img src="../assets/keyboard-nav.png"/>
@@ -77,7 +82,7 @@ Whenever possible, PaperMemory queries the API the provider offers. If they don'
 
     * Arxiv
       * PaperMemory will try to find if a pre-print has been published and create a corresponding `note` to the paper (see [preprints](#preprint-matching))
-      * Also detects and matches papers from [huggingface.co/papers](https://huggingface.co/papers), [arxiv-vanity.com](https://arxiv-vanity.com), [ar5iv.org](https://ar5iv.org) and [scirate.com/](https://scirate.com/)
+      * Also detects and matches papers from [huggingface.co/papers](https://huggingface.co/papers), [AlphaXiv](https://alphaxiv.org), [ar5iv.org](https://ar5iv.org) and [scirate.com/](https://scirate.com/)
     * BioRxiv
     * NeurIPS
     * Open Review (ICLR etc.)

@@ -160,6 +160,87 @@ const svg = (name) => {
     }
 };
 
+const makePaperMemoryHTMLDiv = (paper) => {
+    return paper.venue
+        ? /*html*/ `
+         <div 
+            id="pm-container"
+            style="position: absolute; top: 10px; left: 50%; transform: translateX(-50%); font-family: 'Noto Sans','Noto Sans Fallback',sans-serif; font-size: 0.8rem;"
+        >
+            <div 
+                style="display: flex; justify-content: center; align-items: center;" 
+                id="pm-venue"
+            >
+                <span id="pm-venue-name">${paper.venue}</span>
+                <span id="pm-venue-year">${bibtexToObject(paper.bibtex).year}</span>
+            </div>
+            <p
+                style="text-align: center; font-size: 12px; color: #666; margin: 0;"
+            >
+                (PaperMemory)
+            </p>
+         </div>
+         `
+        : "";
+};
+
+const handleDefaultAction = async () => {
+    const action = await getDefaultKeyboardAction();
+    let id;
+    try {
+        id = await parseIdFromUrl(window.location.href);
+    } catch (e) {
+        console.log("Unknown url:", window.location.href);
+    }
+    if (!id) return;
+    const e = dummyEvent(id);
+    const paper = global.state.papers[id];
+    let text;
+    if (!paper) return;
+    switch (action) {
+        case "o":
+            handleOpenItemLink(e);
+            break;
+        case "c":
+            handleCopyPDFLink(e);
+            text = "Link to paper copied!";
+            break;
+        case "m":
+            handleCopyMarkdownLink(e);
+            text = "Markdown link copied!";
+            break;
+        case "b":
+            handleCopyBibtex(e);
+            text = "Bibtex citation copied!";
+            break;
+        case "h":
+            handleCopyHyperLink(e);
+            text = "Hyperlink copied!";
+            break;
+        case "d":
+            console.log("Invalid action:", action);
+            break;
+        case "e":
+            console.log("Invalid action:", action);
+            break;
+        case "5":
+            handleOpenItemAr5iv(e);
+            break;
+        case "f":
+            handleOpenItemHuggingface(e);
+            break;
+        case "x":
+            handleOpenItemAlphaxiv(e);
+            break;
+        case "s":
+            handleOpenItemScirate(e);
+            break;
+        default:
+            warn("Unknown action:", action);
+    }
+    text && feedback(text);
+};
+
 /** Whether or not to ignore the current paper based on its `is` object
  * and the dictionary of sources to ignore
  * @param {object} is The `is` object of the current paper
@@ -727,6 +808,8 @@ const tryArxivDisplay = async ({
                     preprints: preprintsResolve,
                 },
             });
+        } else if (request.message === "defaultAction") {
+            handleDefaultAction();
         }
     });
 
@@ -770,5 +853,12 @@ const tryArxivDisplay = async ({
     paper = results[0];
     if (paper) {
         tryArxivDisplay({ url, paper, preprintsPromise });
+        if (url.match(/ar5iv\.labs\.arxiv\.org/)) {
+            log("Adding PaperMemory to ar5iv.labs.arxiv.org");
+            const pmDiv = makePaperMemoryHTMLDiv(paper);
+            setTimeout(() => {
+                document.body.insertAdjacentHTML("afterbegin", pmDiv);
+            }, 1000);
+        }
     }
 })();

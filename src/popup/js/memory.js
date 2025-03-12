@@ -166,13 +166,14 @@ const showConfirmDeleteModal = (id) => {
  * @param {string} id Id of the paper to display the feedback in the memory item
  * @param {string} textToCopy Text to copy to the clipboard
  * @param {string} feedbackText Text to display as feedback
- * @param {boolean} isPopup If the action took place in the main popup or in the memory
+ * @param {string} context The context in which the action took place: "popup" or "memory" (or "content_script")
+ * @param {string} hyperLinkTitle The title of the hyperlink to copy to the clipboard
  */
 const copyAndConfirmMemoryItem = async ({
     id,
     textToCopy,
     feedbackText,
-    isPopup = false,
+    context = "popup",
     hyperLinkTitle = null,
 }) => {
     if (!hyperLinkTitle) {
@@ -180,9 +181,12 @@ const copyAndConfirmMemoryItem = async ({
     } else {
         await copyHyperLinkToClipboard(textToCopy, hyperLinkTitle);
     }
-    const element = isPopup
-        ? findEl({ element: "popup-feedback-copied" })
-        : findEl({ paperId: id, memoryItemClass: "memory-item-feedback" });
+    const element =
+        context === "popup"
+            ? findEl({ element: "popup-feedback-copied" })
+            : context === "memory"
+            ? findEl({ paperId: id, memoryItemClass: "memory-item-feedback" })
+            : null;
     if (!element) return;
     element.innerText = feedbackText;
     fadeIn(element);
@@ -193,20 +197,26 @@ const copyAndConfirmMemoryItem = async ({
 
 /**
  * Looks for an open tab with the code of the paper. Matches are not exact:
- * a tab url needs only to include the codeLink to be valid. If no existing
- * tab matches the codeLink, a new tab is created
- * @param {string} codeLink URL of the code repository to open
+ * a tab url needs only to include the targetURL to be valid. If no existing
+ * tab matches the targetURL, a new tab is created
+ * @param {string} targetURL URL of the page to open
  */
-const focusExistingOrCreateNewCodeTab = (codeLink) =>
+const focusExistingOrCreateNewURLTab = (targetURL) =>
     new Promise((resolve) => {
-        codeLink = codeLink.replace("http://", "https://");
-        if (!codeLink.startsWith("https://")) {
-            codeLink = "https://" + codeLink;
+        targetURL = targetURL.replace("http://", "https://");
+        if (!targetURL.startsWith("https://")) {
+            targetURL = "https://" + targetURL;
         }
-        const { origin } = new URL(codeLink);
+        if (!chrome.tabs) {
+            if (window?.location?.href) {
+                window.location.href = targetURL;
+            }
+            return resolve();
+        }
+        const { origin } = new URL(targetURL);
         chrome.tabs.query({ url: `${origin}/*` }, (tabs) => {
             for (const tab of tabs) {
-                if (tab.url.includes(codeLink)) {
+                if (tab.url.includes(targetURL)) {
                     const tabUpdateProperties = { active: true };
                     const windowUpdateProperties = { focused: true };
                     chrome.windows.getCurrent((w) => {
@@ -228,7 +238,7 @@ const focusExistingOrCreateNewCodeTab = (codeLink) =>
                     return;
                 }
             }
-            chrome.tabs.create({ url: codeLink });
+            chrome.tabs.create({ url: targetURL });
             resolve();
         });
         resolve();
@@ -242,7 +252,13 @@ const focusExistingOrCreateNewCodeTab = (codeLink) =>
  * If none exist, create a new tab to the local file if it exists, to the online pdf otherwise.
  * @param {object} paper The paper whose pdf should be opened
  */
-const focusExistingOrCreateNewPaperTab = (paper, fromMemoryItem) => {
+const focusExistingOrCreateNewPaperTab = async (paper, fromMemoryItem) => {
+    if (!chrome.tabs) {
+        focusExistingOrCreateNewURLTab(
+            isPdfUrl(window.location.href) ? paperToAbs(paper) : paperToPDF(paper)
+        );
+        return;
+    }
     chrome.tabs.query({}, async (tabs) => {
         // find user's preferences
         const prefs = global.state.prefs;
@@ -698,8 +714,8 @@ const displayMemoryTable = (pagination = 0) => {
     addEventToClass(".memory-item-link", "click", handleOpenItemLink);
     // Open on Scirate
     addEventToClass(".memory-item-scirate", "click", handleOpenItemScirate);
-    // Open on Arxiv Vanity
-    addEventToClass(".memory-item-vanity", "click", handleOpenItemVanity);
+    // Open on Alphaxiv
+    addEventToClass(".memory-item-alphaxiv", "click", handleOpenItemAlphaxiv);
     // Open on Ar5iv
     addEventToClass(".memory-item-ar5iv", "click", handleOpenItemAr5iv);
     // Open on Huggingface Papers

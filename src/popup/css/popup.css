@@ -114,6 +114,10 @@ svg {
     stroke-linejoin: round;
 }
 
+.alphaxiv-icon {
+    fill: #7c7f8b;
+}
+
 strong {
     font-weight: 500;
 }

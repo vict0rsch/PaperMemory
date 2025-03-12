@@ -702,7 +702,7 @@ const addOrUpdatePaper = async ({
                         paper[key] = value;
                     }
                 }
-                if (key === "bibtex") {
+                if (key === "bibtex" && preprintMatch[key]) {
                     const bibObj = bibtexToObject(preprintMatch[key]);
                     if (bibObj.year !== paper.year) {
                         paper.year = bibObj.year;
