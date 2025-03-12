@@ -116,6 +116,8 @@ function watchFiles() {
         parallel(popupCSS, popupDarkCSS)
     );
     gwatch("src/popup/*.html", popupHTMLDev);
+    gwatch("src/popup/html/modals/*.html", popupHTMLDev);
+    gwatch("src/popup/html/svgs/*.html", popupHTMLDev);
     gwatch("src/shared/js/utils/*", utilsJS);
 }
 
