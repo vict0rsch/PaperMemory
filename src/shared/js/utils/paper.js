@@ -952,7 +952,9 @@ const parseIdFromUrl = async (url, tab = null) => {
     } else if (is.parsedWebsite) {
         idForUrl = is.parsedWebsite.id;
     } else {
-        throw new Error("unknown paper url. Is: " + JSON.stringify(is));
+        throw new Error(
+            "`parseIdFromUrl` failed, unknown paper url. Is: " + JSON.stringify(is)
+        );
     }
 
     return idForUrl;

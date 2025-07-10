@@ -2052,7 +2052,10 @@ const makePaper = async (is, url, tab = false) => {
             paper.source = "chemrxiv";
         }
     } else {
-        throw new Error("Unknown paper source: " + JSON.stringify({ is, url }));
+        console.error({ is, url });
+        throw new Error(
+            "Could not parse paper (in `makePaper`). Unknown paper source, see above."
+        );
     }
 
     if (typeof paper === "undefined") {
