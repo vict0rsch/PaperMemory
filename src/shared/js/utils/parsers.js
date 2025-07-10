@@ -1899,6 +1899,8 @@ const autoTagPaper = async (paper) => {
 
 const makePaper = async (is, url, tab = false) => {
     let paper;
+    let start = performance.now();
+    info("Making paper...");
     if (tab) {
         paper = await makeWebsitePaper(tab);
         if (paper) {
@@ -2061,6 +2063,8 @@ const makePaper = async (is, url, tab = false) => {
     if (typeof paper === "undefined") {
         return;
     }
+    const elapsed = (performance.now() - start) / 1000;
+    info(`Paper parsed in ${elapsed.toFixed(2)}s`);
 
     return await initPaper(paper);
 };
