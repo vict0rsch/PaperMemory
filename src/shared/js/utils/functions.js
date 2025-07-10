@@ -888,7 +888,7 @@ const cutAuthors = (text, maxLen, separator) => {
     let cutAuthors = "";
     const authArray = text.split(" and ");
     const lastAuthor = authArray[authArray.length - 1];
-    for (const [c, candidate] of authArray.entries()) {
+    for (let [c, candidate] of authArray.entries()) {
         if (
             5 +
                 cutAuthors.length +
@@ -898,6 +898,13 @@ const cutAuthors = (text, maxLen, separator) => {
                 maxLen ||
             c == authArray.length - 1
         ) {
+            if (candidate.includes(",")) {
+                candidate = candidate
+                    .split(",")
+                    .map((c) => c.trim())
+                    .reverse()
+                    .join(" ");
+            }
             if (cutAuthors) {
                 cutAuthors += ", " + candidate;
             } else {
