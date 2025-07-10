@@ -120,7 +120,7 @@ if __name__ == "__main__":
     # files which will be copied from ``{root}/{file}`` to ``{out}/{file}``
     files = ["LICENSE", "manifest.json"]
 
-    root = Path(__file__).parent.resolve()
+    root = Path(__file__).resolve().parent.parent
     out = root / "extra" / "archives"
 
     manifest = json.loads((root / "manifest.json").read_text())

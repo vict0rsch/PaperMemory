@@ -54,6 +54,7 @@ const isSourceURL = async (url, noStored) =>
 const paperToAbs = (paper) => {
     let journal, type, doi;
     const pdf = paper.pdfLink;
+    let pii;
     let abs = "";
     switch (paper.source) {
         case "arxiv":
@@ -143,7 +144,7 @@ const paperToAbs = (paper) => {
             break;
 
         case "sciencedirect":
-            const pii = pdf.split("/pii/")[1].split("/")[0].split("#")[0].split("?")[0];
+            pii = pdf.split("/pii/")[1].split("/")[0].split("#")[0].split("?")[0];
             abs = `https://www.sciencedirect.com/science/article/pii/${pii}`;
             break;
 
@@ -191,6 +192,12 @@ const paperToAbs = (paper) => {
             abs = `https://chemrxiv.org/engage/chemrxiv/article-details/${
                 pdf.split("/item/")[1].split("/")[0]
             }`;
+            break;
+
+        case "cell": //TODO DEBUG https://www.cell.com/trends/biochemical-sciences/fulltext/S0968-0004(25)00050-7
+            const journal = paper.id.split("_")[0].split("fulltext")[0];
+            pii = new URL(pdf).searchParams.get("pii");
+            abs = `https://www.cell.com/${journal}/fulltext/${pii}`;
             break;
 
         default:
@@ -312,6 +319,8 @@ const paperToPDF = (paper) => {
             break;
 
         case "website":
+            break;
+        case "cell":
             break;
 
         default:
@@ -947,12 +956,21 @@ const parseIdFromUrl = async (url, tab = null) => {
             ? (chemRxivId = url.split("/item/")[1].split("/")[0])
             : (chemRxivId = noParamUrl(url).split("/").last());
         idForUrl = findPaperForProperty(papers, "chemrxiv", miniHash(chemRxivId));
+    } else if (is.cell) {
+        ({ url } = await findCellPii(url));
+        idForUrl = findPaperForProperty(
+            papers,
+            "cell",
+            miniHash(url.split("cell.com/")[1])
+        );
     } else if (is.localFile) {
         idForUrl = is.localFile;
     } else if (is.parsedWebsite) {
         idForUrl = is.parsedWebsite.id;
     } else {
-        throw new Error("unknown paper url. Is: " + JSON.stringify(is));
+        throw new Error(
+            "`parseIdFromUrl` failed, unknown paper url. Is: " + JSON.stringify(is)
+        );
     }
 
     return idForUrl;

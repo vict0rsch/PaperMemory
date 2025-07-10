@@ -355,6 +355,12 @@ const safeRemoveSurroundingBraces = (str) => {
 
 const bibtexToObject = (bibtex) => {
     var b = new BibtexParser();
+    /*
+    Fixing @article{Jain_Chacinska_Rehling_2025, title={Understanding mitochondrial protein import: a revised model of the presequence translocase}, volume={50}, url={http://dx.doi.org/10.1016/j.tibs.2025.03.001}, DOI={10.1016/j.tibs.2025.03.001}, number={7}, journal={Trends in Biochemical Sciences}, publisher={Elsevier BV}, author={Jain, Naintara and Chacinska, Agnieszka and Rehling, Peter}, year={2025}, month={july}, pages={585–595}, language={en}}'
+    ↓
+    */
+    bibtex = bibtex.replaceAll(/,\s?(\w+)=(\w+)(\s?,?)/gi, ", $1={$2}$3");
+    // end of fixing
     b.setInput(bibtex);
     b.bibtex();
     const entry = b.getEntries()[0];
