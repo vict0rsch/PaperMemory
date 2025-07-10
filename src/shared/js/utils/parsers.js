@@ -1545,6 +1545,59 @@ const makeChemRxivPaper = async (url) => {
     return { author, bibtex, id, key, note, pdfLink, title, venue, year, doi };
 };
 
+const findCellPii = async (url) => {
+    const isPdf = url.toLowerCase().includes("showpdf");
+    const isPdfExtended = url.toLowerCase().includes("pdfextended");
+    let pii;
+    if (isPdf || isPdfExtended) {
+        const cellData = global.state.cellJournalData;
+        pii = isPdf ? new URL(url).searchParams.get("pii") : url.split("/").last();
+        const issn = pii.match(/\d{4}-\d{3}[0-9X]/g)[0];
+        let venue;
+        Object.entries(cellData).forEach(([key, value]) => {
+            if (value.issn.includes(issn)) {
+                venue = key;
+            }
+        });
+        const target = venue
+            .split(" ")
+            .map((w) => w.toLowerCase())
+            .join("-");
+        url = isPdf
+            ? noParamUrl(url).split("/showPdf")[0] + `/${target}/fulltext/${pii}`
+            : noParamUrl(url).split("/pdfExtended")[0] + `/fulltext/${pii}`;
+        url = url.replace("/action/", "/");
+    } else {
+        pii = noParamUrl(url).split("/").last();
+    }
+    return { pii, url };
+};
+
+const makeCellPaper = async (url) => {
+    let pii;
+    ({ pii, url } = await findCellPii(url));
+    const pdfLink = `https://www.cell.com/action/showPdf?pii=${pii}`;
+    const dom = await fetchDom(url);
+    const doi = dom.head
+        .querySelector('meta[name="citation_doi"]')
+        .getAttribute("content");
+    const paper = await fetchBibtex({ doi });
+    const { author, year, title, venue, bibtex, note, citationKey } = paper;
+    const id = `Cell-${year}_${miniHash(url.split("cell.com/")[1])}`;
+    return {
+        author,
+        bibtex,
+        id,
+        key: citationKey,
+        note,
+        pdfLink,
+        title,
+        venue,
+        year,
+        doi,
+    };
+};
+
 // -------------------------------
 // -----  PREPRINT MATCHING  -----
 // -------------------------------
@@ -2052,6 +2105,11 @@ const makePaper = async (is, url, tab = false) => {
         paper = await makeChemRxivPaper(url);
         if (paper) {
             paper.source = "chemrxiv";
+        }
+    } else if (is.cell) {
+        paper = await makeCellPaper(url);
+        if (paper) {
+            paper.source = "cell";
         }
     } else {
         console.error({ is, url });

@@ -83,6 +83,11 @@ const initState = async ({ papers, isContentScript, print = true } = {}) => {
 
     info("State init duration (s): " + (Date.now() - times.last()) / 1e3);
     print && console.groupEnd();
+    (async () => {
+        const cellPath = chrome.runtime.getURL("src/data/cell.json");
+        const cellData = await fetch(cellPath).then((res) => res.json());
+        global.state.cellJournalData = cellData;
+    })();
 };
 
 /**

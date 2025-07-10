@@ -204,6 +204,14 @@ global.knownPaperPages = {
         patterns: ["biorxiv.org/content"],
         name: "BioRxiv",
     },
+    cell: {
+        patterns: [
+            (url) =>
+                url.includes("cell.com/") &&
+                url.split("cell.com/")[1].match(/\d{4}-\d{3}[0-9X]/),
+        ],
+        name: "Cell",
+    },
     chemrxiv: {
         patterns: [
             "chemrxiv.org/engage/chemrxiv/article-details/",
