@@ -78,9 +78,9 @@ $.extend($.easing, {
     },
 });
 
-var timeout = null;
-var prevent = false;
-var pdfTitleIters = 0;
+var TIMEOUT = null;
+var PREVENT = false;
+var PDF_TITLE_ITERS = 0;
 
 /**
  * Centralizes HTML svg codes
@@ -238,7 +238,7 @@ const handleDefaultAction = async () => {
         default:
             warn("Unknown action:", action);
     }
-    text && feedback(text);
+    text && feedback({ text });
 };
 
 /** Whether or not to ignore the current paper based on its `is` object
@@ -366,11 +366,11 @@ const contentScriptMain = async ({
             const paper = global.state.papers[id];
             const maxWait = 60 * 1000;
             while (1) {
-                const waitTime = Math.min(maxWait, 250 * 2 ** pdfTitleIters);
+                const waitTime = Math.min(maxWait, 250 * 2 ** PDF_TITLE_ITERS);
                 await sleep(waitTime);
                 document.title = "";
                 document.title = paper.title;
-                pdfTitleIters++;
+                PDF_TITLE_ITERS++;
             }
         };
         makeTitle(id);
@@ -383,16 +383,16 @@ const contentScriptMain = async ({
  * @param {string} text the text to display in the slider div
  * @returns {void}
  */
-const feedback = (text, paper = null) => {
+const feedback = ({ text, paper = null }) => {
     if (document.readyState === "loading") {
-        setTimeout(() => feedback(text, paper), 250);
+        setTimeout(() => feedback({ text, paper }), 250);
         return;
     }
     const notifTime = 3000;
     try {
-        clearTimeout(timeout);
+        clearTimeout(TIMEOUT);
         findEl({ element: "feedback-notif" }).remove();
-        prevent = true;
+        PREVENT = true;
     } catch (error) {}
 
     if (paper) {
@@ -420,19 +420,19 @@ const feedback = (text, paper = null) => {
         400,
         "easeInOutBack"
     );
-    timeout = setTimeout(() => {
+    TIMEOUT = setTimeout(() => {
         $("#feedback-notif").animate(
             { right: "-200px", opacity: "0" },
             400,
             "easeInOutBack",
             () => {
-                !prevent && $("#feedback-notif").remove();
-                prevent = false;
+                !PREVENT && $("#feedback-notif").remove();
+                PREVENT = false;
             }
         );
     }, notifTime);
     addListener("notif-cancel", "click", async () => {
-        clearTimeout(timeout);
+        clearTimeout(TIMEOUT);
         await deletePaperInStorage(paper.id, global.state.papers);
         if (!global.state.deleted) {
             global.state.deleted = {};
@@ -441,14 +441,14 @@ const feedback = (text, paper = null) => {
         setTimeout(() => {
             delete global.state.deleted[paper.id];
         }, 30 * 1000);
-        timeout = setTimeout(() => {
+        TIMEOUT = setTimeout(() => {
             $("#feedback-notif").animate(
                 { right: "-200px", opacity: "0" },
                 400,
                 "easeInOutBack",
                 () => {
-                    !prevent && $("#feedback-notif").remove();
-                    prevent = false;
+                    !PREVENT && $("#feedback-notif").remove();
+                    PREVENT = false;
                 }
             );
         }, notifTime);
