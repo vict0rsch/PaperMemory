@@ -87,6 +87,7 @@ const handleCopyMarkdownLink = async (e) => {
         id,
         textToCopy: md,
         feedbackText: `Markdown ${text} link copied!`,
+        context: global.state.memoryIsOpen ? "memory" : "popup",
     });
 };
 
@@ -104,6 +105,7 @@ const handleCopyBibtex = async (e) => {
         id,
         textToCopy: bibtexToString(bibobj),
         feedbackText: "Bibtex copied!",
+        context: global.state.memoryIsOpen ? "memory" : "popup",
     });
 };
 
@@ -118,6 +120,7 @@ const handleCopyPDFLink = async (e) => {
         id,
         textToCopy: link,
         feedbackText: `${text} link copied!`,
+        context: global.state.memoryIsOpen ? "memory" : "popup",
     });
 };
 
@@ -131,6 +134,7 @@ const handleCopyHyperLink = async (e) => {
         textToCopy: link,
         feedbackText: `Hyperlink copied!`,
         hyperLinkTitle: paper.title,
+        context: global.state.memoryIsOpen ? "memory" : "popup",
     });
 };
 
