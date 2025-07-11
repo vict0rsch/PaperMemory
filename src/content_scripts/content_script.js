@@ -78,8 +78,6 @@ $.extend($.easing, {
     },
 });
 
-var TIMEOUT = null;
-var PREVENT = false;
 var PDF_TITLE_ITERS = 0;
 
 /**
@@ -158,6 +156,34 @@ const svg = (name) => {
         default:
             break;
     }
+};
+
+const injectNotifCSS = () => {
+    let el = document.createElement("style");
+    el.type = "text/css";
+    el.innerText = `
+        .pm-notif-loader {
+            width: 24px;
+            height: 24px;
+            border: 2px solid #FFF;
+            border-bottom-color: transparent;
+            border-radius: 50%;
+            display: inline-block;
+            box-sizing: border-box;
+            animation: rotation 1s linear infinite;
+            }
+
+        @keyframes rotation {
+            0% {
+                transform: rotate(0deg);
+            }
+            100% {
+                transform: rotate(360deg);
+            }
+        } 
+    `;
+    document.head.appendChild(el);
+    return el;
 };
 
 const makePaperMemoryHTMLDiv = (paper) => {
@@ -377,83 +403,125 @@ const contentScriptMain = async ({
     }
 };
 
+const makeNotif = () => {
+    if (global.notif.element) return;
+    const notif = /*html*/ ` <div id="feedback-notif"></div> `;
+    document.body.insertAdjacentHTML("beforeend", notif);
+    global.notif.element = $("#feedback-notif");
+    style("feedback-notif", "padding", "0px");
+};
+
+const hideNotif = () =>
+    new Promise(async (resolve) => {
+        const end = ({ dontWait = false } = {}) => {
+            global.notif.prevent = false;
+            global.notif.isLoading = false;
+            setTimeout(resolve, dontWait ? 0 : 150);
+        };
+
+        if (!global.notif.element) {
+            warn("[PM][hideNotif] Notif element not found");
+            end({ dontWait: true });
+            return;
+        }
+
+        global.notif.element.animate(
+            { right: "-200px", opacity: "0" },
+            global.notif.hideSpeed,
+            "easeInOutBack",
+            end
+        );
+        // sometimes animate does not call the callback
+        setTimeout(end, global.notif.hideSpeed + 50);
+    });
+
+const setNotifContent = (text) => {
+    if (!global.notif.element) {
+        warn("[PM][setNotifContent] Notif element not found");
+        return;
+    }
+    global.notif.element.html(text);
+};
+
+const showNotif = () =>
+    new Promise((resolve) => {
+        if (!global.notif.element) {
+            console.warn("[PM][showNotif] Notif element not found");
+            makeNotif();
+        }
+        global.notif.element.animate(
+            {
+                right: "64px",
+                opacity: "1",
+            },
+            global.notif.showSpeed,
+            "easeInOutBack",
+            resolve
+        );
+    });
+
 /**
  * Slides a div in then out, bottom right, with some text to give the user
  * a feedback on some action performed
  * @param {string} text the text to display in the slider div
  * @returns {void}
  */
-const feedback = ({ text, paper = null }) => {
+const feedback = async ({
+    text,
+    paper = null,
+    displayDuration = global.notif.displayDuration,
+    loading = false,
+}) => {
     if (document.readyState === "loading") {
-        setTimeout(() => feedback({ text, paper }), 250);
+        setTimeout(() => feedback({ text, paper, displayDuration, loading }), 250);
         return;
     }
-    const notifTime = 3000;
+    makeNotif();
+    if (global.notif.prevent && !global.notif.isLoading) {
+        setTimeout(() => feedback({ text, paper, displayDuration, loading }), 100);
+        return;
+    }
     try {
-        clearTimeout(TIMEOUT);
-        findEl({ element: "feedback-notif" }).remove();
-        PREVENT = true;
+        clearTimeout(global.notif.timeout);
+        await hideNotif();
+        global.notif.prevent = true;
     } catch (error) {}
 
+    let content = "";
+    global.notif.isLoading = false;
+
     if (paper) {
-        text = /*html*/ ` <div id="notif-text">
+        content = /*html*/ ` <div id="notif-text">
                 <div>${text}</div>
             </div>
             <div title="Cancel" id="notif-cancel">
                 <div>${svg("notif-cancel")}</div>
             </div>`;
+    } else if (loading) {
+        global.notif.isLoading = true;
+        content = /*html*/ `<div id="notif-text"><span class="pm-notif-loader"></span></div>`;
     } else {
-        text = /*html*/ ` <div id="notif-text">
-                <div>${text}</div>
+        content = /*html*/ ` <div id="notif-text">
+                <div style="display: flex;">${text}</div>
             </div>`;
     }
-    document.body.insertAdjacentHTML(
-        "beforeend",
-        /*html*/ ` <div id="feedback-notif">${text}</div> `
-    );
-    style("feedback-notif", "padding", "0px");
-    $("#feedback-notif").animate(
-        {
-            right: "64px",
-            opacity: "1",
-        },
-        400,
-        "easeInOutBack"
-    );
-    TIMEOUT = setTimeout(() => {
-        $("#feedback-notif").animate(
-            { right: "-200px", opacity: "0" },
-            400,
-            "easeInOutBack",
-            () => {
-                !PREVENT && $("#feedback-notif").remove();
-                PREVENT = false;
+
+    setNotifContent(content);
+    await showNotif();
+    global.notif.timeout = setTimeout(hideNotif, displayDuration);
+
+    paper &&
+        addListener("notif-cancel", "click", async () => {
+            clearTimeout(global.notif.timeout);
+            await deletePaperInStorage(paper.id, global.state.papers);
+            if (!global.state.deleted) {
+                global.state.deleted = {};
             }
-        );
-    }, notifTime);
-    addListener("notif-cancel", "click", async () => {
-        clearTimeout(TIMEOUT);
-        await deletePaperInStorage(paper.id, global.state.papers);
-        if (!global.state.deleted) {
-            global.state.deleted = {};
-        }
-        global.state.deleted[paper.id] = true;
-        setTimeout(() => {
-            delete global.state.deleted[paper.id];
-        }, 30 * 1000);
-        TIMEOUT = setTimeout(() => {
-            $("#feedback-notif").animate(
-                { right: "-200px", opacity: "0" },
-                400,
-                "easeInOutBack",
-                () => {
-                    !PREVENT && $("#feedback-notif").remove();
-                    PREVENT = false;
-                }
-            );
-        }, notifTime);
-        setHTML("notif-text", "<div>Removed from memory</div>");
-    });
+            global.state.deleted[paper.id] = true;
+            setTimeout(() => delete global.state.deleted[paper.id], 30 * 1000);
+            global.notif.timeout = setTimeout(hideNotif, displayDuration);
+            setHTML("notif-text", "<div>Removed from memory</div>");
+        });
 };
 
 /**
@@ -694,7 +762,7 @@ const arxiv = async (checks) => {
                 });
             });
             copyTextToClipboard(findEl({ element: "pm-bibtex-textarea" }).innerText);
-            feedback("Bibtex Citation Copied!");
+            feedback({ text: "Bibtex Citation Copied!" });
         });
         addListener(querySelector("#markdown-header .copy-feedback"), "click", (e) => {
             $("#markdown-header .copy-feedback").fadeOut(200, () => {
@@ -709,7 +777,7 @@ const arxiv = async (checks) => {
             copyTextToClipboard(
                 findEl({ element: "markdown-link" }).innerText.replaceAll("\n", "")
             );
-            feedback("Markdown Link Copied!");
+            feedback({ text: "Markdown Link Copied!" });
         });
     }
 };
@@ -843,6 +911,7 @@ const tryArxivDisplay = async ({
     // Promise resolved when the DOM is loaded
     const domReadyPromise = new Promise((resolve) => {
         document.addEventListener("DOMContentLoaded", () => {
+            injectNotifCSS();
             resolve();
         });
     });
@@ -861,4 +930,5 @@ const tryArxivDisplay = async ({
             }, 1000);
         }
     }
+    await hideNotif();
 })();

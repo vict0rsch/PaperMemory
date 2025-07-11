@@ -534,6 +534,7 @@ const addOrUpdatePaper = async ({
     global.state.papers = (await getStorage("papers")) ?? {};
     const id = await parseIdFromUrl(url, tab);
     const paperExists = global.state.papers.hasOwnProperty(id);
+    prefs && prefs.checkFeedback && feedback({ loading: true });
 
     if (
         id &&
@@ -690,11 +691,14 @@ const addOrUpdatePaper = async ({
                         "<br/><div id='feedback-pwc'>(+ repo from PapersWithCode) </div>";
                 }
 
-                prefs && prefs.checkFeedback && store && feedback(notifText, paper);
+                prefs &&
+                    prefs.checkFeedback &&
+                    store &&
+                    feedback({ text: notifText, paper });
             } else {
                 // existing paper but new code repo
                 notifText = "Found a code repository on PapersWithCode!";
-                prefs && prefs.checkFeedback && store && feedback(notifText);
+                prefs && prefs.checkFeedback && store && feedback({ text: notifText });
             }
         } else {
             store && logOk("Updated '" + paper.title + "' in your Memory");
