@@ -1881,7 +1881,7 @@ const tryPreprintMatch = async (paper, tryPwc = false) => {
     if (tryPwc) {
         const name = "PapersWithCode";
         if (!matches.hasOwnProperty(name)) {
-            matches[name] = await matchPromises[name];
+            matches[name] = await silentPromiseTimeout(matchPromises[name]);
         }
         if (matches[name].codeLink && !paper.codeLink) {
             code = matches[name].codeLink;
