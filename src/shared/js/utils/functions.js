@@ -991,7 +991,7 @@ const urlToWebsiteId = (url) => {
  * @param {number} time The time after which to resolve the promise
  * @returns {Promise} The wrapped promise
  */
-const silentPromiseTimeout = (prom, time = 5000) => {
+const silentPromiseTimeout = (prom, time = 2000) => {
     // https://advancedweb.hu/how-to-add-timeout-to-a-promise-in-javascript/
     let timer;
     return Promise.race([
