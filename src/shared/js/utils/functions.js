@@ -8,10 +8,6 @@ const logTrace = typeof LOGTRACE !== "undefined" && LOGTRACE;
  * @returns {void}
  */
 const log = (...args) => {
-    if (logTrace) {
-        const stack = new Error().stack;
-        args.push("\n\nLog trace:\n" + stack.split("\n").slice(2).join("\n"));
-    }
     let messageConfig = "%c%s ";
 
     let isInfo = false;
@@ -34,6 +30,17 @@ const log = (...args) => {
     } else if (args[0] === "[debug]") {
         isDebug = true;
         args = args.slice(1);
+    }
+
+    if (
+        (isError && logTrace >= 1) ||
+        (isWarn && logTrace >= 2) ||
+        (isInfo && logTrace >= 3) ||
+        (isDebug && logTrace >= 4) ||
+        logTrace >= 5
+    ) {
+        const stack = new Error().stack;
+        args.push("\n\nLog trace:\n" + stack.split("\n").slice(2).join("\n"));
     }
     // https://stackoverflow.com/questions/55643825/how-to-apply-colors-to-console-log-when-using-multiple-arguments
     args.forEach((argument) => {
