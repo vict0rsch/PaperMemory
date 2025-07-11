@@ -518,6 +518,16 @@ global.englishStopWords = new Set([
 
 global.journalAbbreviations = null;
 
+global.notif = {
+    timeout: null,
+    prevent: false,
+    showSpeed: 400,
+    displayDuration: 3000,
+    hideSpeed: 400,
+    element: null,
+    isLoading: false,
+};
+
 // ----------------------------------------------------
 // -----  TESTS: modules for node.js environment  -----
 // ----------------------------------------------------
