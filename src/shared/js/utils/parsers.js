@@ -92,10 +92,10 @@ const fetchJSON = async (url) => {
     }
 };
 
-const fetchBibtex = async ({ url, doi }) => {
+const fetchBibtexToPaper = async ({ url, doi }) => {
     let bibtex;
     if (url && doi) {
-        throw new Error("fetchBibtex: both url and doi provided");
+        throw new Error("fetchBibtexToPaper: both url and doi provided");
     }
     if (doi) {
         bibtex = await fetchText(
@@ -104,7 +104,7 @@ const fetchBibtex = async ({ url, doi }) => {
     } else if (url) {
         bibtex = await fetchText(url);
     } else {
-        throw new Error("fetchBibtex: no url or doi provided");
+        throw new Error("fetchBibtexToPaper: no url or doi provided");
     }
     const bibObj = bibtexToObject(bibtex);
     delete bibObj.abstract;
@@ -1270,7 +1270,7 @@ const makeWileyPaper = async (url) => {
         : url.replace(/\/doi\/(abs|epdf|full)\//g, "/doi/pdf/");
     const absLink = pdfLink.replace("/doi/pdf/", "/doi/abs/");
     const doi = absLink.split("/doi/abs/")[1];
-    const paper = await fetchBibtex({ doi });
+    const paper = await fetchBibtexToPaper({ doi });
     const { author, citationKey, title, year } = paper;
     const id = `Wiley-${year}_${miniHash(doi)}`;
     const key = citationKey;
@@ -1405,7 +1405,9 @@ const makeIHEPPaper = async (url) => {
 
 const makePLOSPaper = async (url) => {
     const doi = url.split("?id=").last().split("&")[0];
-    let { bibtex, key, author, venue, title, note, year } = await fetchBibtex({ doi });
+    let { bibtex, key, author, venue, title, note, year } = await fetchBibtexToPaper({
+        doi,
+    });
     const pdfLink = `${url.split("/article")[0]}/article/file?id=${doi}&type=printable`;
     const section = url.split("journals.plos.org/")[1].split("/")[0];
 
@@ -1585,7 +1587,7 @@ const makeCellPaper = async (url) => {
     const doi = dom.head
         .querySelector('meta[name="citation_doi"]')
         .getAttribute("content");
-    const paper = await fetchBibtex({ doi });
+    const paper = await fetchBibtexToPaper({ doi });
     const { author, year, title, venue, bibtex, note, citationKey } = paper;
     const id = `Cell-${year}_${miniHash(url.split("cell.com/")[1])}`;
     return {
@@ -2162,7 +2164,7 @@ if (typeof module !== "undefined" && module.exports != null) {
         fetchDom,
         fetchText,
         fetchJSON,
-        fetchBibtex,
+        fetchBibtexToPaper,
         extractCrossrefData,
         fetchCrossRefDataForDoi,
         fetchSemanticScholarDataForDoi,
