@@ -119,7 +119,6 @@ global.prefsCheckNames = [
     "checkAr5iv",
     "checkHuggingface",
     "checkOfficialRepos",
-    "checkPreferPdf",
     "checkPdfOnly",
     "checkNoAuto",
     "checkMdYearVenue",
@@ -140,6 +139,7 @@ global.prefsCheckDefaultFalse = [
     "checkPdfOnly",
     "checkNoAuto",
     "checkMdYearVenue",
+    "checkPreferPdf",
 ];
 /**
  * All keys to retrieve from the menu, the checkboxes + the custom pdf function
