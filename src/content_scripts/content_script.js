@@ -136,14 +136,14 @@ const svg = (name) => {
 
         case "notif-cancel":
             return /*html*/ `<svg
-                width="25"
-                height="25"
+                width="20"
+                height="20"
                 viewBox="0 0 24 24"
                 stroke-width="1"
                 fill="none"
                 stroke-linecap="round"
                 stroke-linejoin="round"
-                stroke="white"
+                stroke="#b31b1b"
             >
                 <path stroke="none" d="M0 0h24v24H0z" fill="none" />
                 <line x1="4" y1="7" x2="20" y2="7" />
@@ -163,9 +163,9 @@ const injectNotifCSS = () => {
     el.type = "text/css";
     el.innerText = `
         .pm-notif-loader {
-            width: 24px;
-            height: 24px;
-            border: 2px solid #FFF;
+            width: 16px;
+            height: 16px;
+            border: 1px solid #b31b1b;
             border-bottom-color: transparent;
             border-radius: 50%;
             display: inline-block;
@@ -416,6 +416,7 @@ const hideNotif = () =>
         const end = ({ dontWait = false } = {}) => {
             global.notif.prevent = false;
             global.notif.isLoading = false;
+            querySelector("#feedback-notif")?.classList.remove("notif-small");
             setTimeout(resolve, dontWait ? 0 : 150);
         };
 
@@ -495,10 +496,11 @@ const feedback = async ({
                 <div>${text}</div>
             </div>
             <div title="Cancel" id="notif-cancel">
-                <div>${svg("notif-cancel")}</div>
+                ${svg("notif-cancel")}
             </div>`;
     } else if (loading) {
         global.notif.isLoading = true;
+        querySelector("#feedback-notif")?.classList.add("notif-small");
         content = /*html*/ `<div id="notif-text"><span class="pm-notif-loader"></span></div>`;
     } else {
         content = /*html*/ ` <div id="notif-text">

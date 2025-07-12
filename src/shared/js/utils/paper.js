@@ -685,7 +685,7 @@ const addOrUpdatePaper = async ({
                 }
                 log("paper: ", paper);
 
-                notifText = "Added to your Memory";
+                notifText = "Saved ✓";
                 if (pwc.codeLink) {
                     notifText +=
                         "<br/><div id='feedback-pwc'>(+ repo from PapersWithCode) </div>";
