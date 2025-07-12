@@ -92,10 +92,10 @@ const fetchJSON = async (url) => {
     }
 };
 
-const fetchBibtex = async ({ url, doi }) => {
+const fetchBibtexToPaper = async ({ url, doi }) => {
     let bibtex;
     if (url && doi) {
-        throw new Error("fetchBibtex: both url and doi provided");
+        throw new Error("fetchBibtexToPaper: both url and doi provided");
     }
     if (doi) {
         bibtex = await fetchText(
@@ -104,7 +104,7 @@ const fetchBibtex = async ({ url, doi }) => {
     } else if (url) {
         bibtex = await fetchText(url);
     } else {
-        throw new Error("fetchBibtex: no url or doi provided");
+        throw new Error("fetchBibtexToPaper: no url or doi provided");
     }
     const bibObj = bibtexToObject(bibtex);
     delete bibObj.abstract;
@@ -1270,7 +1270,7 @@ const makeWileyPaper = async (url) => {
         : url.replace(/\/doi\/(abs|epdf|full)\//g, "/doi/pdf/");
     const absLink = pdfLink.replace("/doi/pdf/", "/doi/abs/");
     const doi = absLink.split("/doi/abs/")[1];
-    const paper = await fetchBibtex({ doi });
+    const paper = await fetchBibtexToPaper({ doi });
     const { author, citationKey, title, year } = paper;
     const id = `Wiley-${year}_${miniHash(doi)}`;
     const key = citationKey;
@@ -1405,7 +1405,9 @@ const makeIHEPPaper = async (url) => {
 
 const makePLOSPaper = async (url) => {
     const doi = url.split("?id=").last().split("&")[0];
-    let { bibtex, key, author, venue, title, note, year } = await fetchBibtex({ doi });
+    let { bibtex, key, author, venue, title, note, year } = await fetchBibtexToPaper({
+        doi,
+    });
     const pdfLink = `${url.split("/article")[0]}/article/file?id=${doi}&type=printable`;
     const section = url.split("journals.plos.org/")[1].split("/")[0];
 
@@ -1427,11 +1429,46 @@ const makeRSCPaper = async (url) => {
     const pdfLink =
         type === "articlepdf" ? url : url.replace(`/article${type}/`, "/articlepdf/");
 
-    let { bibtex, key, author, venue, title, note, year, doi } = await fetchBibtex({
-        url: `https://pubs.rsc.org/en/content/formatedresult?markedids=${rscId}&downloadtype=article&managertype=bibtex`,
-    });
+    let { bibtex, key, author, venue, title, note, year, doi } =
+        await fetchBibtexToPaper({
+            url: `https://pubs.rsc.org/en/content/formatedresult?markedids=${rscId}&downloadtype=article&managertype=bibtex`,
+        });
     author = flipAndAuthors(author);
     const id = `RSC-${venue.replaceAll(" ", "")}_${miniHash(rscId)}`;
+    return { author, bibtex, id, key, note, pdfLink, title, venue, year, doi };
+};
+
+const parseAIPIdOrDOI = (url) => {
+    if (isPdfUrl(noParamUrl(url))) {
+        return {
+            doi: noParamUrl(url)
+                .split("/")
+                .last()
+                .split("_")
+                .last()
+                .replace(".pdf", ""),
+        };
+    }
+    return {
+        aipId: url.includes("/article/")
+            ? url.split("/article/")[1].split("/")[3]
+            : url.includes("/article-split/")
+            ? url.split("/article-split/")[1].split("/")[3]
+            : url.split("/article-abstract/")[1].split("/")[3],
+    };
+};
+const makeAIPPaper = async (url) => {
+    url = noParamUrl(url);
+    if (isPdfUrl(url)) {
+        warn("PaperMemory cannot parse AIP papers from pdf urls");
+        return;
+    }
+    const { aipId } = parseAIPIdOrDOI(url);
+    const bibURL = `https://pubs.aip.org/Citation/Download?resourceId=${aipId}&resourceType=3&citationFormat=2`;
+    const { author, bibtex, key, note, eprint, title, venue, year, doi } =
+        await fetchBibtexToPaper({ url: bibURL });
+    const id = `AIP-${year}_${miniHash(aipId)}`;
+    const pdfLink = eprint.replaceAll("\\", "");
     return { author, bibtex, id, key, note, pdfLink, title, venue, year, doi };
 };
 
@@ -1585,7 +1622,7 @@ const makeCellPaper = async (url) => {
     const doi = dom.head
         .querySelector('meta[name="citation_doi"]')
         .getAttribute("content");
-    const paper = await fetchBibtex({ doi });
+    const paper = await fetchBibtexToPaper({ doi });
     const { author, year, title, venue, bibtex, note, citationKey } = paper;
     const id = `Cell-${year}_${miniHash(url.split("cell.com/")[1])}`;
     return {
@@ -1629,7 +1666,7 @@ const tryPWCMatch = async (paper) => {
             year: pubYear,
             journal: venue,
         });
-    } else {
+    } else if (!paper.venue) {
         log("[PapersWithCode] No publication found");
     }
 
@@ -2115,6 +2152,11 @@ const makePaper = async (is, url, tab = false) => {
         if (paper) {
             paper.source = "cell";
         }
+    } else if (is.aip) {
+        paper = await makeAIPPaper(url);
+        if (paper) {
+            paper.source = "aip";
+        }
     } else {
         console.error({ is, url });
         throw new Error(
@@ -2162,7 +2204,7 @@ if (typeof module !== "undefined" && module.exports != null) {
         fetchDom,
         fetchText,
         fetchJSON,
-        fetchBibtex,
+        fetchBibtexToPaper,
         extractCrossrefData,
         fetchCrossRefDataForDoi,
         fetchSemanticScholarDataForDoi,

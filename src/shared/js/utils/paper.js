@@ -200,6 +200,10 @@ const paperToAbs = (paper) => {
             abs = `https://www.cell.com/${journal}/fulltext/${pii}`;
             break;
 
+        case "aip":
+            abs = `https://doi.org/${paper.doi}`;
+            break;
+
         default:
             abs = "https://xkcd.com/1969/";
             break;
@@ -320,7 +324,11 @@ const paperToPDF = (paper) => {
 
         case "website":
             break;
+
         case "cell":
+            break;
+
+        case "aip":
             break;
 
         default:
@@ -685,7 +693,7 @@ const addOrUpdatePaper = async ({
                 }
                 log("paper: ", paper);
 
-                notifText = "Added to your Memory";
+                notifText = "Saved ✓";
                 if (pwc.codeLink) {
                     notifText +=
                         "<br/><div id='feedback-pwc'>(+ repo from PapersWithCode) </div>";
@@ -967,6 +975,11 @@ const parseIdFromUrl = async (url, tab = null) => {
             "cell",
             miniHash(url.split("cell.com/")[1])
         );
+    } else if (is.aip) {
+        const { aipId, doi } = parseAIPIdOrDOI(url);
+        idForUrl = doi
+            ? findPaperForProperty(papers, "aip", doi, "doi")
+            : findPaperForProperty(papers, "aip", miniHash(aipId));
     } else if (is.localFile) {
         idForUrl = is.localFile;
     } else if (is.parsedWebsite) {

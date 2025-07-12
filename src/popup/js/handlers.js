@@ -393,6 +393,7 @@ const handlePopupKeydown = async (e) => {
     const isCtrlOrMeta = e.ctrlKey || e.metaKey;
     const isEnter = key === "Enter" && !isCtrlOrMeta;
     const isCmdEnter = key === "Enter" && isCtrlOrMeta;
+    if (isCtrlOrMeta && !isCmdEnter) return;
     if (
         [
             "Backspace",
