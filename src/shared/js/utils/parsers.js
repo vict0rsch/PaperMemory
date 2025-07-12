@@ -1429,7 +1429,8 @@ const makeRSCPaper = async (url) => {
     const pdfLink =
         type === "articlepdf" ? url : url.replace(`/article${type}/`, "/articlepdf/");
 
-    let { bibtex, key, author, venue, title, note, year, doi } = await fetchBibtex({
+    let { bibtex, key, author, venue, title, note, year, doi } =
+        await fetchBibtexToPaper({
         url: `https://pubs.rsc.org/en/content/formatedresult?markedids=${rscId}&downloadtype=article&managertype=bibtex`,
     });
     author = flipAndAuthors(author);
