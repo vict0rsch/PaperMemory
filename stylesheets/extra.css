@@ -1,0 +1,78 @@
+:root {
+    --md-primary-fg-color: #b31b1b;
+    --md-primary-fg-color--light: #ecb7b7;
+    --md-primary-fg-color--dark: #7d0109;
+}
+[data-md-color-scheme="slate"] {
+    --md-hue: 225;
+}
+[data-md-color-scheme="slate"] {
+    --md-typeset-a-color: #cf1919;
+}
+#homesection img {
+    max-width: 600px;
+    width: 100%;
+}
+#keyboard-nav {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+}
+/* #keyboard-nav img {
+    max-width: 600px;
+    width: 100%;
+} */
+#keyboard-nav-text {
+    max-width: 50%;
+    width: 100%;
+    min-width: 300px;
+}
+#keyboard-nav p {
+    max-width: 50%;
+    width: 100%;
+    min-width: 300px;
+}
+/* Responsive layout - makes a one column layout instead of a two-column layout */
+@media (max-width: 800px) {
+    #keyboard-nav-text,
+    #keyboard-nav p {
+        max-width: 100%;
+    }
+}
+.md-grid {
+    max-width: 1300px;
+}
+
+.icon-tabler {
+    fill: none !important;
+}
+
+.demo-gif {
+    max-width: 650px !important;
+    margin: 0 2rem;
+    width: 100%;
+}
+.advanced-screenshot {
+    max-width: 600px !important;
+    margin: 0 2rem;
+    width: 100%;
+}
+
+.popup-display {
+    max-width: 400px !important;
+    margin: 0 2rem;
+    width: 100%;
+}
+
+.md-nav__item--active svg {
+    width: 1.4rem;
+    height: 1.1rem;
+}
+
+.md-nav__item--active a {
+    display: flex;
+    align-items: center;
+}
+img {
+    border-radius: 8px;
+}
