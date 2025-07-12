@@ -421,7 +421,7 @@ const hideNotif = () =>
         };
 
         if (!global.notif.element) {
-            warn("[PM][hideNotif] Notif element not found");
+            warn("[hideNotif] Notif element not found");
             end({ dontWait: true });
             return;
         }
@@ -438,7 +438,7 @@ const hideNotif = () =>
 
 const setNotifContent = (text) => {
     if (!global.notif.element) {
-        warn("[PM][setNotifContent] Notif element not found");
+        warn("[setNotifContent] Notif element not found");
         return;
     }
     global.notif.element.html(text);
