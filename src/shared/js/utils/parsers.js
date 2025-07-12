@@ -1631,7 +1631,7 @@ const tryPWCMatch = async (paper) => {
             year: pubYear,
             journal: venue,
         });
-    } else {
+    } else if (!paper.venue) {
         log("[PapersWithCode] No publication found");
     }
 
