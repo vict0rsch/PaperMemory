@@ -1431,10 +1431,44 @@ const makeRSCPaper = async (url) => {
 
     let { bibtex, key, author, venue, title, note, year, doi } =
         await fetchBibtexToPaper({
-        url: `https://pubs.rsc.org/en/content/formatedresult?markedids=${rscId}&downloadtype=article&managertype=bibtex`,
-    });
+            url: `https://pubs.rsc.org/en/content/formatedresult?markedids=${rscId}&downloadtype=article&managertype=bibtex`,
+        });
     author = flipAndAuthors(author);
     const id = `RSC-${venue.replaceAll(" ", "")}_${miniHash(rscId)}`;
+    return { author, bibtex, id, key, note, pdfLink, title, venue, year, doi };
+};
+
+const parseAIPIdOrDOI = (url) => {
+    if (isPdfUrl(noParamUrl(url))) {
+        return {
+            doi: noParamUrl(url)
+                .split("/")
+                .last()
+                .split("_")
+                .last()
+                .replace(".pdf", ""),
+        };
+    }
+    return {
+        aipId: url.includes("/article/")
+            ? url.split("/article/")[1].split("/")[3]
+            : url.includes("/article-split/")
+            ? url.split("/article-split/")[1].split("/")[3]
+            : url.split("/article-abstract/")[1].split("/")[3],
+    };
+};
+const makeAIPPaper = async (url) => {
+    url = noParamUrl(url);
+    if (isPdfUrl(url)) {
+        warn("PaperMemory cannot parse AIP papers from pdf urls");
+        return;
+    }
+    const { aipId } = parseAIPIdOrDOI(url);
+    const bibURL = `https://pubs.aip.org/Citation/Download?resourceId=${aipId}&resourceType=3&citationFormat=2`;
+    const { author, bibtex, key, note, eprint, title, venue, year, doi } =
+        await fetchBibtexToPaper({ url: bibURL });
+    const id = `AIP-${year}_${miniHash(aipId)}`;
+    const pdfLink = eprint.replaceAll("\\", "");
     return { author, bibtex, id, key, note, pdfLink, title, venue, year, doi };
 };
 
@@ -2117,6 +2151,11 @@ const makePaper = async (is, url, tab = false) => {
         paper = await makeCellPaper(url);
         if (paper) {
             paper.source = "cell";
+        }
+    } else if (is.aip) {
+        paper = await makeAIPPaper(url);
+        if (paper) {
+            paper.source = "aip";
         }
     } else {
         console.error({ is, url });

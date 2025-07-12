@@ -355,6 +355,15 @@ global.knownPaperPages = {
         ],
         name: "Wiley",
     },
+    aip: {
+        patterns: [
+            (url) =>
+                url.match(
+                    /pubs.aip.org\/aip\/.+\/(article|article-abstract|article-split)\//g
+                ) || url.match(/watermark.silverchair.com\/.+\.pdf/g),
+        ],
+        name: "AIP (American Institute of Physics)",
+    },
 };
 
 global.overrideORConfs = {
