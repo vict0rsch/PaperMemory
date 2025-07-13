@@ -1,0 +1,32 @@
+{#-
+This file was automatically generated - do not edit
+-#}
+{% extends "main.html" %}
+{% block tabs %}
+{{ super() }}
+<style>
+    .flex-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-direction: row;
+    }
+
+    /* Responsive layout - makes a one column layout instead of a two-column layout */
+    @media (max-width: 800px) {
+        .flex-container {
+            flex-direction: column;
+        }
+    }
+</style>
+<section class="mdx-container" id="homesection">
+    <div class="md-grid md-typeset" style="max-width: 1200px; padding: 1rem; padding-top: 4rem;">
+        {{ page.content }}
+    </div>
+</section>
+{% endblock %}
+{% block content %}
+{% endblock %}
+{% block footer %}
+{% include "partials/footer.html" %}
+{% endblock %}
