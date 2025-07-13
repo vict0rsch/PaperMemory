@@ -61,7 +61,7 @@ const getGist = async (options) => {
             info("No Gist found. Creating new one...");
             const papers = await getStorage("papers");
             gist = await createGistWithFile({
-                filename,
+                file: filename,
                 pat,
                 description,
                 content: papers,
