@@ -31,11 +31,7 @@ const getIdentifier = async () => {
  * @param {boolean} options.patError - Whether to raise an error if no PAT
  * @returns {Promise<{ ok: boolean, payload: { file: { filename: string, raw_url: string, content: object }, pat: string, gistId: string } }>}
  */
-const getGist = async (options) => {
-    options = options ?? {};
-    let pat = options.pat;
-    let store = options.store ?? true;
-    let patError = options.patError ?? true;
+const getGist = async ({ pat, store = true, patError = true }) => {
     try {
         if (!pat) pat = await getPat(patError);
 
@@ -61,7 +57,7 @@ const getGist = async (options) => {
             info("No Gist found. Creating new one...");
             const papers = await getStorage("papers");
             gist = await createGistWithFile({
-                filename,
+                file: filename,
                 pat,
                 description,
                 content: papers,
@@ -246,9 +242,9 @@ const initSyncAndState = async ({
     stateIsReady = () => {},
     remoteIsReady = () => {},
 } = {}) => {
-    (!global.state.dataVersion || forceInit) &&
-        (await initState({ papers, isContentScript }));
-
+    if (!global.state.dataVersion || forceInit) {
+        await initState({ papers, isContentScript });
+    }
     stateIsReady();
 
     if (!(await shouldSync())) {
