@@ -246,9 +246,9 @@ const initSyncAndState = async ({
     stateIsReady = () => {},
     remoteIsReady = () => {},
 } = {}) => {
-    (!global.state.dataVersion || forceInit) &&
-        (await initState({ papers, isContentScript }));
-
+    if (!global.state.dataVersion || forceInit) {
+        await initState({ papers, isContentScript });
+    }
     stateIsReady();
 
     if (!(await shouldSync())) {
