@@ -278,10 +278,13 @@ const pullSyncPapers = async () => {
         });
         const remoteSyncId = global.state.gistData["__syncId"];
         delete global.state.gistData["__syncId"];
-        const remotePapers =
-            remoteSyncId === localSyncID
-                ? (await getStorage("papers")) ?? {}
-                : global.state.gistData;
+
+        let remotePapers;
+        if (remoteSyncId === localSyncID) {
+            remotePapers = (await getStorage("papers")) ?? {};
+        } else {
+            remotePapers = global.state.gistData;
+        }
         if (remoteSyncId === localSyncID) {
             warn("Pulled sync data from same device, ignoring.");
         }
