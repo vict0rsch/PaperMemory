@@ -199,7 +199,11 @@ function delay(fn, ms) {
  */
 const cleanPapers = (papers) => {
     let cleaned = { ...papers };
-    delete cleaned["__dataVersion"];
+    Object.keys(cleaned).forEach((k) => {
+        if (k.startsWith("__")) {
+            delete cleaned[k];
+        }
+    });
     return cleaned;
 };
 
