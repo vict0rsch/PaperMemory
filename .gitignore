@@ -10,3 +10,4 @@ coverage
 .cache
 .todo
 site/
+__pycache__
