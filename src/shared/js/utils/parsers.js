@@ -1,23 +1,65 @@
+// ES Module imports
+import {
+    log,
+    info,
+    warn,
+    cleanStr,
+    miniHash,
+    sendMessageToBackground,
+    cleanBiorxivURL,
+    parseCVFUrl,
+    firstNonStopLowercase,
+    urlToWebsiteId,
+    isPdfUrl,
+    noParamUrl,
+    dedent,
+    parseUrl,
+    arxivIdFromURL,
+    spaceCamelCase,
+    logError,
+    silentPromiseTimeout,
+    toSingleSpace,
+} from "@pmu/functions.js";
+import {
+    state,
+    preprintSources,
+    overrideORConfs,
+    overridePMLRConfs,
+    overrideDBLPVenues,
+    englishStopWords,
+    sourceExtras,
+    journalAbbreviations,
+} from "@pmu/config.js";
+import { getStorage, setStorage, validatePaper, makeVenue } from "@pmu/data.js";
+import {
+    extractBibtexValue,
+    bibtexToString,
+    bibtexToObject,
+} from "@pmu/bibtexParser.js";
+import { queryAll, querySelector } from "@pmu/miniquery.js";
+import { sleep } from "@pmu/sync.js";
+import { parseIdFromUrl } from "@pmu/urls.js";
+import { readJournalAbbreviations } from "@pmu/state.js";
 // -------------------
 // -----  Utils  -----
 // -------------------
 
-const decodeHtml = (html) => {
+export const decodeHtml = (html) => {
     // https://stackoverflow.com/questions/5796718/html-entity-decode
     var txt = document.createElement("textarea");
     txt.innerHTML = html;
     return txt.value;
 };
 
-const flipAuthor = (author) => author.split(", ").reverse().join(" ");
-const flipAndAuthors = (authors) =>
+export const flipAuthor = (author) => author.split(", ").reverse().join(" ");
+export const flipAndAuthors = (authors) =>
     authors.split(" and ").map(flipAuthor).join(" and ");
 
 // -------------------
 // -----  Fetch  -----
 // -------------------
 
-const fetchArxivXML = async (paperId) => {
+export const fetchArxivXML = async (paperId) => {
     const arxivId = paperId.replace("Arxiv-", "").replace("_", "/");
     return fetch(
         "https://export.arxiv.org/api/query?" +
@@ -25,7 +67,7 @@ const fetchArxivXML = async (paperId) => {
     );
 };
 
-const fetchCvfHTML = async (url) => {
+export const fetchCvfHTML = async (url) => {
     let paperPage, text;
     if (url.endsWith(".pdf")) {
         paperPage = url
@@ -54,22 +96,22 @@ const fetchCvfHTML = async (url) => {
     return text;
 };
 
-const getOpenReviewNoteJSON = (url) => {
+export const getOpenReviewNoteJSON = (url) => {
     return sendMessageToBackground({ type: "OpenReviewNoteJSON", url });
 };
 
-const getOpenReviewForumJSON = (url) => {
+export const getOpenReviewForumJSON = (url) => {
     return sendMessageToBackground({ type: "OpenReviewForumJSON", url });
 };
 
-const fetchDom = async (url) => {
+export const fetchDom = async (url) => {
     const html = await fetch(url).then((response) =>
         response.ok ? response.text() : ""
     );
     return new DOMParser().parseFromString(html.replaceAll("\n", ""), "text/html");
 };
 
-const fetchText = async (url) => {
+export const fetchText = async (url) => {
     try {
         const response = await fetch(url);
         const text = response.ok ? await response.text() : "";
@@ -80,7 +122,7 @@ const fetchText = async (url) => {
     }
 };
 
-const fetchJSON = async (url) => {
+export const fetchJSON = async (url) => {
     try {
         const response = await fetch(url);
         const status = response.status;
@@ -92,7 +134,7 @@ const fetchJSON = async (url) => {
     }
 };
 
-const fetchBibtexToPaper = async ({ url, doi }) => {
+export const fetchBibtexToPaper = async ({ url, doi }) => {
     let bibtex;
     if (url && doi) {
         throw new Error("fetchBibtexToPaper: both url and doi provided");
@@ -122,7 +164,22 @@ const fetchBibtexToPaper = async ({ url, doi }) => {
 // -----  Parse  -----
 // -------------------
 
-const extractCrossrefData = (crossrefResponse) => {
+/**
+ * Extract the author from a bibtex string, as an "and" separated list of names.
+ * eg: "John Doe and Jane Doe"
+ * @param {string} bibtex The bibtex string to extract the author from.
+ * @returns {string} The author.
+ */
+export const extractAuthor = (bibtex) =>
+    extractBibtexValue(bibtex, "author")
+        .replaceAll("{", "")
+        .replaceAll("}", "")
+        .replaceAll("\\", "")
+        .split(" and ")
+        .map((a) => a.split(", ").reverse().join(" "))
+        .join(" and ");
+
+export const extractCrossrefData = (crossrefResponse) => {
     if (!crossrefResponse.status || crossrefResponse.status !== "ok") {
         error("Cannot parse CrossRef response", crossrefResponse);
         return;
@@ -205,45 +262,11 @@ const extractCrossrefData = (crossrefResponse) => {
     return { ...bibData, bibtex, venue };
 };
 
-const fetchCrossRefDataForDoi = async (doi) => {
+export const fetchCrossRefDataForDoi = async (doi) => {
     const { data, status } = await fetchJSON(
         `https://api.crossref.org/works/${doi}?mailto=schmidtv%40mila.quebec`
     );
     return { data: extractCrossrefData(data), status };
-};
-
-const fetchSemanticScholarDataForDoi = async (doi) => {
-    const { data } = await fetchJSON(
-        `https://api.semanticscholar.org/graph/v1/paper/${doi}?fields=venue,year,authors,title`
-    );
-
-    let bibData;
-    if (data) {
-        bibData = {};
-        if (data.venue) {
-            bibData.venue = data.venue;
-        }
-        if (data.year) {
-            bibData.year = data.year;
-        }
-        if (data.authors) {
-            bibData.author = data.authors.map((a) => a.name).join(" and ");
-        }
-        if (data.title) {
-            bibData.title = data.title;
-        }
-        const citationKey = `${miniHash(data.authors[0].name)}${firstNonStopLowercase(
-            bibData.title
-        )}`;
-        const bibtex = bibtexToString({
-            entryType: "article",
-            citationKey,
-            ...bibData,
-        });
-        bibData.bibtex = bibtex;
-        bibData.key = citationKey;
-    }
-    return bibData;
 };
 
 // get all dc variations
@@ -253,7 +276,7 @@ const getDCPatterns = (value) => {
     const caps = ["dc.", "DC:", "DC.", "dc:"].map((v) => v + spec.capitalize());
     return [...lowers, ...caps];
 };
-const getMetaContent = ({
+export const getMetaContent = ({
     selector,
     dom,
     all = false,
@@ -284,7 +307,7 @@ const getMetaContent = ({
     return toSingleSpace(spaceCamelCase(candidate));
 };
 
-const extractDataFromDCMetaTags = (dom) => {
+export const extractDataFromDCMetaTags = (dom) => {
     let author =
         getMetaContent({
             selector: { name: "dc.Creator" },
@@ -377,7 +400,7 @@ const extractDataFromDCMetaTags = (dom) => {
     return { author, year, publisher, title, venue, key, doi, bibtex, pdfLink, note };
 };
 
-const makeArxivPaper = async (url) => {
+export const makeArxivPaper = async (url) => {
     const arxivId = arxivIdFromURL(url);
     const response = await fetchArxivXML(arxivId);
     const xmlData = await response.text();
@@ -417,7 +440,7 @@ const makeArxivPaper = async (url) => {
     return { author, bibtex, id, key, pdfLink, title, venue, year };
 };
 
-const makeNeuripsPaper = async (url) => {
+export const makeNeuripsPaper = async (url) => {
     if (url.endsWith(".pdf")) {
         url = url
             .replace("/file/", "/hash/")
@@ -481,7 +504,7 @@ const makeNeuripsPaper = async (url) => {
     return { author, bibtex, id, key, note, pdfLink, title, venue, year };
 };
 
-const makeCVFPaper = async (url) => {
+export const makeCVFPaper = async (url) => {
     const htmlText = await fetchCvfHTML(url);
     const dom = new DOMParser().parseFromString(
         htmlText.replaceAll("\n", ""),
@@ -517,7 +540,7 @@ const makeCVFPaper = async (url) => {
     return { author, bibtex, id, key, note, pdfLink, title, venue, year };
 };
 
-const makeOpenReviewBibTex = (paper, url) => {
+export const makeOpenReviewBibTex = (paper, url) => {
     const title = paper.content.title;
     const author = paper.content.authors.join(" and ");
     const year = paper.cdate ? new Date(paper.cdate).getFullYear() : "0000";
@@ -548,7 +571,7 @@ const makeOpenReviewBibTex = (paper, url) => {
  * @param {Object} paper - A paper returned by the OpenReview API v2 or v1.
  * @returns {Object} The paper with the `value` key extracted from the `content` object.
  */
-const extractAPIv2ContentValue = (paper) => {
+export const extractAPIv2ContentValue = (paper) => {
     const content = {};
     let isV2 = false;
     for (const [k, v] of Object.entries(paper.content)) {
@@ -563,7 +586,7 @@ const extractAPIv2ContentValue = (paper) => {
     return { isV2, paper };
 };
 
-const makeOpenReviewPaper = async (url) => {
+export const makeOpenReviewPaper = async (url) => {
     const noteJson = await getOpenReviewNoteJSON(url);
     const forumJson = await getOpenReviewForumJSON(url);
 
@@ -623,8 +646,8 @@ const makeOpenReviewPaper = async (url) => {
 
     let overrideOrg = organizer;
     let overridden = false;
-    if (global.overrideORConfs.hasOwnProperty(organizer)) {
-        overrideOrg = global.overrideORConfs[organizer];
+    if (overrideORConfs.hasOwnProperty(organizer)) {
+        overrideOrg = overrideORConfs[organizer];
         overridden = true;
     }
     if (overridden) {
@@ -675,7 +698,7 @@ const makeOpenReviewPaper = async (url) => {
     return { author, bibtex, id, key, note, pdfLink, title, venue, year };
 };
 
-const makeBioRxivPaper = async (url) => {
+export const makeBioRxivPaper = async (url) => {
     const biorxivAPI = "https://api.biorxiv.org/";
     const pageURL = url.replace(".full.pdf", "");
     const biorxivID = url
@@ -716,7 +739,7 @@ const makeBioRxivPaper = async (url) => {
     return { author, bibtex, id, key, note, pdfLink, title, venue, year };
 };
 
-const makePMLRPaper = async (url) => {
+export const makePMLRPaper = async (url) => {
     const key = url.split("/").last().split(".")[0];
     const id = await parseIdFromUrl(url);
 
@@ -755,9 +778,9 @@ const makePMLRPaper = async (url) => {
     );
     let venue = conf;
     note = `Accepted @ ${venue} (${year})`;
-    for (const long in global.overridePMLRConfs) {
+    for (const long in overridePMLRConfs) {
         if (conf.includes(long)) {
-            venue = global.overridePMLRConfs[long];
+            venue = overridePMLRConfs[long];
             conf = venue + " " + year;
             note = "Accepted @ " + conf;
             break;
@@ -767,12 +790,12 @@ const makePMLRPaper = async (url) => {
     return { author, bibtex, id, key, note, pdfLink, title, venue, year };
 };
 
-const findACLValue = (dom, key) => {
+export const findACLValue = (dom, key) => {
     const dt = queryAll("dt", dom).filter((v) => v.innerText.includes(key))[0];
     return dt.nextElementSibling.innerText;
 };
 
-const makeACLPaper = async (url) => {
+export const makeACLPaper = async (url) => {
     url = url.replace(".pdf", "");
     const dom = await fetchDom(url);
 
@@ -808,7 +831,7 @@ const makeACLPaper = async (url) => {
     return { author, bibtex, id, key, note, pdfLink, title, venue, year };
 };
 
-const makePNASPaper = async (url) => {
+export const makePNASPaper = async (url) => {
     /*
         https://www.pnas.org/doi/10.1073/pnas.2114679118
         https://www.pnas.org/doi/epdf/10.1073/pnas.2114679118
@@ -864,7 +887,7 @@ const makePNASPaper = async (url) => {
     return { author, bibtex, id, key, note, pdfLink, title, venue, year };
 };
 
-const makeNaturePaper = async (url) => {
+export const makeNaturePaper = async (url) => {
     url = url.replace(".pdf", "").split("#")[0];
     const pdfLink = url + ".pdf";
     const hash = url.split("/").last();
@@ -922,7 +945,7 @@ const makeNaturePaper = async (url) => {
     return { author, bibtex, id, key, note, pdfLink, title, venue, year };
 };
 
-const makeACSPaper = async (url) => {
+export const makeACSPaper = async (url) => {
     url = url.replace("pubs.acs.org/doi/pdf/", "pubs.acs.org/doi/").split("?")[0];
     const doi = url.replace("/abs/", "/").split("/doi/")[1];
     const citeUrl = `https://pubs.acs.org/action/downloadCitation?doi=${doi}&include=cit&format=bibtex&direct=true`;
@@ -940,7 +963,7 @@ const makeACSPaper = async (url) => {
     return { author, bibtex, id, key, note, pdfLink, title, venue, year };
 };
 
-const makeIOPPaper = async (url) => {
+export const makeIOPPaper = async (url) => {
     url = url.split("#")[0];
     if (url.endsWith("/pdf")) url = url.slice(0, -4);
     const dom = await fetchDom(url);
@@ -962,7 +985,7 @@ const makeIOPPaper = async (url) => {
     return { author, bibtex, id, key, note, pdfLink, title, venue, year };
 };
 
-const makeJMLRPaper = async (url) => {
+export const makeJMLRPaper = async (url) => {
     if (url.includes("/papers/volume")) {
         url = url.replace("/papers/volume", "/papers/v");
     }
@@ -985,7 +1008,7 @@ const makeJMLRPaper = async (url) => {
     return { author, bibtex, id, key, note, pdfLink, title, venue, year };
 };
 
-const makePMCPaper = async (url) => {
+export const makePMCPaper = async (url) => {
     const pmcid = url.match(/PMC\d+/)[0].replace("PMC", "");
     const absUrl = url.split(`PMC${pmcid}`)[0] + `PMC${pmcid}`;
     // https://api.ncbi.nlm.nih.gov/lit/ctxp/v1/pmc/?format=csl&id=7537588&download=true
@@ -1029,51 +1052,7 @@ const makePMCPaper = async (url) => {
     return { author, bibtex, id, key, note, pdfLink, title, venue, year };
 };
 
-const makePubMedPaper = async (url) => {
-    const dom = await fetchDom(url.split("?")[0]);
-    const metas = [...dom.getElementsByTagName("meta")].filter((el) =>
-        el.getAttribute("name")?.includes("citation_")
-    );
-    const data = Object.fromEntries(
-        metas.map((el) => [
-            el.getAttribute("name").replace("citation_", ""),
-            el.getAttribute("content"),
-        ])
-    );
-    const author = document
-        .querySelector("div.authors-list")
-        .innerText.replace(/\d/gi, "")
-        .split(",")
-        .map((a) => a.trim())
-        .join(" and ");
-
-    const title = data.title;
-    const venue = data.journal_title;
-    const year = data.date.split("/")[2];
-    const id = `PubMed-${year}_${data.pmid}`;
-    const key = `${author
-        .split(" and ")[0]
-        .split(" ")
-        .last()}${year}${firstNonStopLowercase(data.title)}`;
-
-    const bibtexObj = {
-        entryType: "article",
-        citationKey: key,
-        publisher: data.publisher,
-        doi: data.doi,
-        issn: data.issn,
-        journal: venue,
-        year,
-        author,
-    };
-    const bibtex = bibtexToString(bibtexObj);
-    const note = `Accepted @ ${journal} (${year})`;
-    const pdfLink = "";
-
-    return { author, bibtex, id, key, note, pdfLink, title, venue, year };
-};
-
-const makeIJCAIPaper = async (url) => {
+export const makeIJCAIPaper = async (url) => {
     const procId = url.endsWith(".pdf")
         ? url
               .replace(".pdf", "")
@@ -1107,7 +1086,7 @@ const makeIJCAIPaper = async (url) => {
     return { author, bibtex, id, key, note, pdfLink, title, venue, year };
 };
 
-const makeACMPaper = async (url) => {
+export const makeACMPaper = async (url) => {
     let pdfLink;
     url = noParamUrl(url);
     if (isPdfUrl(url)) {
@@ -1153,7 +1132,7 @@ const makeACMPaper = async (url) => {
     return { author, bibtex, id, key, note, pdfLink, title, venue, year };
 };
 
-const makeIEEEPaper = async (url) => {
+export const makeIEEEPaper = async (url) => {
     if (isPdfUrl(url)) {
         const articleId = url
             .split("/stamp/stamp.jsp?tp=&arnumber=")[1]
@@ -1191,13 +1170,13 @@ const makeIEEEPaper = async (url) => {
     return { author, bibtex, id, key, note, pdfLink, title, venue, year };
 };
 
-const makeSpringerPaper = async (url) => {
+export const makeSpringerPaper = async (url) => {
     // https://link.springer.com/chapter/10.1007/978-981-16-1220-6_12
     // https://link.springer.com/article/10.1007/s00148-021-00864-z
     // https://link.springer.com/content/pdf/10.1007/s00148-021-00864-z.pdf
     // https://link.springer.com/article/10.1007/s00148-021-00864-z?noAccess=true
     // https://citation-needed.springer.com/v2/references/10.1007/s41095-022-0271-y?format=bibtex&flavour=citation
-    const types = [...global.sourceExtras.springer.types, "content/pdf"];
+    const types = [...sourceExtras.springer.types, "content/pdf"];
     const springerType = types.find((c) => url.includes(`/${c}/`));
     if (!springerType) {
         throw new Error(
@@ -1237,7 +1216,7 @@ const makeSpringerPaper = async (url) => {
     };
 };
 
-const makeAPSPaper = async (url) => {
+export const makeAPSPaper = async (url) => {
     url = url.split("#")[0];
     const [journal, type] = parseUrl(url).pathname.split("/").slice(1, 3);
     const doi = url.split(`/${journal}/${type}/`).last();
@@ -1248,7 +1227,7 @@ const makeAPSPaper = async (url) => {
     const id = `APS-${data.year}_${miniHash(doi)}`;
     const journalKey = data.journal ?? data.publisher;
     await readJournalAbbreviations();
-    const venue = global.journalAbbreviations[miniHash(journalKey)] ?? journalKey;
+    const venue = journalAbbreviations[miniHash(journalKey)] ?? journalKey;
     const note = `Published @ ${venue} (${data.year})`;
     return {
         author: flipAndAuthors(data.author),
@@ -1263,7 +1242,7 @@ const makeAPSPaper = async (url) => {
     };
 };
 
-const makeWileyPaper = async (url) => {
+export const makeWileyPaper = async (url) => {
     url = noParamUrl(url);
     const pdfLink = url.match(/\/doi\/10\./g)
         ? url.replace("/doi/", "/doi/pdf/")
@@ -1293,7 +1272,7 @@ const makeWileyPaper = async (url) => {
     };
 };
 
-const makeScienceDirectPaper = async (url) => {
+export const makeScienceDirectPaper = async (url) => {
     const pii = url.split("/pii/")[1].split("/")[0].split("#")[0].split("?")[0];
     const bibtex = await fetchText(
         `https://www.sciencedirect.com/sdfe/arp/cite?pii=${pii}&format=text%2Fx-bibtex&withabstract=false`
@@ -1309,7 +1288,7 @@ const makeScienceDirectPaper = async (url) => {
     return { author, bibtex, id, key: citationKey, note, pdfLink, title, venue, year };
 };
 
-const makeSciencePaper = async (url) => {
+export const makeSciencePaper = async (url) => {
     let author, bibtex, id, key, note, pdfLink, title, venue, year, doi, absUrl;
 
     doi = noParamUrl(url).split("/doi/")[1];
@@ -1335,7 +1314,7 @@ const makeSciencePaper = async (url) => {
     return { author, bibtex, id, key, note, pdfLink, title, venue, year };
 };
 
-const makeFrontiersPaper = async (url) => {
+export const makeFrontiersPaper = async (url) => {
     url = url.replace(/\/pdf$/, "/full");
     const doi = noParamUrl(url).split("/articles/")[1].split("/full")[0];
     const bib = await fetchText(`https://www.frontiersin.org/articles/${doi}/bibTex`);
@@ -1359,7 +1338,7 @@ const makeFrontiersPaper = async (url) => {
     return { author, bibtex, id, key, note, pdfLink, title, venue, year };
 };
 
-const makeIHEPPaper = async (url) => {
+export const makeIHEPPaper = async (url) => {
     let data, num;
     if (url.includes("/files/")) {
         const hash = url.split("/files/")[1].split("/")[0];
@@ -1403,7 +1382,7 @@ const makeIHEPPaper = async (url) => {
     return { author, bibtex, id, key, note, pdfLink, title, venue, year, doi };
 };
 
-const makePLOSPaper = async (url) => {
+export const makePLOSPaper = async (url) => {
     const doi = url.split("?id=").last().split("&")[0];
     let { bibtex, key, author, venue, title, note, year } = await fetchBibtexToPaper({
         doi,
@@ -1417,7 +1396,7 @@ const makePLOSPaper = async (url) => {
     return { author, bibtex, id, key, note, pdfLink, title, venue, year, doi };
 };
 
-const makeRSCPaper = async (url) => {
+export const makeRSCPaper = async (url) => {
     url = noParamUrl(url).replace("/unauth", "");
     const rscId = url.split("/").last();
     const type = url
@@ -1438,7 +1417,7 @@ const makeRSCPaper = async (url) => {
     return { author, bibtex, id, key, note, pdfLink, title, venue, year, doi };
 };
 
-const parseAIPIdOrDOI = (url) => {
+export const parseAIPIdOrDOI = (url) => {
     if (isPdfUrl(noParamUrl(url))) {
         return {
             doi: noParamUrl(url)
@@ -1457,7 +1436,7 @@ const parseAIPIdOrDOI = (url) => {
             : url.split("/article-abstract/")[1].split("/")[3],
     };
 };
-const makeAIPPaper = async (url) => {
+export const makeAIPPaper = async (url) => {
     url = noParamUrl(url);
     if (isPdfUrl(url)) {
         warn("PaperMemory cannot parse AIP papers from pdf urls");
@@ -1472,7 +1451,7 @@ const makeAIPPaper = async (url) => {
     return { author, bibtex, id, key, note, pdfLink, title, venue, year, doi };
 };
 
-const makeWebsitePaper = async (tab) => {
+export const makeWebsitePaper = async (tab) => {
     const url = tab.url;
     const dom = await fetchDom(url);
     const og = Object.fromEntries(
@@ -1506,7 +1485,7 @@ const makeWebsitePaper = async (tab) => {
     return { author, bibtex, id, key, note, pdfLink, title, venue, year };
 };
 
-const makeMDPIPaper = async (url) => {
+export const makeMDPIPaper = async (url) => {
     url = noParamUrl(url);
     if (url.split("/").last().startsWith("pdf")) {
         url = url.split("/").slice(0, -1).join("/");
@@ -1526,7 +1505,7 @@ const makeMDPIPaper = async (url) => {
     return { author, bibtex, id, key, note, pdfLink, title, venue, year, doi };
 };
 
-const makeOUPPaper = async (url) => {
+export const makeOUPPaper = async (url) => {
     url = noParamUrl(url);
     const resourceId = url.split("/").last();
     let bibtex = await fetchText(
@@ -1547,7 +1526,7 @@ const makeOUPPaper = async (url) => {
     return { author, bibtex, id, key, note, pdfLink, title, venue, year, doi };
 };
 
-const makerHALPaper = async (url) => {
+export const makerHALPaper = async (url) => {
     url = noParamUrl(url).replace(/(hal\.science\/\w+-\d+)(v\d+)?(\/document)?/, "$1"); // remove version
     const halId = url.split("/").last();
     const bibURL = `https://hal.science/${halId}/bibtex`;
@@ -1566,7 +1545,7 @@ const makerHALPaper = async (url) => {
     return { author, bibtex, id, key, note, pdfLink, title, venue, year, doi };
 };
 
-const makeChemRxivPaper = async (url) => {
+export const makeChemRxivPaper = async (url) => {
     let chemRxivId;
     let absUrl = url;
     if (isPdfUrl(url)) {
@@ -1582,16 +1561,16 @@ const makeChemRxivPaper = async (url) => {
     return { author, bibtex, id, key, note, pdfLink, title, venue, year, doi };
 };
 
-const findCellPii = async (url) => {
+export const findCellPii = async (url) => {
     const isPdf = url.toLowerCase().includes("showpdf");
     const isPdfExtended = url.toLowerCase().includes("pdfextended");
     let pii;
     if (isPdf || isPdfExtended) {
-        while (!global.state.cellJournalData) {
+        while (!state.cellJournalData) {
             console.log("Waiting for cell journal data...");
             await sleep(5);
         }
-        const cellData = global.state.cellJournalData;
+        const cellData = state.cellJournalData;
         pii = isPdf ? new URL(url).searchParams.get("pii") : url.split("/").last();
         const issn = pii.match(/\d{4}-\d{3}[0-9X]/g)[0];
         let venue;
@@ -1614,7 +1593,7 @@ const findCellPii = async (url) => {
     return { pii, url };
 };
 
-const makeCellPaper = async (url) => {
+export const makeCellPaper = async (url) => {
     let pii;
     ({ pii, url } = await findCellPii(url));
     const pdfLink = `https://www.cell.com/action/showPdf?pii=${pii}`;
@@ -1643,7 +1622,7 @@ const makeCellPaper = async (url) => {
 // -----  PREPRINT MATCHING  -----
 // -------------------------------
 
-const tryPWCMatch = async (paper) => {
+export const tryPWCMatch = async (paper) => {
     const pwcPrefs = (await getStorage("pwcPrefs")) ?? {};
     let bibtex;
     const payload = {
@@ -1689,7 +1668,7 @@ const tryPWCMatch = async (paper) => {
  * @param {object} paper The paper to look for in crossref's database for an exact title match
  * @returns {string} The note for the paper as `Accepted @ ${items.event.name} -- [crossref.org]`
  */
-const tryCrossRef = async (paper, toBackground) => {
+export const tryCrossRef = async (paper, toBackground) => {
     if (toBackground) {
         return await sendMessageToBackground({ type: "try-cross-ref", paper });
     }
@@ -1738,7 +1717,7 @@ const tryCrossRef = async (paper, toBackground) => {
     }
 };
 
-const tryDBLP = async (paper, toBackground) => {
+export const tryDBLP = async (paper, toBackground) => {
     if (toBackground) {
         return await sendMessageToBackground({ type: "try-dblp", paper });
     }
@@ -1784,9 +1763,7 @@ const tryDBLP = async (paper, toBackground) => {
                 const bibtex = await fetchText(hit.info.url + ".bib");
                 const abbr = miniHash(hit.info.venue);
                 await readJournalAbbreviations();
-                const venue = (
-                    global.journalAbbreviations[abbr] ?? hit.info.venue
-                ).trim();
+                const venue = (journalAbbreviations[abbr] ?? hit.info.venue).trim();
                 const year = hit.info.year;
                 const url = hit.info.url;
                 const note = `Accepted @ ${venue} ${year} -- [dblp.org]`;
@@ -1801,7 +1778,7 @@ const tryDBLP = async (paper, toBackground) => {
     }
 };
 
-const trySemanticScholar = async (paper, toBackground) => {
+export const trySemanticScholar = async (paper, toBackground) => {
     if (toBackground) {
         return await sendMessageToBackground({ type: "try-semantic-scholar", paper });
     }
@@ -1859,13 +1836,13 @@ const trySemanticScholar = async (paper, toBackground) => {
     return { status: 404 };
 };
 
-const tryGoogleScholar = async (paper) => {
+export const tryGoogleScholar = async (paper) => {
     const resp = await sendMessageToBackground({ type: "google-scholar", paper });
     resp.note && info("Found a Google Scholar match", resp.note);
     return resp;
 };
 
-const tryUnpaywall = async (paper, toBackground) => {
+export const tryUnpaywall = async (paper, toBackground) => {
     if (toBackground) {
         return await sendMessageToBackground({ type: "try-unpaywall", paper });
     }
@@ -1887,7 +1864,7 @@ const tryUnpaywall = async (paper, toBackground) => {
     return { status };
 };
 
-const tryPreprintMatch = async (paper, tryPwc = false) => {
+export const tryPreprintMatch = async (paper, tryPwc = false) => {
     let note, venue, bibtex, code, doi;
     let matches = {};
 
@@ -1932,7 +1909,7 @@ const tryPreprintMatch = async (paper, tryPwc = false) => {
 // -----  Creating papers  -----
 // -----------------------------
 
-const initPaper = async (paper) => {
+export const initPaper = async (paper) => {
     if (!paper.note) {
         paper.note = "";
     }
@@ -1959,7 +1936,7 @@ const initPaper = async (paper) => {
     return paper;
 };
 
-const autoTagPaper = async (paper) => {
+export const autoTagPaper = async (paper) => {
     try {
         const autoTags = await getStorage("autoTags");
         if (!autoTags || !autoTags.length) return paper;
@@ -1991,7 +1968,7 @@ const autoTagPaper = async (paper) => {
     }
 };
 
-const makePaper = async (is, url, tab = false) => {
+export const makePaper = async (is, url, tab = false) => {
     let paper;
     let start = performance.now();
     info("Making paper...");
@@ -2172,87 +2149,3 @@ const makePaper = async (is, url, tab = false) => {
 
     return await initPaper(paper);
 };
-
-const findFuzzyPaperMatch = (hashes, paper) => {
-    const paperHash = miniHash(paper.title);
-    if (hashes.hasOwnProperty(paperHash)) {
-        const matches = hashes[paperHash];
-        const nonPreprint = matches.find(
-            (m) => !global.preprintSources.some((s) => m.toLowerCase().startsWith(s))
-        );
-        if (nonPreprint) {
-            return nonPreprint;
-        }
-        return matches[0];
-    }
-    return null;
-};
-
-// ----------------------------------------------------
-// -----  TESTS: modules for node.js environment  -----
-// ----------------------------------------------------
-if (typeof module !== "undefined" && module.exports != null) {
-    var dummyModule = module;
-    dummyModule.exports = {
-        decodeHtml,
-        flipAuthor,
-        flipAndAuthors,
-        fetchArxivXML,
-        fetchCvfHTML,
-        getOpenReviewNoteJSON,
-        getOpenReviewForumJSON,
-        fetchDom,
-        fetchText,
-        fetchJSON,
-        fetchBibtexToPaper,
-        extractCrossrefData,
-        fetchCrossRefDataForDoi,
-        fetchSemanticScholarDataForDoi,
-        getMetaContent,
-        extractDataFromDCMetaTags,
-        makeArxivPaper,
-        makeNeuripsPaper,
-        makeCVFPaper,
-        makeOpenReviewBibTex,
-        extractAPIv2ContentValue,
-        makeOpenReviewPaper,
-        makeBioRxivPaper,
-        makePMLRPaper,
-        findACLValue,
-        makeACLPaper,
-        makePNASPaper,
-        makeNaturePaper,
-        makeACSPaper,
-        makeIOPPaper,
-        makeJMLRPaper,
-        makePMCPaper,
-        makePubMedPaper,
-        makeIJCAIPaper,
-        makeACMPaper,
-        makeIEEEPaper,
-        makeSpringerPaper,
-        makeAPSPaper,
-        makeWileyPaper,
-        makeScienceDirectPaper,
-        makeSciencePaper,
-        makeFrontiersPaper,
-        makeIHEPPaper,
-        makePLOSPaper,
-        makeRSCPaper,
-        makeWebsitePaper,
-        makeMDPIPaper,
-        makeOUPPaper,
-        makerHALPaper,
-        tryPWCMatch,
-        tryCrossRef,
-        tryDBLP,
-        trySemanticScholar,
-        tryGoogleScholar,
-        tryUnpaywall,
-        tryPreprintMatch,
-        initPaper,
-        autoTagPaper,
-        makePaper,
-        findFuzzyPaperMatch,
-    };
-}

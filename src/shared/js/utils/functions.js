@@ -1,13 +1,29 @@
+// ES Module imports
+import {
+    state,
+    descendingSortKeys,
+    svgActionsHoverTitles,
+    consolHeaderStyle,
+    englishStopWords,
+} from "@pmu/config.js";
+import { LOGTRACE } from "@pmu/logTrace.js";
+import { val, hasClass, findEl } from "@pmu/miniquery.js";
+
 /**
- * Whether or not to log the error trace to the console
+ * Generate a random integer between 0 and max
+ * @param {number} max The maximum value of the random integer
+ * @returns {number} The random integer
  */
-const logTrace = typeof LOGTRACE !== "undefined" && LOGTRACE;
+export function getRandomInt(max) {
+    // https://developer.mozilla.org/fr/docs/Web/JavaScript/Reference/Global_Objects/Math/random
+    return Math.floor(Math.random() * max);
+}
 
 /** Function to log to console with a prefix
  * @param {any} args The list of arguments to log
  * @returns {void}
  */
-const log = (...args) => {
+export const log = (...args) => {
     let messageConfig = "%c%s ";
 
     let isInfo = false;
@@ -33,11 +49,11 @@ const log = (...args) => {
     }
 
     if (
-        (isError && logTrace >= 1) ||
-        (isWarn && logTrace >= 2) ||
-        (isInfo && logTrace >= 3) ||
-        (isDebug && logTrace >= 4) ||
-        logTrace >= 5
+        (isError && LOGTRACE >= 1) ||
+        (isWarn && LOGTRACE >= 2) ||
+        (isInfo && LOGTRACE >= 3) ||
+        (isDebug && LOGTRACE >= 4) ||
+        LOGTRACE >= 5
     ) {
         const stack = new Error().stack;
         args.push("\n\nLog trace:\n" + stack.split("\n").slice(2).join("\n"));
@@ -86,51 +102,51 @@ const log = (...args) => {
  * @param {any} args The list of arguments to log
  * @returns {void}
  */
-const info = (...args) => log(...["[info]", ...args]);
+export const info = (...args) => log(...["[info]", ...args]);
 
 /** Log a warning message in yellow
  * @param {any} args The list of arguments to log
  * @returns {void}
  * */
-const warn = (...args) => log(...["[warn]", ...args]);
+export const warn = (...args) => log(...["[warn]", ...args]);
 
 /** Log a debug message in purple
  * @param {any} args The list of arguments to log
  * @returns {void}
  * */
-const debug = (...args) => log(...["[debug]", ...args]);
+export const debug = (...args) => log(...["[debug]", ...args]);
 
 /** Log a success message in green
  * @param {any} args The list of arguments to log
  * @returns {void}
  */
-const logOk = (...args) => log(...["[ok]", ...args]);
+export const logOk = (...args) => log(...["[ok]", ...args]);
 
 /** Log an error message in red
  * @param {any} args The list of arguments to log
  * @returns {void}
  * */
-const logError = (...args) => log(...["[error]", ...args]);
+export const logError = (...args) => log(...["[error]", ...args]);
 
 /** Create a group of logs in the console
  *  @param {string} text The text to display in the group
  */
-const consoleHeader = (text) =>
-    console.groupCollapsed(`%c${text}`, global.consolHeaderStyle);
+export const consoleHeader = (text) =>
+    console.groupCollapsed(`%c${text}`, consolHeaderStyle);
 
 /** Gets the string to display from a paper's id, typically
  * splitting on _ and taking the first part
  * @param {string} id The id of the paper
  * @returns {string} The string to display
  */
-const getDisplayId = (id) => {
+export const getDisplayId = (id) => {
     const baseId = id;
     id = id.split("_")[0].split(".")[0];
     if (!id.startsWith("OR-")) {
         id = id.split("-").slice(0, 2).join("-");
     }
-    if (global.state.papers.hasOwnProperty(baseId)) {
-        const paper = global.state.papers[baseId];
+    if (state.papers.hasOwnProperty(baseId)) {
+        const paper = state.papers[baseId];
         if (paper.source === "nature") {
             if (paper.note.match(/^Published\ @.+\(\d+\)$/)) {
                 const journal = paper.note.split("@")[1].split("(")[0].trim();
@@ -161,14 +177,14 @@ const getDisplayId = (id) => {
  * @param {any} obj The variable to test
  * @returns {boolean} Whether or not the variable is an object
  */
-const isObject = (obj) =>
+export const isObject = (obj) =>
     typeof obj === "object" && !Array.isArray(obj) && obj !== null;
 
 /** Whether or not this url leads to a pdf
  * @param {string} url The url to test
  * @returns {boolean} Whether or not the url leads to a pdf
  */
-const isPdfUrl = (url) => {
+export const isPdfUrl = (url) => {
     return (
         url.endsWith(".pdf") ||
         url.endsWith("/pdf") ||
@@ -184,7 +200,7 @@ const isPdfUrl = (url) => {
  * @param {number} ms The number of milliseconds to delay the function
  * @returns {function} The delayed function
  */
-function delay(fn, ms) {
+export function delay(fn, ms) {
     // https://stackoverflow.com/questions/1909441/how-to-delay-the-keyup-handler-until-the-user-stops-typing
     let timer = 0;
     return function (...args) {
@@ -197,7 +213,7 @@ function delay(fn, ms) {
  * @param {Object} papers The dict of papers to clean
  * @returns {Object} The cleaned dict of papers
  */
-const cleanPapers = (papers) => {
+export const cleanPapers = (papers) => {
     let cleaned = { ...papers };
     Object.keys(cleaned).forEach((k) => {
         if (k.startsWith("__")) {
@@ -214,10 +230,10 @@ const cleanPapers = (papers) => {
  * @param {string} title The title to get the first non stop word from
  * @returns {string} The first non stop word
  */
-const firstNonStopLowercase = (title) => {
+export const firstNonStopLowercase = (title) => {
     let t = title.toLowerCase();
     let words = t.split(" ").map(miniHash);
-    let meaningful = words.filter((w) => !global.englishStopWords.has(w));
+    let meaningful = words.filter((w) => !englishStopWords.has(w));
     if (meaningful.length > 0) {
         return meaningful[0];
     }
@@ -230,7 +246,7 @@ const firstNonStopLowercase = (title) => {
  * @param {string} replace The string to replace non-alphanumeric characters with (default is "")
  * @returns {string} The hashed string
  */
-const miniHash = (str, replace) => {
+export const miniHash = (str, replace) => {
     if (typeof replace === "undefined") {
         replace = "";
     }
@@ -243,7 +259,15 @@ const miniHash = (str, replace) => {
  * @param {string} text The text to copy to the clipboard
  * @returns {void}
  */
-const fallbackCopyTextToClipboard = (text) => {
+export const fallbackCopyTextToClipboard = (text) => {
+    // Only available in DOM context, not in service workers
+    if (typeof document === "undefined") {
+        warn(
+            "fallbackCopyTextToClipboard called in service worker context - not supported"
+        );
+        return;
+    }
+
     var textArea = document.createElement("textarea");
     textArea.value = text;
 
@@ -272,7 +296,13 @@ const fallbackCopyTextToClipboard = (text) => {
  * @param {string} text The text to copy to the clipboard
  * @returns {void}
  * */
-const copyTextToClipboard = (text) => {
+export const copyTextToClipboard = (text) => {
+    // Only available in DOM context, not in service workers
+    if (typeof navigator === "undefined" || typeof document === "undefined") {
+        warn("copyTextToClipboard called in service worker context - not supported");
+        return;
+    }
+
     if (!navigator.clipboard) {
         fallbackCopyTextToClipboard(text);
         return;
@@ -293,6 +323,12 @@ const copyTextToClipboard = (text) => {
  * @param {string} plain - a plain text fallback
  */
 async function pasteRich(rich, plain) {
+    // Only available in DOM context, not in service workers
+    if (typeof document === "undefined" || typeof navigator === "undefined") {
+        warn("pasteRich called in service worker context - not supported");
+        return;
+    }
+
     if (typeof ClipboardItem !== "undefined") {
         // Shiny new Clipboard API, not fully supported in Firefox.
         // https://developer.mozilla.org/en-US/docs/Web/API/Clipboard_API#browser_compatibility
@@ -320,7 +356,7 @@ async function pasteRich(rich, plain) {
  * @param {string} title The title of the url to copy to the clipboard
  * @returns {void}
  * */
-const copyHyperLinkToClipboard = (url, title) => {
+export const copyHyperLinkToClipboard = (url, title) => {
     const linkHtml = `<a href="${url}">${title}</a>`;
     pasteRich(linkHtml, `${title} ${url}`);
 };
@@ -330,7 +366,7 @@ const copyHyperLinkToClipboard = (url, title) => {
  * @param {string} url The url to parse
  * @returns {HTMLAnchorElement} The parsed url
  */
-const parseUrl = (url) => {
+export const parseUrl = (url) => {
     var a = document.createElement("a");
     a.href = url;
     return a;
@@ -342,7 +378,13 @@ const parseUrl = (url) => {
  * @param {string} contentType The type of the file to download
  * @returns {void}
  * */
-const downloadTextFile = (content, fileName, contentType) => {
+export const downloadTextFile = (content, fileName, contentType) => {
+    // Only available in DOM context, not in service workers
+    if (typeof document === "undefined") {
+        warn("downloadTextFile called in service worker context - not supported");
+        return;
+    }
+
     var a = document.createElement("a");
     if (contentType === "text/plain") {
         content = content.replace(/\\n/g, "%0D%0A").replace(/"/g, "");
@@ -356,7 +398,7 @@ const downloadTextFile = (content, fileName, contentType) => {
     a.click();
 };
 
-const dummyEvent = (id) => {
+export const dummyEvent = (id) => {
     return {
         target: {
             closest: () => ({ id: `memory-container--${id}` }),
@@ -370,7 +412,7 @@ const dummyEvent = (id) => {
  * @param {Event} e The click event
  * @returns {string} The id of the paper
  */
-const eventId = (e) => {
+export const eventId = (e) => {
     return e.target.closest(".memory-container")?.id?.split("--")[1];
 };
 
@@ -380,7 +422,13 @@ const eventId = (e) => {
  * @param {string} name The name of the file to download
  * @returns {void}
  * */
-async function downloadURI(url, name) {
+export async function downloadURI(url, name) {
+    // Only available in DOM context, not in service workers
+    if (typeof document === "undefined") {
+        warn("downloadURI called in service worker context - not supported");
+        return;
+    }
+
     name = name.replace(/[^\w\s]/gi, "");
     let blob = await fetch(url).then((r) => r.blob());
     var f = new FileReader();
@@ -402,7 +450,13 @@ async function downloadURI(url, name) {
  * @param {string} fileName The name of the file to download
  * @returns {void}
  * */
-const downloadFile = (fileURL, fileName) => {
+export const downloadFile = (fileURL, fileName) => {
+    // Only available in DOM context, not in service workers
+    if (typeof window === "undefined") {
+        warn("downloadFile called in service worker context - not supported");
+        return;
+    }
+
     // for non-IE
     if (!window.ActiveXObject) {
         var save = document.createElement("a");
@@ -440,7 +494,7 @@ const downloadFile = (fileURL, fileName) => {
  * @param {string} s The string to hash
  * @returns {number} The hash code
  * */
-const hashCode = (s) => {
+export const hashCode = (s) => {
     return s.split("").reduce((a, b) => {
         a = (a << 5) - a + b.charCodeAt(0);
         return a & a;
@@ -452,7 +506,7 @@ const hashCode = (s) => {
  * @param {String} url URL to parse data from
  * @returns {Object} { conf, year, id }
  */
-const parseCVFUrl = (url) => {
+export const parseCVFUrl = (url) => {
     // model: https://openaccess.thecvf.com/content_ICCV_2017/papers/Campbell_Globally-Optimal_Inlier_Set_ICCV_2017_paper.pdf
     // or   : https://openaccess.thecvf.com/content/ICCV2021/html/Jang_C2N_Practical_Generative_Noise_Modeling_for_Real-World_Denoising_ICCV_2021_paper.html
     const confAndYear = url
@@ -481,7 +535,7 @@ const parseCVFUrl = (url) => {
  * @param {string} url The url to a biorxiv paper to clean up
  * @returns {string}
  */
-const cleanBiorxivURL = (url) => {
+export const cleanBiorxivURL = (url) => {
     url = url.replace(".full.pdf", "");
     if (!url.match(/\d$/)) {
         url = url.split(".").slice(0, -1).join(".");
@@ -493,7 +547,7 @@ const cleanBiorxivURL = (url) => {
  * Sets the cursor at the end of a text area on focus
  * @param {HTMLElement} element The textarea to focus
  */
-const textareaFocusEnd = (element) => {
+export const textareaFocusEnd = (element) => {
     setTimeout(() => {
         element.selectionStart = element.selectionEnd = 10e3;
     }, 0);
@@ -506,7 +560,7 @@ const textareaFocusEnd = (element) => {
  * @param {array} classNames An optional array of classNames to add to the svg tag
  * @returns {string} A string of html for the svg tag
  */
-const tablerSvg = (pathName, id, classNames) => {
+export const tablerSvg = (pathName, id, classNames) => {
     if (typeof id === "undefined") {
         id = "";
     }
@@ -702,7 +756,7 @@ const tablerSvg = (pathName, id, classNames) => {
         case "huggingface":
             return `<img
                 src="${chrome.runtime.getURL(
-                    global.state.prefs.checkDarkMode
+                    state.prefs.checkDarkMode
                         ? "src/shared/hf-logo-transparent-darktheme.svg"
                         : "src/shared/hf-logo-transparent-lighttheme.svg"
                 )}"
@@ -727,7 +781,7 @@ const tablerSvg = (pathName, id, classNames) => {
  * @param {object} e Error to stringify
  * @returns {string}
  */
-const stringifyError = (e) => {
+export const stringifyError = (e) => {
     const extId = chrome.runtime.id;
     return e.stack
         .split("\n")
@@ -746,7 +800,7 @@ const stringifyError = (e) => {
  * @param {array} b
  * @returns {boolean}
  */
-const arraysIdentical = (a, b) => {
+export const arraysIdentical = (a, b) => {
     var i = a.length;
     if (i != b.length) return false;
     while (i--) {
@@ -760,7 +814,7 @@ const arraysIdentical = (a, b) => {
  * @param {HTMLElement} el the dom element to read tags from (`el.selectedOptions`)
  * @returns
  */
-const parseTags = (el) => {
+export const parseTags = (el) => {
     let tags = Array.from(el.selectedOptions, (e) => e.value.trim()).filter((e) => e);
     tags.sort();
     return tags;
@@ -773,7 +827,7 @@ const parseTags = (el) => {
  * @param {boolean} isPopup Whether the paper to monitor is in the popup or the memory
  * @returns {object} {note, codeLink, tags, favorite}
  */
-const getPaperEdits = (id, isPopup) => {
+export const getPaperEdits = (id, isPopup) => {
     let note, tags, codeLink, favorite;
 
     if (isPopup) {
@@ -796,83 +850,6 @@ const getPaperEdits = (id, isPopup) => {
 };
 
 /**
- * Sets the form edit listeners on the 4 inputs: tags, code, note, favorite
- * @param {string} id Optional id (for the popup's paper)
- * @param {*} isPopup Is the function called from the popup?
- */
-const setFormChangeListener = (id, isPopup) => {
-    let refTags, refNote, refCodeLink, refFavorite;
-    if (isPopup) {
-        refTags = `#popup-item-tags--${id.replace(".", "\\.")}`;
-        refCodeLink = `popup-form-codeLink--${id}`;
-        refNote = `popup-form-note-textarea--${id}`;
-        refFavorite = `checkFavorite--${id}`;
-
-        $(refTags).on("change", delay(monitorPaperEdits(id, isPopup), 300)); // select2 required
-        addListener(refCodeLink, "keyup", delay(monitorPaperEdits(id, isPopup), 300));
-        addListener(refNote, "keyup", delay(monitorPaperEdits(id, isPopup), 300));
-        addListener(refFavorite, "change", delay(monitorPaperEdits(id, isPopup), 300));
-    } else {
-        // tags listeners is set in handleTogglePaperEdit
-        refTags = ".memory-item-tags";
-        refCodeLink = ".form-code-input";
-        refNote = ".form-note-textarea";
-
-        addEventToClass(
-            refCodeLink,
-            "keyup",
-            delay(monitorPaperEdits(undefined, isPopup), 300)
-        );
-        addEventToClass(
-            refNote,
-            "keyup",
-            delay(monitorPaperEdits(undefined, isPopup), 300)
-        );
-    }
-};
-
-/**
- * Monitors the popup's paper edits or the memory's table of papers' edits.
- * Triggers `handleMemorySaveEdits` or `handlePopupSaveEdits` (depending on `isPopup`)
- * if a change is detected.
- *
- * @param {string} id Optional id of the paper to monitor (when called for the popup edit form)
- * @param {boolean} isPopup Whether the function is called to monitor the single
- * popup edit form or the set of memory-items' forms
- */
-const monitorPaperEdits = (id, isPopup) => (e) => {
-    let paperId;
-    if (typeof id === "undefined") {
-        paperId = eventId(e);
-    } else {
-        paperId = id;
-    }
-    const edits = getPaperEdits(paperId, isPopup);
-    const paper = global.state.papers[paperId];
-    let change = false;
-    let refs = {};
-    for (const key in edits) {
-        const ref = paper[key];
-        refs[key] = ref;
-        const value = edits[key];
-        if (key === "tags") {
-            if (!arraysIdentical(ref, value)) change = true;
-        } else {
-            if (ref !== value) {
-                change = true;
-            }
-        }
-    }
-    if (change) {
-        console.log("Updating meta data for", paperId);
-        if (isPopup) {
-            handlePopupSaveEdits(paperId);
-        } else {
-            handleMemorySaveEdits(paperId);
-        }
-    }
-};
-/**
  * Replaces authors with `...` such that:
  * 1/ the resulting string is <= maxLen
  * 2/ the last author is still there
@@ -889,7 +866,7 @@ const monitorPaperEdits = (id, isPopup) => (e) => {
  * @param {string} separator The separator to use between authors (defaults to ", ")
  * @returns {string} The author string with "..." if it was too long, keeping the last author
  */
-const cutAuthors = (text, maxLen, separator) => {
+export const cutAuthors = (text, maxLen, separator) => {
     if (typeof maxLen === "undefined") {
         maxLen = 140;
     }
@@ -935,7 +912,7 @@ const cutAuthors = (text, maxLen, separator) => {
  * @param {object} payload Data to transfer to the background script
  * @returns Promise that resolves the response
  */
-const sendMessageToBackground = (payload) =>
+export const sendMessageToBackground = (payload) =>
     new Promise((resolve) => {
         chrome.runtime.sendMessage(payload, (response) => {
             resolve(response);
@@ -947,7 +924,7 @@ const sendMessageToBackground = (payload) =>
  * PaperMemoryStore/ folder
  * @returns {Promise} Promise that resolves the list of stored files
  */
-const getStoredFiles = () =>
+export const getStoredFiles = () =>
     new Promise((resolve) => {
         chrome.downloads.search(
             {
@@ -969,7 +946,7 @@ const getStoredFiles = () =>
  * Splits url on # and ?
  * @param {string} url The url to check
  */
-const noParamUrl = (url) => {
+export const noParamUrl = (url) => {
     return url.split("?")[0].split("#")[0];
 };
 
@@ -978,7 +955,7 @@ const noParamUrl = (url) => {
  * @param {string} url
  * @returns {string} hash of the url
  */
-const urlToWebsiteId = (url) => {
+export const urlToWebsiteId = (url) => {
     const last = url.split("/").last();
     if (last.includes("#")) {
         const n = url.split("#").length - 1;
@@ -995,7 +972,7 @@ const urlToWebsiteId = (url) => {
  * @param {number} time The time after which to resolve the promise
  * @returns {Promise} The wrapped promise
  */
-const silentPromiseTimeout = (prom, time = 2000) => {
+export const silentPromiseTimeout = (prom, time = 2000) => {
     // https://advancedweb.hu/how-to-add-timeout-to-a-promise-in-javascript/
     let timer;
     return Promise.race([
@@ -1010,7 +987,7 @@ const silentPromiseTimeout = (prom, time = 2000) => {
  * @param {function} callback Function to call if the warning should be shown
  * @returns {Promise} Promise that resolves the callback
  */
-const shouldWarn = async (warningName, callback = () => {}) => {
+export const shouldWarn = async (warningName, callback = () => {}) => {
     return callback(false);
 };
 
@@ -1020,7 +997,7 @@ const shouldWarn = async (warningName, callback = () => {}) => {
  * @param {string} str
  * @returns {string} camelCase string with spaces
  */
-const spaceCamelCase = (str) =>
+export const spaceCamelCase = (str) =>
     str.replace(/([A-Z](?=[a-z]+)|[A-Z]+(?![a-z]))/g, " $1").trim();
 
 /**
@@ -1028,14 +1005,14 @@ const spaceCamelCase = (str) =>
  * @param {string} str
  * @returns {string} string with single spaces
  */
-const toSingleSpace = (str) => str.replace(/\s\s+/g, " ");
+export const toSingleSpace = (str) => str.replace(/\s\s+/g, " ");
 
 /**
  * Dedents a string by removing leading spaces
  * @param {string} str
  * @returns {string} dedented string
  */
-const dedent = (str) => {
+export const dedent = (str) => {
     return ("" + str).replace(/(\n)\s+/g, "$1");
 };
 
@@ -1045,21 +1022,22 @@ const dedent = (str) => {
  * @param {string} paperId
  * @returns {string} ArXiv ID
  */
-const arxivIdFromPaperID = (paperId) => paperId.split("-").last().replace("_", "/");
+export const arxivIdFromPaperID = (paperId) =>
+    paperId.split("-").last().replace("_", "/");
 
 /**
  * Delete non-alphanumerical characters except spaces
  * @param {string} str - The string to clean
  * @returns {string} The cleaned string
  */
-const cleanStr = (str) => str.replace(/[^a-zA-Z0-9 ]/g, "");
+export const cleanStr = (str) => str.replace(/[^a-zA-Z0-9 ]/g, "");
 
 /**
  * Returns the ArXiv ID for a URL from: arxiv.org, alphaxiv.org, ar5iv.labs.arxiv.org, huggingface.co/papers/
  * @param {string} url The URL to parse
  * @returns {string} ArXiv ID
  */
-const arxivIdFromURL = (url) =>
+export const arxivIdFromURL = (url) =>
     url.includes("scirate.com/arxiv/")
         ? url.split("scirate.com/arxiv/")[1].match(/\d+\.\d+/)[0]
         : url.match(/alphaxiv\.org\/(abs|pdf)\//)
@@ -1075,9 +1053,10 @@ const arxivIdFromURL = (url) =>
               .split("v")[0]
               .replace("/", "_");
 
-const getBrowserName = async () => {
+export const getBrowserName = async () => {
     let browserName = navigator.appName;
     const nAgt = navigator.userAgent;
+    let verOffset;
 
     // In Opera, the true version is after "OPR" or after "Version"
     if ((verOffset = nAgt.indexOf("OPR")) != -1) {
@@ -1109,7 +1088,7 @@ const getBrowserName = async () => {
     return browserName;
 };
 
-function getRandomToken() {
+export const getRandomToken = () => {
     // https://stackoverflow.com/questions/23822170/getting-unique-clientid-from-chrome-extension
     // E.g. 8 * 32 = 256 bits token
     var randomPool = new Uint8Array(32);
@@ -1120,57 +1099,4 @@ function getRandomToken() {
     }
     // E.g. db18458e2782b2b77e36769c569e263a53885a9944dd0a861e5064eac16f1a
     return hex;
-}
-
-if (typeof module !== "undefined" && module.exports != null) {
-    var dummyModule = module;
-    dummyModule.exports = {
-        logTrace,
-        log,
-        info,
-        warn,
-        debug,
-        logOk,
-        logError,
-        consoleHeader,
-        getDisplayId,
-        isObject,
-        isPdfUrl,
-        cleanPapers,
-        firstNonStopLowercase,
-        miniHash,
-        fallbackCopyTextToClipboard,
-        copyTextToClipboard,
-        copyHyperLinkToClipboard,
-        parseUrl,
-        downloadTextFile,
-        eventId,
-        downloadFile,
-        downloadURI,
-        hashCode,
-        parseCVFUrl,
-        cleanBiorxivURL,
-        textareaFocusEnd,
-        tablerSvg,
-        stringifyError,
-        arraysIdentical,
-        parseTags,
-        getPaperEdits,
-        setFormChangeListener,
-        monitorPaperEdits,
-        cutAuthors,
-        sendMessageToBackground,
-        getStoredFiles,
-        noParamUrl,
-        urlToWebsiteId,
-        silentPromiseTimeout,
-        shouldWarn,
-        spaceCamelCase,
-        toSingleSpace,
-        dedent,
-        arxivIdFromPaperID,
-        cleanStr,
-        arxivIdFromURL,
-        getBrowserName,
-    };
-}
+};

@@ -1188,12 +1188,17 @@
                          * browserify src/background/octokit.js -p esmify -o src/shared/js/utils/octokit.bundle.js
                          */
                         const { request } = require("@octokit/request");
-                        if (typeof window === "undefined") {
-                            window = global;
-                        } else {
-                            global = window;
+                        if (typeof globalThis === "undefined") {
+                            // Fallback for older environments
+                            if (typeof window !== "undefined") {
+                                globalThis = window;
+                            } else if (typeof global !== "undefined") {
+                                globalThis = global;
+                            } else if (typeof self !== "undefined") {
+                                globalThis = self;
+                            }
                         }
-                        global.octokitRequest = request;
+                        globalThis.octokitRequest = request;
                     }).call(this);
                 }).call(
                     this,

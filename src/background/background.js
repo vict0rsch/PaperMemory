@@ -1,29 +1,37 @@
-if (typeof importScripts === "function") {
-    importScripts(
-        "../shared/js/utils/octokit.bundle.js",
-        "../shared/js/utils/miniquery.js",
-        "../shared/js/utils/config.js",
-        "../shared/js/utils/bibtexParser.js",
-        "../shared/js/utils/functions.js",
-        "../shared/js/utils/sync.js",
-        "../shared/js/utils/data.js",
-        "../shared/js/utils/paper.js",
-        "../shared/js/utils/state.js",
-        "../shared/js/utils/parsers.js"
-    );
-    console.log("Scripts loaded.");
-} else {
-    const isFirefox = navigator.userAgent.search("Firefox") > -1;
-    if (!isFirefox) {
-        console.log("Error importing scripts in background.js. This is OK on Firefox.");
-    } else {
-        console.log("Error importing scripts (`importScripts`) in background.js.");
-    }
-}
+// ES Module imports - Service Worker Safe
+import { state, storeReadme } from "@pmu/config.js";
+import {
+    shouldSync,
+    getIdentifier,
+    getGist,
+    getDataForGistFile,
+    updateGistFile,
+} from "@pmu/sync.js";
+import { getStorage, setStorage } from "@pmu/data.js";
+import { isSourceURL, parseIdFromUrl } from "@pmu/urls.js";
+import { initState, downloadPaperPdf } from "@pmu/state.js";
+import {
+    fetchText,
+    fetchJSON,
+    trySemanticScholar,
+    tryCrossRef,
+    tryDBLP,
+    tryUnpaywall,
+} from "@pmu/parsers.js";
+import { bibtexToObject, bibtexToString } from "@pmu/bibtexParser.js";
+import {
+    log,
+    warn,
+    logOk,
+    logError,
+    info,
+    consoleHeader,
+    miniHash,
+    getStoredFiles,
+} from "@pmu/functions.js";
 
-var paperTitles = {};
-var MAX_TITLE_UPDATES = 100;
 var tabStatuses = {};
+var paperTitles = {};
 
 const badgeOk = () => {
     chrome.action.setBadgeText({ text: "OK!" });
@@ -52,7 +60,7 @@ const badgeClear = (preventTimeout = false) => {
 
 const initGist = async () => {
     if (!(await shouldSync())) {
-        warn("Sync disabled.");
+        info("Sync disabled.");
         return;
     }
     const start = Date.now();
@@ -60,8 +68,8 @@ const initGist = async () => {
     badgeWait("Init...");
     const { ok, error, payload } = await getGist();
     if (ok) {
-        global.state.gistFile = payload.file;
-        global.state.gistId = payload.gistId;
+        state.gistFile = payload.file;
+        state.gistId = payload.gistId;
         const duration = (Date.now() - start) / 1e3;
         logOk(`Sync successfully enabled (${duration}s).`);
         info(`Using gist: ${payload.gistId}`);
@@ -75,19 +83,7 @@ const initGist = async () => {
 
 initGist();
 
-const setFaviconCode = `
-var link;
-if (window.location.href.startsWith("file://")){
-    link = document.querySelector("link[rel~='icon']");
-    if (!link) {
-        link = document.createElement('link');
-        link.rel = 'icon';
-        document.getElementsByTagName('head')[0].appendChild(link);
-    }
-    setTimeout(() => {
-        link.href = "https://github.com/vict0rsch/PaperMemory/blob/master/icons/favicon-192x192.png?raw=true"
-    }, 350);
-}`;
+// Remove DOM-dependent setFaviconCode since it's not needed in service worker
 
 const fetchOpenReviewNoteJSON = async (url) => {
     const id = url.match(/id=([\w-])+/)[0].replace("id=", "");
@@ -272,18 +268,18 @@ const pullSyncPapers = async () => {
         const localSyncID = await getIdentifier();
         consoleHeader(`Pulling ${String.fromCodePoint("0x23EC")}`);
         log("Pulling from Github...");
-        global.state.gistData = await getDataForGistFile({
-            file: global.state.gistFile,
-            gistid: global.state.gistId,
+        state.gistData = await getDataForGistFile({
+            file: state.gistFile,
+            gistid: state.gistId,
         });
-        const remoteSyncId = global.state.gistData["__syncId"];
-        delete global.state.gistData["__syncId"];
+        const remoteSyncId = state.gistData["__syncId"];
+        delete state.gistData["__syncId"];
 
         let remotePapers;
         if (remoteSyncId === localSyncID) {
             remotePapers = (await getStorage("papers")) ?? {};
         } else {
-            remotePapers = global.state.gistData;
+            remotePapers = state.gistData;
         }
         if (remoteSyncId === localSyncID) {
             warn("Pulled sync data from same device, ignoring.");
@@ -317,9 +313,9 @@ const pushSyncPapers = async () => {
         log("Papers to write: ", papers);
         papers["__syncId"] = syncId;
         await updateGistFile({
-            file: global.state.gistFile,
+            file: state.gistFile,
             content: papers,
-            gistId: global.state.gistId,
+            gistId: state.gistId,
         });
         const duration = (Date.now() - start) / 1e3;
         log(`Writing to Github... Done (${duration}s)!`);
@@ -347,7 +343,7 @@ chrome.runtime.onMessage.addListener((payload, sender, sendResponse) => {
         getStoredFiles().then((storedFiles) => {
             if (storedFiles.length === 0) {
                 chrome.downloads.download({
-                    url: URL.createObjectURL(new Blob([global.storeReadme])),
+                    url: URL.createObjectURL(new Blob([storeReadme])),
                     filename: "PaperMemoryStore/IMPORTANT_README.txt",
                     saveAs: false,
                 });
@@ -438,7 +434,7 @@ chrome.commands.onCommand.addListener((command) => {
             await initState();
             const id = await parseIdFromUrl(url);
             if (id) {
-                const paper = global.state.papers[id];
+                const paper = state.papers[id];
                 if (paper) {
                     downloadPaperPdf(paper);
                 } else {
