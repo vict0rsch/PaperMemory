@@ -102,6 +102,7 @@ function watchFiles() {
             "src/options/*.js",
             "src/bibMatcher/*.js",
             "src/fullMemory/*.js",
+            "!**/*.bundle.js",
         ],
         buildESModules
     );
