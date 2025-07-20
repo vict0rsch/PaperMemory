@@ -1,38 +1,283 @@
-const handleBackToFocus = (e) => {
+// ES Module imports
+import {
+    eventId,
+    arxivIdFromPaperID,
+    copyTextToClipboard,
+    copyHyperLinkToClipboard,
+    sendMessageToBackground,
+    textareaFocusEnd,
+    parseTags,
+    getPaperEdits,
+    cutAuthors,
+    delay,
+    log,
+    info,
+    warn,
+    arraysIdentical,
+} from "@pmu/functions.js";
+import {
+    findEl,
+    slideUp,
+    slideDown,
+    setHTML,
+    dispatch,
+    addListener,
+    queryAll,
+    hideId,
+    showId,
+    style,
+    val,
+    querySelector,
+    addEventToClass,
+    hasClass,
+    addClass,
+    removeClass,
+    setPlaceholder,
+} from "@pmu/miniquery.js";
+import { state, select2Options } from "@pmu/config.js";
+import {
+    setStorage,
+    getStorage,
+    getDefaultKeyboardAction,
+    deletePaperInStorage,
+} from "@pmu/data.js";
+import { bibtexToString, bibtexToObject } from "@pmu/bibtexParser.js";
+import { initSyncAndState } from "@pmu/sync.js";
+import { updatePaperVisits, paperToAbs, paperToPDF, makeMdLink } from "@pmu/paper.js";
+import { getTagsOptions, sortMemory } from "@pmu/state.js";
+import {
+    displayMemoryTable,
+    openMemory,
+    closeMemory,
+    focusExistingOrCreateNewURLTab,
+    saveFavoriteItem,
+    updatePopupPaperNoMemory,
+    searchMemoryByTags,
+    searchMemory,
+    searchMemoryByYear,
+    searchMemoryByCode,
+    copyAndConfirmMemoryItem,
+    updatePaperTags,
+    saveNote,
+    saveCodeLink,
+    toggleTagsCollapse,
+    reverseMemory,
+    setMemorySortArrow,
+} from "@pm/popup/js/memory.js";
+import { showPopupModal, closeMenu } from "@pm/popup/js/popup.js";
+
+/**
+ * Closes the popup modal
+ */
+export const closePopupModal = () => {
+    state.modalIsOpen = false;
+    style("popup-modal-wrapper", "display", "none");
+};
+
+export const hideAllTooltips = () => {
+    queryAll(".title-tooltip,#popup-title-tooltip").forEach((el) => {
+        hideId(el);
+    });
+    state.tooltipIsOpen = false;
+};
+
+/**
+ * Looks for an open tab to the paper: either its local or online pdf, or html page.
+ * If both a local pdf tab exists, focus it.
+ * Otherwise, if a remote pdf tab exists, focus it.
+ * Otherwise, if an html page exist, focus the it.
+ * If none exist, create a new tab to the local file if it exists, to the online pdf otherwise.
+ * @param {object} paper The paper whose pdf should be opened
+ */
+export const focusExistingOrCreateNewPaperTab = async (paper, fromMemoryItem) => {
+    if (!chrome.tabs) {
+        focusExistingOrCreateNewURLTab(
+            isPdfUrl(window.location.href) ? paperToAbs(paper) : paperToPDF(paper)
+        );
+        return;
+    }
+    chrome.tabs.query({}, async (tabs) => {
+        // find user's preferences
+        const prefs = state.prefs;
+
+        let paperTabs = []; // tabs to the paper
+        for (const tab of tabs) {
+            let tabPaperId;
+            try {
+                // try and parse a paper id
+                tabPaperId = tab.url && (await parseIdFromUrl(tab.url));
+            } catch (error) {}
+
+            if (tabPaperId && tabPaperId === paper.id) {
+                // an id is found and its the paper's: store the tab
+                paperTabs.push(tab);
+            }
+        }
+
+        let tabToFocus;
+        // choose favorite tabs
+        const favoriteTabs = prefs.checkPreferPdf
+            ? paperTabs.filter((tab) => tab.url && isPdfUrl(tab.url))
+            : paperTabs.filter((tab) => tab.url && !isPdfUrl(tab.url));
+
+        if (favoriteTabs.length > 0) {
+            // favor tabs to local files
+            const fileTabs =
+                fromMemoryItem && state.files.hasOwnProperty(paper.id)
+                    ? []
+                    : paperTabs.filter((tab) => tab.url.startsWith("file://"));
+            if (fileTabs.length > 0) {
+                tabToFocus = fileTabs[0];
+            } else {
+                tabToFocus = favoriteTabs[0];
+            }
+        } else if (paperTabs.length > 0) {
+            // no pdf tab: go to abs url
+            tabToFocus = paperTabs[0];
+        }
+
+        if (tabToFocus) {
+            // a tab was found: focus it by starting to focus its window
+            chrome.windows.getCurrent((w) => {
+                if (w.id !== tabToFocus.windowId) {
+                    // tab is in a different window: focus the window
+                    chrome.windows.update(
+                        tabToFocus.windowId,
+                        { focused: true },
+                        () => {
+                            // focus the tab
+                            chrome.tabs.update(tabToFocus.id, { active: true });
+                        }
+                    );
+                } else {
+                    // tab is in the same window: focus the tab
+                    chrome.tabs.update(tabToFocus.id, { active: true });
+                }
+            });
+        } else {
+            // no tab was found
+            const hasFile = state.files.hasOwnProperty(paper.id);
+            if (hasFile && !fromMemoryItem) {
+                // this paper has a local file
+                chrome.downloads.open(state.files[paper.id].id);
+            } else {
+                // no tab open or local file: open a new tab to the paper's pdf
+                chrome.tabs.create({
+                    url: prefs.checkPreferPdf ? paperToPDF(paper) : paperToAbs(paper),
+                });
+            }
+        }
+
+        state.papers[paper.id] = updatePaperVisits(state.papers[paper.id]);
+        chrome.storage.local.set({ papers: state.papers });
+    });
+};
+
+/**
+ * Delete a paper ; display a modal first to get uer confirmation
+ * @param {string} id Id of the paper to delete
+ */
+export const showConfirmDeleteModal = (id) => {
+    const title = state.papers[id].title;
+    setTextId("delete-modal-title", title);
+    setHTML("delete-paper-modal-hidden-id", id);
+    showId("delete-paper-modal", "flex");
+};
+
+/**
+ * Monitors the popup's paper edits or the memory's table of papers' edits.
+ * Triggers `handleMemorySaveEdits` or `handlePopupSaveEdits` (depending on `isPopup`)
+ * if a change is detected.
+ *
+ * @param {string} id Optional id of the paper to monitor (when called for the popup edit form)
+ * @param {boolean} isPopup Whether the function is called to monitor the single
+ * popup edit form or the set of memory-items' forms
+ */
+export const monitorPaperEdits = (id, isPopup) => (e) => {
+    let paperId;
+    if (typeof id === "undefined") {
+        paperId = eventId(e);
+    } else {
+        paperId = id;
+    }
+    const edits = getPaperEdits(paperId, isPopup);
+    const paper = state.papers[paperId];
+    let change = false;
+    let refs = {};
+    for (const key in edits) {
+        const ref = paper[key];
+        refs[key] = ref;
+        const value = edits[key];
+        if (key === "tags") {
+            if (!arraysIdentical(ref, value)) change = true;
+        } else {
+            if (ref !== value) {
+                change = true;
+            }
+        }
+    }
+    if (change) {
+        log("Updating meta data for", paperId);
+        if (isPopup) {
+            handlePopupSaveEdits(paperId);
+        } else {
+            handleMemorySaveEdits(paperId);
+        }
+    }
+};
+
+export const displayOnScroll = (isPopup) =>
+    delay(() => {
+        const { bottom } = findEl({ element: "memory-table" }).getBoundingClientRect();
+        const height = isPopup
+            ? findEl({ element: "memory-container" }).getBoundingClientRect().height
+            : window.innerHeight;
+        const currentPapers = state.currentMemoryPagination * state.memoryItemsPerPage;
+        if (
+            Math.abs(bottom - height) < height &&
+            currentPapers < state.papersList.length
+        ) {
+            state.currentMemoryPagination += 1;
+            displayMemoryTable(state.currentMemoryPagination);
+        }
+    }, 50);
+
+export const handleBackToFocus = (e) => {
     const id = eventId(e);
     setTimeout(() => {
         dispatch(`memory-container--${id}`, "focus");
     }, 250);
 };
 
-const handleDeleteItem = (e) => {
+export const handleDeleteItem = (e) => {
     const id = eventId(e);
     showConfirmDeleteModal(id);
 };
 
-const handleOpenItemLink = (e) => {
+export const handleOpenItemLink = (e) => {
     const id = eventId(e);
-    focusExistingOrCreateNewPaperTab(global.state.papers[id], true);
+    focusExistingOrCreateNewPaperTab(state.papers[id], true);
 };
-const handleOpenItemScirate = (e) => {
+
+export const handleOpenItemScirate = (e) => {
     const id = eventId(e);
-    const arxivId = arxivIdFromPaperID(global.state.papers[id].id);
+    const arxivId = arxivIdFromPaperID(state.papers[id].id);
     const scirateURL = `https://scirate.com/arxiv/${arxivId}`;
     focusExistingOrCreateNewURLTab(scirateURL);
-    global.state.papers[id] = updatePaperVisits(global.state.papers[id]);
-    setStorage("papers", global.state.papers);
+    state.papers[id] = updatePaperVisits(state.papers[id]);
+    setStorage("papers", state.papers);
 };
-const handleOpenItemAlphaxiv = (e) => {
+export const handleOpenItemAlphaxiv = (e) => {
     const id = eventId(e);
-    const arxivId = arxivIdFromPaperID(global.state.papers[id].id);
+    const arxivId = arxivIdFromPaperID(state.papers[id].id);
     const alphaxivURL = `https://alphaxiv.org/abs/${arxivId}`;
     focusExistingOrCreateNewURLTab(alphaxivURL);
-    global.state.papers[id] = updatePaperVisits(global.state.papers[id]);
-    setStorage("papers", global.state.papers);
+    state.papers[id] = updatePaperVisits(state.papers[id]);
+    setStorage("papers", state.papers);
 };
-const handleOpenItemAr5iv = (e) => {
+export const handleOpenItemAr5iv = (e) => {
     const id = eventId(e);
-    const arxivId = arxivIdFromPaperID(global.state.papers[id].id);
+    const arxivId = arxivIdFromPaperID(state.papers[id].id);
     const ar5ivURL = `https://ar5iv.labs.arxiv.org/html/${arxivId}`;
     const paperMonth = parseInt(arxivId.split(".")[0].slice(-2), 10);
     const paperYear = 2000 + parseInt(arxivId.split(".")[0].slice(0, 2), 10);
@@ -42,44 +287,44 @@ const handleOpenItemAr5iv = (e) => {
         showPopupModal("ar5iv");
         addListener("ar5iv-modal-ok-button", "click", () => {
             focusExistingOrCreateNewURLTab(ar5ivURL);
-            global.state.papers[id] = updatePaperVisits(global.state.papers[id]);
-            setStorage("papers", global.state.papers);
+            state.papers[id] = updatePaperVisits(state.papers[id]);
+            setStorage("papers", state.papers);
             closePopupModal();
         });
         addListener("ar5iv-modal-cancel-button", "click", closePopupModal);
     } else {
         focusExistingOrCreateNewURLTab(ar5ivURL);
-        global.state.papers[id] = updatePaperVisits(global.state.papers[id]);
-        setStorage("papers", global.state.papers);
+        state.papers[id] = updatePaperVisits(state.papers[id]);
+        setStorage("papers", state.papers);
     }
 };
-const handleOpenItemHuggingface = (e) => {
+export const handleOpenItemHuggingface = (e) => {
     const id = eventId(e);
-    const arxivId = arxivIdFromPaperID(global.state.papers[id].id);
+    const arxivId = arxivIdFromPaperID(state.papers[id].id);
     const huggingFaceURL = `https://huggingface.co/papers/${arxivId}`;
     focusExistingOrCreateNewURLTab(huggingFaceURL);
-    global.state.papers[id] = updatePaperVisits(global.state.papers[id]);
-    setStorage("papers", global.state.papers);
+    state.papers[id] = updatePaperVisits(state.papers[id]);
+    setStorage("papers", state.papers);
 };
 
-const handleOpenItemCodeLink = async (e) => {
+export const handleOpenItemCodeLink = async (e) => {
     const id = eventId(e);
-    const url = global.state.papers[id].codeLink;
+    const url = state.papers[id].codeLink;
     await focusExistingOrCreateNewURLTab(url);
 };
 
-const handleOpenItemWebsiteURL = async (e) => {
+export const handleOpenItemWebsiteURL = async (e) => {
     const id = eventId(e);
-    const url = global.state.papers[id].pdfLink;
-    global.state.papers[id] = updatePaperVisits(global.state.papers[id]);
-    await setStorage("papers", global.state.papers);
+    const url = state.papers[id].pdfLink;
+    state.papers[id] = updatePaperVisits(state.papers[id]);
+    await setStorage("papers", state.papers);
     await focusExistingOrCreateNewURLTab(url);
 };
 
-const handleCopyMarkdownLink = async (e) => {
+export const handleCopyMarkdownLink = async (e) => {
     const id = eventId(e);
-    const prefs = global.state.prefs;
-    const paper = global.state.papers[id];
+    const prefs = state.prefs;
+    const paper = state.papers[id];
     const text =
         paper.source === "website" ? "URL" : prefs.checkPreferPdf ? "PDF" : "Abstract";
     const md = makeMdLink(paper, prefs);
@@ -87,32 +332,32 @@ const handleCopyMarkdownLink = async (e) => {
         id,
         textToCopy: md,
         feedbackText: `Markdown ${text} link copied!`,
-        context: global.state.memoryIsOpen ? "memory" : "popup",
+        context: state.memoryIsOpen ? "memory" : "popup",
     });
 };
 
-const handleCopyBibtex = async (e) => {
+export const handleCopyBibtex = async (e) => {
     const id = eventId(e);
-    const bibtex = global.state.papers[id].bibtex;
+    const bibtex = state.papers[id].bibtex;
     let bibobj = bibtexToObject(bibtex);
     if (!bibobj.hasOwnProperty("url")) {
-        bibobj.url = paperToAbs(global.state.papers[id]);
+        bibobj.url = paperToAbs(state.papers[id]);
     }
-    if (!bibobj.hasOwnProperty("pdf") && global.state.papers[id].source !== "website") {
-        bibobj.pdf = paperToPDF(global.state.papers[id]);
+    if (!bibobj.hasOwnProperty("pdf") && state.papers[id].source !== "website") {
+        bibobj.pdf = paperToPDF(state.papers[id]);
     }
     await copyAndConfirmMemoryItem({
         id,
         textToCopy: bibtexToString(bibobj),
         feedbackText: "Bibtex copied!",
-        context: global.state.memoryIsOpen ? "memory" : "popup",
+        context: state.memoryIsOpen ? "memory" : "popup",
     });
 };
 
-const handleCopyPDFLink = async (e) => {
+export const handleCopyPDFLink = async (e) => {
     const id = eventId(e);
-    const prefs = global.state.prefs;
-    const paper = global.state.papers[id];
+    const prefs = state.prefs;
+    const paper = state.papers[id];
     const link = prefs.checkPreferPdf ? paperToPDF(paper) : paperToAbs(paper);
     const text =
         paper.source === "website" ? "URL" : prefs.checkPreferPdf ? "PDF" : "Abstract";
@@ -120,48 +365,47 @@ const handleCopyPDFLink = async (e) => {
         id,
         textToCopy: link,
         feedbackText: `${text} link copied!`,
-        context: global.state.memoryIsOpen ? "memory" : "popup",
+        context: state.memoryIsOpen ? "memory" : "popup",
     });
 };
 
-const handleCopyHyperLink = async (e) => {
+export const handleCopyHyperLink = async (e) => {
     const id = eventId(e);
-    const prefs = global.state.prefs;
-    const paper = global.state.papers[id];
+    const prefs = state.prefs;
+    const paper = state.papers[id];
     const link = prefs.checkPreferPdf ? paperToPDF(paper) : paperToAbs(paper);
     await copyAndConfirmMemoryItem({
         id,
         textToCopy: link,
         feedbackText: `Hyperlink copied!`,
         hyperLinkTitle: paper.title,
-        context: global.state.memoryIsOpen ? "memory" : "popup",
+        context: state.memoryIsOpen ? "memory" : "popup",
     });
 };
 
-const handleAddItemToFavorites = (e) => {
+export const handleAddItemToFavorites = (e) => {
     const id = eventId(e);
     const isFavorite = hasClass(`memory-container--${id}`, "favorite");
     saveFavoriteItem(id, !isFavorite);
 };
 
-const handleMemoryOpenLocal = (e) => {
+export const handleMemoryOpenLocal = (e) => {
     const id = eventId(e);
-    const file = global.state.files[id];
-    const paper = global.state.papers[id];
-    global.state.papers[id] = updatePaperVisits(paper);
-    setStorage("papers", global.state.papers);
+    const file = state.files[id];
+    const paper = state.papers[id];
+    state.papers[id] = updatePaperVisits(paper);
+    setStorage("papers", state.papers);
     if (file && (file.id || file.id === 0)) {
         chrome.downloads.open(file.id);
     }
     window?.close && window.close();
 };
 
-const handleTextareaFocus = () => {
-    var that = this;
-    textareaFocusEnd(that);
+export const handleTextareaFocus = (e) => {
+    textareaFocusEnd(e.target);
 };
 
-const handleMemorySaveEdits = (id) => {
+export const handleMemorySaveEdits = (id) => {
     const { note, codeLink } = getPaperEdits(id);
 
     // Update metadata
@@ -170,10 +414,10 @@ const handleMemorySaveEdits = (id) => {
     updatePaperTags(id, "memory-item-tags");
 };
 
-const handleCancelPaperEdit = (e) => {
+export const handleCancelPaperEdit = (e) => {
     e.preventDefault();
     const id = eventId(e);
-    const paper = global.state.papers[id];
+    const paper = state.papers[id];
     val(findEl({ paperId: id, memoryItemClass: "form-note-textarea" }), paper.note);
     setHTML(
         findEl({ paperId: id, memoryItemClass: "memory-item-tags" }),
@@ -182,7 +426,7 @@ const handleCancelPaperEdit = (e) => {
     dispatch(findEl({ paperId: id, memoryItemClass: "memory-item-edit" }), "click");
 };
 
-const handleTogglePaperEdit = (e) => {
+export const handleTogglePaperEdit = (e) => {
     e.preventDefault();
     // find elements
     const id = eventId(e);
@@ -215,7 +459,7 @@ const handleTogglePaperEdit = (e) => {
         addClass(container, "expand-open");
         // Enable select2 tags input
         tagSelect2.select2({
-            ...global.select2Options,
+            select2Options,
             width: "86%",
         });
         if (!hasClass(container, "has-monitoring")) {
@@ -235,15 +479,15 @@ const handleTogglePaperEdit = (e) => {
     }
 };
 
-const handleMemorySelectChange = (e) => {
+export const handleMemorySelectChange = (e) => {
     const sort = e.target.value;
-    global.state.sortKey = sort;
+    state.sortKey = sort;
     sortMemory();
     displayMemoryTable();
     setMemorySortArrow("down");
 };
 
-const handleMemorySortArrow = (e) => {
+export const handleMemorySortArrow = (e) => {
     if (querySelector("#memory-sort-arrow svg").id === "memory-sort-arrow-down") {
         setMemorySortArrow("up");
     } else {
@@ -253,22 +497,22 @@ const handleMemorySortArrow = (e) => {
     displayMemoryTable();
 };
 
-const handleFilterFavorites = () => {
-    const showFavorites = !global.state.showFavorites;
-    global.state.showFavorites = showFavorites;
+export const handleFilterFavorites = () => {
+    const showFavorites = !state.showFavorites;
+    state.showFavorites = showFavorites;
     if (showFavorites) {
         addClass(
             findEl({ element: "filter-favorites" }).querySelector("svg"),
             "favorite"
         );
         sortMemory();
-        global.state.papersList = global.state.papersList.filter((p) => p.favorite);
+        state.papersList = state.papersList.filter((p) => p.favorite);
         displayMemoryTable();
         setMemorySortArrow("down");
         findEl(
             "memory-select"
         ).innerHTML += `<option value="favoriteDate">Last favoured</option>`;
-        const n = global.state.papersList.length;
+        const n = state.papersList.length;
         setPlaceholder("memory-search", `Search ${n} entries...`);
     } else {
         removeClass(
@@ -278,7 +522,7 @@ const handleFilterFavorites = () => {
 
         if (val("memory-select") === "favoriteDate") {
             val("memory-select", "lastOpenDate");
-            global.state.sortKey = "lastOpenDate";
+            state.sortKey = "lastOpenDate";
         }
         querySelector(`#memory-select option[value="favoriteDate"]`).remove();
         sortMemory();
@@ -287,15 +531,15 @@ const handleFilterFavorites = () => {
         if (val("memory-search").trim()) {
             dispatch("memory-search", "keypress");
         } else {
-            global.state.papersList = global.state.sortedPapers;
+            state.papersList = state.sortedPapers;
             displayMemoryTable();
         }
-        const n = global.state.sortedPapers.length;
+        const n = state.sortedPapers.length;
         setPlaceholder("memory-search", `Search ${n} entries...`);
     }
 };
 
-const handleMemorySearchKeyPress = (allowEmptySearch) => (e) => {
+export const handleMemorySearchKeyPress = (allowEmptySearch) => (e) => {
     // read input, return if empty (after trim)
     const query = val("memory-search").trim();
 
@@ -308,9 +552,9 @@ const handleMemorySearchKeyPress = (allowEmptySearch) => (e) => {
     }
 
     if (!query) {
-        if (global.state.papersList.length !== global.state.sortedPapers.length) {
+        if (state.papersList.length !== state.sortedPapers.length) {
             // empty query but not all papers are displayed
-            global.state.papersList = global.state.sortedPapers;
+            state.papersList = state.sortedPapers;
             displayMemoryTable();
             return;
         }
@@ -337,7 +581,7 @@ const handleMemorySearchKeyPress = (allowEmptySearch) => (e) => {
     displayMemoryTable();
 };
 
-const handleMemorySearchKeyUp = (e) => {
+export const handleMemorySearchKeyUp = (e) => {
     // keyup because keypress does not listen to backspaces
     if (e.key == "Backspace") {
         var backspaceEvent = new Event("keypress");
@@ -349,46 +593,43 @@ const handleMemorySearchKeyUp = (e) => {
     }
 };
 
-const handleCancelModalClick = () => {
+export const handleCancelModalClick = () => {
     hideId("delete-paper-modal");
 };
 
-const handleConfirmDeleteModalClick = async (e) => {
+export const handleConfirmDeleteModalClick = async (e) => {
     const id = findEl({ element: "delete-paper-modal-hidden-id" }).innerHTML;
-    const title = global.state.papers[id].title;
-    const url = global.state.papers[id].pdfLink;
-    await deletePaperInStorage(id, global.state.papers);
+    const title = state.papers[id].title;
+    const url = state.papers[id].pdfLink;
+    await deletePaperInStorage(id, state.papers);
     displayMemoryTable();
     hideId("delete-paper-modal");
     info(`Successfully deleted "${title}" (${id}) from PaperMemory`);
-    if (global.state.currentId === id) {
+    if (state.currentId === id) {
         await updatePopupPaperNoMemory(url);
     }
-    setPlaceholder(
-        "memory-search",
-        `Search ${global.state.papersList.length} entries ...`
-    );
+    setPlaceholder("memory-search", `Search ${state.papersList.length} entries ...`);
     addListener("memory-switch", "click", handleMemorySwitchClick);
 };
 
-const handleTagClick = (e) => {
+export const handleTagClick = (e) => {
     const tagEl = e.target;
     const query = tagEl.textContent;
     val("memory-search", `t: ${query}`);
     dispatch("memory-search", "keypress");
 };
 
-const handleClearSearch = (e) => {
+export const handleClearSearch = (e) => {
     val("memory-search", "");
     dispatch("memory-search", "clear-search");
     style("memory-search-clear-icon", "visibility", "hidden");
 };
 
-const handleMemorySwitchClick = () => {
-    global.state.memoryIsOpen ? closeMemory() : openMemory();
+export const handleMemorySwitchClick = () => {
+    state.memoryIsOpen ? closeMemory() : openMemory();
 };
 
-const handlePopupKeydown = async (e) => {
+export const handlePopupKeydown = async (e) => {
     let key = e.key;
     const isCtrlOrMeta = e.ctrlKey || e.metaKey;
     const isEnter = key === "Enter" && !isCtrlOrMeta;
@@ -418,7 +659,7 @@ const handlePopupKeydown = async (e) => {
         return;
     }
 
-    if (global.state.modalIsOpen) {
+    if (state.modalIsOpen) {
         if (key === "Escape") {
             e.preventDefault();
             closePopupModal();
@@ -428,7 +669,7 @@ const handlePopupKeydown = async (e) => {
 
     // no modal is open
 
-    if (global.state.prefsIsOpen) {
+    if (state.prefsIsOpen) {
         if (key === "Escape") {
             // escape closes menu
             e.preventDefault();
@@ -463,7 +704,7 @@ const handlePopupKeydown = async (e) => {
 
     // no input is focused
 
-    if (key === "Escape" && global.state.tooltipIsOpen) {
+    if (key === "Escape" && state.tooltipIsOpen) {
         handleHideAllTitleTooltips(e);
         e.preventDefault();
         return;
@@ -471,10 +712,10 @@ const handlePopupKeydown = async (e) => {
 
     // no tooltip is open
 
-    if (!global.state.memoryIsOpen) {
+    if (!state.memoryIsOpen) {
         if (key === "a") {
             // a opens the arxiv memory
-            global.state.papers && dispatch("memory-switch", "click");
+            state.papers && dispatch("memory-switch", "click");
         } else if (key === "Enter") {
             // enter on the arxiv memory button opens it
             const focused = querySelector(":focus");
@@ -488,7 +729,7 @@ const handlePopupKeydown = async (e) => {
                 return dispatch(focused, "click");
             }
         } else if (key === "p") {
-            if (!global.state.prefsIsOpen) {
+            if (!state.prefsIsOpen) {
                 return dispatch("menu-switch", "click");
             }
         }
@@ -511,8 +752,8 @@ const handlePopupKeydown = async (e) => {
     // Memory is open and Enter was not pressed on a button
 
     let id, paperItem;
-    if (global.state.currentId && !global.state.memoryIsOpen) {
-        id = global.state.currentId;
+    if (state.currentId && !state.memoryIsOpen) {
+        id = state.currentId;
     } else {
         paperItem = querySelector(".memory-container:focus");
         if (key !== "Escape") {
@@ -544,9 +785,9 @@ const handlePopupKeydown = async (e) => {
     } else if (key === "o") {
         // open paper
         const target =
-            global.state.papers[id].source === "website"
+            state.papers[id].source === "website"
                 ? localFindEl({ id, paperItem, memoryItemClass: "memory-website-url" })
-                : (global.state.prefs.checkEnterLocalPdf &&
+                : (state.prefs.checkEnterLocalPdf &&
                       localFindEl({
                           id,
                           paperItem,
@@ -560,7 +801,7 @@ const handlePopupKeydown = async (e) => {
             e.preventDefault();
             handleTogglePaperEdit(e);
         } else {
-            if (global.state.memoryIsOpen) {
+            if (state.memoryIsOpen) {
                 e.preventDefault();
                 closeMemory();
             }
@@ -625,7 +866,7 @@ const handlePopupKeydown = async (e) => {
         );
     } else if (key === "t") {
         // copy title
-        const title = global.state.papers[id].title;
+        const title = state.papers[id].title;
         await copyAndConfirmMemoryItem({
             id,
             textToCopy: title,
@@ -641,12 +882,12 @@ const handlePopupKeydown = async (e) => {
     }
 };
 
-const handlePrefsCheckChange = async (e) => {
+export const handlePrefsCheckChange = async (e) => {
     const key = e.target.id;
     const checked = findEl({ element: key }).checked;
-    if (global.state && global.state.prefs) {
-        global.state.prefs[key] = checked;
-        setStorage("prefs", global.state.prefs, function () {
+    if (state && state.prefs) {
+        state.prefs[key] = checked;
+        setStorage("prefs", state.prefs, function () {
             log(`Settings saved for ${key} (${checked})`);
         });
     } else {
@@ -669,7 +910,7 @@ const handlePrefsCheckChange = async (e) => {
     }
 };
 
-const handlePopupSaveEdits = (id) => {
+export const handlePopupSaveEdits = (id) => {
     const { note, codeLink, favorite } = getPaperEdits(id, true);
     updatePaperTags(id, `#popup-item-tags--${id}`);
     saveNote(id, note);
@@ -677,52 +918,178 @@ const handlePopupSaveEdits = (id) => {
     saveFavoriteItem(id, favorite);
 };
 
-const handlePopupDeletePaper = (id) => () => {
+export const handlePopupDeletePaper = (id) => () => {
     showConfirmDeleteModal(id);
 };
 
-const showTitleTooltip = (id, isPopup) => {
+export const showTitleTooltip = (id, isPopup) => {
     const div = isPopup
         ? findEl({ element: "popup-title-tooltip" })
         : findEl({ paperId: id, memoryItemClass: ".title-tooltip" });
     if (!div) return;
     hideAllTooltips();
-    global.state.tooltipIsOpen = true;
+    state.tooltipIsOpen = true;
     showId(div);
 };
-const hideTitleTooltip = (id, isPopup) => {
+export const hideTitleTooltip = (id, isPopup) => {
     const div = isPopup
         ? findEl({ element: "popup-title-tooltip" })
         : findEl({ paperId: id, memoryItemClass: ".title-tooltip" });
     if (!div) return;
     hideId(div);
-    global.state.tooltipIsOpen = false;
+    state.tooltipIsOpen = false;
 };
 
-const getHandleTitleTooltip = (func, delay, isPopup) => {
+export const getHandleTitleTooltip = (func, delay, isPopup) => {
     return (e) => {
-        const id = isPopup ? global.state.currentId : eventId(e);
-        let timerId = global.state.timerIdMap.get(e.target) ?? 0;
+        const id = isPopup ? state.currentId : eventId(e);
+        let timerId = state.timerIdMap.get(e.target) ?? 0;
         clearTimeout(timerId);
         timerId = setTimeout(() => func(id, isPopup), delay);
-        global.state.timerIdMap.set(e.target, timerId);
+        state.timerIdMap.set(e.target, timerId);
     };
 };
 
-const handleExpandAuthors = (e) => {
+export const handleExpandAuthors = (e) => {
     let id, authorsEl;
     if (e.target.parentElement?.id === "popup-authors") {
-        id = global.state.currentId;
+        id = state.currentId;
         authorsEl = findEl({ element: "popup-authors" });
     } else {
         id = eventId(e);
         authorsEl = findEl({ paperId: id, memoryItemClass: "memory-authors" });
     }
-    setHTML(authorsEl, cutAuthors(global.state.papers[id].author, 100000));
+    setHTML(authorsEl, cutAuthors(state.papers[id].author, 100000));
 };
 
-const handleHideAllTitleTooltips = (e) => {
+export const handleHideAllTitleTooltips = (e) => {
     if (!e.composedPath().some((el) => el.classList?.contains("title-tooltip"))) {
         hideAllTooltips();
     }
+};
+
+/**
+ * Sets the form edit listeners on the 4 inputs: tags, code, note, favorite
+ * @param {string} id Optional id (for the popup's paper)
+ * @param {*} isPopup Is the function called from the popup?
+ */
+export const setFormChangeListener = (id, isPopup) => {
+    let refTags, refNote, refCodeLink, refFavorite;
+    if (isPopup) {
+        refTags = `#popup-item-tags--${id.replace(".", "\\.")}`;
+        refCodeLink = `popup-form-codeLink--${id}`;
+        refNote = `popup-form-note-textarea--${id}`;
+        refFavorite = `checkFavorite--${id}`;
+
+        $(refTags).on("change", delay(monitorPaperEdits(id, isPopup), 300)); // select2 required
+        addListener(refCodeLink, "keyup", delay(monitorPaperEdits(id, isPopup), 300));
+        addListener(refNote, "keyup", delay(monitorPaperEdits(id, isPopup), 300));
+        addListener(refFavorite, "change", delay(monitorPaperEdits(id, isPopup), 300));
+    } else {
+        // tags listeners is set in handleTogglePaperEdit
+        refTags = ".memory-item-tags";
+        refCodeLink = ".form-code-input";
+        refNote = ".form-note-textarea";
+
+        addEventToClass(
+            refCodeLink,
+            "keyup",
+            delay(monitorPaperEdits(undefined, isPopup), 300)
+        );
+        addEventToClass(
+            refNote,
+            "keyup",
+            delay(monitorPaperEdits(undefined, isPopup), 300)
+        );
+    }
+};
+
+export const addEventsToMemoryItems = () => {
+    // Add events
+    // after a click on such a button, the focus returns to the
+    // container to navigate with tab
+    addEventToClass(".back-to-focus", "click", handleBackToFocus);
+    // delete memory item
+    addEventToClass(".memory-delete", "click", handleDeleteItem);
+    // Open paper page
+    addEventToClass(".memory-item-link", "click", handleOpenItemLink);
+    // Open on Scirate
+    addEventToClass(".memory-item-scirate", "click", handleOpenItemScirate);
+    // Open on Alphaxiv
+    addEventToClass(".memory-item-alphaxiv", "click", handleOpenItemAlphaxiv);
+    // Open on Ar5iv
+    addEventToClass(".memory-item-ar5iv", "click", handleOpenItemAr5iv);
+    // Open on Huggingface Papers
+    addEventToClass(".memory-item-huggingface", "click", handleOpenItemHuggingface);
+    // Open code page
+    addEventToClass(".memory-code-link", "click", handleOpenItemCodeLink);
+    // Open Website URL
+    addEventToClass(".memory-website-url", "click", handleOpenItemWebsiteURL);
+    // Copy markdown link
+    addEventToClass(".memory-item-md", "click", handleCopyMarkdownLink);
+    // Copy bibtex citation
+    addEventToClass(".memory-item-bibtex", "click", handleCopyBibtex);
+    // Copy pdf link
+    addEventToClass(".memory-item-copy-link", "click", handleCopyPDFLink);
+    // Copy hyperlink
+    addEventToClass(".memory-item-copy-hyperlink", "click", handleCopyHyperLink);
+    // Open local file
+    addEventToClass(".memory-item-openLocal", "click", handleMemoryOpenLocal);
+    // Add to favorites
+    addEventToClass(".memory-item-favorite", "click", handleAddItemToFavorites);
+    // Cancel edits: bring previous values from state back
+    addEventToClass(".cancel-note-form", "click", handleCancelPaperEdit);
+    // When clicking on the edit button, either open or close the edit form
+    addEventToClass(".memory-item-edit", "click", handleTogglePaperEdit);
+    // When clicking on a tag, search for it
+    addEventToClass(".memory-tag", "click", handleTagClick);
+    // Monitor form changes
+    setFormChangeListener(undefined, false);
+    // show / remove title tooltips
+    addEventToClass(
+        ".memory-display-id",
+        "click",
+        getHandleTitleTooltip(showTitleTooltip, 0)
+    );
+    addEventToClass(
+        ".memory-display-id",
+        "mouseleave",
+        getHandleTitleTooltip(hideTitleTooltip, 10000)
+    );
+    // expand authorlist on click
+    addEventToClass(".expand-paper-authors", "click", handleExpandAuthors);
+
+    // Put cursor at the end of the textarea's text on focus
+    // (default puts the cursor at the beginning of the text)
+    addEventToClass(".form-note-textarea", "focus", handleTextareaFocus);
+};
+
+export const addEventsToMemoryControls = () => {
+    // Calculate delay time based on number of papers
+    let delayTime = 300;
+    if (state.papersList.length < 20) {
+        delayTime = 0;
+    } else if (state.papersList.length < 100) {
+        delayTime = 150;
+    }
+
+    addListener(
+        "memory-search",
+        "keypress",
+        delay(handleMemorySearchKeyPress(), delayTime)
+    );
+    addListener("memory-search", "clear-search", handleMemorySearchKeyPress(true));
+    addListener("memory-search", "keyup", handleMemorySearchKeyUp);
+    addListener("delete-paper-modal-cancel-button", "click", handleCancelModalClick);
+    addListener(
+        "delete-paper-modal-confirm-button",
+        "click",
+        handleConfirmDeleteModalClick
+    );
+    addListener("filter-favorites", "click", handleFilterFavorites);
+    // listen to sorting feature change
+    addListener("memory-select", "change", handleMemorySelectChange);
+    // listen to sorting direction change
+    addListener("memory-sort-arrow", "click", handleMemorySortArrow);
+    addListener("memory-container", "scroll", displayOnScroll(true));
 };

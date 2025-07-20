@@ -9,7 +9,7 @@
 //
 //Port to Browser lib by ORCID / RCPETERS
 
-function BibtexParser() {
+export function BibtexParser() {
     this.months = [
         "jan",
         "feb",
@@ -335,7 +335,7 @@ function BibtexParser() {
  * @param {string} str
  * @returns {string} str without surrounding braces
  */
-const safeRemoveSurroundingBraces = (str) => {
+export const safeRemoveSurroundingBraces = (str) => {
     let opened = 0;
     let closed = 0;
     let remove = true;
@@ -353,7 +353,7 @@ const safeRemoveSurroundingBraces = (str) => {
     return str;
 };
 
-const bibtexToObject = (bibtex) => {
+export const bibtexToObject = (bibtex) => {
     var b = new BibtexParser();
     /*
     Fixing @article{Jain_Chacinska_Rehling_2025, title={Understanding mitochondrial protein import: a revised model of the presequence translocase}, volume={50}, url={http://dx.doi.org/10.1016/j.tibs.2025.03.001}, DOI={10.1016/j.tibs.2025.03.001}, number={7}, journal={Trends in Biochemical Sciences}, publisher={Elsevier BV}, author={Jain, Naintara and Chacinska, Agnieszka and Rehling, Peter}, year={2025}, month={july}, pages={585–595}, language={en}}'
@@ -382,7 +382,7 @@ const bibtexToObject = (bibtex) => {
     return obj;
 };
 
-const bibtexToString = (bibtex) => {
+export const bibtexToString = (bibtex) => {
     if (typeof bibtex === "string") {
         bibtex = bibtexToObject(bibtex);
     }
@@ -414,29 +414,8 @@ const bibtexToString = (bibtex) => {
     return (bstr.slice(0, -2) + "\n}").replaceAll("\t", "  ").replaceAll("--", "-");
 };
 
-const extractBibtexValue = (bibtex, key) => {
+export const extractBibtexValue = (bibtex, key) => {
     const b = bibtexToObject(bibtex);
     if (b.hasOwnProperty(key)) return b[key];
     return "";
 };
-
-const extractAuthor = (bibtex) =>
-    extractBibtexValue(bibtex, "author")
-        .replaceAll("{", "")
-        .replaceAll("}", "")
-        .replaceAll("\\", "")
-        .split(" and ")
-        .map((a) => a.split(", ").reverse().join(" "))
-        .join(" and ");
-
-if (typeof module !== "undefined" && module.exports != null) {
-    var dummyModule = module;
-    dummyModule.exports = {
-        BibtexParser,
-        safeRemoveSurroundingBraces,
-        bibtexToObject,
-        bibtexToString,
-        extractBibtexValue,
-        extractAuthor,
-    };
-}

@@ -1,17 +1,22 @@
+// ES Module imports
+import { state, knownPaperPages, svgActionsHoverTitles } from "@pmu/config.js";
+import { getDisplayId, tablerSvg, isPdfUrl, cutAuthors } from "@pmu/functions.js";
+import { getTagsOptions } from "@pmu/state.js";
+import { isPaper } from "@pmu/paper.js";
 /**
  * Return a formatted HTML string describing some metadata about a paper
  * added date, last open date, number of visits, venue if available
  * @param {object} paper A paper object
  * @returns {string} HTML string
  */
-const getPaperInfoTable = (paper) => {
+export const getPaperInfoTable = (paper) => {
     const addDate = new Date(paper.addDate).toLocaleString().replace(",", "");
     const lastOpenDate = new Date(paper.lastOpenDate).toLocaleString().replace(",", "");
     const tableData = [
         ["Added", addDate],
         ["Last open", lastOpenDate],
         ["Visits", paper.count],
-        ["Source", global.knownPaperPages[paper.source].name],
+        ["Source", knownPaperPages[paper.source].name],
     ];
     if (paper.venue)
         tableData.push([
@@ -39,18 +44,18 @@ const getPaperInfoTable = (paper) => {
  * @param {object} paper A paper object
  * @returns HTML string
  */
-const getMemoryItemHTML = (paper) => {
+export const getMemoryItemHTML = (paper) => {
     const displayId = getDisplayId(paper.id);
     const note = paper.note || "";
     const id = paper.id;
     const tags = new Set(paper.tags);
     const tagOptions = getTagsOptions(paper);
     const favoriteClass = paper.favorite ? "favorite" : "";
-    const titles = { ...global.svgActionsHoverTitles };
+    const titles = { ...svgActionsHoverTitles };
     // titles behave differently in build/watch mode. This works in build
     titles.pdfLink = `Open tab to ${paper.title}`;
     titles.copyLink = `Copy URL to the paper's ${
-        global.state.prefs.checkPreferPdf ? "PDF" : "abstract"
+        state.prefs.checkPreferPdf ? "PDF" : "abstract"
     }`;
     titles.displayId = `Click to see metadata`;
     let codeDiv = /*html*/ `
@@ -78,7 +83,7 @@ const getMemoryItemHTML = (paper) => {
         `;
     }
 
-    const openLocalDiv = global.state.files.hasOwnProperty(paper.id)
+    const openLocalDiv = state.files.hasOwnProperty(paper.id)
         ? /*html*/ `
             <div
                 class="memory-item-openLocal memory-item-svg-div"
@@ -100,7 +105,7 @@ const getMemoryItemHTML = (paper) => {
             </div>`;
 
     let scirate = "";
-    if (global.state.prefs.checkScirate && paper.source === "arxiv") {
+    if (state.prefs.checkScirate && paper.source === "arxiv") {
         scirate = /*html*/ `
         <div
             class="memory-item-scirate memory-item-svg-div"
@@ -111,7 +116,7 @@ const getMemoryItemHTML = (paper) => {
     }
 
     let alphaxiv = "";
-    if (global.state.prefs.checkAlphaxiv && paper.source === "arxiv") {
+    if (state.prefs.checkAlphaxiv && paper.source === "arxiv") {
         alphaxiv = /*html*/ `
         <div
             class="memory-item-alphaxiv memory-item-svg-div"
@@ -122,7 +127,7 @@ const getMemoryItemHTML = (paper) => {
     }
 
     let ar5iv = "";
-    if (global.state.prefs.checkAr5iv && paper.source === "arxiv") {
+    if (state.prefs.checkAr5iv && paper.source === "arxiv") {
         ar5iv = /*html*/ `
         <div
             class="memory-item-ar5iv memory-item-svg-div"
@@ -133,7 +138,7 @@ const getMemoryItemHTML = (paper) => {
     }
 
     let huggingface = "";
-    if (global.state.prefs.checkHuggingface && paper.source === "arxiv") {
+    if (state.prefs.checkHuggingface && paper.source === "arxiv") {
         huggingface = /*html*/ `
         <div
             class="memory-item-huggingface memory-item-svg-div"
@@ -285,7 +290,7 @@ ${note}</textarea
  * @param {object} paper A paper object
  * @returns HTML string
  */
-const getPopupEditFormHTML = (paper) => {
+export const getPopupEditFormHTML = (paper) => {
     const id = paper.id;
     const tagOptions = getTagsOptions(paper);
     const note = paper.note || "";
@@ -386,14 +391,16 @@ ${note}</textarea
 /**
  * Return a formatted HTML string with the svg icons to display in the main popup
  * @param {object} paper A paper object
+ * @param {string} currentUrl The current URL
+ * @param {object} is The result of isPaper(currentUrl)
  * @returns HTML string
  */
-const getPopupPaperIconsHTML = (paper, currentUrl, is) => {
+export const getPopupPaperIconsHTML = (paper, currentUrl, is) => {
     const id = paper.id;
     const name = isPdfUrl(currentUrl) ? "HTML" : "PDF";
 
     let scirate = "";
-    if (global.state.prefs.checkScirate && paper.source === "arxiv") {
+    if (state.prefs.checkScirate && paper.source === "arxiv") {
         scirate = /*html*/ `
         <div
             tabindex="0"
@@ -404,10 +411,9 @@ const getPopupPaperIconsHTML = (paper, currentUrl, is) => {
             ${tablerSvg("messages", "", ["popup-click-svg"])}
         </div>`;
     }
-
     let alphaxiv = "";
     if (
-        global.state.prefs.checkAlphaxiv &&
+        state.prefs.checkAlphaxiv &&
         paper.source === "arxiv" &&
         !currentUrl.includes("alphaxiv.org")
     ) {
@@ -421,10 +427,9 @@ const getPopupPaperIconsHTML = (paper, currentUrl, is) => {
             ${tablerSvg("alphaxiv", "", ["popup-click-svg", "alphaxiv-icon"])}
         </div>`;
     }
-
     let ar5iv = "";
     if (
-        global.state.prefs.checkAr5iv &&
+        state.prefs.checkAr5iv &&
         paper.source === "arxiv" &&
         !currentUrl.includes("ar5iv.labs.arxiv.org")
     ) {
@@ -438,10 +443,9 @@ const getPopupPaperIconsHTML = (paper, currentUrl, is) => {
             ${tablerSvg("ar5iv", "", ["popup-click-svg"])}
         </div>`;
     }
-
     let huggingface = "";
     if (
-        global.state.prefs.checkHuggingface &&
+        state.prefs.checkHuggingface &&
         paper.source === "arxiv" &&
         !currentUrl.includes("huggingface.co/papers/")
     ) {
@@ -457,8 +461,8 @@ const getPopupPaperIconsHTML = (paper, currentUrl, is) => {
     }
 
     const download =
-        global.state.prefs.checkStore &&
-        (is.localFile || is.stored || global.state.files.hasOwnProperty(paper.id))
+        state.prefs.checkStore &&
+        (is.localFile || is.stored || state.files.hasOwnProperty(paper.id))
             ? /*html*/ `
         <div
             tabindex="0"
@@ -467,27 +471,26 @@ const getPopupPaperIconsHTML = (paper, currentUrl, is) => {
             title="Open downloaded pdf"
         >
             ${tablerSvg("vocabulary", "", ["popup-click-svg"])}
-        </div>
-        `
+        </div>`
             : /*html*/ `
         <div
             tabindex="0"
             class="memory-item-svg-div"
             id="popup-memory-item-download--${id}"
-            title="Download pdf"
+            title="Download PDF"
         >
             ${tablerSvg("file-download", "", ["popup-click-svg"])}
-        </div>
-    `;
+        </div>`;
 
     const paperLink =
         paper.source === "website"
             ? ""
-            : /*html*/ `<div
+            : /*html*/ `
+        <div
             tabindex="0"
             class="memory-item-svg-div"
             id="popup-memory-item-link--${id}"
-            title="Open Paper ${name} Page"
+            title="Open ${name} tab"
         >
             ${tablerSvg("external-link", "", ["popup-click-svg"])}
         </div>`;
@@ -507,6 +510,7 @@ const getPopupPaperIconsHTML = (paper, currentUrl, is) => {
         >
             ${tablerSvg("link", "", ["popup-click-svg"])}
         </div>
+
         <div
             tabindex="0"
             class="memory-item-svg-div"

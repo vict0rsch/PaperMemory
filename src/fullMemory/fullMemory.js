@@ -1,3 +1,10 @@
+// ES Module imports
+import { warn, info, delay } from "@pmu/functions.js";
+import { shouldSync, pushToRemote, initSyncAndState } from "@pmu/sync.js";
+import { makeMemoryHTML, setMemorySortArrow } from "@pm/popup/js/memory.js";
+import { handleClearSearch, displayOnScroll } from "@pm/popup/js/handlers.js";
+import { addListener, val } from "@pmu/miniquery.js";
+
 var REFRESH_INTERVAL_SECS = 5 * 60;
 // var REFRESH_INTERVAL_SECS = 20;
 

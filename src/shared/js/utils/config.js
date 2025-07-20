@@ -1,3 +1,4 @@
+import { miniHash } from "@pmu/functions.js";
 /**
  * Prototypes
  */
@@ -23,22 +24,17 @@ Object.defineProperty(String.prototype, "capitalize", {
  * other files such as functions.js, parsers.js, memory.js, popup.js
  */
 
-var global = {};
-if (typeof window !== "undefined") {
-    global = window;
-}
-
 /**
  * Set uninstall URL
  */
-typeof chrome !== "undefined" &&
-    chrome?.runtime?.setUninstallURL &&
-    chrome?.runtime?.setUninstallURL("https://forms.gle/1JSV8PcxQugRmsd46");
+if (typeof chrome !== "undefined" && chrome?.runtime?.setUninstallURL) {
+    chrome.runtime.setUninstallURL("https://forms.gle/1JSV8PcxQugRmsd46");
+}
 
 /**
  * The popup's global state to store data across functions
  */
-global.state = {
+export const state = {
     currentMemoryPagination: 0,
     dataVersion: 0,
     deleted: {}, // (id => bool)
@@ -65,15 +61,15 @@ global.state = {
     urlHashToId: {}, // (miniHash(url) => id)
 };
 
-global.state.titleFunction = (paper) => {
+state.titleFunction = (paper) => {
     const title = paper.title.replaceAll("\n", "");
     const id = paper.id;
     let name = `${title} - ${id}`;
-    name = name.replaceAll(":", " ").replace(/\\s\\s+/g, " ");
+    name = name.replaceAll(":", " ").replace(/\s\s+/g, " ");
     return name;
 };
 
-global.descendingSortKeys = [
+export const descendingSortKeys = [
     "addDate",
     "count",
     "lastOpenDate",
@@ -81,7 +77,7 @@ global.descendingSortKeys = [
     "year",
 ];
 
-global.svgActionsHoverTitles = {
+export const svgActionsHoverTitles = {
     edit: "Edit paper details",
     copyMd: "Copy Markdown-formatted link",
     copyBibtext: "Copy Bibtex citation",
@@ -91,10 +87,26 @@ global.svgActionsHoverTitles = {
     copyHypeLink: "Copy url as hyperlink",
 };
 
+// Backward compatibility - attach to global window object (only in DOM context)
+if (typeof window !== "undefined") {
+    window.state = state;
+    window.descendingSortKeys = descendingSortKeys;
+    window.svgActionsHoverTitles = svgActionsHoverTitles;
+}
+
+// Node.js module compatibility for testing
+if (typeof module !== "undefined" && module.exports != null) {
+    module.exports = {
+        state,
+        descendingSortKeys,
+        svgActionsHoverTitles,
+    };
+}
+
 /**
  * Shared configuration for the Tags' select2 inputs
  */
-global.select2Options = {
+export const select2Options = {
     placeholder: "Tag paper",
     maximumSelectionLength: 5,
     allowClear: true,
@@ -105,7 +117,7 @@ global.select2Options = {
 /**
  * The array of keys in the menu, i.e. options the user can dis/enable in the menu
  */
-global.prefsCheckNames = [
+export const prefsCheckNames = [
     "checkBib",
     "checkMd",
     "checkDownload",
@@ -128,7 +140,7 @@ global.prefsCheckNames = [
 /**
  * Menu check names which should not default to true but to false
  */
-global.prefsCheckDefaultFalse = [
+export const prefsCheckDefaultFalse = [
     "checkDarkMode",
     "checkStore",
     "checkScirate",
@@ -144,12 +156,12 @@ global.prefsCheckDefaultFalse = [
 /**
  * All keys to retrieve from the menu, the checkboxes + the custom pdf function
  */
-global.prefsStorageKeys = [...global.prefsCheckNames, "pdfTitleFn"];
+export const prefsStorageKeys = [...prefsCheckNames, "pdfTitleFn"];
 
 /**
  * Extra data per source
  */
-global.sourceExtras = {
+export const sourceExtras = {
     springer: {
         types: ["chapter", "article", "book", "referenceworkentry"],
     },
@@ -158,7 +170,7 @@ global.sourceExtras = {
 /**
  * Sources which are preprints (important for de-duplication)
  */
-global.preprintSources = ["arxiv", "biorxiv"];
+export const preprintSources = ["arxiv", "biorxiv"];
 
 /**
  * Map of known data sources to the associated paper urls: pdf urls and web-pages urls.
@@ -167,7 +179,7 @@ global.preprintSources = ["arxiv", "biorxiv"];
  *  ijcai -> papers < 2015 will not be parsed due to website changes
  *           (open an issue if that's problematic)
  */
-global.knownPaperPages = {
+export const knownPaperPages = {
     acl: {
         patterns: ["aclanthology.org/"],
         name: "ACL Anthology (Association for Computational Linguistics)",
@@ -332,9 +344,7 @@ global.knownPaperPages = {
     },
     springer: {
         patterns: [
-            ...global.sourceExtras.springer.types.map(
-                (type) => `link.springer.com/${type}/`
-            ),
+            ...sourceExtras.springer.types.map((type) => `link.springer.com/${type}/`),
             "link.springer.com/content/pdf/",
         ],
         name: "Springer",
@@ -366,11 +376,11 @@ global.knownPaperPages = {
     },
 };
 
-global.overrideORConfs = {
+export const overrideORConfs = {
     "robot-learning": "CoRL",
     ijcai: "IJCAI",
 };
-global.overridePMLRConfs = {
+export const overridePMLRConfs = {
     "Conference on Learning Theory": "CoLT",
     "International Conference on Machine Learning": "ICML",
     "Conference on Uncertainty in Artificial Intelligence": "UAI",
@@ -378,14 +388,14 @@ global.overridePMLRConfs = {
     "International Conference on Artificial Intelligence and Statistics": "AISTATS",
     "International Conference on Algorithmic Learning Theory": "ALT",
 };
-global.overrideDBLPVenues = {
+export const overrideDBLPVenues = {
     "J. Mach. Learn. Res.": "JMLR",
 };
 
-global.consolHeaderStyle =
+export const consolHeaderStyle =
     "@import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@300');font-family:'Fira Code' monospace;font-size:1rem;font-weight:300;display:inline-block;border:2px solid #A41716;border-radius: 4px;padding: 12px; margin: 12px;";
 
-global.storeReadme = `
+export const storeReadme = `
 /!\\ Warning: This folder has been created automatically by your PaperMemory browser extension.\n
 /!\\ It has to stay in your downloads for PaperMemory to be able to access your papers.\n
 /!\\ To be able to open files from this folder instead of re-downloading them, PaperMemory will match their titles and downloaded urls.\n
@@ -395,7 +405,7 @@ global.storeReadme = `
 /**
  * English words to ignore when creating an arxiv paper's BibTex key.
  */
-global.englishStopWords = new Set([
+export const englishStopWords = new Set([
     "i",
     "me",
     "my",
@@ -525,40 +535,4 @@ global.englishStopWords = new Set([
     "now",
 ]);
 
-global.journalAbbreviations = null;
-
-global.notif = {
-    timeout: null,
-    prevent: false,
-    showSpeed: 400,
-    displayDuration: 3000,
-    hideSpeed: 400,
-    element: null,
-    isLoading: false,
-};
-
-// ----------------------------------------------------
-// -----  TESTS: modules for node.js environment  -----
-// ----------------------------------------------------
-if (typeof module !== "undefined" && module.exports != null) {
-    var dummyModule = module;
-    dummyModule.exports = {
-        state: global.state,
-        descendingSortKeys: global.descendingSortKeys,
-        svgActionsHoverTitles: global.svgActionsHoverTitles,
-        select2Options: global.select2Options,
-        prefsCheckNames: global.prefsCheckNames,
-        prefsCheckDefaultFalse: global.prefsCheckDefaultFalse,
-        prefsStorageKeys: global.prefsStorageKeys,
-        sourceExtras: global.sourceExtras,
-        preprintSources: global.preprintSources,
-        knownPaperPages: global.knownPaperPages,
-        overrideORConfs: global.overrideORConfs,
-        overridePMLRConfs: global.overridePMLRConfs,
-        overrideDBLPVenues: global.overrideDBLPVenues,
-        consolHeaderStyle: global.consolHeaderStyle,
-        storeReadme: global.storeReadme,
-        englishStopWords: global.englishStopWords,
-        journalAbbreviations: global.journalAbbreviations,
-    };
-}
+export const journalAbbreviations = {};

@@ -1,3 +1,32 @@
+// ES Module imports
+import {
+    log,
+    info,
+    warn,
+    logOk,
+    logError,
+    downloadTextFile,
+    getRandomToken,
+    cleanPapers,
+    miniHash,
+    parseUrl,
+    stringifyError,
+} from "@pmu/functions.js";
+import {
+    state,
+    preprintSources,
+    overrideORConfs,
+    overridePMLRConfs,
+    overrideDBLPVenues,
+    prefsCheckNames,
+    knownPaperPages,
+    prefsStorageKeys,
+    prefsCheckDefaultFalse,
+} from "@pmu/config.js";
+import { bibtexToString, bibtexToObject } from "@pmu/bibtexParser.js";
+import { makeCVFPaper, makeOpenReviewPaper } from "@pmu/parsers.js";
+import { sortMemory } from "@pmu/state.js";
+
 /**
  * Make sure the currently stored data is compatible with the potentially updated code.
  * To do so, we check the stored data version and the current version of the extension.
@@ -8,7 +37,7 @@
  * @param {boolean} store whether to store the updated papers in storage
  * @returns {object} {papers: migratedPapers, success: ?, ?error: string}
  */
-const migrateData = async (papers, manifestDataVersion, store = true) => {
+export const migrateData = async (papers, manifestDataVersion, store = true) => {
     if (typeof papers === "undefined") {
         chrome.storage.local.set({ papers: { __dataVersion: manifestDataVersion } });
         return { papers: { __dataVersion: manifestDataVersion }, success: true };
@@ -240,7 +269,7 @@ const migrateData = async (papers, manifestDataVersion, store = true) => {
 /**
  * @param {string} key The storage key to log (log)
  */
-const logStorage = (key) => {
+export const logStorage = (key) => {
     chrome.storage.local.get(key, (data) => {
         log(data[key]);
     });
@@ -254,7 +283,7 @@ const logStorage = (key) => {
  * @param {string} key The storage key to retrieve
  * @returns {any}
  */
-const getStorage = async (key) => {
+export const getStorage = async (key) => {
     return new Promise((resolve, reject) => {
         chrome.storage.local.get(key, (data) => {
             if (typeof key === "string") {
@@ -276,7 +305,7 @@ const getStorage = async (key) => {
  * write
  * @returns {promise}
  */
-const setStorage = async (key, value, cb = () => {}) => {
+export const setStorage = async (key, value, cb = () => {}) => {
     return new Promise((resolve, reject) => {
         chrome.storage.local.set({ [key]: value }, () => {
             cb();
@@ -290,20 +319,20 @@ const setStorage = async (key, value, cb = () => {}) => {
  *
  * @param {string} id Paper id to delete. Must be exact.
  */
-const deletePaperInStorage = async (id, papers) => {
+export const deletePaperInStorage = async (id, papers) => {
     if (!papers) {
         papers = (await getStorage("papers")) ?? {};
     }
     let deleted = false;
     if (papers.hasOwnProperty(id)) {
         updateDuplicatedUrls(null, id, true);
-        deleted = delete global.state.titleHashToIds[miniHash(papers[id].title)];
+        deleted = delete state.titleHashToIds[miniHash(papers[id].title)];
         deleted = deleted && delete papers[id];
-        delete global.state.papers[id];
+        delete state.papers[id];
     }
     if (deleted) {
         await setStorage("papers", papers);
-        global.state.papersList = Object.values(cleanPapers(global.state.papers));
+        state.papersList = Object.values(cleanPapers(state.papers));
         sortMemory();
         log("Successfully deleted paper", id);
     } else {
@@ -315,7 +344,7 @@ const deletePaperInStorage = async (id, papers) => {
  * @returns {string} Either "dark" or "light" depending on the user's preference.
  * Defaults to "light"
  */
-const getTheme = async () => {
+export const getTheme = async () => {
     const darkMode = await getStorage("checkDarkMode");
     return darkMode ? "dark" : "light";
 };
@@ -324,7 +353,7 @@ const getTheme = async () => {
  * Stores the last 5 versions of the user's memory whenever there's a migration.
  * @param {object} papers The papers to store.
  */
-const backupData = async (papers) => {
+export const backupData = async (papers) => {
     chrome.storage.local.get("papersBackup", ({ papersBackup }) => {
         if (typeof papersBackup === "undefined") {
             papersBackup = {};
@@ -360,7 +389,7 @@ function dateDiffInDays(a, b) {
 /**
  * Create a weekly backup of the papers
  */
-const weeklyBackup = async () => {
+export const weeklyBackup = async () => {
     let backups = (await getStorage("weeklyBackups")) ?? {};
 
     const today = new Date();
@@ -385,7 +414,7 @@ const weeklyBackup = async () => {
  * Retrieve the boolean preferences as defined in config.js/prefsStorageKeys
  * @returns {object} The user's preferences as per the popup's sliders in the menu.
  */
-const getPrefs = async () => {
+export const getPrefs = async () => {
     let isNew = false;
     let legacyPrefs;
     const storedPrefs = (await getStorage("prefs")) ?? {};
@@ -393,13 +422,13 @@ const getPrefs = async () => {
         isNew = true;
     }
     if (isNew) {
-        legacyPrefs = (await getStorage(global.prefsStorageKeys)) ?? {};
+        legacyPrefs = (await getStorage(prefsStorageKeys)) ?? {};
     }
     let prefs = {};
-    for (const m of global.prefsCheckNames) {
+    for (const m of prefsCheckNames) {
         prefs[m] = (legacyPrefs ?? storedPrefs).hasOwnProperty(m)
             ? (legacyPrefs ?? storedPrefs)[m]
-            : global.prefsCheckDefaultFalse.indexOf(m) >= 0
+            : prefsCheckDefaultFalse.indexOf(m) >= 0
             ? false
             : true;
     }
@@ -421,7 +450,7 @@ const getPrefs = async () => {
  * Retrieve the default keyboard action from storage.
  * @returns {string} The default keyboard action.
  */
-const getDefaultKeyboardAction = async () => {
+export const getDefaultKeyboardAction = async () => {
     let defaultAction = await getStorage("defaultKeyboardAction");
     if (defaultAction) {
         return defaultAction;
@@ -435,7 +464,7 @@ const getDefaultKeyboardAction = async () => {
  * Set the default keyboard action.
  * @param {string} action The default keyboard action.
  */
-const setDefaultKeyboardAction = async (action) =>
+export const setDefaultKeyboardAction = async (action) =>
     setStorage("defaultKeyboardAction", action);
 
 /**
@@ -445,7 +474,7 @@ const setDefaultKeyboardAction = async (action) =>
  *
  * @returns {number} the int-ified semantic version
  */
-const getManifestDataVersion = () => {
+export const getManifestDataVersion = () => {
     const manifest = chrome.runtime.getManifest();
     return manifest.version
         .split(".")
@@ -458,7 +487,7 @@ const getManifestDataVersion = () => {
  * @param {number} dataVersionInt The data version as an int
  * @returns {string} the semantic equivalent of the data version int
  */
-const versionToSemantic = (dataVersionInt) => {
+export const versionToSemantic = (dataVersionInt) => {
     // 209 -> 0.2.9
     // 1293 -> 0.12.93
     // 23439 -> 2.34.39
@@ -477,7 +506,7 @@ const versionToSemantic = (dataVersionInt) => {
  * @returns {object} {warnings: list of warning messages, paper: new paper with
  * updated missing keys to default values}
  */
-const validatePaper = (paper, log = true) => {
+export const validatePaper = (paper, log = true) => {
     /*
     object mapping a paper's attributes to another object describing the
     expected behavior of this attribute:
@@ -606,7 +635,7 @@ const validatePaper = (paper, log = true) => {
             type: "string",
             desc: "the paper's source i.e. where it was added to the memory from",
             validation: (p) => {
-                const sources = Object.keys(global.knownPaperPages);
+                const sources = Object.keys(knownPaperPages);
                 if (sources.indexOf(p) < 0) {
                     return `Unknown source ${p}`;
                 }
@@ -748,7 +777,7 @@ const validatePaper = (paper, log = true) => {
  *  papersToWrite: papersToWrite,
  * }
  */
-const prepareOverwriteData = async (data) => {
+export const prepareOverwriteData = async (data) => {
     let error = true;
     let warning = "";
     let message = "";
@@ -776,7 +805,7 @@ const prepareOverwriteData = async (data) => {
         papersToWrite = migration.papers;
         for (const id in papersToWrite) {
             if (!id.startsWith("__")) {
-                paperWarnings = validatePaper(papersToWrite[id]).warnings;
+                let paperWarnings = validatePaper(papersToWrite[id]).warnings;
                 if (paperWarnings && paperWarnings.length > 0) {
                     warning +=
                         "<br/>" +
@@ -811,7 +840,7 @@ const prepareOverwriteData = async (data) => {
     };
 };
 
-const makeVenue = async (paper) => {
+export const makeVenue = async (paper) => {
     let venue = "";
     if (paper.note && paper.note.match(/(accepted|published)\ @\ .+\(?\d{4}\)?/i)) {
         venue = paper.note
@@ -874,7 +903,7 @@ const makeVenue = async (paper) => {
  * @param {object} papers The papers dict to hash
  * @returns {object} The title hash to ids dict
  */
-const makeTitleHashToIdList = (papers) => {
+export const makeTitleHashToIdList = (papers) => {
     const titleHashToIds = {};
     for (const [id, paper] of Object.entries(cleanPapers(papers))) {
         const hashed = miniHash(paper.title);
@@ -886,23 +915,25 @@ const makeTitleHashToIdList = (papers) => {
     return titleHashToIds;
 };
 
-if (typeof module !== "undefined" && module.exports != null) {
-    var dummyModule = module;
-    dummyModule.exports = {
-        migrateData,
-        logStorage,
-        getStorage,
-        setStorage,
-        deletePaperInStorage,
-        getTheme,
-        backupData,
-        weeklyBackup,
-        getPrefs,
-        getManifestDataVersion,
-        versionToSemantic,
-        validatePaper,
-        prepareOverwriteData,
-        makeVenue,
-        makeTitleHashToIdList,
-    };
-}
+export const updateDuplicatedUrls = (url, id, remove = false) => {
+    if (!remove) {
+        state.urlHashToId[miniHash(url)] = id;
+        setStorage("urlHashToId", state.urlHashToId);
+    } else {
+        let hashedUrls;
+        if (!url) {
+            hashedUrls = Object.keys(state.urlHashToId).filter(
+                (k) => state.urlHashToId[k] === id
+            );
+        } else {
+            hashedUrls = [miniHash(url)];
+        }
+        if (hashedUrls && hashedUrls.length) {
+            for (const hashedUrl of hashedUrls) {
+                warn("Removing duplicated url", url, "for", id);
+                delete state.urlHashToId[hashedUrl];
+            }
+            setStorage("urlHashToId", state.urlHashToId);
+        }
+    }
+};

@@ -1,3 +1,25 @@
+// ES Module imports
+import {
+    addListener,
+    findEl,
+    setHTML,
+    dispatch,
+    val,
+    showId,
+    hideId,
+    querySelector,
+} from "@pmu/miniquery.js";
+import { copyTextToClipboard } from "@pmu/functions.js";
+import { BibtexParser, bibtexToObject, bibtexToString } from "@pmu/bibtexParser.js";
+import {
+    tryDBLP,
+    trySemanticScholar,
+    tryCrossRef,
+    tryUnpaywall,
+    tryGoogleScholar,
+} from "@pmu/parsers.js";
+import { sleep } from "@pmu/sync.js";
+
 var STOPMATCH = false;
 var DISABLE_MATCH = {};
 

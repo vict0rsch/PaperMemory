@@ -1,3 +1,5 @@
+import { warn } from "@pmu/functions.js";
+
 /**
  * Find an element by element id (may be the element itself,
  * in which case it its returned directly), or by finding the element
@@ -10,7 +12,7 @@
  *   container with id memory-container--{paperId}. The leading dot is optional.
  * @returns {HTMLElement}
  */
-const findEl = ({ element, paperId, memoryItemClass }) => {
+export const findEl = ({ element, paperId, memoryItemClass }) => {
     if (element)
         return typeof element === "string" ? document.getElementById(element) : element;
     if (typeof memoryItemClass === "undefined") {
@@ -33,7 +35,7 @@ const findEl = ({ element, paperId, memoryItemClass }) => {
  * @param {function} callback
  * @returns {void}
  */
-const fadeOut = (el, duration = 250, callback = () => {}) => {
+export const fadeOut = (el, duration = 250, callback = () => {}) => {
     el = findEl({ element: el });
     el.style.transition = `${duration}ms`;
     el.style.opacity = 0;
@@ -51,7 +53,7 @@ const fadeOut = (el, duration = 250, callback = () => {}) => {
  * @param {function} callback
  * @returns {void}
  */
-const fadeIn = (el, display = "block", duration = 250, callback = () => {}) => {
+export const fadeIn = (el, display = "block", duration = 250, callback = () => {}) => {
     el = findEl({ element: el });
     el.style.opacity = 0;
     if (el.style.display === "none") {
@@ -73,7 +75,7 @@ const fadeIn = (el, display = "block", duration = 250, callback = () => {}) => {
  * @param {string} value
  * @returns {string}
  */
-const val = (el, value) => {
+export const val = (el, value) => {
     el = findEl({ element: el });
     if (el instanceof HTMLInputElement && el.type === "checkbox") {
         if (typeof value === "undefined") {
@@ -93,7 +95,7 @@ const val = (el, value) => {
  * @param {string} display
  * @returns {void}
  * */
-const showId = (el, display = "block") => {
+export const showId = (el, display = "block") => {
     el = findEl({ element: el });
     if (el) el.style.display = display;
 };
@@ -103,7 +105,7 @@ const showId = (el, display = "block") => {
  * @param {string | HTMLElement} el
  * @returns {void}
  * */
-const hideId = (el) => {
+export const hideId = (el) => {
     el = findEl({ element: el });
     if (el) el.style.display = "none";
 };
@@ -113,7 +115,7 @@ const hideId = (el) => {
  * @param {string} text
  * @returns {void}
  * */
-const setTextId = (el, text) => {
+export const setTextId = (el, text) => {
     el = findEl({ element: el });
     if (el) el.innerText = text;
 };
@@ -123,7 +125,7 @@ const setTextId = (el, text) => {
  * @param {string} html
  * @returns {void}
  * */
-const setHTML = (el, html) => {
+export const setHTML = (el, html) => {
     el = findEl({ element: el });
     if (el) el.innerHTML = html;
 };
@@ -133,7 +135,7 @@ const setHTML = (el, html) => {
  * @param {string | Event} event
  * @returns {void}
  * */
-const dispatch = (el, event) => {
+export const dispatch = (el, event) => {
     el = findEl({ element: el });
     if (typeof event === "string") {
         if (event === "focus") {
@@ -154,7 +156,7 @@ const dispatch = (el, event) => {
  * @param {string} className
  * @returns {boolean}
  * */
-const hasClass = (el, className) => {
+export const hasClass = (el, className) => {
     el = findEl({ element: el });
     return el ? el.classList.contains(className) : false;
 };
@@ -164,7 +166,7 @@ const hasClass = (el, className) => {
  * @param {string} className
  * @returns {void}
  * */
-const addClass = (el, className) => {
+export const addClass = (el, className) => {
     el = findEl({ element: el });
     el && el.classList.add(className);
 };
@@ -174,7 +176,7 @@ const addClass = (el, className) => {
  * @param {string} className
  * @returns {void}
  * */
-const removeClass = (el, className) => {
+export const removeClass = (el, className) => {
     el = findEl({ element: el });
     el && el.classList.remove(className);
 };
@@ -185,7 +187,7 @@ const removeClass = (el, className) => {
  * @param {function} listener
  * @returns {void}
  * */
-const addListener = (el, event, listener) => {
+export const addListener = (el, event, listener) => {
     el = findEl({ element: el });
     el && el.addEventListener(event, listener);
 };
@@ -195,7 +197,7 @@ const addListener = (el, event, listener) => {
  * @param {string} text
  * @returns {void}
  * */
-const setPlaceholder = (el, text) => {
+export const setPlaceholder = (el, text) => {
     el = findEl({ element: el });
     if (el && typeof el.placeholder !== "undefined") el.placeholder = text;
 };
@@ -206,7 +208,7 @@ const setPlaceholder = (el, text) => {
  * @param {string} value
  * @returns {string}
  * */
-const style = (el, key, value) => {
+export const style = (el, key, value) => {
     el = findEl({ element: el });
     if (el) {
         if (typeof value === "undefined") {
@@ -221,7 +223,7 @@ const style = (el, key, value) => {
  * @param {boolean} isDisabled
  * @returns {void}
  * */
-const disable = (el, isDisabled = true) => {
+export const disable = (el, isDisabled = true) => {
     el = findEl({ element: el });
     if (el) el.disabled = isDisabled;
 };
@@ -233,9 +235,16 @@ const disable = (el, isDisabled = true) => {
  * @param {function} complete
  * @returns {void}
  * */
-const slideUp = (el, duration = 250, complete = () => {}) => {
+export const slideUp = (el, duration = 250, complete = () => {}) => {
     el = findEl({ element: el });
     if (!el) return;
+
+    // Only available in DOM context
+    if (typeof window === "undefined") {
+        console.warn("slideUp called in service worker context - not supported");
+        return;
+    }
+
     el.style.transitionProperty = "height, margin, padding";
     el.style.transitionDuration = duration + "ms";
     // el.style.boxSizing = "border-box";
@@ -270,9 +279,16 @@ const slideUp = (el, duration = 250, complete = () => {}) => {
  * @param {function} complete
  * @returns {void}
  * */
-const slideDown = (el, duration = 500, complete = () => {}) => {
+export const slideDown = (el, duration = 500, complete = () => {}) => {
     el = findEl({ element: el });
     if (!el) return;
+
+    // Only available in DOM context
+    if (typeof window === "undefined") {
+        console.warn("slideDown called in service worker context - not supported");
+        return;
+    }
+
     el.style.removeProperty("display");
     let display = window.getComputedStyle(el).display;
 
@@ -311,7 +327,7 @@ const slideDown = (el, duration = 500, complete = () => {}) => {
  * @param {HTMLElement} dom
  * @returns {HTMLElement[]}
  */
-const queryAll = (selector, dom) =>
+export const queryAll = (selector, dom) =>
     dom
         ? [...dom.querySelectorAll(selector)]
         : [...document.querySelectorAll(selector)];
@@ -322,14 +338,14 @@ const queryAll = (selector, dom) =>
  * @param {HTMLElement} dom
  * @returns {HTMLElement}
  */
-const querySelector = (selector, dom) =>
+export const querySelector = (selector, dom) =>
     dom ? dom.querySelector(selector) : document.querySelector(selector);
 
 /** Create an element from an HTML string
  * @param {string} htmlString
  * @returns {HTMLElement}
  * */
-const createElementFromHTML = (htmlString) => {
+export const createElementFromHTML = (htmlString) => {
     var div = document.createElement("div");
     div.innerHTML = htmlString.trim();
 
@@ -343,40 +359,9 @@ const createElementFromHTML = (htmlString) => {
  * @param {function} fn
  * @returns {void}
  * */
-const addEventToClass = (className, eventName, fn) => {
+export const addEventToClass = (className, eventName, fn) => {
     if (!className.startsWith(".")) className = "." + className;
     queryAll(className).forEach((el) => {
         el.addEventListener(eventName, fn);
     });
 };
-
-// ----------------------------------------------------
-// -----  TESTS: modules for node.js environment  -----
-// ----------------------------------------------------
-if (typeof module !== "undefined" && module.exports != null) {
-    var dummyModule = module;
-    dummyModule.exports = {
-        findEl,
-        fadeOut,
-        fadeIn,
-        val,
-        showId,
-        hideId,
-        setTextId,
-        setHTML,
-        dispatch,
-        hasClass,
-        addClass,
-        removeClass,
-        addListener,
-        setPlaceholder,
-        style,
-        disable,
-        slideUp,
-        slideDown,
-        queryAll,
-        querySelector,
-        createElementFromHTML,
-        addEventToClass,
-    };
-}

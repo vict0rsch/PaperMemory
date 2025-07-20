@@ -1,3 +1,57 @@
+// ES Module imports
+import {
+    log,
+    info,
+    warn,
+    logError,
+    eventId,
+    miniHash,
+    cleanStr,
+    sendMessageToBackground,
+    getStoredFiles,
+    noParamUrl,
+    urlToWebsiteId,
+    parseUrl,
+    consoleHeader,
+    logOk,
+    silentPromiseTimeout,
+    cleanPapers,
+    arxivIdFromURL,
+    cleanBiorxivURL,
+    parseCVFUrl,
+    isPdfUrl,
+} from "@pmu/functions.js";
+import {
+    state,
+    knownPaperPages,
+    preprintSources,
+    overrideORConfs,
+    overridePMLRConfs,
+    overrideDBLPVenues,
+    sourceExtras,
+} from "@pmu/config.js";
+import {
+    getStorage,
+    setStorage,
+    getTheme,
+    validatePaper,
+    makeVenue,
+    makeTitleHashToIdList,
+    deletePaperInStorage,
+    updateDuplicatedUrls,
+} from "@pmu/data.js";
+import { bibtexToObject } from "@pmu/bibtexParser.js";
+import { pushToRemote } from "@pmu/sync.js";
+import {
+    tryPWCMatch,
+    tryPreprintMatch,
+    makePaper,
+    findCellPii,
+    parseAIPIdOrDOI,
+} from "@pmu/parsers.js";
+import { parseIdFromUrl } from "@pmu/urls.js";
+import { findLocalFile, isKnownLocalFile } from "@pmu/files.js";
+
 /**
  * Is this url associated with a known paper source?
  * For each known paper source in config.js/knownPaperPages, this function
@@ -8,11 +62,11 @@
  * @param {boolean} noStored if true, don't check for local files
  * @returns {object} boolean map from sources.
  */
-const isPaper = async (url, noStored = false) => {
+export const isPaper = async (url, noStored = false) => {
     let is = {};
     if (!url) return is;
-    for (const source in global.knownPaperPages) {
-        const patterns = global.knownPaperPages[source].patterns;
+    for (const source in knownPaperPages) {
+        const patterns = knownPaperPages[source].patterns;
         // default source status: false
         is[source] = false;
         for (const pattern of patterns) {
@@ -30,18 +84,24 @@ const isPaper = async (url, noStored = false) => {
     // is the url a local file in the memory?
     is.localFile = isKnownLocalFile(url);
     is.stored = noStored ? false : (await findLocalFile(url)) ?? false;
-    is.parsedWebsite = global.state.papers[`Website_${urlToWebsiteId(url)}`] ?? false;
+    is.parsedWebsite = state.papers[`Website_${urlToWebsiteId(url)}`] ?? false;
     return is;
 };
 
-/**
- * Tests wether a given url is a known paper source according to knownPaperPages
- * and to local files.
- * @param {string} url The url to test
- * @returns {boolean}
- */
-const isSourceURL = async (url, noStored) =>
-    Object.values(await isPaper(url, noStored)).some((i) => i);
+export const findFuzzyPaperMatch = (hashes, paper) => {
+    const paperHash = miniHash(paper.title);
+    if (hashes.hasOwnProperty(paperHash)) {
+        const matches = hashes[paperHash];
+        const nonPreprint = matches.find(
+            (m) => !preprintSources.some((s) => m.toLowerCase().startsWith(s))
+        );
+        if (nonPreprint) {
+            return nonPreprint;
+        }
+        return matches[0];
+    }
+    return null;
+};
 
 /**
  * Get the url to the paper's abstract / display page.
@@ -51,7 +111,7 @@ const isSourceURL = async (url, noStored) =>
  * @param {object} paper the paper whose abstract url we're looking for
  * @returns {string} the url to the paper's abstract
  */
-const paperToAbs = (paper) => {
+export const paperToAbs = (paper) => {
     let journal, type, doi;
     const pdf = paper.pdfLink;
     let pii;
@@ -218,7 +278,7 @@ const paperToAbs = (paper) => {
  * @param {object} paper the paper whose pdf url we're looking for
  * @returns {string} the url to the paper's pdf
  */
-const paperToPDF = (paper) => {
+export const paperToPDF = (paper) => {
     let pdf = paper.pdfLink;
     switch (paper.source) {
         case "arxiv":
@@ -339,119 +399,7 @@ const paperToPDF = (paper) => {
     return pdf.replace("http://", "https://");
 };
 
-/**
- * Given a single paper or an url, find a matching file in the users'
- * downloads/PaperMemoryStore/ folder.
- * If a url is provided, it is first checked whether it is a known paper.
- * If not, the promise will resolve to null.
- * If it is, the promise will resolve to the file object as per the chrome.downloads.search API.
- * @param {object || string} paperOrUrl The paper to match to local files
- * @returns {Promise} Resolves a file object if exactly one is found, null otherwise
- */
-const findLocalFile = async (paperOrUrl) => {
-    if (typeof paperOrUrl === "string") {
-        // paperOrUrl is an url: find its paper (if any)
-        let id;
-        try {
-            id = await parseIdFromUrl(paperOrUrl);
-        } catch (error) {
-            // no paper found
-            return new Promise((resolve) => resolve(null));
-        }
-        if (global.state.papers.hasOwnProperty(id)) {
-            paper = global.state.papers[id];
-        } else {
-            // The id found does not exist (parseIdFromUrl bug?)
-            return new Promise((resolve) => resolve(null));
-        }
-    } else {
-        // the paper is an actual paper object not a url
-        paper = paperOrUrl;
-    }
-    // Return a Promise searching PaperMemoryStore/.*
-    const storedFiles = await getStoredFiles();
-    const matches = await matchPapersToFiles({ [paper.id]: paper }, storedFiles);
-    const localFile = Object.values(matches);
-    // resolve to a file object if exactly one is found otherwise to null
-    return localFile.length === 1 ? localFile[0] : null;
-};
-
-/**
- * For each file in the files array, check if there exists a paper such that:
- *
- * 1. the file's finalUrl matches a paper's id as per parseIdFromUrl(candidate.finalUrl)
- * 2. if not, if there exists any paper such that the file's filename contains the paper's title
- *
- * [Note: title matching is done by first lowercasing then removing all non-alphanumeric characters]
- *
- * @param {object} papers An object mapping ids to papers, just like global.state.papers
- * @param {array} files An array of file objects as per the chrome.downloads.search API
- * @returns {object} An object mapping ids to files
- */
-const matchPapersToFiles = async (papers, files) => {
-    // pre-compute paper's simplified titles
-    const titles = Object.fromEntries(
-        Object.values(papers).map((paper) => [paper.id, miniHash(paper.title)])
-    );
-    // filter non-existing file handles
-    files = files.filter(
-        (f) =>
-            f.exists &&
-            f.state === "complete" &&
-            !f.filename.toLowerCase().includes("readme.txt")
-    );
-    // pre-compute file's simplified titles
-    const fileTitles = Object.fromEntries(
-        files.map((f) => [f.id, miniHash(f.filename)])
-    );
-
-    // matching object to return
-    let matches = {};
-
-    for (const candidate of files) {
-        let id;
-
-        try {
-            // find the file's id from its finalUrl
-            id = await parseIdFromUrl(candidate.finalUrl);
-            // if an id is found and it is in the papers requested for matching
-            if (id && papers.hasOwnProperty(id)) matches[id] = candidate;
-        } catch (error) {
-            id = null;
-        }
-        if (!id) {
-            // no id was found, try to match titles.
-            // This is expensive so it should be rare.
-            const candidateFileTitle = fileTitles[candidate.id];
-            const match = Object.entries(titles).find(([id, title]) =>
-                candidateFileTitle.includes(title)
-            );
-            if (match) {
-                matches[match[0]] = candidate;
-            }
-        }
-    }
-    return matches;
-};
-
-const matchAllFilesToPapers = () => {
-    return new Promise((resolve, reject) => {
-        chrome.downloads.search(
-            {
-                filenameRegex: "PaperMemoryStore/.*",
-            },
-            async (files) => {
-                const matches = await matchPapersToFiles(
-                    cleanPapers(global.state.papers),
-                    files
-                );
-                resolve(matches);
-            }
-        );
-    });
-};
-
-const mergePapers = (options = { newPaper: {}, oldPaper: {} }) => {
+export const mergePapers = (options = { newPaper: {}, oldPaper: {} }) => {
     const { oldPaper, newPaper, ...extra } = options;
     let mergedPaper = { ...oldPaper };
 
@@ -507,7 +455,7 @@ const mergePapers = (options = { newPaper: {}, oldPaper: {} }) => {
     return mergedPaper;
 };
 
-const updatePaperVisits = (paper) => {
+export const updatePaperVisits = (paper) => {
     paper.count += 1;
     paper.lastOpenDate = new Date().toJSON();
     log("Updating paper to:", paper);
@@ -522,7 +470,7 @@ const updatePaperVisits = (paper) => {
  * @param {object} checks The user's preferences
  * @returns
  */
-const addOrUpdatePaper = async ({
+export const addOrUpdatePaper = async ({
     url,
     is,
     prefs,
@@ -539,18 +487,17 @@ const addOrUpdatePaper = async ({
     consoleHeader(`PaperMemory Parsing ${String.fromCodePoint("0x1F4DD")}`);
 
     // Extract id from url
-    global.state.papers = (await getStorage("papers")) ?? {};
+    state.papers = (await getStorage("papers")) ?? {};
     const id = await parseIdFromUrl(url, tab);
-    const paperExists = global.state.papers.hasOwnProperty(id);
-    prefs && prefs.checkFeedback && feedback({ loading: true });
+    const paperExists = state.papers.hasOwnProperty(id);
+    prefs &&
+        prefs.checkFeedback &&
+        typeof feedback !== "undefined" &&
+        feedback({ loading: true });
 
-    if (
-        id &&
-        paperExists &&
-        global.state.papers[id].author.toLowerCase() !== "anonymous"
-    ) {
+    if (id && paperExists && state.papers[id].author.toLowerCase() !== "anonymous") {
         // Update paper if it exists
-        paper = updatePaperVisits(global.state.papers[id]);
+        paper = updatePaperVisits(state.papers[id]);
         isNew = false;
     } else {
         // Or create a new one if it does not
@@ -558,11 +505,11 @@ const addOrUpdatePaper = async ({
         if (!newPaper) {
             return;
         }
-        global.state.titleHashToIds = makeTitleHashToIdList(global.state.papers);
-        const existingId = findFuzzyPaperMatch(global.state.titleHashToIds, newPaper);
+        state.titleHashToIds = makeTitleHashToIdList(state.papers);
+        const existingId = findFuzzyPaperMatch(state.titleHashToIds, newPaper);
         if (existingId && store) {
             // Update paper as already it exists
-            let existingPaper = global.state.papers[existingId];
+            let existingPaper = state.papers[existingId];
             log("New paper", newPaper, "already exists as", existingPaper);
             addPaperToTitleHashToId(newPaper);
 
@@ -586,7 +533,7 @@ const addOrUpdatePaper = async ({
             } else if (newPaper.venue) {
                 updateDuplicatedUrls(paperToAbs(existingPaper), newPaper.id);
                 updateDuplicatedUrls(paperToPDF(existingPaper), newPaper.id);
-                await deletePaperInStorage(existingPaper.id, global.state.papers);
+                await deletePaperInStorage(existingPaper.id, state.papers);
                 existingPaper = mergePapers({
                     newPaper: newPaper,
                     oldPaper: existingPaper,
@@ -654,13 +601,13 @@ const addOrUpdatePaper = async ({
         }
     }
 
-    global.state.papers = (await getStorage("papers")) ?? {};
+    state.papers = (await getStorage("papers")) ?? {};
 
     // minimize risk of concurrent writes to the same paper
-    if (isNew && global.state.papers.hasOwnProperty(paper.id)) {
+    if (isNew && state.papers.hasOwnProperty(paper.id)) {
         warn("Paper has been created by another page: merging papers.");
         paper = mergePapers({
-            newPaper: global.state.papers[paper.id],
+            newPaper: state.papers[paper.id],
             oldPaper: paper,
             incrementCount: true,
         });
@@ -671,9 +618,9 @@ const addOrUpdatePaper = async ({
     //   * paper storage from Abstract URLs
     //   * automatic parsing altogether
     // but we still want to display paper metadata on arxiv.org
-    if (store && !global.state.deleted[paper.id]) global.state.papers[paper.id] = paper;
+    if (store && !state.deleted[paper.id]) state.papers[paper.id] = paper;
 
-    chrome.storage.local.set({ papers: global.state.papers }, async () => {
+    chrome.storage.local.set({ papers: state.papers }, async () => {
         // tell the content script the paper has been parsed/updated
         contentScriptCallbacks["update"](paper);
         pushToRemote();
@@ -702,11 +649,16 @@ const addOrUpdatePaper = async ({
                 prefs &&
                     prefs.checkFeedback &&
                     store &&
+                    typeof feedback !== "undefined" &&
                     feedback({ text: notifText, paper });
             } else {
                 // existing paper but new code repo
                 notifText = "Found a code repository on PapersWithCode!";
-                prefs && prefs.checkFeedback && store && feedback({ text: notifText });
+                prefs &&
+                    prefs.checkFeedback &&
+                    store &&
+                    typeof feedback !== "undefined" &&
+                    feedback({ text: notifText });
             }
         } else {
             store && logOk("Updated '" + paper.title + "' in your Memory");
@@ -731,27 +683,26 @@ const addOrUpdatePaper = async ({
                 }
             }
 
-            global.state.papers = (await getStorage("papers")) ?? {};
+            state.papers = (await getStorage("papers")) ?? {};
 
             // minimize risk of concurrent writes to the same paper
             if (
                 isNew &&
-                global.state.papers.hasOwnProperty(paper.id) &&
-                global.state.papers[paper.id].count > 1
+                state.papers.hasOwnProperty(paper.id) &&
+                state.papers[paper.id].count > 1
             ) {
                 warn("Paper has been created by another page: merging papers.");
                 paper = mergePapers({
-                    newPaper: global.state.papers[paper.id],
+                    newPaper: state.papers[paper.id],
                     oldPaper: paper,
                     incrementCount: false,
                 });
             }
 
             // record updated paper if store is true
-            if (store && !global.state.deleted[paper.id])
-                global.state.papers[paper.id] = paper;
+            if (store && !state.deleted[paper.id]) state.papers[paper.id] = paper;
             await new Promise((resolve) =>
-                chrome.storage.local.set({ papers: global.state.papers }, resolve)
+                chrome.storage.local.set({ papers: state.papers }, resolve)
             );
         }
         // tell the content script the pre-print matching procedure has finished
@@ -766,270 +717,12 @@ const addOrUpdatePaper = async ({
 };
 
 /**
- * Find the first paper from a source whose #id matches a certain string.
- * Return its #id.
- * @param {Array<object>} papers List of papers to check
- * @param {String} source the source to filter for
- * @param {String} match the id's uniquely identifiable string to match
- * @returns {String} paper?.id
+ * Make a markdown link to the paper's abstract or pdf.
+ * @param {object} paper The paper to make a link for
+ * @param {object} prefs The user's preferences to determine whether to link to the pdf or the abstract
+ * @returns {string} The markdown link
  */
-const findPaperForProperty = (papers, source, match, prop = "id") =>
-    papers.find((p) => p.source === source && p[prop].includes(match))?.id;
-
-/**
- * Parses a paper's id from a url.
- * Throws error if the url is not a paper source as defined per isPaper(url).
- *
- * @param {string} url The url to use in order to find a matching paper
- * @returns {string} The id of the paper found.
- */
-const parseIdFromUrl = async (url, tab = null) => {
-    if (tab) {
-        return urlToWebsiteId(url);
-    }
-    let idForUrl;
-
-    const hashedUrl = miniHash(url);
-    const hashedId = global.state.urlHashToId[hashedUrl];
-    if (hashedId) {
-        return hashedId;
-    }
-
-    const is = await isPaper(url, true);
-    const papers = Object.values(cleanPapers(global.state.papers));
-
-    if (is.arxiv) {
-        let arxivId = arxivIdFromURL(url);
-        idForUrl = `Arxiv-${arxivId}`;
-
-        const existingIds = Object.values(global.state.titleHashToIds).find((ids) =>
-            ids.includes(idForUrl)
-        );
-        if (existingIds) {
-            idForUrl = existingIds.find((id) => !id.startsWith("Arxiv-")) ?? idForUrl;
-        }
-    } else if (is.neurips) {
-        const year = url.split("/paper/")[1].split("/")[0];
-        const hash = url.split("/").last().split("-")[0].slice(0, 8);
-        idForUrl = `NeurIPS-${year}_${hash}`;
-    } else if (is.cvf) {
-        idForUrl = parseCVFUrl(url).id;
-    } else if (is.openreview) {
-        const OR_id = url.match(/id=\w+/)[0].replace("id=", "");
-        idForUrl = findPaperForProperty(papers, "openreview", OR_id);
-    } else if (is.biorxiv) {
-        url = cleanBiorxivURL(url);
-        let id = url.split("/").last();
-        if (id.match(/v\d+$/)) {
-            id = id.split("v")[0];
-        }
-        idForUrl = `Biorxiv-${id}`;
-
-        const existingIds = Object.values(global.state.titleHashToIds).find((ids) =>
-            ids.includes(idForUrl)
-        );
-        if (existingIds) {
-            idForUrl = existingIds.find((id) => !id.startsWith("Biorxiv-")) ?? idForUrl;
-        }
-    } else if (is.pmlr) {
-        const key = url.split("/").last().split(".")[0];
-        const year = "20" + key.match(/\d+/)[0];
-        idForUrl = `PMLR-${year}-${key}`;
-    } else if (is.acl) {
-        url = url.replace(".pdf", "");
-        if (url.endsWith("/")) {
-            url = url.slice(0, -1);
-        }
-        const key = url.split("/").last();
-        idForUrl = findPaperForProperty(papers, "acl", key);
-    } else if (is.pnas) {
-        url = url.replace(".full.pdf", "");
-        const pid = url.endsWith("/")
-            ? url.split("/").slice(-2)[0]
-            : url.split("/").slice(-1)[0];
-
-        idForUrl = findPaperForProperty(papers, "pnas", pid);
-    } else if (is.nature) {
-        url = url.replace(".pdf", "").split("#")[0];
-        const hash = url.split("/").last();
-        idForUrl = findPaperForProperty(papers, "nature", hash);
-    } else if (is.acs) {
-        url = noParamUrl(url)
-            .replace("pubs.acs.org/doi/pdf/", "/doi/")
-            .replace("pubs.acs.org/doi/abs/", "/doi/");
-        const doi = miniHash(url.split("/doi/")[1]);
-        idForUrl = `ACS_${doi}`;
-    } else if (is.iop) {
-        url = noParamUrl(url).replace(/\/pdf$/, "");
-        const doi = miniHash(url.split("/article/")[1].split("/meta")[0]);
-        idForUrl = `IOPscience_${doi}`;
-    } else if (is.jmlr) {
-        if (url.endsWith(".pdf")) {
-            url = url.split("/").slice(0, -1).join("/");
-        }
-        url = url.replace(".html", "");
-        const jid = url.split("/").last();
-        const year = `20${jid.match(/\d+/)[0]}`;
-        idForUrl = `JMLR-${year}_${jid}`;
-    } else if (is.pmc) {
-        const pmcid = url.match(/PMC\d+/g)[0].replace("PMC", "");
-        idForUrl = findPaperForProperty(papers, "pmc", pmcid);
-    } else if (is.ijcai) {
-        const procId = url.endsWith(".pdf")
-            ? url
-                  .replace(".pdf", "")
-                  .split("/")
-                  .last()
-                  .match(/[1-9]\d*/)
-            : url.split("/").last();
-        const year = url.match(/proceedings\/\d+/gi)[0].split("/")[1];
-        idForUrl = `IJCAI-${year}_${procId}`;
-    } else if (is.acm) {
-        const doi = url.replace(/\/doi\/?(pdf|abs|full)?\//, "/doi/").split("/doi/")[1];
-        idForUrl = findPaperForProperty(papers, "acm", miniHash(doi));
-    } else if (is.ieee) {
-        const articleId = url.includes("ieee.org/document/")
-            ? url.split("ieee.org/document/")[1].match(/\d+/)[0]
-            : url.includes("ieee.org/abstract/document/")
-            ? url.split("ieee.org/abstract/document/")[1].match(/\d+/)[0]
-            : url.split("arnumber=")[1].match(/\d+/)[0];
-        idForUrl = findPaperForProperty(papers, "ieee", articleId);
-    } else if (is.springer) {
-        const types = global.sourceExtras.springer.types;
-        let type = types.filter((c) => url.includes(`/${c}/`))[0];
-        if (!type) {
-            if (!url.includes("/content/pdf/")) {
-                throw new Error(`Could not find Springer type for ${url}`);
-            }
-            type = "content/pdf";
-        }
-        let doi = noParamUrl(url).split(`/${type}/`)[1].replace(".pdf", "");
-        idForUrl = findPaperForProperty(papers, "springer", miniHash(doi));
-    } else if (is.aps) {
-        const [journal, type] = parseUrl(url.split("#")[0])
-            .pathname.split("/")
-            .slice(1, 3);
-        const doi = url.split(`/${journal}/${type}/`).last();
-        idForUrl = findPaperForProperty(papers, "aps", miniHash(doi));
-    } else if (is.wiley) {
-        const doi = url.split("?")[0].split("#")[0].split("/").slice(-2).join("/");
-        idForUrl = findPaperForProperty(papers, "wiley", miniHash(doi));
-    } else if (is.sciencedirect) {
-        const pii = url.split("/pii/")[1].split("/")[0].split("#")[0].split("?")[0];
-        idForUrl = findPaperForProperty(papers, "sciencedirect", miniHash(pii));
-    } else if (is.science) {
-        doi = noParamUrl(url).split("/doi/")[1];
-        if (!doi.startsWith("10.")) {
-            doi = doi.split("/").slice(1).join("/");
-        }
-        idForUrl = findPaperForProperty(papers, "science", miniHash(doi));
-    } else if (is.frontiers) {
-        doi = noParamUrl(url).split("/articles/")[1].split("/").slice(0, -1).join("/");
-        idForUrl = findPaperForProperty(papers, "frontiers", miniHash(doi));
-    } else if (is.ihep) {
-        if (url.includes("/literature/")) {
-            const num = noParamUrl(url).match(/\/literature\/(\d+)/)[1];
-            idForUrl = findPaperForProperty(papers, "ihep", num);
-        } else {
-            const hash = noParamUrl(url).split("/files/")[1].split("/")[0];
-            idForUrl = findPaperForProperty(papers, "ihep", hash, "pdfLink");
-        }
-    } else if (is.plos) {
-        const doi = url.split("?id=").last().split("&")[0];
-        idForUrl = findPaperForProperty(papers, "plos", miniHash(doi));
-    } else if (is.rsc) {
-        const rscId = noParamUrl(url).replace("/unauth", "").split("/").last();
-        idForUrl = findPaperForProperty(papers, "rsc", miniHash(rscId));
-    } else if (is.mdpi) {
-        const mdpiId = noParamUrl(
-            url
-                .split("mdpi.com/")[1]
-                .split("/pdf")[0]
-                .split("/reprints")[0]
-                .split("/notes")[0]
-        );
-        idForUrl = findPaperForProperty(papers, "mdpi", miniHash(mdpiId));
-    } else if (is.oup) {
-        url = noParamUrl(url).split("https://academic.oup.com/").last();
-        if (isPdfUrl(url)) {
-            url = url.split("/").slice(0, -1).join("/");
-        }
-        const num = url.split("/").slice(2).join("");
-        idForUrl = findPaperForProperty(papers, "oup", miniHash(num));
-    } else if (is.hal) {
-        url = noParamUrl(url).replace(
-            /(hal\.science\/\w+-\d+)(v\d+)?((\/document|\/file\/.+\.pdf))?/,
-            "$1"
-        );
-        const halId = url.split("/").last();
-        idForUrl = findPaperForProperty(papers, "hal", miniHash(halId));
-    } else if (is.chemrxiv) {
-        chemRxivId = isPdfUrl(url)
-            ? (chemRxivId = url.split("/item/")[1].split("/")[0])
-            : (chemRxivId = noParamUrl(url).split("/").last());
-        idForUrl = findPaperForProperty(papers, "chemrxiv", miniHash(chemRxivId));
-    } else if (is.cell) {
-        ({ url } = await findCellPii(url));
-        idForUrl = findPaperForProperty(
-            papers,
-            "cell",
-            miniHash(url.split("cell.com/")[1])
-        );
-    } else if (is.aip) {
-        const { aipId, doi } = parseAIPIdOrDOI(url);
-        idForUrl = doi
-            ? findPaperForProperty(papers, "aip", doi, "doi")
-            : findPaperForProperty(papers, "aip", miniHash(aipId));
-    } else if (is.localFile) {
-        idForUrl = is.localFile;
-    } else if (is.parsedWebsite) {
-        idForUrl = is.parsedWebsite.id;
-    } else {
-        throw new Error(
-            "`parseIdFromUrl` failed, unknown paper url. Is: " + JSON.stringify(is)
-        );
-    }
-
-    return idForUrl;
-};
-
-/**
- * A function to detect whether the current local file is known in the
- * user's memory by ensuring there exists a paper whose title is in the filename.
- * The loose comparison is made against lowercase and letter-only strings.
- *
- * @param {string} url The current url (potentially: local file)
- * @returns {string || boolean} false if no paper is found, the paper's id if found
- */
-const isKnownLocalFile = (url) => {
-    if (!url.startsWith("file://")) return false;
-    if (!url.endsWith(".pdf")) return false;
-
-    const filePath = decodeURIComponent(url).replace("file://", "");
-    const storedPaths = Object.entries(global.state.files).filter(
-        ([id, file]) => file.filename === filePath
-    );
-
-    if (storedPaths.length > 0) {
-        console.log("Found stored");
-        return storedPaths[0][0];
-    }
-
-    const filename = decodeURIComponent(url.split("/").last())
-        .toLowerCase()
-        .replace(/\W/g, "");
-    const titles = Object.values(cleanPapers(global.state.papers))
-        .map((p) => {
-            return { title: miniHash(p.title), id: p.id };
-        })
-        .filter((t) => filename.includes(t.title));
-
-    if (titles.length === 0) return false;
-
-    return titles[0].id;
-};
-
-const makeMdLink = (paper, prefs = {}) => {
+export const makeMdLink = (paper, prefs = {}) => {
     const link = prefs.checkPreferPdf ? paperToPDF(paper) : paperToAbs(paper);
     let yearAndVenue = "";
     if (prefs.checkMdYearVenue) {
@@ -1053,25 +746,17 @@ const makeMdLink = (paper, prefs = {}) => {
     return md;
 };
 
-// ----------------------------------------------------
-// -----  TESTS: modules for node.js environment  -----
-// ----------------------------------------------------
-if (typeof module !== "undefined" && module.exports != null) {
-    var dummyModule = module;
-    dummyModule.exports = {
-        isPaper,
-        isSourceURL,
-        paperToAbs,
-        paperToPDF,
-        findLocalFile,
-        matchPapersToFiles,
-        matchAllFilesToPapers,
-        mergePapers,
-        updatePaperVisits,
-        addOrUpdatePaper,
-        findPaperForProperty,
-        parseIdFromUrl,
-        isKnownLocalFile,
-        makeMdLink,
-    };
-}
+/**
+ * Add a paper to the title hash to id list.
+ * @param {object} paper The paper to add
+ */
+export const addPaperToTitleHashToId = (paper) => {
+    const id = paper.id;
+    const hashedTitle = miniHash(paper.title);
+    if (!state.titleHashToIds.hasOwnProperty(hashedTitle)) {
+        state.titleHashToIds[hashedTitle] = [];
+    }
+    if (!state.titleHashToIds[hashedTitle].includes(id)) {
+        state.titleHashToIds[hashedTitle].push(id);
+    }
+};
