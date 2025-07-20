@@ -1,12 +1,16 @@
-const {
+import {
     makeBrowser,
     fullMemoryURL,
     extensionPopupURL,
     getMemoryPapers,
     getPaperMemoryState,
-} = require("./browser");
-const { expect } = require("expect");
-const { readJSON, sleep, asyncMap } = require("./utilsForTests");
+} from "./browser.js";
+import { expect } from "expect";
+import { readJSON, sleep, asyncMap } from "./utilsForTests.js";
+import { loadPaperMemoryUtils } from "./utilsForTests.js";
+
+// make all functions in utils.min.js available in the `global` scope
+loadPaperMemoryUtils();
 
 const pat = process.env.github_pat ?? process.env.pm_ghp;
 const keepOpen = !!(process.env.keepOpen ?? false);

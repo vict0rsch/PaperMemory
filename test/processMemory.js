@@ -1,8 +1,8 @@
-exports.allIds = (memory) => {
+export const allIds = (memory) => {
     return Object.keys(memory);
 };
 
-exports.allAttributes = (memory, key, asObj = false) => {
+export const allAttributes = (memory, key, asObj = false) => {
     if (!asObj) {
         return Object.values(memory).map((item) => item[key]);
     }

@@ -1,7 +1,7 @@
-const Heap = require("heap");
-const puppeteer = require("puppeteer");
-const fs = require("fs");
-const glob = require("glob");
+import Heap from "heap";
+import puppeteer from "puppeteer";
+import fs from "fs";
+import { glob } from "glob";
 
 const waitForLoad = (page) =>
     new Promise((resolve) => {

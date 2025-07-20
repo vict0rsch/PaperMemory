@@ -4,18 +4,20 @@
 // -----  Imports  -----
 // ---------------------
 
-const { expect } = require("expect");
-const fs = require("fs");
-const {
+import { expect } from "expect";
+import fs from "fs";
+import {
     makeBrowser,
     getMemoryPapers,
     extensionPopupURL,
     visitPaperPage,
-} = require("./browser");
+} from "./browser.js";
 
-const { readURLs, root, loadConfig } = require("./utilsForTests");
+import { readURLs, root, loadConfig, loadPaperMemoryUtils } from "./utilsForTests.js";
+import { allAttributes } from "./processMemory.js";
 
-const { allAttributes } = require("./processMemory");
+// make all functions in utils.min.js available in the `global` scope
+loadPaperMemoryUtils();
 
 // -------------------------------------------------------
 // -----  Global constants to parametrize the tests  -----

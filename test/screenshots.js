@@ -1,4 +1,4 @@
-const { makeBrowser, extensionPopupURL } = require("./browser");
+import { makeBrowser, extensionPopupURL } from "./browser.js";
 
 const nowStr = () => {
     d = new Date().toJSON();

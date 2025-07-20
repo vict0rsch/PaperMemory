@@ -1,17 +1,17 @@
-const glob = require("glob");
-const fs = require("fs");
-const ora = require("ora");
-const YAML = require("yaml");
+import { glob } from "glob";
+import fs from "fs";
+import ora from "ora";
+import YAML from "yaml";
 
 /**
  * Get the root directory of the project.
  */
-exports.root = fs.existsSync("./manifest.json") ? "." : "..";
+export const root = fs.existsSync("./manifest.json") ? "." : "..";
 
 /**
  * Sleep for a given duration, and display a spinner.
  */
-exports.sleep = async (duration, textToDisplay) => {
+export const sleep = async (duration, textToDisplay) => {
     const text = textToDisplay
         ? `${textToDisplay} (${duration / 1e3}s)`
         : `Waiting for ${duration / 1e3}s`;
@@ -23,12 +23,12 @@ exports.sleep = async (duration, textToDisplay) => {
 /**
  * Load all utils files into the global scope.
  */
-exports.loadPaperMemoryUtils = () => {
+export const loadPaperMemoryUtils = () => {
     const utilsFiles = glob
-        .sync(`${this.root}/src/shared/js/utils/*.js`)
+        .sync(`${root}/src/shared/js/utils/*.js`)
         .filter((file) => !file.endsWith("gist.js") && !file.endsWith("sync.js"))
-        .map((file) => `../${file.replace(".js", "")}`);
-    const utilsModules = utilsFiles.map((file) => require(file));
+        .map((file) => `../${file}`);
+    const utilsModules = utilsFiles.map((file) => import(file));
 
     for (const module of utilsModules) {
         for (const [name, func] of Object.entries(module)) {
@@ -41,34 +41,34 @@ exports.loadPaperMemoryUtils = () => {
  * Generate an array of integers from 0 to n-1.
  * @param {number} n
  */
-exports.range = (n) => [...Array(n).keys()];
+export const range = (n) => [...Array(n).keys()];
 
 /**
  * Read a JSON file.
  */
-exports.readJSON = (fname) => JSON.parse(fs.readFileSync(fname));
+export const readJSON = (fname) => JSON.parse(fs.readFileSync(fname));
 
 /**
  * Run a function on each element of an array, and return the results.
  */
-exports.asyncMap = (arr, func) => Promise.all(arr.map(func));
+export const asyncMap = (arr, func) => Promise.all(arr.map(func));
 
 /**
  * Read the urls data file.
  */
-exports.readURLs = () => this.readJSON(`${this.root}/test/data/urls.json`);
+export const readURLs = () => readJSON(`${root}/test/data/urls.json`);
 
 /**
  * Read the duplicates data file.
  */
-exports.readDuplicates = () => this.readJSON(`${this.root}/test/data/duplicates.json`);
+export const readDuplicates = () => readJSON(`${root}/test/data/duplicates.json`);
 
 /**
  * Load the test config file, and override any values with environment variables.
  */
-exports.loadConfig = () => {
+export const loadConfig = () => {
     const conf = {};
-    const file = fs.readFileSync(`${this.root}/test/testConfig.yaml`, "utf8");
+    const file = fs.readFileSync(`${root}/test/testConfig.yaml`, "utf8");
     const defaults = YAML.parse(file); // dict of {key: {type: str, defaultValue: any}}
     for (const [key, { type, defaultValue }] of Object.entries(defaults)) {
         conf[key] = process.env[key] || defaultValue;
