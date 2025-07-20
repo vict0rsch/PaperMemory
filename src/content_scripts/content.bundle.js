@@ -89,22 +89,6 @@
         copyHypeLink: "Copy url as hyperlink",
     };
 
-    // Backward compatibility - attach to global window object (only in DOM context)
-    if (typeof window !== "undefined") {
-        window.state = state;
-        window.descendingSortKeys = descendingSortKeys;
-        window.svgActionsHoverTitles = svgActionsHoverTitles;
-    }
-
-    // Node.js module compatibility for testing
-    if (typeof module !== "undefined" && module.exports != null) {
-        module.exports = {
-            state,
-            descendingSortKeys,
-            svgActionsHoverTitles,
-        };
-    }
-
     /**
      * Shared configuration for the Tags' select2 inputs
      */
@@ -10338,4 +10322,4 @@ ${note}</textarea
     window.feedback = feedback$1;
 
 })();
-//# sourceMappingURL=content-bundle.js.map
+//# sourceMappingURL=content.bundle.js.map

@@ -34,7 +34,7 @@ export default [
     {
         input: "src/popup/js/popup.js",
         output: {
-            file: "src/popup/min/popup-bundle.js",
+            file: "src/popup/min/popup.bundle.js",
             format: "iife",
             name: "PaperMemoryPopup",
             sourcemap: !isProduction,
@@ -45,7 +45,7 @@ export default [
     {
         input: "src/content_scripts/content_script.js",
         output: {
-            file: "src/content_scripts/content-bundle.js",
+            file: "src/content_scripts/content.bundle.js",
             format: "iife",
             name: "PaperMemoryContent",
             sourcemap: !isProduction,
@@ -56,7 +56,7 @@ export default [
     {
         input: "src/options/options.js",
         output: {
-            file: "src/options/options-bundle.js",
+            file: "src/options/options.bundle.js",
             format: "iife",
             name: "PaperMemoryOptions",
             sourcemap: !isProduction,
@@ -67,7 +67,7 @@ export default [
     {
         input: "src/background/background.js",
         output: {
-            file: "src/background/background-bundle.js",
+            file: "src/background/background.bundle.js",
             format: "iife",
             name: "PaperMemoryBackground",
             sourcemap: !isProduction,
@@ -78,7 +78,7 @@ export default [
     {
         input: "src/bibMatcher/bibMatcher.js",
         output: {
-            file: "src/bibMatcher/bibMatcher-bundle.js",
+            file: "src/bibMatcher/bibMatcher.bundle.js",
             format: "iife",
             name: "PaperMemoryBibMatcher",
             sourcemap: !isProduction,
@@ -89,7 +89,7 @@ export default [
     {
         input: "src/fullMemory/fullMemory.js",
         output: {
-            file: "src/fullMemory/fullMemory-bundle.js",
+            file: "src/fullMemory/fullMemory.bundle.js",
             format: "iife",
             name: "PaperMemoryFullMemory",
             sourcemap: !isProduction,

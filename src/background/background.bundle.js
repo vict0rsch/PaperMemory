@@ -1,541 +1,6 @@
 (function () {
     'use strict';
 
-    /**
-     * Prototypes
-     */
-
-    Object.defineProperty(Array.prototype, "last", {
-        value: function (i = 0) {
-            return this.reverse()[i];
-        },
-    });
-
-    Object.defineProperty(String.prototype, "capitalize", {
-        value: function (all = false) {
-            if (all)
-                return this.split(" ")
-                    .map((s) => s.capitalize())
-                    .join(" ");
-            return this.charAt(0).toUpperCase() + this.slice(1).toLowerCase();
-        },
-    });
-
-    /**
-     * Global variable & constants are stored in this file to be used by
-     * other files such as functions.js, parsers.js, memory.js, popup.js
-     */
-
-    /**
-     * Set uninstall URL
-     */
-    if (typeof chrome !== "undefined" && chrome?.runtime?.setUninstallURL) {
-        chrome.runtime.setUninstallURL("https://forms.gle/1JSV8PcxQugRmsd46");
-    }
-
-    /**
-     * The popup's global state to store data across functions
-     */
-    const state = {
-        currentMemoryPagination: 0,
-        dataVersion: 0,
-        deleted: {}, // (id => bool)
-        files: {},
-        ignoreSources: {}, // (source => bool)
-        lastRefresh: new Date(),
-        memoryIsOpen: false,
-        memoryItemsPerPage: 10,
-        menuIsOpen: false,
-        modalIsOpen: false,
-        tooltipIsOpen: false,
-        papers: {}, // (id => object)
-        papersList: [], // [papers]
-        papersReady: false,
-        paperTags: new Set(), // (Set(string))
-        pdfTitleFn: null, // function(paper) => string
-        prefs: {}, // (prefsCheckKey => bool)
-        showFavorites: false,
-        sortedPapers: [], // [papers]
-        sortKey: "",
-        timerIdMap: new WeakMap(), // memory title tooltips
-        titleHashToIds: {}, // (miniHash(title) -> [ids])
-        titleFunction: null, // function(paper) => string
-        urlHashToId: {}, // (miniHash(url) => id)
-    };
-
-    state.titleFunction = (paper) => {
-        const title = paper.title.replaceAll("\n", "");
-        const id = paper.id;
-        let name = `${title} - ${id}`;
-        name = name.replaceAll(":", " ").replace(/\s\s+/g, " ");
-        return name;
-    };
-
-    const descendingSortKeys = [
-        "addDate",
-        "count",
-        "lastOpenDate",
-        "favoriteDate",
-        "year",
-    ];
-
-    const svgActionsHoverTitles = {
-        edit: "Edit paper details",
-        copyMd: "Copy Markdown-formatted link",
-        copyBibtext: "Copy Bibtex citation",
-        visits: "Number of times you have opened this paper",
-        openLocal: "Open downloaded pdf",
-        copyLink: "Copy paper url",
-        copyHypeLink: "Copy url as hyperlink",
-    };
-
-    // Backward compatibility - attach to global window object (only in DOM context)
-    if (typeof window !== "undefined") {
-        window.state = state;
-        window.descendingSortKeys = descendingSortKeys;
-        window.svgActionsHoverTitles = svgActionsHoverTitles;
-    }
-
-    // Node.js module compatibility for testing
-    if (typeof module !== "undefined" && module.exports != null) {
-        module.exports = {
-            state,
-            descendingSortKeys,
-            svgActionsHoverTitles,
-        };
-    }
-
-    /**
-     * Shared configuration for the Tags' select2 inputs
-     */
-    const select2Options = {
-        placeholder: "Tag paper",
-        maximumSelectionLength: 5,
-        allowClear: true,
-        tags: true,
-        tokenSeparators: [",", " "],
-    };
-
-    /**
-     * The array of keys in the menu, i.e. options the user can dis/enable in the menu
-     */
-    const prefsCheckNames = [
-        "checkBib",
-        "checkMd",
-        "checkDownload",
-        "checkPdfTitle",
-        "checkFeedback",
-        "checkDarkMode",
-        "checkDirectOpen",
-        "checkStore",
-        "checkScirate",
-        "checkAlphaxiv",
-        "checkAr5iv",
-        "checkHuggingface",
-        "checkOfficialRepos",
-        "checkPdfOnly",
-        "checkNoAuto",
-        "checkMdYearVenue",
-        "checkEnterLocalPdf",
-        "checkWebsiteParsing",
-    ];
-    /**
-     * Menu check names which should not default to true but to false
-     */
-    const prefsCheckDefaultFalse = [
-        "checkDarkMode",
-        "checkStore",
-        "checkScirate",
-        "checkAlphaxiv",
-        "checkAr5iv",
-        "checkHuggingface",
-        "checkOfficialRepos",
-        "checkPdfOnly",
-        "checkNoAuto",
-        "checkMdYearVenue",
-        "checkPreferPdf",
-    ];
-    /**
-     * All keys to retrieve from the menu, the checkboxes + the custom pdf function
-     */
-    const prefsStorageKeys = [...prefsCheckNames, "pdfTitleFn"];
-
-    /**
-     * Extra data per source
-     */
-    const sourceExtras = {
-        springer: {
-            types: ["chapter", "article", "book", "referenceworkentry"],
-        },
-    };
-
-    /**
-     * Sources which are preprints (important for de-duplication)
-     */
-    const preprintSources = ["arxiv", "biorxiv"];
-
-    /**
-     * Map of known data sources to the associated paper urls: pdf urls and web-pages urls.
-     * IMPORTANT: paper page before pdf (see background script)
-     * Notes:
-     *  ijcai -> papers < 2015 will not be parsed due to website changes
-     *           (open an issue if that's problematic)
-     */
-    const knownPaperPages = {
-        acl: {
-            patterns: ["aclanthology.org/"],
-            name: "ACL Anthology (Association for Computational Linguistics)",
-        },
-        acm: {
-            patterns: ["dl.acm.org/doi/"],
-            name: "ACM (Association for Computing Machinery)",
-        },
-        aps: {
-            patterns: [
-                (url) => Boolean(url.match(/journals\.aps\.org\/\w+\/(abstract|pdf)\//g)),
-            ],
-            name: "APS (American Physical Society)",
-        },
-        acs: {
-            patterns: ["pubs.acs.org/doi/"],
-            name: "ACS (American Chemical Society)",
-        },
-        arxiv: {
-            patterns: [
-                "arxiv.org/abs/",
-                "arxiv.org/pdf/",
-                "scirate.com/arxiv/",
-                "ar5iv.labs.arxiv.org/html/",
-                "alphaxiv.org/abs/",
-                "alphaxiv.org/pdf/",
-                (url) =>
-                    url.includes("huggingface.co/papers/") &&
-                    url.split("huggingface.co/papers/")[1].match(/\d+\.\d+/),
-            ],
-            name: "ArXiv",
-        },
-        biorxiv: {
-            patterns: ["biorxiv.org/content"],
-            name: "BioRxiv",
-        },
-        cell: {
-            patterns: [
-                (url) =>
-                    url.includes("cell.com/") &&
-                    url.split("cell.com/")[1].match(/\d{4}-\d{3}[0-9X]/),
-            ],
-            name: "Cell",
-        },
-        chemrxiv: {
-            patterns: [
-                "chemrxiv.org/engage/chemrxiv/article-details/",
-                (url) =>
-                    url.includes(
-                        "https://chemrxiv.org/engage/api-gateway/chemrxiv/assets"
-                    ) && url.endsWith(".pdf"),
-            ],
-            name: "ChemRxiv",
-        },
-        cvf: {
-            patterns: ["openaccess.thecvf.com/content"],
-            name: "CVF (Computer Vision Foundation)",
-        },
-        frontiers: {
-            patterns: ["frontiersin.org/articles"],
-            name: "Frontiers",
-        },
-        hal: {
-            patterns: [
-                (url) => /hal\.science\/\w+-\d+(v\d+)?(\/document)?$/gi.test(url),
-                (url) => /hal\.science\/\w+-\d+(v\d+)?\/file\/.+\.pdf$/gi.test(url),
-            ],
-            name: "HAL",
-        },
-        ihep: {
-            patterns: ["inspirehep.net/literature/", "inspirehep.net/files/"],
-            name: "IHEP (INSPIRE - High Energy Physics)",
-        },
-        ijcai: {
-            patterns: [(url) => /ijcai\.org\/proceedings\/\d{4}\/\d+/gi.test(url)],
-            name: "IJCAI (International Joint Conferences on Artificial Intelligence)",
-        },
-        ieee: {
-            patterns: [
-                "ieeexplore.ieee.org/document/",
-                "ieeexplore.ieee.org/abstract/document/",
-                "ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=",
-            ],
-            name: "IEEE (Institute of Electrical and Electronics Engineers)",
-        },
-        iop: {
-            patterns: ["iopscience.iop.org/article/"],
-            name: "IOP (Institute Of Physics)",
-        },
-        jmlr: {
-            patterns: [(url) => url.includes("jmlr.org/papers/v") && !url.endsWith("/")],
-            name: "JMLR (Journal of Machine Learning Research)",
-        },
-        mdpi: {
-            patterns: [(url) => /mdpi\.com\/\d+-.+/gi.test(url)],
-            name: "MDPI (Multidisciplinary Digital Publishing Institute)",
-        },
-        nature: {
-            patterns: ["nature.com/articles/"],
-            name: "Nature",
-        },
-        neurips: {
-            patterns: [
-                "neurips.cc/paper/",
-                "neurips.cc/paper_files/paper/",
-                "nips.cc/paper/",
-                "nips.cc/paper_files/paper/",
-            ],
-            name: "NeurIPS (Neural Information Processing Systems)",
-        },
-        openreview: {
-            patterns: [
-                "openreview.net/forum",
-                "openreview.net/pdf",
-                "openreview.net/attachment",
-            ],
-            name: "OpenReview",
-        },
-        oup: {
-            patterns: [
-                (url) =>
-                    (url
-                        .split("https://academic.oup.com/")[1]
-                        ?.split("/")[1]
-                        ?.indexOf("article") ?? -1) >= 0,
-            ],
-            name: "OUP (Oxford University Press)",
-        },
-        plos: {
-            patterns: [(url) => /journals\.plos\.org\/.+\/article.+id=/gi.test(url)],
-            name: "PLOS (Public Library of Science)",
-        },
-        pmc: {
-            patterns: ["ncbi.nlm.nih.gov/pmc/articles/PMC"],
-            name: "PMC (PubMed Central)",
-        },
-        pmlr: {
-            patterns: ["proceedings.mlr.press/"],
-            name: "PMLR (Proceedings of Machine Learning Research)",
-        },
-        pnas: {
-            patterns: ["pnas.org/content/", "pnas.org/doi/"],
-            name: "PNAS (Proceedings of the National Academy of Sciences)",
-        },
-        rsc: {
-            patterns: ["pubs.rsc.org/en/content/article"],
-            name: "RSC (Royal Society of Chemistry)",
-        },
-        science: {
-            patterns: [
-                (url) => Boolean(url.match(/science\.org\/doi\/?(abs|full|pdf|epdf)?\//g)),
-            ],
-            name: "Science",
-        },
-        sciencedirect: {
-            patterns: [
-                "sciencedirect.com/science/article/pii/",
-                "sciencedirect.com/science/article/abs/pii/",
-                "reader.elsevier.com/reader/sd/pii/",
-            ],
-            name: "ScienceDirect",
-        },
-        springer: {
-            patterns: [
-                ...sourceExtras.springer.types.map((type) => `link.springer.com/${type}/`),
-                "link.springer.com/content/pdf/",
-            ],
-            name: "Springer",
-        },
-        website: {
-            // special case, manual parsing of arbitrary websites
-            patterns: [],
-            name: "Manually parsed website",
-        },
-        wiley: {
-            patterns: [
-                (url) =>
-                    Boolean(
-                        url.match(
-                            /onlinelibrary\.wiley\.com\/doi\/(abs\/|full\/|pdf\/|epdf\/|10\.)/g
-                        )
-                    ),
-            ],
-            name: "Wiley",
-        },
-        aip: {
-            patterns: [
-                (url) =>
-                    url.match(
-                        /pubs.aip.org\/aip\/.+\/(article|article-abstract|article-split)\//g
-                    ) || url.match(/watermark.silverchair.com\/.+\.pdf/g),
-            ],
-            name: "AIP (American Institute of Physics)",
-        },
-    };
-
-    const overrideORConfs = {
-        "robot-learning": "CoRL",
-        ijcai: "IJCAI",
-    };
-    const overridePMLRConfs = {
-        "Conference on Learning Theory": "CoLT",
-        "International Conference on Machine Learning": "ICML",
-        "Conference on Uncertainty in Artificial Intelligence": "UAI",
-        "Conference on Robot Learning": "CoRL",
-        "International Conference on Artificial Intelligence and Statistics": "AISTATS",
-        "International Conference on Algorithmic Learning Theory": "ALT",
-    };
-
-    const consolHeaderStyle =
-        "@import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@300');font-family:'Fira Code' monospace;font-size:1rem;font-weight:300;display:inline-block;border:2px solid #A41716;border-radius: 4px;padding: 12px; margin: 12px;";
-
-    const storeReadme = `
-/!\\ Warning: This folder has been created automatically by your PaperMemory browser extension.\n
-/!\\ It has to stay in your downloads for PaperMemory to be able to access your papers.\n
-/!\\ To be able to open files from this folder instead of re-downloading them, PaperMemory will match their titles and downloaded urls.\n
-/!\\ If you change the default title function in the Advanced Options and do not include a paper's title in the file name, PaperMemory may not be able to open the file and will instead open the pdf url.\n
-/!\\ Unfortunately, PaperMemory cannot detect papers that have not been *downloaded there* so putting papers in this folder will not make them discoverable by the \`browser.downloads\` API PaperMemory uses.
-`;
-    /**
-     * English words to ignore when creating an arxiv paper's BibTex key.
-     */
-    const englishStopWords = new Set([
-        "i",
-        "me",
-        "my",
-        "myself",
-        "we",
-        "our",
-        "ours",
-        "ourselves",
-        "you",
-        "your",
-        "yours",
-        "yourself",
-        "yourselves",
-        "he",
-        "him",
-        "his",
-        "himself",
-        "she",
-        "her",
-        "hers",
-        "herself",
-        "it",
-        "its",
-        "itself",
-        "they",
-        "them",
-        "their",
-        "theirs",
-        "themselves",
-        "what",
-        "which",
-        "who",
-        "whom",
-        "this",
-        "that",
-        "these",
-        "those",
-        "am",
-        "is",
-        "are",
-        "was",
-        "were",
-        "be",
-        "been",
-        "being",
-        "have",
-        "has",
-        "had",
-        "having",
-        "do",
-        "does",
-        "did",
-        "doing",
-        "a",
-        "an",
-        "the",
-        "and",
-        "but",
-        "if",
-        "or",
-        "because",
-        "as",
-        "until",
-        "while",
-        "of",
-        "at",
-        "by",
-        "for",
-        "with",
-        "about",
-        "against",
-        "between",
-        "into",
-        "through",
-        "during",
-        "before",
-        "after",
-        "above",
-        "below",
-        "to",
-        "from",
-        "up",
-        "down",
-        "in",
-        "out",
-        "on",
-        "off",
-        "over",
-        "under",
-        "again",
-        "further",
-        "then",
-        "once",
-        "here",
-        "there",
-        "when",
-        "where",
-        "why",
-        "how",
-        "all",
-        "any",
-        "both",
-        "each",
-        "few",
-        "more",
-        "most",
-        "other",
-        "some",
-        "such",
-        "no",
-        "nor",
-        "not",
-        "only",
-        "own",
-        "same",
-        "so",
-        "than",
-        "too",
-        "very",
-        "s",
-        "t",
-        "can",
-        "will",
-        "just",
-        "don",
-        "should",
-        "now",
-    ]);
-
-    const journalAbbreviations = {};
-
     // use in the log() function util
     // 0 => no trace
     // 1 => trace errors
@@ -1786,6 +1251,572 @@
                   .replace(".pdf", "")
                   .split("v")[0]
                   .replace("/", "_");
+
+    const getBrowserName = async () => {
+        let browserName = navigator.appName;
+        const nAgt = navigator.userAgent;
+
+        // In Opera, the true version is after "OPR" or after "Version"
+        if ((nAgt.indexOf("OPR")) != -1) {
+            browserName = "Opera";
+        } else if ((navigator.brave && (await navigator.brave.isBrave())) || false) {
+            browserName = "Brave";
+        }
+        // In MS Edge, the true version is after "Edg" in userAgent
+        else if ((nAgt.indexOf("Edg")) != -1) {
+            browserName = "Microsoft Edge";
+        }
+        // In MSIE, the true version is after "MSIE" in userAgent
+        else if ((nAgt.indexOf("MSIE")) != -1) {
+            browserName = "Microsoft Internet Explorer";
+        }
+        // In Chrome, the true version is after "Chrome"
+        else if ((nAgt.indexOf("Chrome")) != -1) {
+            browserName = "Chrome";
+        }
+        // In Safari, the true version is after "Safari" or after "Version"
+        else if ((nAgt.indexOf("Safari")) != -1) {
+            browserName = "Safari";
+        }
+        // In Firefox, the true version is after "Firefox"
+        else if ((nAgt.indexOf("Firefox")) != -1) {
+            browserName = "Firefox";
+        }
+
+        return browserName;
+    };
+
+    const getRandomToken = () => {
+        // https://stackoverflow.com/questions/23822170/getting-unique-clientid-from-chrome-extension
+        // E.g. 8 * 32 = 256 bits token
+        var randomPool = new Uint8Array(32);
+        crypto.getRandomValues(randomPool);
+        var hex = "";
+        for (var i = 0; i < randomPool.length; ++i) {
+            hex += randomPool[i].toString(16);
+        }
+        // E.g. db18458e2782b2b77e36769c569e263a53885a9944dd0a861e5064eac16f1a
+        return hex;
+    };
+
+    /**
+     * Prototypes
+     */
+
+    Object.defineProperty(Array.prototype, "last", {
+        value: function (i = 0) {
+            return this.reverse()[i];
+        },
+    });
+
+    Object.defineProperty(String.prototype, "capitalize", {
+        value: function (all = false) {
+            if (all)
+                return this.split(" ")
+                    .map((s) => s.capitalize())
+                    .join(" ");
+            return this.charAt(0).toUpperCase() + this.slice(1).toLowerCase();
+        },
+    });
+
+    /**
+     * Global variable & constants are stored in this file to be used by
+     * other files such as functions.js, parsers.js, memory.js, popup.js
+     */
+
+    /**
+     * Set uninstall URL
+     */
+    if (typeof chrome !== "undefined" && chrome?.runtime?.setUninstallURL) {
+        chrome.runtime.setUninstallURL("https://forms.gle/1JSV8PcxQugRmsd46");
+    }
+
+    /**
+     * The popup's global state to store data across functions
+     */
+    const state = {
+        currentMemoryPagination: 0,
+        dataVersion: 0,
+        deleted: {}, // (id => bool)
+        files: {},
+        ignoreSources: {}, // (source => bool)
+        lastRefresh: new Date(),
+        memoryIsOpen: false,
+        memoryItemsPerPage: 10,
+        menuIsOpen: false,
+        modalIsOpen: false,
+        tooltipIsOpen: false,
+        papers: {}, // (id => object)
+        papersList: [], // [papers]
+        papersReady: false,
+        paperTags: new Set(), // (Set(string))
+        pdfTitleFn: null, // function(paper) => string
+        prefs: {}, // (prefsCheckKey => bool)
+        showFavorites: false,
+        sortedPapers: [], // [papers]
+        sortKey: "",
+        timerIdMap: new WeakMap(), // memory title tooltips
+        titleHashToIds: {}, // (miniHash(title) -> [ids])
+        titleFunction: null, // function(paper) => string
+        urlHashToId: {}, // (miniHash(url) => id)
+    };
+
+    state.titleFunction = (paper) => {
+        const title = paper.title.replaceAll("\n", "");
+        const id = paper.id;
+        let name = `${title} - ${id}`;
+        name = name.replaceAll(":", " ").replace(/\s\s+/g, " ");
+        return name;
+    };
+
+    const descendingSortKeys = [
+        "addDate",
+        "count",
+        "lastOpenDate",
+        "favoriteDate",
+        "year",
+    ];
+
+    const svgActionsHoverTitles = {
+        edit: "Edit paper details",
+        copyMd: "Copy Markdown-formatted link",
+        copyBibtext: "Copy Bibtex citation",
+        visits: "Number of times you have opened this paper",
+        openLocal: "Open downloaded pdf",
+        copyLink: "Copy paper url",
+        copyHypeLink: "Copy url as hyperlink",
+    };
+
+    /**
+     * Shared configuration for the Tags' select2 inputs
+     */
+    const select2Options = {
+        placeholder: "Tag paper",
+        maximumSelectionLength: 5,
+        allowClear: true,
+        tags: true,
+        tokenSeparators: [",", " "],
+    };
+
+    /**
+     * The array of keys in the menu, i.e. options the user can dis/enable in the menu
+     */
+    const prefsCheckNames = [
+        "checkBib",
+        "checkMd",
+        "checkDownload",
+        "checkPdfTitle",
+        "checkFeedback",
+        "checkDarkMode",
+        "checkDirectOpen",
+        "checkStore",
+        "checkScirate",
+        "checkAlphaxiv",
+        "checkAr5iv",
+        "checkHuggingface",
+        "checkOfficialRepos",
+        "checkPdfOnly",
+        "checkNoAuto",
+        "checkMdYearVenue",
+        "checkEnterLocalPdf",
+        "checkWebsiteParsing",
+    ];
+    /**
+     * Menu check names which should not default to true but to false
+     */
+    const prefsCheckDefaultFalse = [
+        "checkDarkMode",
+        "checkStore",
+        "checkScirate",
+        "checkAlphaxiv",
+        "checkAr5iv",
+        "checkHuggingface",
+        "checkOfficialRepos",
+        "checkPdfOnly",
+        "checkNoAuto",
+        "checkMdYearVenue",
+        "checkPreferPdf",
+    ];
+    /**
+     * All keys to retrieve from the menu, the checkboxes + the custom pdf function
+     */
+    const prefsStorageKeys = [...prefsCheckNames, "pdfTitleFn"];
+
+    /**
+     * Extra data per source
+     */
+    const sourceExtras = {
+        springer: {
+            types: ["chapter", "article", "book", "referenceworkentry"],
+        },
+    };
+
+    /**
+     * Sources which are preprints (important for de-duplication)
+     */
+    const preprintSources = ["arxiv", "biorxiv"];
+
+    /**
+     * Map of known data sources to the associated paper urls: pdf urls and web-pages urls.
+     * IMPORTANT: paper page before pdf (see background script)
+     * Notes:
+     *  ijcai -> papers < 2015 will not be parsed due to website changes
+     *           (open an issue if that's problematic)
+     */
+    const knownPaperPages = {
+        acl: {
+            patterns: ["aclanthology.org/"],
+            name: "ACL Anthology (Association for Computational Linguistics)",
+        },
+        acm: {
+            patterns: ["dl.acm.org/doi/"],
+            name: "ACM (Association for Computing Machinery)",
+        },
+        aps: {
+            patterns: [
+                (url) => Boolean(url.match(/journals\.aps\.org\/\w+\/(abstract|pdf)\//g)),
+            ],
+            name: "APS (American Physical Society)",
+        },
+        acs: {
+            patterns: ["pubs.acs.org/doi/"],
+            name: "ACS (American Chemical Society)",
+        },
+        arxiv: {
+            patterns: [
+                "arxiv.org/abs/",
+                "arxiv.org/pdf/",
+                "scirate.com/arxiv/",
+                "ar5iv.labs.arxiv.org/html/",
+                "alphaxiv.org/abs/",
+                "alphaxiv.org/pdf/",
+                (url) =>
+                    url.includes("huggingface.co/papers/") &&
+                    url.split("huggingface.co/papers/")[1].match(/\d+\.\d+/),
+            ],
+            name: "ArXiv",
+        },
+        biorxiv: {
+            patterns: ["biorxiv.org/content"],
+            name: "BioRxiv",
+        },
+        cell: {
+            patterns: [
+                (url) =>
+                    url.includes("cell.com/") &&
+                    url.split("cell.com/")[1].match(/\d{4}-\d{3}[0-9X]/),
+            ],
+            name: "Cell",
+        },
+        chemrxiv: {
+            patterns: [
+                "chemrxiv.org/engage/chemrxiv/article-details/",
+                (url) =>
+                    url.includes(
+                        "https://chemrxiv.org/engage/api-gateway/chemrxiv/assets"
+                    ) && url.endsWith(".pdf"),
+            ],
+            name: "ChemRxiv",
+        },
+        cvf: {
+            patterns: ["openaccess.thecvf.com/content"],
+            name: "CVF (Computer Vision Foundation)",
+        },
+        frontiers: {
+            patterns: ["frontiersin.org/articles"],
+            name: "Frontiers",
+        },
+        hal: {
+            patterns: [
+                (url) => /hal\.science\/\w+-\d+(v\d+)?(\/document)?$/gi.test(url),
+                (url) => /hal\.science\/\w+-\d+(v\d+)?\/file\/.+\.pdf$/gi.test(url),
+            ],
+            name: "HAL",
+        },
+        ihep: {
+            patterns: ["inspirehep.net/literature/", "inspirehep.net/files/"],
+            name: "IHEP (INSPIRE - High Energy Physics)",
+        },
+        ijcai: {
+            patterns: [(url) => /ijcai\.org\/proceedings\/\d{4}\/\d+/gi.test(url)],
+            name: "IJCAI (International Joint Conferences on Artificial Intelligence)",
+        },
+        ieee: {
+            patterns: [
+                "ieeexplore.ieee.org/document/",
+                "ieeexplore.ieee.org/abstract/document/",
+                "ieeexplore.ieee.org/stamp/stamp.jsp?tp=&arnumber=",
+            ],
+            name: "IEEE (Institute of Electrical and Electronics Engineers)",
+        },
+        iop: {
+            patterns: ["iopscience.iop.org/article/"],
+            name: "IOP (Institute Of Physics)",
+        },
+        jmlr: {
+            patterns: [(url) => url.includes("jmlr.org/papers/v") && !url.endsWith("/")],
+            name: "JMLR (Journal of Machine Learning Research)",
+        },
+        mdpi: {
+            patterns: [(url) => /mdpi\.com\/\d+-.+/gi.test(url)],
+            name: "MDPI (Multidisciplinary Digital Publishing Institute)",
+        },
+        nature: {
+            patterns: ["nature.com/articles/"],
+            name: "Nature",
+        },
+        neurips: {
+            patterns: [
+                "neurips.cc/paper/",
+                "neurips.cc/paper_files/paper/",
+                "nips.cc/paper/",
+                "nips.cc/paper_files/paper/",
+            ],
+            name: "NeurIPS (Neural Information Processing Systems)",
+        },
+        openreview: {
+            patterns: [
+                "openreview.net/forum",
+                "openreview.net/pdf",
+                "openreview.net/attachment",
+            ],
+            name: "OpenReview",
+        },
+        oup: {
+            patterns: [
+                (url) =>
+                    (url
+                        .split("https://academic.oup.com/")[1]
+                        ?.split("/")[1]
+                        ?.indexOf("article") ?? -1) >= 0,
+            ],
+            name: "OUP (Oxford University Press)",
+        },
+        plos: {
+            patterns: [(url) => /journals\.plos\.org\/.+\/article.+id=/gi.test(url)],
+            name: "PLOS (Public Library of Science)",
+        },
+        pmc: {
+            patterns: ["ncbi.nlm.nih.gov/pmc/articles/PMC"],
+            name: "PMC (PubMed Central)",
+        },
+        pmlr: {
+            patterns: ["proceedings.mlr.press/"],
+            name: "PMLR (Proceedings of Machine Learning Research)",
+        },
+        pnas: {
+            patterns: ["pnas.org/content/", "pnas.org/doi/"],
+            name: "PNAS (Proceedings of the National Academy of Sciences)",
+        },
+        rsc: {
+            patterns: ["pubs.rsc.org/en/content/article"],
+            name: "RSC (Royal Society of Chemistry)",
+        },
+        science: {
+            patterns: [
+                (url) => Boolean(url.match(/science\.org\/doi\/?(abs|full|pdf|epdf)?\//g)),
+            ],
+            name: "Science",
+        },
+        sciencedirect: {
+            patterns: [
+                "sciencedirect.com/science/article/pii/",
+                "sciencedirect.com/science/article/abs/pii/",
+                "reader.elsevier.com/reader/sd/pii/",
+            ],
+            name: "ScienceDirect",
+        },
+        springer: {
+            patterns: [
+                ...sourceExtras.springer.types.map((type) => `link.springer.com/${type}/`),
+                "link.springer.com/content/pdf/",
+            ],
+            name: "Springer",
+        },
+        website: {
+            // special case, manual parsing of arbitrary websites
+            patterns: [],
+            name: "Manually parsed website",
+        },
+        wiley: {
+            patterns: [
+                (url) =>
+                    Boolean(
+                        url.match(
+                            /onlinelibrary\.wiley\.com\/doi\/(abs\/|full\/|pdf\/|epdf\/|10\.)/g
+                        )
+                    ),
+            ],
+            name: "Wiley",
+        },
+        aip: {
+            patterns: [
+                (url) =>
+                    url.match(
+                        /pubs.aip.org\/aip\/.+\/(article|article-abstract|article-split)\//g
+                    ) || url.match(/watermark.silverchair.com\/.+\.pdf/g),
+            ],
+            name: "AIP (American Institute of Physics)",
+        },
+    };
+
+    const overrideORConfs = {
+        "robot-learning": "CoRL",
+        ijcai: "IJCAI",
+    };
+    const overridePMLRConfs = {
+        "Conference on Learning Theory": "CoLT",
+        "International Conference on Machine Learning": "ICML",
+        "Conference on Uncertainty in Artificial Intelligence": "UAI",
+        "Conference on Robot Learning": "CoRL",
+        "International Conference on Artificial Intelligence and Statistics": "AISTATS",
+        "International Conference on Algorithmic Learning Theory": "ALT",
+    };
+
+    const consolHeaderStyle =
+        "@import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@300');font-family:'Fira Code' monospace;font-size:1rem;font-weight:300;display:inline-block;border:2px solid #A41716;border-radius: 4px;padding: 12px; margin: 12px;";
+
+    const storeReadme = `
+/!\\ Warning: This folder has been created automatically by your PaperMemory browser extension.\n
+/!\\ It has to stay in your downloads for PaperMemory to be able to access your papers.\n
+/!\\ To be able to open files from this folder instead of re-downloading them, PaperMemory will match their titles and downloaded urls.\n
+/!\\ If you change the default title function in the Advanced Options and do not include a paper's title in the file name, PaperMemory may not be able to open the file and will instead open the pdf url.\n
+/!\\ Unfortunately, PaperMemory cannot detect papers that have not been *downloaded there* so putting papers in this folder will not make them discoverable by the \`browser.downloads\` API PaperMemory uses.
+`;
+    /**
+     * English words to ignore when creating an arxiv paper's BibTex key.
+     */
+    const englishStopWords = new Set([
+        "i",
+        "me",
+        "my",
+        "myself",
+        "we",
+        "our",
+        "ours",
+        "ourselves",
+        "you",
+        "your",
+        "yours",
+        "yourself",
+        "yourselves",
+        "he",
+        "him",
+        "his",
+        "himself",
+        "she",
+        "her",
+        "hers",
+        "herself",
+        "it",
+        "its",
+        "itself",
+        "they",
+        "them",
+        "their",
+        "theirs",
+        "themselves",
+        "what",
+        "which",
+        "who",
+        "whom",
+        "this",
+        "that",
+        "these",
+        "those",
+        "am",
+        "is",
+        "are",
+        "was",
+        "were",
+        "be",
+        "been",
+        "being",
+        "have",
+        "has",
+        "had",
+        "having",
+        "do",
+        "does",
+        "did",
+        "doing",
+        "a",
+        "an",
+        "the",
+        "and",
+        "but",
+        "if",
+        "or",
+        "because",
+        "as",
+        "until",
+        "while",
+        "of",
+        "at",
+        "by",
+        "for",
+        "with",
+        "about",
+        "against",
+        "between",
+        "into",
+        "through",
+        "during",
+        "before",
+        "after",
+        "above",
+        "below",
+        "to",
+        "from",
+        "up",
+        "down",
+        "in",
+        "out",
+        "on",
+        "off",
+        "over",
+        "under",
+        "again",
+        "further",
+        "then",
+        "once",
+        "here",
+        "there",
+        "when",
+        "where",
+        "why",
+        "how",
+        "all",
+        "any",
+        "both",
+        "each",
+        "few",
+        "more",
+        "most",
+        "other",
+        "some",
+        "such",
+        "no",
+        "nor",
+        "not",
+        "only",
+        "own",
+        "same",
+        "so",
+        "than",
+        "too",
+        "very",
+        "s",
+        "t",
+        "can",
+        "will",
+        "just",
+        "don",
+        "should",
+        "now",
+    ]);
+
+    const journalAbbreviations = {};
 
     // https://github.com/ORCID/bibtexParseJs/blob/master/bibtexParse.js
 
@@ -3061,6 +3092,15 @@
      */
     const findPaperForProperty = (papers, source, match, prop = "id") =>
         papers.find((p) => p.source === source && p[prop].includes(match))?.id;
+
+    /**
+     * Tests wether a given url is a known paper source according to k nownPaperPages
+     * and to local files.
+     * @param {string} url The url to test
+     * @returns {boolean}
+     */
+    const isSourceURL = async (url, noStored) =>
+        Object.values(await isPaper(url, noStored)).some((i) => i);
 
     /**
      * Parses a paper's id from a url.
@@ -5176,6 +5216,9 @@
      * @returns {string} The note for the paper as `Accepted @ ${items.event.name} -- [crossref.org]`
      */
     const tryCrossRef = async (paper, toBackground) => {
+        if (toBackground) {
+            return await sendMessageToBackground({ type: "try-cross-ref", paper });
+        }
         try {
             // fetch crossref' api for the paper's title
             const title = encodeURI(paper.title);
@@ -5222,6 +5265,9 @@
     };
 
     const tryDBLP = async (paper, toBackground) => {
+        if (toBackground) {
+            return await sendMessageToBackground({ type: "try-dblp", paper });
+        }
         try {
             const title = encodeURI(paper.title);
             const api = `https://dblp.org/search/publ/api?q=${title}&format=json`;
@@ -5280,9 +5326,61 @@
     };
 
     const trySemanticScholar = async (paper, toBackground) => {
-        {
+        if (toBackground) {
             return await sendMessageToBackground({ type: "try-semantic-scholar", paper });
         }
+        try {
+            const { data, status } = await fetchJSON(
+                `https://api.semanticscholar.org/graph/v1/paper/search?query=${encodeURI(
+                paper.title
+            )}&fields=title,venue,year,authors,externalIds,url&limit=5`
+            );
+            const matches = data;
+
+            if (matches && matches.data && matches.data.length > 0) {
+                for (const match of matches.data) {
+                    if (
+                        miniHash(match.title) === miniHash(paper.title) &&
+                        Math.abs(match.year - paper.year) < 3 &&
+                        match.venue &&
+                        !match.venue.toLowerCase().includes("arxiv") &&
+                        !match.venue.toLowerCase().includes("biorxiv")
+                    ) {
+                        info("Found a Semantic Scholar match");
+                        let venue = match.venue
+                            .trim()
+                            .replace(/^\d{4}/, "")
+                            .trim();
+                        if (venue.indexOf(" ") < 0) venue = venue.toUpperCase();
+                        const year = (match.year + "").trim();
+                        const note = `Accepted @ ${venue} (${year}) -- [semanticscholar.org]`;
+                        const authors = match.authors.map((a) => a.name).join(" and ");
+                        let doi = match.externalIds.DOI;
+                        // if (doi) {
+                        //     doi = doi.replaceAll("_", "\\{_}");
+                        // }
+                        const bibtex = bibtexToString({
+                            entryType: "article",
+                            citationKey:
+                                miniHash(match.authors[0].name.split(" ").last()) +
+                                year +
+                                firstNonStopLowercase(paper.title),
+                            title: paper.title,
+                            author: authors,
+                            journal: venue,
+                            year,
+                            doi,
+                            bibSource: `Semantic Scholar ${match.url}`,
+                        });
+                        return { venue, note, bibtex, status };
+                    }
+                }
+            }
+            return { status };
+        } catch (error) {
+            logError("[SemanticScholar]", error);
+        }
+        return { status: 404 };
     };
 
     const tryGoogleScholar = async (paper) => {
@@ -5292,6 +5390,9 @@
     };
 
     const tryUnpaywall = async (paper, toBackground) => {
+        if (toBackground) {
+            return await sendMessageToBackground({ type: "try-unpaywall", paper });
+        }
         const url = `https://api.unpaywall.org/v2/search?query=${encodeURI(
         paper.title
     )}&is_oa=true&email=papermemory+${parseInt(Math.random() * 1000)}@gmail.com`;
@@ -5317,7 +5418,7 @@
         let names = ["GoogleScholar", "SemanticScholar", "CrossRef", "DBLP", "Unpaywall"];
         let matchPromises = [
             silentPromiseTimeout(tryGoogleScholar(paper)),
-            silentPromiseTimeout(trySemanticScholar(paper)),
+            silentPromiseTimeout(trySemanticScholar(paper, true)),
             silentPromiseTimeout(tryCrossRef(paper)),
             silentPromiseTimeout(tryDBLP(paper)),
             silentPromiseTimeout(tryUnpaywall(paper)),
@@ -7098,9 +7199,8 @@ ${note}</textarea
     const displayOnScroll = (isPopup) =>
         delay(() => {
             const { bottom } = findEl({ element: "memory-table" }).getBoundingClientRect();
-            const height = isPopup
-                ? findEl({ element: "memory-container" }).getBoundingClientRect().height
-                : window.innerHeight;
+            const height = findEl({ element: "memory-container" }).getBoundingClientRect().height
+                ;
             const currentPapers = state.currentMemoryPagination * state.memoryItemsPerPage;
             if (
                 Math.abs(bottom - height) < height &&
@@ -7960,7 +8060,7 @@ ${note}</textarea
         addListener("memory-select", "change", handleMemorySelectChange);
         // listen to sorting direction change
         addListener("memory-sort-arrow", "click", handleMemorySortArrow);
-        addListener("memory-container", "scroll", displayOnScroll(true));
+        addListener("memory-container", "scroll", displayOnScroll());
     };
 
     // ES Module imports
@@ -9213,6 +9313,195 @@ ${note}</textarea
 
     // ES Module imports
 
+    const getPat = async (patError) => {
+        const pat = await getStorage("syncPAT");
+        if (!pat) {
+            warn("No PAT found. Aborting and disabling sync.");
+            await setStorage("syncState", false);
+            if (patError) {
+                throw new Error("No PAT found.");
+            }
+        }
+        return pat;
+    };
+
+    const getIdentifier = async () => {
+        const browserName = await getBrowserName();
+        let syncId = await getStorage("syncId");
+        if (!syncId) {
+            syncId = getRandomToken();
+            syncId = `${browserName}-${syncId}`;
+            info("No syncId found. Creating new one: ", syncId);
+            await setStorage("syncId", syncId);
+        }
+        return syncId;
+    };
+
+    /**
+     * Gets the default content of the PaperMemory sync Gist file.
+     * If the file does not exist, it will be created.
+     * @param {object} options - Options object
+     * @param {string} options.pat - Personal Access Token (will be retrieved if not provided)
+     * @param {boolean} options.store - Whether to store the PAT in the browser storage
+     * @param {boolean} options.patError - Whether to raise an error if no PAT
+     * @returns {Promise<{ ok: boolean, payload: { file: { filename: string, raw_url: string, content: object }, pat: string, gistId: string } }>}
+     */
+    const getGist = async ({ pat, store = true, patError = true } = {}) => {
+        try {
+            if (!pat) pat = await getPat(patError);
+
+            const isTest = await getStorage("syncTest");
+            const filename = isTest
+                ? "TestsPaperMemorySync"
+                : "DO_NO_EDIT__PaperMemorySyncV2.json";
+            const description = "Automated PaperMemory sync Gist. Do not edit manually.";
+            const requestWithAuth = octokitRequest.defaults({
+                headers: {
+                    authorization: `token ${pat}`,
+                    "X-GitHub-Api-Version": "2022-11-28",
+                },
+            });
+
+            const gists = await requestWithAuth("GET /gists");
+
+            let gist = gists.data?.find(
+                (gist) => gist.description === description && gist.files[filename]
+            );
+
+            if (!gist) {
+                info("No Gist found. Creating new one...");
+                const papers = await getStorage("papers");
+                gist = await createGistWithFile({
+                    file: filename,
+                    pat,
+                    description,
+                    content: papers,
+                });
+                if (!gist) return { ok: false, payload: "wrongPAT" };
+            }
+            const file = gist.files[filename];
+            const gistId = gist.id;
+            store && (await setStorage("syncPAT", pat));
+            return { ok: true, payload: { file, pat, gistId } };
+        } catch (e) {
+            console.log(e);
+            warn("Because of the error ^ syncing is now disabled.");
+            setStorage("syncState", false);
+            return { ok: false, payload: "wrongPAT", error: e };
+        }
+    };
+
+    /**
+     * Create a new Gist with a file and some content. The content will be stringified if not
+     * already a string. The PAT will be retrieved from the browser storage if not provided.
+     * @param {object} options - Options object
+     * @param {string} options.file - File name or object with `filename` property
+     * @param {string} options.pat - Personal Access Token (will be retrieved if not provided)
+     * @param {string} options.content - Content of the file (will be stringified if not already a string)
+     * @param {string} options.description - Description of the gist
+     * @returns {Promise<object>} - The Gist object
+     */
+    const createGistWithFile = async ({
+        file,
+        pat,
+        content,
+        description = "Automated PaperMemory sync Gist. Do not edit manually.",
+    }) => {
+        if (typeof file === "undefined") {
+            throw new Error("No file provided.");
+        }
+        if (typeof content !== "string") {
+            content = JSON.stringify(content, null, "");
+        }
+        if (typeof file === "string") {
+            file = { filename: file };
+        }
+        if (!pat) pat = await getPat();
+        const requestWithAuth = octokitRequest.defaults({
+            headers: {
+                authorization: `token ${pat}`,
+                "X-GitHub-Api-Version": "2022-11-28",
+            },
+        });
+        const response = await requestWithAuth("POST /gists", {
+            description,
+            files: { [file.filename]: { content } },
+            public: false,
+        });
+        return response.data;
+    };
+
+    /**
+     * Get the content of a Gist file (from `gistId`). Accept `file:{filename, raw_url}`
+     * object or `filename` and `url` strings.
+     * If `gistId` is not provided, it will query all gists and find the first one with the file.
+     * The PAT will be retrieved from the browser storage if not provided.
+     * @param {object} options - Options object
+     * @param {string} options.file - File name or object with `filename` property
+     * @param {string} options.pat - Personal Access Token (will be retrieved if not provided)
+     * @param {gistId} options.gistId - ID of the Gist. Will query all gists and find the first one with the file if not provided.
+     * @returns {Promise<object>} - The content of the file
+     */
+    const getDataForGistFile = async ({ file, pat, gistId }) => {
+        if (typeof file === "string") {
+            file = { filename: file };
+        }
+        if (!pat) pat = await getPat();
+
+        const requestWithAuth = octokitRequest.defaults({
+            headers: {
+                authorization: `token ${pat}`,
+                "X-GitHub-Api-Version": "2022-11-28",
+            },
+        });
+        let gist;
+        if (!gistId) {
+            const resp = await requestWithAuth("GET /gists");
+            const gists = resp.data;
+            gist = gists?.find((gist) => gist.files[file.filename]);
+        } else {
+            const resp = await requestWithAuth(`GET /gists/${gistId}`);
+            gist = resp.data;
+        }
+        file = gist.files[file.filename];
+
+        if (file.filename.endsWith(".json")) {
+            const { data, status } = await fetchJSON(file.raw_url);
+            return data;
+        }
+        return await fetchText(file.raw_url);
+    };
+
+    /**
+     * Update a Gist file with some content. The content will be stringified if not
+     * already a string. The PAT will be retrieved from the browser storage if not provided.
+     * @param {object} options - Options object
+     * @param {string} options.file - File name or object with `filename` property
+     * @param {string} options.pat - Personal Access Token (will be retrieved if not provided)
+     * @param {string} options.content - Content of the file (will be stringified if not already a string)
+     * @param {string} options.gistId - ID of the Gist
+     * @returns {Promise<object>} - The Gist object
+     */
+    const updateGistFile = async ({ file, content, gistId, pat }) => {
+        if (!pat) pat = await getPat();
+
+        if (typeof content !== "string") {
+            content = JSON.stringify(content, null, "");
+        }
+        if (typeof file === "string") {
+            file = { filename: file };
+        }
+        const requestWithAuth = octokitRequest.defaults({
+            headers: {
+                authorization: `token ${pat}`,
+                "X-GitHub-Api-Version": "2022-11-28",
+            },
+        });
+        return await requestWithAuth(`PATCH /gists/${gistId}`, {
+            files: { [file.filename]: { content } },
+        });
+    };
+
     /**
      * Writes the current `papers` Memory to the default sync Gist file.
      * @returns {Promise}
@@ -9342,65 +9631,436 @@ ${note}</textarea
     const sleep = async (duration) =>
         new Promise((resolve) => setTimeout(resolve, duration));
 
-    // ES Module imports
+    // ES Module imports - Service Worker Safe
 
-    var REFRESH_INTERVAL_SECS = 5 * 60;
-    // var REFRESH_INTERVAL_SECS = 20;
+    var tabStatuses = {};
+    var paperTitles = {};
 
-    const adjustCss = () => {
-        const container = document.getElementById("memory-filters");
-        const searchBar = document.getElementById("memory-search");
-        searchBar.style.width = `${0.4 * container.clientWidth}px`;
+    const badgeOk = () => {
+        chrome.action.setBadgeText({ text: "OK!" });
+        chrome.action.setBadgeBackgroundColor({ color: "rgb(68, 164, 68)" });
     };
 
-    const autoRefresh = () => {
-        if (window.location.href.includes("?noRefresh=true")) {
-            warn("No auto refresh");
+    const badgeWait = (text) => {
+        chrome.action.setBadgeText({ text });
+        chrome.action.setBadgeBackgroundColor({ color: "rgb(189, 127, 10)" });
+    };
+
+    const badgeError = () => {
+        chrome.action.setBadgeText({ text: "Error" });
+        chrome.action.setBadgeBackgroundColor({ color: "rgb(195, 40, 56)" });
+    };
+
+    const badgeClear = (preventTimeout = false) => {
+        if (preventTimeout) {
+            chrome.action.setBadgeText({ text: "" });
+        } else {
+            setTimeout(() => {
+                chrome.action.setBadgeText({ text: "" });
+            }, 2000);
+        }
+    };
+
+    const initGist = async () => {
+        if (!(await shouldSync())) {
+            info("Sync disabled.");
             return;
         }
-        info(`Enabling auto refresh if inactive for ${REFRESH_INTERVAL_SECS} seconds.`);
-        const reload = () => {
-            window.location.reload();
-        };
-
-        let time;
-
-        const resetTimer = () => {
-            clearTimeout(time);
-            time = setTimeout(reload, REFRESH_INTERVAL_SECS * 1000);
-        };
-        const events = ["click", "keypress", "touchstart"];
-        events.forEach(function (name) {
-            document.addEventListener(name, resetTimer, true);
-        });
-        resetTimer();
+        const start = Date.now();
+        log("Initializing Sync...");
+        badgeWait("Init...");
+        const { ok, error, payload } = await getGist();
+        if (ok) {
+            state.gistFile = payload.file;
+            state.gistId = payload.gistId;
+            const duration = (Date.now() - start) / 1e3;
+            logOk(`Sync successfully enabled (${duration}s).`);
+            info(`Using gist: ${payload.gistId}`);
+            badgeOk();
+        } else {
+            logError("[initGist]", error || payload);
+            badgeError();
+        }
+        badgeClear();
     };
 
-    const syncOnBlur = async () => {
-        if (!(await shouldSync())) return;
-        window.addEventListener(
-            "blur",
-            delay(async () => {
-                info("Syncing back and forth...");
-                await pushToRemote();
-                await initSyncAndState();
-            }, 10e3)
+    initGist();
+
+    // Remove DOM-dependent setFaviconCode since it's not needed in service worker
+
+    const fetchOpenReviewNoteJSON = async (url) => {
+        const id = url.match(/id=([\w-])+/)[0].replace("id=", "");
+        const api = `https://api.openreview.net/notes?id=${id}`;
+        let response = await fetch(api);
+        let json = await response.json();
+        if (json["status"] === 404) {
+            warn("Note not found in api.openreview.net, trying api2.openreview.net...");
+            const api2 = `https://api2.openreview.net/notes?id=${id}`;
+            response = await fetch(api2);
+            json = await response.json();
+        }
+        return json;
+    };
+
+    const fetchOpenReviewForumJSON = async (url) => {
+        const id = url.match(/id=([\w-])+/)[0].replace("id=", "");
+        const api = `https://api.openreview.net/notes?forum=${id}`;
+        let response = await fetch(api);
+        let json = await response.json();
+        if (json["status"] === 404 || json["notes"].length === 0) {
+            warn("Forum not found in api.openreview.net, trying api2.openreview.net...");
+            const api2 = `https://api2.openreview.net/notes?forum=${id}`;
+            response = await fetch(api2);
+            json = await response.json();
+        }
+        return json;
+    };
+
+    const fetchGSData = async (paper) => {
+        try {
+            let html = await fetchText(
+                `https://scholar.google.com/scholar?q=${encodeURI(paper.title)}&hl=en`
+            );
+            html = html.split("gs_res_ccl_mid")[1];
+            if (!html) return { note: null };
+
+            const mhtml = miniHash(html, "_");
+            const matchedLower = mhtml.match(
+                new RegExp(`_a_id__(\\w+)__href.+_${miniHash(paper.title, "_")}__a_`)
+            );
+
+            if (!matchedLower || !matchedLower[1]) return { note: null };
+
+            const dataIdLower = matchedLower[1];
+            const startIndex = mhtml.indexOf(dataIdLower);
+            if (startIndex < 0) return { note: null };
+
+            const dataId = html.substring(startIndex, startIndex + dataIdLower.length);
+
+            const citeURL = `https://scholar.google.com/scholar?q=info:${dataId}:scholar.google.com/&output=cite&scirp=0&hl=en`;
+            const citeHTML = await fetchText(citeURL);
+            const bibtexURL = citeHTML
+                .match(/<a[^>]*href="([^>]+)"[^>]*>BibTex<\/a>/i)[1]
+                ?.replaceAll("&amp;", "&");
+            if (!bibtexURL) return { note: null };
+
+            const bibtex = await fetchText(bibtexURL);
+            const venue = bibtexToObject(bibtex)?.journal;
+            if (
+                venue &&
+                !venue.toLowerCase().endsWith("xiv") &&
+                !venue.toLowerCase().includes("preprint")
+            ) {
+                const note = `Accepted @ ${venue} -- [scholar.google.com]`;
+                return { venue, note, bibtex: bibtexToString(bibtex) };
+            }
+            return { note: null };
+        } catch (error) {
+            logError("[GoogleScholar]", error);
+        }
+    };
+
+    const fetchPWCData = async (arxivId, title) => {
+        let pwcPath = `https://paperswithcode.com/api/v1/papers/?`;
+        if (arxivId) {
+            log("Fetching PWC data for arxivId:", arxivId);
+            pwcPath += new URLSearchParams({ arxiv_id: arxivId });
+        } else if (title) {
+            log("Fetching PWC data for paper:", title);
+            pwcPath += new URLSearchParams({ title });
+        }
+        const response = await fetch(pwcPath);
+        const json = await response.json();
+
+        if (json["count"] !== 1) {
+            log("No PWC entry match.");
+            return;
+        }
+        log("PWC entry match:", json["results"][0]["id"]);
+        return json["results"][0];
+    };
+
+    const findCodesForPaper = async (request) => {
+        let arxivId, title, code;
+        if (request.paper.source === "arxiv") {
+            arxivId = request.paper.id.split("-").last().replace("_", "/");
+        } else {
+            title = request.paper.title;
+        }
+        const pwcData = await fetchPWCData(arxivId, title);
+        if (!pwcData) return code;
+        const { id, proceeding, published, conference } = pwcData;
+        info("Found a PWC proceeding paper:", pwcData);
+        let venue, year;
+
+        if (conference) {
+            const confData = await fetchJSON(
+                `https://paperswithcode.com/api/v1/conferences/${conference}`
+            );
+            venue = confData?.name;
+        }
+        if (published) {
+            year = published.split("-")[0];
+        }
+
+        if (proceeding && (!year || !venue)) {
+            year = proceeding.match(/(\d{4})/)[0];
+            venue = proceeding
+                .split(year)[0]
+                .split("-")
+                .filter((p) => p)
+                .map((p) => p[0].toUpperCase() + p.slice(1))
+                .join(" ")
+                .trim();
+        }
+        if (year && venue) {
+            code = {
+                note: `Accepted @ ${venue} (${year}) -- [paperswithcode.com]`,
+                venue,
+                pubYear: year,
+            };
+        }
+
+        if (!id) return code;
+
+        const json = await fetchJSON(
+            `https://paperswithcode.com/api/v1/papers/${id}/repositories/`
         );
+
+        if (json.data["count"] < 1) {
+            log("No code found for paper.");
+            return code;
+        }
+
+        let codes = json.data["results"];
+
+        const { pwcPrefs } = request;
+        const official = pwcPrefs.hasOwnProperty("official") ? pwcPrefs.official : false;
+        const framework = pwcPrefs.hasOwnProperty("framework")
+            ? pwcPrefs.framework
+            : "none";
+
+        const officials = codes.filter((c) => c["is_official"]);
+        log("All codes for paper:", codes);
+        if (officials.length > 0) {
+            codes = officials;
+            log("Selecting official codes only:", codes);
+        } else {
+            if (official) {
+                log("No official code found for paper.");
+                return code;
+            }
+        }
+        if (framework !== "none") {
+            const implems = codes.filter((c) => c["framework"] === framework);
+            if (implems.length > 0) {
+                log(`Selecting framework '${framework}':`, implems);
+                codes = implems;
+            }
+        }
+        codes.sort((a, b) => b.stars - a.stars);
+        info(`Found PWC repository: ${codes[0]["url"]} (${codes[0]["stars"]} stars)`);
+        return { ...codes[0], ...code };
     };
 
-    (async () => {
-        await initSyncAndState();
-        makeMemoryHTML();
-        addListener("memory-search-clear-icon", "click", handleClearSearch);
-        addListener(document, "scroll", displayOnScroll(false));
-        // set default sort to lastOpenDate
-        val("memory-select", "lastOpenDate");
-        // set default sort direction arrow down
-        setMemorySortArrow("down");
-        adjustCss();
-        autoRefresh();
-        syncOnBlur();
-    })();
+    const pullSyncPapers = async () => {
+        if (!(await shouldSync())) return;
+        try {
+            badgeWait("Pull...");
+            const start = Date.now();
+            const localSyncID = await getIdentifier();
+            consoleHeader(`Pulling ${String.fromCodePoint("0x23EC")}`);
+            log("Pulling from Github...");
+            state.gistData = await getDataForGistFile({
+                file: state.gistFile,
+                gistid: state.gistId,
+            });
+            const remoteSyncId = state.gistData["__syncId"];
+            delete state.gistData["__syncId"];
+
+            let remotePapers;
+            if (remoteSyncId === localSyncID) {
+                remotePapers = (await getStorage("papers")) ?? {};
+            } else {
+                remotePapers = state.gistData;
+            }
+            if (remoteSyncId === localSyncID) {
+                warn("Pulled sync data from same device, ignoring.");
+            }
+            log("Pulled papers:", remotePapers);
+            const duration = (Date.now() - start) / 1e3;
+            info(`Pulling from Github... Done (${duration}s)!`);
+            console.groupEnd();
+            badgeOk();
+            badgeClear();
+            return remotePapers;
+        } catch (e) {
+            logError("[pullSyncPapers]", e);
+            badgeError();
+        }
+        badgeClear();
+        console.groupEnd();
+    };
+
+    const pushSyncPapers = async () => {
+        if (!(await shouldSync())) return;
+        await getIdentifier();
+        try {
+            const start = Date.now();
+            consoleHeader(`Pushing ${String.fromCodePoint("0x23EB")}`);
+            log("Writing to Github...");
+            badgeWait("Push...");
+            chrome.action.setBadgeBackgroundColor({ color: "rgb(189, 127, 10)" });
+            const papers = (await getStorage("papers")) ?? {};
+            const syncId = await getIdentifier();
+            log("Papers to write: ", papers);
+            papers["__syncId"] = syncId;
+            await updateGistFile({
+                file: state.gistFile,
+                content: papers,
+                gistId: state.gistId,
+            });
+            const duration = (Date.now() - start) / 1e3;
+            log(`Writing to Github... Done (${duration}s)!`);
+            badgeOk();
+        } catch (e) {
+            logError("[pushSyncPapers]", e);
+            badgeError();
+        }
+        badgeClear();
+        console.groupEnd();
+    };
+
+    chrome.runtime.onMessage.addListener((payload, sender, sendResponse) => {
+        if (payload.type === "update-title") {
+            const { title, url } = payload.options;
+            paperTitles[url] = title.replaceAll('"', "'");
+            sendResponse(true);
+        } else if (payload.type === "tabID") {
+            sendResponse(sender.tab.id);
+        } else if (payload.type === "papersWithCode") {
+            findCodesForPaper(payload).then(sendResponse);
+        } else if (payload.type === "google-scholar") {
+            fetchGSData(payload.paper).then(sendResponse);
+        } else if (payload.type === "download-pdf-to-store") {
+            getStoredFiles().then((storedFiles) => {
+                if (storedFiles.length === 0) {
+                    chrome.downloads.download({
+                        url: URL.createObjectURL(new Blob([storeReadme])),
+                        filename: "PaperMemoryStore/IMPORTANT_README.txt",
+                        saveAs: false,
+                    });
+                }
+                let filename = "PaperMemoryStore/" + payload.title;
+                filename = filename.replaceAll("?", "").replaceAll(":", "");
+                chrome.downloads.download({ url: payload.pdfUrl, filename });
+                sendResponse(true);
+            });
+        } else if (payload.type === "hello") {
+            sendResponse("Connection to background script established.");
+        } else if (payload.type === "writeSync") {
+            pushSyncPapers().then(sendResponse);
+        } else if (payload.type === "pullSync") {
+            pullSyncPapers(payload.gist).then(sendResponse);
+        } else if (payload.type === "restartGist") {
+            initGist().then(sendResponse);
+        } else if (payload.type === "OpenReviewNoteJSON") {
+            fetchOpenReviewNoteJSON(payload.url).then(sendResponse);
+        } else if (payload.type === "OpenReviewForumJSON") {
+            fetchOpenReviewForumJSON(payload.url).then(sendResponse);
+        } else if (payload.type === "try-semantic-scholar") {
+            trySemanticScholar(payload.paper, false).then(sendResponse);
+        } else if (payload.type === "try-cross-ref") {
+            tryCrossRef(payload.paper, false).then(sendResponse);
+        } else if (payload.type === "try-dblp") {
+            tryDBLP(payload.paper, false).then(sendResponse);
+        } else if (payload.type === "try-unpaywall") {
+            tryUnpaywall(payload.paper, false).then(sendResponse);
+        }
+        return true;
+    });
+
+    chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
+        if (changeInfo.status) {
+            if (changeInfo.status === "loading") {
+                tabStatuses[tabId] = "loading";
+            } else if (changeInfo.status === "complete") {
+                tabStatuses[tabId] = "complete";
+            }
+        } else {
+            tab = await new Promise((resolve) =>
+                chrome.tabs.get(tabId, (tab) => resolve(tab))
+            );
+            if (tabStatuses.hasOwnProperty(tabId) && tabStatuses[tabId] === "complete") {
+                const paperTitle = paperTitles[tab.url];
+                if (paperTitle && tab.title !== paperTitle) {
+                    console.log(">>> Setting tab title to :", paperTitle);
+                    chrome.scripting.executeScript({
+                        target: { tabId },
+                        code: `
+                        ${setTitleCode(paperTitle)};
+                        ${setFaviconCode};
+                    `,
+                        runAt: "document_start",
+                    });
+                }
+            }
+        }
+    });
+
+    chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
+        // https://stackoverflow.com/a/50548409/3867406
+        // read changeInfo data and do something with it
+        // like send the new url to content_scripts.js
+        if (changeInfo.url) {
+            if (
+                (await isSourceURL(changeInfo.url)) &&
+                changeInfo.url.includes("openreview")
+            ) {
+                chrome.tabs.sendMessage(tabId, {
+                    message: "tabUrlUpdate",
+                    url: changeInfo.url,
+                });
+            }
+        }
+    });
+
+    chrome.commands.onCommand.addListener((command) => {
+        console.log(`Received command: ${command}`);
+        if (command === "manualParsing") {
+            chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
+                chrome.tabs.sendMessage(tabs[0].id, { message: "manualParsing" });
+            });
+        } else if (command === "downloadPdf") {
+            chrome.tabs.query({ active: true, currentWindow: true }, async function (tabs) {
+                const url = tabs[0].url;
+                await initState();
+                const id = await parseIdFromUrl$1(url);
+                if (id) {
+                    const paper = state.papers[id];
+                    if (paper) {
+                        downloadPaperPdf(paper);
+                    } else {
+                        warn("Unknown paper id:", id);
+                    }
+                }
+            });
+        } else if (command === "defaultAction") {
+            chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
+                chrome.tabs.sendMessage(tabs[0].id, { message: "defaultAction" });
+            });
+        }
+    });
+
+    chrome.runtime.onConnect.addListener(function (port) {
+        if (port.name === "PaperMemoryPopupSync") {
+            log("[chrome.runtime.onConnect] Popup connected.");
+            port.onDisconnect.addListener(async function () {
+                log("[chrome.runtime.onConnect] Popup disconnected.");
+                await pushSyncPapers();
+            });
+        }
+    });
 
 })();
-//# sourceMappingURL=fullMemory-bundle.js.map
+//# sourceMappingURL=background.bundle.js.map
