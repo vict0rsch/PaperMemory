@@ -1,8 +1,8 @@
-const puppeteer = require("puppeteer");
-const { sleep, root } = require("./utilsForTests");
-const fs = require("fs");
+import puppeteer from "puppeteer";
+import { sleep, root } from "./utilsForTests.js";
+import fs from "fs";
 
-exports.makeBrowser = async (windowSize = "1200,900") => {
+export const makeBrowser = async (windowSize = "1200,900") => {
     const browser = await puppeteer.launch({
         headless: false,
         ignoreHTTPSErrors: true,
@@ -16,7 +16,7 @@ exports.makeBrowser = async (windowSize = "1200,900") => {
     return browser;
 };
 
-exports.getMemoryPapers = async (page) => {
+export const getMemoryPapers = async (page) => {
     return await page.evaluate(
         () =>
             new Promise(async (resolve) => {
@@ -25,16 +25,16 @@ exports.getMemoryPapers = async (page) => {
     );
 };
 
-exports.getPaperMemoryState = async (page) => {
+export const getPaperMemoryState = async (page) => {
     return await page.evaluate(
         () =>
             new Promise(async (resolve) => {
-                resolve(global.state);
+                resolve(state);
             })
     );
 };
 
-exports.visitPaperPage = async (browser, target, options = {}) => {
+export const visitPaperPage = async (browser, target, options = {}) => {
     const defaults = { page: null, timeout: null, keepOpen: false };
     const opts = { ...defaults, ...options };
 
@@ -51,9 +51,9 @@ exports.visitPaperPage = async (browser, target, options = {}) => {
     !opts.keepOpen && (await p.close());
 };
 
-exports.extensionPopupURL =
+export const extensionPopupURL =
     "chrome-extension://ehchlpggdaffcncbeopdopnndhdjelbc/src/popup/min/popup.min.html";
-exports.fullMemoryURL =
+export const fullMemoryURL =
     "chrome-extension://ehchlpggdaffcncbeopdopnndhdjelbc/src/fullMemory/fullMemory.html?noRefresh=true";
-exports.chromeExtensionsURL =
+export const chromeExtensionsURL =
     "chrome://extensions/?id=ehchlpggdaffcncbeopdopnndhdjelbc";

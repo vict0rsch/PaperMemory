@@ -2,23 +2,23 @@
 // -----  Imports  -----
 // ---------------------
 
-const { expect } = require("expect");
-const fs = require("fs");
-const {
+import { expect } from "expect";
+import fs from "fs";
+import {
     makeBrowser,
     getPaperMemoryState,
     extensionPopupURL,
     visitPaperPage,
-} = require("./browser");
+} from "./browser.js";
 
-const {
+import {
     loadPaperMemoryUtils,
     sleep,
     readURLs,
     readDuplicates,
     root,
     loadConfig,
-} = require("./utilsForTests");
+} from "./utilsForTests.js";
 
 // make all functions in utils.min.js available in the `global` scope
 loadPaperMemoryUtils();

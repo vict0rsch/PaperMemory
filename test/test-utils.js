@@ -1,7 +1,7 @@
-const { expect } = require("expect");
-const { JSDOM } = require("jsdom");
+import { expect } from "expect";
+import { JSDOM } from "jsdom";
 
-const { loadPaperMemoryUtils, range, readJSON } = require("./utilsForTests");
+import { loadPaperMemoryUtils, range, readJSON } from "./utilsForTests.js";
 
 loadPaperMemoryUtils();
 // create fake `document`, parseUrl() will need it for instance
