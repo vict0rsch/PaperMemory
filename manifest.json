@@ -11,7 +11,7 @@
         "extension_pages": "script-src 'self'; object-src 'self'"
     },
     "background": {
-        "service_worker": "src/background/background-bundle.js"
+        "service_worker": "src/background/background.bundle.js"
     },
     "action": {
         "default_icon": "icons/favicon-192x192.png",
@@ -64,7 +64,7 @@
             "run_at": "document_start",
             "js": [
                 "src/shared/min/jquery.min.js",
-                "src/content_scripts/content-bundle.js"
+                "src/content_scripts/content.bundle.js"
             ],
             "css": [
                 "src/shared/css/loader.css",
