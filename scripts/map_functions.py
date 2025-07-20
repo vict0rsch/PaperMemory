@@ -7,7 +7,6 @@ python scripts/map_functions.py
 """
 
 import re
-from collections import Counter
 from pathlib import Path
 
 JS_BUILTINS = set(
@@ -254,16 +253,6 @@ def main():
             print("\n\n")
         else:
             print(f"No recommendations for {get_file_string(file)}")
-
-    for file in ROOT_DIR.glob("src/**/*.js"):
-        if ignore_file(file):
-            continue
-        unused_functions = find_function_defined_not_used(file, functions)
-        if unused_functions:
-            print("-" * 100)
-            print(get_file_string(file))
-            print(unused_functions)
-            print("\n\n")
 
 
 if __name__ == "__main__":
