@@ -2,6 +2,7 @@
     "name": "papermemory",
     "version": "1.1.0",
     "description": "N/A",
+    "type": "module",
     "main": "gulpfile.js",
     "moduleDirectories": [
         "node_modules",
@@ -23,7 +24,11 @@
         "pretest-no-browser-cov": "echo 'Make sure to be in dev mode ($gulp dev)'",
         "test-no-browser-cov": "./node_modules/.bin/nyc --reporter=text ./node_modules/.bin/mocha 'test/test-!(storage|duplicates|sync)*.js'",
         "prescreenshots": "echo 'Make sure to be in dev mode ($gulp dev)'",
-        "screenshots": "./node_modules/.bin/mocha test/screenshots.js"
+        "screenshots": "./node_modules/.bin/mocha test/screenshots.js",
+        "build:modules": "rollup -c",
+        "build:modules:watch": "rollup -c -w",
+        "build:modules:prod": "NODE_ENV=production rollup -c",
+        "build:prod": "NODE_ENV=production gulp build"
     },
     "repository": {
         "type": "git",
@@ -36,7 +41,13 @@
     },
     "homepage": "https://github.com/vict0rsch/PaperMemory",
     "devDependencies": {
+        "@babel/core": "^7.0.0",
         "@octokit/request": "^8.1.6",
+        "@rollup/plugin-alias": "^5.1.1",
+        "@rollup/plugin-babel": "^6.0.4",
+        "@rollup/plugin-commonjs": "^28.0.6",
+        "@rollup/plugin-node-resolve": "^16.0.1",
+        "@rollup/plugin-terser": "^0.4.4",
         "browserify": "^17.0.0",
         "esmify": "^2.1.1",
         "expect": "^29.7.0",
@@ -58,6 +69,7 @@
         "ora": "^5.4.1",
         "puppeteer": "^18.2.1",
         "readline-sync": "^1.4.10",
+        "rollup": "^4.45.0",
         "uuid": "^9.0.1",
         "yaml": "^2.3.4"
     }
