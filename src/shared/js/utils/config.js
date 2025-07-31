@@ -3,21 +3,27 @@ import { miniHash } from "@pmu/functions.js";
  * Prototypes
  */
 
-Object.defineProperty(Array.prototype, "last", {
-    value: function (i = 0) {
-        return this.reverse()[i];
-    },
-});
+if (!Array.prototype.last) {
+    Object.defineProperty(Array.prototype, "last", {
+        value: function (i = 0) {
+            return this.reverse()[i];
+        },
+        configurable: true,
+    });
+}
 
-Object.defineProperty(String.prototype, "capitalize", {
-    value: function (all = false) {
-        if (all)
-            return this.split(" ")
-                .map((s) => s.capitalize())
-                .join(" ");
-        return this.charAt(0).toUpperCase() + this.slice(1).toLowerCase();
-    },
-});
+if (!String.prototype.capitalize) {
+    Object.defineProperty(String.prototype, "capitalize", {
+        value: function (all = false) {
+            if (all)
+                return this.split(" ")
+                    .map((s) => s.capitalize())
+                    .join(" ");
+            return this.charAt(0).toUpperCase() + this.slice(1).toLowerCase();
+        },
+        configurable: true,
+    });
+}
 
 /**
  * Global variable & constants are stored in this file to be used by

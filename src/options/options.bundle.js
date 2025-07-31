@@ -5,21 +5,27 @@
      * Prototypes
      */
 
-    Object.defineProperty(Array.prototype, "last", {
-        value: function (i = 0) {
-            return this.reverse()[i];
-        },
-    });
+    if (!Array.prototype.last) {
+        Object.defineProperty(Array.prototype, "last", {
+            value: function (i = 0) {
+                return this.reverse()[i];
+            },
+            configurable: true,
+        });
+    }
 
-    Object.defineProperty(String.prototype, "capitalize", {
-        value: function (all = false) {
-            if (all)
-                return this.split(" ")
-                    .map((s) => s.capitalize())
-                    .join(" ");
-            return this.charAt(0).toUpperCase() + this.slice(1).toLowerCase();
-        },
-    });
+    if (!String.prototype.capitalize) {
+        Object.defineProperty(String.prototype, "capitalize", {
+            value: function (all = false) {
+                if (all)
+                    return this.split(" ")
+                        .map((s) => s.capitalize())
+                        .join(" ");
+                return this.charAt(0).toUpperCase() + this.slice(1).toLowerCase();
+            },
+            configurable: true,
+        });
+    }
 
     /**
      * Global variable & constants are stored in this file to be used by
@@ -5738,7 +5744,14 @@ ${note}</textarea
     // ------------------------------
 
     const query = { active: true, lastFocusedWindow: true };
-    if (typeof window !== "undefined" && window.location.href.includes("popup")) {
+    if (
+        typeof window !== "undefined" &&
+        window.location.href.includes("popup") &&
+        !window.paperMemoryPopupInitialized
+    ) {
+        // This is a global variable to track whether the popup has been initialized.
+        // In DEV mode, this would be run twice by the additional injection of debug.bundle.js
+        window.paperMemoryPopupInitialized = true;
         chrome.tabs.query(query, async (tabs) => {
             chrome.runtime.connect({ name: "PaperMemoryPopupSync" });
             const url = tabs[0].url;
