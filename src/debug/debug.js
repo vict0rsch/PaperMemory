@@ -14,6 +14,12 @@ import * as urls from "@pmu/urls.js";
 import * as files from "@pmu/files.js";
 
 // Import popup-specific modules (when available)
+// Important: these modules themselves import popup.js which contains
+// immediately-invoked functions that should not be called twice. This is why
+// we use a global variable to track whether the popup has been initialized.
+
+// If in the future we need to import other non-utils modules, we should
+// check that this double-import issue is addressed.
 import * as templates from "@pm/popup/js/templates.js";
 import * as handlers from "@pm/popup/js/handlers.js";
 import * as memory from "@pm/popup/js/memory.js";
@@ -32,7 +38,7 @@ const PMDebug = {
     urls,
     files,
 
-    // Popup modules (may be null in some contexts)
+    // Popup modules
     templates,
     handlers,
     memory,
@@ -73,6 +79,9 @@ const PMDebug = {
             "state",
             "urls",
             "files",
+            "templates",
+            "handlers",
+            "memory",
         ];
         modules.forEach((moduleName) => {
             if (this[moduleName]) {

@@ -664,7 +664,14 @@ export const popupMain = async (url, is, manualTrigger = false, tab = null) => {
 // ------------------------------
 
 export const query = { active: true, lastFocusedWindow: true };
-if (typeof window !== "undefined" && window.location.href.includes("popup")) {
+if (
+    typeof window !== "undefined" &&
+    window.location.href.includes("popup") &&
+    !window.paperMemoryPopupInitialized
+) {
+    // This is a global variable to track whether the popup has been initialized.
+    // In DEV mode, this would be run twice by the additional injection of debug.bundle.js
+    window.paperMemoryPopupInitialized = true;
     chrome.tabs.query(query, async (tabs) => {
         chrome.runtime.connect({ name: "PaperMemoryPopupSync" });
         const url = tabs[0].url;
