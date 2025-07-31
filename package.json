@@ -39,17 +39,17 @@
         "url": "https://github.com/vict0rsch/PaperMemory/issues"
     },
     "homepage": "https://github.com/vict0rsch/PaperMemory",
+    "dependencies": {
+        "@octokit/request": "^8.1.6"
+    },
     "devDependencies": {
         "@babel/core": "^7.0.0",
-        "@octokit/request": "^8.1.6",
         "@rollup/plugin-alias": "^5.1.1",
         "@rollup/plugin-babel": "^6.0.4",
         "@rollup/plugin-commonjs": "^28.0.6",
         "@rollup/plugin-node-resolve": "^16.0.1",
         "@rollup/plugin-replace": "^6.0.2",
         "@rollup/plugin-terser": "^0.4.4",
-        "browserify": "^17.0.0",
-        "esmify": "^2.1.1",
         "expect": "^29.7.0",
         "glob": "^10.3.10",
         "heap": "^0.2.7",

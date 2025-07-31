@@ -14,6 +14,7 @@ import { state } from "@pmu/config.js";
 import { initState } from "@pmu/state.js";
 import { makeMemoryHTML } from "@pm/popup/js/memory.js";
 import { fetchText, fetchJSON } from "@pmu/parsers.js";
+import { request as octokitRequest } from "@octokit/request";
 
 export const getPat = async (patError) => {
     const pat = await getStorage("syncPAT");

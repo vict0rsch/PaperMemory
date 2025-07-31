@@ -128,7 +128,7 @@ https://extensionworkshop.com/documentation/develop/temporary-installation-in-fi
 └── src  ➤➤➤ Source code (all ES modules)
     ├── background ➤➤➤ Service worker (runs in background)
     │   ├── background.js ➤➤➤ Main background script - handles browser APIs, sync, parsing
-    │   ├── octokit.js ➤➤➤ GitHub API client for sync functionality
+
     │   └── background.bundle.js ➤➤➤ [Generated] Bundled for browser
     ├── content_scripts ➤➤➤ Scripts injected into web pages
     │   ├── content_script.js ➤➤➤ Runs on paper websites - detects/parses papers automatically
@@ -193,7 +193,7 @@ https://extensionworkshop.com/documentation/develop/temporary-installation-in-fi
         │       ├── files.js ➤➤➤ Local file detection and PDF management
         │       ├── bibtexParser.js ➤➤➤ BibTeX parsing and formatting
         │       ├── logTrace.js ➤➤➤ Development logging utilities
-        │       └── octokit.bundle.js ➤➤➤ [Generated] GitHub API client bundle
+
         └── min/ ➤➤➤ [Generated] Shared build output
 ```
 
