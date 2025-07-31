@@ -31,6 +31,79 @@ npm run build       # Production build
 
 For active development, use `npm run dev:watch` which will automatically rebuild files when you save changes.
 
+### Debugging Utilities
+
+PaperMemory includes a comprehensive debugging system that's automatically available in development mode:
+
+#### Debug Bundle (`PMDebug`)
+
+In development builds, a global `PMDebug` object is automatically injected into all contexts (popup, content scripts, options pages, etc.) giving you access to all internal functions:
+
+```javascript
+// Access utility modules
+PMDebug.data.getStorage(); // Storage operations
+PMDebug.functions.log("Debug message"); // Logging utilities
+PMDebug.miniquery.findEl("#element"); // DOM utilities
+PMDebug.paper.addOrUpdatePaper(); // Paper operations
+PMDebug.config.state; // Global state
+
+// Quick shortcuts for common functions
+PMDebug.getStorage(); // → PMDebug.data.getStorage()
+PMDebug.log(); // → PMDebug.functions.log()
+PMDebug.findEl(); // → PMDebug.miniquery.findEl()
+
+// Discover all available functions
+PMDebug.listAllFunctions();
+```
+
+#### Available Debug Modules
+
+-   **`PMDebug.config`** - Global state, constants, and configuration
+-   **`PMDebug.functions`** - Utility functions (logging, string parsing, etc.)
+-   **`PMDebug.miniquery`** - DOM utilities (findEl, setHTML, etc.)
+-   **`PMDebug.data`** - Storage, preferences, and data validation
+-   **`PMDebug.paper`** - Paper operations (creation, updates, conversions)
+-   **`PMDebug.bibtexParser`** - BibTeX parsing and formatting
+-   **`PMDebug.sync`** - GitHub sync functionality
+-   **`PMDebug.state`** - App state management and initialization
+-   **`PMDebug.urls`** - URL parsing and paper ID extraction
+-   **`PMDebug.files`** - Local file detection and PDF management
+-   **`PMDebug.templates`** - HTML string templates (popup context only)
+-   **`PMDebug.handlers`** - Event handlers (popup context only)
+-   **`PMDebug.memory`** - Memory display logic (popup context only)
+
+#### Common Debugging Tasks
+
+```javascript
+// Check current papers in memory
+PMDebug.config.state.papers;
+
+// Manually parse a URL
+PMDebug.urls.parseIdFromUrl("https://arxiv.org/abs/2301.12345");
+
+// Test storage operations
+await PMDebug.getStorage();
+await PMDebug.setStorage({ test: "value" });
+
+// Debug DOM elements
+PMDebug.findEl(".paper-item");
+PMDebug.setHTML("element-id", "<p>Debug content</p>");
+
+// Test paper operations
+PMDebug.paper.isPaper("https://arxiv.org/abs/2301.12345");
+```
+
+#### Implementation Details
+
+The debug bundle is:
+
+-   **Development-only**: Automatically built and injected only when `NODE_ENV !== "production"`
+-   **Context-aware**: Available in popup, content scripts, options pages, etc.
+-   **Zero production impact**: Completely absent from production builds
+-   **Auto-discovery**: Use `PMDebug.listAllFunctions()` to explore available functions
+
+The debug system is implemented in `src/debug/debug.js` and configured in `rollup.config.js`.
+
 ### Refreshing the extension
 
 **Chrome Extensions automatically reload** when you make changes to the source files:
@@ -100,6 +173,9 @@ https://extensionworkshop.com/documentation/develop/temporary-installation-in-fi
     │   ├── fullMemory.js ➤➤➤ Dedicated tab for browsing your paper memory
     │   ├── fullMemory.html ➤➤➤ Full-page memory HTML
     │   └── fullMemory.bundle.js ➤➤➤ [Generated] Bundled for browser
+    ├── debug ➤➤➤ Development debugging utilities
+    │   ├── debug.js ➤➤➤ Debug entry point - exports all utilities as PMDebug global
+    │   └── debug.bundle.js ➤➤➤ [Generated] Development-only debug bundle
     └── shared ➤➤➤ Shared utilities and resources
         ├── css/ ➤➤➤ Shared stylesheets (variables, utilities, loading animations)
         ├── js/
