@@ -28,6 +28,10 @@ const getCommonPlugins = () => [
             },
         ],
     }),
+    replace({
+        __DEV__: JSON.stringify(isDevelopment),
+        preventAssignment: true,
+    }),
     nodeResolve({
         browser: true,
         preferBuiltins: false,
@@ -80,6 +84,16 @@ const generateHTML = (isDev = false) => ({
             }" />
         <link rel="stylesheet" type="text/css" href="dark.min.css" />`
         );
+
+        // Inject debug script in development mode
+        if (isDev) {
+            const debugScriptTag =
+                '<script src="../../debug/debug.bundle.js"></script>';
+            processedHTML = processedHTML.replace(
+                "</head>",
+                `    ${debugScriptTag}\n</head>`
+            );
+        }
 
         // Minify HTML in production
         if (isProduction) {
@@ -232,6 +246,22 @@ const configs = [
         },
         plugins: getCommonPlugins(),
     },
+
+    // Debug bundle (development only)
+    ...(isDevelopment
+        ? [
+              {
+                  input: "src/debug/debug.js",
+                  output: {
+                      file: "src/debug/debug.bundle.js",
+                      format: "iife",
+                      name: "PMDebug",
+                      sourcemap: true,
+                  },
+                  plugins: getCommonPlugins(),
+              },
+          ]
+        : []),
 ];
 
 export default configs;
