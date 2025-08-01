@@ -123,7 +123,7 @@ describe("paper.js", () => {
                     let target = Object.fromEntries(
                         Object.keys(isp).map((k) => [k, false])
                     );
-                    target.stored = null;
+                    target.stored = false;
                     target[source] = true;
                     expect(isp).toEqual(target);
                 });
@@ -135,7 +135,7 @@ describe("paper.js", () => {
                 let target = Object.fromEntries(
                     Object.keys(isp).map((k) => [k, false])
                 );
-                target.stored = null;
+                target.stored = false;
                 expect(isp).toEqual(target);
             });
         }
