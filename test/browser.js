@@ -20,7 +20,7 @@ export const getMemoryPapers = async (page) => {
     return await page.evaluate(
         () =>
             new Promise(async (resolve) => {
-                resolve(await getStorage("papers"));
+                resolve(await PMDebug.functions.getStorage("papers"));
             })
     );
 };
@@ -28,8 +28,12 @@ export const getMemoryPapers = async (page) => {
 export const getPaperMemoryState = async (page) => {
     return await page.evaluate(
         () =>
-            new Promise(async (resolve) => {
-                resolve(state);
+            new Promise(async (resolve, reject) => {
+                try {
+                    resolve(PMDebug.config.state);
+                } catch (e) {
+                    reject(e);
+                }
             })
     );
 };
