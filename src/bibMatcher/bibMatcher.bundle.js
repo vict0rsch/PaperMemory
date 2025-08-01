@@ -360,9 +360,11 @@
         aip: {
             patterns: [
                 (url) =>
-                    url.match(
-                        /pubs.aip.org\/aip\/.+\/(article|article-abstract|article-split)\//g
-                    ) || url.match(/watermark.silverchair.com\/.+\.pdf/g),
+                    Boolean(
+                        url.match(
+                            /pubs.aip.org\/aip\/.+\/(article|article-abstract|article-split)\//g
+                        ) || url.match(/watermark.silverchair.com\/.+\.pdf/g)
+                    ),
             ],
             name: "AIP (American Institute of Physics)",
         },
@@ -5573,10 +5575,9 @@ ${note}</textarea
      * @returns {string} the url to the paper's abstract
      */
     const paperToAbs = (paper) => {
-        let type, doi;
+        var journal, type, doi, pii;
         const pdf = paper.pdfLink;
-        let pii;
-        let abs = "";
+        var abs = "";
         switch (paper.source) {
             case "arxiv":
                 abs = pdf.replace("/pdf/", "/abs/").replace(".pdf", "");
@@ -5656,7 +5657,9 @@ ${note}</textarea
                 break;
 
             case "aps":
-                [journal, type] = parseUrl(pdf).pathname.split("/").slice(1, 3);
+                const urlParts = parseUrl(pdf).pathname.split("/").slice(1, 3);
+                journal = urlParts[0];
+                type = urlParts[1];
                 abs = pdf.replace(`/${journal}/${type}/`, `/${journal}/abstract/`);
                 break;
 
@@ -5716,7 +5719,7 @@ ${note}</textarea
                 break;
 
             case "cell": //TODO DEBUG https://www.cell.com/trends/biochemical-sciences/fulltext/S0968-0004(25)00050-7
-                const journal = paper.id.split("_")[0].split("fulltext")[0];
+                journal = paper.id.split("_")[0].split("fulltext")[0];
                 pii = new URL(pdf).searchParams.get("pii");
                 abs = `https://www.cell.com/${journal}/fulltext/${pii}`;
                 break;
