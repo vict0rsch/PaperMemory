@@ -149,6 +149,51 @@ const processCSS = (inputFiles, outputPath, minimize = true) => ({
     },
 });
 
+// Process static HTML files to conditionally inject debug scripts
+const processStaticHTML = () => ({
+    name: "process-static-html",
+    writeBundle() {
+        const htmlFiles = [
+            {
+                src: "src/options/options.html",
+                debugScript: '    <script src="../debug/debug.bundle.js"></script>',
+                insertBefore: "</body>",
+            },
+            {
+                src: "src/fullMemory/fullMemory.html",
+                debugScript: '        <script src="../debug/debug.bundle.js"></script>',
+                insertBefore: "</head>",
+            },
+            {
+                src: "src/bibMatcher/bibMatcher.html",
+                debugScript: '        <script src="../debug/debug.bundle.js"></script>',
+                insertBefore: "</body>",
+            },
+        ];
+
+        htmlFiles.forEach(({ src, debugScript, insertBefore }) => {
+            let htmlContent = fs.readFileSync(src, "utf-8");
+
+            // Remove any existing debug script tags first (cleanup)
+            htmlContent = htmlContent.replace(
+                /\s*<script src="\.\.\/debug\/debug\.bundle\.js"><\/script>\s*/g,
+                ""
+            );
+
+            // Only inject debug script in development mode
+            if (isDevelopment) {
+                htmlContent = htmlContent.replace(
+                    insertBefore,
+                    `${debugScript}\n${insertBefore}`
+                );
+            }
+
+            // Write the processed HTML back
+            fs.writeFileSync(src, htmlContent);
+        });
+    },
+});
+
 // Configuration for different builds
 const configs = [
     // Theme JS (standalone)
@@ -258,7 +303,7 @@ const configs = [
                       name: "PMDebug",
                       sourcemap: true,
                   },
-                  plugins: getCommonPlugins(),
+                  plugins: [...getCommonPlugins(), processStaticHTML()],
               },
           ]
         : []),
