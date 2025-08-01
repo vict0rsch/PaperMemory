@@ -27,8 +27,16 @@ await loadPaperMemoryUtils();
 // -----  Global constants to parametrize the tests  -----
 // -------------------------------------------------------
 
-let { keepOpen, dump, singleOrder, singleName, ignoreSources, pageTimeout } =
-    loadConfig();
+let {
+    keepOpen,
+    dump,
+    singleOrder,
+    singleName,
+    ignoreSources,
+    pageTimeout,
+    maxSources,
+    onlySources,
+} = loadConfig();
 
 console.log("Test params:");
 console.log("    keepOpen      : ", keepOpen);
@@ -37,6 +45,8 @@ console.log("    singleOrder   : ", singleOrder);
 console.log("    singleName    : ", singleName);
 console.log("    ignoreSources : ", ignoreSources);
 console.log("    pageTimeout   : ", pageTimeout);
+console.log("    maxSources    : ", maxSources);
+console.log("    onlySources   : ", onlySources);
 
 // check env vars
 
@@ -55,7 +65,19 @@ if (singleOrder && orders.indexOf(singleOrder) === -1) {
 // make non-duplicated items to visit before known duplicates:
 // select the first item of each source and format it as duplicates
 // (= [{url: string}])
-let preDuplicates = Object.entries(readURLs())
+let urls = readURLs();
+
+// Apply maxSources truncation (same logic as test-storage.js)
+if (maxSources > 0) {
+    console.log(`Truncating preDuplicates to maxSources: ${maxSources}`);
+    urls = Object.fromEntries(Object.entries(urls).slice(0, maxSources));
+} else if (onlySources && onlySources.length > 0) {
+    urls = Object.fromEntries(
+        Object.entries(urls).filter(([source, v]) => onlySources.includes(source))
+    );
+}
+
+let preDuplicates = Object.entries(urls)
     .filter(([source, urls]) => !ignoreSources.includes(source))
     .map(([source, urls]) => urls)
     .filter((urls) => urls.length < 3 || !urls[2].botPrevention)
@@ -71,9 +93,14 @@ if (singleName) {
 
 console.log(`\nUsing ${preDuplicates.length} pre-duplicates`);
 
-const allDuplicates = readDuplicates().filter(
+let allDuplicates = readDuplicates().filter(
     (duplicates) => !singleName || duplicates[0].name === singleName
 );
+
+if (maxSources > 0) {
+    console.log(`Truncating allDuplicates to maxSources: ${maxSources}`);
+    allDuplicates = allDuplicates.slice(0, maxSources);
+}
 
 // --------------------------------
 // -----  Main test function  -----

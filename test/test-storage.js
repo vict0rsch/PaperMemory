@@ -36,8 +36,8 @@ var {
 // check env vars
 var orders = ["abs;pdf", "pdf;abs"];
 
-if (maxSources > 0 && sources) {
-    throw new Error("Please specify either maxSources xor sources");
+if (maxSources > 0 && onlySources && onlySources.length > 0) {
+    throw new Error("Please specify either maxSources xor onlySources");
 }
 
 if (singleOrder && orders.indexOf(singleOrder) === -1) {
@@ -84,6 +84,7 @@ describe("Test paper detection and storage", function () {
     );
     console.log("onlySources: ", onlySources);
     if (maxSources > 0) {
+        console.info("Truncating urls to maxSources: ", maxSources);
         urls = Object.fromEntries(Object.entries(urls).slice(0, maxSources));
     } else if (onlySources && onlySources.length > 0) {
         urls = Object.fromEntries(
