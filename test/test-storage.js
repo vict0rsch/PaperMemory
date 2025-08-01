@@ -17,7 +17,7 @@ import { readURLs, root, loadConfig, loadPaperMemoryUtils } from "./utilsForTest
 import { allAttributes } from "./processMemory.js";
 
 // make all functions in utils.min.js available in the `global` scope
-loadPaperMemoryUtils();
+await loadPaperMemoryUtils();
 
 // -------------------------------------------------------
 // -----  Global constants to parametrize the tests  -----

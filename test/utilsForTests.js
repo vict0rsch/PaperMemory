@@ -23,12 +23,12 @@ export const sleep = async (duration, textToDisplay) => {
 /**
  * Load all utils files into the global scope.
  */
-export const loadPaperMemoryUtils = () => {
+export const loadPaperMemoryUtils = async () => {
     const utilsFiles = glob
         .sync(`${root}/src/shared/js/utils/*.js`)
         .filter((file) => !file.endsWith("gist.js") && !file.endsWith("sync.js"))
         .map((file) => `../${file}`);
-    const utilsModules = utilsFiles.map((file) => import(file));
+    const utilsModules = await Promise.all(utilsFiles.map((file) => import(file)));
 
     for (const module of utilsModules) {
         for (const [name, func] of Object.entries(module)) {

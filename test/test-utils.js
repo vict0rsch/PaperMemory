@@ -3,12 +3,12 @@ import { JSDOM } from "jsdom";
 
 import { loadPaperMemoryUtils, range, readJSON } from "./utilsForTests.js";
 
-loadPaperMemoryUtils();
+await loadPaperMemoryUtils();
 // create fake `document`, parseUrl() will need it for instance
 global.document = new JSDOM(`<!DOCTYPE html>`).window.document;
 
 describe("Bibtex parser", function () {
-    var bdata = readJSON("./data/bibtexs.json");
+    var bdata = readJSON("./test/data/bibtexs.json");
 
     it("Test data is balanced", function () {
         expect(bdata.strings.length).toEqual(bdata.objects.length);
@@ -75,7 +75,7 @@ describe("Bibtex parser", function () {
 });
 
 describe("paper.js", () => {
-    var allUrls = readJSON("./data/urls.json");
+    var allUrls = readJSON("./test/data/urls.json");
 
     describe("#paperToAbs", () => {
         for (const [i, [source, urls]] of Object.entries(allUrls).entries()) {
