@@ -10,7 +10,7 @@ import { readJSON, sleep, asyncMap } from "./utilsForTests.js";
 import { loadPaperMemoryUtils } from "./utilsForTests.js";
 
 // make all functions in utils.min.js available in the `global` scope
-loadPaperMemoryUtils();
+await loadPaperMemoryUtils();
 
 const pat = process.env.github_pat ?? process.env.pm_ghp;
 const keepOpen = !!(process.env.keepOpen ?? false);
@@ -34,8 +34,8 @@ const setupSync = async (browser, goto = true) => {
 };
 
 describe("Test Github Gist Sync", async function () {
-    let urls = readJSON("./data/urls.json");
-    const miniMemory = readJSON("./data/3-papers-memory.json");
+    let urls = readJSON("./test/data/urls.json");
+    const miniMemory = readJSON("./test/data/3-papers-memory.json");
     urls = [urls["acl"][0], urls["arxiv"][0], urls["jmlr"][0]];
 
     this.slow(60e3);
