@@ -125,7 +125,7 @@
      * @param {string} text
      * @returns {void}
      * */
-    const setTextId$1 = (el, text) => {
+    const setTextId = (el, text) => {
         el = findEl({ element: el });
         if (el) el.innerText = text;
     };
@@ -5737,7 +5737,11 @@
 
             store && backupData({ ...papers });
 
-            delete papers["__dataVersion"];
+            Object.keys(papers).forEach((key) => {
+                if (key.startsWith("__")) {
+                    delete papers[key];
+                }
+            });
             let migrationSummaries = {};
 
             for (const id in papers) {
@@ -8410,11 +8414,11 @@ ${note}</textarea
             );
             setHTML("popup-authors", cutAuthors(paper.author, 200).replace(/({|})/g, ""));
             if (paper.codeLink) {
-                setTextId$1("popup-code-link", paper.codeLink.replace(/^https?:\/\//, ""));
+                setTextId("popup-code-link", paper.codeLink.replace(/^https?:\/\//, ""));
                 showId("popup-code-link");
             }
             if (paper.source === "website") {
-                setTextId$1("popup-website-url", paper.pdfLink.replace(/^https?:\/\//, ""));
+                setTextId("popup-website-url", paper.pdfLink.replace(/^https?:\/\//, ""));
                 showId("popup-website-url");
             }
 
@@ -10504,7 +10508,12 @@ ${note}</textarea
             pwcPath += new URLSearchParams({ title });
         }
         const response = await fetch(pwcPath);
-        const json = await response.json();
+        try {
+            const json = await response.json();
+        } catch (error) {
+            logError("[fetchPWCData]", error);
+            return;
+        }
 
         if (json["count"] !== 1) {
             log("No PWC entry match.");
@@ -10620,6 +10629,17 @@ ${note}</textarea
             }
             if (remoteSyncId === localSyncID) {
                 warn("Pulled sync data from same device, ignoring.");
+            }
+
+            if (typeof remotePapers === "string") {
+                try {
+                    remotePapers = JSON.parse(remotePapers);
+                } catch (e) {
+                    logError("[pullSyncPapers] Error parsing remote papers:", e);
+                    logError("[pullSyncPapers] Remote papers:", remotePapers);
+
+                    throw e;
+                }
             }
             log("Pulled papers:", remotePapers);
             const duration = (Date.now() - start) / 1e3;
