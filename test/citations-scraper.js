@@ -139,6 +139,8 @@ const getCoauthors = (page, max = 4) => {
                     for (const [k, ca] of coauthors.entries()) {
                         nextId.push({ id: ca, order: k, level: currentLevel + 1 });
                     }
+                    // create the directory if it doesn't exist
+                    fs.mkdirSync(`./tmp`, { recursive: true });
                     fs.writeFileSync(
                         "./tmp/citations.json",
                         JSON.stringify(data, null, 2)
