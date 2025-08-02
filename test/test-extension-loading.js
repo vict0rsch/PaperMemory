@@ -7,48 +7,13 @@
 
 import { expect } from "expect";
 import {
-    makeBrowser,
-    extensionPopupURL,
-    fullMemoryURL,
-    chromeExtensionsURL,
+    findExtensionId,
     getPaperMemoryState,
+    makeBrowser,
+    getPMURLs,
 } from "./browser.js";
 
 import { loadConfig, sleep } from "./utilsForTests.js";
-
-// Helper function to find the actual extension ID from the Chrome extensions page
-const findActualExtensionId = async (browser) => {
-    const page = await browser.newPage();
-    try {
-        await page.goto("chrome://extensions/", { waitUntil: "networkidle0" });
-
-        // Extract extension IDs from the page
-        const extensionId = await page.evaluate(() => {
-            const extensionManager = document.querySelector("extensions-manager");
-            if (!extensionManager || !extensionManager.shadowRoot) return null;
-
-            const itemList =
-                extensionManager.shadowRoot.querySelector("extensions-item-list");
-            if (!itemList || !itemList.shadowRoot) return null;
-
-            const extensionItems =
-                itemList.shadowRoot.querySelectorAll("extensions-item");
-            for (const item of extensionItems) {
-                if (!item.shadowRoot) continue;
-
-                const nameElement = item.shadowRoot.querySelector("#name");
-                if (nameElement && nameElement.textContent.includes("Paper Memory")) {
-                    return item.id;
-                }
-            }
-            return null;
-        });
-
-        return extensionId;
-    } finally {
-        await page.close();
-    }
-};
 
 // -------------------------------------------------------
 // -----  Global constants to parametrize the tests  -----
@@ -63,9 +28,8 @@ console.log("keepOpen :", keepOpen);
 
 describe("Test PaperMemory Extension Loading", function () {
     var browser;
-    var actualExtensionId;
-    var dynamicPopupURL;
-    var dynamicFullMemoryURL;
+    var extensionId;
+    var pmURLs;
 
     // Set timeout for extension loading tests
     this.timeout(30000); // 30 seconds
@@ -75,18 +39,9 @@ describe("Test PaperMemory Extension Loading", function () {
         console.log("Creating browser with PaperMemory extension...");
         browser = await makeBrowser();
 
-        // Discover the actual extension ID assigned by Chrome
-        console.log("Discovering actual extension ID...");
-        actualExtensionId = await findActualExtensionId(browser);
-
-        if (actualExtensionId) {
-            console.log(`✓ Found PaperMemory extension with ID: ${actualExtensionId}`);
-            dynamicPopupURL = `chrome-extension://${actualExtensionId}/src/popup/min/popup.min.html`;
-            dynamicFullMemoryURL = `chrome-extension://${actualExtensionId}/src/fullMemory/fullMemory.html?noRefresh=true`;
-        } else {
-            console.log("❌ Could not find PaperMemory extension in Chrome");
-            // We'll still run the tests to show they fail properly
-        }
+        // Discover the extension ID assigned by Chrome
+        console.log("Discovering extension ID...");
+        extensionId = await findExtensionId(browser);
     });
 
     after(async function () {
@@ -97,21 +52,12 @@ describe("Test PaperMemory Extension Loading", function () {
     });
 
     describe("Extension ID Discovery", function () {
-        it("should successfully discover the actual extension ID", async function () {
-            console.log(`Hard-coded extension ID: ehchlpggdaffcncbeopdopnndhdjelbc`);
-
-            if (actualExtensionId) {
-                console.log(`✓ Actual extension ID: ${actualExtensionId}`);
-                expect(actualExtensionId).toBeDefined();
-                expect(actualExtensionId.length).toBe(32); // Chrome extension IDs are 32 characters
-
-                if (actualExtensionId !== "ehchlpggdaffcncbeopdopnndhdjelbc") {
-                    console.log(
-                        `💡 Extension ID mismatch detected! This explains why hard-coded URLs fail.`
-                    );
-                    console.log(`   Hard-coded: ehchlpggdaffcncbeopdopnndhdjelbc`);
-                    console.log(`   Actual:     ${actualExtensionId}`);
-                }
+        it("should successfully discover the extension ID", async function () {
+            if (extensionId) {
+                expect(extensionId).toBeDefined();
+                expect(extensionId.length).toBe(32); // Chrome extension IDs are 32 characters
+                console.log(`✓ Found PaperMemory extension with ID: ${extensionId}`);
+                pmURLs = getPMURLs(extensionId);
             } else {
                 throw new Error(
                     "❌ Extension ID discovery failed - extension not loaded or not found"
@@ -127,20 +73,20 @@ describe("Test PaperMemory Extension Loading", function () {
             try {
                 // Navigate to the extension popup URL
                 // Skip test if extension wasn't found
-                if (!actualExtensionId) {
+                if (!extensionId) {
                     throw new Error(
                         "Extension ID not found - extension not loaded properly"
                     );
                 }
 
                 // Navigate to the extension popup URL using the dynamic ID
-                console.log(`Navigating to popup URL: ${dynamicPopupURL}`);
+                console.log(`Navigating to popup URL: ${pmURLs.popupURL}`);
 
                 let response;
                 let error = null;
 
                 try {
-                    response = await page.goto(dynamicPopupURL, {
+                    response = await page.goto(pmURLs.popupURL, {
                         waitUntil: "networkidle0",
                         timeout: 10000,
                     });
@@ -197,14 +143,14 @@ describe("Test PaperMemory Extension Loading", function () {
             try {
                 // Navigate to the full memory URL
                 // Skip test if extension wasn't found
-                if (!actualExtensionId) {
+                if (!extensionId) {
                     throw new Error(
                         "Extension ID not found - extension not loaded properly"
                     );
                 }
 
-                console.log(`Navigating to full memory URL: ${dynamicFullMemoryURL}`);
-                const response = await page.goto(dynamicFullMemoryURL, {
+                console.log(`Navigating to full memory URL: ${pmURLs.fullMemoryURL}`);
+                const response = await page.goto(pmURLs.fullMemoryURL, {
                     waitUntil: "networkidle0",
                     timeout: 10000,
                 });
@@ -233,9 +179,9 @@ describe("Test PaperMemory Extension Loading", function () {
             try {
                 // Navigate to Chrome extensions page
                 console.log(
-                    `Navigating to Chrome extensions page: ${chromeExtensionsURL}`
+                    `Navigating to Chrome extensions page: ${pmURLs.chromeSettingsURL}`
                 );
-                await page.goto(chromeExtensionsURL, {
+                await page.goto(pmURLs.chromeSettingsURL, {
                     waitUntil: "networkidle0",
                     timeout: 10000,
                 });
@@ -288,14 +234,14 @@ describe("Test PaperMemory Extension Loading", function () {
 
             try {
                 // Skip test if extension wasn't found
-                if (!actualExtensionId) {
+                if (!extensionId) {
                     throw new Error(
                         "Extension ID not found - extension not loaded properly"
                     );
                 }
 
                 // Navigate to the popup page where extension scripts should be loaded
-                await page.goto(dynamicPopupURL, {
+                await page.goto(pmURLs.popupURL, {
                     waitUntil: "networkidle0",
                     timeout: 10000,
                 });
@@ -354,8 +300,8 @@ describe("Test PaperMemory Extension Loading", function () {
             const extensionIdPattern = /chrome-extension:\/\/([a-z]+)\/.*$/;
 
             // Test popup URL
-            expect(extensionPopupURL).toMatch(extensionIdPattern);
-            const popupMatch = extensionPopupURL.match(extensionIdPattern);
+            expect(pmURLs.popupURL).toMatch(extensionIdPattern);
+            const popupMatch = pmURLs.popupURL.match(extensionIdPattern);
             const extensionId = popupMatch[1];
 
             console.log(`Extension ID: ${extensionId}`);
@@ -363,11 +309,11 @@ describe("Test PaperMemory Extension Loading", function () {
             expect(extensionId.length).toBe(32); // Chrome extension IDs are 32 characters
 
             // Test full memory URL
-            expect(fullMemoryURL).toMatch(extensionIdPattern);
-            expect(fullMemoryURL).toContain(extensionId); // Should use same extension ID
+            expect(pmURLs.fullMemoryURL).toMatch(extensionIdPattern);
+            expect(pmURLs.fullMemoryURL).toContain(extensionId); // Should use same extension ID
 
             // Test Chrome extensions URL
-            expect(chromeExtensionsURL).toContain(extensionId);
+            expect(pmURLs.chromeSettingsURL).toContain(extensionId);
 
             console.log("✓ Extension URLs have valid structure");
         });

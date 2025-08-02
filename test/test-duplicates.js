@@ -7,7 +7,8 @@ import fs from "fs";
 import {
     makeBrowser,
     getPaperMemoryState,
-    extensionPopupURL,
+    findExtensionId,
+    getPMURLs,
     visitPaperPage,
 } from "./browser.js";
 
@@ -120,6 +121,10 @@ describe("Paper de-duplication", function () {
     // make sure de-duplication works if a pre-print or a publication is opened first
     for (const [o, order] of orders.entries()) {
         describe(`Testing order ${order}`, function () {
+            after(async function () {
+                await browser.close();
+            });
+
             // before the tests: visit paper pages
             before(async function () {
                 // create browser
@@ -158,8 +163,10 @@ describe("Paper de-duplication", function () {
                 }
 
                 // go to the extension popup's page
-                memoryPage = await browser.newPage();
-                await memoryPage.goto(extensionPopupURL);
+                memoryPage = (await browser.pages())[0];
+                const extensionId = await findExtensionId(browser);
+                const { popupURL } = getPMURLs(extensionId);
+                await memoryPage.goto(popupURL);
                 // wait for it to load
                 await sleep(1e3);
                 // get PaperMemory's state
@@ -168,6 +175,8 @@ describe("Paper de-duplication", function () {
                 if (dump) {
                     // dump this data for human analysis
                     const fname = `${root}/test/tmp/duplicate-memory-${new Date()}.json`;
+                    // create the directory if it doesn't exist
+                    fs.mkdirSync(`${root}/test/tmp`, { recursive: true });
                     fs.writeFileSync(fname, JSON.stringify(memoryState, null, 2));
                 }
             });

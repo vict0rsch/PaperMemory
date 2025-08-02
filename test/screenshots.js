@@ -1,4 +1,4 @@
-import { makeBrowser, extensionPopupURL } from "./browser.js";
+import { makeBrowser, baseExtensionPopupURL } from "./browser.js";
 
 const nowStr = () => {
     d = new Date().toJSON();
@@ -6,7 +6,7 @@ const nowStr = () => {
 };
 
 (async () => {
-    const root = extensionPopupURL.split("/src/")[0];
+    const root = baseExtensionPopupURL.split("/src/")[0];
 
     let capture = ["options", "menu"];
     if (process.env.capture) {
@@ -28,7 +28,7 @@ const nowStr = () => {
         });
         await new Promise((resolve) => {
             page.evaluate(async (resolve) => {
-                setStorage("checkDarkMode", true, resolve);
+                PMDebug.data.setStorage("checkDarkMode", true, resolve);
             }, resolve);
         });
         await page.reload({

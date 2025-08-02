@@ -9,7 +9,8 @@ import fs from "fs";
 import {
     makeBrowser,
     getMemoryPapers,
-    extensionPopupURL,
+    findExtensionId,
+    getPMURLs,
     visitPaperPage,
 } from "./browser.js";
 
@@ -178,7 +179,9 @@ describe("Test paper detection and storage", function () {
 
                 // go to the extension's popup url
                 const page = await browser.newPage();
-                await page.goto(extensionPopupURL);
+                const extensionId = await findExtensionId(browser);
+                const { popupURL } = getPMURLs(extensionId);
+                await page.goto(popupURL);
 
                 // retrieve the data parsed by PaperMemory
                 memoryPapers = await getMemoryPapers(page);
@@ -186,6 +189,8 @@ describe("Test paper detection and storage", function () {
                 if (dump) {
                     // dump this data for human analysis
                     const fname = `${root}/test/tmp/memory-${new Date()}.json`;
+                    // create the directory if it doesn't exist
+                    fs.mkdirSync(`${root}/test/tmp`, { recursive: true });
                     fs.writeFileSync(fname, JSON.stringify(memoryPapers, null, 2));
                 }
 
