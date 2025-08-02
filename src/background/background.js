@@ -167,7 +167,12 @@ const fetchPWCData = async (arxivId, title) => {
         pwcPath += new URLSearchParams({ title });
     }
     const response = await fetch(pwcPath);
-    const json = await response.json();
+    try {
+        const json = await response.json();
+    } catch (error) {
+        logError("[fetchPWCData]", error);
+        return;
+    }
 
     if (json["count"] !== 1) {
         log("No PWC entry match.");
@@ -283,6 +288,17 @@ const pullSyncPapers = async () => {
         }
         if (remoteSyncId === localSyncID) {
             warn("Pulled sync data from same device, ignoring.");
+        }
+
+        if (typeof remotePapers === "string") {
+            try {
+                remotePapers = JSON.parse(remotePapers);
+            } catch (e) {
+                logError("[pullSyncPapers] Error parsing remote papers:", e);
+                logError("[pullSyncPapers] Remote papers:", remotePapers);
+
+                throw e;
+            }
         }
         log("Pulled papers:", remotePapers);
         const duration = (Date.now() - start) / 1e3;
