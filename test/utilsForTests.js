@@ -130,6 +130,8 @@ export const readURLs = () => readJSON(`${root}/test/data/urls.json`);
  */
 export const readDuplicates = () => readJSON(`${root}/test/data/duplicates.json`);
 
+export const indent = (n) => " ".repeat(n * 4);
+
 /**
  * Load the test config file, and override any values with environment variables.
  */
