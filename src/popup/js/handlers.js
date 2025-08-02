@@ -20,6 +20,7 @@ import {
     slideUp,
     slideDown,
     setHTML,
+    setTextId,
     dispatch,
     addListener,
     queryAll,
