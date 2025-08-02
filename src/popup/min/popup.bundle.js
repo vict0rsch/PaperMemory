@@ -125,7 +125,7 @@ var PaperMemoryPopup = (function (exports) {
      * @param {string} text
      * @returns {void}
      * */
-    const setTextId$1 = (el, text) => {
+    const setTextId = (el, text) => {
         el = findEl({ element: el });
         if (el) el.innerText = text;
     };
@@ -7933,7 +7933,11 @@ ${note}</textarea
 
             store && backupData({ ...papers });
 
-            delete papers["__dataVersion"];
+            Object.keys(papers).forEach((key) => {
+                if (key.startsWith("__")) {
+                    delete papers[key];
+                }
+            });
             let migrationSummaries = {};
 
             for (const id in papers) {
@@ -9043,11 +9047,11 @@ ${note}</textarea
             );
             setHTML("popup-authors", cutAuthors(paper.author, 200).replace(/({|})/g, ""));
             if (paper.codeLink) {
-                setTextId$1("popup-code-link", paper.codeLink.replace(/^https?:\/\//, ""));
+                setTextId("popup-code-link", paper.codeLink.replace(/^https?:\/\//, ""));
                 showId("popup-code-link");
             }
             if (paper.source === "website") {
-                setTextId$1("popup-website-url", paper.pdfLink.replace(/^https?:\/\//, ""));
+                setTextId("popup-website-url", paper.pdfLink.replace(/^https?:\/\//, ""));
                 showId("popup-website-url");
             }
 
