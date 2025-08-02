@@ -56,7 +56,11 @@ export const migrateData = async (papers, manifestDataVersion, store = true) => 
 
         store && backupData({ ...papers });
 
-        delete papers["__dataVersion"];
+        Object.keys(papers).forEach((key) => {
+            if (key.startsWith("__")) {
+                delete papers[key];
+            }
+        });
         let migrationSummaries = {};
 
         for (const id in papers) {
