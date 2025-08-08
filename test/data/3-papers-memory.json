@@ -2,7 +2,7 @@
     "Arxiv-1703.10593": {
         "addDate": "2025-08-02T08:24:25.794Z",
         "author": "Jun-Yan Zhu and Taesung Park and Phillip Isola and Alexei A. Efros",
-        "bibtex": "@article{zhu2017unpaired,\\n  title     = {Unpaired Image-to-Image Translation using Cycle-Consistent Adversarial Networks},\\n  author    = {Jun-Yan Zhu and Taesung Park and Phillip Isola and Alexei A. Efros},\\n  journal   = {IEEE International Conference on Computer Vision},\\n  year      = {2017},\\n  doi       = {10.1109/ICCV.2017.244},\\n  bibSource = {Semantic Scholar https://www.semanticscholar.org/paper/c43d954cf8133e6254499f3d68e45218067e4941}\\n}",
+        "bibtex": "@article{zhu2017unpaired,\n  title     = {Unpaired Image-to-Image Translation using Cycle-Consistent Adversarial Networks},\n  author    = {Jun-Yan Zhu and Taesung Park and Phillip Isola and Alexei A. Efros},\n  journal   = {IEEE International Conference on Computer Vision},\n  year      = {2017},\n  doi       = {10.1109/ICCV.2017.244},\n  bibSource = {Semantic Scholar https://www.semanticscholar.org/paper/c43d954cf8133e6254499f3d68e45218067e4941}\n}",
         "code": {},
         "codeLink": "",
         "count": 1,
@@ -24,7 +24,7 @@
     "JMLR-2012_bergstra12a": {
         "addDate": "2025-08-02T08:24:43.053Z",
         "author": "James Bergstra and Yoshua Bengio",
-        "bibtex": "@article{JMLR:v13:bergstra12a,\\n  author  = {James Bergstra and Yoshua Bengio},\\n  title   = {Random Search for Hyper-Parameter Optimization},\\n  journal = {Journal of Machine Learning Research},\\n  year    = {2012},\\n  volume  = {13},\\n  number  = {10},\\n  pages   = {281--305},\\n  url     = {http://jmlr.org/papers/v13/bergstra12a.html}\\n}",
+        "bibtex": "@article{JMLR:v13:bergstra12a,\n  author  = {James Bergstra and Yoshua Bengio},\n  title   = {Random Search for Hyper-Parameter Optimization},\n  journal = {Journal of Machine Learning Research},\n  year    = {2012},\n  volume  = {13},\n  number  = {10},\n  pages   = {281--305},\n  url     = {http://jmlr.org/papers/v13/bergstra12a.html}\n}",
         "code": {},
         "codeLink": "",
         "count": 1,
@@ -46,7 +46,7 @@
     "RSC-DigitalDiscovery_d2dd00066k": {
         "addDate": "2025-08-02T08:25:09.909Z",
         "author": "Shizhao Lu and Brian Montz and Todd Emrick and Arthi Jayaraman",
-        "bibtex": "@article{D2DD00066K,\\n  author    = {Lu, Shizhao and Montz, Brian and Emrick, Todd and Jayaraman, Arthi},\\n  title     = {Semi-supervised machine learning workflow for analysis of nanowire morphologies from transmission electron microscopy images},\\n  journal   = {Digital Discovery},\\n  year      = {2022},\\n  volume    = {1},\\n  issue     = {6},\\n  pages     = {816-833},\\n  publisher = {RSC},\\n  doi       = {10.1039/D2DD00066K},\\n  url       = {http://dx.doi.org/10.1039/D2DD00066K}\\n}",
+        "bibtex": "@article{D2DD00066K,\n  author    = {Lu, Shizhao and Montz, Brian and Emrick, Todd and Jayaraman, Arthi},\n  title     = {Semi-supervised machine learning workflow for analysis of nanowire morphologies from transmission electron microscopy images},\n  journal   = {Digital Discovery},\n  year      = {2022},\n  volume    = {1},\n  issue     = {6},\n  pages     = {816-833},\n  publisher = {RSC},\n  doi       = {10.1039/D2DD00066K},\n  url       = {http://dx.doi.org/10.1039/D2DD00066K}\n}",
         "code": {},
         "codeLink": "",
         "count": 1,

@@ -1,3 +1,5 @@
+import { expect } from "expect";
+
 import puppeteer from "puppeteer";
 import { sleep, root } from "./utilsForTests.js";
 import fs from "fs";
@@ -11,6 +13,7 @@ export const makeBrowser = async (windowSize = "1200,900") => {
             `--load-extension=${root}`,
             `--window-size=${windowSize}`,
             "--user-agent=PuppeteerAgent",
+            "--disable-web-security", // Allow clipboard access
         ],
     });
     return browser;
@@ -109,4 +112,92 @@ export const getPMURLs = (extensionId) => {
             extensionId
         ),
     };
+};
+
+export const resetPage = async (page, url) => {
+    await page.goto(url, {
+        waitUntil: "networkidle0",
+    });
+    await page.bringToFront();
+};
+
+export const setStorage = async (page, key, value) =>
+    await page.evaluate(
+        ({ key, value }) => {
+            return new Promise(async (resolve) => {
+                await PMDebug.data.setStorage(key, value);
+                resolve();
+            });
+        },
+        { key, value }
+    );
+
+export const verifySelectorExists = async (selector, page) => {
+    // Wait for button to be present
+    await page.waitForSelector(selector, { timeout: 3000 });
+    const el = await page.$(selector);
+    expect(el).toBeTruthy();
+    return el;
+};
+
+export const verifyElementClickable = async (el, page) => {
+    const isClickable = await page.evaluate(
+        (el) =>
+            el &&
+            !el.disabled &&
+            getComputedStyle(el).pointerEvents !== "none" &&
+            getComputedStyle(el).visibility !== "hidden" &&
+            getComputedStyle(el).opacity !== "0",
+        el
+    );
+    expect(isClickable).toBe(true);
+    return isClickable;
+};
+
+export const getURL = async (page) => {
+    const documentState = await page.evaluate(() => document.readyState);
+    if (documentState !== "complete") {
+        await page.waitForNavigation({ waitUntil: "domcontentloaded" });
+    }
+    let url = await page.evaluate(() => document.location.href);
+    while (url === "about:blank") {
+        await sleep(50);
+        url = await page.evaluate(() => document.location.href);
+    }
+    return url;
+};
+
+export const safeClick = async (selector, page) => {
+    // Wait for element and ensure it's clickable
+    await page.waitForSelector(selector, { visible: true, timeout: 3000 });
+
+    // Scroll element into view
+    await page.evaluate((sel) => {
+        const element = document.querySelector(sel);
+        if (element) {
+            element.scrollIntoView({ behavior: "instant", block: "center" });
+        }
+    }, selector);
+
+    // Try to click
+    try {
+        await page.click(selector);
+    } catch (error) {
+        console.log(`   ⚠ Direct click failed for ${selector}, trying evaluate click`);
+        await page.evaluate((sel) => {
+            const element = document.querySelector(sel);
+            if (element) {
+                element.click();
+            }
+        }, selector);
+    }
+    await sleep(100);
+};
+
+export const miniHash = async (str, page) => {
+    return await page.evaluate(async (s) => {
+        return await new Promise((resolve) => {
+            resolve(PMDebug.functions.miniHash(s));
+        });
+    }, str);
 };
