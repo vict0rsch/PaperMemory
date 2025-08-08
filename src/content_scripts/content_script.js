@@ -42,7 +42,7 @@ import {
     handleCopyHyperLink,
 } from "@pm/popup/js/handlers.js";
 import { stateTitleFunction } from "@pmu/state.js";
-import { parseIdFromUrl, isSourceURL } from "@pmu/urls.js";
+import { parseIdFromUrl, isSourceURL, isArxivAbstractUrl } from "@pmu/urls.js";
 
 // Notification object for feedback system
 var notif = {
@@ -855,7 +855,7 @@ const tryArxivDisplay = async ({
     // because of the existing paper matching mechanism
     let is = await isPaper(url, true);
 
-    if (is.arxiv && !isPdfUrl(url)) {
+    if (is.arxiv && !isPdfUrl(url) && isArxivAbstractUrl(url)) {
         // larger arxiv column
         adjustArxivColWidth();
 
