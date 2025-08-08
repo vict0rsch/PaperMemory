@@ -140,27 +140,6 @@ describe("Test PaperMemory Memory Item Actions", function () {
         }
     }
 
-    async function setPreferencesAndReload(prefs, page) {
-        await page.evaluate((preferences) => {
-            return new Promise(async (resolve) => {
-                await PMDebug.data.setStorage("prefs", preferences);
-                // Update runtime state without reload when possible
-                if (
-                    window.PMDebug &&
-                    window.PMDebug.config &&
-                    window.PMDebug.config.state
-                ) {
-                    Object.assign(window.PMDebug.config.state.prefs, preferences);
-                }
-                resolve();
-            });
-        }, prefs);
-
-        // Only reload if we need to see UI changes, otherwise just update memory display
-        await page.reload({ waitUntil: "networkidle0" });
-        await ensureMemoryIsOpen(page);
-    }
-
     // Fast preference update for tests that don't need UI refresh
     async function updatePreferences(prefs, page) {
         await page.evaluate((preferences) => {

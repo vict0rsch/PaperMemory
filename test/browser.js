@@ -201,3 +201,23 @@ export const miniHash = async (str, page) => {
         });
     }, str);
 };
+
+export const setPreferencesAndReload = async (prefs, page) => {
+    await page.evaluate((preferences) => {
+        return new Promise(async (resolve) => {
+            await PMDebug.data.setStorage("prefs", preferences);
+            // Update runtime state without reload when possible
+            if (
+                window.PMDebug &&
+                window.PMDebug.config &&
+                window.PMDebug.config.state
+            ) {
+                Object.assign(window.PMDebug.config.state.prefs, preferences);
+            }
+            resolve();
+        });
+    }, prefs);
+
+    // Only reload if we need to see UI changes, otherwise just update memory display
+    await page.reload({ waitUntil: "networkidle0" });
+};
