@@ -253,3 +253,5 @@ export const parseIdFromUrl = async (url, tab = null) => {
 
     return idForUrl;
 };
+
+export const isArxivAbstractUrl = (url) => url.startsWith("https://arxiv.org/abs/");
