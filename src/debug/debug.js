@@ -66,6 +66,10 @@ const PMDebug = {
         return miniquery.setHTML;
     },
 
+    get getPapers() {
+        return config.state.papers;
+    },
+
     // Utility to list all available functions
     listAllFunctions() {
         const modules = [
