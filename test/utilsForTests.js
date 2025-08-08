@@ -95,12 +95,18 @@ export const loadPaperMemoryUtils = async () => {
         .sync(`${root}/src/shared/js/utils/*.js`)
         .filter((file) => !file.endsWith("gist.js") && !file.endsWith("sync.js"))
         .map((file) => `../${file}`);
-    const utilsModules = await Promise.all(utilsFiles.map((file) => import(file)));
+    const utilsModules = await asyncMap(utilsFiles, async (file) => {
+        const module = await import(file);
+        return {
+            name: file.split("/").pop().split(".")[0], // remove .js
+            module,
+        };
+    });
 
-    for (const module of utilsModules) {
-        for (const [name, func] of Object.entries(module)) {
-            global[name] = func;
-        }
+    global.PMUtils = {};
+
+    for (const moduleDict of utilsModules) {
+        global.PMUtils[moduleDict.name] = moduleDict.module;
     }
 };
 
