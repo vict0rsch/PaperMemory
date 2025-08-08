@@ -609,6 +609,9 @@ export const displayMemoryTable = (pagination = 0) => {
     info("Display duration (s): " + (end - start) / 1e3);
 };
 
+export const setMemorySearchPlaceholder = () =>
+    setPlaceholder("memory-search", `Search ${state.papersList.length} entries ...`);
+
 /**
  * Main function called after the user clicks on the PaperMemory button
  * or presses `a`.
@@ -616,8 +619,7 @@ export const displayMemoryTable = (pagination = 0) => {
  */
 export const makeMemoryHTML = async () => {
     // Fill-in input placeholder
-    setPlaceholder("memory-search", `Search ${state.papersList.length} entries ...`);
-
+    setMemorySearchPlaceholder();
     displayMemoryTable();
 
     // search keypress events.
