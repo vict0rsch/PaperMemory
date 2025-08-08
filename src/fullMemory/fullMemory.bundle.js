@@ -6665,7 +6665,7 @@ ${note}</textarea
                             >
                         </div>
                         <div class="form-note-buttons">
-                            <button class="cancel-note-form back-to-focus">
+                            <button class="done-note-form back-to-focus">
                                 Done
                             </button>
                         </div>
@@ -7552,7 +7552,7 @@ ${note}</textarea
                 const id = eventId(e);
                 const div = findEl({ paperId: id, memoryItemClass: "extended-item" });
                 const isVisible = div.style.display !== "none";
-                const doneButton = div.querySelector(".cancel-note-form");
+                const doneButton = div.querySelector(".done-note-form");
                 if (doneButton && isVisible) {
                     doneButton.click();
                 }
@@ -7904,7 +7904,7 @@ ${note}</textarea
         // Add to favorites
         addEventToClass(".memory-item-favorite", "click", handleAddItemToFavorites);
         // Cancel edits: bring previous values from state back
-        addEventToClass(".cancel-note-form", "click", handleCancelPaperEdit);
+        addEventToClass(".done-note-form", "click", handleCancelPaperEdit);
         // When clicking on the edit button, either open or close the edit form
         addEventToClass(".memory-item-edit", "click", handleTogglePaperEdit);
         // When clicking on a tag, search for it
