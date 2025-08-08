@@ -158,6 +158,7 @@ const fetchGSData = async (paper) => {
 };
 
 const fetchPWCData = async (arxivId, title) => {
+    return; // PWC API discontinued, to fix later
     let pwcPath = `https://paperswithcode.com/api/v1/papers/?`;
     if (arxivId) {
         log("Fetching PWC data for arxivId:", arxivId);
