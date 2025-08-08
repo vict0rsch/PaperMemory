@@ -271,7 +271,7 @@ ${note}</textarea
                             >
                         </div>
                         <div class="form-note-buttons">
-                            <button class="cancel-note-form back-to-focus">
+                            <button class="done-note-form back-to-focus">
                                 Done
                             </button>
                         </div>
