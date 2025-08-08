@@ -3410,11 +3410,10 @@ ${note}</textarea
             state.papersList = state.papersList.filter((p) => p.favorite);
             displayMemoryTable();
             setMemorySortArrow("down");
-            findEl(
-                "memory-select"
-            ).innerHTML += `<option value="favoriteDate">Last favoured</option>`;
-            const n = state.papersList.length;
-            setPlaceholder("memory-search", `Search ${n} entries...`);
+            findEl({
+                element: "memory-select",
+            }).innerHTML += `<option value="favoriteDate">Last favoured</option>`;
+            setMemorySearchPlaceholder();
         } else {
             removeClass(
                 findEl({ element: "filter-favorites" }).querySelector("svg"),
@@ -3435,8 +3434,7 @@ ${note}</textarea
                 state.papersList = state.sortedPapers;
                 displayMemoryTable();
             }
-            const n = state.sortedPapers.length;
-            setPlaceholder("memory-search", `Search ${n} entries...`);
+            setMemorySearchPlaceholder();
         }
     };
 
@@ -5326,6 +5324,9 @@ ${note}</textarea
         info("Display duration (s): " + (end - start) / 1e3);
     };
 
+    const setMemorySearchPlaceholder = () =>
+        setPlaceholder("memory-search", `Search ${state.papersList.length} entries ...`);
+
     /**
      * Main function called after the user clicks on the PaperMemory button
      * or presses `a`.
@@ -5333,8 +5334,7 @@ ${note}</textarea
      */
     const makeMemoryHTML = async () => {
         // Fill-in input placeholder
-        setPlaceholder("memory-search", `Search ${state.papersList.length} entries ...`);
-
+        setMemorySearchPlaceholder();
         displayMemoryTable();
 
         // search keypress events.

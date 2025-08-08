@@ -4948,11 +4948,10 @@ ${note}</textarea
             state$1.papersList = state$1.papersList.filter((p) => p.favorite);
             displayMemoryTable();
             setMemorySortArrow("down");
-            findEl(
-                "memory-select"
-            ).innerHTML += `<option value="favoriteDate">Last favoured</option>`;
-            const n = state$1.papersList.length;
-            setPlaceholder("memory-search", `Search ${n} entries...`);
+            findEl({
+                element: "memory-select",
+            }).innerHTML += `<option value="favoriteDate">Last favoured</option>`;
+            setMemorySearchPlaceholder();
         } else {
             removeClass(
                 findEl({ element: "filter-favorites" }).querySelector("svg"),
@@ -4973,8 +4972,7 @@ ${note}</textarea
                 state$1.papersList = state$1.sortedPapers;
                 displayMemoryTable();
             }
-            const n = state$1.sortedPapers.length;
-            setPlaceholder("memory-search", `Search ${n} entries...`);
+            setMemorySearchPlaceholder();
         }
     };
 
@@ -6783,6 +6781,9 @@ ${note}</textarea
         info("Display duration (s): " + (end - start) / 1e3);
     };
 
+    const setMemorySearchPlaceholder = () =>
+        setPlaceholder("memory-search", `Search ${state$1.papersList.length} entries ...`);
+
     /**
      * Main function called after the user clicks on the PaperMemory button
      * or presses `a`.
@@ -6790,8 +6791,7 @@ ${note}</textarea
      */
     const makeMemoryHTML = async () => {
         // Fill-in input placeholder
-        setPlaceholder("memory-search", `Search ${state$1.papersList.length} entries ...`);
-
+        setMemorySearchPlaceholder();
         displayMemoryTable();
 
         // search keypress events.
@@ -6856,6 +6856,7 @@ ${note}</textarea
         searchMemoryByCode: searchMemoryByCode,
         searchMemoryByTags: searchMemoryByTags,
         searchMemoryByYear: searchMemoryByYear,
+        setMemorySearchPlaceholder: setMemorySearchPlaceholder,
         setMemorySortArrow: setMemorySortArrow,
         toggleTagsCollapse: toggleTagsCollapse,
         updateAllMemoryPaperTagOptions: updateAllMemoryPaperTagOptions,

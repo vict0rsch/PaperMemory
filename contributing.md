@@ -43,7 +43,7 @@ In development builds, a global `PMDebug` object is automatically injected into 
 // Access utility modules
 PMDebug.data.getStorage(); // Storage operations
 PMDebug.functions.log("Debug message"); // Logging utilities
-PMDebug.miniquery.findEl("#element"); // DOM utilities
+PMDebug.miniquery.findEl({ element: "elementId" }); // DOM utilities
 PMDebug.paper.addOrUpdatePaper(); // Paper operations
 PMDebug.config.state; // Global state
 
@@ -86,8 +86,12 @@ await PMDebug.getStorage();
 await PMDebug.setStorage({ test: "value" });
 
 // Debug DOM elements
-PMDebug.findEl(".paper-item");
-PMDebug.setHTML("element-id", "<p>Debug content</p>");
+PMDebug.setHTML({ element: "element-id" }, "<p>Debug content</p>");
+// Find an element based on its class *within* a memory item
+PMDebug.miniquery.findEl({
+    paperId: "Arxiv-1703\\.10593",
+    memoryItemClass: "memory-item-link",
+});
 
 // Test paper operations
 PMDebug.paper.isPaper("https://arxiv.org/abs/2301.12345");
