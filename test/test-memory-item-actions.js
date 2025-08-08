@@ -17,7 +17,7 @@ import {
     verifyElementClickable,
     getURL,
     safeClick,
-    miniHash,
+    setPreferencesAndReload,
 } from "./browser.js";
 
 import {
@@ -27,7 +27,12 @@ import {
     indent,
     sleep,
     asyncMap,
+    loadPaperMemoryUtils,
 } from "./utilsForTests.js";
+
+await loadPaperMemoryUtils();
+
+const miniHash = PMUtils.functions.miniHash;
 
 // -------------------------------------------------------
 // -----  Global constants to parametrize the tests  -----
@@ -560,8 +565,8 @@ describe("Test PaperMemory Memory Item Actions", function () {
                 expect(clipboardText).toMatch(/^@\w+\{/); // Should start with @type{
                 expect(clipboardText).toMatch(/title\s*=\s*\{/);
                 expect(clipboardText).toMatch(/author\s*=\s*\{/);
-                expect(await miniHash(clipboardText, PMPage)).toContain(
-                    await miniHash(paperData.title, PMPage)
+                expect(await miniHash(clipboardText)).toContain(
+                    await miniHash(paperData.title)
                 );
                 console.log(indent(2) + `✓ Clipboard contains valid bibtex format`);
             } else {
