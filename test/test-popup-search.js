@@ -37,7 +37,13 @@ await loadPaperMemoryUtils();
 // -------------------------------------------------------
 
 const { keepOpen } = loadConfig();
-console.log("keepOpen :", keepOpen);
+
+// Paper ID constants for test data
+const PAPER_IDS = {
+    CYCLE_GAN: "Arxiv-1703.10593",
+    HYPERPARAMETER: "JMLR-2012_bergstra12a",
+    NANOWIRE: "RSC-DigitalDiscovery_d2dd00066k",
+};
 
 // --------------------------------
 // -----  Main test function  -----
@@ -55,7 +61,6 @@ describe("Test PaperMemory Popup Search Functionality", function () {
     this.slow(60000); // Consider slow after 60 seconds
 
     before(async function () {
-        console.log(indent(1) + "Creating browser with PaperMemory extension");
         browser = await makeBrowser();
         PMPage = (await browser.pages())[0];
 
@@ -70,12 +75,10 @@ describe("Test PaperMemory Popup Search Functionality", function () {
 
         // Load test data
         testData = readJSON(`${root}/test/data/3-papers-memory.json`);
-        console.log(indent(1) + "Test data loaded");
     });
 
     after(async function () {
         if (browser && !keepOpen) {
-            console.log(indent(1) + "Closing browser.");
             await browser.close();
         }
     });
@@ -96,7 +99,6 @@ describe("Test PaperMemory Popup Search Functionality", function () {
             // Ensure memory is open and visible
             await ensureMemoryIsOpen(page);
         } catch (error) {
-            console.log(indent(2) + "⚠ Reset failed, recreating page:", error.message);
             // If reset fails, recreate the page
             try {
                 await page.close();
@@ -250,10 +252,6 @@ describe("Test PaperMemory Popup Search Functionality", function () {
         });
 
         expect(consistency.isConsistent).toBe(true);
-        console.log(
-            indent(3) +
-                `✓ Search consistency verified: ${consistency.statePapersListLength} papers in state, ${consistency.visibleItemsLength} visible items`
-        );
     }
 
     async function verifySearchPlaceholder(page, expectedText) {
@@ -262,31 +260,73 @@ describe("Test PaperMemory Popup Search Functionality", function () {
         expect(placeholder).toContain(expectedText);
     }
 
-    async function debugSearchState(page) {
-        const debugInfo = await page.evaluate(() => {
-            if (
+    async function executeSearch(page, searchQuery) {
+        await page.evaluate((query) => {
+            const searchInput = document.getElementById("memory-search");
+            searchInput.value = query;
+
+            const event = new KeyboardEvent("keypress", {
+                key: "Enter",
+                bubbles: true,
+                cancelable: true,
+            });
+            searchInput.dispatchEvent(event);
+        }, searchQuery);
+
+        await sleep(100);
+    }
+
+    async function verifyDebugUtilsSetup(page) {
+        const isSetup = await page.evaluate(() => {
+            return !!(
                 window.PMDebug &&
                 window.PMDebug.config &&
                 window.PMDebug.config.state
-            ) {
-                const state = window.PMDebug.config.state;
-                const searchInput = document.getElementById("memory-search");
-                return {
-                    papersListLength: state.papersList ? state.papersList.length : 0,
-                    sortedPapersLength: state.sortedPapers
-                        ? state.sortedPapers.length
-                        : 0,
-                    searchValue: searchInput?.value || "",
-                    visibleItems: document.querySelectorAll(
-                        "#memory-table .memory-container"
-                    ).length,
-                    searchInputExists: !!searchInput,
-                    searchInputFocused: document.activeElement.id === "memory-search",
-                };
-            }
-            return null;
+            );
         });
-        console.log(indent(3) + "Debug info:", debugInfo);
+        expect(isSetup).toBe(true);
+    }
+
+    async function setupPaperTags(page, paperIds) {
+        await verifyDebugUtilsSetup(page);
+        await page.evaluate((paperIds) => {
+            const papers = window.PMDebug.config.state.papers;
+            papers[paperIds.CYCLE_GAN].tags = ["computer-vision", "gan"];
+            papers[paperIds.HYPERPARAMETER].tags = ["optimization", "hyperparameter"];
+            papers[paperIds.NANOWIRE].tags = ["machine-learning", "nanowire"];
+        }, paperIds);
+    }
+
+    async function setupPaperCodeLinks(page, paperIds) {
+        await verifyDebugUtilsSetup(page);
+        await page.evaluate((paperIds) => {
+            const papers = window.PMDebug.config.state.papers;
+            papers[paperIds.CYCLE_GAN].codeLink = "https://github.com/junyanz/CycleGAN";
+            papers[paperIds.HYPERPARAMETER].codeLink =
+                "https://github.com/bergstra/hyperopt";
+            papers[paperIds.NANOWIRE].codeLink = "https://github.com/nanowire-analysis";
+        }, paperIds);
+    }
+
+    async function markPaperAsFavorite(page, paperId) {
+        await verifyDebugUtilsSetup(page);
+        await page.evaluate((paperId) => {
+            const papers = window.PMDebug.config.state.papers;
+            papers[paperId].favorite = true;
+            papers[paperId].favoriteDate = new Date().toJSON();
+        }, paperId);
+    }
+
+    async function setupSinglePaperTags(page, paperId, tags) {
+        await verifyDebugUtilsSetup(page);
+        await page.evaluate(
+            (paperId, tags) => {
+                const papers = window.PMDebug.config.state.papers;
+                papers[paperId].tags = tags;
+            },
+            paperId,
+            tags
+        );
     }
 
     describe("Basic Search Functionality", function () {
@@ -303,15 +343,11 @@ describe("Test PaperMemory Popup Search Functionality", function () {
                 return document.activeElement.id === "memory-search";
             });
             expect(isFocused).toBe(true);
-
-            console.log(indent(2) + "✓ Search input is available and focused");
         });
 
         it("should display all papers when search is empty", async function () {
             const visibleItems = await getVisibleMemoryItems(PMPage);
             expect(visibleItems.length).toBe(3); // All 3 test papers
-
-            console.log(indent(2) + "✓ All papers displayed when search is empty");
         });
 
         it("should be able to set search value and trigger search", async function () {
@@ -332,9 +368,6 @@ describe("Test PaperMemory Popup Search Functionality", function () {
                     }
                 }
             });
-
-            await debugSearchState(PMPage);
-            console.log(indent(2) + "✓ Search value can be set and triggered");
         });
 
         it("should debug available search functions", async function () {
@@ -367,7 +400,6 @@ describe("Test PaperMemory Popup Search Functionality", function () {
                 }
                 return available;
             });
-            console.log(indent(2) + "Available functions:", debugInfo);
         });
 
         it("should verify search consistency between state and displayed items", async function () {
@@ -375,150 +407,50 @@ describe("Test PaperMemory Popup Search Functionality", function () {
             await verifySearchConsistency(PMPage);
 
             // Test with search
-            await PMPage.evaluate(() => {
-                const searchInput = document.getElementById("memory-search");
-                searchInput.value = "Cycle";
-
-                const event = new KeyboardEvent("keypress", {
-                    key: "Enter",
-                    bubbles: true,
-                    cancelable: true,
-                });
-                searchInput.dispatchEvent(event);
-            });
-
-            await sleep(200);
+            await executeSearch(PMPage, "Cycle");
             await verifySearchConsistency(PMPage);
-
-            console.log(indent(2) + "✓ Search consistency verified");
         });
 
         it("should filter papers by title search", async function () {
-            // Set the search value and trigger the proper event
-            await PMPage.evaluate(() => {
-                const searchInput = document.getElementById("memory-search");
-                searchInput.value = "Cycle";
-
-                // Dispatch the keypress event that the search handler expects
-                const event = new KeyboardEvent("keypress", {
-                    key: "Enter",
-                    bubbles: true,
-                    cancelable: true,
-                });
-                searchInput.dispatchEvent(event);
-            });
-
-            await sleep(200);
-            await debugSearchState(PMPage);
+            await executeSearch(PMPage, "Cycle");
 
             // Verify by checking state.papersList
-            await verifySearchByState(PMPage, 1, ["Arxiv-1703.10593"]);
-            console.log(indent(2) + "✓ Papers filtered by title search");
+            await verifySearchByState(PMPage, 1, [PAPER_IDS.CYCLE_GAN]);
         });
 
         it("should filter papers by author search", async function () {
-            await PMPage.evaluate(() => {
-                const searchInput = document.getElementById("memory-search");
-                searchInput.value = "Zhu";
-
-                const event = new KeyboardEvent("keypress", {
-                    key: "Enter",
-                    bubbles: true,
-                    cancelable: true,
-                });
-                searchInput.dispatchEvent(event);
-            });
-
-            await sleep(200);
-            await debugSearchState(PMPage);
+            await executeSearch(PMPage, "Zhu");
 
             // Verify by checking state.papersList
-            await verifySearchByState(PMPage, 1, ["Arxiv-1703.10593"]);
-            console.log(indent(2) + "✓ Papers filtered by author search");
+            await verifySearchByState(PMPage, 1, [PAPER_IDS.CYCLE_GAN]);
         });
 
         it("should filter papers by note content", async function () {
-            await PMPage.evaluate(() => {
-                const searchInput = document.getElementById("memory-search");
-                searchInput.value = "IEEE";
-
-                const event = new KeyboardEvent("keypress", {
-                    key: "Enter",
-                    bubbles: true,
-                    cancelable: true,
-                });
-                searchInput.dispatchEvent(event);
-            });
-
-            await sleep(200);
-            await debugSearchState(PMPage);
+            await executeSearch(PMPage, "IEEE");
 
             // Verify by checking state.papersList
-            await verifySearchByState(PMPage, 1, ["Arxiv-1703.10593"]);
-            console.log(indent(2) + "✓ Papers filtered by note content");
+            await verifySearchByState(PMPage, 1, [PAPER_IDS.CYCLE_GAN]);
         });
 
         it("should support multi-word search", async function () {
-            await PMPage.evaluate(() => {
-                const searchInput = document.getElementById("memory-search");
-                searchInput.value = "machine learning";
-
-                const event = new KeyboardEvent("keypress", {
-                    key: "Enter",
-                    bubbles: true,
-                    cancelable: true,
-                });
-                searchInput.dispatchEvent(event);
-            });
-
-            await sleep(200);
-            await debugSearchState(PMPage);
+            await executeSearch(PMPage, "machine learning");
 
             // Verify by checking state.papersList
-            await verifySearchByState(PMPage, 1, ["RSC-DigitalDiscovery_d2dd00066k"]);
-            console.log(indent(2) + "✓ Multi-word search works correctly");
+            await verifySearchByState(PMPage, 1, [PAPER_IDS.NANOWIRE]);
         });
 
         it("should clear search and show all papers", async function () {
             // First search for something
-            await PMPage.evaluate(() => {
-                const searchInput = document.getElementById("memory-search");
-                searchInput.value = "Cycle";
-
-                const event = new KeyboardEvent("keypress", {
-                    key: "Enter",
-                    bubbles: true,
-                    cancelable: true,
-                });
-                searchInput.dispatchEvent(event);
-            });
-
-            await sleep(200);
+            await executeSearch(PMPage, "Cycle");
             await verifySearchByState(PMPage, 1);
 
             // Clear search
-            await PMPage.evaluate(() => {
-                const searchInput = document.getElementById("memory-search");
-                searchInput.value = "";
-
-                // Trigger the search handler with empty query
-                const event = new KeyboardEvent("keypress", {
-                    key: "Enter",
-                    bubbles: true,
-                    cancelable: true,
-                });
-                searchInput.dispatchEvent(event);
-            });
-
-            await sleep(200);
+            await executeSearch(PMPage, "");
             await verifySearchByState(PMPage, 3);
-
-            console.log(indent(2) + "✓ Search cleared and all papers shown");
         });
 
         it("should update search placeholder with correct count", async function () {
             await verifySearchPlaceholder(PMPage, "Search 3 entries");
-            console.log(indent(2) + "✓ Search placeholder shows correct count");
         });
     });
 
@@ -528,63 +460,17 @@ describe("Test PaperMemory Popup Search Functionality", function () {
         });
 
         it("should handle tag search with t: prefix", async function () {
-            // First add some tags to papers for testing
-            await PMPage.evaluate(() => {
-                if (
-                    window.PMDebug &&
-                    window.PMDebug.config &&
-                    window.PMDebug.config.state
-                ) {
-                    const papers = window.PMDebug.config.state.papers;
-                    papers["Arxiv-1703.10593"].tags = ["computer-vision", "gan"];
-                    papers["JMLR-2012_bergstra12a"].tags = [
-                        "optimization",
-                        "hyperparameter",
-                    ];
-                    papers["RSC-DigitalDiscovery_d2dd00066k"].tags = [
-                        "machine-learning",
-                        "nanowire",
-                    ];
-                }
-            });
+            await setupPaperTags(PMPage, PAPER_IDS);
 
-            await PMPage.evaluate(() => {
-                const searchInput = document.getElementById("memory-search");
-                searchInput.value = "t: computer-vision";
+            await executeSearch(PMPage, "t: computer-vision");
 
-                const event = new KeyboardEvent("keypress", {
-                    key: "Enter",
-                    bubbles: true,
-                    cancelable: true,
-                });
-                searchInput.dispatchEvent(event);
-            });
-
-            await sleep(200);
-            await debugSearchState(PMPage);
-
-            await verifySearchByState(PMPage, 1, ["Arxiv-1703.10593"]);
-            console.log(indent(2) + "✓ Tag search with t: prefix works");
+            await verifySearchByState(PMPage, 1, [PAPER_IDS.CYCLE_GAN]);
         });
 
         it("should handle multiple tag search", async function () {
-            await PMPage.evaluate(() => {
-                const searchInput = document.getElementById("memory-search");
-                searchInput.value = "t: gan computer-vision";
+            await executeSearch(PMPage, "t: gan computer-vision");
 
-                const event = new KeyboardEvent("keypress", {
-                    key: "Enter",
-                    bubbles: true,
-                    cancelable: true,
-                });
-                searchInput.dispatchEvent(event);
-            });
-
-            await sleep(200);
-            await debugSearchState(PMPage);
-
-            await verifySearchByState(PMPage, 1, ["Arxiv-1703.10593"]);
-            console.log(indent(2) + "✓ Multiple tag search works");
+            await verifySearchByState(PMPage, 1, [PAPER_IDS.CYCLE_GAN]);
         });
 
         it("should show tags list when tag search is active", async function () {
@@ -593,14 +479,12 @@ describe("Test PaperMemory Popup Search Functionality", function () {
             // Check if tags list is visible
             const tagsList = await PMPage.$("#tags-list-container");
             expect(tagsList).toBeTruthy();
-
-            console.log(indent(2) + "✓ Tags list shown during tag search");
         });
 
         it("should handle tag click to search", async function () {
             // First ensure we have tags visible
             await typeInSearch(PMPage, "t: ");
-            await sleep(200);
+            await sleep(100);
 
             // Click on a tag
             const tagElement = await PMPage.$(".memory-tag");
@@ -612,10 +496,8 @@ describe("Test PaperMemory Popup Search Functionality", function () {
                     return document.getElementById("memory-search").value;
                 });
                 expect(searchValue).toContain("t: ");
-
-                console.log(indent(2) + "✓ Tag click triggers search");
             } else {
-                console.log(indent(2) + "⚠ No tags available for click test");
+                // No tags available for click test
             }
         });
     });
@@ -626,80 +508,23 @@ describe("Test PaperMemory Popup Search Functionality", function () {
         });
 
         it("should handle code search with c: prefix", async function () {
-            // Add code links to papers for testing
-            await PMPage.evaluate(() => {
-                if (
-                    window.PMDebug &&
-                    window.PMDebug.config &&
-                    window.PMDebug.config.state
-                ) {
-                    const papers = window.PMDebug.config.state.papers;
-                    papers["Arxiv-1703.10593"].codeLink =
-                        "https://github.com/junyanz/CycleGAN";
-                    papers["JMLR-2012_bergstra12a"].codeLink =
-                        "https://github.com/bergstra/hyperopt";
-                    papers["RSC-DigitalDiscovery_d2dd00066k"].codeLink =
-                        "https://github.com/nanowire-analysis";
-                }
-            });
+            await setupPaperCodeLinks(PMPage, PAPER_IDS);
 
-            await PMPage.evaluate(() => {
-                const searchInput = document.getElementById("memory-search");
-                searchInput.value = "c: CycleGAN";
+            await executeSearch(PMPage, "c: CycleGAN");
 
-                const event = new KeyboardEvent("keypress", {
-                    key: "Enter",
-                    bubbles: true,
-                    cancelable: true,
-                });
-                searchInput.dispatchEvent(event);
-            });
-
-            await sleep(200);
-            await debugSearchState(PMPage);
-
-            await verifySearchByState(PMPage, 1, ["Arxiv-1703.10593"]);
-            console.log(indent(2) + "✓ Code search with c: prefix works");
+            await verifySearchByState(PMPage, 1, [PAPER_IDS.CYCLE_GAN]);
         });
 
         it("should handle multiple word code search", async function () {
-            await PMPage.evaluate(() => {
-                const searchInput = document.getElementById("memory-search");
-                searchInput.value = "c: github nanowire";
+            await executeSearch(PMPage, "c: github nanowire");
 
-                const event = new KeyboardEvent("keypress", {
-                    key: "Enter",
-                    bubbles: true,
-                    cancelable: true,
-                });
-                searchInput.dispatchEvent(event);
-            });
-
-            await sleep(200);
-            await debugSearchState(PMPage);
-
-            await verifySearchByState(PMPage, 1, ["RSC-DigitalDiscovery_d2dd00066k"]);
-            console.log(indent(2) + "✓ Multiple word code search works");
+            await verifySearchByState(PMPage, 1, [PAPER_IDS.NANOWIRE]);
         });
 
         it("should return no results for non-existent code", async function () {
-            await PMPage.evaluate(() => {
-                const searchInput = document.getElementById("memory-search");
-                searchInput.value = "c: nonexistent";
-
-                const event = new KeyboardEvent("keypress", {
-                    key: "Enter",
-                    bubbles: true,
-                    cancelable: true,
-                });
-                searchInput.dispatchEvent(event);
-            });
-
-            await sleep(200);
-            await debugSearchState(PMPage);
+            await executeSearch(PMPage, "c: nonexistent");
 
             await verifySearchByState(PMPage, 0);
-            console.log(indent(2) + "✓ No results for non-existent code");
         });
     });
 
@@ -709,109 +534,39 @@ describe("Test PaperMemory Popup Search Functionality", function () {
         });
 
         it("should handle year search with y: prefix", async function () {
-            await PMPage.evaluate(() => {
-                const searchInput = document.getElementById("memory-search");
-                searchInput.value = "y: 2017";
+            await executeSearch(PMPage, "y: 2017");
 
-                const event = new KeyboardEvent("keypress", {
-                    key: "Enter",
-                    bubbles: true,
-                    cancelable: true,
-                });
-                searchInput.dispatchEvent(event);
-            });
-
-            await sleep(200);
-            await debugSearchState(PMPage);
-
-            await verifySearchByState(PMPage, 1, ["Arxiv-1703.10593"]);
-            console.log(indent(2) + "✓ Year search with y: prefix works");
+            await verifySearchByState(PMPage, 1, [PAPER_IDS.CYCLE_GAN]);
         });
 
         it("should handle multiple years", async function () {
-            await PMPage.evaluate(() => {
-                const searchInput = document.getElementById("memory-search");
-                searchInput.value = "y: 2017, 2012";
-
-                const event = new KeyboardEvent("keypress", {
-                    key: "Enter",
-                    bubbles: true,
-                    cancelable: true,
-                });
-                searchInput.dispatchEvent(event);
-            });
-
-            await sleep(200);
-            await debugSearchState(PMPage);
+            await executeSearch(PMPage, "y: 2017, 2012");
 
             await verifySearchByState(PMPage, 2, [
-                "Arxiv-1703.10593",
-                "JMLR-2012_bergstra12a",
+                PAPER_IDS.CYCLE_GAN,
+                PAPER_IDS.HYPERPARAMETER,
             ]);
-            console.log(indent(2) + "✓ Multiple year search works");
         });
 
         it("should handle year range with less than", async function () {
-            await PMPage.evaluate(() => {
-                const searchInput = document.getElementById("memory-search");
-                searchInput.value = "y: <2015";
+            await executeSearch(PMPage, "y: <2015");
 
-                const event = new KeyboardEvent("keypress", {
-                    key: "Enter",
-                    bubbles: true,
-                    cancelable: true,
-                });
-                searchInput.dispatchEvent(event);
-            });
-
-            await sleep(200);
-            await debugSearchState(PMPage);
-
-            await verifySearchByState(PMPage, 1, ["JMLR-2012_bergstra12a"]);
-            console.log(indent(2) + "✓ Year range with < operator works");
+            await verifySearchByState(PMPage, 1, [PAPER_IDS.HYPERPARAMETER]);
         });
 
         it("should handle year range with greater than", async function () {
-            await PMPage.evaluate(() => {
-                const searchInput = document.getElementById("memory-search");
-                searchInput.value = "y: >2015";
-
-                const event = new KeyboardEvent("keypress", {
-                    key: "Enter",
-                    bubbles: true,
-                    cancelable: true,
-                });
-                searchInput.dispatchEvent(event);
-            });
-
-            await sleep(200);
-            await debugSearchState(PMPage);
+            await executeSearch(PMPage, "y: >2015");
 
             await verifySearchByState(PMPage, 2, [
-                "Arxiv-1703.10593",
-                "RSC-DigitalDiscovery_d2dd00066k",
+                PAPER_IDS.CYCLE_GAN,
+                PAPER_IDS.NANOWIRE,
             ]);
-            console.log(indent(2) + "✓ Year range with > operator works");
         });
 
         it("should handle two-digit years", async function () {
-            await PMPage.evaluate(() => {
-                const searchInput = document.getElementById("memory-search");
-                searchInput.value = "y: 17";
+            await executeSearch(PMPage, "y: 17");
 
-                const event = new KeyboardEvent("keypress", {
-                    key: "Enter",
-                    bubbles: true,
-                    cancelable: true,
-                });
-                searchInput.dispatchEvent(event);
-            });
-
-            await sleep(200);
-            await debugSearchState(PMPage);
-
-            await verifySearchByState(PMPage, 1, ["Arxiv-1703.10593"]);
-            console.log(indent(2) + "✓ Two-digit year search works");
+            await verifySearchByState(PMPage, 1, [PAPER_IDS.CYCLE_GAN]);
         });
     });
 
@@ -829,7 +584,6 @@ describe("Test PaperMemory Popup Search Functionality", function () {
             }, clearIcon);
 
             expect(isVisible).toBe(true);
-            console.log(indent(2) + "✓ Clear icon visible when search has content");
         });
 
         it("should hide clear icon when search is empty", async function () {
@@ -841,7 +595,6 @@ describe("Test PaperMemory Popup Search Functionality", function () {
             }, clearIcon);
 
             expect(isHidden).toBe(true);
-            console.log(indent(2) + "✓ Clear icon hidden when search is empty");
         });
 
         it("should clear search when clear icon is clicked", async function () {
@@ -854,20 +607,17 @@ describe("Test PaperMemory Popup Search Functionality", function () {
             expect(searchValue).toBe("");
 
             await verifySearchResults(PMPage, 3);
-            console.log(indent(2) + "✓ Clear icon click clears search");
         });
 
         it("should handle backspace key properly", async function () {
             await typeInSearch(PMPage, "test");
             await PMPage.keyboard.press("Backspace");
-            await sleep(200);
+            await sleep(100);
 
             const searchValue = await PMPage.evaluate(() => {
                 return document.getElementById("memory-search").value;
             });
             expect(searchValue).toBe("tes");
-
-            console.log(indent(2) + "✓ Backspace key works properly");
         });
 
         it("should handle enter key without form submission", async function () {
@@ -877,8 +627,6 @@ describe("Test PaperMemory Popup Search Functionality", function () {
             // Should not reload the page or submit a form
             const currentUrl = await getURL(PMPage);
             expect(currentUrl).toContain("popup");
-
-            console.log(indent(2) + "✓ Enter key doesn't submit form");
         });
     });
 
@@ -888,22 +636,11 @@ describe("Test PaperMemory Popup Search Functionality", function () {
         });
 
         it("should filter search results when favorites filter is active", async function () {
-            // First mark a paper as favorite
-            await PMPage.evaluate(() => {
-                if (
-                    window.PMDebug &&
-                    window.PMDebug.config &&
-                    window.PMDebug.config.state
-                ) {
-                    const papers = window.PMDebug.config.state.papers;
-                    papers["Arxiv-1703.10593"].favorite = true;
-                    papers["Arxiv-1703.10593"].favoriteDate = new Date().toJSON();
-                }
-            });
+            await markPaperAsFavorite(PMPage, PAPER_IDS.CYCLE_GAN);
 
             // Enable favorites filter
             await safeClick("#filter-favorites", PMPage);
-            await sleep(200);
+            await sleep(100);
 
             // Search for something that should match multiple papers
             await PMPage.evaluate(() => {
@@ -918,13 +655,10 @@ describe("Test PaperMemory Popup Search Functionality", function () {
                 }
             });
 
-            await sleep(200);
-            await debugSearchState(PMPage);
+            await sleep(100);
 
             // Should only show favorite papers that match
             await verifySearchResults(PMPage, 1);
-
-            console.log(indent(2) + "✓ Search respects favorites filter");
         });
 
         it("should update search placeholder when favorites filter is active", async function () {
@@ -947,14 +681,13 @@ describe("Test PaperMemory Popup Search Functionality", function () {
                 }
             });
 
-            await sleep(200);
+            await sleep(100);
 
-            // Debug: Check if filter button exists
+            // Check if filter button exists
             const filterButtonExists = await PMPage.evaluate(() => {
                 const filterButton = document.querySelector("#filter-favorites");
                 return !!filterButton;
             });
-            console.log(indent(3) + "Filter button exists:", filterButtonExists);
 
             // Trigger the favorites filter by clicking the filter button
             await PMPage.evaluate(() => {
@@ -964,9 +697,9 @@ describe("Test PaperMemory Popup Search Functionality", function () {
                 }
             });
 
-            await sleep(200);
+            await sleep(100);
 
-            // Debug: Check state after filter
+            // Check state after filter
             const debugInfo = await PMPage.evaluate(() => {
                 if (
                     window.PMDebug &&
@@ -985,7 +718,6 @@ describe("Test PaperMemory Popup Search Functionality", function () {
                 }
                 return null;
             });
-            console.log(indent(3) + "Debug after filter:", debugInfo);
 
             // Check the placeholder text BEFORE search (should show total available papers)
             await verifySearchPlaceholder(PMPage, "Search 1 entries");
@@ -1003,15 +735,10 @@ describe("Test PaperMemory Popup Search Functionality", function () {
                 searchInput.dispatchEvent(event);
             });
 
-            await sleep(200);
-            await debugSearchState(PMPage);
+            await sleep(100);
 
             // Verify by checking state.papersList
-            await verifySearchByState(PMPage, 1, ["RSC-DigitalDiscovery_d2dd00066k"]);
-
-            console.log(
-                indent(2) + "✓ Search placeholder updated for favorites filter"
-            );
+            await verifySearchByState(PMPage, 1, [PAPER_IDS.NANOWIRE]);
         });
     });
 
@@ -1021,147 +748,51 @@ describe("Test PaperMemory Popup Search Functionality", function () {
         });
 
         it("should handle case-insensitive search", async function () {
-            await PMPage.evaluate(() => {
-                const searchInput = document.getElementById("memory-search");
-                searchInput.value = "CYCLE";
+            await executeSearch(PMPage, "CYCLE");
 
-                const event = new KeyboardEvent("keypress", {
-                    key: "Enter",
-                    bubbles: true,
-                    cancelable: true,
-                });
-                searchInput.dispatchEvent(event);
-            });
-
-            await sleep(200);
-            await debugSearchState(PMPage);
-
-            await verifySearchByState(PMPage, 1, ["Arxiv-1703.10593"]);
-            console.log(indent(2) + "✓ Case-insensitive search works");
+            await verifySearchByState(PMPage, 1, [PAPER_IDS.CYCLE_GAN]);
         });
 
         it("should handle special characters in search", async function () {
-            await PMPage.evaluate(() => {
-                const searchInput = document.getElementById("memory-search");
-                searchInput.value = "Image-to-Image";
+            await executeSearch(PMPage, "Image-to-Image");
 
-                const event = new KeyboardEvent("keypress", {
-                    key: "Enter",
-                    bubbles: true,
-                    cancelable: true,
-                });
-                searchInput.dispatchEvent(event);
-            });
-
-            await sleep(200);
-            await debugSearchState(PMPage);
-
-            await verifySearchByState(PMPage, 1, ["Arxiv-1703.10593"]);
-            console.log(indent(2) + "✓ Special characters in search work");
+            await verifySearchByState(PMPage, 1, [PAPER_IDS.CYCLE_GAN]);
         });
 
         it("should handle empty search queries gracefully", async function () {
-            await PMPage.evaluate(() => {
-                const searchInput = document.getElementById("memory-search");
-                searchInput.value = "   ";
-
-                const event = new KeyboardEvent("keypress", {
-                    key: "Enter",
-                    bubbles: true,
-                    cancelable: true,
-                });
-                searchInput.dispatchEvent(event);
-            });
-
-            await sleep(200);
-            await debugSearchState(PMPage);
+            await executeSearch(PMPage, "   ");
 
             // Empty search should show all papers
             await verifySearchByState(PMPage, 3);
-            console.log(indent(2) + "✓ Empty search queries handled gracefully");
         });
 
         it("should handle very long search queries", async function () {
             const longQuery = "a".repeat(1000);
-            await PMPage.evaluate((query) => {
-                const searchInput = document.getElementById("memory-search");
-                searchInput.value = query;
-
-                const event = new KeyboardEvent("keypress", {
-                    key: "Enter",
-                    bubbles: true,
-                    cancelable: true,
-                });
-                searchInput.dispatchEvent(event);
-            }, longQuery);
-
-            await sleep(200);
+            await executeSearch(PMPage, longQuery);
 
             // Should not crash and should return no results
             await verifySearchByState(PMPage, 0);
-            console.log(indent(2) + "✓ Very long search queries handled");
         });
 
         it("should maintain search state when switching between search types", async function () {
             // First do a regular search
-            await PMPage.evaluate(() => {
-                const searchInput = document.getElementById("memory-search");
-                searchInput.value = "Cycle";
-
-                const event = new KeyboardEvent("keypress", {
-                    key: "Enter",
-                    bubbles: true,
-                    cancelable: true,
-                });
-                searchInput.dispatchEvent(event);
-            });
-
-            await sleep(200);
-            await verifySearchByState(PMPage, 1, ["Arxiv-1703.10593"]);
+            await executeSearch(PMPage, "Cycle");
+            await verifySearchByState(PMPage, 1, [PAPER_IDS.CYCLE_GAN]);
 
             // Then switch to a tag search (but first add tags)
-            await PMPage.evaluate(() => {
-                if (
-                    window.PMDebug &&
-                    window.PMDebug.config &&
-                    window.PMDebug.config.state
-                ) {
-                    const papers = window.PMDebug.config.state.papers;
-                    papers["Arxiv-1703.10593"].tags = ["computer-vision", "gan"];
-                }
+            await setupSinglePaperTags(PMPage, PAPER_IDS.CYCLE_GAN, [
+                "computer-vision",
+                "gan",
+            ]);
 
-                const searchInput = document.getElementById("memory-search");
-                searchInput.value = "t: computer-vision";
-
-                const event = new KeyboardEvent("keypress", {
-                    key: "Enter",
-                    bubbles: true,
-                    cancelable: true,
-                });
-                searchInput.dispatchEvent(event);
-            });
-
-            await sleep(200);
-            await verifySearchByState(PMPage, 1, ["Arxiv-1703.10593"]);
-            console.log(indent(2) + "✓ Search state maintained when switching types");
+            await executeSearch(PMPage, "t: computer-vision");
+            await verifySearchByState(PMPage, 1, [PAPER_IDS.CYCLE_GAN]);
         });
 
         it("should update search results when sort order changes", async function () {
             // First search
-            await PMPage.evaluate(() => {
-                const searchInput = document.getElementById("memory-search");
-                searchInput.value = "Cycle";
-
-                const event = new KeyboardEvent("keypress", {
-                    key: "Enter",
-                    bubbles: true,
-                    cancelable: true,
-                });
-                searchInput.dispatchEvent(event);
-            });
-
-            await sleep(200);
-            await verifySearchByState(PMPage, 1, ["Arxiv-1703.10593"]);
+            await executeSearch(PMPage, "Cycle");
+            await verifySearchByState(PMPage, 1, [PAPER_IDS.CYCLE_GAN]);
 
             // Change sort order
             await PMPage.evaluate(() => {
@@ -1174,9 +805,8 @@ describe("Test PaperMemory Popup Search Functionality", function () {
                 }
             });
 
-            await sleep(200);
-            await verifySearchByState(PMPage, 1, ["Arxiv-1703.10593"]);
-            console.log(indent(2) + "✓ Search results updated when sort order changes");
+            await sleep(100);
+            await verifySearchByState(PMPage, 1, [PAPER_IDS.CYCLE_GAN]);
         });
     });
 
@@ -1187,54 +817,28 @@ describe("Test PaperMemory Popup Search Functionality", function () {
 
         it("should update search results when sort order changes", async function () {
             // First search for something
-            await PMPage.evaluate(() => {
-                const searchInput = document.getElementById("memory-search");
-                searchInput.value = "machine";
-
-                const event = new KeyboardEvent("keypress", {
-                    key: "Enter",
-                    bubbles: true,
-                    cancelable: true,
-                });
-                searchInput.dispatchEvent(event);
-            });
-
-            await sleep(200);
-            await verifySearchByState(PMPage, 1, ["RSC-DigitalDiscovery_d2dd00066k"]);
+            await executeSearch(PMPage, "machine");
+            await verifySearchByState(PMPage, 1, [PAPER_IDS.NANOWIRE]);
 
             // Change sort order
             await PMPage.select("#memory-select", "title");
-            await sleep(200);
+            await sleep(100);
 
             // Search results should still be correct
-            await verifySearchByState(PMPage, 1, ["RSC-DigitalDiscovery_d2dd00066k"]);
-
-            console.log(indent(2) + "✓ Search results maintained when sort changes");
+            await verifySearchByState(PMPage, 1, [PAPER_IDS.NANOWIRE]);
         });
 
         it("should clear search when memory is closed and reopened", async function () {
-            await PMPage.evaluate(() => {
-                const searchInput = document.getElementById("memory-search");
-                searchInput.value = "test";
-
-                const event = new KeyboardEvent("keypress", {
-                    key: "Enter",
-                    bubbles: true,
-                    cancelable: true,
-                });
-                searchInput.dispatchEvent(event);
-            });
-
-            await sleep(200);
+            await executeSearch(PMPage, "test");
             await verifySearchByState(PMPage, 0);
 
             // Close memory
             await safeClick("#memory-switch-close", PMPage);
-            await sleep(200);
+            await sleep(100);
 
             // Reopen memory
             await safeClick("#memory-switch-open", PMPage);
-            await sleep(200);
+            await sleep(100);
 
             // Search should be cleared
             const searchValue = await PMPage.evaluate(() => {
@@ -1243,7 +847,6 @@ describe("Test PaperMemory Popup Search Functionality", function () {
             expect(searchValue).toBe("");
 
             await verifySearchByState(PMPage, 3);
-            console.log(indent(2) + "✓ Search cleared when memory is reopened");
         });
     });
 });
