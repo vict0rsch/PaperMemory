@@ -122,7 +122,7 @@ describe("Test PaperMemory MemoryTable UI", function () {
 
             // Click memory switch button to close the memory
             await page.click("#memory-switch");
-            await sleep(300, "Waiting for memory table to close");
+            await sleep(200, "Waiting for memory table to close");
 
             // Verify memory is now closed
             const closedState = await getPaperMemoryState(page);
@@ -135,12 +135,12 @@ describe("Test PaperMemory MemoryTable UI", function () {
             const initialState = await getPaperMemoryState(page);
             if (initialState.memoryIsOpen) {
                 await page.click("#memory-switch");
-                await sleep(300);
+                await sleep(200);
             }
 
             // Press 'A' key to open memory table
             await page.keyboard.press("a");
-            await sleep(300, "Waiting for memory table to open");
+            await sleep(200, "Waiting for memory table to open");
 
             // Verify memory table is open
             const finalState = await getPaperMemoryState(page);
@@ -153,7 +153,7 @@ describe("Test PaperMemory MemoryTable UI", function () {
             const initialState = await getPaperMemoryState(page);
             if (!initialState.memoryIsOpen) {
                 await page.keyboard.press("a");
-                await sleep(300);
+                await sleep(200);
             }
 
             // Verify memory switch close button is visible when memory is open
@@ -189,7 +189,7 @@ describe("Test PaperMemory MemoryTable UI", function () {
             const currentState = await getPaperMemoryState(page);
             if (!currentState.memoryIsOpen) {
                 await page.keyboard.press("a");
-                await sleep(300);
+                await sleep(200);
             }
 
             // Verify memory table content
@@ -239,7 +239,7 @@ describe("Test PaperMemory MemoryTable UI", function () {
                 if (!currentState.memoryIsOpen) {
                     // If not open, press 'A' to open it
                     await page.keyboard.press("a");
-                    await sleep(300);
+                    await sleep(200);
                 }
 
                 // Get displayed paper information
@@ -302,7 +302,7 @@ describe("Test PaperMemory MemoryTable UI", function () {
 
             // Press 'Escape' key to close memory
             await page.keyboard.press("Escape");
-            await sleep(300);
+            await sleep(200);
 
             // Verify memory is now closed
             const closedState = await getPaperMemoryState(page);
