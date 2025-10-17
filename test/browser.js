@@ -134,7 +134,7 @@ export const setStorage = async (page, key, value) =>
 
 export const verifySelectorExists = async (selector, page) => {
     // Wait for button to be present
-    await page.waitForSelector(selector, { timeout: 3000 });
+    await page.waitForSelector(selector, { timeout: 2000 });
     const el = await page.$(selector);
     expect(el).toBeTruthy();
     return el;
@@ -155,9 +155,10 @@ export const verifyElementClickable = async (el, page) => {
 };
 
 export const getURL = async (page) => {
-    const documentState = await page.evaluate(() => document.readyState);
-    if (documentState !== "complete") {
-        await page.waitForNavigation({ waitUntil: "domcontentloaded" });
+    let documentState = null;
+    while (documentState !== "complete") {
+        documentState && (await sleep(50));
+        documentState = await page.evaluate(() => document.readyState);
     }
     let url = await page.evaluate(() => document.location.href);
     while (url === "about:blank") {
@@ -206,18 +207,80 @@ export const setPreferencesAndReload = async (prefs, page) => {
     await page.evaluate((preferences) => {
         return new Promise(async (resolve) => {
             await PMDebug.data.setStorage("prefs", preferences);
-            // Update runtime state without reload when possible
-            if (
-                window.PMDebug &&
-                window.PMDebug.config &&
-                window.PMDebug.config.state
-            ) {
-                Object.assign(window.PMDebug.config.state.prefs, preferences);
-            }
             resolve();
         });
     }, prefs);
 
-    // Only reload if we need to see UI changes, otherwise just update memory display
     await page.reload({ waitUntil: "networkidle0" });
+};
+
+export const getClipboardText = async (page) => {
+    const indent = (n) => " ".repeat(n * 4);
+    try {
+        // Add timeout to prevent hanging on permission dialogs
+        return await Promise.race([
+            page.evaluate(async () => {
+                try {
+                    const text = await navigator.clipboard.readText();
+                    return text;
+                } catch (err) {
+                    console.log("Clipboard read failed:", err.message);
+                    // Fallback: try to get clipboard data from a hidden textarea
+                    const textarea = document.createElement("textarea");
+                    document.body.appendChild(textarea);
+                    textarea.focus();
+                    const result = document.execCommand("paste");
+                    const content = textarea.value;
+                    document.body.removeChild(textarea);
+                    return result ? content : null;
+                }
+            }),
+            new Promise((_, reject) =>
+                setTimeout(() => reject(new Error("Clipboard read timeout")), 1000)
+            ),
+        ]);
+    } catch (error) {
+        console.log(indent(3) + `⚠ Clipboard read failed: ${error.message}`);
+        return null;
+    }
+};
+
+export const verifyClipboardContent = async (
+    expectedContent,
+    partialMatch = false,
+    page
+) => {
+    const clipboardText = await getClipboardText(page);
+    expect(clipboardText).toBeTruthy();
+
+    if (partialMatch) {
+        expect(clipboardText).toContain(expectedContent);
+    } else {
+        expect(clipboardText).toBe(expectedContent);
+    }
+    return clipboardText;
+};
+
+export const verifyPageNavigation = async (expectedUrlPattern, browser) => {
+    // Check if any existing or new page has the expected URL
+    const allPages = await browser.pages();
+    const allPagesAndURLs = await Promise.all(
+        allPages.map(async (page) => {
+            try {
+                const url = await getURL(page);
+                return { page, url };
+            } catch (e) {
+                return { page, url: null };
+            }
+        })
+    );
+
+    const matchingPageAndURL = allPagesAndURLs.find((pageAndURL) =>
+        expectedUrlPattern.test
+            ? expectedUrlPattern.test(pageAndURL.url)
+            : pageAndURL.url && pageAndURL.url.includes(expectedUrlPattern)
+    );
+
+    expect(matchingPageAndURL).toBeTruthy();
+    return matchingPageAndURL.page;
 };

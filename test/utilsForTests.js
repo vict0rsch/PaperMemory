@@ -82,9 +82,10 @@ export const sleep = async (duration, textToDisplay) => {
     const text = textToDisplay
         ? `${textToDisplay} (${duration / 1e3}s)`
         : `Waiting for ${duration / 1e3}s`;
-    const spinner = ora({ text, spinner: "timeTravel" }).start();
+    const spinner =
+        duration > 200 ? ora({ text, spinner: "timeTravel" }).start() : null;
     await new Promise((resolve) => setTimeout(resolve, duration));
-    spinner.stop();
+    spinner && spinner.stop();
 };
 
 /**
