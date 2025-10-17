@@ -663,14 +663,14 @@ export const popupMain = async (url, is, manualTrigger = false, tab = null) => {
 // -----  Script Execution  -----
 // ------------------------------
 (async () => {
-if (
-    typeof window !== "undefined" &&
-    window.location.href.includes("popup") &&
-    !window.paperMemoryPopupInitialized
-) {
-    // This is a global variable to track whether the popup has been initialized.
-    // In DEV mode, this would be run twice by the additional injection of debug.bundle.js
-    window.paperMemoryPopupInitialized = true;
+    if (
+        typeof window !== "undefined" &&
+        window.location.href.includes("popup") &&
+        !window.paperMemoryPopupInitialized
+    ) {
+        // This is a global variable to track whether the popup has been initialized.
+        // In DEV mode, this would be run twice by the additional injection of debug.bundle.js
+        window.paperMemoryPopupInitialized = true;
         const tab = await getCurrentUserTab();
         const url = tab.url;
         chrome.runtime.connect({ name: "PaperMemoryPopupSync" });
@@ -708,5 +708,5 @@ if (
             makeMemoryHTML();
             await updatePopupPaperNoMemory(url);
         }
-}
+    }
 })();
