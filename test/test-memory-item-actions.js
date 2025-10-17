@@ -11,6 +11,7 @@ import {
     getPaperMemoryState,
     makeBrowser,
     getPMURLs,
+    getClipboardText,
     resetPage,
     setStorage,
     verifySelectorExists,

@@ -246,12 +246,14 @@ describe("Test paper detection and storage", function () {
                             const papers = Object.values(memoryPapers).filter(
                                 (p) => p.source === source
                             );
-                            expect(papers.length).toBe(1);
+                            expect(papers).toBeDefined();
+                            expect(papers?.length).toBe(1);
                         });
 
                         it("#count is 2", function () {
                             const paper = paperForSource(source, memoryPapers);
-                            expect(paper.count).toBeGreaterThanOrEqual(2);
+                            expect(paper).toBeDefined();
+                            expect(paper?.count).toBeGreaterThanOrEqual(2);
                         });
 
                         // more tests parameterized in the 3rd item in the list for this source
@@ -261,10 +263,11 @@ describe("Test paper detection and storage", function () {
                             if (additionalTest["code"]) {
                                 it("#codeLink", function () {
                                     const paper = paperForSource(source, memoryPapers);
-                                    expect(typeof paper.codeLink === "string").toBe(
+                                    expect(paper).toBeDefined();
+                                    expect(typeof paper?.codeLink === "string").toBe(
                                         true,
-                                        `${source}: code link should not be ${typeof paper.codeLink}${
-                                            paper.codeLink
+                                        `${source}: code link should not be ${typeof paper?.codeLink}${
+                                            paper?.codeLink
                                         }`
                                     );
                                 });
@@ -272,14 +275,16 @@ describe("Test paper detection and storage", function () {
 
                             it("#venue is a string", function () {
                                 const paper = paperForSource(source, memoryPapers);
-                                expect(typeof paper.venue).toMatch("string");
+                                expect(paper).toBeDefined();
+                                expect(typeof paper?.venue).toMatch("string");
                             });
 
                             it("#venue matches source", function () {
                                 const paper = paperForSource(source, memoryPapers);
+                                expect(paper).toBeDefined();
                                 if (additionalTest["venue"]) {
                                     expect(
-                                        paper.venue.toLowerCase().replace(/\s/gi, "")
+                                        paper?.venue?.toLowerCase().replace(/\s/gi, "")
                                     ).toMatch(
                                         additionalTest["venue"]
                                             .toLowerCase()
@@ -288,7 +293,7 @@ describe("Test paper detection and storage", function () {
                                 } else {
                                     // the venue is the same as the source
                                     expect(
-                                        paper.venue.toLowerCase().replace(/\s/gi, "")
+                                        paper?.venue?.toLowerCase().replace(/\s/gi, "")
                                     ).toMatch(source.toLowerCase().replace(/\s/gi, ""));
                                 }
                             });
