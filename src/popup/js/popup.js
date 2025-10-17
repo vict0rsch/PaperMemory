@@ -75,7 +75,7 @@ import {
     updatePopupPaperNoMemory,
 } from "@pm/popup/js/memory.js";
 import { downloadPaperPdf } from "@pmu/state.js";
-import { parseIdFromUrl } from "@pmu/urls.js";
+import { parseIdFromUrl, getCurrentUserTab } from "@pmu/urls.js";
 import { findLocalFile } from "@pmu/files.js";
 
 // Handler functions available globally from handlers.js:
@@ -662,8 +662,7 @@ export const popupMain = async (url, is, manualTrigger = false, tab = null) => {
 // ------------------------------
 // -----  Script Execution  -----
 // ------------------------------
-
-export const query = { active: true, lastFocusedWindow: true };
+(async () => {
 if (
     typeof window !== "undefined" &&
     window.location.href.includes("popup") &&
@@ -672,9 +671,9 @@ if (
     // This is a global variable to track whether the popup has been initialized.
     // In DEV mode, this would be run twice by the additional injection of debug.bundle.js
     window.paperMemoryPopupInitialized = true;
-    chrome.tabs.query(query, async (tabs) => {
+        const tab = await getCurrentUserTab();
+        const url = tab.url;
         chrome.runtime.connect({ name: "PaperMemoryPopupSync" });
-        const url = tabs[0].url;
         document.addEventListener("click", handleHideAllTitleTooltips);
 
         let stateReadyPromise, remoteIsReadyPromise;
@@ -697,7 +696,7 @@ if (
         hideId("memory-spinner");
         showId("memory-switch");
         makeMemoryHTML();
-        popupMain(url, is, false, tabs[0]);
+        popupMain(url, is, false, tab);
         if (navigator.userAgent.search("Firefox") > -1) {
             hideId("overwrite-container");
         }
@@ -709,5 +708,5 @@ if (
             makeMemoryHTML();
             await updatePopupPaperNoMemory(url);
         }
-    });
 }
+})();
