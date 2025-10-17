@@ -17,7 +17,6 @@ import {
     verifyElementClickable,
     getURL,
     safeClick,
-    setPreferencesAndReload,
 } from "./browser.js";
 
 import {

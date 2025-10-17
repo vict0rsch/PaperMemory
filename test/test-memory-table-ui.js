@@ -72,7 +72,7 @@ describe("Test PaperMemory MemoryTable UI", function () {
             console.log(indent(2) + "≈ Setting up test: Navigating to extension popup");
             await page.goto(pmURLs.popupURL, {
                 waitUntil: "networkidle0",
-                timeout: 13000,
+                timeout: 10000,
             });
 
             // Step 2: Inject test data into extension storage

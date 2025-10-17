@@ -18,6 +18,8 @@ import {
     getURL,
     safeClick,
     setPreferencesAndReload,
+    verifyClipboardContent,
+    verifyPageNavigation,
 } from "./browser.js";
 
 import {
@@ -180,21 +182,6 @@ describe("Test PaperMemory Memory Item Actions", function () {
 
     async function verifyButtonClickable(button, page) {
         return await verifyElementClickable(button, page);
-    }
-
-    async function verifyPageNavigation(expectedUrlPattern) {
-        // Check if any existing or new page has the expected URL
-        const allPages = await browser.pages();
-        const allPagesAndURLs = await asyncMap(allPages, async (page) => {
-            return { page, url: await getURL(page) };
-        });
-        const matchingPageAndURL = allPagesAndURLs.find((pageAndURL) =>
-            expectedUrlPattern.test
-                ? expectedUrlPattern.test(pageAndURL.url)
-                : pageAndURL.url.includes(expectedUrlPattern)
-        );
-        expect(matchingPageAndURL).toBeTruthy();
-        return matchingPageAndURL.page;
     }
 
     describe("Basic Actions", function () {
@@ -361,55 +348,6 @@ describe("Test PaperMemory Memory Item Actions", function () {
             PMPage = await quickReset(PMPage);
         });
 
-        async function getClipboardText(page) {
-            try {
-                // Add timeout to prevent hanging on permission dialogs
-                return await Promise.race([
-                    page.evaluate(async () => {
-                        try {
-                            const text = await navigator.clipboard.readText();
-                            return text;
-                        } catch (err) {
-                            console.log("Clipboard read failed:", err.message);
-                            // Fallback: try to get clipboard data from a hidden textarea
-                            const textarea = document.createElement("textarea");
-                            document.body.appendChild(textarea);
-                            textarea.focus();
-                            const result = document.execCommand("paste");
-                            const content = textarea.value;
-                            document.body.removeChild(textarea);
-                            return result ? content : null;
-                        }
-                    }),
-                    new Promise((_, reject) =>
-                        setTimeout(
-                            () => reject(new Error("Clipboard read timeout")),
-                            3000
-                        )
-                    ),
-                ]);
-            } catch (error) {
-                console.log(indent(3) + `⚠ Clipboard read failed: ${error.message}`);
-                return null;
-            }
-        }
-
-        async function verifyClipboardContent(
-            expectedContent,
-            partialMatch = false,
-            page
-        ) {
-            const clipboardText = await getClipboardText(page);
-            expect(clipboardText).toBeTruthy();
-
-            if (partialMatch) {
-                expect(clipboardText).toContain(expectedContent);
-            } else {
-                expect(clipboardText).toBe(expectedContent);
-            }
-            return clipboardText;
-        }
-
         async function paperToAbs(paperId, page) {
             const paperData = await page.evaluate((paperId) => {
                 return PMDebug.paper.paperToAbs(PMDebug.config.state.papers[paperId]);
@@ -422,8 +360,7 @@ describe("Test PaperMemory Memory Item Actions", function () {
             await PMPage.evaluate((text) => {
                 navigator.clipboard.writeText(text);
             }, testText);
-            const clipboardText = await getClipboardText(PMPage);
-            expect(clipboardText).toBe(testText);
+            await verifyClipboardContent(testText, false, PMPage);
         });
 
         it("should handle copy link action (memory-item-copy-link) and verify clipboard content", async function () {
@@ -627,7 +564,7 @@ describe("Test PaperMemory Memory Item Actions", function () {
                 expectedPattern = await paperToAbs(paperData.id, PMPage);
             }
 
-            const newPage = await verifyPageNavigation(expectedPattern);
+            const newPage = await verifyPageNavigation(expectedPattern, browser);
             await newPage.close();
         });
 
@@ -697,7 +634,7 @@ describe("Test PaperMemory Memory Item Actions", function () {
             await safeClick(selector, page);
             const newPagesCount = (await browser.pages()).length - initialPages.length;
             expect(newPagesCount).toBe(1);
-            const newPage = await verifyPageNavigation(expectedUrlPattern);
+            const newPage = await verifyPageNavigation(expectedUrlPattern, browser);
             await newPage.close();
         }
 
@@ -814,7 +751,7 @@ describe("Test PaperMemory Memory Item Actions", function () {
 
             await safeClick(scirateSelector, PMPage);
 
-            const matchingPage = await verifyPageNavigation(/scirate\.com/);
+            const matchingPage = await verifyPageNavigation(/scirate\.com/, browser);
             await matchingPage.close();
 
             console.log(indent(2) + "✓ Complete workflow test passed");
