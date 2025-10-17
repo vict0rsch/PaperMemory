@@ -524,7 +524,7 @@ export const popupMain = async (url, is, manualTrigger = false, tab = null) => {
             const url = findEl({ element: `popup-website-url` }).textContent;
             if (url) {
                 await focusExistingOrCreateNewURLTab(url);
-                // window.close && window.close();
+                window.close && window.close();
             }
         });
         addListener(`popup-memory-item-copy-link--${id}`, "click", async () => {
