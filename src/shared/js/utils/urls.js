@@ -255,3 +255,11 @@ export const parseIdFromUrl = async (url, tab = null) => {
 };
 
 export const isArxivAbstractUrl = (url) => url.startsWith("https://arxiv.org/abs/");
+
+export const getCurrentUserTab = () =>
+    new Promise((resolve) => {
+        const query = { active: true, lastFocusedWindow: true };
+        chrome.tabs.query(query, async (tabs) => {
+            resolve(tabs[0]);
+        });
+    });
