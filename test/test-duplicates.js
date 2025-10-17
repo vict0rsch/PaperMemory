@@ -195,7 +195,7 @@ describe("Paper de-duplication", function () {
 
                     beforeEach(async function () {
                         // before each duplicate test: find the right objects
-                        hashedName = miniHash(duplicates[0].name);
+                        hashedName = PMUtils.functions.miniHash(duplicates[0].name);
                         hashedTitle = Object.keys(memoryState.titleHashToIds).find(
                             (k) => k.includes(hashedName)
                         );
