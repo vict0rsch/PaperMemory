@@ -3276,6 +3276,14 @@
         return idForUrl;
     };
 
+    const getCurrentUserTab = () =>
+        new Promise((resolve) => {
+            const query = { active: true, lastFocusedWindow: true };
+            chrome.tabs.query(query, async (tabs) => {
+                resolve(tabs[0]);
+            });
+        });
+
     // ES Module imports
 
     /**
@@ -8406,7 +8414,7 @@ ${note}</textarea
                 const url = findEl({ element: `popup-website-url` }).textContent;
                 if (url) {
                     await focusExistingOrCreateNewURLTab(url);
-                    // window.close && window.close();
+                    window.close && window.close();
                 }
             });
             addListener(`popup-memory-item-copy-link--${id}`, "click", async () => {
@@ -8544,19 +8552,18 @@ ${note}</textarea
     // ------------------------------
     // -----  Script Execution  -----
     // ------------------------------
-
-    const query = { active: true, lastFocusedWindow: true };
-    if (
-        typeof window !== "undefined" &&
-        window.location.href.includes("popup") &&
-        !window.paperMemoryPopupInitialized
-    ) {
-        // This is a global variable to track whether the popup has been initialized.
-        // In DEV mode, this would be run twice by the additional injection of debug.bundle.js
-        window.paperMemoryPopupInitialized = true;
-        chrome.tabs.query(query, async (tabs) => {
+    (async () => {
+        if (
+            typeof window !== "undefined" &&
+            window.location.href.includes("popup") &&
+            !window.paperMemoryPopupInitialized
+        ) {
+            // This is a global variable to track whether the popup has been initialized.
+            // In DEV mode, this would be run twice by the additional injection of debug.bundle.js
+            window.paperMemoryPopupInitialized = true;
+            const tab = await getCurrentUserTab();
+            const url = tab.url;
             chrome.runtime.connect({ name: "PaperMemoryPopupSync" });
-            const url = tabs[0].url;
             document.addEventListener("click", handleHideAllTitleTooltips);
 
             let stateReadyPromise, remoteIsReadyPromise;
@@ -8579,7 +8586,7 @@ ${note}</textarea
             hideId("memory-spinner");
             showId("memory-switch");
             makeMemoryHTML();
-            popupMain(url, is, false, tabs[0]);
+            popupMain(url, is, false, tab);
             if (navigator.userAgent.search("Firefox") > -1) {
                 hideId("overwrite-container");
             }
@@ -8591,8 +8598,8 @@ ${note}</textarea
                 makeMemoryHTML();
                 await updatePopupPaperNoMemory(url);
             }
-        });
-    }
+        }
+    })();
 
     // ES Module imports
 
