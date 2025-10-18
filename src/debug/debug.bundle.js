@@ -2500,7 +2500,12 @@ var PMDebug = (function () {
         const keyLen = Math.max(...Object.keys(bibtex).map((k) => k.length));
         for (const key in bibtex) {
             if (bibtex.hasOwnProperty(key) && bibtex[key]) {
-                let value = bibtex[key].replaceAll(/\s+/g, " ").trim();
+                let candidate = bibtex[key];
+                if (typeof candidate !== "string") {
+                    console.warn("Non-string value found for key", key, ":", candidate);
+                    candidate = JSON.stringify(candidate);
+                }
+                let value = candidate.replaceAll(/\s+/g, " ").trim();
                 if (value.startsWith("{") && value.endsWith("}")) {
                     value = safeRemoveSurroundingBraces(value);
                 }
@@ -9046,47 +9051,50 @@ ${note}</textarea
     };
 
     const makeACMPaper = async (url) => {
-        let pdfLink;
+        let author, year, title, venue, key, bibtex, note, id, doi, pdfLink;
         url = noParamUrl(url);
         if (isPdfUrl$1(url)) {
             pdfLink = url;
         } else {
             pdfLink = url.replace(/\/doi\/?(abs|full)?\//, "/doi/pdf/");
         }
-        const dom = await fetchDom(url.replace("/doi/pdf/", "/doi/"));
-
-        let author, year, title, venue, key, doi, bibtex, note;
-        const metaTagsData = extractDataFromDCMetaTags(dom);
-        if (metaTagsData) {
-            ({ author, year, title, venue, key, doi, bibtex, note } = metaTagsData);
+        doi = "10.5555/" + url.split("10.5555/")[1];
+        const response = await fetch("https://dl.acm.org/action/exportCiteProcCitation", {
+            headers: {
+                "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
+            },
+            referrer: `https://dl.acm.org/doi/${doi}`,
+            body: `dois=${doi}&targetFile=custom-bibtex&format=bibTex`,
+            method: "POST",
+            mode: "cors",
+        });
+        if (response.ok) {
+            const data = await response.json();
+            if (data && data.items && data.items.length > 0) {
+                const item = data.items[0][doi];
+                title = item.title;
+                author = item.author.map((a) => `${a.given} ${a.family}`).join(" and ");
+                year = item.issued["date-parts"][0][0] + "";
+                venue = item["collection-title"];
+                const ISBN = item.ISBN;
+                bibtex = bibtexToString({
+                    entryType: "article",
+                    citationKey: doi,
+                    journal: venue,
+                    doi,
+                    title,
+                    ISBN,
+                    year,
+                });
+                id = `ACM-${year}_${miniHash(doi)}`;
+                key = doi;
+                note = `Published @ ${venue} (${year})`;
+            } else {
+                throw new Error("Insufficient data from ACM citation");
+            }
         } else {
-            title = dom.querySelector(".citation__title").innerText;
-            author = queryAll(
-                "ul[aria-label='authors'] li.loa__item .loa__author-name",
-                dom
-            )
-                .map((el) => el.innerText.replace(",", "").trim())
-                .join(" and ");
-            const publication = dom.querySelector(".issue-item__detail a").innerText;
-            venue = publication.split("'")[0].trim();
-            year = "20" + publication.split("'")[1].split(":")[0].trim();
-            doi = pdfLink.split("/doi/pdf/")[1];
-
-            note = `Accepted @ ${venue} (${year})`;
-            key = doi;
-            bibtex = bibtexToString({
-                entryType: "article",
-                citationKey: doi,
-                journal: venue,
-                author,
-                title,
-                year,
-                publisher: "Association for Computing Machinery",
-                address: "New York, NY, USA",
-                url: noParamUrl(url).replace("/doi/pdf/", "/doi/"),
-            });
+            throw new Error("Failed to fetch ACM citation", response);
         }
-        const id = `ACM-${year}_${miniHash(doi)}`;
 
         return { author, bibtex, id, key, note, pdfLink, title, venue, year };
     };
@@ -9627,6 +9635,9 @@ ${note}</textarea
      * @returns {string} The note for the paper as `Accepted @ ${items.event.name} -- [crossref.org]`
      */
     const tryCrossRef = async (paper, toBackground) => {
+        if (toBackground) {
+            return await sendMessageToBackground({ type: "try-cross-ref", paper });
+        }
         try {
             // fetch crossref' api for the paper's title
             const title = encodeURI(paper.title);
@@ -9673,6 +9684,9 @@ ${note}</textarea
     };
 
     const tryDBLP = async (paper, toBackground) => {
+        if (toBackground) {
+            return await sendMessageToBackground({ type: "try-dblp", paper });
+        }
         try {
             const title = encodeURI(paper.title);
             const api = `https://dblp.org/search/publ/api?q=${title}&format=json`;
@@ -9731,9 +9745,61 @@ ${note}</textarea
     };
 
     const trySemanticScholar = async (paper, toBackground) => {
-        {
+        if (toBackground) {
             return await sendMessageToBackground({ type: "try-semantic-scholar", paper });
         }
+        try {
+            const { data, status } = await fetchJSON(
+                `https://api.semanticscholar.org/graph/v1/paper/search?query=${encodeURI(
+                paper.title
+            )}&fields=title,venue,year,authors,externalIds,url&limit=5`
+            );
+            const matches = data;
+
+            if (matches && matches.data && matches.data.length > 0) {
+                for (const match of matches.data) {
+                    if (
+                        miniHash(match.title) === miniHash(paper.title) &&
+                        Math.abs(match.year - paper.year) < 3 &&
+                        match.venue &&
+                        !match.venue.toLowerCase().includes("arxiv") &&
+                        !match.venue.toLowerCase().includes("biorxiv")
+                    ) {
+                        info("Found a Semantic Scholar match");
+                        let venue = match.venue
+                            .trim()
+                            .replace(/^\d{4}/, "")
+                            .trim();
+                        if (venue.indexOf(" ") < 0) venue = venue.toUpperCase();
+                        const year = (match.year + "").trim();
+                        const note = `Accepted @ ${venue} (${year}) -- [semanticscholar.org]`;
+                        const authors = match.authors.map((a) => a.name).join(" and ");
+                        let doi = match.externalIds.DOI;
+                        // if (doi) {
+                        //     doi = doi.replaceAll("_", "\\{_}");
+                        // }
+                        const bibtex = bibtexToString({
+                            entryType: "article",
+                            citationKey:
+                                miniHash(match.authors[0].name.split(" ").last()) +
+                                year +
+                                firstNonStopLowercase(paper.title),
+                            title: paper.title,
+                            author: authors,
+                            journal: venue,
+                            year,
+                            doi,
+                            bibSource: `Semantic Scholar ${match.url}`,
+                        });
+                        return { venue, note, bibtex, status };
+                    }
+                }
+            }
+            return { status };
+        } catch (error) {
+            logError("[SemanticScholar]", error);
+        }
+        return { status: 404 };
     };
 
     const tryGoogleScholar = async (paper) => {
@@ -9743,6 +9809,9 @@ ${note}</textarea
     };
 
     const tryUnpaywall = async (paper, toBackground) => {
+        if (toBackground) {
+            return await sendMessageToBackground({ type: "try-unpaywall", paper });
+        }
         const url = `https://api.unpaywall.org/v2/search?query=${encodeURI(
         paper.title
     )}&is_oa=true&email=papermemory+${parseInt(Math.random() * 1000)}@gmail.com`;
@@ -9768,7 +9837,7 @@ ${note}</textarea
         let names = ["GoogleScholar", "SemanticScholar", "CrossRef", "DBLP", "Unpaywall"];
         let matchPromises = [
             silentPromiseTimeout(tryGoogleScholar(paper)),
-            silentPromiseTimeout(trySemanticScholar(paper)),
+            silentPromiseTimeout(trySemanticScholar(paper, true)),
             silentPromiseTimeout(tryCrossRef(paper)),
             silentPromiseTimeout(tryDBLP(paper)),
             silentPromiseTimeout(tryUnpaywall(paper)),
@@ -10046,6 +10115,73 @@ ${note}</textarea
 
         return await initPaper(paper);
     };
+
+    var parsers = /*#__PURE__*/Object.freeze({
+        __proto__: null,
+        autoTagPaper: autoTagPaper,
+        decodeHtml: decodeHtml,
+        extractAPIv2ContentValue: extractAPIv2ContentValue,
+        extractAuthor: extractAuthor,
+        extractCrossrefData: extractCrossrefData,
+        extractDataFromDCMetaTags: extractDataFromDCMetaTags,
+        fetchArxivXML: fetchArxivXML,
+        fetchBibtexToPaper: fetchBibtexToPaper,
+        fetchCrossRefDataForDoi: fetchCrossRefDataForDoi,
+        fetchCvfHTML: fetchCvfHTML,
+        fetchDom: fetchDom,
+        fetchJSON: fetchJSON,
+        fetchText: fetchText,
+        findACLValue: findACLValue,
+        findCellPii: findCellPii,
+        flipAndAuthors: flipAndAuthors,
+        flipAuthor: flipAuthor,
+        getMetaContent: getMetaContent,
+        getOpenReviewForumJSON: getOpenReviewForumJSON,
+        getOpenReviewNoteJSON: getOpenReviewNoteJSON,
+        initPaper: initPaper,
+        makeACLPaper: makeACLPaper,
+        makeACMPaper: makeACMPaper,
+        makeACSPaper: makeACSPaper,
+        makeAIPPaper: makeAIPPaper,
+        makeAPSPaper: makeAPSPaper,
+        makeArxivPaper: makeArxivPaper,
+        makeBioRxivPaper: makeBioRxivPaper,
+        makeCVFPaper: makeCVFPaper,
+        makeCellPaper: makeCellPaper,
+        makeChemRxivPaper: makeChemRxivPaper,
+        makeFrontiersPaper: makeFrontiersPaper,
+        makeIEEEPaper: makeIEEEPaper,
+        makeIHEPPaper: makeIHEPPaper,
+        makeIJCAIPaper: makeIJCAIPaper,
+        makeIOPPaper: makeIOPPaper,
+        makeJMLRPaper: makeJMLRPaper,
+        makeMDPIPaper: makeMDPIPaper,
+        makeNaturePaper: makeNaturePaper,
+        makeNeuripsPaper: makeNeuripsPaper,
+        makeOUPPaper: makeOUPPaper,
+        makeOpenReviewBibTex: makeOpenReviewBibTex,
+        makeOpenReviewPaper: makeOpenReviewPaper,
+        makePLOSPaper: makePLOSPaper,
+        makePMCPaper: makePMCPaper,
+        makePMLRPaper: makePMLRPaper,
+        makePNASPaper: makePNASPaper,
+        makePaper: makePaper,
+        makeRSCPaper: makeRSCPaper,
+        makeScienceDirectPaper: makeScienceDirectPaper,
+        makeSciencePaper: makeSciencePaper,
+        makeSpringerPaper: makeSpringerPaper,
+        makeWebsitePaper: makeWebsitePaper,
+        makeWileyPaper: makeWileyPaper,
+        makerHALPaper: makerHALPaper,
+        parseAIPIdOrDOI: parseAIPIdOrDOI,
+        tryCrossRef: tryCrossRef,
+        tryDBLP: tryDBLP,
+        tryGoogleScholar: tryGoogleScholar,
+        tryPWCMatch: tryPWCMatch,
+        tryPreprintMatch: tryPreprintMatch,
+        trySemanticScholar: trySemanticScholar,
+        tryUnpaywall: tryUnpaywall
+    });
 
     // ES Module imports
 
@@ -10706,6 +10842,7 @@ ${note}</textarea
         };
 
         let warns = {};
+        let message = "";
 
         for (const key in expectedKeys) {
             if (!warns[key]) {
@@ -11001,7 +11138,7 @@ ${note}</textarea
         state,
         urls,
         files,
-
+        parsers,
         // Popup modules
         templates,
         handlers,
@@ -11049,6 +11186,7 @@ ${note}</textarea
                 "files",
                 "templates",
                 "handlers",
+                "parsers",
                 "memory",
             ];
             modules.forEach((moduleName) => {
