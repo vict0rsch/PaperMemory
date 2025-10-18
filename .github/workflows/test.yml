@@ -1,4 +1,4 @@
-name: automerge
+name: test-ci
 on: push
 
 jobs:
