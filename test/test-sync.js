@@ -6,14 +6,21 @@ import {
     getPaperMemoryState,
 } from "./browser.js";
 import { expect } from "expect";
-import { readJSON, sleep, asyncMap } from "./utilsForTests.js";
-import { loadPaperMemoryUtils } from "./utilsForTests.js";
+import {
+    readJSON,
+    sleep,
+    asyncMap,
+    loadConfig,
+    loadPaperMemoryUtils,
+} from "./utilsForTests.js";
 
+const { keepOpen, headless } = loadConfig();
+const pat = process.env.github_pat ?? process.env.pm_ghp;
+console.log("headless :", headless);
+console.log("keepOpen :", keepOpen);
 // make all functions in utils.min.js available in the `global` scope
 await loadPaperMemoryUtils();
 
-const pat = process.env.github_pat ?? process.env.pm_ghp;
-const keepOpen = !!(process.env.keepOpen ?? false);
 var pmURLs;
 
 if (!pat) {
@@ -50,7 +57,7 @@ describe("Test Github Gist Sync", async function () {
     describe("Papers are added on Device 0 and pulled on Device 1", async function () {
         let pages, browsers, memories;
         before(async function () {
-            browsers = [await makeBrowser(), await makeBrowser()];
+            browsers = [await makeBrowser(headless), await makeBrowser(headless)];
             pmURLs = getPMURLs(await findExtensionId(browsers[0]));
 
             pages = await asyncMap(
@@ -115,7 +122,7 @@ describe("Test Github Gist Sync", async function () {
     describe("Removing a paper on Device 1", async function () {
         let memories, browsers, pages;
         before(async function () {
-            browsers = [await makeBrowser(), await makeBrowser()];
+            browsers = [await makeBrowser(headless), await makeBrowser(headless)];
 
             pages = await asyncMap(
                 browsers,

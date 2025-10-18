@@ -1,8 +1,8 @@
-name: automerge
-on: [push, pull_request]
+name: test-ci
+on: push
 
 jobs:
-    build:
+    test:
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v4
@@ -13,4 +13,4 @@ jobs:
             - name: Install dependencies
               run: npm install
             - name: Build
-              run: npm run build
+              run: npm run test-ci

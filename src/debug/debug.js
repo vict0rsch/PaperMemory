@@ -12,7 +12,7 @@ import * as sync from "@pmu/sync.js";
 import * as state from "@pmu/state.js";
 import * as urls from "@pmu/urls.js";
 import * as files from "@pmu/files.js";
-
+import * as parsers from "@pmu/parsers.js";
 // Import popup-specific modules (when available)
 // Important: these modules themselves import popup.js which contains
 // immediately-invoked functions that should not be called twice. This is why
@@ -37,7 +37,7 @@ const PMDebug = {
     state,
     urls,
     files,
-
+    parsers,
     // Popup modules
     templates,
     handlers,
@@ -85,6 +85,7 @@ const PMDebug = {
             "files",
             "templates",
             "handlers",
+            "parsers",
             "memory",
         ];
         modules.forEach((moduleName) => {

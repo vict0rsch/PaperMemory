@@ -28,7 +28,8 @@ import {
 
 await loadPaperMemoryUtils();
 
-const { keepOpen } = loadConfig();
+const { keepOpen, headless } = loadConfig();
+console.log("headless :", headless);
 console.log("keepOpen :", keepOpen);
 
 const miniHash = PMUtils.functions.miniHash;
@@ -48,7 +49,7 @@ describe("Test PaperMemory Popup UI - Known Paper Page", function () {
 
     before(async function () {
         console.log(indent(1) + "Creating browser with PaperMemory extension");
-        browser = await makeBrowser();
+        browser = await makeBrowser(headless);
         PMPage = (await browser.pages())[0];
 
         extensionId = await findExtensionId(browser);

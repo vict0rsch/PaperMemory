@@ -401,7 +401,12 @@ export const bibtexToString = (bibtex) => {
     const keyLen = Math.max(...Object.keys(bibtex).map((k) => k.length));
     for (const key in bibtex) {
         if (bibtex.hasOwnProperty(key) && bibtex[key]) {
-            let value = bibtex[key].replaceAll(/\s+/g, " ").trim();
+            let candidate = bibtex[key];
+            if (typeof candidate !== "string") {
+                console.warn("Non-string value found for key", key, ":", candidate);
+                candidate = JSON.stringify(candidate);
+            }
+            let value = candidate.replaceAll(/\s+/g, " ").trim();
             if (value.startsWith("{") && value.endsWith("}")) {
                 value = safeRemoveSurroundingBraces(value);
             }
