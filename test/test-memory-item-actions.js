@@ -41,8 +41,9 @@ const miniHash = PMUtils.functions.miniHash;
 // -----  Global constants to parametrize the tests  -----
 // -------------------------------------------------------
 
-const { keepOpen } = loadConfig();
+const { keepOpen, headless } = loadConfig();
 console.log("keepOpen :", keepOpen);
+console.log("headless :", headless);
 
 // --------------------------------
 // -----  Main test function  -----
@@ -65,7 +66,7 @@ describe("Test PaperMemory Memory Item Actions", function () {
 
     before(async function () {
         console.log(indent(1) + "Creating browser with PaperMemory extension");
-        browser = await makeBrowser();
+        browser = await makeBrowser(headless);
         PMPage = (await browser.pages())[0];
 
         // Discover the extension ID assigned by Chrome

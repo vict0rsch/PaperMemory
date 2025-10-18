@@ -19,8 +19,9 @@ import { loadConfig, sleep, root, readJSON, indent } from "./utilsForTests.js";
 // -----  Global constants to parametrize the tests  -----
 // -------------------------------------------------------
 
-const { keepOpen } = loadConfig();
+const { keepOpen, headless } = loadConfig();
 console.log("keepOpen :", keepOpen);
+console.log("headless :", headless);
 
 // --------------------------------
 // -----  Main test function  -----
@@ -38,7 +39,7 @@ describe("Test PaperMemory MemoryTable UI", function () {
 
     before(async function () {
         console.log(indent(1) + "Creating browser with PaperMemory extension");
-        browser = await makeBrowser();
+        browser = await makeBrowser(headless);
 
         // Discover the extension ID assigned by Chrome
         extensionId = await findExtensionId(browser);

@@ -4,9 +4,9 @@ import puppeteer from "puppeteer";
 import { sleep, root } from "./utilsForTests.js";
 import fs from "fs";
 
-export const makeBrowser = async (windowSize = "1200,900") => {
+export const makeBrowser = async (headless = false, windowSize = "1200,900") => {
     const browser = await puppeteer.launch({
-        headless: false,
+        headless,
         ignoreHTTPSErrors: true,
         ignoreDefaultArgs: ["--disable-extensions"],
         args: [

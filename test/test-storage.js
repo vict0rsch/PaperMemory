@@ -32,6 +32,7 @@ var {
     dump,
     singleOrder,
     ignoreSources,
+    headless,
 } = loadConfig();
 
 // check env vars
@@ -59,6 +60,7 @@ console.log("    keepOpen      : ", keepOpen);
 console.log("    dump          : ", dump);
 console.log("    singleOrder   : ", singleOrder);
 console.log("    ignoreSources : ", ignoreSources);
+console.log("    headless      : ", headless);
 console.log("--------------------------");
 
 // util to find a paper in the Memory from a specific source
@@ -136,7 +138,7 @@ describe("Test paper detection and storage", function () {
         describe("Parsing order: " + order, function () {
             before(async function () {
                 // create browser
-                browser = await makeBrowser();
+                browser = await makeBrowser(headless);
 
                 // count total urls to visit depending on maxSources
                 const nUrls = sources.length;
