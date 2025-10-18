@@ -50,3 +50,7 @@ singleName:
 ignoreSources:
   type: comma-separated-str
   defaultValue: ""
+
+headless:
+  type: bool
+  defaultValue: true

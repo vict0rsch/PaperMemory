@@ -10,9 +10,7 @@ jobs:
               with:
                   node-version: "22.x"
 
-            - name: Install Yarn
-              run: npm install --global yarn
             - name: Install dependencies
-              run: yarn install
+              run: npm install
             - name: Build
-              run: gulp build
+              run: npm run build

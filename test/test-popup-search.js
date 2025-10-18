@@ -35,7 +35,9 @@ await loadPaperMemoryUtils();
 // -----  Global constants to parametrize the tests  -----
 // -------------------------------------------------------
 
-const { keepOpen } = loadConfig();
+const { keepOpen, headless } = loadConfig();
+console.log("headless :", headless);
+console.log("keepOpen :", keepOpen);
 
 // Paper ID constants for test data
 const PAPER_IDS = {
@@ -60,7 +62,7 @@ describe("Test PaperMemory Popup Search Functionality", function () {
     this.slow(60000); // Consider slow after 60 seconds
 
     before(async function () {
-        browser = await makeBrowser();
+        browser = await makeBrowser(headless);
         PMPage = (await browser.pages())[0];
 
         // Discover the extension ID assigned by Chrome

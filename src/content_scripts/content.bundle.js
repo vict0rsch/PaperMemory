@@ -2217,7 +2217,12 @@
         const keyLen = Math.max(...Object.keys(bibtex).map((k) => k.length));
         for (const key in bibtex) {
             if (bibtex.hasOwnProperty(key) && bibtex[key]) {
-                let value = bibtex[key].replaceAll(/\s+/g, " ").trim();
+                let candidate = bibtex[key];
+                if (typeof candidate !== "string") {
+                    console.warn("Non-string value found for key", key, ":", candidate);
+                    candidate = JSON.stringify(candidate);
+                }
+                let value = candidate.replaceAll(/\s+/g, " ").trim();
                 if (value.startsWith("{") && value.endsWith("}")) {
                     value = safeRemoveSurroundingBraces(value);
                 }
@@ -7591,47 +7596,50 @@ ${note}</textarea
     };
 
     const makeACMPaper = async (url) => {
-        let pdfLink;
+        let author, year, title, venue, key, bibtex, note, id, doi, pdfLink;
         url = noParamUrl(url);
         if (isPdfUrl$1(url)) {
             pdfLink = url;
         } else {
             pdfLink = url.replace(/\/doi\/?(abs|full)?\//, "/doi/pdf/");
         }
-        const dom = await fetchDom(url.replace("/doi/pdf/", "/doi/"));
-
-        let author, year, title, venue, key, doi, bibtex, note;
-        const metaTagsData = extractDataFromDCMetaTags(dom);
-        if (metaTagsData) {
-            ({ author, year, title, venue, key, doi, bibtex, note } = metaTagsData);
+        doi = "10.5555/" + url.split("10.5555/")[1];
+        const response = await fetch("https://dl.acm.org/action/exportCiteProcCitation", {
+            headers: {
+                "content-type": "application/x-www-form-urlencoded; charset=UTF-8",
+            },
+            referrer: `https://dl.acm.org/doi/${doi}`,
+            body: `dois=${doi}&targetFile=custom-bibtex&format=bibTex`,
+            method: "POST",
+            mode: "cors",
+        });
+        if (response.ok) {
+            const data = await response.json();
+            if (data && data.items && data.items.length > 0) {
+                const item = data.items[0][doi];
+                title = item.title;
+                author = item.author.map((a) => `${a.given} ${a.family}`).join(" and ");
+                year = item.issued["date-parts"][0][0] + "";
+                venue = item["collection-title"];
+                const ISBN = item.ISBN;
+                bibtex = bibtexToString({
+                    entryType: "article",
+                    citationKey: doi,
+                    journal: venue,
+                    doi,
+                    title,
+                    ISBN,
+                    year,
+                });
+                id = `ACM-${year}_${miniHash(doi)}`;
+                key = doi;
+                note = `Published @ ${venue} (${year})`;
+            } else {
+                throw new Error("Insufficient data from ACM citation");
+            }
         } else {
-            title = dom.querySelector(".citation__title").innerText;
-            author = queryAll(
-                "ul[aria-label='authors'] li.loa__item .loa__author-name",
-                dom
-            )
-                .map((el) => el.innerText.replace(",", "").trim())
-                .join(" and ");
-            const publication = dom.querySelector(".issue-item__detail a").innerText;
-            venue = publication.split("'")[0].trim();
-            year = "20" + publication.split("'")[1].split(":")[0].trim();
-            doi = pdfLink.split("/doi/pdf/")[1];
-
-            note = `Accepted @ ${venue} (${year})`;
-            key = doi;
-            bibtex = bibtexToString({
-                entryType: "article",
-                citationKey: doi,
-                journal: venue,
-                author,
-                title,
-                year,
-                publisher: "Association for Computing Machinery",
-                address: "New York, NY, USA",
-                url: noParamUrl(url).replace("/doi/pdf/", "/doi/"),
-            });
+            throw new Error("Failed to fetch ACM citation", response);
         }
-        const id = `ACM-${year}_${miniHash(doi)}`;
 
         return { author, bibtex, id, key, note, pdfLink, title, venue, year };
     };
@@ -9217,6 +9225,7 @@ ${note}</textarea
         };
 
         let warns = {};
+        let message = "";
 
         for (const key in expectedKeys) {
             if (!warns[key]) {

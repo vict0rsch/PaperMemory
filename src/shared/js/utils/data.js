@@ -684,6 +684,7 @@ export const validatePaper = (paper, log = true) => {
     };
 
     let warns = {};
+    let message = "";
 
     for (const key in expectedKeys) {
         if (!warns[key]) {

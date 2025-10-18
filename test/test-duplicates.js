@@ -37,6 +37,7 @@ let {
     pageTimeout,
     maxSources,
     onlySources,
+    headless,
 } = loadConfig();
 
 console.log("Test params:");
@@ -48,7 +49,7 @@ console.log("    ignoreSources : ", ignoreSources);
 console.log("    pageTimeout   : ", pageTimeout);
 console.log("    maxSources    : ", maxSources);
 console.log("    onlySources   : ", onlySources);
-
+console.log("    headless      : ", headless);
 // check env vars
 
 var orders = ["pre;pub", "pub;pre"];
@@ -128,7 +129,7 @@ describe("Paper de-duplication", function () {
             // before the tests: visit paper pages
             before(async function () {
                 // create browser
-                browser = await makeBrowser();
+                browser = await makeBrowser(headless);
                 // visit non-duplicated papers first, then known duplicates
                 const allVisits = [...preDuplicates, ...allDuplicates];
                 // count total number of urls to visit
