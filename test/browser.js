@@ -13,6 +13,8 @@ export const makeBrowser = async (headless = false, windowSize = "1200,900") => 
             `--load-extension=${root}`,
             `--window-size=${windowSize}`,
             "--user-agent=PuppeteerAgent",
+            "--no-sandbox",
+            "--disable-setuid-sandbox",
             "--disable-web-security", // Allow clipboard access
         ],
     });
