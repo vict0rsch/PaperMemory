@@ -306,6 +306,7 @@ export const knownPaperPages = {
         patterns: [
             "ncbi.nlm.nih.gov/pmc/articles/PMC",
             "ncbi.nlm.nih.gov/articles/PMC",
+            (url) => url.match(/ncbi.nlm.nih.gov\/\d+/),
         ],
         name: "PMC (PubMed Central)",
     },

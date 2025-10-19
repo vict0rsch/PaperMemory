@@ -1011,18 +1011,18 @@ export const makeJMLRPaper = async (url) => {
 
 export const makePMCPaper = async (url) => {
     url = noParamUrl(url);
+    if (url.endsWith("/")) {
+        url = url.slice(0, -1);
+    }
     if (isPdfUrl(url)) {
         url = url.split("/pdf")[0];
     }
-    console.log("url :", url);
-    const pmcid = url.match(/PMC\d+/)[0].replace("PMC", "");
-    console.log("pmcid :", pmcid);
-    const pdfLink = (url.endsWith("/") ? url : url + "/") + "pdf";
-    const dom = await fetchDom(url);
-    console.log("dom :", dom);
-    const doi = queryAll("a", dom)
-        .find((a) => a.innerText.match(/^10\.\d{4,9}\/[-._;()/:A-Z0-9]+$/i))
-        .innerText.trim();
+    const pmcid = url.includes("PMC")
+        ? url.match(/PMC\d+/)[0].replace("PMC", "")
+        : url.match(/ncbi.nlm.nih.gov\/(\d+)/)[1];
+    const pdfLink = url + "/pdf";
+    const html = await fetchText(url);
+    const doi = html.match(/10\.\d{4,9}\/[-._;()/:A-Z0-9]+/i)[0];
     const { author, bibtex, key, note, title, venue, year } = await fetchBibtexToPaper({
         doi,
     });
