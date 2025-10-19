@@ -303,7 +303,10 @@ export const knownPaperPages = {
         name: "PLOS (Public Library of Science)",
     },
     pmc: {
-        patterns: ["ncbi.nlm.nih.gov/pmc/articles/PMC"],
+        patterns: [
+            "ncbi.nlm.nih.gov/pmc/articles/PMC",
+            "ncbi.nlm.nih.gov/articles/PMC",
+        ],
         name: "PMC (PubMed Central)",
     },
     pmlr: {

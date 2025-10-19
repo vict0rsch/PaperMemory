@@ -1010,46 +1010,23 @@ export const makeJMLRPaper = async (url) => {
 };
 
 export const makePMCPaper = async (url) => {
-    const pmcid = url.match(/PMC\d+/)[0].replace("PMC", "");
-    const absUrl = url.split(`PMC${pmcid}`)[0] + `PMC${pmcid}`;
-    // https://api.ncbi.nlm.nih.gov/lit/ctxp/v1/pmc/?format=csl&id=7537588&download=true
-    const api = "https://api.ncbi.nlm.nih.gov/lit/ctxp/v1/pmc/?format=csl&id=";
-    const data = await (await fetch(`${api}${pmcid}&download=true`)).json();
-    const year = data["epub-date"]
-        ? data["epub-date"]["date-parts"][0][0] + ""
-        : data.issued["date-parts"][0][0] + "";
-    const author = data.author.map((a) => `${a.given} ${a.family}`).join(" and ");
-    const venue = data["container-title"]
-        .split(" ")
-        .map((p) => p.capitalize())
-        .join(" ");
-    const title = data.title;
-    const id = `PMC-${year}_${pmcid}`;
-    const key = `${data.author[0].family}${year}${firstNonStopLowercase(title)}`;
-    const bibtex = bibtexToString({
-        entryType: "article",
-        citationKey: key,
-        journal: venue,
-        issn: data["ISSN"],
-        volume: data.volume,
-        page: data.page,
-        doi: data.DOI,
-        PMID: data.PMID,
-        PMCID: data.PMCID,
-        publisher: data.publisher,
-        author,
-        title,
-    });
-
-    let pdfLink;
+    url = noParamUrl(url);
     if (isPdfUrl(url)) {
-        pdfLink = url;
-    } else {
-        pdfLink = `${absUrl}/pdf`;
+        url = url.split("/pdf")[0];
     }
-
-    const note = `Published @ ${venue} (${year})`;
-
+    console.log("url :", url);
+    const pmcid = url.match(/PMC\d+/)[0].replace("PMC", "");
+    console.log("pmcid :", pmcid);
+    const pdfLink = (url.endsWith("/") ? url : url + "/") + "pdf";
+    const dom = await fetchDom(url);
+    console.log("dom :", dom);
+    const doi = queryAll("a", dom)
+        .find((a) => a.innerText.match(/^10\.\d{4,9}\/[-._;()/:A-Z0-9]+$/i))
+        .innerText.trim();
+    const { author, bibtex, key, note, title, venue, year } = await fetchBibtexToPaper({
+        doi,
+    });
+    const id = `PMC-${year}_${pmcid}`;
     return { author, bibtex, id, key, note, pdfLink, title, venue, year };
 };
 
