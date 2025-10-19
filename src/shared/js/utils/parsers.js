@@ -453,7 +453,7 @@ export const makeNeuripsPaper = async (url) => {
         .filter((a) => a.innerText === "Bibtex")[0]
         ?.getAttribute("href");
 
-    let bibtex, author, title, year, key;
+    let bibtex, author, title, year, key, citationKey;
 
     if (citeUrl) {
         bibtex = await fetchText(`https://${parseUrl(url).host}${citeUrl}`);
