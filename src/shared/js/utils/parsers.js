@@ -778,7 +778,7 @@ export const makePMLRPaper = async (url) => {
         ""
     );
     let venue = conf;
-    note = `Accepted @ ${venue} (${year})`;
+    let note = `Accepted @ ${venue} (${year})`;
     for (const long in overridePMLRConfs) {
         if (conf.includes(long)) {
             venue = overridePMLRConfs[long];
