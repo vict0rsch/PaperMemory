@@ -4269,42 +4269,43 @@
     };
 
     const makeBioRxivPaper = async (url) => {
-        const biorxivAPI = "https://api.biorxiv.org/";
+        let author, bibtex, id, key, note, pdfLink, title, venue, year;
+        const biorxivAPI = "https://api.biorxiv.org";
         const pageURL = url.replace(".full.pdf", "");
-        const biorxivID = url
-            .split("/")
-            .slice(-2)
-            .join("/")
-            .replace(".full.pdf", "")
-            .split("v")[0];
-        const api = `${biorxivAPI}/details/biorxiv/${biorxivID}`;
+        let doi = url.split("/").slice(-2).join("/").replace(".full.pdf", "").split("v")[0];
+        const api = `${biorxivAPI}/details/biorxiv/${doi}`;
         const data = await fetch(api).then((response) => {
             return response.json();
         });
 
         if (data.messages[0].status !== "ok")
             throw new Error(`${api} returned ${data.messages[0].status}`);
-
         const paper = data.collection.last();
 
-        const pageText = await fetchText(pageURL);
+        if (paper.published.startsWith("10.")) {
+            doi = paper.published;
+            const paperData = await fetchBibtexToPaper({ doi });
+            ({ author, bibtex, key, note, title, venue, year } = paperData);
+        } else {
+            const pageText = await fetchText(pageURL);
 
-        const dom = new DOMParser().parseFromString(
-            pageText.replaceAll("\n", ""),
-            "text/html"
-        );
-        const bibtextLink = dom.querySelector(".bibtext a").getAttribute("href");
-        const bibtex = bibtexToString(await (await fetch(bibtextLink)).text());
+            const dom = new DOMParser().parseFromString(
+                pageText.replaceAll("\n", ""),
+                "text/html"
+            );
+            const bibtextLink = dom.querySelector(".bibtext a").getAttribute("href");
 
-        const author = extractAuthor(bibtex);
+            bibtex = bibtexToString(await (await fetch(bibtextLink)).text());
+            author = extractAuthor(bibtex);
 
-        const id = await parseIdFromUrl$1(url);
-        const key = bibtex.split("\n")[0].split("{")[1].replace(",", "").trim();
-        const note = "";
-        const pdfLink = cleanBiorxivURL(url) + ".full.pdf";
-        const title = paper.title;
-        const year = paper.date.split("-")[0];
-        const venue = "";
+            key = bibtex.split("\n")[0].split("{")[1].replace(",", "").trim();
+            note = "";
+            title = paper.title;
+            year = paper.date.split("-")[0];
+            venue = "";
+        }
+        pdfLink = cleanBiorxivURL(url) + ".full.pdf";
+        id = await parseIdFromUrl$1(url);
 
         return { author, bibtex, id, key, note, pdfLink, title, venue, year };
     };
