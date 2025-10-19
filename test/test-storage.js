@@ -107,8 +107,10 @@ describe("Test paper detection and storage", function () {
         const targets = urls[source];
         if (targets.length === 3 && targets[2].botPrevention) {
             console.log(
-                `\n>>> Skipping test for ${source} because its website ` +
-                    `prevents automated browsing. Remember to test manually.`
+                `\n>>> Skipping test for "${source}" because its website ` +
+                    `prevents automated browsing. Remember to test manually:` +
+                    `\n    ${targets[0]}` +
+                    `\n    ${targets[1]}`
             );
             delete urls[source];
         } else if (targets.length === 3 && targets[2].noPdf) {
