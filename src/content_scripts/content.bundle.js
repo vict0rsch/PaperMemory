@@ -9842,7 +9842,7 @@ ${note}</textarea
             };
 
             if (!notif.element) {
-                warn("[hideNotif] Notif element not found");
+                // warn("[hideNotif] Notif element not found");
                 end({ dontWait: true });
                 return;
             }
