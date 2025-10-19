@@ -26,7 +26,8 @@
         "https://journals.aps.org/prl/abstract/10.1103/PhysRevLett.128.171101",
         "https://journals.aps.org/prl/pdf/10.1103/PhysRevLett.128.171101",
         {
-            "venue": "Physical Review Letters"
+            "venue": "Physical Review Letters",
+            "botPrevention": true
         }
     ],
     "arxiv": [
