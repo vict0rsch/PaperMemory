@@ -129,7 +129,9 @@ export const parseIdFromUrl = async (url, tab = null) => {
         const year = `20${jid.match(/\d+/)[0]}`;
         idForUrl = `JMLR-${year}_${jid}`;
     } else if (is.pmc) {
-        const pmcid = url.match(/PMC\d+/g)[0].replace("PMC", "");
+        const pmcid = url.includes("PMC")
+            ? url.match(/PMC\d+/)[0].replace("PMC", "")
+            : url.match(/ncbi.nlm.nih.gov\/(\d+)/)[1];
         idForUrl = findPaperForProperty(papers, "pmc", pmcid);
     } else if (is.ijcai) {
         const procId = url.endsWith(".pdf")
