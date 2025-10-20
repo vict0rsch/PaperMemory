@@ -6,6 +6,14 @@
             "venue": "acl"
         }
     ],
+    "aip": [
+        "https://pubs.aip.org/aip/aml/article/1/1/010901/2878738/Deep-language-models-for-interpretative-and?searchresult=1",
+        "https://watermark02.silverchair.com/010901_1_5.0134317.pdf?token=AQECAHi208BE49Ooan9kkhW_Ercy7Dm3ZL_9Cf3qfKAc485ysgAAAy8wggMrBgkqhkiG9w0BBwagggMcMIIDGAIBADCCAxEGCSqGSIb3DQEHATAeBglghkgBZQMEAS4wEQQM4RTwOlcL3rxxHpClAgEQgIIC4n-V-uQcDI2YfQlmdHOaw_Dn7s7RiWP2Eh70_z9G4Sis8c9LslR-jTagm5adDBWKBvFeZVv2L3zU-5ZTRhkMD4cfWiBJHLDmEqvz7uEOMqcbgntFRzMj17QCMYMwwQtQHnAcn4jARCldux8AEJfpmGR2Ay5l9hIwO21GyZY_vgf41bm4tBk7fNiUJfitFXqY8Rzmm7WMsOlUn_iCfwueNG0HbaZQHErpOv2VnzEFaX7rQddmWXpCpZmKOZy8bNXqtErupmMSef9pqLT0fSBqv0oZwL-e40FtzEf2Rzyg7670-7yRc7kaMSDNmPSTC8NaD5I7HccHzBFHD-2727GrutfeXvUOWO6y7BatXF6P0xxXJD4glt7aBQgEKg99odz0XHGoWYEJQCFXQf6gAYHQNncSji9FDTVpp_2wpM-VM6dFBEbPBF1ebRtphgkfPGbx8ZHR0qaclD9zAmLnBv7XdPba6Tc5HgsIdPVt3gToeaBRQxeyBn3ez0DgnyawVKtdLehKFD42Wn1FoVqfkg2E3n4dmkFItuCEtbMsZMrfrDUuwILpx-VHl-k14pjubbeTl-qcy_5STdXoZqUTuNANiS--Cpjg1FR3e-0hTjyqOzl7byL0oiVULgUEYs1P4jRG8DEGEYdsPhFSa7NnklmuQMn1Kc-v9jLI1zdilU67ggEmNPMCl6H_rN4lEGhWktAPIVFWNsOY3976M0g1nzDU6bHhYMfIznG3N1p1LrKrxBup0Mwg-ot8gPi6CX-2E3WTMdeEbRX_gw-hKYAvG9n86AjCVOUsX3cCPpq2sLE1rjI-brpePMSxktLVMM5vXWz-3no3f60kN8sgMcnq1KrYf8H2luIo30j-n6JqBx-FLJD9nT40y5VRI88-eE0ugfCJ8YJOjdW5UIfSFXD1ECoVCspGrfJgw7oNVv_YFx0v1SDP7FxALgEF4cwRWMhYpWlOL0qKwD6dHSe6x-zNpxc84_nA5Q",
+        {
+            "noPdf": true,
+            "botPrevention": true
+        }
+    ],
     "acm": [
         "https://dl.acm.org/doi/10.5555/3491440.3491756",
         "https://dl.acm.org/doi/pdf/10.5555/3491440.3491756",
@@ -41,6 +49,14 @@
         "https://www.biorxiv.org/content/10.1101/2021.11.08.467690v2",
         "https://www.biorxiv.org/content/10.1101/2021.11.08.467690v2.full.pdf"
     ],
+    "cell": [
+        "https://www.cell.com/cell/fulltext/S0092-8674(25)01089-X",
+        "https://www.cell.com/action/showPdf?pii=S0092-8674%2825%2901089-X"
+    ],
+    "chemrxiv": [
+        "https://chemrxiv.org/engage/chemrxiv/article-details/65957d349138d231611ad8f7",
+        "https://chemrxiv.org/engage/api-gateway/chemrxiv/assets/orp/resource/item/65957d349138d231611ad8f7/original/challenges-in-high-throughput-inorganic-material-prediction-and-autonomous-synthesis.pdf"
+    ],
     "cvf": [
         "https://openaccess.thecvf.com/content_CVPR_2020/html/Bhattacharjee_DUNIT_Detection-Based_Unsupervised_Image-to-Image_Translation_CVPR_2020_paper.html",
         "https://openaccess.thecvf.com/content_CVPR_2020/papers/Bhattacharjee_DUNIT_Detection-Based_Unsupervised_Image-to-Image_Translation_CVPR_2020_paper.pdf",
@@ -53,6 +69,13 @@
         "https://www.frontiersin.org/articles/10.3389/fpace.2022.892330/pdf",
         {
             "noPdf": true
+        }
+    ],
+    "hal": [
+        "https://hal.science/hal-03171076",
+        "https://hal.science/hal-03171076/file/paper_22.pdf",
+        {
+            "venue": "DGMM"
         }
     ],
     "ijcai": [
@@ -88,6 +111,13 @@
         "https://www.jmlr.org/papers/v13/bergstra12a.html",
         "https://www.jmlr.org/papers/volume13/bergstra12a/bergstra12a.pdf"
     ],
+    "mdpi": [
+        "https://www.mdpi.com/2076-328X/13/12/961",
+        "https://www.mdpi.com/2076-328X/13/12/961/pdf",
+        {
+            "noPdf": true
+        }
+    ],
     "nature": [
         "https://www.nature.com/articles/s41467-018-07210-0",
         "https://www.nature.com/articles/s41467-018-07210-0.pdf",
@@ -105,6 +135,13 @@
         {
             "code": true,
             "venue": "iclr"
+        }
+    ],
+    "oup": [
+        "https://academic.oup.com/brain/article/147/3/743/7617466",
+        "https://watermark02.silverchair.com/awae043.pdf?token=AQECAHi208BE49Ooan9kkhW_Ercy7Dm3ZL_9Cf3qfKAc485ysgAAA1QwggNQBgkqhkiG9w0BBwagggNBMIIDPQIBADCCAzYGCSqGSIb3DQEHATAeBglghkgBZQMEAS4wEQQM7kysuY_cs4rR2-jhAgEQgIIDB4P9PivhWOCC8mFmhsZNyZflrzom2JHSmlFrmTEMfpOjewEbs6ujIgmf466LnSL_8BoyFCpXuwfCTp_EVwkQmBfdgVdL8ckkyt6k46nOXKAGKPHOzcv0EDIJaj6R3V9RUMikRSzI4A09fYlKZKE5LmYUxx41i85wYw00VErOHEmDV_yhQXD2VL168iDCDHCJii7QgbCh-m6s6uN-6PB78FXInRQihR4RgscNUHtb3zVU50Hiic0yXYp0wpkcC6j30tAFJlG9fTi4ZYJApvXw6dFTWL_z1kgn0YEg05TNqyCBA3KykBhcZfwB_e0nFiezf1K4ymsgseRyBd5y-e2SRdFw1cpYToGo2gvj53mKqRyWf2R-arEcNKHsx88WHfJsccUXU-ypM2l_jMGfJaKId3FXNXpOSd5zsUy4JoZ93tQgTlllxa9nOsAN9JwcC1y7wHocJ6YuornKusv7ERioglKJdwnbgXb8TUcYxlaiGiPMjkFubq97D9v3hJxsdvjCubkHrvaBG8GUvGd5rASrCUZjPnPzqL52UYKaDOHWQidk26mVV3rbJ1t9GnqZ1VXyiRO0PYChR8hQ46hpsgSmODx7LNBe1Um515BjcTKY6x6Vo-QXEUvj6EQ2yk_8KPwriOAXbKv2CJZNejsVVpx7v07K2XhFwNWthSOILMcV_abQxZxOToNPf59mPK_rTCW_RJkCZdJuklSyR6jY0EXIjPEKJBfIgsRn584ek1jNbOmAAy5qi9DDwPp-8XP-ctS5iN1U6G0bf5XW1umDCKwKrwuHAHgVc-ABiorChqpBPen3NhBPgCQBMyKr0u3_dBjiIrr599qn5a8U0ZsPOyCw1_RDThlP_qMsEdOvGZDwvmQtOQqD_rYgGh2RFDPjOR-GKix6pjFcwLYImoWc0iCjX1JhQJw4ReKI5F6n2Uavhp2Tsz8YrgSAZPDN8skS8Wqqp2cM886EkywyF6h6izg74nD5mYnzK6RUNM2Nu4_MV0jJ1xqsw2B-ou41yMDIQWd7mUqngBA7Jhg",
+        {
+            "noPdf": true
         }
     ],
     "pmc": [
