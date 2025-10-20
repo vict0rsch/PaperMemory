@@ -228,8 +228,8 @@ export const parseIdFromUrl = async (url, tab = null) => {
         idForUrl = findPaperForProperty(papers, "hal", miniHash(halId));
     } else if (is.chemrxiv) {
         let chemRxivId = isPdfUrl(url)
-            ? (chemRxivId = url.split("/item/")[1].split("/")[0])
-            : (chemRxivId = noParamUrl(url).split("/").last());
+            ? url.split("/item/")[1].split("/")[0]
+            : noParamUrl(url).split("/").last();
         idForUrl = findPaperForProperty(papers, "chemrxiv", miniHash(chemRxivId));
     } else if (is.cell) {
         ({ url } = await findCellPii(url));
