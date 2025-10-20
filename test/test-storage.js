@@ -148,6 +148,8 @@ describe("Test paper detection and storage", function () {
             expect(missingTests).toEqual([]);
         });
     });
+
+    for (const [orderIdx, order] of orders.entries()) {
         describe("Parsing order: " + order, function () {
             before(async function () {
                 // create browser
@@ -159,16 +161,17 @@ describe("Test paper detection and storage", function () {
                 // visit all relevant urls
                 // all abstracts then all pdfs
 
-                const indices = order === "abs;pdf" ? [0, 1] : [1, 0];
+                const sourceOrder = order === "abs;pdf" ? [0, 1] : [1, 0];
 
-                for (const t of indices) {
-                    for (const [idx, targets] of Object.values(urls).entries()) {
+                for (const sourceOrderIdx of sourceOrder) {
+                    for (const [targetIdx, targets] of Object.values(urls).entries()) {
                         // for each target url (abstract, pdf), visit the url
                         // and wait a little for it to load
-
+                        const isPDF = sourceOrderIdx === 1;
+                        if (isPDF && targets[2]?.noPdf) continue;
                         // filter out the additional test configs
                         const targetUrls = targets.filter((u) => typeof u === "string");
-                        if (t >= targetUrls.length) {
+                        if (sourceOrderIdx >= targetUrls.length) {
                             continue;
                         }
                         if (targets.length > 2) {
@@ -179,9 +182,14 @@ describe("Test paper detection and storage", function () {
                                 continue;
                             }
                         }
-                        const target = targetUrls[t];
+                        // TODO: handle no pdf but still check abstracts
+                        const target = targetUrls[sourceOrderIdx];
                         // log prefix
-                        const n = idx + (o > 0 ? 1 - t : t) * nUrls + 1;
+                        const n =
+                            targetIdx +
+                            (orderIdx > 0 ? 1 - sourceOrderIdx : sourceOrderIdx) *
+                                nUrls +
+                            1;
                         const prefix = `${" ".repeat(6)}(${n}/${nUrls * 2})`;
                         console.log(`${prefix} Going to: ${target}`);
 
@@ -231,8 +239,11 @@ describe("Test paper detection and storage", function () {
                     const filteredSources = sources.filter(
                         (s) => !ignoreSingleOrder(s, urls, order)
                     );
-                    const memoryCounts = allAttributes(memoryPapers, "count");
-                    expect(memoryCounts.every((c) => c >= 2)).toBeTruthy();
+                    for (const paper of Object.values(memoryPapers)) {
+                        let targetMinCount = 2;
+                        if (urls[paper.source][2]?.noPdf) targetMinCount--;
+                        expect(paper.count).toBeGreaterThanOrEqual(targetMinCount);
+                    }
                 });
 
                 it("No undefined keys", async function () {
@@ -265,10 +276,12 @@ describe("Test paper detection and storage", function () {
                             expect(papers?.length).toBe(1);
                         });
 
-                        it("#count is 2", function () {
+                        it("#count is appropriate for the source", function () {
                             const paper = paperForSource(source, memoryPapers);
                             expect(paper).toBeDefined();
-                            expect(paper?.count).toBeGreaterThanOrEqual(2);
+                            let sourceCount = 2;
+                            if (urls[source][2]?.noPdf) sourceCount--;
+                            expect(paper?.count).toBeGreaterThanOrEqual(sourceCount);
                         });
 
                         // more tests parameterized in the 3rd item in the list for this source
