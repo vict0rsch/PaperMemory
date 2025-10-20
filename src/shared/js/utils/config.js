@@ -229,7 +229,10 @@ export const knownPaperPages = {
         name: "CVF (Computer Vision Foundation)",
     },
     frontiers: {
-        patterns: ["frontiersin.org/articles"],
+        patterns: [
+            "frontiersin.org/articles",
+            (url) => url.match(/frontiersin\.org\/.+\/articles\//),
+        ],
         name: "Frontiers",
     },
     hal: {

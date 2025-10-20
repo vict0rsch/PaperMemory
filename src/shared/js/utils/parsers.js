@@ -1297,8 +1297,11 @@ export const makeSciencePaper = async (url) => {
 
 export const makeFrontiersPaper = async (url) => {
     url = url.replace(/\/pdf$/, "/full");
+    if (url.endsWith("/")) {
+        url = url.slice(0, -1);
+    }
     const doi = noParamUrl(url).split("/articles/")[1].split("/full")[0];
-    const bib = await fetchText(`https://www.frontiersin.org/articles/${doi}/bibTex`);
+    const bib = await fetchText(noParamUrl(url).replace("/full", "") + "/bibTex");
     const data = Object.fromEntries(
         Object.entries(bibtexToObject(bib)).map(([k, v]) => [
             k === "citationKey" || k === "entryType" ? k : k.toLowerCase(),
@@ -1316,7 +1319,7 @@ export const makeFrontiersPaper = async (url) => {
     const key = citationKey;
     const pdfLink = url.replace(/\/full$/, "/pdf");
 
-    return { author, bibtex, id, key, note, pdfLink, title, venue, year };
+    return { author, bibtex, id, key, note, pdfLink, title, venue, year, doi };
 };
 
 export const makeIHEPPaper = async (url) => {
