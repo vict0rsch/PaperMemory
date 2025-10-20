@@ -115,10 +115,9 @@ describe("Test paper detection and storage", function () {
             delete urls[source];
         } else if (targets.length === 3 && targets[2].noPdf) {
             console.log(
-                `\n>>> Skipping test for ${source} because its ` +
-                    `pdf page does not exist`
+                `\n>>> Skipping PDF test for ${source} because its ` +
+                    `pdf page does not exist / cannot be parsed to an ID`
             );
-            delete urls[source];
         }
     }
 
@@ -135,8 +134,20 @@ describe("Test paper detection and storage", function () {
     // --------------------------
     // -----  Prepare Data  -----
     // --------------------------
-
-    for (const [o, order] of orders.entries()) {
+    describe("Check all sources have a test", function () {
+        it("All sources have at least one test", function () {
+            const knownSources = Object.keys(PMUtils.config.knownPaperPages);
+            const testSources = readURLs();
+            const missingTests = [];
+            for (const source of knownSources) {
+                if (source == "website") continue;
+                if (!testSources[source]) {
+                    missingTests.push(source);
+                }
+            }
+            expect(missingTests).toEqual([]);
+        });
+    });
         describe("Parsing order: " + order, function () {
             before(async function () {
                 // create browser
