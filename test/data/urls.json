@@ -75,7 +75,7 @@
         "https://hal.science/hal-03171076",
         "https://hal.science/hal-03171076/file/paper_22.pdf",
         {
-            "venue": "DGMM"
+            "venue": "International Joint Conference on Discrete Geometry and Mathematical Morphology"
         }
     ],
     "ijcai": [
@@ -115,7 +115,8 @@
         "https://www.mdpi.com/2076-328X/13/12/961",
         "https://www.mdpi.com/2076-328X/13/12/961/pdf",
         {
-            "noPdf": true
+            "noPdf": true,
+            "venue": "Behavioral Sciences"
         }
     ],
     "nature": [
@@ -141,7 +142,8 @@
         "https://academic.oup.com/brain/article/147/3/743/7617466",
         "https://watermark02.silverchair.com/awae043.pdf?token=AQECAHi208BE49Ooan9kkhW_Ercy7Dm3ZL_9Cf3qfKAc485ysgAAA1QwggNQBgkqhkiG9w0BBwagggNBMIIDPQIBADCCAzYGCSqGSIb3DQEHATAeBglghkgBZQMEAS4wEQQM7kysuY_cs4rR2-jhAgEQgIIDB4P9PivhWOCC8mFmhsZNyZflrzom2JHSmlFrmTEMfpOjewEbs6ujIgmf466LnSL_8BoyFCpXuwfCTp_EVwkQmBfdgVdL8ckkyt6k46nOXKAGKPHOzcv0EDIJaj6R3V9RUMikRSzI4A09fYlKZKE5LmYUxx41i85wYw00VErOHEmDV_yhQXD2VL168iDCDHCJii7QgbCh-m6s6uN-6PB78FXInRQihR4RgscNUHtb3zVU50Hiic0yXYp0wpkcC6j30tAFJlG9fTi4ZYJApvXw6dFTWL_z1kgn0YEg05TNqyCBA3KykBhcZfwB_e0nFiezf1K4ymsgseRyBd5y-e2SRdFw1cpYToGo2gvj53mKqRyWf2R-arEcNKHsx88WHfJsccUXU-ypM2l_jMGfJaKId3FXNXpOSd5zsUy4JoZ93tQgTlllxa9nOsAN9JwcC1y7wHocJ6YuornKusv7ERioglKJdwnbgXb8TUcYxlaiGiPMjkFubq97D9v3hJxsdvjCubkHrvaBG8GUvGd5rASrCUZjPnPzqL52UYKaDOHWQidk26mVV3rbJ1t9GnqZ1VXyiRO0PYChR8hQ46hpsgSmODx7LNBe1Um515BjcTKY6x6Vo-QXEUvj6EQ2yk_8KPwriOAXbKv2CJZNejsVVpx7v07K2XhFwNWthSOILMcV_abQxZxOToNPf59mPK_rTCW_RJkCZdJuklSyR6jY0EXIjPEKJBfIgsRn584ek1jNbOmAAy5qi9DDwPp-8XP-ctS5iN1U6G0bf5XW1umDCKwKrwuHAHgVc-ABiorChqpBPen3NhBPgCQBMyKr0u3_dBjiIrr599qn5a8U0ZsPOyCw1_RDThlP_qMsEdOvGZDwvmQtOQqD_rYgGh2RFDPjOR-GKix6pjFcwLYImoWc0iCjX1JhQJw4ReKI5F6n2Uavhp2Tsz8YrgSAZPDN8skS8Wqqp2cM886EkywyF6h6izg74nD5mYnzK6RUNM2Nu4_MV0jJ1xqsw2B-ou41yMDIQWd7mUqngBA7Jhg",
         {
-            "noPdf": true
+            "noPdf": true,
+            "venue": "Brain"
         }
     ],
     "pmc": [
