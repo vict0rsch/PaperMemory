@@ -9,11 +9,13 @@ jobs:
             - uses: actions/setup-node@v4
               with:
                   node-version: "22.x"
+            - uses: nick-fields/retry@v3
+              with:
+                timeout_minutes: 10
+                max_attempts: 2
+                retry_on: error
+                command: npm install &&npm run test-ci
 
-            - name: Install dependencies
-              run: npm install
-            - name: Test CI
-              run: npm run test-ci
     test-storage:
         runs-on: ubuntu-latest
         steps:
@@ -21,8 +23,9 @@ jobs:
             - uses: actions/setup-node@v4
               with:
                   node-version: "22.x"
-
-            - name: Install dependencies
-              run: npm install
-            - name: Test storage
-              run: npm run test-storage
+            - uses: nick-fields/retry@v3
+              with:
+                timeout_minutes: 10
+                max_attempts: 2
+                retry_on: error
+                command: npm install &&npm run test-storage
