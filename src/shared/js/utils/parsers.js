@@ -1110,6 +1110,13 @@ export const makeACMPaper = async (url) => {
         throw new Error("Failed to fetch ACM citation", response);
     }
 
+    if (venue.match(/'\d+/g)) {
+        venue = venue.replace(/'\d+/g, "");
+    }
+    if (venue.match(/\d+/g)) {
+        venue = venue.replace(/\d+/g, "");
+    }
+
     return { author, bibtex, id, key, note, pdfLink, title, venue, year };
 };
 
@@ -1510,9 +1517,9 @@ export const makeOUPPaper = async (url) => {
     return { author, bibtex, id, key, note, pdfLink, title, venue, year, doi };
 };
 
-export const makerHALPaper = async (url) => {
+export const makeHALPaper = async (url) => {
     url = noParamUrl(url).replace(/(hal\.science\/\w+-\d+)(v\d+)?(\/document)?/, "$1"); // remove version
-    const halId = url.split("/").last();
+    const halId = url.match(/(hal-\d+)/)[1];
     const bibURL = `https://hal.science/${halId}/bibtex`;
     let bibtex = await fetchText(bibURL);
     const paper = bibtexToObject(bibtex);
@@ -2099,7 +2106,7 @@ export const makePaper = async (is, url, tab = false) => {
             paper.source = "oup";
         }
     } else if (is.hal) {
-        paper = await makerHALPaper(url);
+        paper = await makeHALPaper(url);
         if (paper) {
             paper.source = "hal";
         }
