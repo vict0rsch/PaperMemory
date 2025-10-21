@@ -311,12 +311,13 @@ describe("Test paper detection and storage", function () {
                                 const paper = paperForSource(source, memoryPapers);
                                 expect(paper).toBeDefined();
                                 if (additionalTest["venue"]) {
-                                    expect(
+                                    const testVenues = additionalTest["venue"]
+                                        .split(";")
+                                        .map((v) =>
+                                            v.trim().toLowerCase().replace(/\s/gi, "")
+                                        );
+                                    expect(testVenues).toContain(
                                         paper?.venue?.toLowerCase().replace(/\s/gi, "")
-                                    ).toMatch(
-                                        additionalTest["venue"]
-                                            .toLowerCase()
-                                            .replace(/\s/gi, "")
                                     );
                                 } else {
                                     // the venue is the same as the source
