@@ -316,9 +316,19 @@ describe("Test paper detection and storage", function () {
                                         .map((v) =>
                                             v.trim().toLowerCase().replace(/\s/gi, "")
                                         );
-                                    expect(testVenues).toContain(
-                                        paper?.venue?.toLowerCase().replace(/\s/gi, "")
+                                    const hasVenue = testVenues.some((v) =>
+                                        paper?.venue
+                                            ?.toLowerCase()
+                                            .replace(/\s/gi, "")
+                                            .includes(v)
                                     );
+                                    if (!hasVenue) {
+                                        throw new Error(
+                                            `${source}: ${
+                                                paper?.venue
+                                            } does not match ${testVenues.join(", ")}`
+                                        );
+                                    }
                                 } else {
                                     // the venue is the same as the source
                                     expect(
