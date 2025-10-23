@@ -11,3 +11,4 @@ coverage
 .todo
 site/
 __pycache__
+tmp/
