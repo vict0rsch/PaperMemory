@@ -152,6 +152,7 @@ describe("Test paper detection and storage", function () {
     for (const [orderIdx, order] of orders.entries()) {
         describe("Parsing order: " + order, function () {
             before(async function () {
+                !Object.keys(urls).length && this.skip();
                 // create browser
                 browser = await makeBrowser(headless);
 

@@ -47,14 +47,21 @@ export const visitPaperPage = async (browser, target, options = {}) => {
     const defaults = { page: null, timeout: null, keepOpen: false };
     const opts = { ...defaults, ...options };
 
-    const p = opts.page || (await browser.newPage());
-    const paperIsStored = new Promise(
-        (resolve) =>
-            p.on("console", (msg) =>
-                msg.text().match(/\[PM\]\s*Done processing paper/)
-            ) && resolve()
-    );
+    const p = opts.page || (await browser.pages())[0] || (await browser.newPage());
     await p.goto(target);
+    const paperIsStored = new Promise((resolve, reject) => {
+        p.waitForSelector("meta[name='pm-complete-secret-html']", {
+            timeout: 10000,
+        }).then(resolve);
+        setTimeout(async () => {
+            setTimeout(resolve, 10000);
+            const content = await p.evaluate(() => {
+                return document.querySelector("meta[name='pm-complete-secret-html']")
+                    .content;
+            });
+            resolve();
+        }, 10000);
+    });
     await paperIsStored;
     opts.timeout && opts.timeout > 0 && (await sleep(opts.timeout));
     !opts.keepOpen && (await p.close());
