@@ -231,7 +231,10 @@
             name: "CVF (Computer Vision Foundation)",
         },
         frontiers: {
-            patterns: ["frontiersin.org/articles"],
+            patterns: [
+                "frontiersin.org/articles",
+                (url) => url.match(/frontiersin\.org\/.+\/articles\//),
+            ],
             name: "Frontiers",
         },
         hal: {
@@ -305,7 +308,11 @@
             name: "PLOS (Public Library of Science)",
         },
         pmc: {
-            patterns: ["ncbi.nlm.nih.gov/pmc/articles/PMC"],
+            patterns: [
+                "ncbi.nlm.nih.gov/pmc/articles/PMC",
+                "ncbi.nlm.nih.gov/articles/PMC",
+                (url) => url.match(/ncbi.nlm.nih.gov\/\d+/),
+            ],
             name: "PMC (PubMed Central)",
         },
         pmlr: {
@@ -2357,7 +2364,9 @@
             const year = `20${jid.match(/\d+/)[0]}`;
             idForUrl = `JMLR-${year}_${jid}`;
         } else if (is.pmc) {
-            const pmcid = url.match(/PMC\d+/g)[0].replace("PMC", "");
+            const pmcid = url.includes("PMC")
+                ? url.match(/PMC\d+/)[0].replace("PMC", "")
+                : url.match(/ncbi.nlm.nih.gov\/(\d+)/)[1];
             idForUrl = findPaperForProperty(papers, "pmc", pmcid);
         } else if (is.ijcai) {
             const procId = url.endsWith(".pdf")
@@ -2454,8 +2463,8 @@
             idForUrl = findPaperForProperty(papers, "hal", miniHash(halId));
         } else if (is.chemrxiv) {
             let chemRxivId = isPdfUrl$1(url)
-                ? (chemRxivId = url.split("/item/")[1].split("/")[0])
-                : (chemRxivId = noParamUrl(url).split("/").last());
+                ? url.split("/item/")[1].split("/")[0]
+                : noParamUrl(url).split("/").last();
             idForUrl = findPaperForProperty(papers, "chemrxiv", miniHash(chemRxivId));
         } else if (is.cell) {
             ({ url } = await findCellPii(url));
@@ -3286,6 +3295,7 @@
 
             info(`Done processing paper (${(Date.now() - aouStart) / 1e3}s).`);
             console.groupEnd();
+            contentScriptCallbacks["done"](paper);
         });
 
         return { paper, id };
@@ -6963,7 +6973,7 @@ ${note}</textarea
             .filter((a) => a.innerText === "Bibtex")[0]
             ?.getAttribute("href");
 
-        let bibtex, author, title, year, key;
+        let bibtex, author, title, year, key, citationKey;
 
         if (citeUrl) {
             bibtex = await fetchText(`https://${parseUrl(url).host}${citeUrl}`);
@@ -7287,7 +7297,7 @@ ${note}</textarea
             ""
         );
         let venue = conf;
-        note = `Accepted @ ${venue} (${year})`;
+        let note = `Accepted @ ${venue} (${year})`;
         for (const long in overridePMLRConfs) {
             if (conf.includes(long)) {
                 venue = overridePMLRConfs[long];
@@ -7474,24 +7484,18 @@ ${note}</textarea
     };
 
     const makeIOPPaper = async (url) => {
+        let author, bibtex, id, key, note, pdfLink, title, venue, year;
         url = url.split("#")[0];
         if (url.endsWith("/pdf")) url = url.slice(0, -4);
-        const dom = await fetchDom(url);
-        const bibtexPath = queryAll(".btn-multi-block a", dom)
-            .filter((a) => a.innerText === "BibTeX")
-            .map((a) => a.getAttribute("href"))[0];
-        const citeUrl = `https://${parseUrl(url).host}${bibtexPath}`;
-        const bibtex = await fetchText(citeUrl);
-        const data = bibtexToObject(bibtex);
-        const author = data.author.replaceAll("\n", "").trim();
-        const title = data.title.trim();
-        const year = data.year.trim();
-        const key = data.citationKey.trim();
-        const pdfLink = url + "/pdf";
-        const venue = data.journal;
-        const note = `Published @ ${venue} (${year})`;
+
         const doi = url.split("/article/").last().split("/meta")[0];
-        const id = `IOPscience_${miniHash(doi)}`;
+
+        const data = await fetchBibtexToPaper({ doi });
+
+        ({ author, bibtex, key, note, title, venue, year } = data);
+        id = `IOPscience_${miniHash(doi)}`;
+        pdfLink = url + "/pdf";
+
         return { author, bibtex, id, key, note, pdfLink, title, venue, year };
     };
 
@@ -7519,46 +7523,23 @@ ${note}</textarea
     };
 
     const makePMCPaper = async (url) => {
-        const pmcid = url.match(/PMC\d+/)[0].replace("PMC", "");
-        const absUrl = url.split(`PMC${pmcid}`)[0] + `PMC${pmcid}`;
-        // https://api.ncbi.nlm.nih.gov/lit/ctxp/v1/pmc/?format=csl&id=7537588&download=true
-        const api = "https://api.ncbi.nlm.nih.gov/lit/ctxp/v1/pmc/?format=csl&id=";
-        const data = await (await fetch(`${api}${pmcid}&download=true`)).json();
-        const year = data["epub-date"]
-            ? data["epub-date"]["date-parts"][0][0] + ""
-            : data.issued["date-parts"][0][0] + "";
-        const author = data.author.map((a) => `${a.given} ${a.family}`).join(" and ");
-        const venue = data["container-title"]
-            .split(" ")
-            .map((p) => p.capitalize())
-            .join(" ");
-        const title = data.title;
-        const id = `PMC-${year}_${pmcid}`;
-        const key = `${data.author[0].family}${year}${firstNonStopLowercase(title)}`;
-        const bibtex = bibtexToString({
-            entryType: "article",
-            citationKey: key,
-            journal: venue,
-            issn: data["ISSN"],
-            volume: data.volume,
-            page: data.page,
-            doi: data.DOI,
-            PMID: data.PMID,
-            PMCID: data.PMCID,
-            publisher: data.publisher,
-            author,
-            title,
-        });
-
-        let pdfLink;
-        if (isPdfUrl$1(url)) {
-            pdfLink = url;
-        } else {
-            pdfLink = `${absUrl}/pdf`;
+        url = noParamUrl(url);
+        if (url.endsWith("/")) {
+            url = url.slice(0, -1);
         }
-
-        const note = `Published @ ${venue} (${year})`;
-
+        if (isPdfUrl$1(url)) {
+            url = url.split("/pdf")[0];
+        }
+        const pmcid = url.includes("PMC")
+            ? url.match(/PMC\d+/)[0].replace("PMC", "")
+            : url.match(/ncbi.nlm.nih.gov\/(\d+)/)[1];
+        const pdfLink = url + "/pdf";
+        const html = await fetchText(url);
+        const doi = html.match(/10\.\d{4,9}\/[-._;()/:A-Z0-9]+/i)[0];
+        const { author, bibtex, key, note, title, venue, year } = await fetchBibtexToPaper({
+            doi,
+        });
+        const id = `PMC-${year}_${pmcid}`;
         return { author, bibtex, id, key, note, pdfLink, title, venue, year };
     };
 
@@ -7640,6 +7621,13 @@ ${note}</textarea
             }
         } else {
             throw new Error("Failed to fetch ACM citation", response);
+        }
+
+        if (venue.match(/'\d+/g)) {
+            venue = venue.replace(/'\d+/g, "");
+        }
+        if (venue.match(/\d+/g)) {
+            venue = venue.replace(/\d+/g, "");
         }
 
         return { author, bibtex, id, key, note, pdfLink, title, venue, year };
@@ -7828,8 +7816,11 @@ ${note}</textarea
 
     const makeFrontiersPaper = async (url) => {
         url = url.replace(/\/pdf$/, "/full");
+        if (url.endsWith("/")) {
+            url = url.slice(0, -1);
+        }
         const doi = noParamUrl(url).split("/articles/")[1].split("/full")[0];
-        const bib = await fetchText(`https://www.frontiersin.org/articles/${doi}/bibTex`);
+        const bib = await fetchText(noParamUrl(url).replace("/full", "") + "/bibTex");
         const data = Object.fromEntries(
             Object.entries(bibtexToObject(bib)).map(([k, v]) => [
                 k === "citationKey" || k === "entryType" ? k : k.toLowerCase(),
@@ -7847,7 +7838,7 @@ ${note}</textarea
         const key = citationKey;
         const pdfLink = url.replace(/\/full$/, "/pdf");
 
-        return { author, bibtex, id, key, note, pdfLink, title, venue, year };
+        return { author, bibtex, id, key, note, pdfLink, title, venue, year, doi };
     };
 
     const makeIHEPPaper = async (url) => {
@@ -8038,9 +8029,9 @@ ${note}</textarea
         return { author, bibtex, id, key, note, pdfLink, title, venue, year, doi };
     };
 
-    const makerHALPaper = async (url) => {
+    const makeHALPaper = async (url) => {
         url = noParamUrl(url).replace(/(hal\.science\/\w+-\d+)(v\d+)?(\/document)?/, "$1"); // remove version
-        const halId = url.split("/").last();
+        const halId = url.match(/(hal-\d+)/)[1];
         const bibURL = `https://hal.science/${halId}/bibtex`;
         let bibtex = await fetchText(bibURL);
         const paper = bibtexToObject(bibtex);
@@ -8566,7 +8557,7 @@ ${note}</textarea
                 paper.source = "oup";
             }
         } else if (is.hal) {
-            paper = await makerHALPaper(url);
+            paper = await makeHALPaper(url);
             if (paper) {
                 paper.source = "hal";
             }
@@ -10205,6 +10196,23 @@ ${note}</textarea
         }
     };
 
+    // Because Puppeteer does not receive content script logs as "console" events,
+    // we need another way to signal parsing completion to the testing script.
+    const updateCompleteSecretHTML = (paper) => {
+        let intervalId = null;
+        intervalId = setInterval(() => {
+            if (document?.querySelector("head")?.insertAdjacentHTML) {
+                clearInterval(intervalId);
+                document
+                    .querySelector("head")
+                    .insertAdjacentHTML(
+                        "beforeend",
+                        /*html*/ `<meta name="pm-complete-secret-html" content="${paper.id}">`
+                    );
+            }
+        }, 50);
+    };
+
     const tryArxivDisplay = async ({
         url = null,
         paper = null,
@@ -10287,6 +10295,7 @@ ${note}</textarea
                     paperUpdateDoneCallbacks: {
                         update: paperResolve,
                         preprints: preprintsResolve,
+                        done: updateCompleteSecretHTML,
                     },
                 });
             } else if (request.message === "manualParsing") {
@@ -10298,6 +10307,7 @@ ${note}</textarea
                     paperUpdateDoneCallbacks: {
                         update: paperResolve,
                         preprints: preprintsResolve,
+                        done: updateCompleteSecretHTML,
                     },
                 });
             } else if (request.message === "defaultAction") {
@@ -10322,6 +10332,7 @@ ${note}</textarea
                         paperUpdateDoneCallbacks: {
                             update: paperResolve,
                             preprints: preprintsResolve,
+                            done: updateCompleteSecretHTML,
                         },
                     });
                 } else {

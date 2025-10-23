@@ -841,6 +841,23 @@ const arxiv = async (checks) => {
     }
 };
 
+// Because Puppeteer does not receive content script logs as "console" events,
+// we need another way to signal parsing completion to the testing script.
+const updateCompleteSecretHTML = (paper) => {
+    let intervalId = null;
+    intervalId = setInterval(() => {
+        if (document?.querySelector("head")?.insertAdjacentHTML) {
+            clearInterval(intervalId);
+            document
+                .querySelector("head")
+                .insertAdjacentHTML(
+                    "beforeend",
+                    /*html*/ `<meta name="pm-complete-secret-html" content="${paper.id}">`
+                );
+        }
+    }, 50);
+};
+
 const tryArxivDisplay = async ({
     url = null,
     paper = null,
@@ -923,6 +940,7 @@ const tryArxivDisplay = async ({
                 paperUpdateDoneCallbacks: {
                     update: paperResolve,
                     preprints: preprintsResolve,
+                    done: updateCompleteSecretHTML,
                 },
             });
         } else if (request.message === "manualParsing") {
@@ -934,6 +952,7 @@ const tryArxivDisplay = async ({
                 paperUpdateDoneCallbacks: {
                     update: paperResolve,
                     preprints: preprintsResolve,
+                    done: updateCompleteSecretHTML,
                 },
             });
         } else if (request.message === "defaultAction") {
@@ -958,6 +977,7 @@ const tryArxivDisplay = async ({
                     paperUpdateDoneCallbacks: {
                         update: paperResolve,
                         preprints: preprintsResolve,
+                        done: updateCompleteSecretHTML,
                     },
                 });
             } else {
