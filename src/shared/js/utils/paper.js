@@ -712,6 +712,7 @@ export const addOrUpdatePaper = async ({
 
         info(`Done processing paper (${(Date.now() - aouStart) / 1e3}s).`);
         console.groupEnd();
+        contentScriptCallbacks["done"](paper);
     });
 
     return { paper, id };

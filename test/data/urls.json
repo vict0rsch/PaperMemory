@@ -11,7 +11,7 @@
         "https://watermark02.silverchair.com/010901_1_5.0134317.pdf?token=AQECAHi208BE49Ooan9kkhW_Ercy7Dm3ZL_9Cf3qfKAc485ysgAAAy8wggMrBgkqhkiG9w0BBwagggMcMIIDGAIBADCCAxEGCSqGSIb3DQEHATAeBglghkgBZQMEAS4wEQQM4RTwOlcL3rxxHpClAgEQgIIC4n-V-uQcDI2YfQlmdHOaw_Dn7s7RiWP2Eh70_z9G4Sis8c9LslR-jTagm5adDBWKBvFeZVv2L3zU-5ZTRhkMD4cfWiBJHLDmEqvz7uEOMqcbgntFRzMj17QCMYMwwQtQHnAcn4jARCldux8AEJfpmGR2Ay5l9hIwO21GyZY_vgf41bm4tBk7fNiUJfitFXqY8Rzmm7WMsOlUn_iCfwueNG0HbaZQHErpOv2VnzEFaX7rQddmWXpCpZmKOZy8bNXqtErupmMSef9pqLT0fSBqv0oZwL-e40FtzEf2Rzyg7670-7yRc7kaMSDNmPSTC8NaD5I7HccHzBFHD-2727GrutfeXvUOWO6y7BatXF6P0xxXJD4glt7aBQgEKg99odz0XHGoWYEJQCFXQf6gAYHQNncSji9FDTVpp_2wpM-VM6dFBEbPBF1ebRtphgkfPGbx8ZHR0qaclD9zAmLnBv7XdPba6Tc5HgsIdPVt3gToeaBRQxeyBn3ez0DgnyawVKtdLehKFD42Wn1FoVqfkg2E3n4dmkFItuCEtbMsZMrfrDUuwILpx-VHl-k14pjubbeTl-qcy_5STdXoZqUTuNANiS--Cpjg1FR3e-0hTjyqOzl7byL0oiVULgUEYs1P4jRG8DEGEYdsPhFSa7NnklmuQMn1Kc-v9jLI1zdilU67ggEmNPMCl6H_rN4lEGhWktAPIVFWNsOY3976M0g1nzDU6bHhYMfIznG3N1p1LrKrxBup0Mwg-ot8gPi6CX-2E3WTMdeEbRX_gw-hKYAvG9n86AjCVOUsX3cCPpq2sLE1rjI-brpePMSxktLVMM5vXWz-3no3f60kN8sgMcnq1KrYf8H2luIo30j-n6JqBx-FLJD9nT40y5VRI88-eE0ugfCJ8YJOjdW5UIfSFXD1ECoVCspGrfJgw7oNVv_YFx0v1SDP7FxALgEF4cwRWMhYpWlOL0qKwD6dHSe6x-zNpxc84_nA5Q",
         {
             "noPdf": true,
-            "botPrevention": true
+            "venue": "APL Machine Learning"
         }
     ],
     "acm": [
@@ -103,8 +103,7 @@
         "https://iopscience.iop.org/article/10.1149/2.1051908jes",
         "https://iopscience.iop.org/article/10.1149/2.1051908jes/pdf",
         {
-            "venue": "Journal of The Electrochemical Society",
-            "botPrevention": true
+            "venue": "Journal of The Electrochemical Society"
         }
     ],
     "jmlr": [

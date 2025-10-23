@@ -965,24 +965,18 @@ export const makeACSPaper = async (url) => {
 };
 
 export const makeIOPPaper = async (url) => {
+    let author, bibtex, id, key, note, pdfLink, title, venue, year;
     url = url.split("#")[0];
     if (url.endsWith("/pdf")) url = url.slice(0, -4);
-    const dom = await fetchDom(url);
-    const bibtexPath = queryAll(".btn-multi-block a", dom)
-        .filter((a) => a.innerText === "BibTeX")
-        .map((a) => a.getAttribute("href"))[0];
-    const citeUrl = `https://${parseUrl(url).host}${bibtexPath}`;
-    const bibtex = await fetchText(citeUrl);
-    const data = bibtexToObject(bibtex);
-    const author = data.author.replaceAll("\n", "").trim();
-    const title = data.title.trim();
-    const year = data.year.trim();
-    const key = data.citationKey.trim();
-    const pdfLink = url + "/pdf";
-    const venue = data.journal;
-    const note = `Published @ ${venue} (${year})`;
+
     const doi = url.split("/article/").last().split("/meta")[0];
-    const id = `IOPscience_${miniHash(doi)}`;
+
+    const data = await fetchBibtexToPaper({ doi });
+
+    ({ author, bibtex, key, note, title, venue, year } = data);
+    id = `IOPscience_${miniHash(doi)}`;
+    pdfLink = url + "/pdf";
+
     return { author, bibtex, id, key, note, pdfLink, title, venue, year };
 };
 

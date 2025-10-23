@@ -12,3 +12,7 @@ export const allAttributes = (memory, key, asObj = false) => {
     });
     return values;
 };
+
+export const paperForSource = (source, memory) => {
+    return Object.values(memory).find((p) => p?.source === source);
+};
