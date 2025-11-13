@@ -51,7 +51,10 @@
     ],
     "cell": [
         "https://www.cell.com/cell/fulltext/S0092-8674(25)01089-X",
-        "https://www.cell.com/action/showPdf?pii=S0092-8674%2825%2901089-X"
+        "https://www.cell.com/action/showPdf?pii=S0092-8674%2825%2901089-X",
+        {
+            "botPrevention": true
+        }
     ],
     "chemrxiv": [
         "https://chemrxiv.org/engage/chemrxiv/article-details/65957d349138d231611ad8f7",
