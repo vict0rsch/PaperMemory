@@ -90,6 +90,7 @@ describe("paper.js", () => {
                     source,
                     pdfLink: urls[1],
                 };
+                let target = urls[0];
                 if (source === "arxiv") {
                     paper.id = "Arxiv-1703.10593";
                 }
@@ -104,7 +105,15 @@ describe("paper.js", () => {
                 if (source === "ihep") {
                     paper.id = "IHEP-2095720";
                 }
-                expect(PMUtils.paper.paperToAbs(paper)).toEqual(urls[0]);
+                if (source === "aip") {
+                    paper.doi = "10.1063/5.0134317";
+                    target = `https://doi.org/${paper.doi}`;
+                }
+                if (source === "oup") {
+                    paper.doi = "10.1093/brain/awae043";
+                    target = `https://doi.org/${paper.doi}`;
+                }
+                expect(PMUtils.paper.paperToAbs(paper)).toEqual(target);
             });
         }
     });
