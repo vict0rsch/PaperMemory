@@ -76,13 +76,13 @@ export const isPaper = async (url, noStored = false) => {
                     is[source] = true;
                 }
             } else if (typeof pattern === "function") {
-                is[source] = pattern(url);
+                is[source] = pattern(url) ?? false;
             }
             if (is[source]) break;
         }
     }
     // is the url a local file in the memory?
-    is.localFile = isKnownLocalFile(url);
+    is.localFile = isKnownLocalFile(url) ?? false;
     is.stored = noStored ? false : (await findLocalFile(url)) ?? false;
     is.parsedWebsite = state.papers[`Website_${urlToWebsiteId(url)}`] ?? false;
     return is;
