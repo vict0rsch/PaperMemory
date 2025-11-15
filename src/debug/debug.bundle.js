@@ -2967,13 +2967,13 @@ var PMDebug = (function () {
                         is[source] = true;
                     }
                 } else if (typeof pattern === "function") {
-                    is[source] = pattern(url);
+                    is[source] = pattern(url) ?? false;
                 }
                 if (is[source]) break;
             }
         }
         // is the url a local file in the memory?
-        is.localFile = isKnownLocalFile(url);
+        is.localFile = isKnownLocalFile(url) ?? false;
         is.stored = noStored ? false : (await findLocalFile(url)) ?? false;
         is.parsedWebsite = state$1.papers[`Website_${urlToWebsiteId(url)}`] ?? false;
         return is;
@@ -3752,13 +3752,13 @@ var PMDebug = (function () {
             times.unshift(Date.now());
         }
 
+        const cellPath = chrome.runtime.getURL("src/data/cell.json");
+        state$1.cellJournalData = await fetch(cellPath).then((res) => res.json());
+        print && log("Time to fetch cell journal data (s): " + duration(times));
+        times.unshift(Date.now());
+
         info("State init duration (s): " + (Date.now() - times.last()) / 1e3);
         print && console.groupEnd();
-        (async () => {
-            const cellPath = chrome.runtime.getURL("src/data/cell.json");
-            const cellData = await fetch(cellPath).then((res) => res.json());
-            state$1.cellJournalData = cellData;
-        })();
     };
 
     /**
@@ -8033,14 +8033,6 @@ ${note}</textarea
     // -----  Fetch  -----
     // -------------------
 
-    const fetchArxivXML = async (paperId) => {
-        const arxivId = paperId.replace("Arxiv-", "").replace("_", "/");
-        return fetch(
-            "https://export.arxiv.org/api/query?" +
-                new URLSearchParams({ id_list: arxivId })
-        );
-    };
-
     const fetchCvfHTML = async (url) => {
         let paperPage, text;
         if (url.endsWith(".pdf")) {
@@ -8376,8 +8368,10 @@ ${note}</textarea
 
     const makeArxivPaper = async (url) => {
         const arxivId = arxivIdFromURL(url);
-        const response = await fetchArxivXML(arxivId);
-        const xmlData = await response.text();
+        const xmlData = await sendMessageToBackground({
+            type: "fetch-arxiv-xml",
+            paperId: arxivId,
+        });
         const doc = new DOMParser().parseFromString(
             xmlData.replaceAll("\n", ""),
             "text/xml"
@@ -10116,7 +10110,6 @@ ${note}</textarea
         extractAuthor: extractAuthor,
         extractCrossrefData: extractCrossrefData,
         extractDataFromDCMetaTags: extractDataFromDCMetaTags,
-        fetchArxivXML: fetchArxivXML,
         fetchBibtexToPaper: fetchBibtexToPaper,
         fetchCrossRefDataForDoi: fetchCrossRefDataForDoi,
         fetchCvfHTML: fetchCvfHTML,
