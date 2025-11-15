@@ -115,13 +115,13 @@ export const initState = async ({ papers, isContentScript, print = true } = {}) 
         times.unshift(Date.now());
     }
 
+    const cellPath = chrome.runtime.getURL("src/data/cell.json");
+    state.cellJournalData = await fetch(cellPath).then((res) => res.json());
+    print && log("Time to fetch cell journal data (s): " + duration(times));
+    times.unshift(Date.now());
+
     info("State init duration (s): " + (Date.now() - times.last()) / 1e3);
     print && console.groupEnd();
-    (async () => {
-        const cellPath = chrome.runtime.getURL("src/data/cell.json");
-        const cellData = await fetch(cellPath).then((res) => res.json());
-        state.cellJournalData = cellData;
-    })();
 };
 
 /**
