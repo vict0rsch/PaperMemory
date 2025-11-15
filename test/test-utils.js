@@ -1,14 +1,14 @@
-const { expect } = require("expect");
-const { JSDOM } = require("jsdom");
+import { expect } from "expect";
+import { JSDOM } from "jsdom";
 
-const { loadPaperMemoryUtils, range, readJSON } = require("./utilsForTests");
+import { loadPaperMemoryUtils, range, readJSON } from "./utilsForTests.js";
 
-loadPaperMemoryUtils();
+await loadPaperMemoryUtils();
 // create fake `document`, parseUrl() will need it for instance
 global.document = new JSDOM(`<!DOCTYPE html>`).window.document;
 
 describe("Bibtex parser", function () {
-    var bdata = readJSON("./data/bibtexs.json");
+    var bdata = readJSON("./test/data/bibtexs.json");
 
     it("Test data is balanced", function () {
         expect(bdata.strings.length).toEqual(bdata.objects.length);
@@ -17,7 +17,9 @@ describe("Bibtex parser", function () {
     describe("#bibtexToObject", function () {
         for (const i of range(bdata.strings.length)) {
             it(`Pair ${i}`, function () {
-                expect(bibtexToObject(bdata.strings[i])).toEqual(bdata.objects[i]);
+                expect(PMUtils.bibtexParser.bibtexToObject(bdata.strings[i])).toEqual(
+                    bdata.objects[i]
+                );
             });
         }
     });
@@ -25,34 +27,38 @@ describe("Bibtex parser", function () {
     describe("#bibtexToString(object)", function () {
         for (const i of range(bdata.strings.length)) {
             it(`Pair ${i}`, function () {
-                expect(bibtexToString(bdata.objects[i])).toEqual(bdata.strings[i]);
+                expect(PMUtils.bibtexParser.bibtexToString(bdata.objects[i])).toEqual(
+                    bdata.strings[i]
+                );
             });
         }
     });
     describe("#bibtexToString(string)", function () {
         for (const i of range(bdata.strings.length)) {
             it(`Pair ${i}`, function () {
-                expect(bibtexToString(bibtexToString(bdata.objects[i]))).toEqual(
-                    bdata.strings[i]
-                );
+                expect(
+                    PMUtils.bibtexParser.bibtexToString(
+                        PMUtils.bibtexParser.bibtexToString(bdata.objects[i])
+                    )
+                ).toEqual(bdata.strings[i]);
             });
         }
     });
 
     describe("String -> Object -> String", function () {
         for (const [b, bstring] of bdata["strings"].entries()) {
-            const bobj = bibtexToObject(bstring);
+            const bobj = PMUtils.bibtexParser.bibtexToObject(bstring);
             it(`String ${b}`, function () {
-                expect(bibtexToString(bobj)).toEqual(bstring);
+                expect(PMUtils.bibtexParser.bibtexToString(bobj)).toEqual(bstring);
             });
         }
     });
 
     describe("Object -> String -> Object", function () {
         for (const [b, bobj] of bdata.objects.entries()) {
-            const bstring = bibtexToString(bobj);
+            const bstring = PMUtils.bibtexParser.bibtexToString(bobj);
             it(`Object ${b}`, function () {
-                expect(bibtexToObject(bstring)).toEqual(bobj);
+                expect(PMUtils.bibtexParser.bibtexToObject(bstring)).toEqual(bobj);
             });
         }
     });
@@ -64,9 +70,9 @@ describe("Bibtex parser", function () {
             describe(`String ${i}`, function () {
                 for (const attribute in bobj) {
                     it(`Attribute ${attribute}`, function () {
-                        expect(extractBibtexValue(bstring, attribute)).toEqual(
-                            bobj[attribute]
-                        );
+                        expect(
+                            PMUtils.bibtexParser.extractBibtexValue(bstring, attribute)
+                        ).toEqual(bobj[attribute]);
                     });
                 }
             });
@@ -75,15 +81,16 @@ describe("Bibtex parser", function () {
 });
 
 describe("paper.js", () => {
-    var allUrls = readJSON("./data/urls.json");
+    var allUrls = readJSON("./test/data/urls.json");
 
     describe("#paperToAbs", () => {
         for (const [i, [source, urls]] of Object.entries(allUrls).entries()) {
-            it(source, () => {
+            it(source, async () => {
                 let paper = {
                     source,
                     pdfLink: urls[1],
                 };
+                let target = urls[0];
                 if (source === "arxiv") {
                     paper.id = "Arxiv-1703.10593";
                 }
@@ -98,7 +105,18 @@ describe("paper.js", () => {
                 if (source === "ihep") {
                     paper.id = "IHEP-2095720";
                 }
-                expect(paperToAbs(paper)).toEqual(urls[0]);
+                if (source === "aip") {
+                    paper.doi  "1=0.1063/5.0134317";
+                    target = `https://doi.org/${paper.doi}`;
+                }
+                if (source === "oup") {
+                    paper.doi = "10.1093/brain/awae043";
+                    target = `https://doi.org/${paper.doi}`;
+                }
+                if (source === "cell") {
+                    await PMUtils.state.initState();
+                }
+                expect(PMUtils.paper.paperToAbs(paper)).toEqual(target);
             });
         }
     });
@@ -109,7 +127,7 @@ describe("paper.js", () => {
                     source,
                     pdfLink: urls[1],
                 };
-                expect(paperToPDF(paper)).toEqual(urls[1]);
+                expect(PMUtils.paper.paperToPDF(paper)).toEqual(urls[1]);
             });
         }
     });
@@ -119,11 +137,11 @@ describe("paper.js", () => {
         for (const [source, urls] of Object.entries(allUrls)) {
             for (const [i, url] of urls.slice(0, 2).entries()) {
                 it(`${source} - ${names[i]}`, async () => {
-                    const isp = await isPaper(url);
+                    const isp = await PMUtils.paper.isPaper(url);
                     let target = Object.fromEntries(
                         Object.keys(isp).map((k) => [k, false])
                     );
-                    target.stored = null;
+                    target.stored = false;
                     target[source] = true;
                     expect(isp).toEqual(target);
                 });
@@ -131,11 +149,11 @@ describe("paper.js", () => {
         }
         for (const [u, url] of ["arxiv.org", "https://google.com"].entries()) {
             it(`Negative ${u} (${url})`, async () => {
-                const isp = await isPaper(url);
+                const isp = await PMUtils.paper.isPaper(url);
                 let target = Object.fromEntries(
                     Object.keys(isp).map((k) => [k, false])
                 );
-                target.stored = null;
+                target.stored = false;
                 expect(isp).toEqual(target);
             });
         }

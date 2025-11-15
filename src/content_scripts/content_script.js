@@ -1,3 +1,60 @@
+// ES Module imports
+import {
+    addListener,
+    setHTML,
+    findEl,
+    style,
+    querySelector,
+    addClass,
+    hasClass,
+    removeClass,
+    queryAll,
+} from "@pmu/miniquery.js";
+import {
+    copyTextToClipboard,
+    isPdfUrl,
+    warn,
+    log,
+    info,
+    sendMessageToBackground,
+    downloadURI,
+    dummyEvent,
+} from "@pmu/functions.js";
+import { bibtexToString, bibtexToObject } from "@pmu/bibtexParser.js";
+import {
+    getStorage,
+    deletePaperInStorage,
+    getDefaultKeyboardAction,
+} from "@pmu/data.js";
+import { isPaper, addOrUpdatePaper } from "@pmu/paper.js";
+import { state } from "@pmu/config.js";
+import { makeArxivPaper } from "@pmu/parsers.js";
+import { initSyncAndState, sleep } from "@pmu/sync.js";
+import {
+    handleOpenItemAr5iv,
+    handleCopyBibtex,
+    handleCopyPDFLink,
+    handleOpenItemLink,
+    handleCopyMarkdownLink,
+    handleOpenItemHuggingface,
+    handleOpenItemAlphaxiv,
+    handleOpenItemScirate,
+    handleCopyHyperLink,
+} from "@pm/popup/js/handlers.js";
+import { stateTitleFunction } from "@pmu/state.js";
+import { parseIdFromUrl, isSourceURL, isArxivAbstractUrl } from "@pmu/urls.js";
+
+// Notification object for feedback system
+var notif = {
+    element: null,
+    timeout: null,
+    prevent: false,
+    isLoading: false,
+    displayDuration: 5000,
+    showSpeed: 500,
+    hideSpeed: 200,
+};
+
 /*
  * jQuery Easing v1.3 - http://gsgd.co.uk/sandbox/jquery/easing/
  *
@@ -220,7 +277,7 @@ const handleDefaultAction = async () => {
     }
     if (!id) return;
     const e = dummyEvent(id);
-    const paper = global.state.papers[id];
+    const paper = state.papers[id];
     let text;
     if (!paper) return;
     switch (action) {
@@ -341,7 +398,7 @@ const contentScriptMain = async ({
         tryArxivDisplay({ url });
         await remoteReadyPromise;
     }
-    const prefs = global.state.prefs;
+    const prefs = state.prefs;
 
     let is = await isPaper(url, true);
 
@@ -388,8 +445,8 @@ const contentScriptMain = async ({
 
     if (id && prefs.checkPdfTitle) {
         const makeTitle = async (id) => {
-            if (!global.state.papers.hasOwnProperty(id)) return;
-            const paper = global.state.papers[id];
+            if (!state.papers.hasOwnProperty(id)) return;
+            const paper = state.papers[id];
             const maxWait = 60 * 1000;
             while (1) {
                 const waitTime = Math.min(maxWait, 250 * 2 ** PDF_TITLE_ITERS);
@@ -404,58 +461,58 @@ const contentScriptMain = async ({
 };
 
 const makeNotif = () => {
-    if (global.notif.element) return;
-    const notif = /*html*/ ` <div id="feedback-notif"></div> `;
-    document.body.insertAdjacentHTML("beforeend", notif);
-    global.notif.element = $("#feedback-notif");
+    if (notif.element) return;
+    const notifHtml = /*html*/ ` <div id="feedback-notif"></div> `;
+    document.body.insertAdjacentHTML("beforeend", notifHtml);
+    notif.element = $("#feedback-notif");
     style("feedback-notif", "padding", "0px");
 };
 
 const hideNotif = () =>
     new Promise(async (resolve) => {
         const end = ({ dontWait = false } = {}) => {
-            global.notif.prevent = false;
-            global.notif.isLoading = false;
+            notif.prevent = false;
+            notif.isLoading = false;
             querySelector("#feedback-notif")?.classList.remove("notif-small");
             setTimeout(resolve, dontWait ? 0 : 150);
         };
 
-        if (!global.notif.element) {
-            warn("[hideNotif] Notif element not found");
+        if (!notif.element) {
+            // warn("[hideNotif] Notif element not found");
             end({ dontWait: true });
             return;
         }
 
-        global.notif.element.animate(
+        notif.element.animate(
             { right: "-200px", opacity: "0" },
-            global.notif.hideSpeed,
+            notif.hideSpeed,
             "easeInOutBack",
             end
         );
         // sometimes animate does not call the callback
-        setTimeout(end, global.notif.hideSpeed + 50);
+        setTimeout(end, notif.hideSpeed + 50);
     });
 
 const setNotifContent = (text) => {
-    if (!global.notif.element) {
+    if (!notif.element) {
         warn("[setNotifContent] Notif element not found");
         return;
     }
-    global.notif.element.html(text);
+    notif.element.html(text);
 };
 
 const showNotif = () =>
     new Promise((resolve) => {
-        if (!global.notif.element) {
+        if (!notif.element) {
             console.warn("[PM][showNotif] Notif element not found");
             makeNotif();
         }
-        global.notif.element.animate(
+        notif.element.animate(
             {
                 right: "64px",
                 opacity: "1",
             },
-            global.notif.showSpeed,
+            notif.showSpeed,
             "easeInOutBack",
             resolve
         );
@@ -470,7 +527,7 @@ const showNotif = () =>
 const feedback = async ({
     text,
     paper = null,
-    displayDuration = global.notif.displayDuration,
+    displayDuration = notif.displayDuration,
     loading = false,
 }) => {
     if (document.readyState === "loading") {
@@ -478,18 +535,18 @@ const feedback = async ({
         return;
     }
     makeNotif();
-    if (global.notif.prevent && !global.notif.isLoading) {
+    if (notif.prevent && !notif.isLoading) {
         setTimeout(() => feedback({ text, paper, displayDuration, loading }), 100);
         return;
     }
     try {
-        clearTimeout(global.notif.timeout);
+        clearTimeout(notif.timeout);
         await hideNotif();
-        global.notif.prevent = true;
+        notif.prevent = true;
     } catch (error) {}
 
     let content = "";
-    global.notif.isLoading = false;
+    notif.isLoading = false;
 
     if (paper) {
         content = /*html*/ ` <div id="notif-text">
@@ -499,7 +556,7 @@ const feedback = async ({
                 ${svg("notif-cancel")}
             </div>`;
     } else if (loading) {
-        global.notif.isLoading = true;
+        notif.isLoading = true;
         querySelector("#feedback-notif")?.classList.add("notif-small");
         content = /*html*/ `<div id="notif-text"><span class="pm-notif-loader"></span></div>`;
     } else {
@@ -510,18 +567,18 @@ const feedback = async ({
 
     setNotifContent(content);
     await showNotif();
-    global.notif.timeout = setTimeout(hideNotif, displayDuration);
+    notif.timeout = setTimeout(hideNotif, displayDuration);
 
     paper &&
         addListener("notif-cancel", "click", async () => {
-            clearTimeout(global.notif.timeout);
-            await deletePaperInStorage(paper.id, global.state.papers);
-            if (!global.state.deleted) {
-                global.state.deleted = {};
+            clearTimeout(notif.timeout);
+            await deletePaperInStorage(paper.id, state.papers);
+            if (!state.deleted) {
+                state.deleted = {};
             }
-            global.state.deleted[paper.id] = true;
-            setTimeout(() => delete global.state.deleted[paper.id], 30 * 1000);
-            global.notif.timeout = setTimeout(hideNotif, displayDuration);
+            state.deleted[paper.id] = true;
+            setTimeout(() => delete state.deleted[paper.id], 30 * 1000);
+            notif.timeout = setTimeout(hideNotif, displayDuration);
             setHTML("notif-text", "<div>Removed from memory</div>");
         });
 };
@@ -671,7 +728,7 @@ const arxiv = async (checks) => {
                 );
                 return;
             }
-            if (!global.state.papers.hasOwnProperty(id)) {
+            if (!state.papers.hasOwnProperty(id)) {
                 const title = await fetch(
                     `https://export.arxiv.org/api/query?id_list=${id.split("-")[1]}`
                 ).then((data) => {
@@ -697,8 +754,8 @@ const arxiv = async (checks) => {
     // -----  Markdown Link  -----
     // ---------------------------
 
-    let paper = global.state.papers.hasOwnProperty(id)
-        ? global.state.papers[id]
+    let paper = state.papers.hasOwnProperty(id)
+        ? state.papers[id]
         : await makeArxivPaper(url);
 
     if (paper.venue) {
@@ -710,8 +767,8 @@ const arxiv = async (checks) => {
     }
 
     if (checkMd) {
-        const mdTitle = global.state.papers.hasOwnProperty(id)
-            ? global.state.papers[id].title
+        const mdTitle = state.papers.hasOwnProperty(id)
+            ? state.papers[id].title
             : document.title;
         const mdContent = `[${mdTitle}](${pdfUrl})`;
         const mdHtml = /*html*/ `
@@ -784,6 +841,23 @@ const arxiv = async (checks) => {
     }
 };
 
+// Because Puppeteer does not receive content script logs as "console" events,
+// we need another way to signal parsing completion to the testing script.
+const updateCompleteSecretHTML = (paper) => {
+    let intervalId = null;
+    intervalId = setInterval(() => {
+        if (document?.querySelector("head")?.insertAdjacentHTML) {
+            clearInterval(intervalId);
+            document
+                .querySelector("head")
+                .insertAdjacentHTML(
+                    "beforeend",
+                    /*html*/ `<meta name="pm-complete-secret-html" content="${paper.id}">`
+                );
+        }
+    }, 50);
+};
+
 const tryArxivDisplay = async ({
     url = null,
     paper = null,
@@ -792,13 +866,13 @@ const tryArxivDisplay = async ({
     // a paper was parsed
 
     // user preferences
-    const prefs = global.state.prefs;
+    const prefs = state.prefs;
 
     // paper.source may not be "arxiv" even on arxiv.org
     // because of the existing paper matching mechanism
     let is = await isPaper(url, true);
 
-    if (is.arxiv && !isPdfUrl(url)) {
+    if (is.arxiv && !isPdfUrl(url) && isArxivAbstractUrl(url)) {
         // larger arxiv column
         adjustArxivColWidth();
 
@@ -811,9 +885,9 @@ const tryArxivDisplay = async ({
             paper = await preprintsPromise;
         } else {
             const id = await parseIdFromUrl(url);
-            const paperExists = global.state.papers.hasOwnProperty(id);
+            const paperExists = state.papers.hasOwnProperty(id);
             if (!paperExists) return;
-            paper = global.state.papers[id];
+            paper = state.papers[id];
         }
 
         // update bibtex
@@ -834,6 +908,7 @@ const tryArxivDisplay = async ({
 };
 
 (async () => {
+    log("Running PaperMemory's content script");
     var prefs, paper;
     var paperPromise, preprintsPromise, paperResolve, preprintsResolve;
     const url = window.location.href;
@@ -843,7 +918,7 @@ const tryArxivDisplay = async ({
     let stateIsReady = false;
     if (url.startsWith("file://")) {
         await initSyncAndState({ isContentScript: true });
-        prefs = global.state.prefs;
+        prefs = state.prefs;
         stateIsReady = true;
     }
 
@@ -865,6 +940,7 @@ const tryArxivDisplay = async ({
                 paperUpdateDoneCallbacks: {
                     update: paperResolve,
                     preprints: preprintsResolve,
+                    done: updateCompleteSecretHTML,
                 },
             });
         } else if (request.message === "manualParsing") {
@@ -876,6 +952,7 @@ const tryArxivDisplay = async ({
                 paperUpdateDoneCallbacks: {
                     update: paperResolve,
                     preprints: preprintsResolve,
+                    done: updateCompleteSecretHTML,
                 },
             });
         } else if (request.message === "defaultAction") {
@@ -900,6 +977,7 @@ const tryArxivDisplay = async ({
                     paperUpdateDoneCallbacks: {
                         update: paperResolve,
                         preprints: preprintsResolve,
+                        done: updateCompleteSecretHTML,
                     },
                 });
             } else {
@@ -934,3 +1012,6 @@ const tryArxivDisplay = async ({
     }
     await hideNotif();
 })();
+
+// Make feedback function globally available for use by utility modules
+window.feedback = feedback;

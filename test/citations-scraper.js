@@ -1,7 +1,7 @@
-const Heap = require("heap");
-const puppeteer = require("puppeteer");
-const fs = require("fs");
-const glob = require("glob");
+import Heap from "heap";
+import puppeteer from "puppeteer";
+import fs from "fs";
+import { glob } from "glob";
 
 const waitForLoad = (page) =>
     new Promise((resolve) => {
@@ -139,6 +139,8 @@ const getCoauthors = (page, max = 4) => {
                     for (const [k, ca] of coauthors.entries()) {
                         nextId.push({ id: ca, order: k, level: currentLevel + 1 });
                     }
+                    // create the directory if it doesn't exist
+                    fs.mkdirSync(`./tmp`, { recursive: true });
                     fs.writeFileSync(
                         "./tmp/citations.json",
                         JSON.stringify(data, null, 2)

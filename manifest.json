@@ -11,7 +11,7 @@
         "extension_pages": "script-src 'self'; object-src 'self'"
     },
     "background": {
-        "service_worker": "src/background/background.js"
+        "service_worker": "src/background/background.bundle.js"
     },
     "action": {
         "default_icon": "icons/favicon-192x192.png",
@@ -64,20 +64,7 @@
             "run_at": "document_start",
             "js": [
                 "src/shared/min/jquery.min.js",
-                "src/shared/js/utils/logTrace.js",
-                "src/shared/js/utils/miniquery.js",
-                "src/shared/js/utils/config.js",
-                "src/shared/js/utils/functions.js",
-                "src/shared/js/utils/octokit.bundle.js",
-                "src/shared/js/utils/sync.js",
-                "src/shared/js/utils/data.js",
-                "src/shared/js/utils/paper.js",
-                "src/shared/js/utils/state.js",
-                "src/shared/js/utils/bibtexParser.js",
-                "src/shared/js/utils/parsers.js",
-                "src/popup/js/handlers.js",
-                "src/popup/js/memory.js",
-                "src/content_scripts/content_script.js"
+                "src/content_scripts/content.bundle.js"
             ],
             "css": [
                 "src/shared/css/loader.css",

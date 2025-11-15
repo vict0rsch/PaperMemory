@@ -1,37 +1,58 @@
-/**
- * TODO: docstrings
- * TODO: miniquery for content_script.js
- *
- * TODO: add advanced option to customize storage folder
- */
+// ES Module imports
+import { state } from "@pmu/config.js";
+import {
+    arraysIdentical,
+    parseTags,
+    isPdfUrl,
+    copyTextToClipboard,
+    copyHyperLinkToClipboard,
+    logError,
+    log,
+    info,
+    warn,
+} from "@pmu/functions.js";
+import {
+    updatePaperVisits,
+    isPaper,
+    addOrUpdatePaper,
+    paperToAbs,
+    paperToPDF,
+} from "@pmu/paper.js";
+import { sortMemory, makeTags, getTagsOptions, duration } from "@pmu/state.js";
+import {
+    findEl,
+    setHTML,
+    val,
+    queryAll,
+    addListener,
+    showId,
+    hideId,
+    setTextId,
+    setPlaceholder,
+    addClass,
+    removeClass,
+    fadeIn,
+    fadeOut,
+    dispatch,
+    slideDown,
+    slideUp,
+} from "@pmu/miniquery.js";
+import { parseIdFromUrl } from "@pmu/urls.js";
+import { getMemoryItemHTML } from "@pm/popup/js/templates.js";
+import { closeMenu, showPopupModal, popupMain } from "@pm/popup/js/popup.js";
+import {
+    handleTagClick,
+    addEventsToMemoryItems,
+    addEventsToMemoryControls,
+    handleClearSearch,
+} from "@pm/popup/js/handlers.js";
 
-/**
- * Get a the HTML string listing all the <option>tag</option> of all known tags,
- * setting the <option>'s "selected" attribute according to the paper's own tags
- * @param {object} paper The paper whose options' HTML string are being created
- * @returns {string} The HTML string of the paper's options
- */
-const getTagsOptions = (paper) => {
-    const tags = new Set(paper.tags);
-
-    return [...global.state.paperTags]
-        .sort()
-        .map((t, i) => {
-            let h = '<option value="' + t + '"'; // not string literal here for minification
-            if (tags.has(t)) {
-                h += ' selected="selected" ';
-            }
-            return h + `>${t}</option>`;
-        })
-        .join("");
-};
-
-const toggleTagsCollapse = (on) => {
+export const toggleTagsCollapse = (on) => {
     if (on) {
         if (!!findEl({ element: "tags-list-container" })) return;
         const contents = /*html*/ `
             <ul id="all-tags-list">
-                ${[...global.state.paperTags]
+                ${[...state.paperTags]
                     .map((t) => /*html*/ `<li class="memory-tag" >${t}</li>`)
                     .join("")}
             </ul>`;
@@ -50,16 +71,16 @@ const toggleTagsCollapse = (on) => {
 /**
  * Updates all the papers' options HTML list
  */
-const updateAllMemoryPaperTagOptions = () => {
-    for (const id in global.state.papers) {
-        if (global.state.papers.hasOwnProperty(id) && id !== "__dataVersion") {
-            const paper = global.state.papers[id];
+export const updateAllMemoryPaperTagOptions = () => {
+    for (const id in state.papers) {
+        if (state.papers.hasOwnProperty(id) && id !== "__dataVersion") {
+            const paper = state.papers[id];
             setHTML(`memory-item-tags--${id}`, getTagsOptions(paper));
         }
     }
 };
 
-const sampleAsciiArt = async () => {
+export const sampleAsciiArt = async () => {
     const artPath = chrome.runtime.getURL("src/data/art.json");
     const art = await fetch(artPath).then((res) => res.json());
     const nArts = Object.keys(art).length;
@@ -68,9 +89,8 @@ const sampleAsciiArt = async () => {
     return { animal, ascii };
 };
 
-const updatePopupPaperNoMemory = async (url) => {
-    let { animal, ascii } = await sampleAsciiArt();
-
+export const updatePopupPaperNoMemory = async (url) => {
+    const { animal, ascii } = await sampleAsciiArt();
     let noPaperHtml = /* html */ `
         <div class="no-paper-div">
             <h3>This paper is not in your Memory&nbsp;
@@ -84,8 +104,9 @@ const updatePopupPaperNoMemory = async (url) => {
             </div>
         </div>
     `;
+
     const isFirefox = navigator.userAgent.search("Firefox") > -1;
-    const allowManualParsing = isFirefox || global.state.prefs.checkNoAuto;
+    const allowManualParsing = isFirefox || state.prefs.checkNoAuto;
     let ff_warning = "";
     if (isFirefox) {
         ff_warning = /* html */ `
@@ -112,6 +133,7 @@ const updatePopupPaperNoMemory = async (url) => {
             </div>
         `;
     }
+
     const previousIsArxiv = findEl({ element: "isArxiv" }).innerHTML;
     setHTML("isArxiv", noPaperHtml);
 
@@ -151,17 +173,6 @@ const updatePopupPaperNoMemory = async (url) => {
 };
 
 /**
- * Delete a paper ; display a modal first to get uer confirmation
- * @param {string} id Id of the paper to delete
- */
-const showConfirmDeleteModal = (id) => {
-    const title = global.state.papers[id].title;
-    setTextId("delete-modal-title", title);
-    setHTML("delete-paper-modal-hidden-id", id);
-    showId("delete-paper-modal", "flex");
-};
-
-/**
  * Copy a text to the clipboard and display a feedback text
  * @param {string} id Id of the paper to display the feedback in the memory item
  * @param {string} textToCopy Text to copy to the clipboard
@@ -169,7 +180,7 @@ const showConfirmDeleteModal = (id) => {
  * @param {string} context The context in which the action took place: "popup" or "memory" (or "content_script")
  * @param {string} hyperLinkTitle The title of the hyperlink to copy to the clipboard
  */
-const copyAndConfirmMemoryItem = async ({
+export const copyAndConfirmMemoryItem = async ({
     id,
     textToCopy,
     feedbackText,
@@ -201,7 +212,7 @@ const copyAndConfirmMemoryItem = async ({
  * tab matches the targetURL, a new tab is created
  * @param {string} targetURL URL of the page to open
  */
-const focusExistingOrCreateNewURLTab = (targetURL) =>
+export const focusExistingOrCreateNewURLTab = (targetURL) =>
     new Promise((resolve) => {
         targetURL = targetURL.replace("http://", "https://");
         if (!targetURL.startsWith("https://")) {
@@ -245,100 +256,6 @@ const focusExistingOrCreateNewURLTab = (targetURL) =>
     });
 
 /**
- * Looks for an open tab to the paper: either its local or online pdf, or html page.
- * If both a local pdf tab exists, focus it.
- * Otherwise, if a remote pdf tab exists, focus it.
- * Otherwise, if an html page exist, focus the it.
- * If none exist, create a new tab to the local file if it exists, to the online pdf otherwise.
- * @param {object} paper The paper whose pdf should be opened
- */
-const focusExistingOrCreateNewPaperTab = async (paper, fromMemoryItem) => {
-    if (!chrome.tabs) {
-        focusExistingOrCreateNewURLTab(
-            isPdfUrl(window.location.href) ? paperToAbs(paper) : paperToPDF(paper)
-        );
-        return;
-    }
-    chrome.tabs.query({}, async (tabs) => {
-        // find user's preferences
-        const prefs = global.state.prefs;
-
-        let paperTabs = []; // tabs to the paper
-        for (const tab of tabs) {
-            let tabPaperId;
-            try {
-                // try and parse a paper id
-                tabPaperId = tab.url && (await parseIdFromUrl(tab.url));
-            } catch (error) {}
-
-            if (tabPaperId && tabPaperId === paper.id) {
-                // an id is found and its the paper's: store the tab
-                paperTabs.push(tab);
-            }
-        }
-
-        let tabToFocus;
-        // choose favorite tabs
-        const favoriteTabs = prefs.checkPreferPdf
-            ? paperTabs.filter((tab) => tab.url && isPdfUrl(tab.url))
-            : paperTabs.filter((tab) => tab.url && !isPdfUrl(tab.url));
-
-        if (favoriteTabs.length > 0) {
-            // favor tabs to local files
-            const fileTabs =
-                fromMemoryItem && global.state.files.hasOwnProperty(paper.id)
-                    ? []
-                    : paperTabs.filter((tab) => tab.url.startsWith("file://"));
-            if (fileTabs.length > 0) {
-                tabToFocus = fileTabs[0];
-            } else {
-                tabToFocus = favoriteTabs[0];
-            }
-        } else if (paperTabs.length > 0) {
-            // no pdf tab: go to abs url
-            tabToFocus = paperTabs[0];
-        }
-
-        if (tabToFocus) {
-            // a tab was found: focus it by starting to focus its window
-            chrome.windows.getCurrent((w) => {
-                if (w.id !== tabToFocus.windowId) {
-                    // tab is in a different window: focus the window
-                    chrome.windows.update(
-                        tabToFocus.windowId,
-                        { focused: true },
-                        () => {
-                            // focus the tab
-                            chrome.tabs.update(tabToFocus.id, { active: true });
-                        }
-                    );
-                } else {
-                    // tab is in the same window: focus the tab
-                    chrome.tabs.update(tabToFocus.id, { active: true });
-                }
-            });
-        } else {
-            // no tab was found
-            const hasFile = global.state.files.hasOwnProperty(paper.id);
-            if (hasFile && !fromMemoryItem) {
-                // this paper has a local file
-                chrome.downloads.open(global.state.files[paper.id].id);
-            } else {
-                // no tab open or local file: open a new tab to the paper's pdf
-                chrome.tabs.create({
-                    url: prefs.checkPreferPdf ? paperToPDF(paper) : paperToAbs(paper),
-                });
-            }
-        }
-
-        global.state.papers[paper.id] = updatePaperVisits(
-            global.state.papers[paper.id]
-        );
-        chrome.storage.local.set({ papers: global.state.papers });
-    });
-};
-
-/**
  * Trim then save in chrome.storage.local the content of the note for a paper.
  * Also updates this paper's memory table display and the main popup's textarea
  * (if the paper being edited from the memory is actually the one currently opened
@@ -346,9 +263,9 @@ const focusExistingOrCreateNewPaperTab = async (paper, fromMemoryItem) => {
  * @param {string} id The id of the paper whose note is being saved
  * @param {string} note The content of the note
  */
-const saveNote = (id, note) => {
-    global.state.papers[id].note = note;
-    chrome.storage.local.set({ papers: global.state.papers }, () => {
+export const saveNote = (id, note) => {
+    state.papers[id].note = note;
+    chrome.storage.local.set({ papers: state.papers }, () => {
         setHTML(
             findEl({ paperId: id, memoryItemClass: "memory-note-div" }),
             note
@@ -372,10 +289,10 @@ const saveNote = (id, note) => {
  * @param {string} id The id of the paper whose code is being saved
  * @param {string} codeLink The link to the paper's code
  */
-const saveCodeLink = (id, codeLink) => {
+export const saveCodeLink = (id, codeLink) => {
     codeLink = codeLink.trim();
-    global.state.papers[id].codeLink = codeLink;
-    chrome.storage.local.set({ papers: global.state.papers }, () => {
+    state.papers[id].codeLink = codeLink;
+    chrome.storage.local.set({ papers: state.papers }, () => {
         const displayLink = codeLink.replace(/^https?:\/\//, "");
         setHTML(
             findEl({ paperId: id, memoryItemClass: "memory-code-link" }),
@@ -389,11 +306,10 @@ const saveCodeLink = (id, codeLink) => {
     });
 };
 
-const saveFavoriteItem = (id, favorite) => {
-    global.state.papers[id].favorite = favorite;
-    global.state.papers[id].favoriteDate = new Date().toJSON();
-    chrome.storage.local.set({ papers: global.state.papers }, () => {
-        // log(`${global.state.papers[id].title} is favorite: ${favorite}`);
+export const saveFavoriteItem = (id, favorite) => {
+    state.papers[id].favorite = favorite;
+    state.papers[id].favoriteDate = new Date().toJSON();
+    chrome.storage.local.set({ papers: state.papers }, () => {
         if (favorite) {
             addClass(`memory-container--${id}`, "favorite");
             addClass(
@@ -414,12 +330,12 @@ const saveFavoriteItem = (id, favorite) => {
             );
         }
 
-        if (global.state.sortKey === "favoriteDate") {
+        if (state.sortKey === "favoriteDate") {
             if (!favorite) {
                 sortMemory();
                 displayMemoryTable();
             }
-            const n = global.state.sortedPapers.filter((p) => p.favorite).length;
+            const n = state.sortedPapers.filter((p) => p.favorite).length;
             const memSearch = findEl({ element: "memory-search" });
             if (memSearch) {
                 setPlaceholder(memSearch, `Search ${n} entries`);
@@ -437,7 +353,7 @@ const saveFavoriteItem = (id, favorite) => {
  * Function to change the html content of #memory-sort-arrow to an up or down arrow
  * @param {string} direction up/down string to change the arrow's direction
  */
-const setMemorySortArrow = (direction) => {
+export const setMemorySortArrow = (direction) => {
     let arrow;
     if (direction === "up") {
         arrow = /*html*/ `<svg
@@ -467,11 +383,11 @@ const setMemorySortArrow = (direction) => {
 };
 
 /**
- * Reverses the global.state's 2 ordered lists: sortedPapers and papersList
+ * Reverses the state's 2 ordered lists: sortedPapers and papersList
  */
-const reverseMemory = () => {
-    global.state.sortedPapers.reverse();
-    global.state.papersList.reverse();
+export const reverseMemory = () => {
+    state.sortedPapers.reverse();
+    state.papersList.reverse();
 };
 
 /**
@@ -481,11 +397,11 @@ const reverseMemory = () => {
  *        contains both the strings "cli" and "ga".
  * @param {string} letters The user's string query.
  */
-const searchMemory = (letters) => {
+export const searchMemory = (letters) => {
     const words = letters.toLowerCase().split(" ");
     let papersList = [];
     const contentKeys = ["title", "author", "note", "tags", "id", "venue"];
-    for (const paper of global.state.sortedPapers) {
+    for (const paper of state.sortedPapers) {
         const contents = contentKeys.map((key) => {
             if (Array.isArray(paper[key])) {
                 return paper[key].join(" ").toLowerCase();
@@ -498,12 +414,12 @@ const searchMemory = (letters) => {
         });
 
         if (words.every((w) => contents.some((c) => c.includes(w)))) {
-            if (!global.state.showFavorites || paper.favorite) {
+            if (!state.showFavorites || paper.favorite) {
                 papersList.push(paper);
             }
         }
     }
-    global.state.papersList = papersList;
+    state.papersList = papersList;
 };
 
 /**
@@ -511,7 +427,7 @@ const searchMemory = (letters) => {
  * e.g.: "y:21, 22" or "y: <2012"
  * @param {string} letters The string representing the tags query, deleting "t:" and splitting on " "
  */
-const searchMemoryByYear = (letters) => {
+export const searchMemoryByYear = (letters) => {
     const condition = letters.includes("<")
         ? "smaller"
         : letters.includes(">")
@@ -526,7 +442,6 @@ const searchMemoryByYear = (letters) => {
         .filter((y) => y.length > 0)
         .map((y) => (y.length === 4 ? y : "20" + y))
         .map((y) => parseInt(y, 10));
-    console.log("searchYears: ", searchYears);
     let papersList = [];
     let compare = (y, py) => y === py;
     if (condition === "smaller") {
@@ -534,13 +449,13 @@ const searchMemoryByYear = (letters) => {
     } else if (condition === "greater") {
         compare = (y, py) => y < py;
     }
-    for (const paper of global.state.sortedPapers) {
+    for (const paper of state.sortedPapers) {
         const paperYear = parseInt(paper.year, 10);
         if (searchYears.some((year) => compare(year, paperYear))) {
             papersList.push(paper);
         }
     }
-    global.state.papersList = papersList;
+    state.papersList = papersList;
 };
 /**
  * Filters the sortedPapers into papersList, keeping papers whose tags match the query: all
@@ -549,18 +464,18 @@ const searchMemoryByYear = (letters) => {
  *        AND at least 1 tag containing the substring "ga"
  * @param {string} letters The string representing the tags query, deleting "t:" and splitting on " "
  */
-const searchMemoryByTags = (letters) => {
+export const searchMemoryByTags = (letters) => {
     const tags = letters.replace("t:", "").toLowerCase().split(" ");
     let papersList = [];
-    for (const paper of global.state.sortedPapers) {
+    for (const paper of state.sortedPapers) {
         const paperTags = paper.tags.map((t) => t.toLowerCase());
         if (tags.every((t) => paperTags.some((pt) => pt.indexOf(t) >= 0))) {
-            if (!global.state.showFavorites || paper.favorite) {
+            if (!state.showFavorites || paper.favorite) {
                 papersList.push(paper);
             }
         }
     }
-    global.state.papersList = papersList;
+    state.papersList = papersList;
 };
 
 /**
@@ -568,29 +483,29 @@ const searchMemoryByTags = (letters) => {
  * to searchMemory but looks into the codeLink attribute. Triggered when a query starts with "c: ".
  * @param {string} letters The string representing the code query, deleting "c:" and splitting on " "
  */
-const searchMemoryByCode = (letters) => {
+export const searchMemoryByCode = (letters) => {
     const words = letters.replace("c:", "").toLowerCase().split(" ");
     let papersList = [];
-    for (const paper of global.state.sortedPapers) {
+    for (const paper of state.sortedPapers) {
         let paperCode = paper.codeLink || "";
         paperCode = paperCode.toLowerCase();
         if (words.every((w) => paperCode.includes(w))) {
-            if (!global.state.showFavorites || paper.favorite) {
+            if (!state.showFavorites || paper.favorite) {
                 papersList.push(paper);
             }
         }
     }
-    global.state.papersList = papersList;
+    state.papersList = papersList;
 };
 
 /**
  * Updates a paper's tag HTML list from the object's tags array.
  * @param {string} id The paper's id
  */
-const updatePaperTagsHTML = (id) => {
+export const updatePaperTagsHTML = (id) => {
     setHTML(
         findEl({ paperId: id, memoryItemClass: "tag-list" }),
-        global.state.papers[id].tags
+        state.papers[id].tags
             .map((t) => `<span class="memory-tag">${t}</span>`)
             .join("")
     );
@@ -601,10 +516,10 @@ const updatePaperTagsHTML = (id) => {
  * using getTagsOptions.
  * @param {string} id The paper's id
  */
-const updateTagOptions = (id) => {
+export const updateTagOptions = (id) => {
     updateAllMemoryPaperTagOptions();
     // update popup tags if the current paper is being edited in the memory
-    const tagOptions = getTagsOptions(global.state.papers[id]);
+    const tagOptions = getTagsOptions(state.papers[id]);
     setHTML(`popup-item-tags--${id}`, tagOptions);
 };
 
@@ -613,7 +528,7 @@ const updateTagOptions = (id) => {
  * @param {string} id The paper's id
  * @param {string} elementId The paper's html element selector (either an id for the popup main tags, or a class for a memory item)
  */
-const updatePaperTags = (id, elementId) => {
+export const updatePaperTags = (id, elementId) => {
     let ref;
     // elementId may be an ID selector (in the main popup)
     // or a class selector (in the memory)
@@ -625,14 +540,14 @@ const updatePaperTags = (id, elementId) => {
     const tags = parseTags(ref);
     let updated = false;
     let newTags = new Set();
-    if (!arraysIdentical(global.state.papers[id].tags, tags)) updated = true;
-    global.state.papers[id].tags = tags;
+    if (!arraysIdentical(state.papers[id].tags, tags)) updated = true;
+    state.papers[id].tags = tags;
 
     // If there's a change: update the global set of tags:
     // we need to add or remove tags to the global suggestions array
     // for select2
     if (updated) {
-        chrome.storage.local.set({ papers: global.state.papers }, () => {
+        chrome.storage.local.set({ papers: state.papers }, () => {
             // update the global set of tags
             makeTags();
             // update the selected tags in the select2 input for this paper
@@ -650,44 +565,27 @@ const updatePaperTags = (id, elementId) => {
     }
 };
 
-const displayOnScroll = (isPopup) =>
-    delay(() => {
-        const { bottom } = findEl({ element: "memory-table" }).getBoundingClientRect();
-        const height = isPopup
-            ? findEl({ element: "memory-container" }).getBoundingClientRect().height
-            : window.innerHeight;
-        const currentPapers =
-            global.state.currentMemoryPagination * global.state.memoryItemsPerPage;
-        if (
-            Math.abs(bottom - height) < height &&
-            currentPapers < global.state.papersList.length
-        ) {
-            global.state.currentMemoryPagination += 1;
-            displayMemoryTable(global.state.currentMemoryPagination);
-        }
-    }, 50);
-
 /**
  * Iterates over all papers in the papersList (sorted and filtered),
  * creates each paper's HTML template and appends it to #memory-table.
  * Also creates the relevant events.
  */
-const displayMemoryTable = (pagination = 0) => {
+export const displayMemoryTable = (pagination = 0) => {
     const start = Date.now();
 
     // Clear existing items
     var memoryTable = findEl({ element: "memory-table" });
     if (pagination === 0) {
         setHTML(memoryTable, "");
-        global.state.currentMemoryPagination = 0;
+        state.currentMemoryPagination = 0;
     }
 
     // Add relevant sorted papers (papersList may be smaller than sortedPapers
     // depending on the search query)
     let table = [];
-    for (const paper of global.state.papersList.slice(
-        pagination * global.state.memoryItemsPerPage,
-        (pagination + 1) * global.state.memoryItemsPerPage
+    for (const paper of state.papersList.slice(
+        pagination * state.memoryItemsPerPage,
+        (pagination + 1) * state.memoryItemsPerPage
     )) {
         try {
             table.push(getMemoryItemHTML(paper));
@@ -704,118 +602,34 @@ const displayMemoryTable = (pagination = 0) => {
         memoryTable.insertAdjacentHTML("beforeend", table.join(""));
     }
 
-    // Add events
-    // after a click on such a button, the focus returns to the
-    // container to navigate with tab
-    addEventToClass(".back-to-focus", "click", handleBackToFocus);
-    // delete memory item
-    addEventToClass(".memory-delete", "click", handleDeleteItem);
-    // Open paper page
-    addEventToClass(".memory-item-link", "click", handleOpenItemLink);
-    // Open on Scirate
-    addEventToClass(".memory-item-scirate", "click", handleOpenItemScirate);
-    // Open on Alphaxiv
-    addEventToClass(".memory-item-alphaxiv", "click", handleOpenItemAlphaxiv);
-    // Open on Ar5iv
-    addEventToClass(".memory-item-ar5iv", "click", handleOpenItemAr5iv);
-    // Open on Huggingface Papers
-    addEventToClass(".memory-item-huggingface", "click", handleOpenItemHuggingface);
-    // Open code page
-    addEventToClass(".memory-code-link", "click", handleOpenItemCodeLink);
-    // Open Website URL
-    addEventToClass(".memory-website-url", "click", handleOpenItemWebsiteURL);
-    // Copy markdown link
-    addEventToClass(".memory-item-md", "click", handleCopyMarkdownLink);
-    // Copy bibtex citation
-    addEventToClass(".memory-item-bibtex", "click", handleCopyBibtex);
-    // Copy pdf link
-    addEventToClass(".memory-item-copy-link", "click", handleCopyPDFLink);
-    // Copy hyperlink
-    addEventToClass(".memory-item-copy-hyperlink", "click", handleCopyHyperLink);
-    // Open local file
-    addEventToClass(".memory-item-openLocal", "click", handleMemoryOpenLocal);
-    // Add to favorites
-    addEventToClass(".memory-item-favorite", "click", handleAddItemToFavorites);
-    // Cancel edits: bring previous values from global.state back
-    addEventToClass(".cancel-note-form", "click", handleCancelPaperEdit);
-    // When clicking on the edit button, either open or close the edit form
-    addEventToClass(".memory-item-edit", "click", handleTogglePaperEdit);
-    // When clicking on a tag, search for it
-    addEventToClass(".memory-tag", "click", handleTagClick);
-    // Monitor form changes
-    setFormChangeListener(undefined, false);
-    // show / remove title tooltips
-    addEventToClass(
-        ".memory-display-id",
-        "click",
-        getHandleTitleTooltip(showTitleTooltip, 0)
-    );
-    addEventToClass(
-        ".memory-display-id",
-        "mouseleave",
-        getHandleTitleTooltip(hideTitleTooltip, 10000)
-    );
-    // expand authorlist on click
-    addEventToClass(".expand-paper-authors", "click", handleExpandAuthors);
-
-    // Put cursor at the end of the textarea's text on focus
-    // (default puts the cursor at the beginning of the text)
-    addEventToClass(".form-note-textarea", "focus", handleTextareaFocus);
+    addEventsToMemoryItems();
     // Save fields on edits save (submit)
     const end = Date.now();
 
     info("Display duration (s): " + (end - start) / 1e3);
 };
 
+export const setMemorySearchPlaceholder = () =>
+    setPlaceholder("memory-search", `Search ${state.papersList.length} entries ...`);
+
 /**
  * Main function called after the user clicks on the PaperMemory button
  * or presses `a`.
  * + closes the menu if it is open (should not be)
  */
-const makeMemoryHTML = async () => {
+export const makeMemoryHTML = async () => {
     // Fill-in input placeholder
-    setPlaceholder(
-        "memory-search",
-        `Search ${global.state.papersList.length} entries ...`
-    );
-
+    setMemorySearchPlaceholder();
     displayMemoryTable();
-
-    // add input search delay if there are many papers:
-    // wait for some time between keystrokes before firing the search
-    let delayTime = 300;
-    if (global.state.papersList.length < 20) {
-        delayTime = 0;
-    } else if (global.state.papersList.length < 100) {
-        delayTime = 150;
-    }
 
     // search keypress events.
     // deprecated fix: https://stackoverflow.com/questions/49278648/alternative-for-events-deprecated-keyboardevent-which-property
-    addListener(
-        "memory-search",
-        "keypress",
-        delay(handleMemorySearchKeyPress(), delayTime)
-    );
-    addListener("memory-search", "clear-search", handleMemorySearchKeyPress(true));
-    addListener("memory-search", "keyup", handleMemorySearchKeyUp);
-    addListener("delete-paper-modal-cancel-button", "click", handleCancelModalClick);
-    addListener(
-        "delete-paper-modal-confirm-button",
-        "click",
-        handleConfirmDeleteModalClick
-    );
-    addListener("filter-favorites", "click", handleFilterFavorites);
-    // listen to sorting feature change
-    addListener("memory-select", "change", handleMemorySelectChange);
-    // listen to sorting direction change
-    addListener("memory-sort-arrow", "click", handleMemorySortArrow);
-    addListener("memory-container", "scroll", displayOnScroll(true));
+    addEventsToMemoryControls();
 };
 
-const openMemory = () => {
-    global.state.prefsIsOpen && closeMenu();
-    global.state.memoryIsOpen = true;
+export const openMemory = () => {
+    state.prefsIsOpen && closeMenu();
+    state.memoryIsOpen = true;
     // hide menu button
     hideId("memory-switch-open");
     showId("memory-switch-close");
@@ -838,15 +652,15 @@ const openMemory = () => {
 /**
  * Closes the memory overlay with slideUp
  */
-const closeMemory = () => {
+export const closeMemory = () => {
     dispatch("memory-switch", "blur");
     hideId("memory-switch-close");
     showId("memory-switch-open");
     slideUp("memory-container", 200, () => {
         val("memory-search", "");
         dispatch("memory-search", "clear-search");
-        global.state.memoryIsOpen = false;
-        if (global.state.showFavorites) {
+        state.memoryIsOpen = false;
+        if (state.showFavorites) {
             dispatch("filter-favorites", "click");
         }
         showId("menu-switch", "flex");

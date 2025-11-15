@@ -1,4 +1,22 @@
-const getPat = async (patError) => {
+// ES Module imports
+import {
+    warn,
+    info,
+    getBrowserName,
+    getRandomToken,
+    sendMessageToBackground,
+    consoleHeader,
+    log,
+} from "@pmu/functions.js";
+import { getStorage, setStorage } from "@pmu/data.js";
+import { setPlaceholder, showId, hideId } from "@pmu/miniquery.js";
+import { state } from "@pmu/config.js";
+import { initState } from "@pmu/state.js";
+import { makeMemoryHTML } from "@pm/popup/js/memory.js";
+import { fetchText, fetchJSON } from "@pmu/parsers.js";
+import { request as octokitRequest } from "@octokit/request";
+
+export const getPat = async (patError) => {
     const pat = await getStorage("syncPAT");
     if (!pat) {
         warn("No PAT found. Aborting and disabling sync.");
@@ -10,7 +28,7 @@ const getPat = async (patError) => {
     return pat;
 };
 
-const getIdentifier = async () => {
+export const getIdentifier = async () => {
     const browserName = await getBrowserName();
     let syncId = await getStorage("syncId");
     if (!syncId) {
@@ -31,7 +49,7 @@ const getIdentifier = async () => {
  * @param {boolean} options.patError - Whether to raise an error if no PAT
  * @returns {Promise<{ ok: boolean, payload: { file: { filename: string, raw_url: string, content: object }, pat: string, gistId: string } }>}
  */
-const getGist = async ({ pat, store = true, patError = true }) => {
+export const getGist = async ({ pat, store = true, patError = true } = {}) => {
     try {
         if (!pat) pat = await getPat(patError);
 
@@ -64,7 +82,7 @@ const getGist = async ({ pat, store = true, patError = true }) => {
             });
             if (!gist) return { ok: false, payload: "wrongPAT" };
         }
-        file = gist.files[filename];
+        const file = gist.files[filename];
         const gistId = gist.id;
         store && (await setStorage("syncPAT", pat));
         return { ok: true, payload: { file, pat, gistId } };
@@ -86,7 +104,7 @@ const getGist = async ({ pat, store = true, patError = true }) => {
  * @param {string} options.description - Description of the gist
  * @returns {Promise<object>} - The Gist object
  */
-const createGistWithFile = async ({
+export const createGistWithFile = async ({
     file,
     pat,
     content,
@@ -127,7 +145,7 @@ const createGistWithFile = async ({
  * @param {gistId} options.gistId - ID of the Gist. Will query all gists and find the first one with the file if not provided.
  * @returns {Promise<object>} - The content of the file
  */
-const getDataForGistFile = async ({ file, pat, gistId }) => {
+export const getDataForGistFile = async ({ file, pat, gistId }) => {
     if (typeof file === "string") {
         file = { filename: file };
     }
@@ -167,7 +185,7 @@ const getDataForGistFile = async ({ file, pat, gistId }) => {
  * @param {string} options.gistId - ID of the Gist
  * @returns {Promise<object>} - The Gist object
  */
-const updateGistFile = async ({ file, content, gistId, pat }) => {
+export const updateGistFile = async ({ file, content, gistId, pat }) => {
     if (!pat) pat = await getPat();
 
     if (typeof content !== "string") {
@@ -191,7 +209,8 @@ const updateGistFile = async ({ file, content, gistId, pat }) => {
  * Writes the current `papers` Memory to the default sync Gist file.
  * @returns {Promise}
  */
-const pushToRemote = async () => await sendMessageToBackground({ type: "writeSync" });
+export const pushToRemote = async () =>
+    await sendMessageToBackground({ type: "writeSync" });
 
 /**
  * Pulls the current `papers` from the default sync Gist file.
@@ -200,7 +219,7 @@ const pushToRemote = async () => await sendMessageToBackground({ type: "writeSyn
  * @param {boolean} isContentScript - Whether the function is called from a content script
  * @returns {Promise<object>} - The remote `papers` from the Gist file
  */
-const pullFromRemote = async (papers, isContentScript) => {
+export const pullFromRemote = async (papers, isContentScript) => {
     const start = Date.now();
     const remotePapers = await sendMessageToBackground({ type: "pullSync" });
     consoleHeader(`PaperMemory Pull ${String.fromCodePoint("0x1F504")}`);
@@ -213,7 +232,7 @@ const pullFromRemote = async (papers, isContentScript) => {
         });
         const time = (Date.now() - start) / 1e3;
         info(`Successfully pulled from Github (${time}s).`);
-        await setStorage("papers", global.state.papers);
+        await setStorage("papers", state.papers);
     }
     console.groupEnd();
     return remotePapers;
@@ -223,7 +242,7 @@ const pullFromRemote = async (papers, isContentScript) => {
  * Whether the user has enabled sync.
  * @returns {Promise<boolean>}
  */
-const shouldSync = async () => !!(await getStorage("syncState"));
+export const shouldSync = async () => !!(await getStorage("syncState"));
 
 /**
  * Initialize the sync state.
@@ -235,14 +254,14 @@ const shouldSync = async () => !!(await getStorage("syncState"));
  * @param {function} options.remoteIsReady - Callback function to be called when the remote is ready
  * @returns {Promise}
  */
-const initSyncAndState = async ({
+export const initSyncAndState = async ({
     papers = null,
     isContentScript = false,
     forceInit = false,
     stateIsReady = () => {},
     remoteIsReady = () => {},
 } = {}) => {
-    if (!global.state.dataVersion || forceInit) {
+    if (!state.dataVersion || forceInit) {
         await initState({ papers, isContentScript });
     }
     stateIsReady();
@@ -257,10 +276,11 @@ const initSyncAndState = async ({
     const remotePapers = await pullFromRemote(papers, isContentScript);
     if (remotePapers) {
         if (!isContentScript) {
-            const n = global.state.sortedPapers.length;
+            const n = state.sortedPapers.length;
             setPlaceholder("memory-search", `Search ${n} entries...`);
             if (
-                !global.state.memoryIsOpen &&
+                !state.memoryIsOpen &&
+                typeof window !== "undefined" &&
                 !window.location.href.includes("options.html")
             ) {
                 await makeMemoryHTML();
@@ -278,7 +298,7 @@ const initSyncAndState = async ({
  * Show the sync loader in the popup.
  * @returns {Promise}
  */
-const startSyncLoader = async () => {
+export const startSyncLoader = async () => {
     showId("sync-popup-feedback");
     hideId("sync-popup-error");
     hideId("sync-popup-synced");
@@ -288,7 +308,7 @@ const startSyncLoader = async () => {
  * Hide the sync loader in the popup and display the success message.
  * @returns {Promise}
  */
-const successSyncLoader = async () => {
+export const successSyncLoader = async () => {
     showId("sync-popup-feedback");
     hideId("sync-popup-syncing");
     hideId("sync-popup-error");
@@ -301,7 +321,7 @@ const successSyncLoader = async () => {
  * Hide the sync loader in the popup and display the error message.
  * @returns {Promise}
  */
-const errorSyncLoader = async () => {
+export const errorSyncLoader = async () => {
     showId("sync-popup-feedback");
     hideId("sync-popup-syncing");
     hideId("sync-popup-synced");
@@ -316,7 +336,7 @@ const errorSyncLoader = async () => {
  * @param {string} gistId ID of the User's gist to delete
  * @returns {Promise} Promise from the request
  */
-const deleteGist = async ({ gistId, pat }) => {
+export const deleteGist = async ({ gistId, pat }) => {
     if (!pat) pat = await getPat();
     const requestWithAuth = octokitRequest.defaults({
         headers: {
@@ -327,10 +347,10 @@ const deleteGist = async ({ gistId, pat }) => {
     return await requestWithAuth(`DELETE /gists/${gistId}`);
 };
 
-const sleep = async (duration) =>
+export const sleep = async (duration) =>
     new Promise((resolve) => setTimeout(resolve, duration));
 
-const measureCacheTime = async ({ maxTime = 1e5 }) => {
+export const measureCacheTime = async ({ maxTime = 1e5 }) => {
     const randomId = Math.random().toString(36).substring(7);
     const filename = `PaperMemory-cache-test-${randomId}.json`;
     const description = "PaperMemory cache test. You *can* delete this.";
@@ -379,28 +399,3 @@ const measureCacheTime = async ({ maxTime = 1e5 }) => {
         await deleteGist({ gistId });
     }
 };
-
-// ----------------------------------------------------
-// -----  TESTS: modules for node.js environment  -----
-// ----------------------------------------------------
-if (typeof module !== "undefined" && module.exports != null) {
-    var dummyModule = module;
-    dummyModule.exports = {
-        getPat,
-        getIdentifier,
-        getGist,
-        createGistWithFile,
-        getDataForGistFile,
-        updateGistFile,
-        pushToRemote,
-        pullFromRemote,
-        shouldSync,
-        initSyncAndState,
-        startSyncLoader,
-        successSyncLoader,
-        errorSyncLoader,
-        deleteGist,
-        sleep,
-        measureCacheTime,
-    };
-}

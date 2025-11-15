@@ -1,14 +1,67 @@
+// ES Module imports
+import {
+    setHTML,
+    findEl,
+    querySelector,
+    style,
+    val,
+    showId,
+    hideId,
+    createElementFromHTML,
+    addListener,
+    queryAll,
+    dispatch,
+    addEventToClass,
+} from "@pmu/miniquery.js";
+import {
+    getStorage,
+    setStorage,
+    validatePaper,
+    prepareOverwriteData,
+} from "@pmu/data.js";
+import { bibtexToString } from "@pmu/bibtexParser.js";
+import { knownPaperPages, select2Options, state } from "@pmu/config.js";
+import {
+    log,
+    info,
+    warn,
+    logOk,
+    logError,
+    downloadTextFile,
+    stringifyError,
+    cleanPapers,
+    sendMessageToBackground,
+    parseTags,
+} from "@pmu/functions.js";
+import {
+    makePaper,
+    tryPreprintMatch,
+    tryPWCMatch,
+    tryDBLP,
+    tryCrossRef,
+    trySemanticScholar,
+    tryUnpaywall,
+} from "@pmu/parsers.js";
+import { mergePapers } from "@pmu/paper.js";
+import {
+    shouldSync,
+    pushToRemote,
+    getGist,
+    getDataForGistFile,
+    updateGistFile,
+    initSyncAndState,
+} from "@pmu/sync.js";
+import { isPaper } from "@pmu/paper.js";
+import { versionToSemantic } from "@pmu/data.js";
+
+// Global functions are now available from the ES modules bundle
+
 // TODO: data management: 1/ import css 2/ import functions 3/ remove from popup
 // TODO: fix biorxiv bibtex \t
 
 // -------------------------
 // -----  Local Utils  -----
 // -------------------------
-
-function getRandomInt(max) {
-    // https://developer.mozilla.org/fr/docs/Web/JavaScript/Reference/Global_Objects/Math/random
-    return Math.floor(Math.random() * max);
-}
 
 const isValidHttpUrl = (string) => {
     let url;
@@ -744,7 +797,7 @@ const handleExportTagsConfirm = () => {
     const operator = findEl({ element: "export-tags-operator" }).value;
     const format = findEl({ element: "export-tags-format" }).value;
 
-    let papers = global.state.sortedPapers.filter((p) =>
+    let papers = state.sortedPapers.filter((p) =>
         operator === "AND"
             ? p.tags && tags.every((t) => p.tags.includes(t))
             : p.tags && tags.some((t) => p.tags.includes(t))
@@ -789,7 +842,7 @@ const setupDataManagement = () => {
     addListener("overwrite-arxivmemory-button", "click", handleOverwriteMemory);
     addListener("overwrite-arxivmemory-input", "change", handleSelectOverwriteFile);
 
-    const tagOptions = [...global.state.paperTags]
+    const tagOptions = [...state.paperTags]
         .sort()
         .map((t, i) => {
             const h = '<option value="' + t + '"'; // not string literal here for minification
@@ -798,7 +851,7 @@ const setupDataManagement = () => {
         .join("");
     setHTML("export-tags-select", tagOptions);
     $(`#export-tags-select`).select2({
-        ...global.select2Options,
+        ...select2Options,
         placeholder: "Tags to export",
         width: "100%",
         tags: false,
@@ -823,7 +876,7 @@ const makeSource = ([key, sourceDict], idx) => {
 };
 
 const setupSourcesSelection = async () => {
-    const sources = global.knownPaperPages;
+    const sources = knownPaperPages;
     const table = Object.entries(sources).map(makeSource).join("");
     setHTML("select-sources-container", table);
 
@@ -948,7 +1001,7 @@ const setupSync = async () => {
                         "text/json"
                     );
                 }
-                await updateGistFile({ file, content: global.state.papers, gistId });
+                await updateGistFile({ file, content: state.papers, gistId });
                 await setSyncOk();
             } else if (userChoice === "local-remote") {
                 // overwrite local data with remote data

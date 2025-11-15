@@ -1,39 +1,123 @@
+// ES Module imports
+import {
+    prefsCheckDefaultFalse,
+    prefsCheckNames,
+    select2Options,
+    state,
+} from "@pmu/config.js";
+import {
+    arxivIdFromPaperID,
+    cutAuthors,
+    delay,
+    firstNonStopLowercase,
+    info,
+    isPdfUrl,
+    log,
+    miniHash,
+    shouldWarn,
+    tablerSvg,
+    textareaFocusEnd,
+} from "@pmu/functions.js";
+import {
+    addEventToClass,
+    addListener,
+    dispatch,
+    findEl,
+    hideId,
+    queryAll,
+    setHTML,
+    setTextId,
+    showId,
+    slideDown,
+    slideUp,
+    style,
+    val,
+} from "@pmu/miniquery.js";
+import {
+    getDefaultKeyboardAction,
+    getPrefs,
+    getStorage,
+    setDefaultKeyboardAction,
+    setStorage,
+    validatePaper,
+} from "@pmu/data.js";
+import {
+    addOrUpdatePaper,
+    isPaper,
+    makeMdLink,
+    paperToAbs,
+    paperToPDF,
+} from "@pmu/paper.js";
+import { bibtexToObject, bibtexToString } from "@pmu/bibtexParser.js";
+import { initSyncAndState, pushToRemote } from "@pmu/sync.js";
+import {
+    getPaperInfoTable,
+    getPopupEditFormHTML,
+    getPopupPaperIconsHTML,
+} from "@pm/popup/js/templates.js";
+import {
+    closePopupModal,
+    getHandleTitleTooltip,
+    handleExpandAuthors,
+    handleHideAllTitleTooltips,
+    handleMemorySwitchClick,
+    handlePopupDeletePaper,
+    handlePopupKeydown,
+    handlePrefsCheckChange,
+    hideTitleTooltip,
+    showTitleTooltip,
+    setFormChangeListener,
+} from "@pm/popup/js/handlers.js";
+import {
+    copyAndConfirmMemoryItem,
+    focusExistingOrCreateNewURLTab,
+    makeMemoryHTML,
+    updatePopupPaperNoMemory,
+} from "@pm/popup/js/memory.js";
+import { downloadPaperPdf } from "@pmu/state.js";
+import { parseIdFromUrl, getCurrentUserTab } from "@pmu/urls.js";
+import { findLocalFile } from "@pmu/files.js";
+
+// Handler functions available globally from handlers.js:
+// handlePrefsCheckChange, handleMemorySwitchClick, handlePopupKeydown, handlePopupDeletePaper
+
 /**
  * Close the menu's overlay: slide div up and update button svg
  */
-const closeMenu = () => {
+export const closeMenu = () => {
     let classes = ["pm-tabler-icon", "menu-svg"];
 
     slideUp("menu-container", 300);
     setHTML("menu-switch", tablerSvg("settings", "menu-switch-svg", classes));
     dispatch("menu-switch", "blur");
-    global.state.prefsIsOpen = false;
+    state.prefsIsOpen = false;
 };
 
 /**
  * Open the menu's overlay: slide div down and update button svg
  */
-const openMenu = () => {
+export const openMenu = () => {
     let classes = ["pm-tabler-icon", "menu-svg"];
     slideDown("menu-container", 300);
     dispatch("menu-switch", "blur");
     setHTML("menu-switch", tablerSvg("circle-x", "close-menu-btn", classes));
-    global.state.prefsIsOpen = true;
+    state.prefsIsOpen = true;
     setHTML("pm-version", chrome.runtime.getManifest().version);
     findEl({ element: "menu-feedback-header" }).focus();
 };
+
 /**
  * Parses prefs options from the storage and adds events listeners for their change.
  * Notably, if a key in `prefsCheckNames` is missing from `prefs` it is set to true
  * @param {object} prefs The user preferences retrieved from storage
  * @param {string []} prefsCheckNames The array of all expected prefs options
  */
-const getAndTrackPopupMenuChecks = (prefs, prefsCheckNames) => {
+export const getAndTrackPopupMenuChecks = (prefs, prefsCheckNames) => {
     let setValues = {};
     for (const key of prefsCheckNames) {
         setValues[key] = prefs.hasOwnProperty(key)
             ? prefs[key]
-            : global.prefsCheckDefaultFalse.indexOf(key) >= 0
+            : prefsCheckDefaultFalse.indexOf(key) >= 0
             ? false
             : true;
         const el = findEl({ element: key });
@@ -49,11 +133,11 @@ const getAndTrackPopupMenuChecks = (prefs, prefsCheckNames) => {
 };
 
 /**
- * Shows a modal with the given name
- * @param {string} name The name of the modal to show
+ * Opens a modal by its name by making it visible and setting global state
+ * @param {string} name - The name/id of the modal to show
  */
-const showPopupModal = (name) => {
-    global.state.modalIsOpen = true;
+export const showPopupModal = (name) => {
+    state.modalIsOpen = true;
     queryAll(".popup-modal-content").forEach(hideId);
     showId(`modal-${name}-content`, "contents");
     style("popup-modal-wrapper", "display", "flex");
@@ -64,7 +148,7 @@ const showPopupModal = (name) => {
     });
 };
 
-const fillUserGuideShortcuts = () => {
+export const fillUserGuideShortcuts = () => {
     const ul = findEl({ element: "user-guide-shortcuts-ul" });
     const children = findEl({ element: "menu-keyboard-shortcuts" }).children;
     for (const child of children) {
@@ -85,24 +169,9 @@ const fillUserGuideShortcuts = () => {
 };
 
 /**
- * Closes the popup modal
- */
-const closePopupModal = () => {
-    global.state.modalIsOpen = false;
-    style("popup-modal-wrapper", "display", "none");
-};
-
-const hideAllTooltips = () => {
-    queryAll(".title-tooltip,#popup-title-tooltip").forEach((el) => {
-        hideId(el);
-    });
-    global.state.tooltipIsOpen = false;
-};
-
-/**
  * Creates click events on the popup
  */
-const setStandardPopupClicks = () => {
+export const setStandardPopupClicks = () => {
     queryAll(".link-in-new-tab").forEach((el) => {
         addListener(el, "click", () => {
             chrome.tabs.create({ url: el.getAttribute("href") });
@@ -155,7 +224,7 @@ const setStandardPopupClicks = () => {
     });
 
     addListener("menu-switch", "click", () => {
-        global.state.prefsIsOpen ? closeMenu() : openMenu();
+        state.prefsIsOpen ? closeMenu() : openMenu();
     });
 
     addListener("memory-switch", "click", handleMemorySwitchClick);
@@ -166,7 +235,7 @@ const setStandardPopupClicks = () => {
  * @param {Object} parsedPaper the parsed paper from addOrUpdatePaper
  * @param {string} url the url of the parsed paper
  */
-const editManualWebsite = (parsedPaper, url) => {
+export const editManualWebsite = (parsedPaper, url) => {
     // Open modal and form
     hideId("manual-website-validation");
     showPopupModal("manual-website");
@@ -227,8 +296,8 @@ const editManualWebsite = (parsedPaper, url) => {
             showId("manual-website-validation");
         } else {
             // No warnings -> store paper
-            global.state.papers[paper.id] = paper;
-            await setStorage("papers", global.state.papers);
+            state.papers[paper.id] = paper;
+            await setStorage("papers", state.papers);
             await pushToRemote();
             popupMain(url, await isPaper(url), true, null);
             hideId("website-trigger-btn");
@@ -245,7 +314,7 @@ const editManualWebsite = (parsedPaper, url) => {
  * + Add event listeners (clicks and keyboard)
  * @param {str} url Currently focused and active tab's url.
  */
-const popupMain = async (url, is, manualTrigger = false, tab = null) => {
+export const popupMain = async (url, is, manualTrigger = false, tab = null) => {
     console.log(navigator.userAgent);
     if (navigator.userAgent === "PuppeteerAgent") {
         info("Is puppet");
@@ -282,7 +351,7 @@ const popupMain = async (url, is, manualTrigger = false, tab = null) => {
     }
     const prefs = await getPrefs();
     // Set checkboxes
-    getAndTrackPopupMenuChecks(prefs, global.prefsCheckNames);
+    getAndTrackPopupMenuChecks(prefs, prefsCheckNames);
     const defaultKeyboardAction = await getDefaultKeyboardAction();
     findEl({ element: "memory-item-default-action" }).value = defaultKeyboardAction;
 
@@ -320,9 +389,9 @@ const popupMain = async (url, is, manualTrigger = false, tab = null) => {
         showId("isArxiv", "flex");
 
         const id = await parseIdFromUrl(url);
-        global.state.currentId = id;
+        state.currentId = id;
 
-        if (!id || !global.state.papers.hasOwnProperty(id)) {
+        if (!id || !state.papers.hasOwnProperty(id)) {
             // Unknown paper, probably deleted by the user
             log("Unknown id " + id);
             await updatePopupPaperNoMemory(url);
@@ -332,7 +401,7 @@ const popupMain = async (url, is, manualTrigger = false, tab = null) => {
             return;
         }
 
-        const paper = global.state.papers[id];
+        const paper = state.papers[id];
         const eid = paper.id.replaceAll(".", "\\.");
 
         // -----------------------------
@@ -376,10 +445,10 @@ const popupMain = async (url, is, manualTrigger = false, tab = null) => {
         // -----  Paper  edits  -----
         // --------------------------
         $(`#popup-item-tags--${eid}`).select2({
-            ...global.select2Options,
+            ...select2Options,
             width: "87%",
         });
-        addListener(`popup-form-note-textarea--${id}`, "focus", () => {
+        addListener(`popup-form-note-textarea--${id}`, "focus", function () {
             var that = this;
             textareaFocusEnd(that);
         });
@@ -448,14 +517,14 @@ const popupMain = async (url, is, manualTrigger = false, tab = null) => {
             const codeLink = findEl({ element: `popup-code-link` }).textContent;
             if (codeLink) {
                 await focusExistingOrCreateNewURLTab(codeLink);
-                global.close && global.close();
+                window.close && window.close();
             }
         });
         addListener(`popup-website-url`, "click", async (e) => {
             const url = findEl({ element: `popup-website-url` }).textContent;
             if (url) {
                 await focusExistingOrCreateNewURLTab(url);
-                // global.close && global.close();
+                window.close && window.close();
             }
         });
         addListener(`popup-memory-item-copy-link--${id}`, "click", async () => {
@@ -505,13 +574,13 @@ const popupMain = async (url, is, manualTrigger = false, tab = null) => {
             });
         });
         addListener(`popup-memory-item-bibtex--${id}`, "click", async () => {
-            let bibtex = global.state.papers[id].bibtex;
+            let bibtex = state.papers[id].bibtex;
             let bibobj = bibtexToObject(bibtex);
             if (!bibobj.hasOwnProperty("url")) {
-                bibobj.url = paperToAbs(global.state.papers[id]);
+                bibobj.url = paperToAbs(state.papers[id]);
             }
             if (!bibobj.hasOwnProperty("pdf")) {
-                bibobj.pdf = paperToPDF(global.state.papers[id]);
+                bibobj.pdf = paperToPDF(state.papers[id]);
             }
             bibtex = bibtexToString(bibobj);
             await copyAndConfirmMemoryItem({
@@ -522,7 +591,7 @@ const popupMain = async (url, is, manualTrigger = false, tab = null) => {
             });
         });
         addListener(`popup-memory-item-openLocal--${id}`, "click", async () => {
-            const file = (await findLocalFile(paper)) || global.state.files[paper.id];
+            const file = (await findLocalFile(paper)) || state.files[paper.id];
             if (file) {
                 chrome.downloads.open(file.id);
             } else {
@@ -539,7 +608,7 @@ const popupMain = async (url, is, manualTrigger = false, tab = null) => {
         // ------------------------------------
         // -----  Manual Website Parsing  -----
         // ------------------------------------
-        const allowWebsiteParsing = tab && global.state.prefs.checkWebsiteParsing;
+        const allowWebsiteParsing = tab && state.prefs.checkWebsiteParsing;
         if (allowWebsiteParsing) {
             // Add website parsing button, loader and error div
             const websiteParsingHtml = /* html */ `
@@ -593,12 +662,18 @@ const popupMain = async (url, is, manualTrigger = false, tab = null) => {
 // ------------------------------
 // -----  Script Execution  -----
 // ------------------------------
-
-const query = { active: true, lastFocusedWindow: true };
-if (window.location.href.includes("popup")) {
-    chrome.tabs.query(query, async (tabs) => {
+(async () => {
+    if (
+        typeof window !== "undefined" &&
+        window.location.href.includes("popup") &&
+        !window.paperMemoryPopupInitialized
+    ) {
+        // This is a global variable to track whether the popup has been initialized.
+        // In DEV mode, this would be run twice by the additional injection of debug.bundle.js
+        window.paperMemoryPopupInitialized = true;
+        const tab = await getCurrentUserTab();
+        const url = tab.url;
         chrome.runtime.connect({ name: "PaperMemoryPopupSync" });
-        const url = tabs[0].url;
         document.addEventListener("click", handleHideAllTitleTooltips);
 
         let stateReadyPromise, remoteIsReadyPromise;
@@ -621,17 +696,17 @@ if (window.location.href.includes("popup")) {
         hideId("memory-spinner");
         showId("memory-switch");
         makeMemoryHTML();
-        popupMain(url, is, false, tabs[0]);
+        popupMain(url, is, false, tab);
         if (navigator.userAgent.search("Firefox") > -1) {
             hideId("overwrite-container");
         }
 
         await remoteIsReadyPromise;
 
-        if (global.state.currentId && !global.state.papers[global.state.currentId]) {
-            global.state.currentId = null;
+        if (state.currentId && !state.papers[state.currentId]) {
+            state.currentId = null;
             makeMemoryHTML();
             await updatePopupPaperNoMemory(url);
         }
-    });
-}
+    }
+})();

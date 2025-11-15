@@ -1,9 +1,43 @@
+// ES Module imports
+import {
+    log,
+    info,
+    warn,
+    consoleHeader,
+    downloadTextFile,
+    downloadFile,
+    sendMessageToBackground,
+    cleanPapers,
+    getStoredFiles,
+    miniHash,
+    getRandomInt,
+} from "@pmu/functions.js";
+import {
+    state,
+    descendingSortKeys,
+    preprintSources,
+    journalAbbreviations,
+    storeReadme,
+} from "@pmu/config.js";
+import {
+    getStorage,
+    setStorage,
+    migrateData,
+    getManifestDataVersion,
+    getTheme,
+    makeTitleHashToIdList,
+    weeklyBackup,
+    getPrefs,
+} from "@pmu/data.js";
+import { paperToPDF } from "@pmu/paper.js";
+import { matchPapersToFiles } from "@pmu/files.js";
+
 /**
  * Compute the duration between now and the first element of the times array in seconds.
  * @param {array} times Array of times to compute the duration from
  * @returns
  */
-const duration = (times) => (Date.now() - times[0]) / 1e3;
+export const duration = (times) => (Date.now() - times[0]) / 1e3;
 /**
  * Function to initialize the app's state.
  *  1. load the papers from storage is the papers argument is undefined
@@ -21,7 +55,7 @@ const duration = (times) => (Date.now() - times[0]) / 1e3;
  * @param {object} papers Memory object with papers to initialize the state with
  * @param {boolean} isContentScript Whether the call is from a content_script or the popup
  */
-const initState = async ({ papers, isContentScript, print = true } = {}) => {
+export const initState = async ({ papers, isContentScript, print = true } = {}) => {
     const times = [];
     times.unshift(Date.now());
     print && consoleHeader(`PaperMemory Init ${String.fromCodePoint("0x2705")}`);
@@ -32,7 +66,7 @@ const initState = async ({ papers, isContentScript, print = true } = {}) => {
     }
     times.unshift(Date.now());
 
-    global.state.dataVersion = getManifestDataVersion();
+    state.dataVersion = getManifestDataVersion();
     print && log("Time to parse data version (s): " + duration(times));
     times.unshift(Date.now());
 
@@ -40,37 +74,37 @@ const initState = async ({ papers, isContentScript, print = true } = {}) => {
     print && log("Time to backup papers (weekly) (s): " + duration(times));
     times.unshift(Date.now());
 
-    const migration = await migrateData(papers, global.state.dataVersion);
+    const migration = await migrateData(papers, state.dataVersion);
     print && log("Time to migrate data (s): " + duration(times));
     times.unshift(Date.now());
 
     papers = migration.papers;
-    global.state.papers = papers;
+    state.papers = papers;
 
-    global.state.prefs = await getPrefs();
+    state.prefs = await getPrefs();
     print && log("Time to retrieve user preferences (s): " + duration(times));
     times.unshift(Date.now());
 
-    global.state.ignoreSources = (await getStorage("ignoreSources")) ?? {};
+    state.ignoreSources = (await getStorage("ignoreSources")) ?? {};
     print && log("Time to retrieve sources to ignore (s): " + duration(times));
     times.unshift(Date.now());
 
-    global.state.urlHashToId = (await getStorage("urlHashToId")) ?? {};
+    state.urlHashToId = (await getStorage("urlHashToId")) ?? {};
     print && log("Time to retrieve sources to urlHashToId (s): " + duration(times));
     times.unshift(Date.now());
 
-    global.state.titleHashToIds = makeTitleHashToIdList(papers);
+    state.titleHashToIds = makeTitleHashToIdList(papers);
     print && log("Time to hash titles (s): " + duration(times));
     times.unshift(Date.now());
 
     if (!isContentScript) {
-        global.state.files = await matchAllFilesToPapers();
+        state.files = await matchAllFilesToPapers();
         print && log("Time to match all local files (s): " + duration(times));
         times.unshift(Date.now());
 
-        global.state.papersList = Object.values(cleanPapers(papers));
-        global.state.sortKey = "lastOpenDate";
-        global.state.papersReady = true;
+        state.papersList = Object.values(cleanPapers(papers));
+        state.sortKey = "lastOpenDate";
+        state.papersReady = true;
 
         sortMemory();
         print && log("Time to sort memory (s): " + duration(times));
@@ -81,27 +115,25 @@ const initState = async ({ papers, isContentScript, print = true } = {}) => {
         times.unshift(Date.now());
     }
 
+    const cellPath = chrome.runtime.getURL("src/data/cell.json");
+    state.cellJournalData = await fetch(cellPath).then((res) => res.json());
+    print && log("Time to fetch cell journal data (s): " + duration(times));
+    times.unshift(Date.now());
+
     info("State init duration (s): " + (Date.now() - times.last()) / 1e3);
     print && console.groupEnd();
-    (async () => {
-        const cellPath = chrome.runtime.getURL("src/data/cell.json");
-        const cellData = await fetch(cellPath).then((res) => res.json());
-        global.state.cellJournalData = cellData;
-    })();
 };
 
 /**
- * Execute the sort operation on global.state.sortedPapers using orderPapers, removing the
- * __dataVersion element in global.state.papers.
+ * Execute the sort operation on state.sortedPapers using orderPapers, removing the
+ * __dataVersion element in state.papers.
  */
-const sortMemory = () => {
-    global.state.sortedPapers = Object.values(cleanPapers(global.state.papers));
-    global.state.sortedPapers.sort(
-        orderPapers(global.descendingSortKeys.indexOf(global.state.sortKey) >= 0)
+export const sortMemory = () => {
+    state.sortedPapers = Object.values(cleanPapers(state.papers));
+    state.sortedPapers.sort(
+        orderPapers(descendingSortKeys.indexOf(state.sortKey) >= 0)
     );
-    global.state.papersList.sort(
-        orderPapers(global.descendingSortKeys.indexOf(global.state.sortKey) >= 0)
-    );
+    state.papersList.sort(orderPapers(descendingSortKeys.indexOf(state.sortKey) >= 0));
 };
 
 /**
@@ -113,9 +145,9 @@ const sortMemory = () => {
  * @param {object} paper2 Second item to compare
  * @returns {number} 1 or -1 depending on the prevalence of paper1/paper2
  */
-const orderPapers = (descending) => (paper1, paper2) => {
-    let val1 = paper1[global.state.sortKey];
-    let val2 = paper2[global.state.sortKey];
+export const orderPapers = (descending) => (paper1, paper2) => {
+    let val1 = paper1[state.sortKey];
+    let val2 = paper2[state.sortKey];
 
     if (typeof val1 === "undefined") {
         val1 = "";
@@ -139,15 +171,15 @@ const orderPapers = (descending) => (paper1, paper2) => {
  * it is added to this list, if a tag is never used after it's deleted from its
  * last paper, it is removed from the list.
  */
-const makeTags = () => {
+export const makeTags = () => {
     let tags = new Set();
-    for (const p of global.state.sortedPapers) {
+    for (const p of state.sortedPapers) {
         for (const t of p.tags) {
             tags.add(t);
         }
     }
-    global.state.paperTags = [...tags];
-    global.state.paperTags.sort();
+    state.paperTags = [...tags];
+    state.paperTags.sort();
 };
 
 /**
@@ -159,7 +191,7 @@ const makeTags = () => {
  * @param {number} idx Optional index of the sample paper.
  * @returns {object} paper object to display in the options.
  */
-const getExamplePaper = async (idx) => {
+export const getExamplePaper = async (idx) => {
     // all papers
     const papers = (await getStorage("papers")) ?? {};
     // filter out the data version
@@ -192,73 +224,42 @@ const getExamplePaper = async (idx) => {
  * @param {string || object} paperOrId the paper for which to get the title
  * @returns {string} the title of the paper
  */
-const stateTitleFunction = (paperOrId) => {
+export const stateTitleFunction = (paperOrId) => {
     let paper = paperOrId;
     if (typeof paperOrId === "string") {
         // paperOrId is an ID
-        paper = global.state.papers[paperOrId];
+        paper = state.papers[paperOrId];
         if (typeof paper === "undefined") {
             // no such paper
             log("Error in stateTitleFunction: unknown id", paperOrId);
             return "Unknown ID";
         }
     }
-    const name = global.state.titleFunction(paper);
+    const name = state.titleFunction(paper);
     return name.replaceAll("\n", " ").replace(/\s\s+/g, " ");
 };
 
-const updateDuplicatedUrls = (url, id, remove = false) => {
-    if (!remove) {
-        global.state.urlHashToId[miniHash(url)] = id;
-        setStorage("urlHashToId", global.state.urlHashToId);
-    } else {
-        let hashedUrls;
-        if (!url) {
-            hashedUrls = Object.keys(global.state.urlHashToId).filter(
-                (k) => global.state.urlHashToId[k] === id
-            );
-        } else {
-            hashedUrls = [miniHash(url)];
-        }
-        if (hashedUrls && hashedUrls.length) {
-            for (const hashedUrl of hashedUrls) {
-                warn("Removing duplicated url", url, "for", id);
-                delete global.state.urlHashToId[hashedUrl];
-            }
-            setStorage("urlHashToId", global.state.urlHashToId);
-        }
-    }
-};
-
-const addPaperToTitleHashToId = (paper) => {
-    const id = paper.id;
-    const hashedTitle = miniHash(paper.title);
-    if (!global.state.titleHashToIds.hasOwnProperty(hashedTitle)) {
-        global.state.titleHashToIds[hashedTitle] = [];
-    }
-    if (!global.state.titleHashToIds[hashedTitle].includes(id)) {
-        global.state.titleHashToIds[hashedTitle].push(id);
-    }
-};
-
-const readJournalAbbreviations = async () => {
-    if (global.journalAbbreviations) {
+export const readJournalAbbreviations = async () => {
+    if (Object.keys(journalAbbreviations).length > 0) {
         return;
     }
     const iso4Path = chrome.runtime.getURL("src/data/iso4-journals.json");
     const iso4 = await fetch(iso4Path).then((res) => res.json());
     const abbrPath = chrome.runtime.getURL("src/data/journal-abbreviations.json");
     const abbr = await fetch(abbrPath).then((res) => res.json());
-    global.journalAbbreviations = Object.fromEntries(
+    const newAbbreviations = Object.fromEntries(
         [...Object.entries(iso4), ...Object.entries(abbr)].map(([k, v]) => [
             miniHash(k),
             v,
         ])
     );
+    for (const [key, value] of Object.entries(newAbbreviations)) {
+        journalAbbreviations[key] = value;
+    }
 };
 
-const downloadPaperPdf = async (paper) => {
-    if (!global.state.papersReady) {
+export const downloadPaperPdf = async (paper) => {
+    if (!state.papersReady) {
         throw new Error("[PM] State is not ready (downloadPaperPdf)");
     }
     let title = stateTitleFunction(paper);
@@ -267,12 +268,12 @@ const downloadPaperPdf = async (paper) => {
         /[\u2000-\u206F\u2E00-\u2E7F\\'!"#$%&()*+,\/:;<=>?@\[\]^`{|}~]/g;
     const spaceRegex = /\s+/g;
     title = title.replace(punctuationRegex, " ").replace(spaceRegex, " ");
-    if (global.state.prefs.checkStore) {
+    if (state.prefs.checkStore) {
         title = "PaperMemoryStore/" + title;
         const storedFiles = await getStoredFiles();
         if (storedFiles.length === 0) {
             chrome.downloads.download({
-                url: URL.createObjectURL(new Blob([global.storeReadme])),
+                url: URL.createObjectURL(new Blob([storeReadme])),
                 filename: "PaperMemoryStore/IMPORTANT_README.txt",
                 saveAs: false,
             });
@@ -291,22 +292,40 @@ const downloadPaperPdf = async (paper) => {
     });
 };
 
-// ----------------------------------------------------
-// -----  TESTS: modules for node.js environment  -----
-// ----------------------------------------------------
-if (typeof module !== "undefined" && module.exports != null) {
-    var dummyModule = module;
-    dummyModule.exports = {
-        duration,
-        initState,
-        sortMemory,
-        orderPapers,
-        makeTags,
-        getExamplePaper,
-        stateTitleFunction,
-        updateDuplicatedUrls,
-        addPaperToTitleHashToId,
-        readJournalAbbreviations,
-        downloadPaperPdf,
-    };
-}
+export const matchAllFilesToPapers = () => {
+    return new Promise((resolve, reject) => {
+        chrome.downloads.search(
+            {
+                filenameRegex: "PaperMemoryStore/.*",
+            },
+            async (files) => {
+                const matches = await matchPapersToFiles(
+                    cleanPapers(state.papers),
+                    files
+                );
+                resolve(matches);
+            }
+        );
+    });
+};
+
+/**
+ * Get a the HTML string listing all the <option>tag</option> of all known tags,
+ * setting the <option>'s "selected" attribute according to the paper's own tags
+ * @param {object} paper The paper whose options' HTML string are being created
+ * @returns {string} The HTML string of the paper's options
+ */
+export const getTagsOptions = (paper) => {
+    const tags = new Set(paper.tags);
+
+    return [...state.paperTags]
+        .sort()
+        .map((t, i) => {
+            let h = '<option value="' + t + '"'; // not string literal here for minification
+            if (tags.has(t)) {
+                h += ' selected="selected" ';
+            }
+            return h + `>${t}</option>`;
+        })
+        .join("");
+};

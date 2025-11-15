@@ -13,56 +13,24 @@ import fs from "fs";
 import zip from "gulp-zip";
 import { v4 as uuidv4 } from "uuid";
 import include from "gulp-include";
+import { spawn } from "child_process";
 // import debug from "gulp-debug";
 
-function popupJS() {
-    return (
-        src([
-            "src/popup/js/handlers.js",
-            "src/popup/js/templates.js",
-            "src/popup/js/memory.js",
-            "src/popup/js/popup.js",
-        ])
-            .pipe(concat("popup.js"))
-            // .pipe(
-            //     minifyJSTemplate({
-            //         minifyOptions: { minifyCSS: false, collapseWhitespace: true },
-            //         shouldMinify: (template) => true,
-            //     })
-            // )
-            .pipe(uglify({ mangle: true }))
-            .pipe(rename({ suffix: ".min" }))
-            .pipe(dest("src/popup/min/"))
-    );
+// Helper function to build ES modules using Rollup
+function buildESModules() {
+    return new Promise((resolve, reject) => {
+        const rollup = spawn("npx", ["rollup", "-c"], { stdio: "inherit" });
+        rollup.on("close", (code) => {
+            if (code === 0) {
+                resolve();
+            } else {
+                reject(new Error(`Rollup build failed with code ${code}`));
+            }
+        });
+    });
 }
 
-function utilsJS() {
-    return (
-        src([
-            "src/shared/js/utils/octokit.bundle.js",
-            "src/shared/js/utils/miniquery.js",
-            "src/shared/js/utils/config.js",
-            "src/shared/js/utils/bibtexParser.js",
-            "src/shared/js/utils/functions.js",
-            "src/shared/js/utils/sync.js",
-            "src/shared/js/utils/data.js",
-            "src/shared/js/utils/paper.js",
-            "src/shared/js/utils/state.js",
-            "src/shared/js/utils/parsers.js",
-        ])
-            // .pipe(debug())
-            .pipe(concat("utils.js"))
-            // .pipe(
-            //     minifyJSTemplate({
-            //         minifyOptions: { minifyCSS: false, collapseWhitespace: true },
-            //         shouldMinify: (template) => true,
-            //     })
-            // )
-            .pipe(uglify({ mangle: true }))
-            .pipe(rename({ suffix: ".min" }))
-            .pipe(dest("src/shared/min"))
-    );
-}
+// Note: popupJS() and utilsJS() tasks removed - now handled by Rollup
 
 function themeJS() {
     return src(["src/shared/js/theme.js"])
@@ -101,6 +69,7 @@ function popupCSS() {
         .pipe(rename({ suffix: ".min" }))
         .pipe(dest("src/popup/min/"));
 }
+
 function popupDarkCSS() {
     return src(["src/popup/css/dark.css"])
         .pipe(cleanCss())
@@ -109,16 +78,34 @@ function popupDarkCSS() {
 }
 
 function watchFiles() {
-    gwatch("src/popup/js/*.js", popupJS);
+    // Watch theme.js (still processed by Gulp)
     gwatch("src/shared/js/theme.js", themeJS);
+
+    // Watch CSS files
     gwatch(
         ["src/popup/css/*.css", "src/shared/css/*.css"],
         parallel(popupCSS, popupDarkCSS)
     );
+
+    // Watch HTML files
     gwatch("src/popup/*.html", popupHTMLDev);
     gwatch("src/popup/html/modals/*.html", popupHTMLDev);
     gwatch("src/popup/html/svgs/*.html", popupHTMLDev);
-    gwatch("src/shared/js/utils/*", utilsJS);
+
+    // Watch for ES module changes (handled by Rollup)
+    gwatch(
+        [
+            "src/shared/js/utils/*",
+            "src/popup/js/*.js",
+            "src/content_scripts/*.js",
+            "src/background/*.js",
+            "src/options/*.js",
+            "src/bibMatcher/*.js",
+            "src/fullMemory/*.js",
+            "!**/*.bundle.js",
+        ],
+        buildESModules
+    );
 }
 
 function createArchive(cb) {
@@ -157,22 +144,21 @@ function createArchive(cb) {
         .pipe(dest(archiveFolder));
 }
 
+// Updated build tasks - removed redundant JS bundling
 export const build = parallel(
-    popupJS,
     themeJS,
-    utilsJS,
     popupCSS,
     popupDarkCSS,
-    popupHTML
+    popupHTML,
+    buildESModules
 );
 
 export const dev = parallel(
-    popupJS,
     themeJS,
-    utilsJS,
     popupCSS,
     popupDarkCSS,
-    popupHTMLDev
+    popupHTMLDev,
+    buildESModules
 );
 
 export const watch = series(dev, watchFiles);
@@ -180,3 +166,5 @@ export const watch = series(dev, watchFiles);
 export const archive = series(build, createArchive);
 
 export const html = series(popupHTMLDev);
+
+export const modules = buildESModules;
