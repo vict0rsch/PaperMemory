@@ -2370,13 +2370,13 @@
                         is[source] = true;
                     }
                 } else if (typeof pattern === "function") {
-                    is[source] = pattern(url);
+                    is[source] = pattern(url) ?? false;
                 }
                 if (is[source]) break;
             }
         }
         // is the url a local file in the memory?
-        is.localFile = isKnownLocalFile(url);
+        is.localFile = isKnownLocalFile(url) ?? false;
         is.stored = noStored ? false : (await findLocalFile(url)) ?? false;
         is.parsedWebsite = state.papers[`Website_${urlToWebsiteId(url)}`] ?? false;
         return is;
@@ -3384,13 +3384,13 @@
             times.unshift(Date.now());
         }
 
+        const cellPath = chrome.runtime.getURL("src/data/cell.json");
+        state.cellJournalData = await fetch(cellPath).then((res) => res.json());
+        print && log("Time to fetch cell journal data (s): " + duration(times));
+        times.unshift(Date.now());
+
         info("State init duration (s): " + (Date.now() - times.last()) / 1e3);
         print && console.groupEnd();
-        (async () => {
-            const cellPath = chrome.runtime.getURL("src/data/cell.json");
-            const cellData = await fetch(cellPath).then((res) => res.json());
-            state.cellJournalData = cellData;
-        })();
     };
 
     /**
@@ -3582,14 +3582,6 @@
     // -------------------
     // -----  Fetch  -----
     // -------------------
-
-    const fetchArxivXML = async (paperId) => {
-        const arxivId = paperId.replace("Arxiv-", "").replace("_", "/");
-        return fetch(
-            "https://export.arxiv.org/api/query?" +
-                new URLSearchParams({ id_list: arxivId })
-        );
-    };
 
     const fetchCvfHTML = async (url) => {
         let paperPage, text;
@@ -3926,8 +3918,10 @@
 
     const makeArxivPaper = async (url) => {
         const arxivId = arxivIdFromURL(url);
-        const response = await fetchArxivXML(arxivId);
-        const xmlData = await response.text();
+        const xmlData = await sendMessageToBackground({
+            type: "fetch-arxiv-xml",
+            paperId: arxivId,
+        });
         const doc = new DOMParser().parseFromString(
             xmlData.replaceAll("\n", ""),
             "text/xml"
