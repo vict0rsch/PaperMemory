@@ -59,14 +59,6 @@ export const flipAndAuthors = (authors) =>
 // -----  Fetch  -----
 // -------------------
 
-export const fetchArxivXML = async (paperId) => {
-    const arxivId = paperId.replace("Arxiv-", "").replace("_", "/");
-    return fetch(
-        "https://export.arxiv.org/api/query?" +
-            new URLSearchParams({ id_list: arxivId })
-    );
-};
-
 export const fetchCvfHTML = async (url) => {
     let paperPage, text;
     if (url.endsWith(".pdf")) {
@@ -402,8 +394,10 @@ export const extractDataFromDCMetaTags = (dom) => {
 
 export const makeArxivPaper = async (url) => {
     const arxivId = arxivIdFromURL(url);
-    const response = await fetchArxivXML(arxivId);
-    const xmlData = await response.text();
+    const xmlData = await sendMessageToBackground({
+        type: "fetch-arxiv-xml",
+        paperId: arxivId,
+    });
     const doc = new DOMParser().parseFromString(
         xmlData.replaceAll("\n", ""),
         "text/xml"
