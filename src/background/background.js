@@ -332,6 +332,15 @@ const pushSyncPapers = async () => {
     console.groupEnd();
 };
 
+const fetchArxivXML = async (paperId) => {
+    const arxivId = paperId.replace("Arxiv-", "").replace("_", "/");
+    const response = await fetch(
+        "https://export.arxiv.org/api/query?" +
+            new URLSearchParams({ id_list: arxivId })
+    );
+    return await response.text();
+};
+
 chrome.runtime.onMessage.addListener((payload, sender, sendResponse) => {
     if (payload.type === "update-title") {
         const { title, url } = payload.options;
@@ -377,6 +386,8 @@ chrome.runtime.onMessage.addListener((payload, sender, sendResponse) => {
         tryDBLP(payload.paper, false).then(sendResponse);
     } else if (payload.type === "try-unpaywall") {
         tryUnpaywall(payload.paper, false).then(sendResponse);
+    } else if (payload.type === "fetch-arxiv-xml") {
+        fetchArxivXML(payload.arxivId).then(sendResponse);
     }
     return true;
 });
