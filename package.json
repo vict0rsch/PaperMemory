@@ -19,7 +19,8 @@
         "test-cov": "node --import ./register.mjs ./node_modules/.bin/nyc --reporter=text ./node_modules/.bin/mocha test/test-*.js",
         "dev": "rollup -c",
         "dev:watch": "rollup -c -w",
-        "build": "NODE_ENV=production rollup -c"
+        "build": "NODE_ENV=production rollup -c",
+        "dev:ff": "web-ext run"
     },
     "repository": {
         "type": "git",
