@@ -110,6 +110,25 @@ def update_ffx_manifest(manifest, out_dir):
     (out_dir / "manifest.json").write_text(json.dumps(manifest, indent=2))
 
 
+def to_firefox():
+    root = Path(__file__).resolve().parent.parent
+    manifest_file = root / "manifest.json"
+    assert manifest_file.exists(), f"{manifest_file} does not exist"
+    copy2(manifest_file, manifest_file.with_suffix(".json.chrome"))
+    manifest = json.loads(manifest_file.read_text())
+    update_ffx_manifest(manifest, root)
+
+
+def from_firefox():
+    root = Path(__file__).resolve().parent.parent
+    manifest_file = root / "manifest.json"
+    chrome_manifest_file = manifest_file.with_suffix(".json.chrome")
+    assert manifest_file.exists(), f"{manifest_file} does not exist"
+    assert chrome_manifest_file.exists(), f"{chrome_manifest_file} does not exist"
+    manifest_file.unlink()
+    chrome_manifest_file.rename(manifest_file)
+
+
 if __name__ == "__main__":
     parser = ArgumentParser()
     parser.add_argument("--force", action="store_true", help="Force overwrite")
@@ -135,7 +154,7 @@ if __name__ == "__main__":
     out_chr.mkdir(parents=True, exist_ok=True)
     out_ffx.mkdir(parents=True, exist_ok=True)
 
-    os.system("gulp build")
+    os.system("nvm version ; npm run build")
 
     with tempfile.TemporaryDirectory() as tmp:
         tmp_dir = Path(tmp) / "chrome"
