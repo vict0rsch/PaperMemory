@@ -116,14 +116,14 @@ const fetchOpenReviewForumJSON = async (url) => {
 const fetchGSData = async (paper) => {
     try {
         let html = await fetchText(
-            `https://scholar.google.com/scholar?q=${encodeURI(paper.title)}&hl=en`
+            `https://scholar.google.com/scholar?q=${encodeURI(paper.title)}&hl=en`,
         );
         html = html.split("gs_res_ccl_mid")[1];
         if (!html) return { note: null };
 
         const mhtml = miniHash(html, "_");
         const matchedLower = mhtml.match(
-            new RegExp(`_a_id__(\\w+)__href.+_${miniHash(paper.title, "_")}__a_`)
+            new RegExp(`_a_id__(\\w+)__href.+_${miniHash(paper.title, "_")}__a_`),
         );
 
         if (!matchedLower || !matchedLower[1]) return { note: null };
@@ -198,7 +198,7 @@ const findCodesForPaper = async (request) => {
 
     if (conference) {
         const confData = await fetchJSON(
-            `https://paperswithcode.com/api/v1/conferences/${conference}`
+            `https://paperswithcode.com/api/v1/conferences/${conference}`,
         );
         venue = confData?.name;
     }
@@ -227,7 +227,7 @@ const findCodesForPaper = async (request) => {
     if (!id) return code;
 
     const json = await fetchJSON(
-        `https://paperswithcode.com/api/v1/papers/${id}/repositories/`
+        `https://paperswithcode.com/api/v1/papers/${id}/repositories/`,
     );
 
     if (json.data["count"] < 1) {
@@ -347,11 +347,10 @@ const pushSyncPapers = async () => {
 
 const fetchArxivXML = async (paperId) => {
     const arxivId = paperId.replace("Arxiv-", "").replace("_", "/");
-    const response = await fetch(
+    return await fetch(
         "https://export.arxiv.org/api/query?" +
-            new URLSearchParams({ id_list: arxivId })
-    );
-    return await response.text();
+            new URLSearchParams({ id_list: arxivId }),
+    ).then((res) => res.text());
 };
 
 chrome.runtime.onMessage.addListener((payload, sender, sendResponse) => {
@@ -400,7 +399,7 @@ chrome.runtime.onMessage.addListener((payload, sender, sendResponse) => {
     } else if (payload.type === "try-unpaywall") {
         tryUnpaywall(payload.paper, false).then(sendResponse);
     } else if (payload.type === "fetch-arxiv-xml") {
-        fetchArxivXML(payload.arxivId).then(sendResponse);
+        fetchArxivXML(payload.paperId).then(sendResponse);
     }
     return true;
 });
@@ -414,7 +413,7 @@ chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
         }
     } else {
         tab = await new Promise((resolve) =>
-            chrome.tabs.get(tabId, (tab) => resolve(tab))
+            chrome.tabs.get(tabId, (tab) => resolve(tab)),
         );
         if (tabStatuses.hasOwnProperty(tabId) && tabStatuses[tabId] === "complete") {
             const paperTitle = paperTitles[tab.url];
