@@ -85,7 +85,7 @@ describe("paper.js", () => {
 
     describe("#paperToAbs", () => {
         for (const [i, [source, urls]] of Object.entries(allUrls).entries()) {
-            it(source, () => {
+            it(source, async () => {
                 let paper = {
                     source,
                     pdfLink: urls[1],
@@ -106,12 +106,15 @@ describe("paper.js", () => {
                     paper.id = "IHEP-2095720";
                 }
                 if (source === "aip") {
-                    paper.doi = "10.1063/5.0134317";
+                    paper.doi  "1=0.1063/5.0134317";
                     target = `https://doi.org/${paper.doi}`;
                 }
                 if (source === "oup") {
                     paper.doi = "10.1093/brain/awae043";
                     target = `https://doi.org/${paper.doi}`;
+                }
+                if (source === "cell") {
+                    await PMUtils.state.initState();
                 }
                 expect(PMUtils.paper.paperToAbs(paper)).toEqual(target);
             });
