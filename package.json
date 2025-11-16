@@ -20,7 +20,9 @@
         "dev": "rollup -c",
         "dev:watch": "rollup -c -w",
         "build": "NODE_ENV=production rollup -c",
-        "dev:ff": "web-ext run"
+        "predev:ff": "source ./.venv/bin/activate && python scripts/release-mv2-mv3.py --to-firefox",
+        "dev:ff": "web-ext run --reload --url 'about:debugging#/runtime/this-firefox'",
+        "postdev:ff": "python scripts/release-mv2-mv3.py --from-firefox"
     },
     "repository": {
         "type": "git",
