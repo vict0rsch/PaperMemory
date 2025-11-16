@@ -107,22 +107,34 @@ def update_ffx_manifest(manifest, out_dir):
     del manifest["commands"]["_execute_action"]
     manifest["permissions"].append("<all_urls>")
 
-    (out_dir / "manifest.json").write_text(json.dumps(manifest, indent=2))
+    (out_dir / "manifest.json").write_text(json.dumps(manifest, indent=4))
 
 
 def to_firefox():
+    """Convert manifest to Firefox.
+
+    The manifest is copied as a backup to ``{root}/manifest.json.chrome``.
+
+    No-op if the Chrome manifest already exists, assuming the current ``manifest.json``
+    is already in Firefox format.
+    """
     root = Path(__file__).resolve().parent.parent
     manifest_file = root / "manifest.json"
+    chrome_manifest_file = manifest_file.with_suffix(".chrome.json")
     assert manifest_file.exists(), f"{manifest_file} does not exist"
-    copy2(manifest_file, manifest_file.with_suffix(".json.chrome"))
+    if chrome_manifest_file.exists():
+        print(f"{chrome_manifest_file} already exists. Ignoring.")
+        return
+    copy2(manifest_file, chrome_manifest_file)
     manifest = json.loads(manifest_file.read_text())
     update_ffx_manifest(manifest, root)
 
 
 def from_firefox():
+    """Deletes the Firefox manifest and restores the Chrome manifest."""
     root = Path(__file__).resolve().parent.parent
     manifest_file = root / "manifest.json"
-    chrome_manifest_file = manifest_file.with_suffix(".json.chrome")
+    chrome_manifest_file = manifest_file.with_suffix(".chrome.json")
     assert manifest_file.exists(), f"{manifest_file} does not exist"
     assert chrome_manifest_file.exists(), f"{chrome_manifest_file} does not exist"
     manifest_file.unlink()
@@ -132,7 +144,26 @@ def from_firefox():
 if __name__ == "__main__":
     parser = ArgumentParser()
     parser.add_argument("--force", action="store_true", help="Force overwrite")
+    parser.add_argument(
+        "--to-firefox", action="store_true", help="Convert manifest to Firefox"
+    )
+    parser.add_argument(
+        "--from-firefox",
+        action="store_true",
+        help="Convert manifest from Firefox to Chrome",
+    )
     args = parser.parse_args()
+
+    if args.to_firefox:
+        print("Converting manifest to Firefox.")
+        to_firefox()
+        print("Done, see `manifest.json` and `manifest.chrome.json`.")
+        sys.exit(0)
+    elif args.from_firefox:
+        print("Converting manifest from Firefox to Chrome.")
+        from_firefox()
+        print("Done.")
+        sys.exit(0)
 
     # folders which will be copied from ``{root}/{folder}`` to ``{out}/{folder}``
     folders = ["icons", "src"]
