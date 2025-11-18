@@ -255,7 +255,7 @@ export const paperToAbs = (paper) => {
             }`;
             break;
 
-        case "cell": //TODO DEBUG https://www.cell.com/trends/biochemical-sciences/fulltext/S0968-0004(25)00050-7
+        case "cell":
             journal = paper.id.split("_")[0].split("fulltext")[0];
             pii = new URL(pdf).searchParams.get("pii");
             abs = `https://www.cell.com/${journal}/fulltext/${pii}`;
