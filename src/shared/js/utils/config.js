@@ -34,7 +34,7 @@ if (!String.prototype.capitalize) {
  * Set uninstall URL
  */
 if (typeof chrome !== "undefined" && chrome?.runtime?.setUninstallURL) {
-    chrome.runtime.setUninstallURL("https://forms.gle/1JSV8PcxQugRmsd46");
+    chrome.runtime.setUninstallURL("https://forms.gle/1GjtXGhZjs8Q817y5");
 }
 
 /**
