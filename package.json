@@ -3,7 +3,6 @@
     "version": "1.1.0",
     "description": "N/A",
     "type": "module",
-    "main": "gulpfile.js",
     "moduleDirectories": [
         "node_modules",
         "src"
