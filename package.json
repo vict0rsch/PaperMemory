@@ -20,8 +20,8 @@
         "dev": "rollup -c",
         "dev:watch": "rollup -c -w",
         "build": "NODE_ENV=production rollup -c",
-        "predev:ff": "source ./.venv/bin/activate && python scripts/release-mv2-mv3.py --to-firefox",
-        "dev:ff": "web-ext run --reload --url 'about:debugging#/runtime/this-firefox'",
+        "predev:ff": "./.venv/bin/python scripts/release-mv2-mv3.py --to-firefox",
+        "dev:ff": "web-ext run --url 'about:debugging#/runtime/this-firefox' --firefox=deved -p dev-edition-default",
         "postdev:ff": "python scripts/release-mv2-mv3.py --from-firefox"
     },
     "repository": {

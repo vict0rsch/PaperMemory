@@ -12,3 +12,4 @@ coverage
 site/
 __pycache__
 tmp/
+manifest.chrome.json
