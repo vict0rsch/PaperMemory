@@ -11,16 +11,19 @@ jobs:
               with:
                 enable-cache: true
             - name: Setup Python virtual environment
-              run: uv venv .venv --seed ; echo $(ls -la)
-              
+              run: uv venv --seed
             - uses: actions/setup-node@v4
               with:
                   node-version: "22.x"
+
             - name: Install dependencies
-              run: npm install ; echo $(ls -la)
+              run: npm install
+
             - name: Build
               run: npm run build
+
+            - name: Build Firefox
+              run: npm run build:ff
+              
             - name: Dev Chrome
               run: npm run dev
-            - name: Dev Firefox
-              run: npm run dev:ff
