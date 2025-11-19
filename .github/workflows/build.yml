@@ -11,14 +11,14 @@ jobs:
               with:
                 enable-cache: true
             - name: Setup Python virtual environment
-              run: uv venv --seed
+              run: uv venv .venv --seed ; echo $(ls -la)
+              
             - uses: actions/checkout@v4
-
             - uses: actions/setup-node@v4
               with:
                   node-version: "22.x"
             - name: Install dependencies
-              run: npm install
+              run: npm install ; echo $(ls -la)
             - name: Build
               run: npm run build
             - name: Dev Chrome
