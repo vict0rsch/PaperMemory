@@ -8,20 +8,23 @@
         "src"
     ],
     "scripts": {
-        "pretest": "echo 'Make sure to be in dev mode (npm run dev)'",
-        "test": "node --import ./register.mjs ./node_modules/.bin/mocha test/test-*.js",
+        "pretest": "npm run dev'",
+        "test": "node --import ./register.mjs ./node_modules/.bin/mocha test/test-*.js --exit",
         "pretest-ci": "npm run dev",
         "test-ci": "node --import ./register.mjs ./node_modules/.bin/mocha test/test-*.js --exclude test/test-storage.js --exclude test/test-duplicates.js --exclude test/test-sync.js --exit",
         "pretest-storage": "npm run dev",
         "test-storage": "node --import ./register.mjs ./node_modules/.bin/mocha test/test-storage.js --exit",
-        "pretest-cov": "echo 'Make sure to be in dev mode (npm run dev)'",
+        "pretest-cov": "npm run dev'",
         "test-cov": "node --import ./register.mjs ./node_modules/.bin/nyc --reporter=text ./node_modules/.bin/mocha test/test-*.js",
         "dev": "rollup -c",
         "dev:watch": "rollup -c -w",
         "build": "NODE_ENV=production rollup -c",
         "predev:ff": "./.venv/bin/python scripts/release-mv2-mv3.py --to-firefox",
         "dev:ff": "web-ext run --url 'about:debugging#/runtime/this-firefox' --firefox=deved -p dev-edition-default",
-        "postdev:ff": "python scripts/release-mv2-mv3.py --from-firefox"
+        "postdev:ff": "python scripts/release-mv2-mv3.py --from-firefox",
+        "prebuild:ff": "./.venv/bin/python scripts/release-mv2-mv3.py --to-firefox",
+        "build:ff": "npm run build && web-ext build",
+        "postbuild:ff": "python scripts/release-mv2-mv3.py --from-firefox"
     },
     "repository": {
         "type": "git",

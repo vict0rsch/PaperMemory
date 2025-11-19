@@ -1,4 +1,4 @@
-name: automerge
+name: Build & Dev CI
 on: [push, pull_request]
 
 jobs:
@@ -13,7 +13,6 @@ jobs:
             - name: Setup Python virtual environment
               run: uv venv .venv --seed ; echo $(ls -la)
               
-            - uses: actions/checkout@v4
             - uses: actions/setup-node@v4
               with:
                   node-version: "22.x"

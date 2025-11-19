@@ -1,4 +1,4 @@
-name: test-ci
+name: Tests CI
 on: push
 
 jobs:
