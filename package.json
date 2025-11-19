@@ -62,6 +62,7 @@
         "rollup-plugin-delete": "^3.0.1",
         "rollup-plugin-postcss": "^4.0.2",
         "uuid": "^9.0.1",
+        "web-ext": "^9.1.0",
         "yaml": "^2.3.4"
     }
 }
