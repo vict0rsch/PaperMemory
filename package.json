@@ -9,7 +9,6 @@
     ],
     "scripts": {
         "dev": "rollup -c",
-        "dev": "rollup -c",
         "dev:watch": "rollup -c -w",
         "build": "NODE_ENV=production rollup -c",
         "predev:ff": "./.venv/bin/python scripts/release-mv2-mv3.py --to-firefox",
@@ -17,7 +16,10 @@
         "postdev:ff": "python scripts/release-mv2-mv3.py --from-firefox",
         "prebuild:ff": "./.venv/bin/python scripts/release-mv2-mv3.py --to-firefox",
         "build:ff": "npm run build && web-ext build",
-        "postbuild:ff": "python scripts/release-mv2-mv3.py --from-firefox"
+        "postbuild:ff": "python scripts/release-mv2-mv3.py --from-firefox",
+        "pretest": "npm run dev",
+        "test": "node --import ./register.mjs ./node_modules/.bin/mocha test/test-*.js --exclude test/test-sync.js --exit",
+        "test:file": "node --import ./register.mjs ./node_modules/.bin/mocha --exit"
     },
     "repository": {
         "type": "git",
@@ -45,7 +47,6 @@
         "heap": "^0.2.7",
         "jsdom": "^23.0.1",
         "mocha": "^10.2.0",
-        "nyc": "^15.1.0",
         "ora": "^5.4.1",
         "postcss": "^8.5.6",
         "puppeteer": "^24.16.0",
