@@ -6,6 +6,7 @@
 
 import { expect } from "expect";
 import fs from "fs";
+import { basename } from "node:path";
 import {
     makeBrowser,
     getMemoryPapers,
@@ -52,16 +53,15 @@ if (typeof ignoreSources === "string") {
     ignoreSources = ignoreSources.split(",").map((source) => source.trim());
 }
 
-console.log("Test params:");
-console.log("    pageTimeout   : ", pageTimeout);
-console.log("    maxSources    : ", maxSources);
-console.log("    onlySources   : ", onlySources);
-console.log("    keepOpen      : ", keepOpen);
-console.log("    dump          : ", dump);
-console.log("    singleOrder   : ", singleOrder);
-console.log("    ignoreSources : ", ignoreSources);
-console.log("    headless      : ", headless);
-console.log("--------------------------");
+console.log(`\n${basename(import.meta.url)} args:`);
+console.log("  pageTimeout   : ", pageTimeout);
+console.log("  maxSources    : ", maxSources);
+console.log("  onlySources   : ", onlySources);
+console.log("  keepOpen      : ", keepOpen);
+console.log("  dump          : ", dump);
+console.log("  singleOrder   : ", singleOrder);
+console.log("  ignoreSources : ", ignoreSources);
+console.log("  headless      : ", headless);
 
 // util to find a paper in the Memory from a specific source
 const paperForSource = (source, memoryPapers) => {
@@ -81,11 +81,6 @@ describe("Test paper detection and storage", function () {
 
     // load tests configurations
     var urls = readURLs();
-    console.log(
-        "onlySources && onlySources.length > 0: ",
-        onlySources && onlySources.length > 0
-    );
-    console.log("onlySources: ", onlySources);
     if (maxSources > 0) {
         console.info("Truncating urls to maxSources: ", maxSources);
         urls = Object.fromEntries(Object.entries(urls).slice(0, maxSources));

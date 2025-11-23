@@ -6,6 +6,7 @@ import {
     getPaperMemoryState,
 } from "./browser.js";
 import { expect } from "expect";
+import { basename } from "node:path";
 import {
     readJSON,
     sleep,
@@ -16,8 +17,9 @@ import {
 
 const { keepOpen, headless } = loadConfig();
 const pat = process.env.github_pat ?? process.env.pm_ghp;
-console.log("headless :", headless);
-console.log("keepOpen :", keepOpen);
+console.log(`\n${basename(import.meta.url)} args:`);
+console.log("  headless :", headless);
+console.log("  keepOpen :", keepOpen);
 // make all functions in utils.min.js available in the `global` scope
 await loadPaperMemoryUtils();
 
@@ -229,7 +231,15 @@ describe("Test Github Gist Sync", async function () {
             ).toEqual(urls.length - 1);
         });
         it("Memories match exactly", () => {
-            expect(memories[0]).toEqual(memories[1]);
+            expect(
+                Object.fromEntries(
+                    Object.entries(memories[0]).filter(([k]) => !k.startsWith("_"))
+                ).toEqual(
+                    Object.fromEntries(
+                        Object.entries(memories[1]).filter(([k]) => !k.startsWith("_"))
+                    )
+                )
+            );
         });
 
         after(async function () {

@@ -4,6 +4,7 @@
 
 import { expect } from "expect";
 import fs from "fs";
+import { basename } from "node:path";
 import {
     makeBrowser,
     getPaperMemoryState,
@@ -40,16 +41,16 @@ let {
     headless,
 } = loadConfig();
 
-console.log("Test params:");
-console.log("    keepOpen      : ", keepOpen);
-console.log("    dump          : ", dump);
-console.log("    singleOrder   : ", singleOrder);
-console.log("    singleName    : ", singleName);
-console.log("    ignoreSources : ", ignoreSources);
-console.log("    pageTimeout   : ", pageTimeout);
-console.log("    maxSources    : ", maxSources);
-console.log("    onlySources   : ", onlySources);
-console.log("    headless      : ", headless);
+console.log(`\n${basename(import.meta.url)} args:`);
+console.log("  keepOpen      : ", keepOpen);
+console.log("  dump          : ", dump);
+console.log("  singleOrder   : ", singleOrder);
+console.log("  singleName    : ", singleName);
+console.log("  ignoreSources : ", ignoreSources);
+console.log("  pageTimeout   : ", pageTimeout);
+console.log("  maxSources    : ", maxSources);
+console.log("  onlySources   : ", onlySources);
+console.log("  headless      : ", headless);
 // check env vars
 
 var orders = ["pre;pub", "pub;pre"];
