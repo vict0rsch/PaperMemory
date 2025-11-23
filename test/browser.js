@@ -50,9 +50,13 @@ export const visitPaperPage = async (browser, target, options = {}) => {
     const p = opts.page || (await browser.pages())[0] || (await browser.newPage());
     await p.goto(target);
     const paperIsStored = new Promise((resolve, reject) => {
-        p.waitForSelector("meta[name='pm-complete-secret-html']").then(resolve);
-        setTimeout(async () => {
-            setTimeout(async () => {
+        let screenshotTimeout, querySelectorTimeout;
+        p.waitForSelector("meta[name='pm-complete-secret-html']").then(() => {
+            clearTimeout(querySelectorTimeout);
+            resolve();
+        });
+        querySelectorTimeout = setTimeout(async () => {
+            screenshotTimeout = setTimeout(async () => {
                 if (!fs.existsSync(`./tmp`)) {
                     fs.mkdirSync(`./tmp`);
                 }
@@ -66,13 +70,14 @@ export const visitPaperPage = async (browser, target, options = {}) => {
             }, 1000);
             const content = await p.evaluate(() => {
                 return document.querySelector("meta[name='pm-complete-secret-html']")
-                    .content;
+                    ?.content;
             });
+            clearTimeout(screenshotTimeout);
             resolve();
         }, 5000);
     });
-    await paperIsStored;
-    opts.timeout && opts.timeout > 0 && (await sleep(opts.timeout));
+    opts.timeout > 0 && (await paperIsStored);
+    opts.timeout > 0 && (await sleep(opts.timeout));
     !opts.keepOpen && (await p.close());
 };
 
