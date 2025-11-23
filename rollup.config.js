@@ -81,8 +81,7 @@ const generateHTML = (isDev = false) => ({
             '<link rel="stylesheet" type="text/css" href="popup.min.css" />',
             `<link rel="stylesheet" type="text/css" href="${
                 isProduction ? "popup.min.css" : "popup.css"
-            }" />
-        <link rel="stylesheet" type="text/css" href="dark.min.css" />`
+            }" />`
         );
 
         // Inject debug script in development mode
