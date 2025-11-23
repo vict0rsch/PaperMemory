@@ -126,6 +126,7 @@ export const prefsCheckNames = [
     "checkMdYearVenue",
     "checkEnterLocalPdf",
     "checkWebsiteParsing",
+    "checkPreferPdf",
 ];
 /**
  * Menu check names which should not default to true but to false
