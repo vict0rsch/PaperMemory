@@ -6,6 +6,7 @@
 // ---------------------
 
 import { expect } from "expect";
+import { basename } from "node:path";
 import {
     findExtensionId,
     getPaperMemoryState,
@@ -42,8 +43,9 @@ const miniHash = PMUtils.functions.miniHash;
 // -------------------------------------------------------
 
 const { keepOpen, headless } = loadConfig();
-console.log("keepOpen :", keepOpen);
-console.log("headless :", headless);
+console.log(`\n${basename(import.meta.url)} args:`);
+console.log("  keepOpen :", keepOpen);
+console.log("  headless :", headless);
 
 // --------------------------------
 // -----  Main test function  -----

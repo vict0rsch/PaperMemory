@@ -6,6 +6,7 @@
 // ---------------------
 
 import { expect } from "expect";
+import { basename } from "node:path";
 import {
     findExtensionId,
     getPaperMemoryState,
@@ -36,8 +37,9 @@ await loadPaperMemoryUtils();
 // -------------------------------------------------------
 
 const { keepOpen, headless } = loadConfig();
-console.log("headless :", headless);
-console.log("keepOpen :", keepOpen);
+console.log(`\n${basename(import.meta.url)} args:`);
+console.log("  headless :", headless);
+console.log("  keepOpen :", keepOpen);
 
 // Paper ID constants for test data
 const PAPER_IDS = {
