@@ -22,6 +22,8 @@ jobs:
                       files: test/test-sync.js
                     - name: Duplicates
                       files: test/test-duplicates.js
+                    - name: All test scripts are listed in test.yml
+                      files: test/test-meta.js
 
         name: ${{ matrix.name }}
         steps:
