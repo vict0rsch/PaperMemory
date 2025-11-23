@@ -50,17 +50,19 @@ export const visitPaperPage = async (browser, target, options = {}) => {
     const p = opts.page || (await browser.pages())[0] || (await browser.newPage());
     await p.goto(target);
     const paperIsStored = new Promise((resolve, reject) => {
-        let screenshotTimeout, querySelectorTimeout;
+        let querySelectorTimeout;
         p.waitForSelector("meta[name='pm-complete-secret-html']").then(() => {
             clearTimeout(querySelectorTimeout);
-            clearTimeout(screenshotTimeout);
             resolve();
         });
         querySelectorTimeout = setTimeout(async () => {
-            screenshotTimeout = setTimeout(async () => {
-                console.log(
-                    `It's taking a while to find the selector for ${target}: taking a screenshot`
-                );
+            console.log(`\nBackup wait for selector after 5 seconds for ${target}`);
+            const element = await p.evaluate(() => {
+                return document.querySelector("meta[name='pm-complete-secret-html']");
+            });
+            console.log(`Backup element found: ${element}`);
+            if (!element) {
+                console.log(`No element found: taking a screenshot`);
                 if (!fs.existsSync(`${root}/tmp`)) {
                     console.log(`Creating tmp directory in ${root}/tmp`);
                     fs.mkdirSync(`${root}/tmp`);
@@ -73,15 +75,7 @@ export const visitPaperPage = async (browser, target, options = {}) => {
                     fullPage: true,
                 });
                 console.log(`Screenshot taken and saved to ${screenshotPath}\n\n`);
-                resolve();
-            }, 1000);
-            console.log(`\nBackup wait for selector after 5 seconds for ${target}`);
-            const content = await p.evaluate(() => {
-                return document.querySelector("meta[name='pm-complete-secret-html']")
-                    ?.content;
-            });
-            console.log(`Backup content found: ${content}`);
-            clearTimeout(screenshotTimeout);
+            }
             resolve();
         }, 5000);
     });
