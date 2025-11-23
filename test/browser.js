@@ -53,25 +53,34 @@ export const visitPaperPage = async (browser, target, options = {}) => {
         let screenshotTimeout, querySelectorTimeout;
         p.waitForSelector("meta[name='pm-complete-secret-html']").then(() => {
             clearTimeout(querySelectorTimeout);
+            clearTimeout(screenshotTimeout);
             resolve();
         });
         querySelectorTimeout = setTimeout(async () => {
             screenshotTimeout = setTimeout(async () => {
-                if (!fs.existsSync(`./tmp`)) {
-                    fs.mkdirSync(`./tmp`);
+                console.log(
+                    `It's taking a while to find the selector for ${target}: taking a screenshot`
+                );
+                if (!fs.existsSync(`${root}/tmp`)) {
+                    console.log(`Creating tmp directory in ${root}/tmp`);
+                    fs.mkdirSync(`${root}/tmp`);
                 }
+                const screenshotPath = `${root}/tmp/screenshot_${Date.now()}_${target
+                    .replaceAll("https://", "")
+                    .replaceAll("/", "__")}.jpg`;
                 await p.screenshot({
-                    path: `./tmp/screenshot_${Date.now()}_${target
-                        .replaceAll("https://", "")
-                        .replaceAll("/", "__")}.jpg`,
+                    path: screenshotPath,
                     fullPage: true,
                 });
+                console.log(`Screenshot taken and saved to ${screenshotPath}\n\n`);
                 resolve();
             }, 1000);
+            console.log(`\nBackup wait for selector after 5 seconds for ${target}`);
             const content = await p.evaluate(() => {
                 return document.querySelector("meta[name='pm-complete-secret-html']")
                     ?.content;
             });
+            console.log(`Backup content found: ${content}`);
             clearTimeout(screenshotTimeout);
             resolve();
         }, 5000);
