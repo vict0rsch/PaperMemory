@@ -16,6 +16,7 @@ export const makeBrowser = async (headless = false, windowSize = "1200,900") => 
             "--no-sandbox",
             "--disable-setuid-sandbox",
             "--disable-web-security", // Allow clipboard access
+            "--disable-dev-shm-usage",
         ],
     });
     return browser;
@@ -51,10 +52,14 @@ export const visitPaperPage = async (browser, target, options = {}) => {
     await p.goto(target);
     const paperIsStored = new Promise((resolve, reject) => {
         let screenshotTimeout;
-        p.waitForSelector("meta[name='pm-complete-secret-html']").then(() => {
-            clearTimeout(screenshotTimeout);
-            resolve();
-        });
+        p.waitForSelector("meta[name='pm-complete-secret-html']")
+            .then(() => {
+                clearTimeout(screenshotTimeout);
+                resolve();
+            })
+            .catch(() => {
+                // Ignore errors (e.g. timeout or target closed)
+            });
         screenshotTimeout = setTimeout(async () => {
             const element = await p.evaluate(() => {
                 return document.querySelector("meta[name='pm-complete-secret-html']");
