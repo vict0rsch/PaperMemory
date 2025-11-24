@@ -65,12 +65,13 @@ export const visitPaperPage = async (browser, target, options = {}) => {
                     console.log(`Creating tmp directory in ${root}/tmp`);
                     fs.mkdirSync(`${root}/tmp`);
                 }
-                let screenshotPath = `${root}/tmp/screenshot_${Date.now()}_${target
+                let screenshotName = `screenshot_${Date.now()}_${target
                     .replaceAll("https://", "")
                     .replaceAll("/", "__")}.jpg`;
-                screenshotPath = screenshotPath
+                screenshotName = screenshotName
                     .replace(/[^a-zA-Z0-9\-_\.]/g, "")
                     .slice(0, 100);
+                const screenshotPath = `${root}/tmp/${screenshotName}`;
                 await p.screenshot({
                     path: screenshotPath,
                     fullPage: true,
