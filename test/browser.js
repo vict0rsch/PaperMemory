@@ -50,26 +50,27 @@ export const visitPaperPage = async (browser, target, options = {}) => {
     const p = opts.page || (await browser.pages())[0] || (await browser.newPage());
     await p.goto(target);
     const paperIsStored = new Promise((resolve, reject) => {
-        let querySelectorTimeout;
+        let screenshotTimeout;
         p.waitForSelector("meta[name='pm-complete-secret-html']").then(() => {
-            clearTimeout(querySelectorTimeout);
+            clearTimeout(screenshotTimeout);
             resolve();
         });
-        querySelectorTimeout = setTimeout(async () => {
-            console.log(`\nBackup wait for selector after 5 seconds for ${target}`);
+        screenshotTimeout = setTimeout(async () => {
             const element = await p.evaluate(() => {
                 return document.querySelector("meta[name='pm-complete-secret-html']");
             });
-            console.log(`Backup element found: ${element}`);
             if (!element) {
                 console.log(`No element found: taking a screenshot`);
                 if (!fs.existsSync(`${root}/tmp`)) {
                     console.log(`Creating tmp directory in ${root}/tmp`);
                     fs.mkdirSync(`${root}/tmp`);
                 }
-                const screenshotPath = `${root}/tmp/screenshot_${Date.now()}_${target
+                let screenshotPath = `${root}/tmp/screenshot_${Date.now()}_${target
                     .replaceAll("https://", "")
                     .replaceAll("/", "__")}.jpg`;
+                screenshotPath = screenshotPath
+                    .replace(/[^a-zA-Z0-9\-_\.]/g, "")
+                    .slice(0, 100);
                 await p.screenshot({
                     path: screenshotPath,
                     fullPage: true,
