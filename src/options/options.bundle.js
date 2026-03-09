@@ -36,7 +36,7 @@
      * Set uninstall URL
      */
     if (typeof chrome !== "undefined" && chrome?.runtime?.setUninstallURL) {
-        chrome.runtime.setUninstallURL("https://forms.gle/1JSV8PcxQugRmsd46");
+        chrome.runtime.setUninstallURL("https://forms.gle/1GjtXGhZjs8Q817y5");
     }
 
     /**
@@ -128,6 +128,7 @@
         "checkMdYearVenue",
         "checkEnterLocalPdf",
         "checkWebsiteParsing",
+        "checkPreferPdf",
     ];
     /**
      * Menu check names which should not default to true but to false
@@ -2847,7 +2848,7 @@
             }`;
                 break;
 
-            case "cell": //TODO DEBUG https://www.cell.com/trends/biochemical-sciences/fulltext/S0968-0004(25)00050-7
+            case "cell":
                 journal = paper.id.split("_")[0].split("fulltext")[0];
                 pii = new URL(pdf).searchParams.get("pii");
                 abs = `https://www.cell.com/${journal}/fulltext/${pii}`;
@@ -7459,9 +7460,6 @@ ${note}</textarea
         }, 2000);
     };
 
-    const sleep = async (duration) =>
-        new Promise((resolve) => setTimeout(resolve, duration));
-
     // ES Module imports
     // -------------------
     // -----  Utils  -----
@@ -8967,10 +8965,6 @@ ${note}</textarea
         const isPdfExtended = url.toLowerCase().includes("pdfextended");
         let pii;
         if (isPdf || isPdfExtended) {
-            while (!state.cellJournalData) {
-                console.log("Waiting for cell journal data...");
-                await sleep(5);
-            }
             const cellData = state.cellJournalData;
             pii = isPdf ? new URL(url).searchParams.get("pii") : url.split("/").last();
             const issn = pii.match(/\d{4}-\d{3}[0-9X]/g)[0];
