@@ -43,7 +43,7 @@ jobs:
           timeout_minutes: 20
           max_attempts: 2
           retry_on: error
-          command: npm run test:file ${{ matrix.files }}
+          command: github_pat=${{ secrets.VICT0RSCH_GITHUB_PAT }} npm run test:file ${{ matrix.files }}
 
   test-storage:
     runs-on: ubuntu-latest
