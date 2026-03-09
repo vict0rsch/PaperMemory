@@ -548,6 +548,7 @@ describe("Popup Menu Tests", function () {
                     page: paperPage,
                     timeout: 4000, // Wait to ensure it DOESN'T parse
                     keepOpen: true,
+                    dontScreenshot: true,
                 });
 
                 // Now verify storage from the popup page (PMPage)

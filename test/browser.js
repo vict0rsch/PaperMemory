@@ -17,6 +17,7 @@ export const makeBrowser = async (headless = false, windowSize = "1200,900") => 
             "--disable-setuid-sandbox",
             "--disable-web-security", // Allow clipboard access
             "--disable-dev-shm-usage",
+            "--disable-gpu",
         ],
     });
     return browser;
@@ -45,7 +46,12 @@ export const getPaperMemoryState = async (page) => {
 };
 
 export const visitPaperPage = async (browser, target, options = {}) => {
-    const defaults = { page: null, timeout: null, keepOpen: false };
+    const defaults = {
+        page: null,
+        timeout: null,
+        keepOpen: false,
+        dontScreenshot: false,
+    };
     const opts = { ...defaults, ...options };
 
     const p = opts.page || (await browser.pages())[0] || (await browser.newPage());
@@ -64,7 +70,7 @@ export const visitPaperPage = async (browser, target, options = {}) => {
             const element = await p.evaluate(() => {
                 return document.querySelector("meta[name='pm-complete-secret-html']");
             });
-            if (!element) {
+            if (!element && !opts.dontScreenshot) {
                 console.log(`No element found: taking a screenshot`);
                 if (!fs.existsSync(`${root}/tmp`)) {
                     console.log(`Creating tmp directory in ${root}/tmp`);
