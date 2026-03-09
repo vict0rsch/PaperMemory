@@ -2,76 +2,76 @@ name: Tests CI
 on: push
 
 jobs:
-    test-matrix:
-        runs-on: ubuntu-latest
-        strategy:
-            fail-fast: false
-            matrix:
-                include:
-                    - name: Utils Tests
-                      files: test/test-utils.js
-                    - name: Extension Loading
-                      files: test/test-extension-loading.js
-                    - name: Popup UI
-                      files: test/test-popup-search.js test/test-popup-paper-ui.js
-                    - name: Memory UI
-                      files: test/test-memory-item-actions.js test/test-memory-table-ui.js
-                    - name: Menu
-                      files: test/test-menu.js
-                    - name: Sync
-                      files: test/test-sync.js
-                    - name: Duplicates
-                      files: test/test-duplicates.js
-                    - name: All test scripts are listed in test.yml
-                      files: test/test-meta.js
+  test-matrix:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: Utils Tests
+            files: test/test-utils.js
+          - name: Extension Loading
+            files: test/test-extension-loading.js
+          - name: Popup UI
+            files: test/test-popup-search.js test/test-popup-paper-ui.js
+          - name: Memory UI
+            files: test/test-memory-item-actions.js test/test-memory-table-ui.js
+          - name: Menu
+            files: test/test-menu.js
+          - name: Sync
+            files: test/test-sync.js
+          - name: Duplicates
+            files: test/test-duplicates.js
+          - name: All test scripts are listed in test.yml
+            files: test/test-meta.js
 
-        name: ${{ matrix.name }}
-        steps:
-            - uses: actions/checkout@v4
-            
-            - uses: actions/setup-node@v4
-              with:
-                  node-version: "22.x"
-                  cache: 'npm' # Caches node_modules
+    name: ${{ matrix.name }}
+    steps:
+      - uses: actions/checkout@v4
 
-            - name: Install Dependencies
-              run: npm ci
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22.x"
+          cache: "npm" # Caches node_modules
 
-            - uses: nick-fields/retry@v3
-              name: Run Test
-              with:
-                timeout_minutes: 20
-                max_attempts: 2
-                retry_on: error
-                command: npm run test:file ${{ matrix.files }}
+      - name: Install Dependencies
+        run: npm ci
 
-    test-storage:
-        runs-on: ubuntu-latest
-        name: Storage Tests
-        steps:
-            - uses: actions/checkout@v4
-            
-            - uses: actions/setup-node@v4
-              with:
-                  node-version: "22.x"
-                  cache: 'npm'
-            
-            - name: Install Dependencies
-              run: npm ci
-            
-            - uses: nick-fields/retry@v3
-              name: Run Storage Test
-              with:
-                timeout_minutes: 20
-                max_attempts: 2
-                retry_on: error
-                command: npm run test:file test/test-storage.js
+      - uses: nick-fields/retry@v3
+        name: Run Test
+        with:
+          timeout_minutes: 20
+          max_attempts: 2
+          retry_on: error
+          command: npm run test:file ${{ matrix.files }}
 
-            - uses: actions/upload-artifact@v4
-              if: always() # Upload screenshots even on failure for debugging
-              with:
-                name: test-storage-screenshots
-                path: ./tmp/*.jpg
-                if-no-files-found: ignore
-                retention-days: 7
-                compression-level: 3
+  test-storage:
+    runs-on: ubuntu-latest
+    name: Storage Tests
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22.x"
+          cache: "npm"
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - uses: nick-fields/retry@v3
+        name: Run Storage Test
+        with:
+          timeout_minutes: 20
+          max_attempts: 2
+          retry_on: error
+          command: npm run test:file test/test-storage.js
+
+      - uses: actions/upload-artifact@v4
+        if: always() # Upload screenshots even on failure for debugging
+        with:
+          name: test-storage-screenshots
+          path: ./tmp/*.jpg
+          if-no-files-found: ignore
+          retention-days: 7
+          compression-level: 3
