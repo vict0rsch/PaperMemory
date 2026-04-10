@@ -4,39 +4,33 @@
 
 PaperMemory is pure JS+HTML with minimal dependencies: no framework, (almost) no external dependencies so it's easy to help :)
 
-The only external deps. are [`select2.js`](https://select2.org/) which requires `JQuery` and some of the latter here and there (but I'm working on getting rid of it, replacing it with a simple set of helper functions in `src/shared/utils/miniquery.js`).
+The external deps are [`select2.js`](https://select2.org/) which requires `JQuery`. jQuery is also used directly in a few places (popup handlers, options page). Custom DOM helpers live in `src/shared/js/utils/miniquery.js` and coexist with jQuery.
 
-The project uses modern ES modules with Rollup for bundling to make development contributor-friendly.
-
-I advise to mainly develop for Chrome and use `scripts/release-mv2-mv3.py` to test on Firefox afterwards as the latter has a poor extension development workflow IMHO.
+The project uses modern ES modules with Rollup for bundling to make development contributor-friendly. Chrome and Firefox builds are both handled by the [`extension`](https://www.npmjs.com/package/extension) CLI, integrated into the Rollup workflow.
 
 ## Set-up
 
 1. [Install `npm`](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm)
 2. Install dependencies: from the root of this repo `$ npm install`
-3. Start development: `$ npm run dev`
+3. Start development: `$ npm run dev:watch`
 4. Edit files!
 
 The build system uses Rollup to bundle ES modules for browser compatibility. In development mode, you get:
 
--   Hot reloading when files change
+-   Automatic rebuilds when files change (via Rollup watch)
+-   Live extension reloading (via `extension dev`)
 -   Source maps for debugging
 -   Unminified code for easier debugging
 
 ## Build Commands
 
 ```bash
-# Chrome
-npm run dev         # Development build (one-time)
-npm run dev:watch   # Development build with file watching
-npm run build       # Production build
-
-# Firefox
-npm run dev:ff      # Development build for Firefox
-npm run build:ff    # Production build for Firefox
+npm run dev         # One-time development build
+npm run dev:watch   # Development build with file watching + extension dev server
+npm run build       # Production build (Chrome + Firefox zips via `extension build`)
 ```
 
-For active development, use `npm run dev:watch` which will automatically rebuild files when you save changes.
+In production, `npm run build` sets `NODE_ENV=production` and the Rollup config automatically triggers `extension build` to produce zipped Chrome and Firefox packages.
 
 ### Debugging Utilities
 
@@ -135,11 +129,13 @@ https://extensionworkshop.com/documentation/develop/temporary-installation-in-fi
 ```tree
 ├── jsconfig.json ➤➤➤ VS Code config with ES modules and path aliases (@pm, @pmu)
 ├── rollup.config.js ➤➤➤ Build configuration that bundles ES modules for browsers
-├── manifest.json ➤➤➤ Extension configuration for Chrome/Firefox
-└── src  ➤➤➤ Source code (all ES modules)
+├── .prettierrc ➤➤➤ Prettier config (tabWidth: 4, printWidth: 88, YAML tabWidth: 2)
+├── register.mjs ➤➤➤ ESM loader registration (for test runner)
+├── loader.mjs ➤➤➤ Custom ESM loader resolving @pm/* and @pmu/* aliases in Node
+└── src ➤➤➤ Source code (all ES modules)
+    ├── manifest.json ➤➤➤ Extension configuration for Chrome/Firefox (MV3)
     ├── background ➤➤➤ Service worker (runs in background)
     │   ├── background.js ➤➤➤ Main background script - handles browser APIs, sync, parsing
-
     │   └── background.bundle.js ➤➤➤ [Generated] Bundled for browser
     ├── content_scripts ➤➤➤ Scripts injected into web pages
     │   ├── content_script.js ➤➤➤ Runs on paper websites - detects/parses papers automatically
@@ -195,6 +191,7 @@ https://extensionworkshop.com/documentation/develop/temporary-installation-in-fi
         │       ├── config.js ➤➤➤ Global state, constants, and configuration
         │       ├── functions.js ➤➤➤ Utility functions used throughout the app
         │       ├── miniquery.js ➤➤➤ DOM utilities (custom jQuery-like functions)
+        │       ├── jquery-setup.js ➤➤➤ jQuery + Select2 initialization
         │       ├── data.js ➤➤➤ Data management - storage, migrations, validation
         │       ├── paper.js ➤➤➤ Paper operations - creation, updates, URL conversions
         │       ├── parsers.js ➤➤➤ Website parsers for different paper sources (ArXiv, Nature, etc.)
@@ -203,8 +200,7 @@ https://extensionworkshop.com/documentation/develop/temporary-installation-in-fi
         │       ├── urls.js ➤➤➤ URL parsing and paper ID extraction
         │       ├── files.js ➤➤➤ Local file detection and PDF management
         │       ├── bibtexParser.js ➤➤➤ BibTeX parsing and formatting
-        │       ├── logTrace.js ➤➤➤ Development logging utilities
-
+        │       └── logTrace.js ➤➤➤ Development logging utilities
         └── min/ ➤➤➤ [Generated] Shared build output
 ```
 
@@ -236,10 +232,14 @@ https://extensionworkshop.com/documentation/develop/temporary-installation-in-fi
 -   **Automatic bundling**: Rollup generates optimized `.bundle.js` files for browsers
 -   **Smart CSS processing**: Unminified CSS in development, minified in production
 -   **Direct file editing**: Edit source files directly, no preprocessing required
+-   **Multi-browser**: `extension build` produces Chrome and Firefox zips from the same source
 
 ### Prettier
 
-TODO
+The project uses Prettier for code formatting. Configuration is in `.prettierrc`:
+
+-   `tabWidth`: 4, `printWidth`: 88
+-   YAML files: `tabWidth`: 2
 
 ## Adding a paper source
 
@@ -262,32 +262,59 @@ The following functions and constants should be updated:
 
 ## Tests
 
-Testing is WIP and relies on Puppeteer to a large extent.
-Run tests with
+Tests use **Mocha** + **expect** for assertions and **Puppeteer** for browser-based integration tests. The test runner uses ESM with custom loaders (`register.mjs` / `loader.mjs`) to resolve `@pm/*` and `@pmu/*` aliases in Node.
+
+### Running tests
 
 ```bash
 npm run test
 ```
 
-You can adjust testing condition with `env` variables (see `tests/test-storage.js`)
+This runs a dev build first (`pretest` → `npm run dev`), then executes all `test/test-*.js` files except `test-sync.js`.
 
-```bash
-headless=false onlySources=arxiv,neurips npm run test:file test/test-storage.js
-```
-
-Currently, tests **only** check that a pre-defined set of papers (`tests/data/urls.json`) are correctly parsed to memory once the browser visits a given url.
-
-You can run a single test file with:
+Run a single test file with:
 
 ```bash
 npm run test:file test/test-utils.js
 ```
 
-You can adjust testing condition with `env` variables (see `tests/test-storage.js`)
+### Test configuration
+
+Test behavior is configured via `test/testConfig.yaml`. Each key can be overridden with an environment variable of the same name:
+
+| Variable | Type | Default | Description |
+|----------|------|---------|-------------|
+| `headless` | bool | `true` | Run browser in headless mode |
+| `keepOpen` | bool | `true` | Keep tab open after paper is parsed |
+| `pageTimeout` | int | `200` | Timeout between paper pages (ms) |
+| `maxSources` | int | `-1` | Max sources to iterate (-1 = all) |
+| `onlySources` | comma-separated | `""` | Only test these sources |
+| `ignoreSources` | comma-separated | `""` | Skip these sources |
+| `singleOrder` | string | `""` | Test one parsing order (e.g. `"abs;pdf"`) |
+| `singleName` | string | `""` | Test one duplicate name (see `test/data/duplicates.json`) |
+| `dump` | bool | `true` | Dump parsed memory to JSON in `test/tmp/` |
+
+Example:
 
 ```bash
 headless=false onlySources=arxiv,neurips npm run test:file test/test-storage.js
 ```
+
+### Test files
+
+| File | Description |
+|------|-------------|
+| `test-storage.js` | Paper parsing from URLs → memory storage |
+| `test-duplicates.js` | Duplicate detection and merging |
+| `test-utils.js` | Unit tests for utility functions (no browser) |
+| `test-extension-loading.js` | Extension loads correctly in Chrome |
+| `test-popup-search.js` | Popup search functionality |
+| `test-popup-paper-ui.js` | Popup paper display UI |
+| `test-memory-item-actions.js` | Memory item action buttons |
+| `test-memory-table-ui.js` | Memory table rendering |
+| `test-menu.js` | Settings menu |
+| `test-sync.js` | GitHub sync (excluded from default `npm test`, run separately) |
+| `test-meta.js` | Meta test: asserts all test scripts are listed in CI |
 
 ## Building the documentation
 
