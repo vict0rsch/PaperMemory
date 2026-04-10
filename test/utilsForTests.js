@@ -7,7 +7,7 @@ import YAML from "yaml";
 /**
  * Get the root directory of the project.
  */
-export const root = fs.existsSync("./manifest.json") ? "." : "..";
+export const root = fs.existsSync("./src/manifest.json") ? "." : "..";
 
 /**
  * Find Chrome executable path across different operating systems.

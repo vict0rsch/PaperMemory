@@ -10,6 +10,7 @@ import { fileURLToPath } from "url";
 import path from "path";
 import fs from "fs";
 import { glob } from "glob";
+import { spawn } from "child_process";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -37,7 +38,6 @@ const getCommonPlugins = () => [
         preferBuiltins: false,
     }),
     commonjs(),
-    ...(isProduction ? [terser()] : []),
 ];
 
 // Generate HTML files
@@ -171,15 +171,13 @@ const processStaticHTML = () => ({
         ];
 
         htmlFiles.forEach(({ src, debugScript, insertBefore }) => {
-            let htmlContent = fs.readFileSync(src, "utf-8");
+            const originalContent = fs.readFileSync(src, "utf-8");
 
-            // Remove any existing debug script tags first (cleanup)
-            htmlContent = htmlContent.replace(
+            let htmlContent = originalContent.replace(
                 /\s*<script src="\.\.\/debug\/debug\.bundle\.js"><\/script>\s*/g,
                 ""
             );
 
-            // Only inject debug script in development mode
             if (isDevelopment) {
                 htmlContent = htmlContent.replace(
                     insertBefore,
@@ -187,9 +185,89 @@ const processStaticHTML = () => ({
                 );
             }
 
-            // Write the processed HTML back
-            fs.writeFileSync(src, htmlContent);
+            if (htmlContent !== originalContent) {
+                fs.writeFileSync(src, htmlContent);
+            }
         });
+    },
+});
+
+const copyDataFiles = () => ({
+    name: "copy-data-files",
+    writeBundle() {
+        const srcDir = path.resolve(__dirname, "src/data");
+        const distDir = path.resolve(__dirname, "dist");
+        if (!fs.existsSync(distDir)) return;
+        for (const browser of fs.readdirSync(distDir)) {
+            const dest = path.join(distDir, browser, "data");
+            try {
+                fs.mkdirSync(dest, { recursive: true });
+                for (const file of fs.readdirSync(srcDir)) {
+                    if (file.endsWith(".json")) {
+                        fs.copyFileSync(
+                            path.join(srcDir, file),
+                            path.join(dest, file)
+                        );
+                    }
+                }
+            } catch (e) {
+                // dist subdirectory not ready yet
+            }
+        }
+    },
+});
+
+let extensionBuildTimeout;
+
+const triggerExtensionBuild = () => ({
+    name: "trigger-extension-build",
+    writeBundle() {
+        if (extensionBuildTimeout) clearTimeout(extensionBuildTimeout);
+
+        extensionBuildTimeout = setTimeout(() => {
+            const command =
+                'concurrently "extension build src/ --zip --zip-source" "extension build src/ --zip --browser=firefox"';
+
+            console.log(`\n📦 Triggering extension build...\n`);
+            const child = spawn(command, { stdio: "inherit", shell: true });
+
+            child.on("close", (code) => {
+                if (code === 0) {
+                    console.log(
+                        `\n✅ Extension build completed at ${new Date().toLocaleTimeString()}\n`
+                    );
+                } else {
+                    console.error(`❌ Extension build failed with code ${code}`);
+                }
+            });
+        }, 1000);
+    },
+});
+
+const watchExtraFiles = () => ({
+    name: "watch-extra-files",
+    buildStart() {
+        this.addWatchFile("src/manifest.json");
+
+        const skipDirs = new Set(["dist", "node_modules", "min"]);
+        const findFiles = (dir) => {
+            const files = fs.readdirSync(dir);
+            for (const file of files) {
+                const filePath = path.join(dir, file);
+                const stat = fs.statSync(filePath);
+                if (stat.isDirectory()) {
+                    if (!skipDirs.has(file)) findFiles(filePath);
+                } else if (file.endsWith(".html") || file.endsWith(".css")) {
+                    this.addWatchFile(filePath);
+                }
+            }
+        };
+
+        try {
+            findFiles("src");
+        } catch (err) {
+            console.error("Error watching extra files:", err);
+        }
     },
 });
 
@@ -203,7 +281,7 @@ const configs = [
             format: "iife",
             sourcemap: !isProduction,
         },
-        plugins: [...(isProduction ? [terser()] : [])],
+        plugins: [copyDataFiles()],
     },
 
     // Popup modules bundle
@@ -228,6 +306,7 @@ const configs = [
                 isProduction ? "popup.min.css" : "popup.css"
             ),
             processCSS(["src/popup/css/dark.css"], "dark.min.css"),
+            watchExtraFiles(),
         ],
     },
 
@@ -288,7 +367,12 @@ const configs = [
             name: "PaperMemoryFullMemory",
             sourcemap: !isProduction,
         },
-        plugins: getCommonPlugins(),
+        plugins: [
+            ...getCommonPlugins(),
+            ...(isProduction
+                ? [watchExtraFiles(), triggerExtensionBuild()]
+                : []),
+        ],
     },
 
     // Debug bundle (development only)
@@ -302,7 +386,10 @@ const configs = [
                       name: "PMDebug",
                       sourcemap: true,
                   },
-                  plugins: [...getCommonPlugins(), processStaticHTML()],
+                  plugins: [
+                      ...getCommonPlugins(),
+                      processStaticHTML(),
+                  ],
               },
           ]
         : []),

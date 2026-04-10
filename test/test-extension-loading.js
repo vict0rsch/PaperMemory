@@ -330,12 +330,12 @@ describe("Test PaperMemory Extension Loading", function () {
             console.log("🔍 Extension loading diagnostics:");
             console.log(`   Extension root path: ${root}`);
             console.log(
-                `   Manifest exists: ${fs.existsSync(`${root}/manifest.json`)}`
+                `   Manifest exists: ${fs.existsSync(`${root}/src/manifest.json`)}`
             );
 
-            if (fs.existsSync(`${root}/manifest.json`)) {
+            if (fs.existsSync(`${root}/src/manifest.json`)) {
                 const manifest = JSON.parse(
-                    fs.readFileSync(`${root}/manifest.json`, "utf8")
+                    fs.readFileSync(`${root}/src/manifest.json`, "utf8")
                 );
                 console.log(`   Extension name: ${manifest.name || "Unknown"}`);
                 console.log(`   Extension version: ${manifest.version || "Unknown"}`);

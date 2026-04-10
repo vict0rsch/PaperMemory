@@ -1,3 +1,4 @@
+import $ from "@pmu/jquery-setup.js";
 // ES Module imports
 import {
     setHTML,

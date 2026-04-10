@@ -11,12 +11,20 @@
         "extension_pages": "script-src 'self'; object-src 'self'"
     },
     "background": {
-        "service_worker": "src/background/background.bundle.js"
+        "service_worker": "background/background.bundle.js"
+    },
+    "firefox:background": {
+        "scripts": ["background/background.bundle.js"]
+    },
+    "firefox:browser_specific_settings": {
+        "gecko": {
+            "id": "paper-memory@vict0rsch"
+        }
     },
     "action": {
         "default_icon": "icons/favicon-192x192.png",
         "default_title": "PaperMemory",
-        "default_popup": "src/popup/min/popup.min.html"
+        "default_popup": "popup/min/popup.min.html"
     },
     "commands": {
         "_execute_action": {
@@ -46,7 +54,7 @@
         }
     },
     "options_ui": {
-        "page": "src/options/options.html",
+        "page": "options/options.html",
         "open_in_tab": true
     },
     "permissions": [
@@ -62,19 +70,13 @@
         {
             "matches": ["<all_urls>"],
             "run_at": "document_start",
-            "js": [
-                "src/shared/min/jquery.min.js",
-                "src/content_scripts/content.bundle.js"
-            ],
-            "css": [
-                "src/shared/css/loader.css",
-                "src/content_scripts/content_script.css"
-            ]
+            "js": ["content_scripts/content.bundle.js"],
+            "css": ["shared/css/loader.css", "content_scripts/content_script.css"]
         }
     ],
     "web_accessible_resources": [
         {
-            "resources": ["src/data/*.json"],
+            "resources": ["data/*.json"],
             "matches": ["<all_urls>"]
         }
     ]

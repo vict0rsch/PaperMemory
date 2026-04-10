@@ -1,3 +1,4 @@
+import $ from "@pmu/jquery-setup.js";
 // ES Module imports
 import {
     eventId,
@@ -94,7 +95,7 @@ export const hideAllTooltips = () => {
 export const focusExistingOrCreateNewPaperTab = async (paper, fromMemoryItem) => {
     if (!chrome.tabs) {
         focusExistingOrCreateNewURLTab(
-            isPdfUrl(window.location.href) ? paperToAbs(paper) : paperToPDF(paper)
+            isPdfUrl(window.location.href) ? paperToAbs(paper) : paperToPDF(paper),
         );
         return;
     }
@@ -149,7 +150,7 @@ export const focusExistingOrCreateNewPaperTab = async (paper, fromMemoryItem) =>
                         () => {
                             // focus the tab
                             chrome.tabs.update(tabToFocus.id, { active: true });
-                        }
+                        },
                     );
                 } else {
                     // tab is in the same window: focus the tab
@@ -293,7 +294,6 @@ export const handleOpenItemAr5iv = (e) => {
             setStorage("papers", state.papers);
             closePopupModal();
         });
-        addListener("ar5iv-modal-cancel-button", "click", closePopupModal);
     } else {
         focusExistingOrCreateNewURLTab(ar5ivURL);
         state.papers[id] = updatePaperVisits(state.papers[id]);
@@ -423,7 +423,7 @@ export const handleCancelPaperEdit = (e) => {
     val(findEl({ paperId: id, memoryItemClass: "form-note-textarea" }), paper.note);
     setHTML(
         findEl({ paperId: id, memoryItemClass: "memory-item-tags" }),
-        getTagsOptions(paper)
+        getTagsOptions(paper),
     );
     dispatch(findEl({ paperId: id, memoryItemClass: "memory-item-edit" }), "click");
 };
@@ -505,7 +505,7 @@ export const handleFilterFavorites = () => {
     if (showFavorites) {
         addClass(
             findEl({ element: "filter-favorites" }).querySelector("svg"),
-            "favorite"
+            "favorite",
         );
         sortMemory();
         state.papersList = state.papersList.filter((p) => p.favorite);
@@ -518,7 +518,7 @@ export const handleFilterFavorites = () => {
     } else {
         removeClass(
             findEl({ element: "filter-favorites" }).querySelector("svg"),
-            "favorite"
+            "favorite",
         );
 
         if (val("memory-select") === "favoriteDate") {
@@ -696,7 +696,7 @@ export const handlePopupKeydown = async (e) => {
     // Menu is closed
 
     const inputIsFocused = queryAll(":focus").some((el) =>
-        ["INPUT", "TEXTAREA"].includes(el.tagName)
+        ["INPUT", "TEXTAREA"].includes(el.tagName),
     );
     if (inputIsFocused && key !== "Escape") {
         return;
@@ -780,7 +780,7 @@ export const handlePopupKeydown = async (e) => {
         // delete
         dispatch(
             localFindEl({ id, paperItem, memoryItemClass: "memory-delete" }),
-            "click"
+            "click",
         );
     } else if (key === "o") {
         // open paper
@@ -810,49 +810,49 @@ export const handlePopupKeydown = async (e) => {
         // edit item
         dispatch(
             localFindEl({ id, paperItem, memoryItemClass: "memory-item-edit" }),
-            "click"
+            "click",
         );
     } else if (key === "c") {
         // copy link
         dispatch(
             localFindEl({ id, paperItem, memoryItemClass: "memory-item-copy-link" }),
-            "click"
+            "click",
         );
     } else if (key === "m") {
         // copy link
         dispatch(
             localFindEl({ id, paperItem, memoryItemClass: "memory-item-md" }),
-            "click"
+            "click",
         );
     } else if (key === "b") {
         // copy bibtex
         dispatch(
             localFindEl({ id, paperItem, memoryItemClass: "memory-item-bibtex" }),
-            "click"
+            "click",
         );
     } else if (key === "5") {
         // copy pdf link
         dispatch(
             localFindEl({ id, paperItem, memoryItemClass: "memory-item-ar5iv" }),
-            "click"
+            "click",
         );
     } else if (key === "x") {
         // copy pdf link
         dispatch(
             localFindEl({ id, paperItem, memoryItemClass: "memory-item-alphaxiv" }),
-            "click"
+            "click",
         );
     } else if (key === "f") {
         // copy pdf link
         dispatch(
             localFindEl({ id, paperItem, memoryItemClass: "memory-item-huggingface" }),
-            "click"
+            "click",
         );
     } else if (key === "s") {
         // copy pdf link
         dispatch(
             localFindEl({ id, paperItem, memoryItemClass: "memory-item-scirate" }),
-            "click"
+            "click",
         );
     } else if (key === "h") {
         // copy hyperlink
@@ -862,7 +862,7 @@ export const handlePopupKeydown = async (e) => {
                 paperItem,
                 memoryItemClass: "memory-item-copy-hyperlink",
             }),
-            "click"
+            "click",
         );
     } else if (key === "t") {
         // copy title
@@ -877,7 +877,7 @@ export const handlePopupKeydown = async (e) => {
         // display id
         dispatch(
             localFindEl({ id, paperItem, memoryItemClass: "memory-display-id" }),
-            "click"
+            "click",
         );
     }
 };
@@ -900,7 +900,7 @@ export const handlePrefsCheckChange = async (e) => {
     if (checked && key === "checkNoAuto") {
         chrome.commands.getAll((commands) => {
             const { shortcut } = commands.find(
-                (command) => command.name === "manualParsing"
+                (command) => command.name === "manualParsing",
             );
             console.log("shortcut: ", shortcut);
             if (!shortcut) {
@@ -994,12 +994,12 @@ export const setFormChangeListener = (id, isPopup) => {
         addEventToClass(
             refCodeLink,
             "keyup",
-            delay(monitorPaperEdits(undefined, isPopup), 300)
+            delay(monitorPaperEdits(undefined, isPopup), 300),
         );
         addEventToClass(
             refNote,
             "keyup",
-            delay(monitorPaperEdits(undefined, isPopup), 300)
+            delay(monitorPaperEdits(undefined, isPopup), 300),
         );
     }
 };
@@ -1049,12 +1049,12 @@ export const addEventsToMemoryItems = () => {
     addEventToClass(
         ".memory-display-id",
         "click",
-        getHandleTitleTooltip(showTitleTooltip, 0)
+        getHandleTitleTooltip(showTitleTooltip, 0),
     );
     addEventToClass(
         ".memory-display-id",
         "mouseleave",
-        getHandleTitleTooltip(hideTitleTooltip, 10000)
+        getHandleTitleTooltip(hideTitleTooltip, 10000),
     );
     // expand authorlist on click
     addEventToClass(".expand-paper-authors", "click", handleExpandAuthors);
@@ -1076,7 +1076,7 @@ export const addEventsToMemoryControls = () => {
     addListener(
         "memory-search",
         "keypress",
-        delay(handleMemorySearchKeyPress(), delayTime)
+        delay(handleMemorySearchKeyPress(), delayTime),
     );
     addListener("memory-search", "clear-search", handleMemorySearchKeyPress(true));
     addListener("memory-search", "keyup", handleMemorySearchKeyUp);
@@ -1084,7 +1084,7 @@ export const addEventsToMemoryControls = () => {
     addListener(
         "delete-paper-modal-confirm-button",
         "click",
-        handleConfirmDeleteModalClick
+        handleConfirmDeleteModalClick,
     );
     addListener("filter-favorites", "click", handleFilterFavorites);
     // listen to sorting feature change
