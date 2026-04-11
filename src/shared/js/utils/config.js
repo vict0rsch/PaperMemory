@@ -218,9 +218,10 @@ export const knownPaperPages = {
     chemrxiv: {
         patterns: [
             "chemrxiv.org/engage/chemrxiv/article-details/",
+            "https://chemrxiv.org/doi/",
             (url) =>
                 url.includes(
-                    "https://chemrxiv.org/engage/api-gateway/chemrxiv/assets"
+                    "https://chemrxiv.org/engage/api-gateway/chemrxiv/assets",
                 ) && url.endsWith(".pdf"),
         ],
         name: "ChemRxiv",
