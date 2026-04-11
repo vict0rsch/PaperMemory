@@ -23992,9 +23992,6 @@ ${note}</textarea
         select2Factory(undefined, jQuery$1);
     }
 
-    // #region agent log
-    try{fetch('http://127.0.0.1:7427/ingest/fc4b4d42-87ef-4ac4-9f7f-ddc54f78411f',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'7011d7'},body:JSON.stringify({sessionId:'7011d7',location:'jquery-setup.js:done',message:'jquery-setup complete',data:{hasFn:typeof jQuery$1.fn!=='undefined',jQueryVersion:typeof jQuery$1.fn!=='undefined'?jQuery$1.fn.jquery:'N/A',select2Available:typeof jQuery$1.fn!=='undefined'&&typeof jQuery$1.fn.select2},timestamp:Date.now()})}).catch(()=>{});}catch(e){}
-
     /**
      * Closes the popup modal
      */
@@ -25014,25 +25011,6 @@ ${note}</textarea
         addListener("memory-container", "scroll", displayOnScroll());
     };
 
-    // #region agent log
-    try {
-        fetch("http://127.0.0.1:7427/ingest/fc4b4d42-87ef-4ac4-9f7f-ddc54f78411f", {
-            method: "POST",
-            headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "7011d7" },
-            body: JSON.stringify({
-                sessionId: "7011d7",
-                location: "popup.js:top",
-                message: "popup.js loaded with npm jQuery",
-                data: {
-                    dollarType: typeof jQuery$1,
-                    dollarVersion: typeof jQuery$1 === "function" ? jQuery$1.fn?.jquery : "N/A",
-                    select2OnDollar: typeof jQuery$1 === "function" && typeof jQuery$1.fn?.select2,
-                },
-                timestamp: Date.now(),
-            }),
-        }).catch(() => {});
-    } catch (e) {}
-
     // Handler functions available globally from handlers.js:
     // handlePrefsCheckChange, handleMemorySwitchClick, handlePopupKeydown, handlePopupDeletePaper
 
@@ -25617,34 +25595,10 @@ ${note}</textarea
     // ------------------------------
     // -----  Script Execution  -----
     // ------------------------------
-    // #region agent log
-    try {
-        fetch("http://127.0.0.1:7427/ingest/fc4b4d42-87ef-4ac4-9f7f-ddc54f78411f", {
-            method: "POST",
-            headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "7011d7" },
-            body: JSON.stringify({
-                sessionId: "7011d7",
-                location: "popup.js:init-guard",
-                message: "Init guard check",
-                data: {
-                    href:
-                        typeof window !== "undefined" ? window.location.href : "no-window",
-                    includesPopup:
-                        typeof window !== "undefined" &&
-                        window.location.href.includes("popup"),
-                    alreadyInitialized:
-                        typeof window !== "undefined" && window.paperMemoryPopupInitialized,
-                },
-                timestamp: Date.now(),
-            }),
-        }).catch(() => {});
-    } catch (e) {}
-    // #endregion
     (async () => {
         if (
             typeof window !== "undefined" &&
-            (window.location.href.includes("popup") ||
-                window.location.href.includes("/action/")) &&
+            (window.location.href.includes("popup") || window.location.href.includes("/action/")) &&
             !window.paperMemoryPopupInitialized
         ) {
             // This is a global variable to track whether the popup has been initialized.

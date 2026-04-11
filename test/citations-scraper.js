@@ -1,5 +1,8 @@
 import Heap from "heap";
-import puppeteer from "puppeteer";
+import puppeteer from "puppeteer-extra";
+import StealthPlugin from "puppeteer-extra-plugin-stealth";
+
+puppeteer.use(StealthPlugin());
 import fs from "fs";
 import { glob } from "glob";
 

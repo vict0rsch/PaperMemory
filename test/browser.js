@@ -1,8 +1,11 @@
 import { expect } from "expect";
 
-import puppeteer from "puppeteer";
+import puppeteer from "puppeteer-extra";
+import StealthPlugin from "puppeteer-extra-plugin-stealth";
 import { sleep, root } from "./utilsForTests.js";
 import fs from "fs";
+
+puppeteer.use(StealthPlugin());
 
 export const makeBrowser = async (headless = false, windowSize = "1200,900") => {
     const browser = await puppeteer.launch({
@@ -12,10 +15,9 @@ export const makeBrowser = async (headless = false, windowSize = "1200,900") => 
         args: [
             `--load-extension=${root}/src`,
             `--window-size=${windowSize}`,
-            "--user-agent=PuppeteerAgent",
             "--no-sandbox",
             "--disable-setuid-sandbox",
-            "--disable-web-security", // Allow clipboard access
+            "--disable-web-security",
             "--disable-dev-shm-usage",
             "--disable-gpu",
         ],
