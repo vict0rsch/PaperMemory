@@ -358,8 +358,8 @@ export const knownPaperPages = {
             (url) =>
                 Boolean(
                     url.match(
-                        /onlinelibrary\.wiley\.com\/doi\/(abs\/|full\/|pdf\/|epdf\/|10\.)/g
-                    )
+                        /onlinelibrary\.wiley\.com\/doi\/(abs\/|full\/|pdf\/|epdf\/|10\.)/g,
+                    ),
                 ),
         ],
         name: "Wiley",
@@ -369,8 +369,8 @@ export const knownPaperPages = {
             (url) =>
                 Boolean(
                     url.match(
-                        /pubs.aip.org\/aip\/.+\/(article|article-abstract|article-split)\//g
-                    ) || url.match(/watermark.silverchair.com\/.+\.pdf/g)
+                        /pubs.aip.org\/aip\/.+\/(article|article-abstract|article-split)\//g,
+                    ) || url.match(/watermark.silverchair.com\/.+\.pdf/g),
                 ),
         ],
         name: "AIP (American Institute of Physics)",
