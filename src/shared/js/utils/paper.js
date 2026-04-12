@@ -477,7 +477,7 @@ export const addOrUpdatePaper = async ({
     prefs,
     tab,
     store = true,
-    contentScriptCallbacks = { update: () => {}, preprints: () => {} },
+    contentScriptCallbacks = { update: () => {}, preprints: () => {}, feedback: null },
 }) => {
     // start time
     const aouStart = Date.now();
@@ -493,8 +493,8 @@ export const addOrUpdatePaper = async ({
     const paperExists = state.papers.hasOwnProperty(id);
     prefs &&
         prefs.checkFeedback &&
-        typeof feedback !== "undefined" &&
-        feedback({ loading: true });
+        contentScriptCallbacks.feedback &&
+        contentScriptCallbacks.feedback({ loading: true });
 
     if (id && paperExists && state.papers[id].author.toLowerCase() !== "anonymous") {
         // Update paper if it exists
@@ -650,16 +650,16 @@ export const addOrUpdatePaper = async ({
                 prefs &&
                     prefs.checkFeedback &&
                     store &&
-                    typeof feedback !== "undefined" &&
-                    feedback({ text: notifText, paper });
+                    contentScriptCallbacks.feedback &&
+                    contentScriptCallbacks.feedback({ text: notifText, paper });
             } else {
                 // existing paper but new code repo
                 notifText = "Found a code repository on PapersWithCode!";
                 prefs &&
                     prefs.checkFeedback &&
                     store &&
-                    typeof feedback !== "undefined" &&
-                    feedback({ text: notifText });
+                    contentScriptCallbacks.feedback &&
+                    contentScriptCallbacks.feedback({ text: notifText });
             }
         } else {
             store && logOk("Updated '" + paper.title + "' in your Memory");

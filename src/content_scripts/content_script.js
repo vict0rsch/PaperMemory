@@ -941,6 +941,7 @@ export async function initContentScript() {
                     update: paperResolve,
                     preprints: preprintsResolve,
                     done: updateCompleteSecretHTML,
+                    feedback,
                 },
             });
         } else if (request.message === "manualParsing") {
@@ -953,6 +954,7 @@ export async function initContentScript() {
                     update: paperResolve,
                     preprints: preprintsResolve,
                     done: updateCompleteSecretHTML,
+                    feedback,
                 },
             });
         } else if (request.message === "defaultAction") {
@@ -978,6 +980,7 @@ export async function initContentScript() {
                         update: paperResolve,
                         preprints: preprintsResolve,
                         done: updateCompleteSecretHTML,
+                        feedback,
                     },
                 });
             } else {
@@ -1011,6 +1014,4 @@ export async function initContentScript() {
         }
     }
     await hideNotif();
-    // Make feedback function globally available for use by utility modules
-    window.feedback = feedback;
 } // end initContentScript
