@@ -94,7 +94,7 @@ export default defineConfig({
             },
         },
     },
-    vite: () => ({
+    vite: ({ command }) => ({
         resolve: {
             alias: {
                 "@pm": path.resolve("src"),
@@ -102,7 +102,7 @@ export default defineConfig({
             },
         },
         define: {
-            __DEV__: JSON.stringify(false),
+            __DEV__: JSON.stringify(command === "serve"),
         },
         plugins: [htmlIncludePlugin(path.resolve("src/popup/html"))],
     }),

@@ -33,13 +33,6 @@
         "select2": "^4.1.0-rc.0"
     },
     "devDependencies": {
-        "@babel/core": "^7.0.0",
-        "@rollup/plugin-alias": "^5.1.1",
-        "@rollup/plugin-babel": "^6.0.4",
-        "@rollup/plugin-commonjs": "^28.0.6",
-        "@rollup/plugin-node-resolve": "^16.0.1",
-        "@rollup/plugin-replace": "^6.0.2",
-        "@rollup/plugin-terser": "^0.4.4",
         "expect": "^29.7.0",
         "glob": "^10.3.10",
         "heap": "^0.2.7",
@@ -51,12 +44,7 @@
         "puppeteer-extra": "^3.3.6",
         "puppeteer-extra-plugin-stealth": "^2.11.2",
         "readline-sync": "^1.4.10",
-        "rollup": "^4.45.0",
-        "rollup-plugin-copy": "^3.5.0",
-        "rollup-plugin-delete": "^3.0.1",
-        "rollup-plugin-postcss": "^4.0.2",
         "uuid": "^9.0.1",
-        "web-ext": "^9.1.0",
         "wxt": "^0.20.20",
         "yaml": "^2.3.4"
     }

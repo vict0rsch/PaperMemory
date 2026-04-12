@@ -374,8 +374,13 @@ chrome.runtime.onMessage.addListener((payload, sender, sendResponse) => {
                     saveAs: false,
                 });
             }
-            let filename = "PaperMemoryStore/" + payload.title;
-            filename = filename.replaceAll("?", "").replaceAll(":", "");
+                const safeTitle = payload.title
+                    .replaceAll("?", "")
+                    .replaceAll(":", "")
+                    .replaceAll("..", "")
+                    .replaceAll("/", "_")
+                    .replaceAll("\\", "_");
+                const filename = "PaperMemoryStore/" + safeTitle;
             chrome.downloads.download({ url: payload.pdfUrl, filename });
             sendResponse(true);
         });
