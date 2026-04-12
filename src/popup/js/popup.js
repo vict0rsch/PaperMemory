@@ -393,12 +393,12 @@ export const popupMain = async (url, is, manualTrigger = false, tab = null) => {
         state.currentId = id;
 
         if (!id || !state.papers.hasOwnProperty(id)) {
-            // Unknown paper, probably deleted by the user
             log("Unknown id " + id);
             await updatePopupPaperNoMemory(url);
             if (prefs.checkDirectOpen && !prefs.checkNoAuto) {
                 dispatch("memory-switch", "click");
             }
+            window.__pmPopupReady = true;
             return;
         }
 
@@ -657,6 +657,7 @@ export const popupMain = async (url, is, manualTrigger = false, tab = null) => {
             });
         }
     }
+    window.__pmPopupReady = true;
 };
 
 // ------------------------------
@@ -700,7 +701,10 @@ export const popupMain = async (url, is, manualTrigger = false, tab = null) => {
         hideId("memory-spinner");
         showId("memory-switch");
         makeMemoryHTML();
-        popupMain(url, is, false, tab);
+        popupMain(url, is, false, tab).catch((e) => {
+            console.error("popupMain error:", e);
+            window.__pmPopupReady = true;
+        });
         if (navigator.userAgent.search("Firefox") > -1) {
             hideId("overwrite-container");
         }

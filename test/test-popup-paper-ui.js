@@ -100,7 +100,10 @@ describe("Test PaperMemory Popup UI - Known Paper Page", function () {
             };
         }, paperUrl);
 
-        await page.reload();
+        await page.reload({ waitUntil: "networkidle0" });
+        await page.waitForFunction(() => window.__pmPopupReady === true, {
+            timeout: 10000,
+        });
     }
 
     describe("Basic Popup Setup", function () {

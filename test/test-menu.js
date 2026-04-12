@@ -103,6 +103,7 @@ describe("Popup Menu Tests", function () {
 
         // 6. Reload popup to apply mocks and data
         await resetPage(PMPage, pmURLs.popupURL);
+        await waitForPopupReady(PMPage);
     });
 
     after(async function () {
@@ -120,6 +121,12 @@ describe("Popup Menu Tests", function () {
         });
     }
 
+    async function waitForPopupReady(page) {
+        await page.waitForFunction(() => window.__pmPopupReady === true, {
+            timeout: 15000,
+        });
+    }
+
     // Helper to set a preference safely
     async function setPreference(page, key, value) {
         await page.evaluate(
@@ -130,8 +137,8 @@ describe("Popup Menu Tests", function () {
             },
             { key, value }
         );
-        await page.reload();
-        await page.waitForFunction(() => typeof window.PMDebug !== "undefined");
+        await page.reload({ waitUntil: "networkidle0" });
+        await waitForPopupReady(page);
 
         // Verify
         const val = await page.evaluate(async (key) => {
@@ -146,8 +153,8 @@ describe("Popup Menu Tests", function () {
                 },
                 { key, value }
             );
-            await page.reload();
-            await page.waitForFunction(() => typeof window.PMDebug !== "undefined");
+            await page.reload({ waitUntil: "networkidle0" });
+            await waitForPopupReady(page);
         }
     }
 
@@ -516,7 +523,7 @@ describe("Popup Menu Tests", function () {
                 await setPreference(PMPage, "checkDarkMode", true);
                 const hasDarkMode = await PMPage.evaluate(() => {
                     const links = Array.from(document.querySelectorAll("link"));
-                    return links.some((l) => l.href.includes("dark.min.css"));
+                    return links.some((l) => l.href.includes("dark.css"));
                 });
                 expect(hasDarkMode).toBe(true);
             });
@@ -525,7 +532,7 @@ describe("Popup Menu Tests", function () {
                 await setPreference(PMPage, "checkDarkMode", false);
                 const hasDarkMode = await PMPage.evaluate(() => {
                     const links = Array.from(document.querySelectorAll("link"));
-                    return links.some((l) => l.href.includes("dark.min.css"));
+                    return links.some((l) => l.href.includes("dark.css"));
                 });
                 expect(hasDarkMode).toBe(false);
             });

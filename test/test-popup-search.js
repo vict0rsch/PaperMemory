@@ -90,6 +90,9 @@ describe("Test PaperMemory Popup Search Functionality", function () {
     async function setupPageWithData(page, data) {
         await setStorage(page, "papers", data);
         await page.reload({ waitUntil: "networkidle0" });
+        await page.waitForFunction(() => window.__pmPopupReady === true, {
+            timeout: 10000,
+        });
         await ensureMemoryIsOpen(page);
     }
 
