@@ -60,7 +60,7 @@ export const parseIdFromUrl = async (url, tab = null) => {
         idForUrl = `Arxiv-${arxivId}`;
 
         const existingIds = Object.values(state.titleHashToIds).find((ids) =>
-            ids.includes(idForUrl)
+            ids.includes(idForUrl),
         );
         if (existingIds) {
             idForUrl = existingIds.find((id) => !id.startsWith("Arxiv-")) ?? idForUrl;
@@ -83,7 +83,7 @@ export const parseIdFromUrl = async (url, tab = null) => {
         idForUrl = `Biorxiv-${id}`;
 
         const existingIds = Object.values(state.titleHashToIds).find((ids) =>
-            ids.includes(idForUrl)
+            ids.includes(idForUrl),
         );
         if (existingIds) {
             idForUrl = existingIds.find((id) => !id.startsWith("Biorxiv-")) ?? idForUrl;
@@ -150,8 +150,8 @@ export const parseIdFromUrl = async (url, tab = null) => {
         const articleId = url.includes("ieee.org/document/")
             ? url.split("ieee.org/document/")[1].match(/\d+/)[0]
             : url.includes("ieee.org/abstract/document/")
-            ? url.split("ieee.org/abstract/document/")[1].match(/\d+/)[0]
-            : url.split("arnumber=")[1].match(/\d+/)[0];
+              ? url.split("ieee.org/abstract/document/")[1].match(/\d+/)[0]
+              : url.split("arnumber=")[1].match(/\d+/)[0];
         idForUrl = findPaperForProperty(papers, "ieee", articleId);
     } else if (is.springer) {
         const types = sourceExtras.springer.types;
@@ -209,7 +209,7 @@ export const parseIdFromUrl = async (url, tab = null) => {
                 .split("mdpi.com/")[1]
                 .split("/pdf")[0]
                 .split("/reprints")[0]
-                .split("/notes")[0]
+                .split("/notes")[0],
         );
         idForUrl = findPaperForProperty(papers, "mdpi", miniHash(mdpiId));
     } else if (is.oup) {
@@ -222,7 +222,7 @@ export const parseIdFromUrl = async (url, tab = null) => {
     } else if (is.hal) {
         url = noParamUrl(url).replace(
             /(hal\.science\/\w+-\d+)(v\d+)?((\/document|\/file\/.+\.pdf))?/,
-            "$1"
+            "$1",
         );
         const halId = url.split("/").last();
         idForUrl = findPaperForProperty(papers, "hal", miniHash(halId));
@@ -236,7 +236,7 @@ export const parseIdFromUrl = async (url, tab = null) => {
         idForUrl = findPaperForProperty(
             papers,
             "cell",
-            miniHash(url.split("cell.com/")[1])
+            miniHash(url.split("cell.com/")[1]),
         );
     } else if (is.aip) {
         const { aipId, doi } = parseAIPIdOrDOI(url);
@@ -249,7 +249,7 @@ export const parseIdFromUrl = async (url, tab = null) => {
         idForUrl = is.parsedWebsite.id;
     } else {
         throw new Error(
-            "`parseIdFromUrl` failed, unknown paper url. Is: " + JSON.stringify(is)
+            "`parseIdFromUrl` failed, unknown paper url. Is: " + JSON.stringify(is),
         );
     }
 

@@ -423,17 +423,17 @@ const contentScriptMain = async ({
     } else {
         if (ignorePaper(is, ignoreSources)) {
             warn(
-                "Paper is being ignored because its source has been disabled in the Advanced Options."
+                "Paper is being ignored because its source has been disabled in the Advanced Options.",
             );
         } else if (prefs.checkPdfOnly && !isPdfUrl(url)) {
             warn(
                 `Paper is being ignored because you have checked the PDF-Only option ` +
-                    `and the current URL (${url}) is not that of a pdf's.`
+                    `and the current URL (${url}) is not that of a pdf's.`,
             );
         } else if (prefs.checkNoAuto && !manualTrigger) {
             warn(
                 "Paper is being ignored because you disabled automatic parsing" +
-                    " in the menu."
+                    " in the menu.",
             );
         }
     }
@@ -487,7 +487,7 @@ const hideNotif = () =>
             { right: "-200px", opacity: "0" },
             notif.hideSpeed,
             "easeInOutBack",
-            end
+            end,
         );
         // sometimes animate does not call the callback
         setTimeout(end, notif.hideSpeed + 50);
@@ -514,7 +514,7 @@ const showNotif = () =>
             },
             notif.showSpeed,
             "easeInOutBack",
-            resolve
+            resolve,
         );
     });
 
@@ -615,7 +615,7 @@ const displayPaperVenue = (paper) => {
     findEl({ element: "pm-publication-wrapper" })?.remove();
     findEl({ element: "pm-header-content" })?.insertAdjacentHTML(
         "afterbegin",
-        venueDiv
+        venueDiv,
     );
 };
 
@@ -689,7 +689,7 @@ const arxiv = async (checks) => {
                 <div id="pm-header-content"></div>
             </div>
         </div>
-        <div id="pm-extras"></div>`
+        <div id="pm-extras"></div>`,
     );
     let pdfUrlButton = await queryOrWait({ query: ".abs-button.download-pdf" });
     let pdfUrl = pdfUrlButton?.href;
@@ -708,7 +708,7 @@ const arxiv = async (checks) => {
         findEl({ element: "pm-arxiv-direct-download" })?.remove();
         (await queryOrWait({ query: "#pm-header-content" }))?.insertAdjacentHTML(
             "beforeend",
-            button
+            button,
         );
         var downloadTimeout;
         addListener("arxiv-button", "click", async () => {
@@ -724,13 +724,13 @@ const arxiv = async (checks) => {
             }
             if (!pdfUrl) {
                 console.error(
-                    "Could not parse the PDF URL from HTML element: `.abs-button.download-pdf`"
+                    "Could not parse the PDF URL from HTML element: `.abs-button.download-pdf`",
                 );
                 return;
             }
             if (!state.papers.hasOwnProperty(id)) {
                 const title = await fetch(
-                    `https://export.arxiv.org/api/query?id_list=${id.split("-")[1]}`
+                    `https://export.arxiv.org/api/query?id_list=${id.split("-")[1]}`,
                 ).then((data) => {
                     return $($(data).find("entry title")[0]).text();
                 });
@@ -803,7 +803,7 @@ const arxiv = async (checks) => {
                     ${svg("clipboard-default")} ${svg("clipboard-default-ok")}
                 </div>
                 <div id="pm-bibtex-textarea" class="pm-codify">${bibtexToString(
-                    paper.bibtex
+                    paper.bibtex,
                 ).replaceAll("\t", "  ")}</div>
             </div>
         `;
@@ -834,7 +834,7 @@ const arxiv = async (checks) => {
                 });
             });
             copyTextToClipboard(
-                findEl({ element: "markdown-link" }).innerText.replaceAll("\n", "")
+                findEl({ element: "markdown-link" }).innerText.replaceAll("\n", ""),
             );
             feedback({ text: "Markdown Link Copied!" });
         });
@@ -852,7 +852,7 @@ const updateCompleteSecretHTML = (paper) => {
                 .querySelector("head")
                 .insertAdjacentHTML(
                     "beforeend",
-                    /*html*/ `<meta name="pm-complete-secret-html" content="${paper.id}">`
+                    /*html*/ `<meta name="pm-complete-secret-html" content="${paper.id}">`,
                 );
         }
     }, 50);
@@ -894,7 +894,7 @@ const tryArxivDisplay = async ({
         if (prefs.checkBib) {
             if (findEl({ element: "pm-bibtex-textarea" })) {
                 findEl({ element: "pm-bibtex-textarea" }).innerHTML = bibtexToString(
-                    paper.bibtex
+                    paper.bibtex,
                 ).replaceAll("\t", "  ");
             }
         }
@@ -907,7 +907,7 @@ const tryArxivDisplay = async ({
     }
 };
 
-(async () => {
+export async function initContentScript() {
     log("Running PaperMemory's content script");
     var prefs, paper;
     var paperPromise, preprintsPromise, paperResolve, preprintsResolve;
@@ -941,6 +941,7 @@ const tryArxivDisplay = async ({
                     update: paperResolve,
                     preprints: preprintsResolve,
                     done: updateCompleteSecretHTML,
+                    feedback,
                 },
             });
         } else if (request.message === "manualParsing") {
@@ -953,6 +954,7 @@ const tryArxivDisplay = async ({
                     update: paperResolve,
                     preprints: preprintsResolve,
                     done: updateCompleteSecretHTML,
+                    feedback,
                 },
             });
         } else if (request.message === "defaultAction") {
@@ -978,6 +980,7 @@ const tryArxivDisplay = async ({
                         update: paperResolve,
                         preprints: preprintsResolve,
                         done: updateCompleteSecretHTML,
+                        feedback,
                     },
                 });
             } else {
@@ -1011,7 +1014,4 @@ const tryArxivDisplay = async ({
         }
     }
     await hideNotif();
-})();
-
-// Make feedback function globally available for use by utility modules
-window.feedback = feedback;
+} // end initContentScript

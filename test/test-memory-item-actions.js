@@ -91,7 +91,7 @@ describe("Test PaperMemory Memory Item Actions", function () {
         } catch (error) {
             console.log(
                 indent(1) + "⚠ Could not set clipboard permissions:",
-                error.message
+                error.message,
             );
         }
 
@@ -119,6 +119,9 @@ describe("Test PaperMemory Memory Item Actions", function () {
     async function setupPageWithData(page, data) {
         await setStorage(page, "papers", data);
         await page.reload({ waitUntil: "networkidle0" });
+        await page.waitForFunction(() => window.__pmPopupReady === true, {
+            timeout: 10000,
+        });
         await ensureMemoryIsOpen(page);
     }
 
@@ -170,7 +173,7 @@ describe("Test PaperMemory Memory Item Actions", function () {
     async function verifyFeedbackMessage(paperId, expectedText, page) {
         const queryId = paperId.replaceAll(".", "\\.");
         const feedback = await page.$(
-            `#memory-container--${queryId} .memory-item-feedback`
+            `#memory-container--${queryId} .memory-item-feedback`,
         );
         const feedbackText = await page.evaluate((el) => el.textContent, feedback);
         expect(feedbackText).toContain(expectedText);
@@ -203,7 +206,7 @@ describe("Test PaperMemory Memory Item Actions", function () {
                 // Click favorite button
                 await safeClick(
                     `#memory-container--${firstQueryId} .memory-item-favorite`,
-                    PMPage
+                    PMPage,
                 );
 
                 // Wait for state change - much faster than arbitrary sleep
@@ -215,7 +218,7 @@ describe("Test PaperMemory Memory Item Actions", function () {
                     },
                     { timeout: 2000 },
                     firstPaperId,
-                    initialFavorite
+                    initialFavorite,
                 );
 
                 // Verify favorite state changed
@@ -225,7 +228,7 @@ describe("Test PaperMemory Memory Item Actions", function () {
                 expect(finalFavorite).toBe(!initialFavorite);
                 console.log(
                     indent(2) +
-                        `✓ Favorite toggled from ${initialFavorite} to ${finalFavorite}`
+                        `✓ Favorite toggled from ${initialFavorite} to ${finalFavorite}`,
                 );
             });
         });
@@ -234,7 +237,7 @@ describe("Test PaperMemory Memory Item Actions", function () {
             // Click edit button
             await safeClick(
                 `#memory-container--${firstQueryId} .memory-item-edit`,
-                PMPage
+                PMPage,
             );
 
             // Wait for edit form to be visible
@@ -244,16 +247,16 @@ describe("Test PaperMemory Memory Item Actions", function () {
                     return el && getComputedStyle(el).display !== "none";
                 },
                 { timeout: 2000 },
-                `#memory-container--${firstQueryId} .extended-item`
+                `#memory-container--${firstQueryId} .extended-item`,
             );
 
             // Verify edit form is open
             const editForm = await PMPage.$(
-                `#memory-container--${firstQueryId} .extended-item`
+                `#memory-container--${firstQueryId} .extended-item`,
             );
             const isVisible = await PMPage.evaluate(
                 (el) => getComputedStyle(el).display !== "none",
-                editForm
+                editForm,
             );
 
             expect(isVisible).toBe(true);
@@ -263,7 +266,7 @@ describe("Test PaperMemory Memory Item Actions", function () {
             await sleep(250); // Let the form slide events finish
             await PMPage.$eval(
                 `#memory-container--${firstQueryId} .done-note-form`,
-                (el) => el.click()
+                (el) => el.click(),
             );
 
             // Wait for edit form to be hidden
@@ -273,13 +276,13 @@ describe("Test PaperMemory Memory Item Actions", function () {
                     return el && getComputedStyle(el).display === "none";
                 },
                 { timeout: 2000 },
-                `#memory-container--${firstQueryId} .extended-item`
+                `#memory-container--${firstQueryId} .extended-item`,
             );
 
             // Verify edit form is closed
             const isHidden = await PMPage.evaluate(
                 (el) => getComputedStyle(el).display === "none",
-                editForm
+                editForm,
             );
 
             expect(isHidden).toBe(true);
@@ -290,7 +293,7 @@ describe("Test PaperMemory Memory Item Actions", function () {
             // Click delete button
             await safeClick(
                 `#memory-container--${firstQueryId} .memory-delete`,
-                PMPage
+                PMPage,
             );
 
             // Wait for modal to appear
@@ -299,14 +302,14 @@ describe("Test PaperMemory Memory Item Actions", function () {
                     const modal = document.querySelector("#delete-paper-modal");
                     return modal && getComputedStyle(modal).display !== "none";
                 },
-                { timeout: 2000 }
+                { timeout: 2000 },
             );
 
             // Verify delete modal appears
             const deleteModal = await PMPage.$("#delete-paper-modal");
             const modalVisible = await PMPage.evaluate(
                 (el) => getComputedStyle(el).display !== "none",
-                deleteModal
+                deleteModal,
             );
 
             expect(modalVisible).toBe(true);
@@ -315,7 +318,7 @@ describe("Test PaperMemory Memory Item Actions", function () {
             // Cancel delete - use direct DOM click since modal buttons have display:none
             const cancelClicked = await PMPage.evaluate(() => {
                 const cancelBtn = document.querySelector(
-                    "#delete-paper-modal-cancel-button"
+                    "#delete-paper-modal-cancel-button",
                 );
                 if (cancelBtn) {
                     cancelBtn.click();
@@ -333,13 +336,13 @@ describe("Test PaperMemory Memory Item Actions", function () {
                     const modal = document.querySelector("#delete-paper-modal");
                     return modal && getComputedStyle(modal).display === "none";
                 },
-                { timeout: 2000 }
+                { timeout: 2000 },
             );
 
             // Verify modal is hidden
             const modalHidden = await PMPage.evaluate(
                 (el) => getComputedStyle(el).display === "none",
-                deleteModal
+                deleteModal,
             );
 
             expect(modalHidden).toBe(true);
@@ -375,13 +378,13 @@ describe("Test PaperMemory Memory Item Actions", function () {
 
             await safeClick(
                 `#memory-container--${firstQueryId} .memory-item-copy-link`,
-                PMPage
+                PMPage,
             );
 
             const feedbackText = await verifyFeedbackMessage(
                 firstPaperId,
                 "copied",
-                PMPage
+                PMPage,
             );
             console.log(indent(2) + `✓ Copy link feedback: "${feedbackText}"`);
 
@@ -400,8 +403,8 @@ describe("Test PaperMemory Memory Item Actions", function () {
                 indent(2) +
                     `✓ Clipboard contains valid URL: "${clipboardText.substring(
                         0,
-                        50
-                    )}..."`
+                        50,
+                    )}..."`,
             );
         });
 
@@ -420,19 +423,19 @@ describe("Test PaperMemory Memory Item Actions", function () {
                 indent(3) +
                     `Testing copy hyperlink for paper: "${paperData.title.substring(
                         0,
-                        50
-                    )}..."`
+                        50,
+                    )}..."`,
             );
 
             await safeClick(
                 `#memory-container--${firstQueryId} .memory-item-copy-hyperlink`,
-                PMPage
+                PMPage,
             );
 
             const feedbackText = await verifyFeedbackMessage(
                 firstPaperId,
                 "Hyperlink copied",
-                PMPage
+                PMPage,
             );
             console.log(indent(2) + `✓ Copy hyperlink feedback: "${feedbackText}"`);
 
@@ -440,17 +443,17 @@ describe("Test PaperMemory Memory Item Actions", function () {
             const clipboardText = await verifyClipboardContent("", true, PMPage);
             if (clipboardText) {
                 console.log(
-                    indent(3) + `Debug: Clipboard content is: "${clipboardText}"`
+                    indent(3) + `Debug: Clipboard content is: "${clipboardText}"`,
                 );
                 expect(clipboardText).toContain(paperData.title);
                 expect(clipboardText).toMatch(/https?:\/\//);
                 console.log(
-                    indent(2) + `✓ Clipboard contains hyperlink with title and URL`
+                    indent(2) + `✓ Clipboard contains hyperlink with title and URL`,
                 );
             } else {
                 console.log(
                     indent(3) +
-                        "⚠ Clipboard verification skipped due to test environment limitations"
+                        "⚠ Clipboard verification skipped due to test environment limitations",
                 );
             }
         });
@@ -463,13 +466,13 @@ describe("Test PaperMemory Memory Item Actions", function () {
 
             await safeClick(
                 `#memory-container--${firstQueryId} .memory-item-md`,
-                PMPage
+                PMPage,
             );
 
             const feedbackText = await verifyFeedbackMessage(
                 firstPaperId,
                 "Markdown",
-                PMPage
+                PMPage,
             );
             expect(feedbackText).toContain("copied");
             console.log(indent(2) + `✓ Copy markdown feedback: "${feedbackText}"`);
@@ -480,7 +483,7 @@ describe("Test PaperMemory Memory Item Actions", function () {
             expect(clipboardText).toContain(paperData.title);
 
             console.log(
-                indent(2) + `✓ Clipboard contains valid markdown: "${clipboardText}"`
+                indent(2) + `✓ Clipboard contains valid markdown: "${clipboardText}"`,
             );
         });
 
@@ -492,12 +495,12 @@ describe("Test PaperMemory Memory Item Actions", function () {
 
             await safeClick(
                 `#memory-container--${firstQueryId} .memory-item-bibtex`,
-                PMPage
+                PMPage,
             );
             const feedbackText = await verifyFeedbackMessage(
                 firstPaperId,
                 "Bibtex",
-                PMPage
+                PMPage,
             );
 
             // Verify clipboard contains valid bibtex format
@@ -507,20 +510,20 @@ describe("Test PaperMemory Memory Item Actions", function () {
                 expect(clipboardText).toMatch(/title\s*=\s*\{/);
                 expect(clipboardText).toMatch(/author\s*=\s*\{/);
                 expect(await miniHash(clipboardText)).toContain(
-                    await miniHash(paperData.title)
+                    await miniHash(paperData.title),
                 );
                 console.log(indent(2) + `✓ Clipboard contains valid bibtex format`);
             } else {
                 // In some test environments, bibtex generation might not work as expected
                 console.log(
                     indent(2) +
-                        `⚠ Bibtex format verification limited in test environment`
+                        `⚠ Bibtex format verification limited in test environment`,
                 );
                 console.log(
                     indent(2) +
                         `    Clipboard content: "${
                             clipboardText ? clipboardText.substring(0, 100) : "empty"
-                        }..."`
+                        }..."`,
                 );
             }
         });
@@ -534,12 +537,12 @@ describe("Test PaperMemory Memory Item Actions", function () {
         it("should handle external link action (memory-item-link) and verify page navigation", async function () {
             // Find a non-website paper
             const nonWebsitePaper = Object.keys(testData).find(
-                (key) => !key.startsWith("__") && testData[key].source !== "website"
+                (key) => !key.startsWith("__") && testData[key].source !== "website",
             );
 
             if (!nonWebsitePaper) {
                 console.log(
-                    indent(2) + "⚠ No non-website papers in test data, skipping test"
+                    indent(2) + "⚠ No non-website papers in test data, skipping test",
                 );
                 return;
             }
@@ -549,10 +552,10 @@ describe("Test PaperMemory Memory Item Actions", function () {
                 await verifyMemoryItemButtonExists(
                     nonWebsitePaper,
                     ".memory-item-link",
-                    PMPage
+                    PMPage,
                 );
             console.log(
-                indent(2) + "✓ External link button present for non-website paper"
+                indent(2) + "✓ External link button present for non-website paper",
             );
 
             await verifyButtonClickable(linkButton, PMPage);
@@ -589,7 +592,7 @@ describe("Test PaperMemory Memory Item Actions", function () {
                 await verifyMemoryItemButtonExists(
                     firstPaperId,
                     ".memory-item-openLocal",
-                    PMPage
+                    PMPage,
                 );
             console.log(indent(2) + "✓ Local file button present when file available");
 
@@ -602,7 +605,7 @@ describe("Test PaperMemory Memory Item Actions", function () {
             // Note: In test environment, actual file opening may not be observable
             console.log(
                 indent(2) +
-                    "✓ Local file action triggered (file system access limited in tests)"
+                    "✓ Local file action triggered (file system access limited in tests)",
             );
         });
     });
@@ -617,17 +620,17 @@ describe("Test PaperMemory Memory Item Actions", function () {
             preferenceKey,
             buttonClass,
             expectedUrlPattern,
-            page
+            page,
         ) {
             await setPreferencesAndReload({ [preferenceKey]: true }, page);
 
             const { button, selector } = await verifyMemoryItemButtonExists(
                 arxivPaperId,
                 buttonClass,
-                page
+                page,
             );
             console.log(
-                indent(2) + `✓ ${serviceName} button present when preference enabled`
+                indent(2) + `✓ ${serviceName} button present when preference enabled`,
             );
 
             await verifyButtonClickable(button, page);
@@ -648,7 +651,7 @@ describe("Test PaperMemory Memory Item Actions", function () {
                 "checkScirate",
                 ".memory-item-scirate",
                 /scirate\.com\/arxiv/,
-                PMPage
+                PMPage,
             );
         });
 
@@ -658,7 +661,7 @@ describe("Test PaperMemory Memory Item Actions", function () {
                 "checkAlphaxiv",
                 ".memory-item-alphaxiv",
                 /alphaxiv\.org\/abs/,
-                PMPage
+                PMPage,
             );
         });
 
@@ -668,7 +671,7 @@ describe("Test PaperMemory Memory Item Actions", function () {
                 "checkAr5iv",
                 ".memory-item-ar5iv",
                 /ar5iv\.labs\.arxiv\.org\/html/,
-                PMPage
+                PMPage,
             );
         });
 
@@ -678,7 +681,7 @@ describe("Test PaperMemory Memory Item Actions", function () {
                 "checkHuggingface",
                 ".memory-item-huggingface",
                 /huggingface\.co\/papers/,
-                PMPage
+                PMPage,
             );
         });
 
@@ -690,21 +693,21 @@ describe("Test PaperMemory Memory Item Actions", function () {
                     checkAr5iv: false,
                     checkHuggingface: false,
                 },
-                PMPage
+                PMPage,
             );
 
             // Check that optional buttons are not present
             const scirateButton = await PMPage.$(
-                `#memory-container--${arxivQueryId} .memory-item-scirate`
+                `#memory-container--${arxivQueryId} .memory-item-scirate`,
             );
             const alphaxivButton = await PMPage.$(
-                `#memory-container--${arxivQueryId} .memory-item-alphaxiv`
+                `#memory-container--${arxivQueryId} .memory-item-alphaxiv`,
             );
             const ar5ivButton = await PMPage.$(
-                `#memory-container--${arxivQueryId} .memory-item-ar5iv`
+                `#memory-container--${arxivQueryId} .memory-item-ar5iv`,
             );
             const huggingfaceButton = await PMPage.$(
-                `#memory-container--${arxivQueryId} .memory-item-huggingface`
+                `#memory-container--${arxivQueryId} .memory-item-huggingface`,
             );
 
             expect(scirateButton).toBeFalsy();
@@ -722,7 +725,7 @@ describe("Test PaperMemory Memory Item Actions", function () {
                 await verifyMemoryItemButtonExists(
                     arxivPaperId,
                     ".memory-item-bibtex",
-                    PMPage
+                    PMPage,
                 );
             await safeClick(bibtexSelector, PMPage);
 
@@ -740,7 +743,7 @@ describe("Test PaperMemory Memory Item Actions", function () {
                 console.log(indent(2) + "✓ Bibtex successfully copied to clipboard");
             } else {
                 console.log(
-                    indent(2) + "⚠ Clipboard access limited in test environment"
+                    indent(2) + "⚠ Clipboard access limited in test environment",
                 );
             }
 
@@ -749,7 +752,7 @@ describe("Test PaperMemory Memory Item Actions", function () {
                 await verifyMemoryItemButtonExists(
                     arxivPaperId,
                     ".memory-item-scirate",
-                    PMPage
+                    PMPage,
                 );
             const initialPagesCount = (await browser.pages()).length;
 

@@ -115,8 +115,12 @@ export const initState = async ({ papers, isContentScript, print = true } = {}) 
         times.unshift(Date.now());
     }
 
-    const cellPath = chrome.runtime.getURL("src/data/cell.json");
-    state.cellJournalData = await fetch(cellPath).then((res) => res.json());
+    try {
+        const cellPath = chrome.runtime.getURL("data/cell.json");
+        state.cellJournalData = await fetch(cellPath).then((res) => res.json());
+    } catch (e) {
+        state.cellJournalData = {};
+    }
     print && log("Time to fetch cell journal data (s): " + duration(times));
     times.unshift(Date.now());
 
@@ -131,7 +135,7 @@ export const initState = async ({ papers, isContentScript, print = true } = {}) 
 export const sortMemory = () => {
     state.sortedPapers = Object.values(cleanPapers(state.papers));
     state.sortedPapers.sort(
-        orderPapers(descendingSortKeys.indexOf(state.sortKey) >= 0)
+        orderPapers(descendingSortKeys.indexOf(state.sortKey) >= 0),
     );
     state.papersList.sort(orderPapers(descendingSortKeys.indexOf(state.sortKey) >= 0));
 };
@@ -243,15 +247,15 @@ export const readJournalAbbreviations = async () => {
     if (Object.keys(journalAbbreviations).length > 0) {
         return;
     }
-    const iso4Path = chrome.runtime.getURL("src/data/iso4-journals.json");
+    const iso4Path = chrome.runtime.getURL("data/iso4-journals.json");
     const iso4 = await fetch(iso4Path).then((res) => res.json());
-    const abbrPath = chrome.runtime.getURL("src/data/journal-abbreviations.json");
+    const abbrPath = chrome.runtime.getURL("data/journal-abbreviations.json");
     const abbr = await fetch(abbrPath).then((res) => res.json());
     const newAbbreviations = Object.fromEntries(
         [...Object.entries(iso4), ...Object.entries(abbr)].map(([k, v]) => [
             miniHash(k),
             v,
-        ])
+        ]),
     );
     for (const [key, value] of Object.entries(newAbbreviations)) {
         journalAbbreviations[key] = value;
@@ -301,10 +305,10 @@ export const matchAllFilesToPapers = () => {
             async (files) => {
                 const matches = await matchPapersToFiles(
                     cleanPapers(state.papers),
-                    files
+                    files,
                 );
                 resolve(matches);
-            }
+            },
         );
     });
 };

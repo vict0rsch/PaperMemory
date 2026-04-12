@@ -1554,6 +1554,10 @@ export const findCellPii = async (url) => {
                 venue = key;
             }
         });
+        if (!venue) {
+            warn(`[findCellPii] No Cell journal found for ISSN: ${issn}`);
+            return { pii, url };
+        }
         const target = venue
             .split(" ")
             .map((w) => w.toLowerCase())
@@ -1947,173 +1951,181 @@ export const makePaper = async (is, url, tab = false) => {
     let paper;
     let start = performance.now();
     info("Making paper...");
-    if (tab) {
-        paper = await makeWebsitePaper(tab);
-        if (paper) {
-            paper.source = "website";
+    try {
+        if (tab) {
+            paper = await makeWebsitePaper(tab);
+            if (paper) {
+                paper.source = "website";
+            }
+        } else if (is.arxiv) {
+            paper = await makeArxivPaper(url);
+            if (paper) {
+                paper.source = "arxiv";
+            }
+            // paper.codes = await fetchCodes(paper)
+        } else if (is.neurips) {
+            paper = await makeNeuripsPaper(url);
+            if (paper) {
+                paper.source = "neurips";
+            }
+            // paper.codes = await fetchCodes(paper);
+        } else if (is.cvf) {
+            paper = await makeCVFPaper(url);
+            if (paper) {
+                paper.source = "cvf";
+            }
+        } else if (is.openreview) {
+            paper = await makeOpenReviewPaper(url);
+            if (paper) {
+                paper.source = "openreview";
+            }
+        } else if (is.biorxiv) {
+            paper = await makeBioRxivPaper(url);
+            if (paper) {
+                paper.source = "biorxiv";
+            }
+        } else if (is.pmlr) {
+            paper = await makePMLRPaper(url);
+            if (paper) {
+                paper.source = "pmlr";
+            }
+        } else if (is.acl) {
+            paper = await makeACLPaper(url);
+            if (paper) {
+                paper.source = "acl";
+            }
+        } else if (is.pnas) {
+            paper = await makePNASPaper(url);
+            if (paper) {
+                paper.source = "pnas";
+            }
+        } else if (is.nature) {
+            paper = await makeNaturePaper(url);
+            if (paper) {
+                paper.source = "nature";
+            }
+        } else if (is.acs) {
+            paper = await makeACSPaper(url);
+            if (paper) {
+                paper.source = "acs";
+            }
+        } else if (is.iop) {
+            paper = await makeIOPPaper(url);
+            if (paper) {
+                paper.source = "iop";
+            }
+        } else if (is.jmlr) {
+            paper = await makeJMLRPaper(url);
+            if (paper) {
+                paper.source = "jmlr";
+            }
+        } else if (is.pmc) {
+            paper = await makePMCPaper(url);
+            if (paper) {
+                paper.source = "pmc";
+            }
+        } else if (is.ijcai) {
+            paper = await makeIJCAIPaper(url);
+            if (paper) {
+                paper.source = "ijcai";
+            }
+        } else if (is.acm) {
+            paper = await makeACMPaper(url);
+            if (paper) {
+                paper.source = "acm";
+            }
+        } else if (is.ieee) {
+            paper = await makeIEEEPaper(url);
+            if (paper) {
+                paper.source = "ieee";
+            }
+        } else if (is.springer) {
+            paper = await makeSpringerPaper(url);
+            if (paper) {
+                paper.source = "springer";
+            }
+        } else if (is.aps) {
+            paper = await makeAPSPaper(url);
+            if (paper) {
+                paper.source = "aps";
+            }
+        } else if (is.wiley) {
+            paper = await makeWileyPaper(url);
+            if (paper) {
+                paper.source = "wiley";
+            }
+        } else if (is.sciencedirect) {
+            paper = await makeScienceDirectPaper(url);
+            if (paper) {
+                paper.source = "sciencedirect";
+            }
+        } else if (is.science) {
+            paper = await makeSciencePaper(url);
+            if (paper) {
+                paper.source = "science";
+            }
+        } else if (is.frontiers) {
+            paper = await makeFrontiersPaper(url);
+            if (paper) {
+                paper.source = "frontiers";
+            }
+        } else if (is.ihep) {
+            paper = await makeIHEPPaper(url);
+            if (paper) {
+                paper.source = "ihep";
+            }
+        } else if (is.plos) {
+            paper = await makePLOSPaper(url);
+            if (paper) {
+                paper.source = "plos";
+            }
+        } else if (is.rsc) {
+            paper = await makeRSCPaper(url);
+            if (paper) {
+                paper.source = "rsc";
+            }
+        } else if (is.mdpi) {
+            paper = await makeMDPIPaper(url);
+            if (paper) {
+                paper.source = "mdpi";
+            }
+        } else if (is.oup) {
+            paper = await makeOUPPaper(url);
+            if (paper) {
+                paper.source = "oup";
+            }
+        } else if (is.hal) {
+            paper = await makeHALPaper(url);
+            if (paper) {
+                paper.source = "hal";
+            }
+        } else if (is.chemrxiv) {
+            paper = await makeChemRxivPaper(url);
+            if (paper) {
+                paper.source = "chemrxiv";
+            }
+        } else if (is.cell) {
+            paper = await makeCellPaper(url);
+            if (paper) {
+                paper.source = "cell";
+            }
+        } else if (is.aip) {
+            paper = await makeAIPPaper(url);
+            if (paper) {
+                paper.source = "aip";
+            }
+        } else {
+            console.error({ is, url });
+            throw new Error(
+                "Could not parse paper (in `makePaper`). Unknown paper source, see above.",
+            );
         }
-    } else if (is.arxiv) {
-        paper = await makeArxivPaper(url);
-        if (paper) {
-            paper.source = "arxiv";
+    } catch (e) {
+        logError("Error in makePaper:", e);
+        if (e.message?.includes("Unknown paper source")) {
+            throw e;
         }
-        // paper.codes = await fetchCodes(paper)
-    } else if (is.neurips) {
-        paper = await makeNeuripsPaper(url);
-        if (paper) {
-            paper.source = "neurips";
-        }
-        // paper.codes = await fetchCodes(paper);
-    } else if (is.cvf) {
-        paper = await makeCVFPaper(url);
-        if (paper) {
-            paper.source = "cvf";
-        }
-    } else if (is.openreview) {
-        paper = await makeOpenReviewPaper(url);
-        if (paper) {
-            paper.source = "openreview";
-        }
-    } else if (is.biorxiv) {
-        paper = await makeBioRxivPaper(url);
-        if (paper) {
-            paper.source = "biorxiv";
-        }
-    } else if (is.pmlr) {
-        paper = await makePMLRPaper(url);
-        if (paper) {
-            paper.source = "pmlr";
-        }
-    } else if (is.acl) {
-        paper = await makeACLPaper(url);
-        if (paper) {
-            paper.source = "acl";
-        }
-    } else if (is.pnas) {
-        paper = await makePNASPaper(url);
-        if (paper) {
-            paper.source = "pnas";
-        }
-    } else if (is.nature) {
-        paper = await makeNaturePaper(url);
-        if (paper) {
-            paper.source = "nature";
-        }
-    } else if (is.acs) {
-        paper = await makeACSPaper(url);
-        if (paper) {
-            paper.source = "acs";
-        }
-    } else if (is.iop) {
-        paper = await makeIOPPaper(url);
-        if (paper) {
-            paper.source = "iop";
-        }
-    } else if (is.jmlr) {
-        paper = await makeJMLRPaper(url);
-        if (paper) {
-            paper.source = "jmlr";
-        }
-    } else if (is.pmc) {
-        paper = await makePMCPaper(url);
-        if (paper) {
-            paper.source = "pmc";
-        }
-    } else if (is.ijcai) {
-        paper = await makeIJCAIPaper(url);
-        if (paper) {
-            paper.source = "ijcai";
-        }
-    } else if (is.acm) {
-        paper = await makeACMPaper(url);
-        if (paper) {
-            paper.source = "acm";
-        }
-    } else if (is.ieee) {
-        paper = await makeIEEEPaper(url);
-        if (paper) {
-            paper.source = "ieee";
-        }
-    } else if (is.springer) {
-        paper = await makeSpringerPaper(url);
-        if (paper) {
-            paper.source = "springer";
-        }
-    } else if (is.aps) {
-        paper = await makeAPSPaper(url);
-        if (paper) {
-            paper.source = "aps";
-        }
-    } else if (is.wiley) {
-        paper = await makeWileyPaper(url);
-        if (paper) {
-            paper.source = "wiley";
-        }
-    } else if (is.sciencedirect) {
-        paper = await makeScienceDirectPaper(url);
-        if (paper) {
-            paper.source = "sciencedirect";
-        }
-    } else if (is.science) {
-        paper = await makeSciencePaper(url);
-        if (paper) {
-            paper.source = "science";
-        }
-    } else if (is.frontiers) {
-        paper = await makeFrontiersPaper(url);
-        if (paper) {
-            paper.source = "frontiers";
-        }
-    } else if (is.ihep) {
-        paper = await makeIHEPPaper(url);
-        if (paper) {
-            paper.source = "ihep";
-        }
-    } else if (is.plos) {
-        paper = await makePLOSPaper(url);
-        if (paper) {
-            paper.source = "plos";
-        }
-    } else if (is.rsc) {
-        paper = await makeRSCPaper(url);
-        if (paper) {
-            paper.source = "rsc";
-        }
-    } else if (is.mdpi) {
-        paper = await makeMDPIPaper(url);
-        if (paper) {
-            paper.source = "mdpi";
-        }
-    } else if (is.oup) {
-        paper = await makeOUPPaper(url);
-        if (paper) {
-            paper.source = "oup";
-        }
-    } else if (is.hal) {
-        paper = await makeHALPaper(url);
-        if (paper) {
-            paper.source = "hal";
-        }
-    } else if (is.chemrxiv) {
-        paper = await makeChemRxivPaper(url);
-        if (paper) {
-            paper.source = "chemrxiv";
-        }
-    } else if (is.cell) {
-        paper = await makeCellPaper(url);
-        if (paper) {
-            paper.source = "cell";
-        }
-    } else if (is.aip) {
-        paper = await makeAIPPaper(url);
-        if (paper) {
-            paper.source = "aip";
-        }
-    } else {
-        console.error({ is, url });
-        throw new Error(
-            "Could not parse paper (in `makePaper`). Unknown paper source, see above.",
-        );
+        return;
     }
 
     if (typeof paper === "undefined") {

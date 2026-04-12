@@ -4,256 +4,255 @@
 
 PaperMemory is pure JS+HTML with minimal dependencies: no framework, (almost) no external dependencies so it's easy to help :)
 
-The only external deps. are [`select2.js`](https://select2.org/) which requires `JQuery` and some of the latter here and there (but I'm working on getting rid of it, replacing it with a simple set of helper functions in `src/shared/utils/miniquery.js`).
+The only external deps are [`select2.js`](https://select2.org/) (which requires `jQuery`) -- both installed via npm.
 
-The project uses modern ES modules with Rollup for bundling to make development contributor-friendly.
-
-I advise to mainly develop for Chrome and use `scripts/release-mv2-mv3.py` to test on Firefox afterwards as the latter has a poor extension development workflow IMHO.
+The project uses modern ES modules and [WXT](https://wxt.dev/) for bundling, dev server, manifest generation, and cross-browser packaging.
 
 ## Set-up
 
-1. [Install `npm`](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm)
-2. Install dependencies: from the root of this repo `$ npm install`
-3. Start development: `$ npm run dev`
-4. Edit files!
+1. [Install `npm`](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm) (Node.js 22+ recommended)
+2. Install dependencies: `npm install`
+3. Start the dev server: `npm run dev`
+4. Load the extension in Chrome from `dist/chrome-mv3/` (see [Loading the extension](#loading-the-extension))
+5. Edit files — WXT auto-reloads!
 
-The build system uses Rollup to bundle ES modules for browser compatibility. In development mode, you get:
+## What is WXT?
 
--   Hot reloading when files change
--   Source maps for debugging
--   Unminified code for easier debugging
+[WXT](https://wxt.dev/) is a framework for building browser extensions:
 
-## Build Commands
+- **Bundling**: Uses Vite under the hood to bundle ES modules
+- **Manifest generation**: Writes `manifest.json` automatically from `wxt.config.js` (Chrome MV3 and Firefox MV2)
+- **Dev server**: Hot module reloading with `npm run dev`
+- **Zip packaging**: `npm run zip` produces ready-to-submit archives for both browsers
+
+You do **not** need to know WXT internals to contribute. The key thing to know is that WXT discovers entry points from `src/entrypoints/` and builds them into `dist/`.
+
+## Build commands
 
 ```bash
-# Chrome
-npm run dev         # Development build (one-time)
-npm run dev:watch   # Development build with file watching
-npm run build       # Production build
+npm run dev              # Dev server for Chrome (HMR, auto-reload)
+npm run dev:firefox      # Dev server for Firefox
 
-# Firefox
-npm run dev:ff      # Development build for Firefox
-npm run build:ff    # Production build for Firefox
+npm run build            # Production build for Chrome + Firefox
+npm run build:chrome     # Production build for Chrome only
+npm run build:firefox    # Production build for Firefox only
+
+npm run zip              # Build + zip for both browsers
+npm run zip:chrome       # Build + zip for Chrome only
+npm run zip:firefox      # Build + zip for Firefox only
 ```
 
-For active development, use `npm run dev:watch` which will automatically rebuild files when you save changes.
+Build output goes to `dist/chrome-mv3/` and `dist/firefox-mv2/`.
 
-### Debugging Utilities
+## Loading the extension
 
-PaperMemory includes a comprehensive debugging system that's automatically available in development mode:
+### Chrome
 
-#### Debug Bundle (`PMDebug`)
+1. Run `npm run dev` (or `npm run build:chrome`)
+2. Open `chrome://extensions/`, enable "Developer mode"
+3. Click "Load unpacked" and select the `dist/chrome-mv3/` directory
+4. The extension auto-reloads on file changes when using `npm run dev`
 
-In development builds, a global `PMDebug` object is automatically injected into all contexts (popup, content scripts, options pages, etc.) giving you access to all internal functions:
+### Firefox
 
-```javascript
-// Access utility modules
-PMDebug.data.getStorage(); // Storage operations
-PMDebug.functions.log("Debug message"); // Logging utilities
-PMDebug.miniquery.findEl({ element: "elementId" }); // DOM utilities
-PMDebug.paper.addOrUpdatePaper(); // Paper operations
-PMDebug.config.state; // Global state
+1. Run `npm run dev:firefox`
+2. Open `about:debugging#/runtime/this-firefox`
+3. Click "Load Temporary Add-on" and select any file inside `dist/firefox-mv2/`
 
-// Quick shortcuts for common functions
-PMDebug.getStorage(); // → PMDebug.data.getStorage()
-PMDebug.log(); // → PMDebug.functions.log()
-PMDebug.findEl(); // → PMDebug.miniquery.findEl()
+More info: https://extensionworkshop.com/documentation/develop/temporary-installation-in-firefox/
 
-// Discover all available functions
-PMDebug.listAllFunctions();
-```
+## Refreshing the extension
 
-#### Available Debug Modules
+When using `npm run dev`:
 
--   **`PMDebug.config`** - Global state, constants, and configuration
--   **`PMDebug.functions`** - Utility functions (logging, string parsing, etc.)
--   **`PMDebug.miniquery`** - DOM utilities (findEl, setHTML, etc.)
--   **`PMDebug.data`** - Storage, preferences, and data validation
--   **`PMDebug.paper`** - Paper operations (creation, updates, conversions)
--   **`PMDebug.bibtexParser`** - BibTeX parsing and formatting
--   **`PMDebug.sync`** - GitHub sync functionality
--   **`PMDebug.state`** - App state management and initialization
--   **`PMDebug.urls`** - URL parsing and paper ID extraction
--   **`PMDebug.files`** - Local file detection and PDF management
--   **`PMDebug.templates`** - HTML string templates (popup context only)
--   **`PMDebug.handlers`** - Event handlers (popup context only)
--   **`PMDebug.memory`** - Memory display logic (popup context only)
+- **Popup / options / fullMemory changes**: Auto-reload via HMR
+- **Background script changes**: WXT reloads the service worker automatically
+- **Content script changes**: Require refreshing the web page where the content script runs
 
-#### Common Debugging Tasks
+### Debugging utilities (`PMDebug`)
+
+A global `PMDebug` object is available in all HTML pages (popup, options, fullMemory, bibMatcher) for inspecting internal state from the browser console:
 
 ```javascript
-// Check current papers in memory
-PMDebug.config.state.papers;
-
-// Manually parse a URL
+PMDebug.config.state; // Global state (papers, prefs, etc.)
+PMDebug.config.state.papers; // All stored papers
+PMDebug.data.getStorage(); // Raw chrome.storage access
 PMDebug.urls.parseIdFromUrl("https://arxiv.org/abs/2301.12345");
-
-// Test storage operations
-await PMDebug.getStorage();
-await PMDebug.setStorage({ test: "value" });
-
-// Debug DOM elements
-PMDebug.setHTML({ element: "element-id" }, "<p>Debug content</p>");
-// Find an element based on its class *within* a memory item
-PMDebug.miniquery.findEl({
-    paperId: "Arxiv-1703\\.10593",
-    memoryItemClass: "memory-item-link",
-});
-
-// Test paper operations
 PMDebug.paper.isPaper("https://arxiv.org/abs/2301.12345");
+PMDebug.listAllFunctions(); // Discover everything available
 ```
 
-#### Implementation Details
+Available modules: `config`, `functions`, `miniquery`, `data`, `paper`, `bibtexParser`, `sync`, `state`, `urls`, `files`, `templates`, `handlers`, `memory`.
 
-The debug bundle is:
-
--   **Development-only**: Automatically built and injected only when `NODE_ENV !== "production"`
--   **Context-aware**: Available in popup, content scripts, options pages, etc.
--   **Zero production impact**: Completely absent from production builds
--   **Auto-discovery**: Use `PMDebug.listAllFunctions()` to explore available functions
-
-The debug system is implemented in `src/debug/debug.js` and configured in `rollup.config.js`.
-
-### Refreshing the extension
-
-**Chrome Extensions automatically reload** when you make changes to the source files:
-
--   **Popup changes**: Take effect immediately, no refresh needed
--   **Content script changes**: Require refreshing the extension in `chrome://extensions/` and then refreshing any web pages where you want to see the changes
-
-The `npm run dev:watch` command will automatically rebuild files when you save changes.
-
-## Loading in Firefox
-
-https://extensionworkshop.com/documentation/develop/temporary-installation-in-firefox/
+The debug system is implemented in `src/debug/debug.js` and imported by each entry point's `main.js`.
 
 ## Conventions
 
 ### File structure
 
-```tree
-├── jsconfig.json ➤➤➤ VS Code config with ES modules and path aliases (@pm, @pmu)
-├── rollup.config.js ➤➤➤ Build configuration that bundles ES modules for browsers
-├── manifest.json ➤➤➤ Extension configuration for Chrome/Firefox
-└── src  ➤➤➤ Source code (all ES modules)
-    ├── background ➤➤➤ Service worker (runs in background)
-    │   ├── background.js ➤➤➤ Main background script - handles browser APIs, sync, parsing
-
-    │   └── background.bundle.js ➤➤➤ [Generated] Bundled for browser
-    ├── content_scripts ➤➤➤ Scripts injected into web pages
-    │   ├── content_script.js ➤➤➤ Runs on paper websites - detects/parses papers automatically
-    │   ├── content_script.css ➤➤➤ Styles for notifications and UI injected into pages
-    │   └── content.bundle.js ➤➤➤ [Generated] Bundled for browser
-    ├── data ➤➤➤ JSON configuration files
-    │   ├── journal-abbreviations.json ➤➤➤ Journal name mappings for citations
-    │   ├── iso4-journals.json ➤➤➤ Standard journal abbreviations
-    │   ├── art.json ➤➤➤ Article types for parsing
-    │   └── cell.json ➤➤➤ Cell journal specific configurations
-    ├── popup ➤➤➤ Extension popup interface (main UI)
-    │   ├── css ➤➤➤ Stylesheet sources
-    │   │   ├── popup.css ➤➤➤ Main popup styling
-    │   │   ├── dark.css ➤➤➤ Dark mode theme
-    │   │   ├── options.css ➤➤➤ Settings toggles and checkboxes
-    │   │   └── select2.min.css ➤➤➤ [External] Dropdown styling library
-    │   ├── html ➤➤➤ HTML templates and components
-    │   │   ├── popup.html ➤➤➤ Main popup HTML structure
-    │   │   ├── menu.html ➤➤➤ Settings menu template
-    │   │   ├── modals/ ➤➤➤ Dialog templates (user guide, warnings, etc.)
-    │   │   └── svgs/ ➤➤➤ SVG icon components
-    │   ├── js ➤➤➤ ES modules for popup functionality
-    │   │   ├── popup.js ➤➤➤ Main entry point - initializes popup, handles paper display
-    │   │   ├── handlers.js ➤➤➤ Event handlers for buttons, keyboard shortcuts, user actions
-    │   │   ├── memory.js ➤➤➤ Memory display logic - table rendering, search, sorting
-    │   │   ├── templates.js ➤➤➤ HTML string templates for dynamic content
-    │   │   └── select2.min.js ➤➤➤ [External] Tag selection library
-    │   └── min/ ➤➤➤ [Generated] Build output
-    ├── options ➤➤➤ Advanced settings page
-    │   ├── options.js ➤➤➤ Settings page logic - preferences, data management, sync setup
-    │   ├── options.html ➤➤➤ Settings page HTML
-    │   ├── options.css ➤➤➤ Settings page styling
-    │   ├── github*.css ➤➤➤ Code syntax highlighting themes
-    │   ├── highlight.min.js ➤➤➤ [External] Code highlighting library
-    │   └── options.bundle.js ➤➤➤ [Generated] Bundled for browser
-    ├── bibMatcher ➤➤➤ BibTeX matching tool
-    │   ├── bibMatcher.js ➤➤➤ Tool to match ArXiv papers to published versions
-    │   ├── bibMatcher.html ➤➤➤ BibTeX matcher page HTML
-    │   ├── testBibs.js ➤➤➤ Sample BibTeX entries for testing
-    │   └── bibMatcher.bundle.js ➤➤➤ [Generated] Bundled for browser
-    ├── fullMemory ➤➤➤ Full-page memory view
-    │   ├── fullMemory.js ➤➤➤ Dedicated tab for browsing your paper memory
-    │   ├── fullMemory.html ➤➤➤ Full-page memory HTML
-    │   └── fullMemory.bundle.js ➤➤➤ [Generated] Bundled for browser
-    ├── debug ➤➤➤ Development debugging utilities
-    │   ├── debug.js ➤➤➤ Debug entry point - exports all utilities as PMDebug global
-    │   └── debug.bundle.js ➤➤➤ [Generated] Development-only debug bundle
-    └── shared ➤➤➤ Shared utilities and resources
-        ├── css/ ➤➤➤ Shared stylesheets (variables, utilities, loading animations)
+```
+├── wxt.config.js         ➤ WXT + Vite config (manifest, aliases, HTML include plugin)
+├── jsconfig.json         ➤ VS Code config with path aliases (@pm, @pmu)
+├── public/               ➤ Static assets copied verbatim to build output
+│   ├── theme.js          ➤ Dark mode detection (runs before modules, loaded via <script>)
+│   ├── data/             ➤ JSON data files (journals, abbreviations, art)
+│   ├── icons/            ➤ Extension icons
+│   ├── *.css             ➤ Stylesheets loaded at runtime via <link> or chrome.runtime.getURL
+│   └── highlight.min.js  ➤ Code highlighting library (options page)
+│
+└── src/
+    ├── entrypoints/              ➤ WXT entry points (only these are built into the extension)
+    │   ├── background.js         ➤ Service worker — wrapped in defineBackground()
+    │   ├── content.js            ➤ Content script — wrapped in defineContentScript()
+    │   ├── popup/                ➤ Extension popup
+    │   │   ├── index.html        ➤ Popup HTML (uses <!--=include --> for partials)
+    │   │   └── main.js           ➤ Imports jquery-setup + popup.js + debug.js
+    │   ├── options/              ➤ Advanced settings page
+    │   │   ├── index.html
+    │   │   └── main.js
+    │   ├── fullMemory/           ➤ Full-page paper memory view
+    │   │   ├── index.html
+    │   │   └── main.js
+    │   └── bibMatcher/           ➤ BibTeX matching tool
+    │       ├── index.html
+    │       └── main.js
+    │
+    ├── popup/                    ➤ Popup source code (NOT moved — shared across builds)
+    │   ├── js/
+    │   │   ├── popup.js          ➤ Main popup logic and initialization
+    │   │   ├── handlers.js       ➤ Event handlers (clicks, keyboard, forms)
+    │   │   ├── memory.js         ➤ Memory table display, search, sorting
+    │   │   └── templates.js      ➤ HTML string templates for dynamic content
+    │   └── html/
+    │       ├── menu.html         ➤ Settings menu partial
+    │       ├── modals/           ➤ Dialog partials (user guide, warnings)
+    │       └── svgs/             ➤ SVG icon partials
+    │
+    ├── background/
+    │   └── background.js         ➤ Background logic (sync, notifications, browser APIs)
+    ├── content_scripts/
+    │   ├── content_script.js     ➤ Paper detection on web pages
+    │   └── content_script.css    ➤ Injected page styles
+    ├── debug/
+    │   └── debug.js              ➤ PMDebug global — imports all modules for console access
+    ├── options/                  ➤ Options page logic
+    ├── fullMemory/               ➤ Full memory page logic
+    ├── bibMatcher/               ➤ BibTeX matcher logic
+    │
+    └── shared/                   ➤ Shared utilities and resources
         ├── js/
-        │   ├── theme.js ➤➤➤ Theme detection (runs first, before ES modules)
-        │   └── utils/ ➤➤➤ Core ES modules (the heart of PaperMemory)
-        │       ├── config.js ➤➤➤ Global state, constants, and configuration
-        │       ├── functions.js ➤➤➤ Utility functions used throughout the app
-        │       ├── miniquery.js ➤➤➤ DOM utilities (custom jQuery-like functions)
-        │       ├── data.js ➤➤➤ Data management - storage, migrations, validation
-        │       ├── paper.js ➤➤➤ Paper operations - creation, updates, URL conversions
-        │       ├── parsers.js ➤➤➤ Website parsers for different paper sources (ArXiv, Nature, etc.)
-        │       ├── state.js ➤➤➤ App state management - memory initialization, sorting
-        │       ├── sync.js ➤➤➤ GitHub sync functionality for data backup
-        │       ├── urls.js ➤➤➤ URL parsing and paper ID extraction
-        │       ├── files.js ➤➤➤ Local file detection and PDF management
-        │       ├── bibtexParser.js ➤➤➤ BibTeX parsing and formatting
-        │       ├── logTrace.js ➤➤➤ Development logging utilities
-
-        └── min/ ➤➤➤ [Generated] Shared build output
+        │   ├── jquery-setup.js   ➤ jQuery + select2 global setup (import $ from 'jquery')
+        │   └── utils/            ➤ Core modules (the heart of PaperMemory)
+        │       ├── config.js     ➤ Global state, constants, paper source definitions
+        │       ├── functions.js  ➤ Utility functions (logging, clipboard, string ops)
+        │       ├── miniquery.js  ➤ DOM utilities (findEl, setHTML, addListener)
+        │       ├── data.js       ➤ Storage, validation, data migrations
+        │       ├── paper.js      ➤ Paper CRUD, URL conversions
+        │       ├── parsers.js    ➤ Website-specific paper parsers
+        │       ├── state.js      ➤ App state initialization, sorting
+        │       ├── sync.js       ➤ GitHub Gist sync
+        │       ├── urls.js       ➤ URL parsing and paper ID extraction
+        │       ├── files.js      ➤ Local file detection
+        │       └── bibtexParser.js ➤ BibTeX parsing and formatting
+        └── css/                  ➤ Shared stylesheets (variables, loader animations)
 ```
 
-**Key Source Files for Contributors:**
+### How WXT entry points work
 
-**Core Logic** (`shared/js/utils/`):
+WXT uses a **file-based convention** in `src/entrypoints/`:
 
--   `config.js` - Global state and settings. Start here to understand data structures.
--   `functions.js` - Utility functions used everywhere. Common operations like string parsing, clipboard access.
--   `data.js` - How papers are stored, validated, and migrated between versions.
--   `parsers.js` - Add new paper sources here. Contains website-specific parsing logic.
--   `paper.js` - Paper object operations. How papers are created, updated, and linked.
+- `background.js` → background service worker
+- `content.js` → content script (injected into web pages)
+- `popup/index.html` → popup page (the `main.js` next to it is the `<script>` entry)
+- `options/index.html` → options page
+- etc.
 
-**User Interface** (`popup/js/`):
+Each HTML entry point's `main.js` is a thin wrapper that imports:
 
--   `popup.js` - Main popup logic. How the extension popup initializes and displays papers.
--   `memory.js` - Memory table functionality. Search, sorting, and display of saved papers.
--   `handlers.js` - User interactions. Button clicks, keyboard shortcuts, form handling.
+1. `@pm/shared/js/jquery-setup.js` — sets up `window.$` globally
+2. The actual page logic (e.g. `@pm/popup/js/popup.js`)
+3. `@pm/debug/debug.js` — exposes `PMDebug` to the console
+
+The background and content-script entry points (`src/entrypoints/background.js` and `src/entrypoints/content.js`) are thin wrappers around the canonical source files:
+
+- `src/background/background.js` exports `initBackground()` — the background entry point calls it inside `defineBackground()`
+- `src/content_scripts/content_script.js` exports `initContentScript()` — the content entry point calls it inside `defineContentScript()`
+
+All logic lives in those canonical files; the entry-point wrappers contain only the WXT boilerplate (`defineBackground`/`defineContentScript` with the right configuration).
+
+### Path aliases
+
+Two aliases are configured in `wxt.config.js` (for Vite/WXT) and `jsconfig.json` (for VS Code):
+
+- `@pm` → `src/` (e.g. `import "@pm/popup/js/popup.js"`)
+- `@pmu` → `src/shared/js/utils/` (e.g. `import { log } from "@pmu/functions.js"`)
+
+### HTML includes
+
+The popup HTML uses `<!--=include path -->` directives to inline partial HTML files (menu, modals, SVGs). A custom Vite plugin in `wxt.config.js` processes these at build time.
+
+### jQuery / select2
+
+jQuery and select2 are installed via npm. A single file `src/shared/js/jquery-setup.js` imports them and sets `window.$ = window.jQuery`. This file is imported once at the top of each HTML entry point's `main.js`.
+
+### Static assets (`public/`)
+
+Files in `public/` are copied as-is to the build output. Use this for:
+
+- CSS loaded dynamically via `chrome.runtime.getURL()` (e.g. `dark.css`)
+- JSON data files accessed at runtime (e.g. `data/cell.json`)
+- `theme.js` (loaded via `<script src="/theme.js">` before modules)
+
+### Key source files for contributors
+
+**Core Logic** (`src/shared/js/utils/`):
+
+- `config.js` — Global state and settings. Start here to understand data structures.
+- `functions.js` — Utility functions used everywhere.
+- `data.js` — How papers are stored, validated, and migrated between versions.
+- `parsers.js` — Add new paper sources here. Contains website-specific parsing logic.
+- `paper.js` — Paper object operations. How papers are created, updated, and linked.
+
+**User Interface** (`src/popup/js/`):
+
+- `popup.js` — Main popup logic. How the extension popup initializes and displays papers.
+- `memory.js` — Memory table functionality. Search, sorting, and display of saved papers.
+- `handlers.js` — User interactions. Button clicks, keyboard shortcuts, form handling.
 
 **Background Processing**:
 
--   `background/background.js` - Handles sync, notifications, and browser API calls.
--   `content_scripts/content_script.js` - Automatically detects papers when browsing websites.
-
-**Build System Features:**
-
--   **ES modules**: All `.js` files use modern `import`/`export` syntax
--   **Path aliases**: `@pm/*` and `@pmu/*` for clean, readable imports
--   **Automatic bundling**: Rollup generates optimized `.bundle.js` files for browsers
--   **Smart CSS processing**: Unminified CSS in development, minified in production
--   **Direct file editing**: Edit source files directly, no preprocessing required
+- `src/background/background.js` — Handles sync, notifications, and browser API calls.
+- `src/content_scripts/content_script.js` — Automatically detects papers when browsing websites.
 
 ### Prettier
 
-TODO
+Prettier is used for consistent formatting. The config lives in `.prettierrc`:
+
+- **4 spaces** for indentation (`tabWidth: 4`, `useTabs: false`)
+- **88 character** print width
+- YAML files use 2-space indentation
+
+Run the formatter with:
+
+```bash
+npx prettier --write .
+```
+
+Most editors can auto-format on save with the Prettier extension. For VS Code, install the [Prettier - Code formatter](https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode) extension.
 
 ## Adding a paper source
 
 The following functions and constants should be updated:
 
--   `config.js:global.knownPaperPages` with `source: {patterns: [array of url matches to trigger paper parsing, or boolean functions taking it as input], name: displayName}`
-    -   will be used by `paper.js:isPaper()` to determine whether `content_script.js` should parse the current page into a paper with `addOrUpdatePaper()` (or update the existing one's visits count) and `popup.js` to display the current paper
--   `parsers.js:makePaper()` to create a new entry
-    -   Typically, add a parser function in `parsers.js`
--   `state:parseIdFromUrl()`
--   `paper.js:paperToAbs()` and `paper.js:paperToPDF()` to enable to pdf<->webpage button
--   `functions.js:getDisplayId()` if necessary
--   `functions.js:isPdfUrl()` if necessary
--   `test/data/urls.json` to test that the integration works (and keeps working!)
+- `config.js:global.knownPaperPages` with `source: {patterns: [array of url matches to trigger paper parsing, or boolean functions taking it as input], name: displayName}`
+    - will be used by `paper.js:isPaper()` to determine whether `content_script.js` should parse the current page into a paper with `addOrUpdatePaper()` (or update the existing one's visits count) and `popup.js` to display the current paper
+- `parsers.js:makePaper()` to create a new entry
+    - Typically, add a parser function in `parsers.js`
+- `state:parseIdFromUrl()`
+- `paper.js:paperToAbs()` and `paper.js:paperToPDF()` to enable to pdf<->webpage button
+- `functions.js:getDisplayId()` if necessary
+- `functions.js:isPdfUrl()` if necessary
+- `test/data/urls.json` to test that the integration works (and keeps working!)
 
 ## Creating a new paper attribute
 
@@ -262,28 +261,15 @@ The following functions and constants should be updated:
 
 ## Tests
 
-Testing is WIP and relies on Puppeteer to a large extent.
-Run tests with
+Tests use Puppeteer to launch a real Chrome instance with the extension loaded. `npm test` builds the extension first (`pretest` runs `npm run build:chrome`), then runs all test suites.
 
 ```bash
-npm run test
+npm test                                 # Build + run all tests
+npm run test:file test/test-utils.js     # Run a single test file (no auto-build)
+npm run test:file test/test-menu.js test/test-popup-paper-ui.js  # Run multiple files
 ```
 
-You can adjust testing condition with `env` variables (see `tests/test-storage.js`)
-
-```bash
-headless=false onlySources=arxiv,neurips npm run test:file test/test-storage.js
-```
-
-Currently, tests **only** check that a pre-defined set of papers (`tests/data/urls.json`) are correctly parsed to memory once the browser visits a given url.
-
-You can run a single test file with:
-
-```bash
-npm run test:file test/test-utils.js
-```
-
-You can adjust testing condition with `env` variables (see `tests/test-storage.js`)
+Environment variables (see `test/test-storage.js`):
 
 ```bash
 headless=false onlySources=arxiv,neurips npm run test:file test/test-storage.js

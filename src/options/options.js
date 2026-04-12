@@ -150,7 +150,7 @@ const validateImportPaper = (p) => {
         if (!p.url || typeof p.url !== "string") {
             alert(
                 `Entry ${i} should have a "url" string field: \n\n`,
-                JSON.stringify(p)
+                JSON.stringify(p),
             );
             return;
         }
@@ -240,7 +240,7 @@ const handleParseImportJson = async (e) => {
             changeProgress(((i + 1) / papersToParse.length) * 100);
             setHTML(
                 "import-json-status",
-                `Parsing paper ${i + 1} / ${papersToParse.length} ${url}`
+                `Parsing paper ${i + 1} / ${papersToParse.length} ${url}`,
             );
 
             try {
@@ -259,7 +259,7 @@ const handleParseImportJson = async (e) => {
                     }
                     if (p.tags && Array.isArray(p.tags) && p.tags.length > 0) {
                         paper.tags = p.tags.filter(
-                            (t) => typeof t === "string" && t.length > 0
+                            (t) => typeof t === "string" && t.length > 0,
                         );
                     }
                     const exists = await storeImportedPaper(paper);
@@ -435,14 +435,14 @@ const saveNewAutoTagItem = async () => {
     if (!at.title && !at.authors) {
         autoTagsFeedback(
             "You have to set at least one of: Title RegEx or Authors RegEx",
-            false
+            false,
         );
         return;
     }
     if (!at.tags.length) {
         autoTagsFeedback(
             "You have to set at least one tag (tags are coma-separated)",
-            false
+            false,
         );
         return;
     }
@@ -454,7 +454,7 @@ const saveNewAutoTagItem = async () => {
     autoTags.push(at);
     setStorage("autoTags", autoTags, () => {
         const items = findEl({ element: "auto-tags-list" }).getElementsByClassName(
-            "auto-tags-item"
+            "auto-tags-item",
         );
         const last = [...items].last();
         last.insertAdjacentHTML("afterend", getAutoTagHTML(at));
@@ -642,7 +642,7 @@ const handleDownloadMemoryClick = () => {
         downloadTextFile(
             JSON.stringify(papers),
             `PaperMemory-data-${date}-${time}.json`,
-            "text/json"
+            "text/json",
         );
     });
 };
@@ -661,7 +661,7 @@ const handleDownloadBibtexJsonClick = () => {
         downloadTextFile(
             JSON.stringify(bibtex),
             `PaperMemory-bibtex-${date}-${time}.json`,
-            "text/json"
+            "text/json",
         );
     });
 };
@@ -686,7 +686,7 @@ const handleDownloadBibtexPlainClick = () => {
         downloadTextFile(
             bibtex,
             `PaperMemory-bibtex-${date}-${time}.bib`,
-            "text/plain"
+            "text/plain",
         );
     });
 };
@@ -694,7 +694,7 @@ const handleDownloadBibtexPlainClick = () => {
 const handleConfirmOverwrite = (papersToWrite, warning) => (e) => {
     setHTML(
         "overwriteFeedback",
-        `<div class="pm-container"><div class="sk-folding-cube"><div class="sk-cube1 sk-cube"></div><div class="sk-cube2 sk-cube"></div><div class="sk-cube4 sk-cube"></div><div class="sk-cube3 sk-cube"></div></div></div>`
+        `<div class="pm-container"><div class="sk-folding-cube"><div class="sk-cube1 sk-cube"></div><div class="sk-cube2 sk-cube"></div><div class="sk-cube4 sk-cube"></div><div class="sk-cube3 sk-cube"></div></div></div>`,
     );
     setTimeout(async () => {
         if (warning) {
@@ -713,7 +713,7 @@ const handleConfirmOverwrite = (papersToWrite, warning) => (e) => {
         await pushToRemote();
         setHTML(
             "overwriteFeedback",
-            `<h4 style="margin: 1.5rem">Memory overwritten${pushed}.</h4>`
+            `<h4 style="margin: 1.5rem">Memory overwritten${pushed}.</h4>`,
         );
         val("overwrite-arxivmemory-input", "");
     }, 700);
@@ -738,7 +738,7 @@ const handleOverwriteMemory = () => {
             showId("overwriteFeedback");
             setHTML(
                 "overwriteFeedback",
-                `<div class="pm-container"><div class="sk-folding-cube"><div class="sk-cube1 sk-cube"></div><div class="sk-cube2 sk-cube"></div><div class="sk-cube4 sk-cube"></div><div class="sk-cube3 sk-cube"></div></div></div>`
+                `<div class="pm-container"><div class="sk-folding-cube"><div class="sk-cube1 sk-cube"></div><div class="sk-cube2 sk-cube"></div><div class="sk-cube4 sk-cube"></div><div class="sk-cube3 sk-cube"></div></div></div>`,
             );
             const confirm = `<button id="confirm-overwrite">Confirm</button>`;
             const cancel = `<button id="cancel-overwrite">Cancel</button>`;
@@ -752,19 +752,19 @@ const handleOverwriteMemory = () => {
                         const nWarnings = (warning.match(/<br\/>/g) ?? []).length;
                         setHTML(
                             "overwriteFeedback",
-                            `<h5 class="errorTitle">Done with ${nWarnings} warnings. Confirm overwrite?</h5>${warning}${overwriteDiv}`
+                            `<h5 class="errorTitle">Done with ${nWarnings} warnings. Confirm overwrite?</h5>${warning}${overwriteDiv}`,
                         );
                     } else {
                         style("overwriteFeedback", "text-align", "center");
                         setHTML(
                             "overwriteFeedback",
-                            `<h5 class="mb-0 mt-2">Data seems valid. Confirm overwrite?</h5>${overwriteDiv}`
+                            `<h5 class="mb-0 mt-2">Data seems valid. Confirm overwrite?</h5>${overwriteDiv}`,
                         );
                     }
                     addListener(
                         "confirm-overwrite",
                         "click",
-                        handleConfirmOverwrite(papersToWrite, warning)
+                        handleConfirmOverwrite(papersToWrite, warning),
                     );
                     addListener("cancel-overwrite", "click", handleCancelOverwrite);
                 } else {
@@ -774,7 +774,7 @@ const handleOverwriteMemory = () => {
         } catch (error) {
             setHTML(
                 "overwriteFeedback",
-                `<br/><strong>Error:</strong><br/>${stringifyError(error)}`
+                `<br/><strong>Error:</strong><br/>${stringifyError(error)}`,
             );
         }
     };
@@ -800,7 +800,7 @@ const handleExportTagsConfirm = () => {
     let papers = state.sortedPapers.filter((p) =>
         operator === "AND"
             ? p.tags && tags.every((t) => p.tags.includes(t))
-            : p.tags && tags.some((t) => p.tags.includes(t))
+            : p.tags && tags.some((t) => p.tags.includes(t)),
     );
     if (format === "bib") {
         papers = papers.map((p) => bibtexToString(p.bibtex)).join("\n");
@@ -819,7 +819,7 @@ const handleExportTagsConfirm = () => {
                 return e;
             }),
             null,
-            2
+            2,
         );
     }
     const now = new Date();
@@ -998,7 +998,7 @@ const setupSync = async () => {
                     downloadTextFile(
                         JSON.stringify(data),
                         `PaperMemory-remote-data-backup-${date}-${time}.json`,
-                        "text/json"
+                        "text/json",
                     );
                 }
                 await updateGistFile({ file, content: state.papers, gistId });
@@ -1014,13 +1014,13 @@ const setupSync = async () => {
                         const nWarnings = (warning.match(/<br\/>/g) ?? []).length;
                         setHTML(
                             "overwriteRemoteFeedback",
-                            `<h5 class="errorTitle">Done with ${nWarnings} non-breaking warnings.</h5>${warning}<br/><br/>`
+                            `<h5 class="errorTitle">Done with ${nWarnings} non-breaking warnings.</h5>${warning}<br/><br/>`,
                         );
                     } else {
                         style("overwriteRemoteFeedback", "text-align", "center");
                         setHTML(
                             "overwriteRemoteFeedback",
-                            `<h5 class="mb-0 mt-2">Data is valid. Overwriting</h5>`
+                            `<h5 class="mb-0 mt-2">Data is valid. Overwriting</h5>`,
                         );
                     }
                     await setStorage("papers", papersToWrite);
@@ -1035,12 +1035,12 @@ const setupSync = async () => {
                 downloadTextFile(
                     JSON.stringify(data),
                     `PaperMemory-merge--remote-data-backup-${date}-${time}.json`,
-                    "text/json"
+                    "text/json",
                 );
                 downloadTextFile(
                     JSON.stringify(await getStorage("papers")),
                     `PaperMemory-merge--local-data-backup-${date}-${time}.json`,
-                    "text/json"
+                    "text/json",
                 );
                 let mergedPapers = {};
                 const remotePapers = data;
@@ -1075,13 +1075,13 @@ const setupSync = async () => {
                         const nWarnings = (warning.match(/<br\/>/g) ?? []).length;
                         setHTML(
                             "overwriteRemoteFeedback",
-                            `<h5 class="errorTitle">Done with ${nWarnings} non-breaking warnings.</h5>${warning}<br/><br/>`
+                            `<h5 class="errorTitle">Done with ${nWarnings} non-breaking warnings.</h5>${warning}<br/><br/>`,
                         );
                     } else {
                         style("overwriteRemoteFeedback", "text-align", "center");
                         setHTML(
                             "overwriteRemoteFeedback",
-                            `<h5 class="mb-0 mt-2">Data is valid. Overwriting</h5>`
+                            `<h5 class="mb-0 mt-2">Data is valid. Overwriting</h5>`,
                         );
                     }
                     await setStorage("papers", papersToWrite);
@@ -1166,7 +1166,7 @@ const toggleSync = async ({ hideAll = false } = {}) => {
 
 const makeSideBar = () => {
     const sections = queryAll(".section").filter(
-        (section) => !!section.querySelector("h2")
+        (section) => !!section.querySelector("h2"),
     );
     const lis = sections.map((section) => {
         const h2 = section.querySelector("h2");
@@ -1299,7 +1299,12 @@ const setupSidebar = async () => {
                 tocPath.setAttribute("stroke-dashoffset", "1");
                 tocPath.setAttribute(
                     "stroke-dasharray",
-                    "1, " + pathStart + ", " + (pathEnd - pathStart) + ", " + pathLength
+                    "1, " +
+                        pathStart +
+                        ", " +
+                        (pathEnd - pathStart) +
+                        ", " +
+                        pathLength,
                 );
                 tocPath.setAttribute("opacity", 1);
             }

@@ -1,0 +1,13 @@
+:root {
+    --blue: #0276ff;
+    --red: #b31b1b;
+    --lightRed: #cc5050;
+    --round: 4px;
+    --rounder: 6px;
+    --outline: grey;
+    --color: black;
+    --aColor: rgb(22, 86, 184);
+    --noteColor: rgb(45, 45, 45);
+    --dimColor: rgb(65, 64, 64);
+    --lighterBackground: rgb(236, 236, 236);
+}

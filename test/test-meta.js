@@ -66,7 +66,7 @@ describe("Meta Tests - CI Workflow Coverage", function () {
             if (!listedFiles.has(relativePath)) {
                 throw new Error(
                     `${file} is not listed in .github/workflows/test.yml. Please add it to the workflow or add '// ` +
-                        `test-meta:ignore' to the file.`
+                        `test-meta:ignore' to the file.`,
                 );
             }
         });

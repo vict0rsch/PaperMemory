@@ -123,7 +123,7 @@ const promises = Object.keys(data).map(
                         ...acc,
                         ...(issn.match(/\d{4}-\d{3}[0-9X]/g) || []),
                     ],
-                    []
+                    [],
                 );
             // remove duplicates
             issn = [...new Set(issn)];
@@ -132,7 +132,7 @@ const promises = Object.keys(data).map(
                 data[key].issn = issn;
             }
             resolve();
-        })
+        }),
 );
 
 // run all promises in parallel

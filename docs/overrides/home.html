@@ -1,9 +1,5 @@
-{#-
-This file was automatically generated - do not edit
--#}
-{% extends "main.html" %}
-{% block tabs %}
-{{ super() }}
+{#- This file was automatically generated - do not edit -#} {% extends "main.html" %} {%
+block tabs %} {{ super() }}
 <style>
     .flex-container {
         display: flex;
@@ -20,13 +16,12 @@ This file was automatically generated - do not edit
     }
 </style>
 <section class="mdx-container" id="homesection">
-    <div class="md-grid md-typeset" style="max-width: 1200px; padding: 1rem; padding-top: 4rem;">
+    <div
+        class="md-grid md-typeset"
+        style="max-width: 1200px; padding: 1rem; padding-top: 4rem"
+    >
         {{ page.content }}
     </div>
 </section>
-{% endblock %}
-{% block content %}
-{% endblock %}
-{% block footer %}
-{% include "partials/footer.html" %}
-{% endblock %}
+{% endblock %} {% block content %} {% endblock %} {% block footer %} {% include
+"partials/footer.html" %} {% endblock %}

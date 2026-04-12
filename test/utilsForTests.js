@@ -7,7 +7,7 @@ import YAML from "yaml";
 /**
  * Get the root directory of the project.
  */
-export const root = fs.existsSync("./manifest.json") ? "." : "..";
+export const root = fs.existsSync("./wxt.config.js") ? "." : "..";
 
 /**
  * Find Chrome executable path across different operating systems.
@@ -22,7 +22,7 @@ export const findChromeExecutable = () => {
             return process.env.CHROME_PATH;
         } else {
             throw new Error(
-                `Chrome executable not found at CHROME_PATH: ${process.env.CHROME_PATH}`
+                `Chrome executable not found at CHROME_PATH: ${process.env.CHROME_PATH}`,
             );
         }
     }
@@ -71,7 +71,7 @@ export const findChromeExecutable = () => {
     const pathList = possiblePaths.map((p) => `  - ${p}`).join("\n");
     throw new Error(
         `Chrome executable not found on ${platform}. Searched in:\n${pathList}\n\n` +
-            `Please install Google Chrome or Chromium, or set CHROME_PATH environment variable.`
+            `Please install Google Chrome or Chromium, or set CHROME_PATH environment variable.`,
     );
 };
 

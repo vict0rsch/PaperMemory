@@ -45,7 +45,7 @@ if (maxSources > 0 && onlySources && onlySources.length > 0) {
 
 if (singleOrder && orders.indexOf(singleOrder) === -1) {
     throw new Error(
-        `Unknown order: ${singleOrder}. Valid orders: ${orders.join(" and ")}`
+        `Unknown order: ${singleOrder}. Valid orders: ${orders.join(" and ")}`,
     );
 }
 
@@ -86,15 +86,15 @@ describe("Test paper detection and storage", function () {
         urls = Object.fromEntries(Object.entries(urls).slice(0, maxSources));
     } else if (onlySources && onlySources.length > 0) {
         urls = Object.fromEntries(
-            Object.entries(urls).filter(([source, v]) => onlySources.includes(source))
+            Object.entries(urls).filter(([source, v]) => onlySources.includes(source)),
         );
     }
 
     if (ignoreSources && ignoreSources.length > 0) {
         urls = Object.fromEntries(
             Object.entries(urls).filter(
-                ([source, v]) => ignoreSources.indexOf(source) < 0
-            )
+                ([source, v]) => ignoreSources.indexOf(source) < 0,
+            ),
         );
     }
 
@@ -105,13 +105,13 @@ describe("Test paper detection and storage", function () {
                 `\n>>> Skipping test for "${source}" because its website ` +
                     `prevents automated browsing. Remember to test manually:` +
                     `\n    ${targets[0]}` +
-                    `\n    ${targets[1]}`
+                    `\n    ${targets[1]}`,
             );
             delete urls[source];
         } else if (targets.length === 3 && targets[2].noPdf) {
             console.log(
                 `\n>>> Skipping PDF test for ${source} because its ` +
-                    `pdf page does not exist / cannot be parsed to an ID`
+                    `pdf page does not exist / cannot be parsed to an ID`,
             );
         }
     }
@@ -233,7 +233,7 @@ describe("Test paper detection and storage", function () {
 
                 it("Pdf and Abstract are matched to the same Memory item (count is 2 --or 3 to account for redirections--)", async function () {
                     const filteredSources = sources.filter(
-                        (s) => !ignoreSingleOrder(s, urls, order)
+                        (s) => !ignoreSingleOrder(s, urls, order),
                     );
                     for (const paper of Object.values(memoryPapers)) {
                         let targetMinCount = 2;
@@ -246,9 +246,9 @@ describe("Test paper detection and storage", function () {
                     expect(
                         Object.values(memoryPapers).every((item) =>
                             Object.values(item).every(
-                                (v) => typeof v !== "undefined" && v !== "undefined"
-                            )
-                        )
+                                (v) => typeof v !== "undefined" && v !== "undefined",
+                            ),
+                        ),
                     ).toBe(true);
                 });
             });
@@ -260,13 +260,13 @@ describe("Test paper detection and storage", function () {
             describe("Per source specifics", function () {
                 // execute shared tests for all sources
                 const filteredSources = sources.filter(
-                    (s) => !ignoreSingleOrder(s, urls, order)
+                    (s) => !ignoreSingleOrder(s, urls, order),
                 );
                 filteredSources.map((source) => {
                     describe(source.toLocaleUpperCase(), function () {
                         it("1 paper for source", function () {
                             const papers = Object.values(memoryPapers).filter(
-                                (p) => p.source === source
+                                (p) => p.source === source,
                             );
                             expect(papers).toBeDefined();
                             expect(papers?.length).toBe(1);
@@ -292,7 +292,7 @@ describe("Test paper detection and storage", function () {
                                         true,
                                         `${source}: code link should not be ${typeof paper?.codeLink}${
                                             paper?.codeLink
-                                        }`
+                                        }`,
                                     );
                                 });
                             }
@@ -310,25 +310,25 @@ describe("Test paper detection and storage", function () {
                                     const testVenues = additionalTest["venue"]
                                         .split(";")
                                         .map((v) =>
-                                            v.trim().toLowerCase().replace(/\s/gi, "")
+                                            v.trim().toLowerCase().replace(/\s/gi, ""),
                                         );
                                     const hasVenue = testVenues.some((v) =>
                                         paper?.venue
                                             ?.toLowerCase()
                                             .replace(/\s/gi, "")
-                                            .includes(v)
+                                            .includes(v),
                                     );
                                     if (!hasVenue) {
                                         throw new Error(
                                             `${source}: ${
                                                 paper?.venue
-                                            } does not match ${testVenues.join(", ")}`
+                                            } does not match ${testVenues.join(", ")}`,
                                         );
                                     }
                                 } else {
                                     // the venue is the same as the source
                                     expect(
-                                        paper?.venue?.toLowerCase().replace(/\s/gi, "")
+                                        paper?.venue?.toLowerCase().replace(/\s/gi, ""),
                                     ).toMatch(source.toLowerCase().replace(/\s/gi, ""));
                                 }
                             });

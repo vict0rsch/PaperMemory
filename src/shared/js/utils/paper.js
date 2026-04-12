@@ -83,7 +83,7 @@ export const isPaper = async (url, noStored = false) => {
     }
     // is the url a local file in the memory?
     is.localFile = isKnownLocalFile(url) ?? false;
-    is.stored = noStored ? false : (await findLocalFile(url)) ?? false;
+    is.stored = noStored ? false : ((await findLocalFile(url)) ?? false);
     is.parsedWebsite = state.papers[`Website_${urlToWebsiteId(url)}`] ?? false;
     return is;
 };
@@ -93,7 +93,7 @@ export const findFuzzyPaperMatch = (hashes, paper) => {
     if (hashes.hasOwnProperty(paperHash)) {
         const matches = hashes[paperHash];
         const nonPreprint = matches.find(
-            (m) => !preprintSources.some((s) => m.toLowerCase().startsWith(s))
+            (m) => !preprintSources.some((s) => m.toLowerCase().startsWith(s)),
         );
         if (nonPreprint) {
             return nonPreprint;
@@ -477,7 +477,7 @@ export const addOrUpdatePaper = async ({
     prefs,
     tab,
     store = true,
-    contentScriptCallbacks = { update: () => {}, preprints: () => {} },
+    contentScriptCallbacks = { update: () => {}, preprints: () => {}, feedback: null },
 }) => {
     // start time
     const aouStart = Date.now();
@@ -493,8 +493,8 @@ export const addOrUpdatePaper = async ({
     const paperExists = state.papers.hasOwnProperty(id);
     prefs &&
         prefs.checkFeedback &&
-        typeof feedback !== "undefined" &&
-        feedback({ loading: true });
+        contentScriptCallbacks.feedback &&
+        contentScriptCallbacks.feedback({ loading: true });
 
     if (id && paperExists && state.papers[id].author.toLowerCase() !== "anonymous") {
         // Update paper if it exists
@@ -636,7 +636,7 @@ export const addOrUpdatePaper = async ({
                     warn(
                         "Discovered '" +
                             paper.title +
-                            "' but did not store it (`store` is false)."
+                            "' but did not store it (`store` is false).",
                     );
                 }
                 log("paper: ", paper);
@@ -650,16 +650,16 @@ export const addOrUpdatePaper = async ({
                 prefs &&
                     prefs.checkFeedback &&
                     store &&
-                    typeof feedback !== "undefined" &&
-                    feedback({ text: notifText, paper });
+                    contentScriptCallbacks.feedback &&
+                    contentScriptCallbacks.feedback({ text: notifText, paper });
             } else {
                 // existing paper but new code repo
                 notifText = "Found a code repository on PapersWithCode!";
                 prefs &&
                     prefs.checkFeedback &&
                     store &&
-                    typeof feedback !== "undefined" &&
-                    feedback({ text: notifText });
+                    contentScriptCallbacks.feedback &&
+                    contentScriptCallbacks.feedback({ text: notifText });
             }
         } else {
             store && logOk("Updated '" + paper.title + "' in your Memory");
@@ -703,7 +703,7 @@ export const addOrUpdatePaper = async ({
             // record updated paper if store is true
             if (store && !state.deleted[paper.id]) state.papers[paper.id] = paper;
             await new Promise((resolve) =>
-                chrome.storage.local.set({ papers: state.papers }, resolve)
+                chrome.storage.local.set({ papers: state.papers }, resolve),
             );
         }
         // tell the content script the pre-print matching procedure has finished

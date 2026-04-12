@@ -64,13 +64,13 @@ describe("Test Github Gist Sync", async function () {
 
             pages = await asyncMap(
                 browsers,
-                async (browser) => (await browser.pages())[0]
+                async (browser) => (await browser.pages())[0],
             );
             // Go to extension url on both devices
             await asyncMap(
                 pages,
                 async (page) =>
-                    await page.goto(pmURLs.popupURL, { waitUntil: "networkidle0" })
+                    await page.goto(pmURLs.popupURL, { waitUntil: "networkidle0" }),
             );
             // Enable sync on both devices
             await asyncMap(browsers, setupSync);
@@ -87,7 +87,9 @@ describe("Test Github Gist Sync", async function () {
             await asyncMap(
                 pages,
                 async (page) =>
-                    await page.goto(pmURLs.fullMemoryURL, { waitUntil: "networkidle0" })
+                    await page.goto(pmURLs.fullMemoryURL, {
+                        waitUntil: "networkidle0",
+                    }),
             );
             await asyncMap(pages, async (page) => await page.reload());
             memories = await asyncMap(pages, getMemoryPapers);
@@ -100,16 +102,16 @@ describe("Test Github Gist Sync", async function () {
         it("Memories contain as many papers as urls", async function () {
             // get all memories
             expect(
-                Object.keys(memories[0]).filter((k) => !k.startsWith("_")).length
+                Object.keys(memories[0]).filter((k) => !k.startsWith("_")).length,
             ).toEqual(urls.length);
             expect(
-                Object.keys(memories[1]).filter((k) => !k.startsWith("_")).length
+                Object.keys(memories[1]).filter((k) => !k.startsWith("_")).length,
             ).toEqual(urls.length);
         });
         it("Memories contain the right papers", async function () {
             // get all memories
             expect(
-                Object.keys(memories[1]).filter((k) => !k.startsWith("_")).length
+                Object.keys(memories[1]).filter((k) => !k.startsWith("_")).length,
             ).toEqual(Object.keys(miniMemory).filter((k) => !k.startsWith("_")).length);
         });
 
@@ -128,13 +130,15 @@ describe("Test Github Gist Sync", async function () {
 
             pages = await asyncMap(
                 browsers,
-                async (browser) => (await browser.pages())[0]
+                async (browser) => (await browser.pages())[0],
             );
             // Go to extension url on both devices
             await asyncMap(
                 pages,
                 async (page) =>
-                    await page.goto(pmURLs.fullMemoryURL, { waitUntil: "networkidle0" })
+                    await page.goto(pmURLs.fullMemoryURL, {
+                        waitUntil: "networkidle0",
+                    }),
             );
             // Start syncing on device 1
             await asyncMap(browsers, (b) => setupSync(b, false));
@@ -146,7 +150,7 @@ describe("Test Github Gist Sync", async function () {
                         await PMDebug.data.setStorage("papers", mem);
                         await PMDebug.state.initState();
                         await PMDebug.memory.makeMemoryHTML();
-                    }, miniMemory)
+                    }, miniMemory),
             );
             // Push papers from device 0
             await pages[0].evaluate(async () => await PMDebug.sync.pushToRemote());
@@ -167,29 +171,29 @@ describe("Test Github Gist Sync", async function () {
             await pages[0].evaluate(async (id) => {
                 console.log(
                     "[test-sync] Before delete storage: ",
-                    await PMDebug.data.getStorage("papers")
+                    await PMDebug.data.getStorage("papers"),
                 );
                 console.log(
                     "[test-sync] Before delete state: ",
-                    PMDebug.config.state.papers
+                    PMDebug.config.state.papers,
                 );
                 await PMDebug.data.deletePaperInStorage(id);
                 console.log(
                     "[test-sync] After delete storage: ",
-                    await PMDebug.data.getStorage("papers")
+                    await PMDebug.data.getStorage("papers"),
                 );
                 console.log(
                     "[test-sync] After delete state: ",
-                    PMDebug.config.state.papers
+                    PMDebug.config.state.papers,
                 );
                 await PMDebug.sync.pushToRemote();
                 console.log(
                     "[test-sync] After push storage: ",
-                    await PMDebug.data.getStorage("papers")
+                    await PMDebug.data.getStorage("papers"),
                 );
                 console.log(
                     "[test-sync] After push state: ",
-                    PMDebug.config.state.papers
+                    PMDebug.config.state.papers,
                 );
             }, id);
 
@@ -201,12 +205,12 @@ describe("Test Github Gist Sync", async function () {
             await pages[1].evaluate(async (id) => {
                 console.log(
                     "[test-sync] Before pull: ",
-                    await PMDebug.data.getStorage("papers")
+                    await PMDebug.data.getStorage("papers"),
                 );
                 await PMDebug.sync.initSyncAndState();
                 console.log(
                     "[test-sync] After pull: ",
-                    await PMDebug.data.getStorage("papers")
+                    await PMDebug.data.getStorage("papers"),
                 );
             }, id);
 
@@ -220,25 +224,25 @@ describe("Test Github Gist Sync", async function () {
 
         it("Devices have the same number of papers", () => {
             expect(
-                Object.keys(memories[0]).filter((k) => !k.startsWith("_")).length
+                Object.keys(memories[0]).filter((k) => !k.startsWith("_")).length,
             ).toEqual(
-                Object.keys(memories[1]).filter((k) => !k.startsWith("_")).length
+                Object.keys(memories[1]).filter((k) => !k.startsWith("_")).length,
             );
         });
         it("Devices have 1 fewer paper than originally", () => {
             expect(
-                Object.keys(memories[0]).filter((k) => !k.startsWith("_")).length
+                Object.keys(memories[0]).filter((k) => !k.startsWith("_")).length,
             ).toEqual(urls.length - 1);
         });
         it("Memories match exactly", () => {
             expect(
                 Object.fromEntries(
-                    Object.entries(memories[0]).filter(([k]) => !k.startsWith("_"))
+                    Object.entries(memories[0]).filter(([k]) => !k.startsWith("_")),
                 ).toEqual(
                     Object.fromEntries(
-                        Object.entries(memories[1]).filter(([k]) => !k.startsWith("_"))
-                    )
-                )
+                        Object.entries(memories[1]).filter(([k]) => !k.startsWith("_")),
+                    ),
+                ),
             );
         });
 
