@@ -907,7 +907,7 @@ const tryArxivDisplay = async ({
     }
 };
 
-(async () => {
+export async function initContentScript() {
     log("Running PaperMemory's content script");
     var prefs, paper;
     var paperPromise, preprintsPromise, paperResolve, preprintsResolve;
@@ -1011,7 +1011,6 @@ const tryArxivDisplay = async ({
         }
     }
     await hideNotif();
-})();
-
-// Make feedback function globally available for use by utility modules
-window.feedback = feedback;
+    // Make feedback function globally available for use by utility modules
+    window.feedback = feedback;
+} // end initContentScript

@@ -172,7 +172,12 @@ Each HTML entry point's `main.js` is a thin wrapper that imports:
 2. The actual page logic (e.g. `@pm/popup/js/popup.js`)
 3. `@pm/debug/debug.js` — exposes `PMDebug` to the console
 
-The original source files (`src/popup/js/popup.js`, `src/background/background.js`, etc.) stay where they are. Only the entry-point wrappers live in `src/entrypoints/`.
+The background and content-script entry points (`src/entrypoints/background.js` and `src/entrypoints/content.js`) are thin wrappers around the canonical source files:
+
+- `src/background/background.js` exports `initBackground()` — the background entry point calls it inside `defineBackground()`
+- `src/content_scripts/content_script.js` exports `initContentScript()` — the content entry point calls it inside `defineContentScript()`
+
+All logic lives in those canonical files; the entry-point wrappers contain only the WXT boilerplate (`defineBackground`/`defineContentScript` with the right configuration).
 
 ### Path aliases
 
@@ -219,7 +224,19 @@ Files in `public/` are copied as-is to the build output. Use this for:
 
 ### Prettier
 
-TODO
+Prettier is used for consistent formatting. The config lives in `.prettierrc`:
+
+- **4 spaces** for indentation (`tabWidth: 4`, `useTabs: false`)
+- **88 character** print width
+- YAML files use 2-space indentation
+
+Run the formatter with:
+
+```bash
+npx prettier --write .
+```
+
+Most editors can auto-format on save with the Prettier extension. For VS Code, install the [Prettier - Code formatter](https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode) extension.
 
 ## Adding a paper source
 

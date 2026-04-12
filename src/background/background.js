@@ -30,6 +30,7 @@ import {
     getStoredFiles,
 } from "@pmu/functions.js";
 
+export function initBackground() {
 var tabStatuses = {};
 var paperTitles = {};
 
@@ -485,3 +486,4 @@ chrome.runtime.onConnect.addListener(function (port) {
         });
     }
 });
+} // end initBackground
