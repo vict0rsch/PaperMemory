@@ -81,12 +81,17 @@ export const updateAllMemoryPaperTagOptions = () => {
 };
 
 export const sampleAsciiArt = async () => {
-    const artPath = chrome.runtime.getURL("src/data/art.json");
-    const art = await fetch(artPath).then((res) => res.json());
-    const nArts = Object.keys(art).length;
-    const u = Math.floor(Math.random() * nArts);
-    const [animal, ascii] = Object.entries(art)[u];
-    return { animal, ascii };
+    try {
+        const artPath = chrome.runtime.getURL("src/data/art.json");
+        const art = await fetch(artPath).then((res) => res.json());
+        const nArts = Object.keys(art).length;
+        const u = Math.floor(Math.random() * nArts);
+        const [animal, ascii] = Object.entries(art)[u];
+        return { animal, ascii };
+    } catch (e) {
+        console.error("Error sampling ascii art:", e);
+        return { animal: "cat", ascii: " /\\_/\\\n( o.o )\n > ^ <" };
+    }
 };
 
 export const updatePopupPaperNoMemory = async (url) => {
@@ -196,8 +201,8 @@ export const copyAndConfirmMemoryItem = async ({
         context === "popup"
             ? findEl({ element: "popup-feedback-copied" })
             : context === "memory"
-            ? findEl({ paperId: id, memoryItemClass: "memory-item-feedback" })
-            : null;
+              ? findEl({ paperId: id, memoryItemClass: "memory-item-feedback" })
+              : null;
     if (!element) return;
     element.innerText = feedbackText;
     fadeIn(element);
@@ -238,7 +243,7 @@ export const focusExistingOrCreateNewURLTab = (targetURL) =>
                                 () => {
                                     chrome.tabs.update(tab.id, tabUpdateProperties);
                                     resolve();
-                                }
+                                },
                             );
                         } else {
                             chrome.tabs.update(tab.id, tabUpdateProperties);
@@ -273,7 +278,7 @@ export const saveNote = (id, note) => {
                       <span class="note-content-header">Note:</span>
                       <span class="note-content">${note}</span>
                   </div>`
-                : /*html*/ `<div class="memory-note-div memory-item-faded"></div>`
+                : /*html*/ `<div class="memory-note-div memory-item-faded"></div>`,
         );
         const textarea = findEl({ element: `popup-form-note-textarea--${id}` });
         val(textarea, note);
@@ -296,7 +301,7 @@ export const saveCodeLink = (id, codeLink) => {
         const displayLink = codeLink.replace(/^https?:\/\//, "");
         setHTML(
             findEl({ paperId: id, memoryItemClass: "memory-code-link" }),
-            displayLink
+            displayLink,
         );
         setHTML(`popup-code-link`, displayLink);
         val(findEl({ paperId: id, memoryItemClass: "form-code-input" }), codeLink);
@@ -317,7 +322,7 @@ export const saveFavoriteItem = (id, favorite) => {
                     paperId: id,
                     memoryItemClass: "memory-item-favorite",
                 }).querySelector("svg"),
-                "favorite"
+                "favorite",
             );
         } else {
             removeClass(`memory-container--${id}`, "favorite");
@@ -326,7 +331,7 @@ export const saveFavoriteItem = (id, favorite) => {
                     paperId: id,
                     memoryItemClass: "memory-item-favorite",
                 }).querySelector("svg"),
-                "favorite"
+                "favorite",
             );
         }
 
@@ -431,8 +436,8 @@ export const searchMemoryByYear = (letters) => {
     const condition = letters.includes("<")
         ? "smaller"
         : letters.includes(">")
-        ? "greater"
-        : "";
+          ? "greater"
+          : "";
     const searchYears = letters
         .replace("y:", "")
         .replace(/(<|>)/g, "")
@@ -507,7 +512,7 @@ export const updatePaperTagsHTML = (id) => {
         findEl({ paperId: id, memoryItemClass: "tag-list" }),
         state.papers[id].tags
             .map((t) => `<span class="memory-tag">${t}</span>`)
-            .join("")
+            .join(""),
     );
 };
 
@@ -556,7 +561,7 @@ export const updatePaperTags = (id, elementId) => {
             updatePaperTagsHTML(id);
             const tagEls = queryAll(
                 ".memory-tag",
-                findEl({ paperId: id, memoryItemClass: "tag-list" })
+                findEl({ paperId: id, memoryItemClass: "tag-list" }),
             );
             for (const el of tagEls) {
                 addListener(el, "click", handleTagClick);
@@ -585,7 +590,7 @@ export const displayMemoryTable = (pagination = 0) => {
     let table = [];
     for (const paper of state.papersList.slice(
         pagination * state.memoryItemsPerPage,
-        (pagination + 1) * state.memoryItemsPerPage
+        (pagination + 1) * state.memoryItemsPerPage,
     )) {
         try {
             table.push(getMemoryItemHTML(paper));

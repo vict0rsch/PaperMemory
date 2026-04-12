@@ -55,18 +55,18 @@ export const findLocalFile = async (paperOrUrl) => {
 export const matchPapersToFiles = async (papers, files) => {
     // pre-compute paper's simplified titles
     const titles = Object.fromEntries(
-        Object.values(papers).map((paper) => [paper.id, miniHash(paper.title)])
+        Object.values(papers).map((paper) => [paper.id, miniHash(paper.title)]),
     );
     // filter non-existing file handles
     files = files.filter(
         (f) =>
             f.exists &&
             f.state === "complete" &&
-            !f.filename.toLowerCase().includes("readme.txt")
+            !f.filename.toLowerCase().includes("readme.txt"),
     );
     // pre-compute file's simplified titles
     const fileTitles = Object.fromEntries(
-        files.map((f) => [f.id, miniHash(f.filename)])
+        files.map((f) => [f.id, miniHash(f.filename)]),
     );
 
     // matching object to return
@@ -88,7 +88,7 @@ export const matchPapersToFiles = async (papers, files) => {
             // This is expensive so it should be rare.
             const candidateFileTitle = fileTitles[candidate.id];
             const match = Object.entries(titles).find(([id, title]) =>
-                candidateFileTitle.includes(title)
+                candidateFileTitle.includes(title),
             );
             if (match) {
                 matches[match[0]] = candidate;
@@ -112,7 +112,7 @@ export const isKnownLocalFile = (url) => {
 
     const filePath = decodeURIComponent(url).replace("file://", "");
     const storedPaths = Object.entries(state.files).filter(
-        ([id, file]) => file.filename === filePath
+        ([id, file]) => file.filename === filePath,
     );
 
     if (storedPaths.length > 0) {

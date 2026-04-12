@@ -78,7 +78,7 @@ export const fetchCvfHTML = async (url) => {
         const { conf, year } = parseCVFUrl(url);
         paperPage = paperPage.replace(
             `/content_${conf}_${year}/`,
-            `/content_${conf.toLowerCase()}_${year}/`
+            `/content_${conf.toLowerCase()}_${year}/`,
         );
         text = await fetch(paperPage).then((response) => {
             return response.ok ? response.text() : "";
@@ -98,7 +98,7 @@ export const getOpenReviewForumJSON = (url) => {
 
 export const fetchDom = async (url) => {
     const html = await fetch(url).then((response) =>
-        response.ok ? response.text() : ""
+        response.ok ? response.text() : "",
     );
     return new DOMParser().parseFromString(html.replaceAll("\n", ""), "text/html");
 };
@@ -133,7 +133,7 @@ export const fetchBibtexToPaper = async ({ url, doi }) => {
     }
     if (doi) {
         bibtex = await fetchText(
-            `https://citation.doi.org/format?doi=${doi}&style=bibtex&lang=en-US`
+            `https://citation.doi.org/format?doi=${doi}&style=bibtex&lang=en-US`,
         );
     } else if (url) {
         bibtex = await fetchText(url);
@@ -189,8 +189,8 @@ export const extractCrossrefData = (crossrefResponse) => {
     const year = data.issued
         ? data.issued["date-parts"][0][0] + ""
         : data.published
-        ? data.published["date-parts"][0][0] + ""
-        : null;
+          ? data.published["date-parts"][0][0] + ""
+          : null;
 
     if (!year) {
         error("Cannot find year in CrossRef data", data);
@@ -216,10 +216,10 @@ export const extractCrossrefData = (crossrefResponse) => {
         data.type === "book"
             ? "book"
             : data.type === "book-chapter"
-            ? "InBook"
-            : data.type.includes("article")
-            ? "Article"
-            : "InProceedings";
+              ? "InBook"
+              : data.type.includes("article")
+                ? "Article"
+                : "InProceedings";
     let bibData = {
         entryType,
         citationKey: key,
@@ -256,7 +256,7 @@ export const extractCrossrefData = (crossrefResponse) => {
 
 export const fetchCrossRefDataForDoi = async (doi) => {
     const { data, status } = await fetchJSON(
-        `https://api.crossref.org/works/${doi}?mailto=schmidtv%40mila.quebec`
+        `https://api.crossref.org/works/${doi}?mailto=schmidtv%40mila.quebec`,
     );
     return { data: extractCrossrefData(data), status };
 };
@@ -288,7 +288,7 @@ export const getMetaContent = ({
     }
     if (all) {
         const candidate = queryAll(query, dom).map(
-            (el) => el.getAttribute("content") ?? ""
+            (el) => el.getAttribute("content") ?? "",
         );
         if (pure) return candidate;
         return candidate.map(spaceCamelCase).map(toSingleSpace);
@@ -375,7 +375,7 @@ export const extractDataFromDCMetaTags = (dom) => {
         .split(" and ")[0]
         .split(" ")
         .find(
-            (v, k) => k >= 1 && miniHash(v).length > 1 // ignore middle initials
+            (v, k) => k >= 1 && miniHash(v).length > 1, // ignore middle initials
         )}${year}${firstNonStopLowercase(title)}`.toLowerCase();
     const bibtex = bibtexToString({
         citationKey: key,
@@ -400,7 +400,7 @@ export const makeArxivPaper = async (url) => {
     });
     const doc = new DOMParser().parseFromString(
         xmlData.replaceAll("\n", ""),
-        "text/xml"
+        "text/xml",
     );
 
     const authors = queryAll("author name", doc).map((el) => el.innerHTML);
@@ -460,7 +460,7 @@ export const makeNeuripsPaper = async (url) => {
 
         title = dom.getElementsByTagName("h4")[0].innerHTML;
         const h4Authors = queryAll("h4", dom).filter(
-            (h) => h.innerText === "Authors"
+            (h) => h.innerText === "Authors",
         )[0];
 
         author = h4Authors.nextElementSibling.innerText
@@ -469,7 +469,7 @@ export const makeNeuripsPaper = async (url) => {
                 author
                     .split(" ")
                     .map((p) => p.capitalize())
-                    .join(" ")
+                    .join(" "),
             )
             .join(" and ");
         year = paragraphs[0].innerHTML.match(/\d{4}/)[0];
@@ -502,7 +502,7 @@ export const makeCVFPaper = async (url) => {
     const htmlText = await fetchCvfHTML(url);
     const dom = new DOMParser().parseFromString(
         htmlText.replaceAll("\n", ""),
-        "text/html"
+        "text/html",
     );
     const title = dom.getElementById("papertitle").innerText.trim();
     let author = dom
@@ -592,7 +592,7 @@ export const makeOpenReviewPaper = async (url) => {
             1/ Make sure you are logged in.
             2/ Alternatively, this may be due to OpenReview changing the visibility of this paper.
 
-            Try accessing this URL manually to make sure.`)
+            Try accessing this URL manually to make sure.`),
         );
         throw Error(noteJson.message);
     } else if (noteJson.status === 404 && noteJson.name === "NotFoundError") {
@@ -612,7 +612,7 @@ export const makeOpenReviewPaper = async (url) => {
         paper.content.authors?.value || ["Anonymous"]
     ).join(" and ");
     const bibtex = bibtexToString(
-        paper.content._bibtex || makeOpenReviewBibTex(paper, url)
+        paper.content._bibtex || makeOpenReviewBibTex(paper, url),
     );
     const bibObj = bibtexToObject(bibtex);
     const key = bibObj.citationKey;
@@ -661,8 +661,8 @@ export const makeOpenReviewPaper = async (url) => {
         : forum.filter(
               (r) =>
                   ["Final Decision", "Paper Decision", "Acceptance Decision"].indexOf(
-                      r?.content?.title
-                  ) > -1
+                      r?.content?.title,
+                  ) > -1,
           );
     let venue = "";
     if (candidates && candidates.length > 0) {
@@ -715,7 +715,7 @@ export const makeBioRxivPaper = async (url) => {
 
         const dom = new DOMParser().parseFromString(
             pageText.replaceAll("\n", ""),
-            "text/html"
+            "text/html",
         );
         const bibtextLink = dom.querySelector(".bibtext a").getAttribute("href");
 
@@ -755,7 +755,7 @@ export const makePMLRPaper = async (url) => {
     for (const item of items) {
         bibtex = bibtex.replace(
             item,
-            item.replace(", ", ",\n    ").replace(" = ", "=")
+            item.replace(", ", ",\n    ").replace(" = ", "="),
         );
     }
     if (bibtex.endsWith("}}")) {
@@ -769,7 +769,7 @@ export const makePMLRPaper = async (url) => {
 
     let conf = extractBibtexValue(bibtex, "booktitle").replaceAll(
         "Proceedings of the",
-        ""
+        "",
     );
     let venue = conf;
     let note = `Accepted @ ${venue} (${year})`;
@@ -811,7 +811,7 @@ export const makeACLPaper = async (url) => {
                 .split(",")
                 .map((a) => a.trim())
                 .reverse()
-                .join(" ")
+                .join(" "),
         )
         .join(" and ");
     const key = bibtexData.citationKey;
@@ -839,7 +839,7 @@ export const makePNASPaper = async (url) => {
     const title = dom.getElementsByTagName("h1")[0].innerText;
     const author = queryAll(
         ".authors span[property='author'] a:not([property='email']):not(.orcid-id)",
-        dom
+        dom,
     )
         .filter((el) => !el.getAttribute("href").includes("mailto:"))
         .map((el) => el.innerText)
@@ -895,7 +895,7 @@ export const makeNaturePaper = async (url) => {
             a.innerText
                 .replace(/(\ ?,)|&|…|\d/g, "")
                 .split(/orcid/i)[0]
-                .trim()
+                .trim(),
         )
         .filter((a) => a.length > 0)
         .join(" and ");
@@ -1037,7 +1037,7 @@ export const makeIJCAIPaper = async (url) => {
         bibtex
             .split("\n")
             .filter((line) => !/note\s+=/gi.test(line))
-            .join("\n")
+            .join("\n"),
     );
 
     const key = data.citationKey;
@@ -1120,7 +1120,7 @@ export const makeIEEEPaper = async (url) => {
         [...dom.getElementsByTagName("script")]
             .filter((s) => s.innerHTML?.includes("metadata="))[0]
             .innerHTML.split("metadata=")[1]
-            .split(/};\s*/)[0] + "}"
+            .split(/};\s*/)[0] + "}",
     );
 
     const title = metadata.title;
@@ -1156,7 +1156,7 @@ export const makeSpringerPaper = async (url) => {
     const springerType = types.find((c) => url.includes(`/${c}/`));
     if (!springerType) {
         throw new Error(
-            `Could not find Springer type for ${url} (known: ${types.join(", ")})`
+            `Could not find Springer type for ${url} (known: ${types.join(", ")})`,
         );
     }
     const doi = url.split(`/${springerType}/`)[1].split("?")[0].replace(".pdf", "");
@@ -1251,7 +1251,7 @@ export const makeWileyPaper = async (url) => {
 export const makeScienceDirectPaper = async (url) => {
     const pii = url.split("/pii/")[1].split("/")[0].split("#")[0].split("?")[0];
     const bibtex = await fetchText(
-        `https://www.sciencedirect.com/sdfe/arp/cite?pii=${pii}&format=text%2Fx-bibtex&withabstract=false`
+        `https://www.sciencedirect.com/sdfe/arp/cite?pii=${pii}&format=text%2Fx-bibtex&withabstract=false`,
     );
     const data = bibtexToObject(bibtex);
 
@@ -1301,7 +1301,7 @@ export const makeFrontiersPaper = async (url) => {
         Object.entries(bibtexToObject(bib)).map(([k, v]) => [
             k === "citationKey" || k === "entryType" ? k : k.toLowerCase(),
             v,
-        ])
+        ]),
     );
     data.author = flipAndAuthors(data.author);
     delete data.abstract;
@@ -1324,7 +1324,7 @@ export const makeIHEPPaper = async (url) => {
         const api = `https://inspirehep.net/api/literature?q=documents.key:${hash}`;
         const results = (await fetchJSON(api)).data;
         data = results.hits.hits.find(
-            (h) => !!h.metadata.documents.find((d) => d.key === hash)
+            (h) => !!h.metadata.documents.find((d) => d.key === hash),
         );
         if (!data) {
             warn("Could not find an Inspire HEP record for the url", url);
@@ -1339,11 +1339,11 @@ export const makeIHEPPaper = async (url) => {
         return;
     }
     const bibtex = await fetchText(
-        `https://inspirehep.net/api/literature/${num}?format=bibtex`
+        `https://inspirehep.net/api/literature/${num}?format=bibtex`,
     );
     if (!data) {
         ({ data } = await fetchJSON(
-            `https://inspirehep.net/api/literature/${num}?format=json`
+            `https://inspirehep.net/api/literature/${num}?format=json`,
         ));
     }
     const bibObj = bibtexToObject(bibtex);
@@ -1381,7 +1381,7 @@ export const makeRSCPaper = async (url) => {
     const type = url
         .split("/")
         .find(
-            (s) => s === "articlehtml" || s === "articlepdf" || s === "articlelanding"
+            (s) => s === "articlehtml" || s === "articlepdf" || s === "articlelanding",
         )
         .replace("article", "");
     const pdfLink =
@@ -1411,8 +1411,8 @@ export const parseAIPIdOrDOI = (url) => {
         aipId: url.includes("/article/")
             ? url.split("/article/")[1].split("/")[3]
             : url.includes("/article-split/")
-            ? url.split("/article-split/")[1].split("/")[3]
-            : url.split("/article-abstract/")[1].split("/")[3],
+              ? url.split("/article-split/")[1].split("/")[3]
+              : url.split("/article-abstract/")[1].split("/")[3],
     };
 };
 export const makeAIPPaper = async (url) => {
@@ -1440,7 +1440,7 @@ export const makeWebsitePaper = async (tab) => {
             .map((m) => [
                 m.getAttribute("property").replace("og:", ""),
                 m.getAttribute("content"),
-            ])
+            ]),
     );
 
     const author =
@@ -1488,7 +1488,7 @@ export const makeOUPPaper = async (url) => {
     url = noParamUrl(url);
     const resourceId = url.split("/").last();
     let bibtex = await fetchText(
-        `https://academic.oup.com/Citation/Download?resourceId=${resourceId}&resourceType=3&citationFormat=2`
+        `https://academic.oup.com/Citation/Download?resourceId=${resourceId}&resourceType=3&citationFormat=2`,
     );
     const paper = bibtexToObject(bibtex);
     delete paper.abstract;
@@ -1717,7 +1717,7 @@ export const tryDBLP = async (paper, toBackground) => {
         }
 
         const hits = json.result.hits.hit.sort(
-            (a, b) => parseInt(a.info.year, 10) - parseInt(b.info.year, 10)
+            (a, b) => parseInt(a.info.year, 10) - parseInt(b.info.year, 10),
         );
 
         for (const hit of hits) {
@@ -1726,7 +1726,7 @@ export const tryDBLP = async (paper, toBackground) => {
                     ?.toLowerCase()
                     .replaceAll("\n", " ")
                     .replaceAll(".", "")
-                    .replaceAll(/\s\s+/g, " ")
+                    .replaceAll(/\s\s+/g, " "),
             );
             const refTitle = paper.title
                 .toLowerCase()
@@ -1760,8 +1760,8 @@ export const trySemanticScholar = async (paper, toBackground) => {
     try {
         const { data, status } = await fetchJSON(
             `https://api.semanticscholar.org/graph/v1/paper/search?query=${encodeURI(
-                paper.title
-            )}&fields=title,venue,year,authors,externalIds,url&limit=5`
+                paper.title,
+            )}&fields=title,venue,year,authors,externalIds,url&limit=5`,
         );
         const matches = data;
 
@@ -1822,12 +1822,12 @@ export const tryUnpaywall = async (paper, toBackground) => {
         return await sendMessageToBackground({ type: "try-unpaywall", paper });
     }
     const url = `https://api.unpaywall.org/v2/search?query=${encodeURI(
-        paper.title
+        paper.title,
     )}&is_oa=true&email=papermemory+${parseInt(Math.random() * 1000)}@gmail.com`;
     const { data, status } = await fetchJSON(url);
     if (data && status === 200) {
         const match = data.results?.find(
-            (m) => miniHash(m.response.title) === miniHash(paper.title)
+            (m) => miniHash(m.response.title) === miniHash(paper.title),
         );
         if (match && match.journal_name) {
             const venue = match.journal_name;
@@ -1947,173 +1947,178 @@ export const makePaper = async (is, url, tab = false) => {
     let paper;
     let start = performance.now();
     info("Making paper...");
-    if (tab) {
-        paper = await makeWebsitePaper(tab);
-        if (paper) {
-            paper.source = "website";
+    try {
+        if (tab) {
+            paper = await makeWebsitePaper(tab);
+            if (paper) {
+                paper.source = "website";
+            }
+        } else if (is.arxiv) {
+            paper = await makeArxivPaper(url);
+            if (paper) {
+                paper.source = "arxiv";
+            }
+            // paper.codes = await fetchCodes(paper)
+        } else if (is.neurips) {
+            paper = await makeNeuripsPaper(url);
+            if (paper) {
+                paper.source = "neurips";
+            }
+            // paper.codes = await fetchCodes(paper);
+        } else if (is.cvf) {
+            paper = await makeCVFPaper(url);
+            if (paper) {
+                paper.source = "cvf";
+            }
+        } else if (is.openreview) {
+            paper = await makeOpenReviewPaper(url);
+            if (paper) {
+                paper.source = "openreview";
+            }
+        } else if (is.biorxiv) {
+            paper = await makeBioRxivPaper(url);
+            if (paper) {
+                paper.source = "biorxiv";
+            }
+        } else if (is.pmlr) {
+            paper = await makePMLRPaper(url);
+            if (paper) {
+                paper.source = "pmlr";
+            }
+        } else if (is.acl) {
+            paper = await makeACLPaper(url);
+            if (paper) {
+                paper.source = "acl";
+            }
+        } else if (is.pnas) {
+            paper = await makePNASPaper(url);
+            if (paper) {
+                paper.source = "pnas";
+            }
+        } else if (is.nature) {
+            paper = await makeNaturePaper(url);
+            if (paper) {
+                paper.source = "nature";
+            }
+        } else if (is.acs) {
+            paper = await makeACSPaper(url);
+            if (paper) {
+                paper.source = "acs";
+            }
+        } else if (is.iop) {
+            paper = await makeIOPPaper(url);
+            if (paper) {
+                paper.source = "iop";
+            }
+        } else if (is.jmlr) {
+            paper = await makeJMLRPaper(url);
+            if (paper) {
+                paper.source = "jmlr";
+            }
+        } else if (is.pmc) {
+            paper = await makePMCPaper(url);
+            if (paper) {
+                paper.source = "pmc";
+            }
+        } else if (is.ijcai) {
+            paper = await makeIJCAIPaper(url);
+            if (paper) {
+                paper.source = "ijcai";
+            }
+        } else if (is.acm) {
+            paper = await makeACMPaper(url);
+            if (paper) {
+                paper.source = "acm";
+            }
+        } else if (is.ieee) {
+            paper = await makeIEEEPaper(url);
+            if (paper) {
+                paper.source = "ieee";
+            }
+        } else if (is.springer) {
+            paper = await makeSpringerPaper(url);
+            if (paper) {
+                paper.source = "springer";
+            }
+        } else if (is.aps) {
+            paper = await makeAPSPaper(url);
+            if (paper) {
+                paper.source = "aps";
+            }
+        } else if (is.wiley) {
+            paper = await makeWileyPaper(url);
+            if (paper) {
+                paper.source = "wiley";
+            }
+        } else if (is.sciencedirect) {
+            paper = await makeScienceDirectPaper(url);
+            if (paper) {
+                paper.source = "sciencedirect";
+            }
+        } else if (is.science) {
+            paper = await makeSciencePaper(url);
+            if (paper) {
+                paper.source = "science";
+            }
+        } else if (is.frontiers) {
+            paper = await makeFrontiersPaper(url);
+            if (paper) {
+                paper.source = "frontiers";
+            }
+        } else if (is.ihep) {
+            paper = await makeIHEPPaper(url);
+            if (paper) {
+                paper.source = "ihep";
+            }
+        } else if (is.plos) {
+            paper = await makePLOSPaper(url);
+            if (paper) {
+                paper.source = "plos";
+            }
+        } else if (is.rsc) {
+            paper = await makeRSCPaper(url);
+            if (paper) {
+                paper.source = "rsc";
+            }
+        } else if (is.mdpi) {
+            paper = await makeMDPIPaper(url);
+            if (paper) {
+                paper.source = "mdpi";
+            }
+        } else if (is.oup) {
+            paper = await makeOUPPaper(url);
+            if (paper) {
+                paper.source = "oup";
+            }
+        } else if (is.hal) {
+            paper = await makeHALPaper(url);
+            if (paper) {
+                paper.source = "hal";
+            }
+        } else if (is.chemrxiv) {
+            paper = await makeChemRxivPaper(url);
+            if (paper) {
+                paper.source = "chemrxiv";
+            }
+        } else if (is.cell) {
+            paper = await makeCellPaper(url);
+            if (paper) {
+                paper.source = "cell";
+            }
+        } else if (is.aip) {
+            paper = await makeAIPPaper(url);
+            if (paper) {
+                paper.source = "aip";
+            }
+        } else {
+            console.error({ is, url });
+            throw new Error(
+                "Could not parse paper (in `makePaper`). Unknown paper source, see above.",
+            );
         }
-    } else if (is.arxiv) {
-        paper = await makeArxivPaper(url);
-        if (paper) {
-            paper.source = "arxiv";
-        }
-        // paper.codes = await fetchCodes(paper)
-    } else if (is.neurips) {
-        paper = await makeNeuripsPaper(url);
-        if (paper) {
-            paper.source = "neurips";
-        }
-        // paper.codes = await fetchCodes(paper);
-    } else if (is.cvf) {
-        paper = await makeCVFPaper(url);
-        if (paper) {
-            paper.source = "cvf";
-        }
-    } else if (is.openreview) {
-        paper = await makeOpenReviewPaper(url);
-        if (paper) {
-            paper.source = "openreview";
-        }
-    } else if (is.biorxiv) {
-        paper = await makeBioRxivPaper(url);
-        if (paper) {
-            paper.source = "biorxiv";
-        }
-    } else if (is.pmlr) {
-        paper = await makePMLRPaper(url);
-        if (paper) {
-            paper.source = "pmlr";
-        }
-    } else if (is.acl) {
-        paper = await makeACLPaper(url);
-        if (paper) {
-            paper.source = "acl";
-        }
-    } else if (is.pnas) {
-        paper = await makePNASPaper(url);
-        if (paper) {
-            paper.source = "pnas";
-        }
-    } else if (is.nature) {
-        paper = await makeNaturePaper(url);
-        if (paper) {
-            paper.source = "nature";
-        }
-    } else if (is.acs) {
-        paper = await makeACSPaper(url);
-        if (paper) {
-            paper.source = "acs";
-        }
-    } else if (is.iop) {
-        paper = await makeIOPPaper(url);
-        if (paper) {
-            paper.source = "iop";
-        }
-    } else if (is.jmlr) {
-        paper = await makeJMLRPaper(url);
-        if (paper) {
-            paper.source = "jmlr";
-        }
-    } else if (is.pmc) {
-        paper = await makePMCPaper(url);
-        if (paper) {
-            paper.source = "pmc";
-        }
-    } else if (is.ijcai) {
-        paper = await makeIJCAIPaper(url);
-        if (paper) {
-            paper.source = "ijcai";
-        }
-    } else if (is.acm) {
-        paper = await makeACMPaper(url);
-        if (paper) {
-            paper.source = "acm";
-        }
-    } else if (is.ieee) {
-        paper = await makeIEEEPaper(url);
-        if (paper) {
-            paper.source = "ieee";
-        }
-    } else if (is.springer) {
-        paper = await makeSpringerPaper(url);
-        if (paper) {
-            paper.source = "springer";
-        }
-    } else if (is.aps) {
-        paper = await makeAPSPaper(url);
-        if (paper) {
-            paper.source = "aps";
-        }
-    } else if (is.wiley) {
-        paper = await makeWileyPaper(url);
-        if (paper) {
-            paper.source = "wiley";
-        }
-    } else if (is.sciencedirect) {
-        paper = await makeScienceDirectPaper(url);
-        if (paper) {
-            paper.source = "sciencedirect";
-        }
-    } else if (is.science) {
-        paper = await makeSciencePaper(url);
-        if (paper) {
-            paper.source = "science";
-        }
-    } else if (is.frontiers) {
-        paper = await makeFrontiersPaper(url);
-        if (paper) {
-            paper.source = "frontiers";
-        }
-    } else if (is.ihep) {
-        paper = await makeIHEPPaper(url);
-        if (paper) {
-            paper.source = "ihep";
-        }
-    } else if (is.plos) {
-        paper = await makePLOSPaper(url);
-        if (paper) {
-            paper.source = "plos";
-        }
-    } else if (is.rsc) {
-        paper = await makeRSCPaper(url);
-        if (paper) {
-            paper.source = "rsc";
-        }
-    } else if (is.mdpi) {
-        paper = await makeMDPIPaper(url);
-        if (paper) {
-            paper.source = "mdpi";
-        }
-    } else if (is.oup) {
-        paper = await makeOUPPaper(url);
-        if (paper) {
-            paper.source = "oup";
-        }
-    } else if (is.hal) {
-        paper = await makeHALPaper(url);
-        if (paper) {
-            paper.source = "hal";
-        }
-    } else if (is.chemrxiv) {
-        paper = await makeChemRxivPaper(url);
-        if (paper) {
-            paper.source = "chemrxiv";
-        }
-    } else if (is.cell) {
-        paper = await makeCellPaper(url);
-        if (paper) {
-            paper.source = "cell";
-        }
-    } else if (is.aip) {
-        paper = await makeAIPPaper(url);
-        if (paper) {
-            paper.source = "aip";
-        }
-    } else {
-        console.error({ is, url });
-        throw new Error(
-            "Could not parse paper (in `makePaper`). Unknown paper source, see above."
-        );
+    } catch (e) {
+        logError("Error in makePaper:", e);
+        return;
     }
 
     if (typeof paper === "undefined") {

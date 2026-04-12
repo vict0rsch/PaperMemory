@@ -50,6 +50,8 @@
         "ora": "^5.4.1",
         "postcss": "^8.5.6",
         "puppeteer": "^24.16.0",
+        "puppeteer-extra": "^3.3.6",
+        "puppeteer-extra-plugin-stealth": "^2.11.2",
         "readline-sync": "^1.4.10",
         "rollup": "^4.45.0",
         "rollup-plugin-copy": "^3.5.0",
