@@ -128,7 +128,7 @@ export const migrateData = async (papers, manifestDataVersion, store = true) => 
                     if (pdfVersion && pdfVersion.length > 0) {
                         papers[id].pdfLink = papers[id].pdfLink.replace(
                             pdfVersion[0],
-                            ".pdf"
+                            ".pdf",
                         );
                         migrationSummaries[id].push("(m210) remove pdf version");
                     }
@@ -159,7 +159,7 @@ export const migrateData = async (papers, manifestDataVersion, store = true) => 
                 if (papers[id].source === "acs") {
                     papers[id].pdfLink = papers[id].pdfLink.replace(
                         "/doi/pdf/abs/",
-                        "/doi/pdf/"
+                        "/doi/pdf/",
                     );
                     migrationSummaries[id].push("(m502) fix acs pdfLink");
                 }
@@ -172,7 +172,7 @@ export const migrateData = async (papers, manifestDataVersion, store = true) => 
                     papers[id].note = papers[id].note
                         .replace(
                             /accepted\s*@\s*arxiv\.org.+semanticscholar\.org\]/gi,
-                            ""
+                            "",
                         )
                         .trim();
                     migrationSummaries[id].push("(m509) fix: remove arxiv as venue");
@@ -262,7 +262,7 @@ export const migrateData = async (papers, manifestDataVersion, store = true) => 
         return { papers: newPapers, success: true };
     } catch (err) {
         log(
-            `Error migrating data from version ${currentVersion} to ${manifestDataVersion}: `
+            `Error migrating data from version ${currentVersion} to ${manifestDataVersion}: `,
         );
         log(err);
 
@@ -433,8 +433,8 @@ export const getPrefs = async () => {
         prefs[m] = (legacyPrefs ?? storedPrefs).hasOwnProperty(m)
             ? (legacyPrefs ?? storedPrefs)[m]
             : prefsCheckDefaultFalse.indexOf(m) >= 0
-            ? false
-            : true;
+              ? false
+              : true;
     }
 
     if (prefs.checkOfficialRepos) {
@@ -541,8 +541,8 @@ export const validatePaper = (paper, log = true) => {
                         `No author: ${p} for paper ${paper.id}:\n${JSON.stringify(
                             paper,
                             null,
-                            2
-                        )}\nFix the json file and try again.\n`
+                            2,
+                        )}\nFix the json file and try again.\n`,
                     );
                 }
             },
@@ -659,8 +659,8 @@ export const validatePaper = (paper, log = true) => {
                         `No title: ${p} for paper ${paper.id}:\n${JSON.stringify(
                             paper,
                             null,
-                            2
-                        )}\nFix the json file and try again.\n`
+                            2,
+                        )}\nFix the json file and try again.\n`,
                     );
                 }
             },
@@ -697,7 +697,7 @@ export const validatePaper = (paper, log = true) => {
                 const defaultValue = expectedKeys[key].default(paper);
                 paper[key] = defaultValue;
                 message = `➤ Attribute "${key}" absent; will be set to '${JSON.stringify(
-                    defaultValue
+                    defaultValue,
                 )}' (${paper.id})`;
                 // stores the update message. If `log` is true, also log the message
                 warns[key].push(message);
@@ -706,7 +706,7 @@ export const validatePaper = (paper, log = true) => {
                 // There's no default function for the missing attribute.
                 // This behavior is unaccounted for: throw an error and break the validation.
                 throw new Error(
-                    `Cannot continue, paper is corrupted. Missing mandatory attribute "${key}" in ${paper.id}`
+                    `Cannot continue, paper is corrupted. Missing mandatory attribute "${key}" in ${paper.id}`,
                 );
             }
         } else {
@@ -928,7 +928,7 @@ export const updateDuplicatedUrls = (url, id, remove = false) => {
         let hashedUrls;
         if (!url) {
             hashedUrls = Object.keys(state.urlHashToId).filter(
-                (k) => state.urlHashToId[k] === id
+                (k) => state.urlHashToId[k] === id,
             );
         } else {
             hashedUrls = [miniHash(url)];

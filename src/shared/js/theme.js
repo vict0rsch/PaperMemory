@@ -21,7 +21,7 @@
         if (window.location.href.includes("options.html")) {
             var optLink = document.createElement("link");
             optLink.href = chrome.runtime.getURL(
-                "src/options/github-dark-dimmed.min.css"
+                "src/options/github-dark-dimmed.min.css",
             );
             optLink.type = "text/css";
             optLink.rel = "stylesheet";

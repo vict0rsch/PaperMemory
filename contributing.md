@@ -18,7 +18,7 @@ The project uses modern ES modules and [WXT](https://wxt.dev/) for bundling, dev
 
 ## What is WXT?
 
-[WXT](https://wxt.dev/) is a framework for building browser extensions. It replaces the previous Rollup + Python + web-ext toolchain with a single tool that handles:
+[WXT](https://wxt.dev/) is a framework for building browser extensions:
 
 - **Bundling**: Uses Vite under the hood to bundle ES modules
 - **Manifest generation**: Writes `manifest.json` automatically from `wxt.config.js` (Chrome MV3 and Firefox MV2)

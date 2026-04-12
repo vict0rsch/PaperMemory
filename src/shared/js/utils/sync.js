@@ -68,7 +68,7 @@ export const getGist = async ({ pat, store = true, patError = true } = {}) => {
         const gists = await requestWithAuth("GET /gists");
 
         let gist = gists.data?.find(
-            (gist) => gist.description === description && gist.files[filename]
+            (gist) => gist.description === description && gist.files[filename],
         );
 
         if (!gist) {

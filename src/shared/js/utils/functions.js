@@ -84,17 +84,17 @@ export const log = (...args) => {
             isInfo
                 ? "#8BB4F7; font-weight:bold;"
                 : isWarn
-                ? "#f3bd1e; font-weight:bold;"
-                : isError
-                ? "#FF4F54; font-weight:bold;"
-                : isOk
-                ? "#23F62B; font-weight:bold;"
-                : isDebug
-                ? "#BA357E; font-weight:bold;"
-                : "tan"
+                  ? "#f3bd1e; font-weight:bold;"
+                  : isError
+                    ? "#FF4F54; font-weight:bold;"
+                    : isOk
+                      ? "#23F62B; font-weight:bold;"
+                      : isDebug
+                        ? "#BA357E; font-weight:bold;"
+                        : "tan"
         }`,
         "[PM]",
-        ...args
+        ...args,
     );
 };
 
@@ -263,7 +263,7 @@ export const fallbackCopyTextToClipboard = (text) => {
     // Only available in DOM context, not in service workers
     if (typeof document === "undefined") {
         warn(
-            "fallbackCopyTextToClipboard called in service worker context - not supported"
+            "fallbackCopyTextToClipboard called in service worker context - not supported",
         );
         return;
     }
@@ -313,7 +313,7 @@ export const copyTextToClipboard = (text) => {
         },
         (err) => {
             console.error("Async: Could not copy text: ", err);
-        }
+        },
     );
 };
 
@@ -758,7 +758,7 @@ export const tablerSvg = (pathName, id, classNames) => {
                 src="${chrome.runtime.getURL(
                     state.prefs.checkDarkMode
                         ? "src/shared/hf-logo-transparent-darktheme.svg"
-                        : "src/shared/hf-logo-transparent-lighttheme.svg"
+                        : "src/shared/hf-logo-transparent-lighttheme.svg",
                 )}"
                 ${id}
                 ${classNames}
@@ -789,7 +789,7 @@ export const stringifyError = (e) => {
             line
                 .split(" ")
                 .map((word) => word.split(extId).last())
-                .join(" ")
+                .join(" "),
         )
         .join("<br/>");
 };
@@ -835,7 +835,7 @@ export const getPaperEdits = (id, isPopup) => {
         codeLink = val(
             document
                 .getElementById(`popup-form-note--${id}`)
-                .querySelector(".form-code-input")
+                .querySelector(".form-code-input"),
         );
         tags = parseTags(findEl({ element: `popup-item-tags--${id}` }));
         favorite = findEl({ element: `checkFavorite--${id}` }).checked;
@@ -936,9 +936,9 @@ export const getStoredFiles = () =>
                         (f) =>
                             f.exists &&
                             f.state === "complete" &&
-                            !f.filename.toLowerCase().includes("readme.txt")
-                    )
-                )
+                            !f.filename.toLowerCase().includes("readme.txt"),
+                    ),
+                ),
         );
     });
 
@@ -962,7 +962,7 @@ export const urlToWebsiteId = (url) => {
         url = url.split("#").slice(0, n).join("#");
     }
     return miniHash(
-        url.replace("https://", "").replace("http://", "").replace("www.", "")
+        url.replace("https://", "").replace("http://", "").replace("www.", ""),
     );
 };
 
@@ -1041,17 +1041,17 @@ export const arxivIdFromURL = (url) =>
     url.includes("scirate.com/arxiv/")
         ? url.split("scirate.com/arxiv/")[1].match(/\d+\.\d+/)[0]
         : url.match(/alphaxiv\.org\/(abs|pdf)\//)
-        ? url.split("alphaxiv.org/")[1].match(/\d+\.\d+/)[0]
-        : url.includes("ar5iv.labs.arxiv.org/html/")
-        ? url.split("ar5iv.labs.arxiv.org/html/")[1].match(/\d+\.\d+/)[0]
-        : url.includes("huggingface.co/papers/")
-        ? url.split("huggingface.co/papers/")[1].match(/\d+\.\d+/)[0]
-        : noParamUrl(url)
-              .replace("/abs/", "/pdf/")
-              .split("/pdf/")[1]
-              .replace(".pdf", "")
-              .split("v")[0]
-              .replace("/", "_");
+          ? url.split("alphaxiv.org/")[1].match(/\d+\.\d+/)[0]
+          : url.includes("ar5iv.labs.arxiv.org/html/")
+            ? url.split("ar5iv.labs.arxiv.org/html/")[1].match(/\d+\.\d+/)[0]
+            : url.includes("huggingface.co/papers/")
+              ? url.split("huggingface.co/papers/")[1].match(/\d+\.\d+/)[0]
+              : noParamUrl(url)
+                    .replace("/abs/", "/pdf/")
+                    .split("/pdf/")[1]
+                    .replace(".pdf", "")
+                    .split("v")[0]
+                    .replace("/", "_");
 
 export const getBrowserName = async () => {
     let browserName = navigator.appName;

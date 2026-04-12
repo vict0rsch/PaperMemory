@@ -666,7 +666,8 @@ export const popupMain = async (url, is, manualTrigger = false, tab = null) => {
 (async () => {
     if (
         typeof window !== "undefined" &&
-        (window.location.href.includes("popup") || window.location.href.includes("/action/")) &&
+        (window.location.href.includes("popup") ||
+            window.location.href.includes("/action/")) &&
         !window.paperMemoryPopupInitialized
     ) {
         // This is a global variable to track whether the popup has been initialized.

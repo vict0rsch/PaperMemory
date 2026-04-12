@@ -83,7 +83,7 @@ export const isPaper = async (url, noStored = false) => {
     }
     // is the url a local file in the memory?
     is.localFile = isKnownLocalFile(url) ?? false;
-    is.stored = noStored ? false : (await findLocalFile(url)) ?? false;
+    is.stored = noStored ? false : ((await findLocalFile(url)) ?? false);
     is.parsedWebsite = state.papers[`Website_${urlToWebsiteId(url)}`] ?? false;
     return is;
 };
@@ -93,7 +93,7 @@ export const findFuzzyPaperMatch = (hashes, paper) => {
     if (hashes.hasOwnProperty(paperHash)) {
         const matches = hashes[paperHash];
         const nonPreprint = matches.find(
-            (m) => !preprintSources.some((s) => m.toLowerCase().startsWith(s))
+            (m) => !preprintSources.some((s) => m.toLowerCase().startsWith(s)),
         );
         if (nonPreprint) {
             return nonPreprint;
@@ -636,7 +636,7 @@ export const addOrUpdatePaper = async ({
                     warn(
                         "Discovered '" +
                             paper.title +
-                            "' but did not store it (`store` is false)."
+                            "' but did not store it (`store` is false).",
                     );
                 }
                 log("paper: ", paper);
@@ -703,7 +703,7 @@ export const addOrUpdatePaper = async ({
             // record updated paper if store is true
             if (store && !state.deleted[paper.id]) state.papers[paper.id] = paper;
             await new Promise((resolve) =>
-                chrome.storage.local.set({ papers: state.papers }, resolve)
+                chrome.storage.local.set({ papers: state.papers }, resolve),
             );
         }
         // tell the content script the pre-print matching procedure has finished
