@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>PaperMemory Options</title>
+    <meta name="manifest.open_in_tab" content="true" />
+    <script src="/theme.js"></script>
+    <style>
+        @import url("https://fonts.googleapis.com/css2?family=Yantramanav:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;1,600&display=swap");
+        @import url("https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;500;600;700&display=swap");
+    </style>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+    <link rel="stylesheet" type="text/css" href="/vars.css">
+    <link rel="stylesheet" type="text/css" href="/loader.css">
+    <link rel="stylesheet" type="text/css" href="/select2.min.css">
+    <link rel="stylesheet" type="text/css" href="/github.min.css">
+    <link rel="stylesheet" type="text/css" href="/options-page.css">
+</head>
+
+<body>
+
+    <div id="header">
+        <div id="header-wrapper">
+            <h1>PaperMemory Options</h1>
+            <svg viewBox="0 0 24 24" class="pm-tabler-icon ml-3" id="header-icon">
+                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                <polyline points="13 3 13 10 19 10 11 21 11 14 5 14 13 3" />
+            </svg>
+        </div>
+    </div>
+    <div id="content">
+        <p style="margin-bottom: 1rem;">
+            <em>These customization options are complementary to those available in the
+                popup such as Dark Theme or
+                Notifications. You can also access your full-screen memory
+                <a target="_blank"
+                    href="chrome-extension://ehchlpggdaffcncbeopdopnndhdjelbc/src/fullMemory/fullMemory.html">here</a></em>.
+        </p>
+        <p style="margin-bottom: 3rem;">
+            <em><strong>Warning:</strong> features which alter your Memory such as publication matching, importing
+                papers or overwriting your Memory should not be triggered while you are browsing papers. This would have
+                unpredictable effects as you would concurrently write to the same database.
+            </em>
+        </p>
+
+        <div id="toc-container">
+            <nav class="toc">
+                <ul>
+                </ul>
+                <svg class="toc-marker" width="200" height="200" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke="#b31b1b" stroke-width="3" fill="transparent" stroke-dasharray="0, 0, 0, 1000"
+                        stroke-linecap="round" stroke-linejoin="round" transform="translate(-0.5, -0.5)" />
+                </svg>
+                <div id="sync-popup-feedback" style="display: none;">
+                    <div id="sync-popup-syncing" style="display: none; align-items: center; justify-content: center;">
+                        <div style="display: inline-block; margin-right: 8px">Syncing</div>
+                        <div class="pm-loader"
+                            style="width: 24px; height: 24px; border-width: 2px; display: inline-block;">
+                        </div>
+                    </div>
+                    <div id="sync-popup-synced" style="display: none; text-align: center;">
+                        <div>Synced &#9989;</div>
+                    </div>
+                    <div id="sync-popup-synced" style="display: none; text-align: center;">
+                        <div>Sync failed &#10060;</div>
+                    </div>
+                </div>
+            </nav>
+        </div>
+
+        <div class="row mb-5">
+            <!-- <h3>Table of contents</h3> -->
+            <div id="toc"></div>
+        </div>
+
+        <hr>
+
+        <div class="section">
+            <h2 id="paperswithcode-preferences">PapersWithCode preferences</h2>
+
+            <div style="display: flex; align-items: center; height:4rem">
+                <span style="width: 35%">[1] Only store <em>official</em> code repositories: </span>
+                <span style="margin-left: 1.5rem; padding-top: 3px">
+                    <input class="switch" type="checkbox" id="official-repo" name="official-repo" value="official-repo">
+                </span>
+            </div>
+            <div style="display: flex; align-items: center; height:4rem">
+                <span style="width: 35%;">[2] Preferred implementation framework:</span>
+                <span style="margin-left: 1.5rem;">
+                    <select name="framework" id="framework-select">
+                        <option value="none">No preference</option>
+                        <option value="pytorch">Pytorch</option>
+                        <option value="tf">Tensorflow</option>
+                    </select>
+                </span>
+            </div>
+
+            <h5 id="pwc-about-title">About</h5>
+            <p>If you select option [1] and PapersWithCode reports no official implementation for the paper then no
+                repository will be stored, even if there are non-official implementations. Otherwise, official
+                implementations will always be preferred.</p>
+            <p>If a framework is selected in [2] and such an implementation is available, all other implementations will
+                be ignored.</p>
+            <p>If multiple code repositories are available at this point, PaperMemory will store the one with most
+                stars.</p>
+        </div>
+
+        <hr>
+
+        <div class="section">
+            <h2 id="auto-tagging">Auto-tagging</h2>
+            <p>Provide Javascript regular expressions to automatically add tags to papers based on their titles and
+                authors. The
+                two columns represent an <code>AND</code>. Use two different entries for an <code>OR</code>.
+                Matching is <strong>not</strong> case-sensitive. An empty input matches everything, it is equivalent to
+                <code>.*</code>.
+            </p>
+
+            <p>The Authors RegEx will be matched against a string which joins authors in a BibTex fashion, <em>e.g.</em>
+                <code>Abc Def and Ghi Jkl and Mno Pqr</code>.
+            </p>
+
+            <p>For instance, to match all papers containing <code>"GAN"</code> the corresponding Title RegEx could be
+                <code>.*gan.*</code> (note this would match <em>any</em> title containing those 3 letters subsequently).
+            </p>
+
+            <div id="auto-tags-container">
+                <div id="auto-tags-headers" class="row">
+                    <div class="col-3"><strong>Title RegEx</strong></div>
+                    <div class="col-3"><strong>Authors RegEx</strong></div>
+                    <div class="col-3"><strong>Tags to use</strong> (coma-seprated)</div>
+                    <div class="col-3"><span id="auto-tags-feedback"></span></div>
+                </div>
+                <div id="auto-tags-list"></div>
+                <div id="auto-tags-new" class="row">
+                    <div class="col-3">
+                        <input type="text" id="auto-tags-new-title" />
+                    </div>
+                    <div class="col-3">
+                        <input type="text" id="auto-tags-new-authors" />
+                    </div>
+                    <div class="col-3">
+                        <input type="text" id="auto-tags-new-tags" />
+                    </div>
+                    <div class="col-3">
+                        <div class="row">
+                            <div class="col-6 d-flex justify-content-evenly" title="Save regexs & tags">
+                                <svg tabindex="0" style="stroke: #24f62a; width: 32px; height: 32px; cursor: pointer"
+                                    id="auto-tags-new-save" viewBox="0 0 24 24">
+                                    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                                    <path d="M5 12l5 5l10 -10" />
+                                </svg>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <hr>
+
+        <div class="section">
+            <h2 id="preprint-matching">Preprint matching</h2>
+
+            <p>In this section, you can manually trigger the <a
+                    href="https://github.com/vict0rsch/PaperMemory#preprints" rel="noopenner noreferrer"
+                    target="_blank">preprint
+                    matching procedure</a> to discover publications from Arxiv pre-prints and code for your papers from
+                paperswithcode.com.</p>
+
+            <p>A paper's <code>note</code> will only be updated to
+                <code>Accepted @ venue (year) -- [source]</code>
+                <strong><em>if</em></strong>&nbsp; you don't have a custom note already.
+            </p>
+
+            <p>You currently have <span id="preprints-number"></span> papers missing a publication venue.</p>
+            <button id="start-matching">Start the matching procedure</button>
+
+            <div id="matching-progress-container" style="display: none;">
+                <div class="progress-container">
+                    <div class="progress" id="manual-parsing-progress-bar"></div>
+                    <div style="padding: 8px; text-align: center;">
+                        <span id="matching-status-index"></span> / <span id="matching-status-total"></span>
+                    </div>
+                </div>
+                <div id="matching-status">
+                    <div id="matching-status-title"></div>
+                    <div>
+                        Looking for publications on <span id="matching-status-provider"></span>
+                    </div>
+                </div>
+            </div>
+
+            <div id="updates-to-confirm">
+
+            </div>
+
+        </div>
+
+
+        <hr>
+
+        <div class="section">
+            <h2 id="select-sources">Select Sources</h2>
+            <p>If you don't want to track papers from <emph>all</emph> the sources PaperMemory can handle, you can
+                disable them
+                here.
+            </p>
+            <p>Note that you can only disable per <strong>source</strong> not exact venue. For instance you cannot
+                distinguish between Nature Communications and Nature Climate Change (both <code>nature</code> venues) or
+                between CVPR and ICCV (both <code>cvf</code> venues).</p>
+            <p>Sources to parse papers from:</p>
+            <div id="select-sources-container"></div>
+        </div>
+
+        <hr>
+
+        <div class="section">
+            <h2 id="data-management">Data Management</h2>
+
+            <p>You can export your Memory as a <code>json</code> file or as a bibliography.</p>
+            <p>To perform advanced data manipulation (paper merges, batch tagging etc.) you can process the exported
+                Memory file
+                and then load it into the extension, overwriting your current data.</p>
+
+            <p>You can also share a list of papers for others in your team!</p>
+            <br>
+            <h5 id="memory-exports-title">Full Memory Exports</h5>
+
+            <div style="display: flex; align-items: center;" class="row mb-4">
+                <div class="col-6">
+                    <p class="mb-0"> &gt; Export the Memory as a BibTex <strong>bibliography</strong>: </p>
+                </div>
+                <div class="col-2">
+                    <button class="ms-2 flex-center-between code-font" id="download-bibtex-json">
+                        .json&nbsp;
+                        <svg viewBox="0 0 24 24" style="height: 18px; width: 18px; color: black; stroke: black">
+                            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                            <line x1="4" y1="20" x2="20" y2="20" />
+                            <line x1="12" y1="14" x2="12" y2="4" />
+                            <line x1="12" y1="14" x2="16" y2="10" />
+                            <line x1="12" y1="14" x2="8" y2="10" />
+                        </svg>
+                    </button>
+                </div>
+                <div class="col-2">
+                    <button class="ms-2 flex-center-between code-font" id="download-bibtex-plain">
+                        .bib&nbsp;
+                        <svg viewBox="0 0 24 24" style="height: 18px; width: 18px; color: black; stroke: black">
+                            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                            <line x1="4" y1="20" x2="20" y2="20" />
+                            <line x1="12" y1="14" x2="12" y2="4" />
+                            <line x1="12" y1="14" x2="16" y2="10" />
+                            <line x1="12" y1="14" x2="8" y2="10" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <div style="align-items: center;" class="row mb-4">
+                <div class="col-6">
+                    <p class="mb-0"> &gt; Export your full Memory <strong>data</strong>: </p>
+                </div>
+                <div class="col-2">
+                    <button class="ms-2 flex-center-between code-font" id="download-arxivmemory">
+                        .json&nbsp;
+                        <svg viewBox="0 0 24 24" style="height: 18px; width: 18px; color: black; stroke: black">
+                            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                            <line x1="4" y1="20" x2="20" y2="20" />
+                            <line x1="12" y1="14" x2="12" y2="4" />
+                            <line x1="12" y1="14" x2="16" y2="10" />
+                            <line x1="12" y1="14" x2="8" y2="10" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+
+            <div id="overwrite-container" class="row">
+                <div class="col-6" style="display: flex; align-items: center;">
+                    <p class="mb-0"> &gt; Load a <code>json</code> memory file (this will <strong
+                            style="text-decoration: underline;">overwrite</strong>
+                        your
+                        Memory): </p>
+                </div>
+                <div class="col-2">
+                    <label id="file-upload-label" for="overwrite-arxivmemory-input"
+                        class="ms-2 file-upload-label">Select
+                        file</label><input type="file" id="overwrite-arxivmemory-input" style="display: none;"></input>
+                </div>
+                <div class="col-2">
+                    <button id="overwrite-arxivmemory-button" disabled class="ms-2 flex-center-between code-font">
+                        .json&nbsp;
+                        <svg viewBox="0 0 24 24" style="height: 18px; width: 18px; color: black; stroke: black">
+                            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                            <path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2 -2v-2" />
+                            <polyline points="7 9 12 4 17 9" />
+                            <line x1="12" y1="4" x2="12" y2="16" />
+                        </svg>
+                    </button>
+                </div>
+                <div class="col-6"></div>
+                <div class="col-6 mt-2"><span id="overwrite-file-name"></span></div>
+
+                <div style="display: none; margin: auto; margin-top: 1rem" id="overwriteFeedback" class="col-11"></div>
+            </div>
+
+            <br>
+            <h5 id="memory-export-tags-title">Export by tags</h5>
+
+            <p>Select papers to export by providing a list of tags. If you select the <code>AND</code> operator, papers
+                will be required to have all those tags. If you select the <code>OR</code> operator, papers
+                will be required to have at least one of those tags.</p>
+
+            <p>You can export to <code>.bib</code> for bibliographies, or to <code>.json</code>. In the latter case you
+                can choose to either just export URLs, or include <code>title</code>, <code>codeLink</code> and
+                <code>tags</code> fields (in
+                order to match the <a href="#import-papers">import format</a>, and <code>title</code> is just for the
+                sake of human
+                readability)
+            </p>
+
+            <div class="row align-items-center mt-4">
+                <div style="font-size: 0.8rem;" class="col-5 d-flex justify-content-evenly">
+                    <select class="" id="export-tags-select" multiple="multiple">
+                    </select>
+                </div>
+                <div class="col-2 d-flex justify-content-evenly">
+                    <select name="export-tags-operator" id="export-tags-operator">
+                        <option selected value="OR">OR</option>
+                        <option value="AND">AND</option>
+                    </select>
+                </div>
+                <div class="col-3 d-flex justify-content-evenly align-items-center">
+                    <label for="export-tags-format">Format:&nbsp;&nbsp;</label>
+                    <select name="export-tags-format" id="export-tags-format">
+                        <option selected value="json">.json</option>
+                        <option value="json-urls">.json (urls only)</option>
+                        <option value="bib">.bib</option>
+                    </select>
+                </div>
+                <div class="col-2 d-flex justify-content-evenly">
+                    <button id="export-tags-confirm">Export!</button>
+                </div>
+            </div>
+
+            <br>
+            <br>
+
+            <h5 id="import-papers">Import papers</h5>
+
+            <p>PaperMemory lets you add papers from a list of URLs in the form of a <code>.json</code> file.
+            </p>
+
+            <p>The file must be structured as follows: a list of entries where each entry is either a
+                <code>string</code> pointing to a paper's <code>url</code> (PDF or abstract) or an
+                <code>object</code> with a mandatory <code>"url": string</code> field and <em>optionally</em> :
+            <ul>
+                <li>a
+                    <code>"codeLink": string</code> field pointing a to code repository
+                </li>
+                <li>a
+                    <code>"tags": Array&lt;string&gt;</code> field with tags.
+                </li>
+            </ul>
+            </p>
+
+            <p><strong><em>Note&nbsp;&nbsp;&nbsp;</em></strong>&nbsp;: all URLs must come from sources known to
+                PaperMemory
+            </p>
+            <p><strong><em>Note 2</em></strong>&nbsp;: If you have enabled online synchronization through Github Gists,
+                be aware that synchronization will only happen after <em>all</em> imported papers have been parsed.</p>
+
+            <p>Example valid <code>.json</code> file:</p>
+            <code style="display: block; white-space: pre-wrap; padding: 16px" class="language-json trim-code">
+                [
+                    "https://arxiv.org/pdf/1901.06500.pdf",
+                    "https://arxiv.org/abs/2110.02871",
+                    {
+                        "url": "https://arxiv.org/abs/1811.12833",
+                        "codeLink": "https://github.com/valeoai/ADVENT"
+                    },
+                    {
+                        "url": "https://openreview.net/forum?id=xQUe1pOKPam",
+                        "tags": ["graphs", "3d", "molecules"],
+                        "codeLink": "https://github.com/chao1224/graphmvp"
+                    }
+                ]
+            </code>
+
+            <div class="row mt-4">
+                <div class="col-3">
+                    <label id="import-json-label" for="import-json-papers-input" class="ms-2 file-upload-label">
+                        Select file
+                    </label>
+                    <input type="file" id="import-json-papers-input" style="display: none;"></input>
+                </div>
+                <div class="col-3">
+                    <button id="import-json-papers-button" disabled class="ms-2 flex-center-between code-font">
+                        .json&nbsp;
+                        <svg viewBox="0 0 24 24" style="height: 18px; width: 18px; color: black; stroke: black">
+                            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
+                            <path d="M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2 -2v-2" />
+                            <polyline points="7 9 12 4 17 9" />
+                            <line x1="12" y1="4" x2="12" y2="16" />
+                        </svg>
+                    </button>
+                </div>
+                <div class="col-6" id="import-json-label-filename">
+
+                </div>
+
+                <div id="import-json-status-container" style="display: none; padding: 32px; align-items: center;">
+
+
+                    <div class="progress-container" style="margin: 0;">
+                        <div class="progress" id="import-json-progress-bar"></div>
+                    </div>
+                    <div id="import-json-status" style="display: flex; padding-left: 16px;">
+                    </div>
+
+                </div>
+                <div>
+                    <ul id="json-import-feedback" style="padding: 0px 32px; list-style-type: none;"></ul>
+                </div>
+
+            </div>
+
+        </div>
+
+        <hr>
+
+        <div class="section">
+            <h2 id="online-synchronization">Online synchronization</h2>
+
+            <h4 id="sync-how-it-works">How it works</h4>
+
+            <ul>
+                <li>Your Memory data gets written to a <code>.json</code> file as a gist on your Github account (<a
+                        href="https://docs.github.com/en/get-started/writing-on-github/editing-and-sharing-content-with-gists/creating-gists#about-gists"
+                        target="_blank" rel="noopener noreferrer">read about
+                        gists</a>)</li>
+                <li>Although it is non-discoverable, your gist data is still accessible to someone you'd give the link
+                    to</li>
+                <li>The synchronization happens in 2 stages:
+                    <ul>
+                        <li><em>Push</em>&nbsp;: when you close the Popup or when a paper gets added to the memory, the
+                            remote gist
+                            gets overwritten</li>
+                        <li><em>Pull</em>&nbsp;&nbsp;&nbsp;: when you open the popup or before a paper gets added, the
+                            remote
+                            gist
+                            is
+                            downloaded and overwrites your local Memory</li>
+                    </ul>
+                </li>
+                <li>This is all very alpha!</li>
+            </ul>
+
+            <p>Syncing is meant for <em>sequential</em> use across multiple devices.</p>
+
+            <p>Syncing does <strong>NOT</strong> turn PaperMemory into a multi-user tool: in its current state,
+                PaperMemory will NOT handle
+                conflicts or concurrent writes
+                to the remote data. Any conflict will result in potential loss of data.</p>
+
+            <h4 id="sync-syncing-state-title">Syncing</h4>
+
+            <p>PaperMemory relies on Github's <em>Personal Access Tokens</em> which you can easily generate from your
+                Github
+                account. Make sure
+            <ol>
+                <li>It has no expiration date</li>
+                <li>The <code>gist</code> scope is selected</li>
+            </ol>
+            You can revoke the token later at any time. Click <a
+                href="https://github.com/settings/tokens/new?scopes=gist" target="_blank"
+                rel="noopener noreferrer">here</a> to generate a new token.
+            </p>
+
+            <div>
+                <label for="pat-input">Github Personal Access Token:</label>
+                <input name="pat-input" id="pat-input" type="text"
+                    placeholder="ghp_0IurqH9T1wj0E1E3YuroyvykuYI17Rl5hdN9" />
+                <input id="save-pat" type="button" value="Save">
+                <br />
+                <div><small>Note: your token is saved locally and does not leave your computer.</small></div>
+                <div>
+                    <div class="pm-loader" id="pat-loader" style="display: none;"></div>
+                    <p id="pat-feedback">
+                    </p>
+                </div>
+                <div id="start-sync" class="row" style="display: none;">
+                    <h5>Start syncing your data to Github?</h5>
+                    <p>
+                        Your data sill be stored as a Gist on your personal github account. Do <strong>not</strong>
+                        edit
+                        that file manually or you may corrupt your whole data.
+                    </p>
+                    <p>In case anything goes wrong, we'll still download a backup locally</p>
+                    <p><input id="start-gh-sync" type="button" value="Start Github synchronization" /></p>
+
+                    <div class="pm-loader" id="sync-loader" style="display: none;"></div>
+
+                    <div id="overwriteRemoteFeedback">
+                    </div>
+
+                </div>
+                <div id="stop-sync" class="row" style="display: none;">
+                    <h5>STOP syncing your data to Github?</h5>
+                    <p>
+                        The Gist will not be deleted, but changes to your Memory will not be synced anymore.
+                    </p>
+                    <p><input id="stop-gh-sync" type="button" value="Stop Github synchronization" /></p>
+
+                </div>
+            </div>
+        </div>
+
+        <hr>
+
+        <div class="section" id="footer">
+
+            <p style="color: gray;"><em>If you like PaperMemory please consider sharing, starring on Github and rating
+                    on the Chrome/Firefox
+                    webstores</em></p>
+
+            <div class="flex-center-evenly">
+                <a href="https://github.com/vict0rsch">Author</a>
+                <a href="https://github.com/vict0rsch/PaperMemory">Code</a>
+                <a href="https://github.com/vict0rsch/PaperMemory/issues">Issues</a>
+                <a href="https://chrome.google.com/webstore/detail/arxivtools/hmebhknlgddhfbbdhgplnillngljgmdi">
+                    Chrome Webstore
+                </a>
+                <a href="https://addons.mozilla.org/en-US/firefox/addon/paper-memory/">
+                    Firefox Add-ons
+                </a>
+            </div>
+        </div>
+
+        <div id="modal-wrapper" style="display: none;">
+            <div id="modal-contents">
+                <span id="close-modal">&times;</span>
+                <div id="modal-sync-strategy-content" class="modal-content-div">
+                    <h3>Syncronization conflict</h3>
+
+                    <p>You seem to already have a synced Memory. What do you want to do?</p>
+                    <ol class="mb-4">
+                        <li>Overwrite your LOCAL data with the REMOTE data</li>
+                        <li>Overwrite your REMOTE data with the LOCAL data</li>
+                        <li>Merge both data sources into the union of all papers</li>
+                        <li>Abort this procedure.</li>
+                    </ol>
+
+                    <p class="mt-4 mb-4"><strong><em>Note&nbsp;:</em></strong>&nbsp; All overwritten data will be saved
+                        to
+                        your <code>Downloads/</code> folder in case anything goes wrong.</p>
+
+                    <div class="row d-flex justify-content-evenly align-items-center pt-4">
+                        <div class="col-3 d-flex justify-content-center align-items-center">
+                            <button id="modal-sync-local-remote" class="modal-sync-strategy-choice">
+                                1. Overwrite local with remote
+                            </button>
+                        </div>
+                        <div class="col-3 d-flex justify-content-center align-items-center">
+                            <button id="modal-sync-remote-local" class="modal-sync-strategy-choice">
+                                2. Overwrite remote with local
+                            </button>
+                        </div>
+                        <div class="col-3 d-flex justify-content-center align-items-center">
+                            <button id="modal-sync-merge" class="modal-sync-strategy-choice">
+                                3. Merge both data sources
+                            </button>
+                        </div>
+                        <div class="col-6 d-flex justify-content-center align-items-center mt-4">
+                            <button id="modal-sync-cancel" class="modal-sync-strategy-choice">
+                                Cancel synchronization
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="modal-sync-warning-content" class="modal-content-div">
+                    <p>You are about to enable Syncing across devices with Github Gists.</p>
+
+                    <p>This popup is simply to make sure everything is clear on what will happen</p>
+
+                    <p>In particular, make sure you have read and understood the <a
+                            href="chrome-extension://ehchlpggdaffcncbeopdopnndhdjelbc/src/options/options.html#sync-how-it-works"
+                            id="modal-sync-warning-description">description
+                            of the feature</a> before
+                        continuing.</p>
+
+                    <p>Additionally:
+                    <ul>
+                        <li>Syncronization typically takes approximately 2-3 seconds to <em>Pull</em> or to
+                            <em>Push</em>
+                            the data.
+                        </li>
+                        <li>Therefore, if you modify your memory (add tags, notes, delete a paper) from the popup and
+                            then close it, your modifications will be lost so you have to make sure the app is done
+                            syncing before leaving the popup. </li>
+                        <li>In most cases, the above is not critical. But it may explain why you feel like some of your
+                            actions are not recored or overwritten.</li>
+                    </ul>
+                    </p>
+                    <p>In general, you can consider that PaperMemory expects around <strong>5-10 seconds between devices
+                        </strong> to work
+                        properly.</p>
+                    <br>
+                    <br>
+                    <div class="row d-flex justify-content-evenly align-items-center">
+                        <button class="col-7 mb-4" id="modal-sync-warning-cancel">Cancel Synchronization.</button>
+                        <button class="col-7 mb-4" id="modal-sync-warning-continue">Ok, let's do this!</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script src="/highlight.min.js"></script>
+    <script type="module" src="./main.js"></script>
+</body>
+
+</html>

@@ -116,7 +116,7 @@ export const initState = async ({ papers, isContentScript, print = true } = {}) 
     }
 
     try {
-        const cellPath = chrome.runtime.getURL("src/data/cell.json");
+        const cellPath = chrome.runtime.getURL("data/cell.json");
         state.cellJournalData = await fetch(cellPath).then((res) => res.json());
     } catch (e) {
         state.cellJournalData = {};
@@ -247,9 +247,9 @@ export const readJournalAbbreviations = async () => {
     if (Object.keys(journalAbbreviations).length > 0) {
         return;
     }
-    const iso4Path = chrome.runtime.getURL("src/data/iso4-journals.json");
+    const iso4Path = chrome.runtime.getURL("data/iso4-journals.json");
     const iso4 = await fetch(iso4Path).then((res) => res.json());
-    const abbrPath = chrome.runtime.getURL("src/data/journal-abbreviations.json");
+    const abbrPath = chrome.runtime.getURL("data/journal-abbreviations.json");
     const abbr = await fetch(abbrPath).then((res) => res.json());
     const newAbbreviations = Object.fromEntries(
         [...Object.entries(iso4), ...Object.entries(abbr)].map(([k, v]) => [

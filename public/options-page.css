@@ -1,0 +1,626 @@
+/*
+---------------------
+-----  Globals  -----
+---------------------
+*/
+:root {
+    --maxWidth: 1000px;
+    --color: unset;
+}
+body {
+    margin: 0;
+    font-family: "Yantramanav";
+}
+
+svg {
+    stroke-width: 1.15;
+    stroke: #7c7f8b;
+    fill: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+code {
+    font-family: "Fira Code", monospace !important;
+    color: inherit !important;
+    padding: 1px 4px;
+    vertical-align: text-top;
+    border-radius: var(--round);
+    background-color: rgb(238, 238, 238);
+}
+
+.pm-tabler-icon {
+    height: 32px;
+    width: 32px;
+    color: var(--red);
+    stroke-width: 1px;
+}
+
+h2,
+h3,
+h4,
+h5,
+h6 {
+    padding-top: 1.5rem;
+}
+
+/*
+--------------------
+-----  Header  -----
+--------------------
+*/
+#header {
+    background-color: var(--red);
+    padding: 12px;
+    color: white;
+    display: flex;
+    justify-content: start;
+    align-items: center;
+    border-radius: 0 0 75% 0/50%;
+    box-shadow: 14px 30px 122px -30px rgba(0, 0, 0, 0.75);
+}
+#header-wrapper {
+    max-width: var(--maxWidth);
+    margin: auto;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+#header-wrapper h1 {
+    font-weight: 300;
+}
+#header-icon {
+    stroke: white;
+    margin-left: 1rem;
+}
+
+#toc {
+    text-align: center;
+    max-width: 75%;
+    margin: auto;
+    margin-top: 2rem;
+    font-size: 1.2rem;
+}
+
+.toc-item {
+    display: inline-block;
+}
+
+/*
+---------------------
+-----  Content  -----
+---------------------
+*/
+#content {
+    max-width: var(--maxWidth);
+    margin: auto;
+    padding: 32px;
+}
+
+hr {
+    border: none;
+    border-top: 1px solid var(--lighterColor);
+    margin: 4rem;
+}
+
+textarea {
+    border-radius: var(--round);
+    border: 1px solid #aaaaaa;
+    font-family: "Yantramanav";
+    padding: 6px;
+}
+
+button,
+.file-upload-label {
+    border: 1px solid var(--red);
+    border-radius: var(--rounder);
+    padding: 4px 6px;
+    background-color: white;
+    transition: all ease 200ms;
+    cursor: pointer;
+}
+button:disabled,
+.file-upload-label:disabled {
+    cursor: not-allowed;
+    pointer-events: none;
+    border-color: #e7a9a9;
+}
+
+button:hover,
+.file-upload-label:hover {
+    border-color: var(--red);
+    background-color: rgb(253, 235, 235);
+}
+
+input {
+    border-radius: var(--round);
+    border: 1px solid #aaa;
+    margin-top: 8px;
+    line-height: 1.1rem;
+    padding: 6px;
+    margin-bottom: 4px;
+}
+
+/*
+-----------------
+-----  PWC  -----
+-----------------
+*/
+
+#framework-select,
+#export-tags-format,
+#export-tags-operator {
+    border-radius: var(--round);
+    padding: 6px 12px;
+    background-color: var(--color);
+}
+
+/*
+-----------------------
+-----  Auto Tags  -----
+-----------------------
+*/
+
+#auto-tags-headers {
+    margin-bottom: 1rem;
+}
+
+#auto-tags-container svg {
+    stroke-width: 2;
+}
+
+.auto-tags-item {
+    margin-bottom: 0.5rem;
+}
+
+/*
+-------------------------------
+-----  Preprint matching  -----
+-------------------------------
+*/
+
+.progress-container {
+    margin: 30px;
+    margin-top: 0;
+    height: 0.8rem;
+    width: 40%;
+    border-radius: 0.4rem;
+    background: #000;
+}
+
+.progress-container .progress {
+    height: 100%;
+    width: 0;
+    border-radius: 0.4rem;
+    background: #ff4754;
+    transition: width 0.4s ease;
+}
+
+#matching-progress-container {
+    display: flex;
+    justify-content: space-evenly;
+    align-items: center;
+    width: 100%;
+    padding-top: 24px;
+}
+
+#matching-status-title,
+#import-json-status-title {
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+    display: inline-block;
+    max-width: 100%;
+}
+
+#matching-status {
+    width: 60%;
+    min-width: 60%;
+    max-width: 60%;
+}
+
+.paper-update-item {
+    width: calc(100% - 2rem);
+    border: 1px solid;
+    border-radius: var(--rounder);
+    padding: 2rem;
+    margin-left: 2rem;
+    margin-bottom: 1rem;
+}
+
+/*
+-----------------------------------
+-----  Custom title function  -----
+-----------------------------------
+*/
+
+#another-paper {
+    font-size: 0.8rem;
+    color: rgb(36, 119, 197);
+    text-decoration: underline;
+    cursor: pointer;
+    margin-left: 0.5rem;
+}
+
+/*
+-----------------------------
+-----  Data Management  -----
+-----------------------------
+*/
+
+.flex-center-between {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+#overwrite-file-name {
+    max-width: 200px;
+    padding: 2px 8px;
+    word-break: break-all;
+}
+
+#overwriteFeedback {
+    margin-top: 1rem;
+    border: 1px solid grey;
+    border-radius: var(--round);
+    padding: 1.5rem 2rem;
+    font-size: 0.9rem;
+    overflow: scroll;
+    font-family: "Fira Code", monospace;
+}
+
+#overwrite-buttons {
+    flex-direction: column;
+}
+
+/*
+-------------------------
+-----  Set Sources  -----
+-------------------------
+*/
+.source-container {
+    display: inline-block;
+}
+.source-container:not(:last-child) {
+    min-width: 33%;
+}
+.source-wrapper {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+}
+
+/*
+--------------------
+-----  Footer  -----
+--------------------
+*/
+
+#footer {
+    border-top: 1px solid gray;
+    padding-top: 4rem;
+    margin-top: 4rem;
+}
+
+.flex-center-evenly {
+    display: flex;
+    align-items: center;
+    justify-content: space-evenly;
+}
+
+#footer a {
+    font-weight: 800;
+}
+
+/*
+------------------------
+-----  CheckBoxes  -----
+------------------------
+*/
+
+@supports (-webkit-appearance: none) or (-moz-appearance: none) {
+    input[type="checkbox"] {
+        --active: rgb(201, 19, 19, 0.65);
+        --active-inner: #fff;
+        --focus: 2px rgba(254, 39, 39, 0.596);
+        --border: #c5aaaa;
+        --border-hover: #b94141;
+        --background: #fff;
+        --disabled: #f9e1e1;
+        --disabled-inner: #f9e1e1;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        height: 21px;
+        outline: none;
+        display: inline-block;
+        vertical-align: top;
+        position: relative;
+        margin: 0;
+        cursor: pointer;
+        border: 1px solid var(--bc, var(--border));
+        background: var(--b, var(--background));
+        -webkit-transition: background 0.3s, border-color 0.3s, box-shadow 0.2s;
+        transition: background 0.3s, border-color 0.3s, box-shadow 0.2s;
+    }
+
+    input[type="checkbox"]:after {
+        content: "";
+        display: block;
+        left: 0;
+        top: 0;
+        position: absolute;
+        -webkit-transition: opacity var(--d-o, 0.2s),
+            -webkit-transform var(--d-t, 0.3s) var(--d-t-e, ease);
+        transition: opacity var(--d-o, 0.2s),
+            -webkit-transform var(--d-t, 0.3s) var(--d-t-e, ease);
+        transition: transform var(--d-t, 0.3s) var(--d-t-e, ease),
+            opacity var(--d-o, 0.2s);
+        transition: transform var(--d-t, 0.3s) var(--d-t-e, ease),
+            opacity var(--d-o, 0.2s),
+            -webkit-transform var(--d-t, 0.3s) var(--d-t-e, ease);
+    }
+
+    input[type="checkbox"]:checked {
+        --b: var(--active);
+        --bc: var(--active);
+        --d-o: 0.3s;
+        --d-t: 0.6s;
+        --d-t-e: cubic-bezier(0.2, 0.85, 0.32, 1.2);
+    }
+
+    input[type="checkbox"]:disabled {
+        --b: var(--disabled);
+        cursor: not-allowed;
+        opacity: 0.9;
+    }
+
+    input[type="checkbox"]:disabled:checked {
+        --b: var(--disabled-inner);
+        --bc: var(--border);
+    }
+
+    input[type="checkbox"]:disabled + label {
+        cursor: not-allowed;
+    }
+
+    input[type="checkbox"]:hover:not(:checked):not(:disabled) {
+        --bc: var(--border-hover);
+    }
+
+    input[type="checkbox"]:focus {
+        box-shadow: 0 0 0 var(--focus);
+    }
+
+    input[type="checkbox"]:not(.switch) {
+        width: 21px;
+    }
+
+    input[type="checkbox"]:not(.switch):after {
+        opacity: var(--o, 0);
+    }
+
+    input[type="checkbox"]:not(.switch):checked {
+        --o: 1;
+    }
+
+    input[type="checkbox"] + label {
+        display: inline-block;
+        cursor: pointer;
+        vertical-align: sub;
+        margin-left: 4px;
+    }
+
+    input[type="checkbox"].switch {
+        width: 38px;
+        border-radius: 11px;
+    }
+
+    input[type="checkbox"].switch:after {
+        left: 2px;
+        top: 2px;
+        border-radius: 50%;
+        width: 15px;
+        height: 15px;
+        background: var(--ab, var(--border));
+        -webkit-transform: translateX(var(--x, 0));
+        transform: translateX(var(--x, 0));
+    }
+
+    input[type="checkbox"].switch:checked {
+        --ab: var(--active-inner);
+        --x: 17px;
+    }
+
+    input[type="checkbox"].switch:disabled:not(:checked):after {
+        opacity: 0.6;
+    }
+}
+
+/*
+---------------------
+-----  SYNCING  -----
+---------------------
+*/
+
+#pat-input {
+    margin-left: 1rem;
+    width: 350px;
+}
+#save-pat {
+    margin-left: 1rem;
+    background-color: rgb(27, 159, 7);
+    color: rgb(223, 223, 223);
+}
+#save-pat:hover {
+    color: white;
+}
+#pat-feedback {
+    color: rgb(150, 102, 13);
+}
+
+@keyframes rotation {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(359deg);
+    }
+}
+
+.pm-loader {
+    animation: rotation 1.3s infinite linear;
+    height: 50px;
+    width: 50px;
+    border-left: 4px dotted salmon;
+    border-radius: 100%;
+    margin: auto;
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+}
+
+/*
+---------------------
+-----  Sidebar  -----
+---------------------
+*/
+
+.toc {
+    position: fixed;
+    left: 2em;
+    top: 5em;
+    padding: 1em;
+    width: 14em;
+    line-height: 2;
+    font-size: 0.9rem;
+}
+.toc a:hover {
+    color: var(--color) !important;
+}
+.toc ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+.toc ul ul {
+    padding-left: 2em;
+}
+.toc li a {
+    display: inline-block;
+    color: #aaa;
+    text-decoration: none;
+    transition: all 0.3s cubic-bezier(0.23, 1, 0.32, 1);
+}
+.toc li.visible > a {
+    color: #111;
+    transform: translate(6px, 2px);
+}
+
+.toc-marker {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    z-index: -1;
+}
+.toc-marker path {
+    transition: all 0.3s ease;
+}
+
+@media screen and (max-width: 1400px) {
+    #content {
+        max-width: 900px;
+    }
+}
+@media screen and (max-width: 1200px) {
+    #content {
+        max-width: 800px;
+        margin: auto;
+        padding: 32px;
+    }
+    .toc {
+        font-size: 0.8rem;
+        left: 1rem;
+        width: 10em;
+    }
+}
+@media screen and (max-width: 1000px) {
+    #toc-container {
+        display: none;
+    }
+}
+
+#sync-popup-feedback {
+    position: unset;
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: var(--red);
+    white-space: nowrap;
+    margin-top: 32px;
+}
+.pm-loader {
+    margin: 8px;
+}
+/*
+ -------------------
+ -----  Modal  -----
+ -------------------
+ */
+
+#modal-wrapper {
+    display: none; /* Hidden by default */
+    position: fixed; /* Stay in place */
+    z-index: 10; /* Sit on top */
+    left: 0;
+    top: 0;
+    width: 100%; /* Full width */
+    max-width: 100%; /* Full width */
+    height: 100%; /* Full height */
+    overflow: auto; /* Enable scroll if needed */
+    background-color: rgb(0, 0, 0); /* Fallback color */
+    background-color: rgba(0, 0, 0, 0.2); /* Black w/ opacity */
+    backdrop-filter: blur(6px);
+    justify-content: center;
+    align-items: center;
+    transition: all ease 0.5s;
+}
+
+/* Modal Content/Box */
+#modal-contents {
+    background-color: var(--lighterBackground);
+    padding: 20px 35px;
+    border-radius: var(--rounder);
+    width: 60%; /* Could be more or less, depending on screen size */
+    min-width: 500px;
+    min-height: 200px;
+    max-height: 80%;
+    overflow: scroll;
+    position: fixed;
+    top: 10%;
+}
+.modal-content-div {
+    padding-top: 50px;
+}
+/* The Close Button */
+#close-modal {
+    color: #aaa;
+    float: right;
+    font-size: 28px;
+}
+
+#close-modal:hover,
+#close-modal:focus {
+    color: black;
+    text-decoration: none;
+    cursor: pointer;
+}
+#modal-sync-cancel:hover,
+#modal-sync-warning-cancel:hover {
+    color: var(--red);
+}
+#modal-sync-cancel,
+#modal-sync-warning-cancel {
+    padding: 8px 16px;
+    background: rgb(253, 201, 195);
+}

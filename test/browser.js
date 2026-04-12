@@ -13,7 +13,7 @@ export const makeBrowser = async (headless = false, windowSize = "1200,900") => 
         ignoreHTTPSErrors: true,
         ignoreDefaultArgs: ["--disable-extensions"],
         args: [
-            `--load-extension=${root}`,
+            `--load-extension=${root}/.output/chrome-mv3`,
             `--window-size=${windowSize}`,
             "--no-sandbox",
             "--disable-setuid-sandbox",
@@ -134,9 +134,9 @@ export const findExtensionId = async (browser) => {
 };
 
 export const baseExtensionPopupURL =
-    "chrome-extension://{EXTENSION_ID}/src/popup/min/popup.min.html";
+    "chrome-extension://{EXTENSION_ID}/popup.html";
 export const baseFullMemoryURL =
-    "chrome-extension://{EXTENSION_ID}/src/fullMemory/fullMemory.html?noRefresh=true";
+    "chrome-extension://{EXTENSION_ID}/fullMemory.html?noRefresh=true";
 export const baseChromeExtensionsURL = "chrome://extensions/?id={EXTENSION_ID}";
 
 /**

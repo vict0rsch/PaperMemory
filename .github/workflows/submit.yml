@@ -14,10 +14,10 @@ jobs:
             - name: Download Github Release Assets
               uses: plasmo-corp/download-release-asset@v1.0.0
               with:
-                  files: Archive-*
+                  files: papermemory-*
                   tag: ${{ github.event.inputs.tag }}
             - name: Browser Plugin Publish
               uses: plasmo-corp/bpp@v1
               with:
-                  artifact: "Archive-${{ github.event.inputs.tag }}.zip"
+                  artifact: "papermemory-${{ github.event.inputs.tag }}-chrome.zip"
                   keys: ${{ secrets.SUBMIT_KEYS }}

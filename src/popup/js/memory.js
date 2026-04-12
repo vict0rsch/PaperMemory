@@ -82,7 +82,7 @@ export const updateAllMemoryPaperTagOptions = () => {
 
 export const sampleAsciiArt = async () => {
     try {
-        const artPath = chrome.runtime.getURL("src/data/art.json");
+        const artPath = chrome.runtime.getURL("data/art.json");
         const art = await fetch(artPath).then((res) => res.json());
         const nArts = Object.keys(art).length;
         const u = Math.floor(Math.random() * nArts);

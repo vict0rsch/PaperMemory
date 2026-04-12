@@ -1,0 +1,246 @@
+{
+    "Cell": {
+        "url": "https://www.cell.com/cell/home",
+        "issn": ["0092-8674", "1097-4172"]
+    },
+    "Cancer Cell": {
+        "url": "https://www.cell.com/cancer-cell/home",
+        "issn": ["1535-6108", "1878-3686"]
+    },
+    "Cell Chemical Biology": {
+        "url": "https://www.cell.com/cell-chemical-biology",
+        "issn": ["2451-9456", "2451-9448"]
+    },
+    "Cell Genomics": {
+        "url": "https://www.cell.com/cell-genomics/home",
+        "issn": ["2666-979X"]
+    },
+    "Cell Host & Microbe": {
+        "url": "https://www.cell.com/cell-host-microbe/home",
+        "issn": ["1931-3128", "1934-6069"]
+    },
+    "Cell Metabolism": {
+        "url": "https://www.cell.com/cell-metabolism/home",
+        "issn": ["1550-4131", "1932-7420"]
+    },
+    "Cell Reports": {
+        "url": "https://www.cell.com/cell-reports/home",
+        "issn": ["2211-1247", "2639-1856"]
+    },
+    "Cell Reports Medicine": {
+        "url": "https://www.cell.com/cell-reports-medicine/home",
+        "issn": ["2666-3791"]
+    },
+    "Cell Stem Cell": {
+        "url": "https://www.cell.com/cell-stem-cell/home",
+        "issn": ["1934-5909", "1875-9777"]
+    },
+    "Cell Systems": {
+        "url": "https://www.cell.com/cell-systems/home",
+        "issn": ["2405-4712", "2405-4720"]
+    },
+    "Current Biology": {
+        "url": "https://www.cell.com/current-biology/home",
+        "issn": ["0960-9822", "1879-0445"]
+    },
+    "Developmental Cell": {
+        "url": "https://www.cell.com/developmental-cell/home",
+        "issn": ["1534-5807", "1878-1551"]
+    },
+    "Immunity": {
+        "url": "https://www.cell.com/immunity/home",
+        "issn": ["1074-7613", "1097-4180"]
+    },
+    "Med": {
+        "url": "https://www.cell.com/med/home",
+        "issn": ["2666-6359", "2666-6340"]
+    },
+    "Molecular Cell": {
+        "url": "https://www.cell.com/molecular-cell/home",
+        "issn": ["1097-2765", "1097-4164"]
+    },
+    "Neuron": {
+        "url": "https://www.cell.com/neuron/home",
+        "issn": ["0896-6273", "1097-4199"]
+    },
+    "Structure": {
+        "url": "https://www.cell.com/structure/home",
+        "issn": ["0969-2126", "1878-4186"]
+    },
+    "American Journal of Human Genetics (partner)": {
+        "url": "https://www.cell.com/ajhg/home",
+        "issn": ["0002-9297", "1537-6605"]
+    },
+    "Biophysical Journal (partner)": {
+        "url": "https://www.cell.com/biophysj/home",
+        "issn": ["0006-3495", "1542-0086"]
+    },
+    "Biophysical Reports (partner)": {
+        "url": "https://www.cell.com/biophysreports/home",
+        "issn": ["2667-0747"]
+    },
+    "Human Genetics and Genomics Advances (partner)": {
+        "url": "https://www.cell.com/hgg-advances/home",
+        "issn": ["2666-2477"]
+    },
+    "Molecular Plant (partner)": {
+        "url": "https://www.cell.com/molecular-plant/home",
+        "issn": ["1674-2052", "1752-9867"]
+    },
+    "Molecular Therapy (partner)": {
+        "url": "https://www.cell.com/molecular-therapy-family/molecular-therapy/home",
+        "issn": ["1525-0016", "1525-0024"]
+    },
+    "Molecular Therapy Methods & Clinical Development (partner)": {
+        "url": "https://www.cell.com/molecular-therapy-family/methods/home",
+        "issn": ["2329-0501"]
+    },
+    "Molecular Therapy Nucleic Acids (partner)": {
+        "url": "https://www.cell.com/molecular-therapy-family/nucleic-acids/home",
+        "issn": ["2162-2531"]
+    },
+    "Molecular Therapy Oncology (partner)": {
+        "url": "https://www.cell.com/molecular-therapy-family/oncology/home",
+        "issn": ["2950-3299"]
+    },
+    "Plant Communications (partner)": {
+        "url": "https://www.cell.com/plant-communications/home",
+        "issn": ["2590-3462"]
+    },
+    "Stem Cell Reports (partner)": {
+        "url": "https://www.cell.com/stem-cell-reports/home",
+        "issn": ["2213-6711"]
+    },
+    "Trends in Biochemical Sciences": {
+        "url": "https://www.cell.com/trends/biochemical-sciences/home",
+        "issn": ["0968-0004", "1362-4326"]
+    },
+    "Trends in Cancer": {
+        "url": "https://www.cell.com/trends/cancer/home",
+        "issn": ["2405-8033", "2405-8025"]
+    },
+    "Trends in Cell Biology": {
+        "url": "https://www.cell.com/trends/cell-biology/home",
+        "issn": ["0962-8924", "1879-3088"]
+    },
+    "Trends in Ecology & Evolution": {
+        "url": "https://www.cell.com/trends/ecology-evolution/home",
+        "issn": ["0169-5347", "1872-8383"]
+    },
+    "Trends in Endocrinology & Metabolism": {
+        "url": "https://www.cell.com/trends/endocrinology-metabolism/home",
+        "issn": ["1043-2760", "1879-3061"]
+    },
+    "Trends in Genetics": {
+        "url": "https://www.cell.com/trends/genetics/home",
+        "issn": ["0168-9525", "1362-4555"]
+    },
+    "Trends in Immunology": {
+        "url": "https://www.cell.com/trends/immunology/home",
+        "issn": ["1471-4906", "1471-4981"]
+    },
+    "Trends in Microbiology": {
+        "url": "https://www.cell.com/trends/microbiology/home",
+        "issn": ["0966-842X", "1878-4380"]
+    },
+    "Trends in Molecular Medicine": {
+        "url": "https://www.cell.com/trends/molecular-medicine/home",
+        "issn": ["1471-4914", "1471-499X"]
+    },
+    "Trends in Neurosciences": {
+        "url": "https://www.cell.com/trends/neurosciences/home",
+        "issn": ["0166-2236", "1878-108X"]
+    },
+    "Trends in Parasitology": {
+        "url": "https://www.cell.com/trends/parasitology/home",
+        "issn": ["1471-4922", "1471-5007"]
+    },
+    "Trends in Pharmacological Sciences": {
+        "url": "https://www.cell.com/trends/pharmacological-sciences/home",
+        "issn": ["0165-6147", "1873-3735"]
+    },
+    "Trends in Plant Science": {
+        "url": "https://www.cell.com/trends/plant-science/home",
+        "issn": ["1360-1385", "1878-4372"]
+    },
+    "Cell Biomaterials": {
+        "url": "https://www.cell.com/cell-biomaterials/home",
+        "issn": ["3050-5623"]
+    },
+    "Cell Reports Physical Science": {
+        "url": "https://www.cell.com/cell-reports-physical-science/home",
+        "issn": ["2666-3864"]
+    },
+    "Chem": {
+        "url": "https://www.cell.com/chem/home",
+        "issn": ["2451-9294", "2451-9308"]
+    },
+    "Chem Catalysis": {
+        "url": "https://www.cell.com/chem-catalysis/home",
+        "issn": ["2667-1107", "2667-1093"]
+    },
+    "Device": {
+        "url": "https://www.cell.com/device/home",
+        "issn": ["2666-9994", "2666-9986"]
+    },
+    "Joule": {
+        "url": "https://www.cell.com/joule/home",
+        "issn": ["2542-4785", "2542-4351"]
+    },
+    "Matter": {
+        "url": "https://www.cell.com/matter/home",
+        "issn": ["2590-2393", "2590-2385"]
+    },
+    "Newton": {
+        "url": "https://www.cell.com/newton/home",
+        "issn": ["2950-6360"]
+    },
+    "Trends in Chemistry": {
+        "url": "https://www.cell.com/trends/chemistry/home",
+        "issn": ["2589-7209", "2589-5974"]
+    },
+    "Cell Reports Methods": {
+        "url": "https://www.cell.com/cell-reports-methods/home",
+        "issn": ["2667-2375"]
+    },
+    "Cell Reports Sustainability": {
+        "url": "https://www.cell.com/cell-reports-sustainability/home",
+        "issn": ["2949-7906"]
+    },
+    "Heliyon": {
+        "url": "https://www.cell.com/heliyon/home",
+        "issn": ["2405-8440"]
+    },
+    "iScience": {
+        "url": "https://www.cell.com/iscience/home",
+        "issn": ["2589-0042"]
+    },
+    "One Earth": {
+        "url": "https://www.cell.com/one-earth/home",
+        "issn": ["2590-3330", "2590-3322"]
+    },
+    "Patterns": {
+        "url": "https://www.cell.com/patterns/home",
+        "issn": ["2666-3899"]
+    },
+    "STAR Protocols": {
+        "url": "https://www.cell.com/star-protocols/home",
+        "issn": ["2666-1667"]
+    },
+    "Nexus (partner)": {
+        "url": "https://www.cell.com/nexus/home",
+        "issn": ["2950-1601"]
+    },
+    "The Innovation (partner)": {
+        "url": "https://www.cell.com/the-innovation/home",
+        "issn": ["2666-6758"]
+    },
+    "Trends in Biotechnology": {
+        "url": "https://www.cell.com/trends/biotechnology/home",
+        "issn": ["0167-7799", "1879-3096"]
+    },
+    "Trends in Cognitive Sciences": {
+        "url": "https://www.cell.com/trends/cognitive-sciences/home",
+        "issn": ["1364-6613", "1879-307X"]
+    }
+}
