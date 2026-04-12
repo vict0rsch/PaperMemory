@@ -253,6 +253,9 @@ export const setPreferencesAndReload = async (prefs, page) => {
     }, prefs);
 
     await page.reload({ waitUntil: "networkidle0" });
+    await page.waitForFunction(() => window.__pmPopupReady === true, {
+        timeout: 10000,
+    });
 };
 
 export const getClipboardText = async (page) => {
