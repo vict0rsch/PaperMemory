@@ -36,9 +36,9 @@ It's all stored locally in your browser's local storage. If you want to transfer
 
 Check out the [Advanced Options](./configuration.md#advanced-options)'s _Data Management_ section, you can export:
 
--   your full PaperMemory data as `.json` file
--   your full bibliography as `.bib` file (or `.json`)
--   papers based on the tags you'be assigned them as a `.bib` file
+- your full PaperMemory data as `.json` file
+- your full bibliography as `.bib` file (or `.json`)
+- papers based on the tags you'be assigned them as a `.bib` file
 
 ### Can I reference my PDF in PaperMemory?
 
@@ -48,8 +48,8 @@ Because of limitations Browser Extensions face, a file **must** be _downloaded f
 
 ### How do I resolve duplicates?
 
--   If you installed PaperMemory `<0.5.3` (May 2022) you may have duplicate papers in your Memory. The easiest way to resolve this is to go to a duplicate's page, then delete it from memory and refresh the page. The automatic de-duplication features in version `0.5.3` should handle the matching _if_ the 2 papers have the same title.
--   If you still see duplicates with PaperMemory `>=0.5.3` _and_ the 2 papers have the same title, this may be a problem with PaperMemory and you should open an issue here on Github.
+- If you installed PaperMemory `<0.5.3` (May 2022) you may have duplicate papers in your Memory. The easiest way to resolve this is to go to a duplicate's page, then delete it from memory and refresh the page. The automatic de-duplication features in version `0.5.3` should handle the matching _if_ the 2 papers have the same title.
+- If you still see duplicates with PaperMemory `>=0.5.3` _and_ the 2 papers have the same title, this may be a problem with PaperMemory and you should open an issue here on Github.
 
 ### Can I access the memory full-screen?
 

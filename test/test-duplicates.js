@@ -61,7 +61,7 @@ if (typeof ignoreSources === "string") {
 
 if (singleOrder && orders.indexOf(singleOrder) === -1) {
     throw new Error(
-        `Unknown order: ${singleOrder}. Valid orders: ${orders.join(" and ")}`
+        `Unknown order: ${singleOrder}. Valid orders: ${orders.join(" and ")}`,
     );
 }
 
@@ -76,7 +76,7 @@ if (maxSources > 0) {
     urls = Object.fromEntries(Object.entries(urls).slice(0, maxSources));
 } else if (onlySources && onlySources.length > 0) {
     urls = Object.fromEntries(
-        Object.entries(urls).filter(([source, v]) => onlySources.includes(source))
+        Object.entries(urls).filter(([source, v]) => onlySources.includes(source)),
     );
 }
 
@@ -97,7 +97,7 @@ if (singleName) {
 console.log(`\nUsing ${preDuplicates.length} pre-duplicates`);
 
 let allDuplicates = readDuplicates().filter(
-    (duplicates) => !singleName || duplicates[0].name === singleName
+    (duplicates) => !singleName || duplicates[0].name === singleName,
 );
 
 if (maxSources > 0) {
@@ -199,7 +199,7 @@ describe("Paper de-duplication", function () {
                         // before each duplicate test: find the right objects
                         hashedName = PMUtils.functions.miniHash(duplicates[0].name);
                         hashedTitle = Object.keys(memoryState.titleHashToIds).find(
-                            (k) => k.includes(hashedName)
+                            (k) => k.includes(hashedName),
                         );
                         ids = memoryState.titleHashToIds[hashedTitle];
                         papers = ids.map((id) => memoryState.papers[id]);

@@ -54,7 +54,7 @@ export function BibtexParser() {
                     " -> expected " +
                     s +
                     ", found " +
-                    this.input.substring(this.pos)
+                    this.input.substring(this.pos),
             );
         }
         this.skipWhitespace(canCommentOut);
@@ -132,7 +132,7 @@ export function BibtexParser() {
             if (this.pos >= this.input.length - 1) {
                 throw TypeError(
                     "Unterminated value: value_comment",
-                    +this.input.substring(start)
+                    +this.input.substring(start),
                 );
             }
             this.pos++;
@@ -153,7 +153,7 @@ export function BibtexParser() {
                 } else if (this.pos >= this.input.length - 1) {
                     throw TypeError(
                         "Unterminated value: value_quotes",
-                        this.input.substring(start)
+                        this.input.substring(start),
                     );
                 }
             }
@@ -223,7 +223,7 @@ export function BibtexParser() {
         } else {
             throw TypeError(
                 "Value expected, equals sign missing: key_equals_value",
-                this.input.substring(this.pos)
+                this.input.substring(this.pos),
             );
         }
     };

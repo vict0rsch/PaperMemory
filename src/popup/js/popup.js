@@ -118,8 +118,8 @@ export const getAndTrackPopupMenuChecks = (prefs, prefsCheckNames) => {
         setValues[key] = prefs.hasOwnProperty(key)
             ? prefs[key]
             : prefsCheckDefaultFalse.indexOf(key) >= 0
-            ? false
-            : true;
+              ? false
+              : true;
         const el = findEl({ element: key });
         if (el) {
             el.checked = setValues[key];
@@ -216,6 +216,7 @@ export const setStandardPopupClicks = () => {
         }
     });
     addListener("close-popup-modal", "click", closePopupModal);
+    addListener("ar5iv-modal-cancel-button", "click", closePopupModal);
 
     // When the user clicks anywhere outside of the modal, close it
     addListener(window, "click", (event) => {
@@ -270,7 +271,7 @@ export const editManualWebsite = (parsedPaper, url) => {
         // check values are valid
         let updatedPaper = { ...parsedPaper, title, author, year, note, pdfLink };
         const citationKey = `${miniHash(
-            author.split(" and ")[0].split(" ").last()
+            author.split(" and ")[0].split(" ").last(),
         )}${year}${firstNonStopLowercase(title)}`;
         updatedPaper.bibtex = bibtexToString({
             ...bibtexToObject(updatedPaper.bibtex),
@@ -362,13 +363,13 @@ export const popupMain = async (url, is, manualTrigger = false, tab = null) => {
     // Set fullMemory page link
     addListener("full-memory", "click", () => {
         chrome.tabs.create({
-            url: chrome.runtime.getURL("src/fullMemory/fullMemory.html"),
+            url: chrome.runtime.getURL("fullMemory.html"),
         });
     });
     // Set BibMatcher page link
     addListener("bib-matcher", "click", () => {
         chrome.tabs.create({
-            url: chrome.runtime.getURL("src/bibMatcher/bibMatcher.html"),
+            url: chrome.runtime.getURL("bibMatcher.html"),
         });
     });
     // Set default keyboard action
@@ -392,12 +393,12 @@ export const popupMain = async (url, is, manualTrigger = false, tab = null) => {
         state.currentId = id;
 
         if (!id || !state.papers.hasOwnProperty(id)) {
-            // Unknown paper, probably deleted by the user
             log("Unknown id " + id);
             await updatePopupPaperNoMemory(url);
             if (prefs.checkDirectOpen && !prefs.checkNoAuto) {
                 dispatch("memory-switch", "click");
             }
+            window.__pmPopupReady = true;
             return;
         }
 
@@ -410,7 +411,7 @@ export const popupMain = async (url, is, manualTrigger = false, tab = null) => {
         setHTML(
             "popup-paper-title",
             paper.title.replaceAll("\n", "") +
-                '<div id="popup-title-tooltip" style="display: none;">'
+                '<div id="popup-title-tooltip" style="display: none;">',
         );
         setHTML("popup-authors", cutAuthors(paper.author, 200).replace(/({|})/g, ""));
         if (paper.codeLink) {
@@ -457,12 +458,12 @@ export const popupMain = async (url, is, manualTrigger = false, tab = null) => {
         addEventToClass(
             ".popup-display-id",
             "click",
-            getHandleTitleTooltip(showTitleTooltip, 0, true)
+            getHandleTitleTooltip(showTitleTooltip, 0, true),
         );
         addEventToClass(
             ".popup-display-id",
             "mouseleave",
-            getHandleTitleTooltip(hideTitleTooltip, 10000, true)
+            getHandleTitleTooltip(hideTitleTooltip, 10000, true),
         );
         addEventToClass(".expand-paper-authors", "click", handleExpandAuthors);
 
@@ -494,7 +495,6 @@ export const popupMain = async (url, is, manualTrigger = false, tab = null) => {
                     chrome.tabs.update({ url: ar5ivURL });
                     window.close();
                 });
-                addListener("ar5iv-modal-cancel-button", "click", closePopupModal);
             } else {
                 const ar5ivURL = `https://ar5iv.labs.arxiv.org/html/${arxivId}`;
                 chrome.tabs.update({ url: ar5ivURL });
@@ -533,8 +533,8 @@ export const popupMain = async (url, is, manualTrigger = false, tab = null) => {
                 paper.source === "website"
                     ? "URL"
                     : prefs.checkPreferPdf
-                    ? "PDF"
-                    : "Abstract";
+                      ? "PDF"
+                      : "Abstract";
             await copyAndConfirmMemoryItem({
                 id,
                 textToCopy: link,
@@ -548,8 +548,8 @@ export const popupMain = async (url, is, manualTrigger = false, tab = null) => {
                 paper.source === "website"
                     ? "URL"
                     : prefs.checkPreferPdf
-                    ? "PDF"
-                    : "Abstract";
+                      ? "PDF"
+                      : "Abstract";
             await copyAndConfirmMemoryItem({
                 id,
                 textToCopy: link,
@@ -564,8 +564,8 @@ export const popupMain = async (url, is, manualTrigger = false, tab = null) => {
                 paper.source === "website"
                     ? "URL"
                     : prefs.checkPreferPdf
-                    ? "PDF"
-                    : "Abstract";
+                      ? "PDF"
+                      : "Abstract";
             await copyAndConfirmMemoryItem({
                 id,
                 textToCopy: md,
@@ -644,7 +644,7 @@ export const popupMain = async (url, is, manualTrigger = false, tab = null) => {
                     showId("website-parsing-error");
                     setHTML(
                         "website-parsing-error",
-                        `<h3>Error</h3><div>${error}</div>`
+                        `<h3>Error</h3><div>${error}</div>`,
                     );
                     setTimeout(() => {
                         hideId("website-loader-container");
@@ -657,6 +657,7 @@ export const popupMain = async (url, is, manualTrigger = false, tab = null) => {
             });
         }
     }
+    window.__pmPopupReady = true;
 };
 
 // ------------------------------
@@ -665,7 +666,8 @@ export const popupMain = async (url, is, manualTrigger = false, tab = null) => {
 (async () => {
     if (
         typeof window !== "undefined" &&
-        window.location.href.includes("popup") &&
+        (window.location.href.includes("popup") ||
+            window.location.pathname.startsWith("/action")) &&
         !window.paperMemoryPopupInitialized
     ) {
         // This is a global variable to track whether the popup has been initialized.
@@ -682,6 +684,10 @@ export const popupMain = async (url, is, manualTrigger = false, tab = null) => {
                 initSyncAndState({
                     stateIsReady: stateReadyResolve,
                     remoteIsReady: remoteReadyResolve,
+                }).catch((e) => {
+                    console.error("initSyncAndState failed", e);
+                    stateReadyResolve();
+                    remoteReadyResolve();
                 });
             });
         });
@@ -696,7 +702,10 @@ export const popupMain = async (url, is, manualTrigger = false, tab = null) => {
         hideId("memory-spinner");
         showId("memory-switch");
         makeMemoryHTML();
-        popupMain(url, is, false, tab);
+        popupMain(url, is, false, tab).catch((e) => {
+            console.error("popupMain error:", e);
+            window.__pmPopupReady = true;
+        });
         if (navigator.userAgent.search("Firefox") > -1) {
             hideId("overwrite-container");
         }

@@ -47,20 +47,17 @@ icon: octicons/rocket-16
 
     For better usability, I recommend that you *pin* the PaperMemory extension to your browser's toolbar.
 
-
-
 ## Main components
 
 ### Popup
-
 
 ![Popup](assets/popup.png){ align=right .popup-display }
 
 Your main interface to PaperMemory is its popup. You can open it by clicking on the PaperMemory extension icon or using the default keyboard shortcut:
 
-* ++cmd+shift+"E"++ (:fontawesome-brands-apple:)
-* ++ctrl+shift+"E"++ (:fontawesome-brands-windows:)
-* ++ctrl+shift+"M"++ (:fontawesome-brands-linux:)
+- ++cmd+shift+"E"++ (:fontawesome-brands-apple:)
+- ++ctrl+shift+"E"++ (:fontawesome-brands-windows:)
+- ++ctrl+shift+"M"++ (:fontawesome-brands-linux:)
 
 !!! tip "User Guide"
 
@@ -90,7 +87,7 @@ The detail list of available customization options can be found in [Configuratio
 
 ![Popup](assets/memory.png){ align=right .popup-display }
 
-Open your Memory (*i.e.* the list of your papers) by clicking on the popup bottom-left :material-folder-multiple-outline:{ color="red" } button.
+Open your Memory (_i.e._ the list of your papers) by clicking on the popup bottom-left :material-folder-multiple-outline:{ color="red" } button.
 
 In the search bar, you can search by title or author, prefix by `t:` to search for tags or by `y:` to search by year. More information in [Searching for papers](features.md#searching).
 
@@ -98,14 +95,14 @@ You can also
 
 <div class="annotate" markdown>
 
-* :tabler-star: Mark a paper as Favourite
-* :tabler-writing: Edit the paper's tags, code link and note
-* :tabler-vocabulary: open a downloaded PDF
-* :tabler-external-link: Go to the paper's online page (1)
-* :octicons-link-24: Copy the link to the paper (2)
-* :tabler-device-desktop-code: Copy a formatted hyperlink (to share papers in emails, Google Docs or Slack for instance)
-* :material-language-markdown-outline: Copy a `[$title]($url)` Markdown-formatted link (3)
-* :tabler-math-function: Copy a BibTex entry for your `.bib` bibliography.
+- :tabler-star: Mark a paper as Favourite
+- :tabler-writing: Edit the paper's tags, code link and note
+- :tabler-vocabulary: open a downloaded PDF
+- :tabler-external-link: Go to the paper's online page (1)
+- :octicons-link-24: Copy the link to the paper (2)
+- :tabler-device-desktop-code: Copy a formatted hyperlink (to share papers in emails, Google Docs or Slack for instance)
+- :material-language-markdown-outline: Copy a `[$title]($url)` Markdown-formatted link (3)
+- :tabler-math-function: Copy a BibTex entry for your `.bib` bibliography.
 
 </div>
 
@@ -133,7 +130,7 @@ When on a known article's page, PaperMemory will display its meta-data (title, a
 
 Update your `.bib` file with actual published references.
 
-At the bottom of the :octicons-gear-16: Popup Menu, click on the *PaperMemory BibMatcher* link to open a tool that allows you to seamlessly match Arxiv references in your `.bib` file to actual publications, using the PaperMemory's [preprint matching feature](features.md#preprint-matching).
+At the bottom of the :octicons-gear-16: Popup Menu, click on the _PaperMemory BibMatcher_ link to open a tool that allows you to seamlessly match Arxiv references in your `.bib` file to actual publications, using the PaperMemory's [preprint matching feature](features.md#preprint-matching).
 
 <p style="clear: both;" />
 
@@ -145,12 +142,9 @@ At the bottom of the :octicons-gear-16: Popup Menu, click on the *PaperMemory Bi
 
 More customization options and features are available in the advanced options page:
 
-* Right click on the extension's button in your browser toolbar and select *Options*
-* Open the :octicons-gear-16: Popup Menu, scroll down and click on *Options page*.
+- Right click on the extension's button in your browser toolbar and select _Options_
+- Open the :octicons-gear-16: Popup Menu, scroll down and click on _Options page_.
 
 More details in [Configuration](configuration.md#advanced-options).
 
 <p style="clear: both;" />
-
-
-

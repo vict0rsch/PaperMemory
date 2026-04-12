@@ -3,21 +3,17 @@
     "version": "1.1.0",
     "description": "N/A",
     "type": "module",
-    "moduleDirectories": [
-        "node_modules",
-        "src"
-    ],
     "scripts": {
-        "dev": "rollup -c",
-        "dev:watch": "rollup -c -w",
-        "build": "NODE_ENV=production rollup -c",
-        "predev:ff": "./.venv/bin/python scripts/release-mv2-mv3.py --to-firefox",
-        "dev:ff": "web-ext run --url 'about:debugging#/runtime/this-firefox' --firefox=deved -p dev-edition-default",
-        "postdev:ff": "./.venv/bin/python scripts/release-mv2-mv3.py --from-firefox",
-        "prebuild:ff": "./.venv/bin/python scripts/release-mv2-mv3.py --to-firefox",
-        "build:ff": "npm run build && web-ext build",
-        "postbuild:ff": "./.venv/bin/python scripts/release-mv2-mv3.py --from-firefox",
-        "pretest": "npm run dev",
+        "dev": "wxt",
+        "dev:firefox": "wxt --browser firefox",
+        "build": "wxt build && wxt build --browser firefox",
+        "build:chrome": "wxt build",
+        "build:firefox": "wxt build --browser firefox",
+        "zip": "wxt zip && wxt zip --browser firefox",
+        "zip:chrome": "wxt zip",
+        "zip:firefox": "wxt zip --browser firefox",
+        "postinstall": "wxt prepare",
+        "pretest": "npm run build:chrome",
         "test": "node --import ./register.mjs ./node_modules/.bin/mocha test/test-*.js --exclude test/test-sync.js --exit",
         "test:file": "node --import ./register.mjs ./node_modules/.bin/mocha --exit"
     },
@@ -32,16 +28,11 @@
     },
     "homepage": "https://github.com/vict0rsch/PaperMemory",
     "dependencies": {
-        "@octokit/request": "^8.1.6"
+        "@octokit/request": "^8.1.6",
+        "jquery": "^4.0.0",
+        "select2": "^4.1.0-rc.0"
     },
     "devDependencies": {
-        "@babel/core": "^7.0.0",
-        "@rollup/plugin-alias": "^5.1.1",
-        "@rollup/plugin-babel": "^6.0.4",
-        "@rollup/plugin-commonjs": "^28.0.6",
-        "@rollup/plugin-node-resolve": "^16.0.1",
-        "@rollup/plugin-replace": "^6.0.2",
-        "@rollup/plugin-terser": "^0.4.4",
         "expect": "^29.7.0",
         "glob": "^10.3.10",
         "heap": "^0.2.7",
@@ -50,13 +41,11 @@
         "ora": "^5.4.1",
         "postcss": "^8.5.6",
         "puppeteer": "^24.16.0",
+        "puppeteer-extra": "^3.3.6",
+        "puppeteer-extra-plugin-stealth": "^2.11.2",
         "readline-sync": "^1.4.10",
-        "rollup": "^4.45.0",
-        "rollup-plugin-copy": "^3.5.0",
-        "rollup-plugin-delete": "^3.0.1",
-        "rollup-plugin-postcss": "^4.0.2",
         "uuid": "^9.0.1",
-        "web-ext": "^9.1.0",
+        "wxt": "^0.20.20",
         "yaml": "^2.3.4"
     }
 }

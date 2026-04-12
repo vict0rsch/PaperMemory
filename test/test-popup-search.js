@@ -90,6 +90,9 @@ describe("Test PaperMemory Popup Search Functionality", function () {
     async function setupPageWithData(page, data) {
         await setStorage(page, "papers", data);
         await page.reload({ waitUntil: "networkidle0" });
+        await page.waitForFunction(() => window.__pmPopupReady === true, {
+            timeout: 10000,
+        });
         await ensureMemoryIsOpen(page);
     }
 
@@ -179,7 +182,7 @@ describe("Test PaperMemory Popup Search Functionality", function () {
         if (expectedTitles.length > 0) {
             const actualTitles = await page.evaluate(() => {
                 const items = document.querySelectorAll(
-                    "#memory-table .memory-container"
+                    "#memory-table .memory-container",
                 );
 
                 return Array.from(items).map((item) => {
@@ -190,7 +193,7 @@ describe("Test PaperMemory Popup Search Functionality", function () {
 
             for (const expectedTitle of expectedTitles) {
                 expect(
-                    actualTitles.some((title) => title.includes(expectedTitle))
+                    actualTitles.some((title) => title.includes(expectedTitle)),
                 ).toBe(true);
             }
         }
@@ -238,7 +241,7 @@ describe("Test PaperMemory Popup Search Functionality", function () {
             ) {
                 const state = window.PMDebug.config.state;
                 const visibleItems = document.querySelectorAll(
-                    "#memory-table .memory-container"
+                    "#memory-table .memory-container",
                 );
 
                 return {
@@ -328,7 +331,7 @@ describe("Test PaperMemory Popup Search Functionality", function () {
                 papers[paperId].tags = tags;
             },
             paperId,
-            tags
+            tags,
         );
     }
 
@@ -396,7 +399,7 @@ describe("Test PaperMemory Popup Search Functionality", function () {
                         if (window.PMDebug.config.state) {
                             available.hasState = true;
                             available.stateKeys = Object.keys(
-                                window.PMDebug.config.state
+                                window.PMDebug.config.state,
                             );
                         }
                     }
@@ -672,11 +675,11 @@ describe("Test PaperMemory Popup Search Functionality", function () {
             // Mark the first paper as favorite using the UI
             await PMPage.evaluate(() => {
                 const firstMemoryItem = document.querySelector(
-                    "#memory-table .memory-container"
+                    "#memory-table .memory-container",
                 );
                 if (firstMemoryItem) {
                     const favoriteButton = firstMemoryItem.querySelector(
-                        ".memory-item-favorite"
+                        ".memory-item-favorite",
                     );
                     if (favoriteButton) {
                         favoriteButton.click();
@@ -715,7 +718,7 @@ describe("Test PaperMemory Popup Search Functionality", function () {
                         papersListLength: state.papersList.length,
                         sortedPapersLength: state.sortedPapers.length,
                         favoritePapersCount: state.sortedPapers.filter(
-                            (p) => p.favorite
+                            (p) => p.favorite,
                         ).length,
                     };
                 }

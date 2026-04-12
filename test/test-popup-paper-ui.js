@@ -100,7 +100,10 @@ describe("Test PaperMemory Popup UI - Known Paper Page", function () {
             };
         }, paperUrl);
 
-        await page.reload();
+        await page.reload({ waitUntil: "networkidle0" });
+        await page.waitForFunction(() => window.__pmPopupReady === true, {
+            timeout: 10000,
+        });
     }
 
     describe("Basic Popup Setup", function () {
@@ -114,7 +117,7 @@ describe("Test PaperMemory Popup UI - Known Paper Page", function () {
             // Check that paper title is displayed
             const titleElement = await verifySelectorExists(
                 "#popup-paper-title",
-                PMPage
+                PMPage,
             );
             const titleText = await titleElement.evaluate((el) => el.innerText);
             expect(titleText).toBeTruthy();
@@ -129,7 +132,7 @@ describe("Test PaperMemory Popup UI - Known Paper Page", function () {
 
     describe("Displayed paper data matches test data", function () {
         const paperIds = Object.keys(
-            readJSON(`${root}/test/data/3-papers-memory.json`)
+            readJSON(`${root}/test/data/3-papers-memory.json`),
         ).filter((key) => !key.startsWith("__"));
         paperIds.forEach((paperId) => {
             it(`should display the correct paper data for ${paperId}`, async function () {
@@ -141,13 +144,13 @@ describe("Test PaperMemory Popup UI - Known Paper Page", function () {
                 // check that the paper data matches the test data
                 const displayedPaperData = await PMPage.evaluate(
                     (paperId) => PMDebug.config.state.papers[paperId],
-                    paperId
+                    paperId,
                 );
                 expect(displayedPaperData).toEqual(paperData);
 
                 const titleEl = await verifySelectorExists(
                     "#popup-paper-title",
-                    PMPage
+                    PMPage,
                 );
                 const titleText = await titleEl.evaluate((el) => el.innerText);
                 expect(miniHash(titleText)).toBe(miniHash(paperData.title));
@@ -158,12 +161,12 @@ describe("Test PaperMemory Popup UI - Known Paper Page", function () {
                     authorsText
                         .split(",")
                         .map((a) => a.trim())
-                        .join(" and ")
+                        .join(" and "),
                 ).toBe(paperData.author);
 
                 const codeLinkEl = await verifySelectorExists(
                     "#popup-code-link",
-                    PMPage
+                    PMPage,
                 );
                 const codeLinkText = await codeLinkEl.evaluate((el) => el.innerText);
                 expect(miniHash(codeLinkText)).toBe(miniHash(paperData.codeLink));
@@ -185,7 +188,7 @@ describe("Test PaperMemory Popup UI - Known Paper Page", function () {
             } catch (error) {
                 console.log(
                     indent(1) + "⚠ Could not set clipboard permissions:",
-                    error.message
+                    error.message,
                 );
             }
         });
@@ -223,7 +226,7 @@ describe("Test PaperMemory Popup UI - Known Paper Page", function () {
             // Verify feedback message
             const feedbackElement = await verifySelectorExists(
                 "#popup-feedback-copied",
-                PMPage
+                PMPage,
             );
             const feedbackText = await feedbackElement.evaluate((el) => el.textContent);
             expect(feedbackText).toContain("copied");
@@ -239,7 +242,7 @@ describe("Test PaperMemory Popup UI - Known Paper Page", function () {
             const copyHyperlinkSelector = `#popup-memory-item-copy-hyperlink--${arxivPaperIdEscaped}`;
             const copyHyperlinkBtn = await verifySelectorExists(
                 copyHyperlinkSelector,
-                PMPage
+                PMPage,
             );
             await safeClick(copyHyperlinkSelector, PMPage);
 
@@ -253,7 +256,7 @@ describe("Test PaperMemory Popup UI - Known Paper Page", function () {
             // Verify feedback message
             const feedbackElement = await verifySelectorExists(
                 "#popup-feedback-copied",
-                PMPage
+                PMPage,
             );
             const feedbackText = await feedbackElement.evaluate((el) => el.textContent);
             expect(feedbackText).toContain("Abstract hyperlink copied!");
@@ -278,7 +281,7 @@ describe("Test PaperMemory Popup UI - Known Paper Page", function () {
             // Verify feedback message
             const feedbackElement = await verifySelectorExists(
                 "#popup-feedback-copied",
-                PMPage
+                PMPage,
             );
             const feedbackText = await feedbackElement.evaluate((el) => el.textContent);
             expect(feedbackText).toContain("Markdown");
@@ -295,7 +298,7 @@ describe("Test PaperMemory Popup UI - Known Paper Page", function () {
             const copyBibtexSelector = `#popup-memory-item-bibtex--${arxivPaperIdEscaped}`;
             const copyBibtexBtn = await verifySelectorExists(
                 copyBibtexSelector,
-                PMPage
+                PMPage,
             );
             await safeClick(copyBibtexSelector, PMPage);
 
@@ -310,7 +313,7 @@ describe("Test PaperMemory Popup UI - Known Paper Page", function () {
             // Verify feedback message
             const feedbackElement = await verifySelectorExists(
                 "#popup-feedback-copied",
-                PMPage
+                PMPage,
             );
             const feedbackText = await feedbackElement.evaluate((el) => el.textContent);
             expect(feedbackText).toContain("Bibtex");
@@ -352,7 +355,7 @@ describe("Test PaperMemory Popup UI - Known Paper Page", function () {
             serviceName,
             preferenceKey,
             buttonClass,
-            expectedUrlPattern
+            expectedUrlPattern,
         ) {
             // Set up the popup with mocked tab
             await setupPopupWithMockedTab(PMPage, arxivPaperUrl, arxivPaperId);
@@ -366,10 +369,10 @@ describe("Test PaperMemory Popup UI - Known Paper Page", function () {
             const { button, selector } = await verifyMemoryItemButtonExists(
                 arxivPaperId,
                 buttonClass,
-                PMPage
+                PMPage,
             );
             console.log(
-                indent(2) + `✓ ${serviceName} button present when preference enabled`
+                indent(2) + `✓ ${serviceName} button present when preference enabled`,
             );
 
             await verifyButtonClickable(button, PMPage);
@@ -402,7 +405,7 @@ describe("Test PaperMemory Popup UI - Known Paper Page", function () {
                 "SciRate",
                 "checkScirate",
                 "scirate",
-                /scirate\.com\/arxiv/
+                /scirate\.com\/arxiv/,
             );
         });
 
@@ -411,7 +414,7 @@ describe("Test PaperMemory Popup UI - Known Paper Page", function () {
                 "AlphaXiv",
                 "checkAlphaxiv",
                 "alphaxiv",
-                /alphaxiv\.org\/abs/
+                /alphaxiv\.org\/abs/,
             );
         });
 
@@ -420,7 +423,7 @@ describe("Test PaperMemory Popup UI - Known Paper Page", function () {
                 "ar5iv",
                 "checkAr5iv",
                 "ar5iv",
-                /ar5iv\.labs\.arxiv\.org\/html/
+                /ar5iv\.labs\.arxiv\.org\/html/,
             );
         });
 
@@ -429,7 +432,7 @@ describe("Test PaperMemory Popup UI - Known Paper Page", function () {
                 "HuggingFace",
                 "checkHuggingface",
                 "huggingface",
-                /huggingface\.co\/papers/
+                /huggingface\.co\/papers/,
             );
         });
 
@@ -442,21 +445,21 @@ describe("Test PaperMemory Popup UI - Known Paper Page", function () {
                     checkAr5iv: false,
                     checkHuggingface: false,
                 },
-                PMPage
+                PMPage,
             );
 
             // Check that optional buttons are not present
             const scirateButton = await PMPage.$(
-                `#popup-memory-item-scirate--${arxivPaperIdEscaped}`
+                `#popup-memory-item-scirate--${arxivPaperIdEscaped}`,
             );
             const alphaxivButton = await PMPage.$(
-                `#popup-memory-item-alphaxiv--${arxivPaperIdEscaped}`
+                `#popup-memory-item-alphaxiv--${arxivPaperIdEscaped}`,
             );
             const ar5ivButton = await PMPage.$(
-                `#popup-memory-item-ar5iv--${arxivPaperIdEscaped}`
+                `#popup-memory-item-ar5iv--${arxivPaperIdEscaped}`,
             );
             const huggingfaceButton = await PMPage.$(
-                `#popup-memory-item-huggingface--${arxivPaperIdEscaped}`
+                `#popup-memory-item-huggingface--${arxivPaperIdEscaped}`,
             );
 
             expect(scirateButton).toBeFalsy();
