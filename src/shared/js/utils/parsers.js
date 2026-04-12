@@ -1554,6 +1554,10 @@ export const findCellPii = async (url) => {
                 venue = key;
             }
         });
+        if (!venue) {
+            warn(`[findCellPii] No Cell journal found for ISSN: ${issn}`);
+            return { pii, url };
+        }
         const target = venue
             .split(" ")
             .map((w) => w.toLowerCase())
@@ -2118,6 +2122,9 @@ export const makePaper = async (is, url, tab = false) => {
         }
     } catch (e) {
         logError("Error in makePaper:", e);
+        if (e.message?.includes("Unknown paper source")) {
+            throw e;
+        }
         return;
     }
 
