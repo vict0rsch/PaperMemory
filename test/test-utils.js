@@ -18,7 +18,7 @@ describe("Bibtex parser", function () {
         for (const i of range(bdata.strings.length)) {
             it(`Pair ${i}`, function () {
                 expect(PMUtils.bibtexParser.bibtexToObject(bdata.strings[i])).toEqual(
-                    bdata.objects[i]
+                    bdata.objects[i],
                 );
             });
         }
@@ -28,7 +28,7 @@ describe("Bibtex parser", function () {
         for (const i of range(bdata.strings.length)) {
             it(`Pair ${i}`, function () {
                 expect(PMUtils.bibtexParser.bibtexToString(bdata.objects[i])).toEqual(
-                    bdata.strings[i]
+                    bdata.strings[i],
                 );
             });
         }
@@ -38,8 +38,8 @@ describe("Bibtex parser", function () {
             it(`Pair ${i}`, function () {
                 expect(
                     PMUtils.bibtexParser.bibtexToString(
-                        PMUtils.bibtexParser.bibtexToString(bdata.objects[i])
-                    )
+                        PMUtils.bibtexParser.bibtexToString(bdata.objects[i]),
+                    ),
                 ).toEqual(bdata.strings[i]);
             });
         }
@@ -71,7 +71,7 @@ describe("Bibtex parser", function () {
                 for (const attribute in bobj) {
                     it(`Attribute ${attribute}`, function () {
                         expect(
-                            PMUtils.bibtexParser.extractBibtexValue(bstring, attribute)
+                            PMUtils.bibtexParser.extractBibtexValue(bstring, attribute),
                         ).toEqual(bobj[attribute]);
                     });
                 }
@@ -146,7 +146,7 @@ describe("paper.js", () => {
                         return;
                     }
                     let target = Object.fromEntries(
-                        Object.keys(isp).map((k) => [k, false])
+                        Object.keys(isp).map((k) => [k, false]),
                     );
                     target.stored = false;
                     target[source] = true;
@@ -158,7 +158,7 @@ describe("paper.js", () => {
             it(`Negative ${u} (${url})`, async () => {
                 const isp = await PMUtils.paper.isPaper(url);
                 let target = Object.fromEntries(
-                    Object.keys(isp).map((k) => [k, false])
+                    Object.keys(isp).map((k) => [k, false]),
                 );
                 target.stored = false;
                 expect(isp).toEqual(target);

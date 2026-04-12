@@ -14,7 +14,7 @@ const waitForLoad = (page) =>
 const getTotalCitations = (page) => {
     return page.evaluate(() => {
         return Promise.resolve(
-            parseInt(querySelector("#gsc_rsb_st .gsc_rsb_std").innerText)
+            parseInt(querySelector("#gsc_rsb_st .gsc_rsb_std").innerText),
         );
     });
 };
@@ -60,7 +60,7 @@ const parseAuthor = (page) => {
             .filter((v, i) => i % 2 === 0)
             .map((e) => e.innerText);
         const tags = queryAll("#gsc_prf_i .gsc_prf_inta.gs_ibl").map((a) =>
-            a.innerText.toLowerCase()
+            a.innerText.toLowerCase(),
         );
         const id = window.location.href.match(/user=(\w+)&?/)[1];
         const affiliations = document
@@ -87,7 +87,7 @@ const getCoauthors = (page, max = 4) => {
             queryAll(document, "#gsc_rsb_co .gsc_rsb_a_desc a")
                 .map((a) => a.getAttribute("href"))
                 .map((h) => h.match(/user=([\w|-|-|_]+)&?/)[1])
-                .slice(0, max)
+                .slice(0, max),
         );
     }, max);
 };
@@ -146,7 +146,7 @@ const getCoauthors = (page, max = 4) => {
                     fs.mkdirSync(`./tmp`, { recursive: true });
                     fs.writeFileSync(
                         "./tmp/citations.json",
-                        JSON.stringify(data, null, 2)
+                        JSON.stringify(data, null, 2),
                     );
                 }
             } catch (error) {

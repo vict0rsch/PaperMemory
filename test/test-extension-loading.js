@@ -63,7 +63,7 @@ describe("Test PaperMemory Extension Loading", function () {
                 pmURLs = getPMURLs(extensionId);
             } else {
                 throw new Error(
-                    "❌ Extension ID discovery failed - extension not loaded or not found"
+                    "❌ Extension ID discovery failed - extension not loaded or not found",
                 );
             }
         });
@@ -78,7 +78,7 @@ describe("Test PaperMemory Extension Loading", function () {
                 // Skip test if extension wasn't found
                 if (!extensionId) {
                     throw new Error(
-                        "Extension ID not found - extension not loaded properly"
+                        "Extension ID not found - extension not loaded properly",
                     );
                 }
 
@@ -96,28 +96,28 @@ describe("Test PaperMemory Extension Loading", function () {
                 } catch (err) {
                     error = err;
                     console.log(
-                        `❌ Extension popup page failed to load: ${err.message}`
+                        `❌ Extension popup page failed to load: ${err.message}`,
                     );
 
                     if (err.message.includes("net::ERR_BLOCKED_BY_CLIENT")) {
                         console.log(
-                            "❌ This indicates the extension is not properly loaded in the browser"
+                            "❌ This indicates the extension is not properly loaded in the browser",
                         );
                         console.log("💡 Possible solutions:");
                         console.log(
-                            "   - Check if the extension is built (run 'npm run dev')"
+                            "   - Check if the extension is built (run 'npm run dev')",
                         );
                         console.log(
-                            "   - Verify the extension path in browser.js is correct"
+                            "   - Verify the extension path in browser.js is correct",
                         );
                         console.log(
-                            "   - Ensure Chrome allows loading unpacked extensions"
+                            "   - Ensure Chrome allows loading unpacked extensions",
                         );
                         console.log("   - Restart Chrome and try again");
                     }
 
                     throw new Error(
-                        `Extension popup not accessible: ${err.message}. This indicates the PaperMemory extension is not properly loaded in the browser.`
+                        `Extension popup not accessible: ${err.message}. This indicates the PaperMemory extension is not properly loaded in the browser.`,
                     );
                 }
 
@@ -148,7 +148,7 @@ describe("Test PaperMemory Extension Loading", function () {
                 // Skip test if extension wasn't found
                 if (!extensionId) {
                     throw new Error(
-                        "Extension ID not found - extension not loaded properly"
+                        "Extension ID not found - extension not loaded properly",
                     );
                 }
 
@@ -182,7 +182,7 @@ describe("Test PaperMemory Extension Loading", function () {
             try {
                 // Navigate to Chrome extensions page
                 console.log(
-                    `Navigating to Chrome extensions page: ${pmURLs.chromeSettingsURL}`
+                    `Navigating to Chrome extensions page: ${pmURLs.chromeSettingsURL}`,
                 );
                 await page.goto(pmURLs.chromeSettingsURL, {
                     waitUntil: "networkidle0",
@@ -217,7 +217,7 @@ describe("Test PaperMemory Extension Loading", function () {
                 });
 
                 console.log(
-                    `Extension found in Chrome extensions: ${extensionEnabled}`
+                    `Extension found in Chrome extensions: ${extensionEnabled}`,
                 );
 
                 // Note: We can't easily check for the specific PaperMemory extension due to shadow DOM complexity
@@ -239,7 +239,7 @@ describe("Test PaperMemory Extension Loading", function () {
                 // Skip test if extension wasn't found
                 if (!extensionId) {
                     throw new Error(
-                        "Extension ID not found - extension not loaded properly"
+                        "Extension ID not found - extension not loaded properly",
                     );
                 }
 
@@ -268,7 +268,7 @@ describe("Test PaperMemory Extension Loading", function () {
             try {
                 // Navigate to a simple webpage to test content script injection
                 await page.goto(
-                    "data:text/html,<html><head><title>Test</title></head><body><p>Test page for extension</p></body></html>"
+                    "data:text/html,<html><head><title>Test</title></head><body><p>Test page for extension</p></body></html>",
                 );
 
                 // Check if the page loaded
@@ -330,17 +330,17 @@ describe("Test PaperMemory Extension Loading", function () {
             console.log("🔍 Extension loading diagnostics:");
             console.log(`   Extension root path: ${root}`);
             console.log(
-                `   Manifest exists: ${fs.existsSync(`${root}/manifest.json`)}`
+                `   Manifest exists: ${fs.existsSync(`${root}/manifest.json`)}`,
             );
 
             if (fs.existsSync(`${root}/manifest.json`)) {
                 const manifest = JSON.parse(
-                    fs.readFileSync(`${root}/manifest.json`, "utf8")
+                    fs.readFileSync(`${root}/manifest.json`, "utf8"),
                 );
                 console.log(`   Extension name: ${manifest.name || "Unknown"}`);
                 console.log(`   Extension version: ${manifest.version || "Unknown"}`);
                 console.log(
-                    `   Manifest version: ${manifest.manifest_version || "Unknown"}`
+                    `   Manifest version: ${manifest.manifest_version || "Unknown"}`,
                 );
             }
 

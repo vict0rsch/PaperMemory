@@ -30,7 +30,7 @@ export const getMemoryPapers = async (page) => {
         () =>
             new Promise(async (resolve) => {
                 resolve(await PMDebug.data.getStorage("papers"));
-            })
+            }),
     );
 };
 
@@ -43,7 +43,7 @@ export const getPaperMemoryState = async (page) => {
                 } catch (e) {
                     reject(e);
                 }
-            })
+            }),
     );
 };
 
@@ -133,8 +133,7 @@ export const findExtensionId = async (browser) => {
     }
 };
 
-export const baseExtensionPopupURL =
-    "chrome-extension://{EXTENSION_ID}/popup.html";
+export const baseExtensionPopupURL = "chrome-extension://{EXTENSION_ID}/popup.html";
 export const baseFullMemoryURL =
     "chrome-extension://{EXTENSION_ID}/fullMemory.html?noRefresh=true";
 export const baseChromeExtensionsURL = "chrome://extensions/?id={EXTENSION_ID}";
@@ -150,7 +149,7 @@ export const getPMURLs = (extensionId) => {
         fullMemoryURL: baseFullMemoryURL.replace("{EXTENSION_ID}", extensionId),
         chromeSettingsURL: baseChromeExtensionsURL.replace(
             "{EXTENSION_ID}",
-            extensionId
+            extensionId,
         ),
     };
 };
@@ -170,7 +169,7 @@ export const setStorage = async (page, key, value) =>
                 resolve();
             });
         },
-        { key, value }
+        { key, value },
     );
 
 export const verifySelectorExists = async (selector, page) => {
@@ -189,7 +188,7 @@ export const verifyElementClickable = async (el, page) => {
             getComputedStyle(el).pointerEvents !== "none" &&
             getComputedStyle(el).visibility !== "hidden" &&
             getComputedStyle(el).opacity !== "0",
-        el
+        el,
     );
     expect(isClickable).toBe(true);
     return isClickable;
@@ -280,7 +279,7 @@ export const getClipboardText = async (page) => {
                 }
             }),
             new Promise((_, reject) =>
-                setTimeout(() => reject(new Error("Clipboard read timeout")), 1000)
+                setTimeout(() => reject(new Error("Clipboard read timeout")), 1000),
             ),
         ]);
     } catch (error) {
@@ -292,7 +291,7 @@ export const getClipboardText = async (page) => {
 export const verifyClipboardContent = async (
     expectedContent,
     partialMatch = false,
-    page
+    page,
 ) => {
     const clipboardText = await getClipboardText(page);
     expect(clipboardText).toBeTruthy();
@@ -316,13 +315,13 @@ export const verifyPageNavigation = async (expectedUrlPattern, browser) => {
             } catch (e) {
                 return { page, url: null };
             }
-        })
+        }),
     );
 
     const matchingPageAndURL = allPagesAndURLs.find((pageAndURL) =>
         expectedUrlPattern.test
             ? expectedUrlPattern.test(pageAndURL.url)
-            : pageAndURL.url && pageAndURL.url.includes(expectedUrlPattern)
+            : pageAndURL.url && pageAndURL.url.includes(expectedUrlPattern),
     );
 
     expect(matchingPageAndURL).toBeTruthy();

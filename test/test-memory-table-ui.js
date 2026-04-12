@@ -102,12 +102,12 @@ describe("Test PaperMemory MemoryTable UI", function () {
             const initialState = await getPaperMemoryState(page);
             expect(initialState.memoryIsOpen).toBe(true);
             console.log(
-                indent(2) + "✓ Initial state confirmed - memory is open by default"
+                indent(2) + "✓ Initial state confirmed - memory is open by default",
             );
 
             // Verify papers are loaded
             const papersCount = Object.keys(initialState.papers || {}).filter(
-                (key) => !key.startsWith("__")
+                (key) => !key.startsWith("__"),
             ).length;
             expect(papersCount).toBeGreaterThan(0);
             console.log(indent(2) + `✓ ${papersCount} papers loaded in state`);
@@ -166,7 +166,7 @@ describe("Test PaperMemory MemoryTable UI", function () {
             expect(memorySwitchCloseAfter).toBeTruthy();
             expect(memorySwitchOpenAfter).toBeTruthy();
             console.log(
-                indent(2) + "✓ Memory switch close and open buttons are visible"
+                indent(2) + "✓ Memory switch close and open buttons are visible",
             );
 
             // Check visibility of memory switch close and open buttons when open
@@ -183,7 +183,7 @@ describe("Test PaperMemory MemoryTable UI", function () {
             expect(closeVisible).toBe(true);
             expect(openVisible).toBe(false);
             console.log(
-                indent(2) + "✓ Memory switch close button is visible when open"
+                indent(2) + "✓ Memory switch close button is visible when open",
             );
         });
 
@@ -206,18 +206,18 @@ describe("Test PaperMemory MemoryTable UI", function () {
 
             // Verify specific papers from test data are displayed
             const expectedPapers = Object.keys(testData).filter(
-                (key) => !key.startsWith("__")
+                (key) => !key.startsWith("__"),
             );
             const displayedPaperTitles = await page.evaluate(() => {
                 return Array.from(document.querySelectorAll(".memory-title")).map(
-                    (el) => el.textContent.trim()
+                    (el) => el.textContent.trim(),
                 );
             });
 
             expect(displayedPaperTitles.length).toBeGreaterThan(0);
             console.log(
                 indent(2) +
-                    `✓ Found ${displayedPaperTitles.length} displayed paper titles`
+                    `✓ Found ${displayedPaperTitles.length} displayed paper titles`,
             );
 
             // Check that at least one of our test papers is displayed
@@ -226,12 +226,12 @@ describe("Test PaperMemory MemoryTable UI", function () {
                 testPaperTitles.some(
                     (testTitle) =>
                         displayedTitle.includes(testTitle) ||
-                        testTitle.includes(displayedTitle)
-                )
+                        testTitle.includes(displayedTitle),
+                ),
             );
             expect(hasTestPaper).toBe(true);
             console.log(
-                indent(2) + "✓ Test papers are correctly displayed in memory table"
+                indent(2) + "✓ Test papers are correctly displayed in memory table",
             );
         });
 
@@ -248,7 +248,7 @@ describe("Test PaperMemory MemoryTable UI", function () {
                 // Get displayed paper information
                 const displayedPapers = await page.evaluate(() => {
                     return Array.from(
-                        document.querySelectorAll(".memory-container")
+                        document.querySelectorAll(".memory-container"),
                     ).map((container) => {
                         const titleEl = container.querySelector(".memory-title");
                         const authorEl = container.querySelector(".memory-authors");
@@ -262,7 +262,7 @@ describe("Test PaperMemory MemoryTable UI", function () {
                 });
 
                 console.log(
-                    indent(2) + `Found ${displayedPapers.length} displayed papers`
+                    indent(2) + `Found ${displayedPapers.length} displayed papers`,
                 );
 
                 // Verify we have the expected number of papers (or at least some)
@@ -282,14 +282,14 @@ describe("Test PaperMemory MemoryTable UI", function () {
                     const found = foundTitles.some(
                         (foundTitle) =>
                             foundTitle.includes(expectedTitle.substring(0, 20)) ||
-                            expectedTitle.includes(foundTitle.substring(0, 20))
+                            expectedTitle.includes(foundTitle.substring(0, 20)),
                     );
                     if (found) foundCount++;
                 });
 
                 console.log(
                     indent(2) +
-                        `✓ Found ${foundCount} out of ${expectedTitles.length} expected test papers`
+                        `✓ Found ${foundCount} out of ${expectedTitles.length} expected test papers`,
                 );
                 expect(foundCount).toBeGreaterThan(0);
             } catch (error) {

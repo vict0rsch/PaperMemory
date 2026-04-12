@@ -74,12 +74,12 @@ When using `npm run dev`:
 A global `PMDebug` object is available in all HTML pages (popup, options, fullMemory, bibMatcher) for inspecting internal state from the browser console:
 
 ```javascript
-PMDebug.config.state;                    // Global state (papers, prefs, etc.)
-PMDebug.config.state.papers;             // All stored papers
-PMDebug.data.getStorage();               // Raw chrome.storage access
+PMDebug.config.state; // Global state (papers, prefs, etc.)
+PMDebug.config.state.papers; // All stored papers
+PMDebug.data.getStorage(); // Raw chrome.storage access
 PMDebug.urls.parseIdFromUrl("https://arxiv.org/abs/2301.12345");
 PMDebug.paper.isPaper("https://arxiv.org/abs/2301.12345");
-PMDebug.listAllFunctions();              // Discover everything available
+PMDebug.listAllFunctions(); // Discover everything available
 ```
 
 Available modules: `config`, `functions`, `miniquery`, `data`, `paper`, `bibtexParser`, `sync`, `state`, `urls`, `files`, `templates`, `handlers`, `memory`.
@@ -168,6 +168,7 @@ WXT uses a **file-based convention** in `src/entrypoints/`:
 - etc.
 
 Each HTML entry point's `main.js` is a thin wrapper that imports:
+
 1. `@pm/shared/js/jquery-setup.js` — sets up `window.$` globally
 2. The actual page logic (e.g. `@pm/popup/js/popup.js`)
 3. `@pm/debug/debug.js` — exposes `PMDebug` to the console
@@ -197,6 +198,7 @@ jQuery and select2 are installed via npm. A single file `src/shared/js/jquery-se
 ### Static assets (`public/`)
 
 Files in `public/` are copied as-is to the build output. Use this for:
+
 - CSS loaded dynamically via `chrome.runtime.getURL()` (e.g. `dark.css`)
 - JSON data files accessed at runtime (e.g. `data/cell.json`)
 - `theme.js` (loaded via `<script src="/theme.js">` before modules)
@@ -205,22 +207,22 @@ Files in `public/` are copied as-is to the build output. Use this for:
 
 **Core Logic** (`src/shared/js/utils/`):
 
--   `config.js` — Global state and settings. Start here to understand data structures.
--   `functions.js` — Utility functions used everywhere.
--   `data.js` — How papers are stored, validated, and migrated between versions.
--   `parsers.js` — Add new paper sources here. Contains website-specific parsing logic.
--   `paper.js` — Paper object operations. How papers are created, updated, and linked.
+- `config.js` — Global state and settings. Start here to understand data structures.
+- `functions.js` — Utility functions used everywhere.
+- `data.js` — How papers are stored, validated, and migrated between versions.
+- `parsers.js` — Add new paper sources here. Contains website-specific parsing logic.
+- `paper.js` — Paper object operations. How papers are created, updated, and linked.
 
 **User Interface** (`src/popup/js/`):
 
--   `popup.js` — Main popup logic. How the extension popup initializes and displays papers.
--   `memory.js` — Memory table functionality. Search, sorting, and display of saved papers.
--   `handlers.js` — User interactions. Button clicks, keyboard shortcuts, form handling.
+- `popup.js` — Main popup logic. How the extension popup initializes and displays papers.
+- `memory.js` — Memory table functionality. Search, sorting, and display of saved papers.
+- `handlers.js` — User interactions. Button clicks, keyboard shortcuts, form handling.
 
 **Background Processing**:
 
--   `src/background/background.js` — Handles sync, notifications, and browser API calls.
--   `src/content_scripts/content_script.js` — Automatically detects papers when browsing websites.
+- `src/background/background.js` — Handles sync, notifications, and browser API calls.
+- `src/content_scripts/content_script.js` — Automatically detects papers when browsing websites.
 
 ### Prettier
 
@@ -242,15 +244,15 @@ Most editors can auto-format on save with the Prettier extension. For VS Code, i
 
 The following functions and constants should be updated:
 
--   `config.js:global.knownPaperPages` with `source: {patterns: [array of url matches to trigger paper parsing, or boolean functions taking it as input], name: displayName}`
-    -   will be used by `paper.js:isPaper()` to determine whether `content_script.js` should parse the current page into a paper with `addOrUpdatePaper()` (or update the existing one's visits count) and `popup.js` to display the current paper
--   `parsers.js:makePaper()` to create a new entry
-    -   Typically, add a parser function in `parsers.js`
--   `state:parseIdFromUrl()`
--   `paper.js:paperToAbs()` and `paper.js:paperToPDF()` to enable to pdf<->webpage button
--   `functions.js:getDisplayId()` if necessary
--   `functions.js:isPdfUrl()` if necessary
--   `test/data/urls.json` to test that the integration works (and keeps working!)
+- `config.js:global.knownPaperPages` with `source: {patterns: [array of url matches to trigger paper parsing, or boolean functions taking it as input], name: displayName}`
+    - will be used by `paper.js:isPaper()` to determine whether `content_script.js` should parse the current page into a paper with `addOrUpdatePaper()` (or update the existing one's visits count) and `popup.js` to display the current paper
+- `parsers.js:makePaper()` to create a new entry
+    - Typically, add a parser function in `parsers.js`
+- `state:parseIdFromUrl()`
+- `paper.js:paperToAbs()` and `paper.js:paperToPDF()` to enable to pdf<->webpage button
+- `functions.js:getDisplayId()` if necessary
+- `functions.js:isPdfUrl()` if necessary
+- `test/data/urls.json` to test that the integration works (and keeps working!)
 
 ## Creating a new paper attribute
 

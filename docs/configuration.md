@@ -13,18 +13,18 @@ By default, and _if_ they are not already attributed, the following keyboard sho
 
     Replace ++ctrl++ by ++cmd++ on a Mac.
 
--   Open the PaperMemory Popup
-    -   :fontawesome-brands-apple: / :fontawesome-brands-windows: ▶️ ++ctrl+shift+"E"++
-    -   :fontawesome-brands-linux: ▶️ ++ctrl+shift+"M"++
--   Download PDF of current paper
-    -   :fontawesome-brands-apple: / :fontawesome-brands-windows: / :fontawesome-brands-linux: ▶️ ++ctrl+shift+"S"++
-    -   If you have enabled this feature in the menu, the paper will be downloaded in your PaperMemoryStore (see thee [below](#paper-memory-store)).
--   Trigger paper parsing
-    -   :fontawesome-brands-apple: / :fontawesome-brands-windows: / :fontawesome-brands-linux: ▶️ ++ctrl+shift+"P"++
-    -   Trigger the manual parsing of a paper if you have disabled automatic paper detection [in the menu](#disable-automatic-parsing).
--   Execute the default action for the current paper
-    -   :fontawesome-brands-apple: / :fontawesome-brands-windows: / :fontawesome-brands-linux: ▶️ ++alt+shift+"E"++
-    -   This will not work if the current page is not a paper's page or the current action is not available for this paper (e.g. trying to open the AlphaXiv page of a non-Arxiv paper).
+- Open the PaperMemory Popup
+    - :fontawesome-brands-apple: / :fontawesome-brands-windows: ▶️ ++ctrl+shift+"E"++
+    - :fontawesome-brands-linux: ▶️ ++ctrl+shift+"M"++
+- Download PDF of current paper
+    - :fontawesome-brands-apple: / :fontawesome-brands-windows: / :fontawesome-brands-linux: ▶️ ++ctrl+shift+"S"++
+    - If you have enabled this feature in the menu, the paper will be downloaded in your PaperMemoryStore (see thee [below](#paper-memory-store)).
+- Trigger paper parsing
+    - :fontawesome-brands-apple: / :fontawesome-brands-windows: / :fontawesome-brands-linux: ▶️ ++ctrl+shift+"P"++
+    - Trigger the manual parsing of a paper if you have disabled automatic paper detection [in the menu](#disable-automatic-parsing).
+- Execute the default action for the current paper
+    - :fontawesome-brands-apple: / :fontawesome-brands-windows: / :fontawesome-brands-linux: ▶️ ++alt+shift+"E"++
+    - This will not work if the current page is not a paper's page or the current action is not available for this paper (e.g. trying to open the AlphaXiv page of a non-Arxiv paper).
 
 !!! info "Customization & Issues"
 
@@ -137,9 +137,9 @@ From the Menu, you can also define a default keyboard shortcut to execute when t
 
 More customization options and features are available in the **Advanced Options page**:
 
--   Right click on the extension's button in your browser toolbar and select _Options_
--   Open the :octicons-gear-16: Popup Menu, scroll down and click on _Options page_.
--   Paste one of those URLs in your address bar
+- Right click on the extension's button in your browser toolbar and select _Options_
+- Open the :octicons-gear-16: Popup Menu, scroll down and click on _Options page_.
+- Paste one of those URLs in your address bar
     ```bash
     # Chrome / Brave / Edge:
     chrome-extension://ehchlpggdaffcncbeopdopnndhdjelbc/src/options/options.html

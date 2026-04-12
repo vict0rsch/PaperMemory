@@ -22,7 +22,7 @@ PaperMemory is designed to be a fast, automated and user-friendly in-browser ref
 <br/>
 <br/>
 
--   :octicons-rocket-24:{ .lg .middle } **Parse papers you open automatically**
+- :octicons-rocket-24:{ .lg .middle } **Parse papers you open automatically**
 
     Papers are stored in your Memory automatically, without a click. You can then search them, tag them, take personal notes etc.
 
@@ -32,7 +32,7 @@ PaperMemory is designed to be a fast, automated and user-friendly in-browser ref
 
     ***
 
--   :material-fire:{ .lg .middle } **Match preprints to publications**
+- :material-fire:{ .lg .middle } **Match preprints to publications**
 
     By querying SemanticScholar, DBLP and CrossRef, PaperMemory can discover the proper publication of Arxiv pre-prints.
 
@@ -40,19 +40,18 @@ PaperMemory is designed to be a fast, automated and user-friendly in-browser ref
 
     ***
 
--   :octicons-share-android-24:{ .lg .middle } **You live in your browser? So do your papers**
+- :octicons-share-android-24:{ .lg .middle } **You live in your browser? So do your papers**
 
     Share papers to your favorite apps by copying:
-
-    -   a :tabler-math-function: **BibTex entry** for :simple-overleaf: Overleaf
-    -   a :material-language-markdown-outline: **Markdown link** `[title](url)` link for :simple-github: Github, :material-file-document-outline: HackMD or :simple-notion: Notion
-    -   a :tabler-device-desktop-code: **HyperText link** for :octicons-mail-24: emails, :simple-googledocs: Google Docs, :simple-slack: Slack, etc.
+    - a :tabler-math-function: **BibTex entry** for :simple-overleaf: Overleaf
+    - a :material-language-markdown-outline: **Markdown link** `[title](url)` link for :simple-github: Github, :material-file-document-outline: HackMD or :simple-notion: Notion
+    - a :tabler-device-desktop-code: **HyperText link** for :octicons-mail-24: emails, :simple-googledocs: Google Docs, :simple-slack: Slack, etc.
 
     [:octicons-arrow-right-24: Memory buttons](getting-started.md#memory)
 
     ***
 
--   :fontawesome-solid-file-code:{ .lg .middle } **Discover code repositories**
+- :fontawesome-solid-file-code:{ .lg .middle } **Discover code repositories**
 
     Using the PapersWithCode API, PaperMemory will match code repositories with papers in your Memory.
 
@@ -60,7 +59,7 @@ PaperMemory is designed to be a fast, automated and user-friendly in-browser ref
 
     ***
 
--   :simple-arxiv:{ .lg .middle } **Enhance ArXiv.org**
+- :simple-arxiv:{ .lg .middle } **Enhance ArXiv.org**
 
     Display the actual pubication venue of published papers, a link to the code repository, copy the BibTex entry etc.
 
@@ -68,7 +67,7 @@ PaperMemory is designed to be a fast, automated and user-friendly in-browser ref
 
     ***
 
--   :material-square-root-box:{ .lg .middle } **Instantly copy `.bib`-compatible bibliography entries**
+- :material-square-root-box:{ .lg .middle } **Instantly copy `.bib`-compatible bibliography entries**
 
     Export a paper's BibTex entry directly from the extension, or bulk export BibTex entries by paper tag. You can even use PaperMemory to update the ArXiv entries of a stand-alone `.bib` file.
 
@@ -76,7 +75,7 @@ PaperMemory is designed to be a fast, automated and user-friendly in-browser ref
 
     ***
 
--   :material-keyboard-outline:{ .lg .middle } **Keyboard-driven**
+- :material-keyboard-outline:{ .lg .middle } **Keyboard-driven**
 
     Use the keyboard to navigate through your papers, search them, copy the data you need (like hyperlinks, BibTex entries, markdown links etc.)
 
@@ -84,7 +83,7 @@ PaperMemory is designed to be a fast, automated and user-friendly in-browser ref
 
     ***
 
--   :octicons-gear-24:{ .lg .middle } **Highly customizable**
+- :octicons-gear-24:{ .lg .middle } **Highly customizable**
 
     Change the theme to light or dark, control the default link copied to your clipboard, add links to SciRate / HuggingFace Papers / Ar5iv / ArxivSanity, trigger parsing manually, export / import papers etc.
 
@@ -92,7 +91,7 @@ PaperMemory is designed to be a fast, automated and user-friendly in-browser ref
 
     ***
 
--   :material-sunglasses:{ .lg .middle } **And many more features!**
+- :material-sunglasses:{ .lg .middle } **And many more features!**
 
     Github Gist synchronization, regex-based automatic paper tagging, arbitrary website parsing to record Blog posts or dataset websites, etc.
 

@@ -2,16 +2,16 @@ name: Build CI
 on: [push, pull_request]
 
 jobs:
-    build:
-        runs-on: ubuntu-latest
-        steps:
-            - uses: actions/checkout@v5
-            - uses: actions/setup-node@v4
-              with:
-                  node-version: "22.x"
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22.x"
 
-            - name: Install dependencies
-              run: npm install
+      - name: Install dependencies
+        run: npm install
 
-            - name: Build Chrome & Firefox
-              run: npm run build
+      - name: Build Chrome & Firefox
+        run: npm run build

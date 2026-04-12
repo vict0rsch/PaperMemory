@@ -19,8 +19,14 @@
         cursor: pointer;
         border: 1px solid var(--bc, var(--border));
         background: var(--b, var(--background));
-        -webkit-transition: background 0.3s, border-color 0.3s, box-shadow 0.2s;
-        transition: background 0.3s, border-color 0.3s, box-shadow 0.2s;
+        -webkit-transition:
+            background 0.3s,
+            border-color 0.3s,
+            box-shadow 0.2s;
+        transition:
+            background 0.3s,
+            border-color 0.3s,
+            box-shadow 0.2s;
     }
 
     input[type="checkbox"]:after {
@@ -29,13 +35,17 @@
         left: 0;
         top: 0;
         position: absolute;
-        -webkit-transition: opacity var(--d-o, 0.2s),
+        -webkit-transition:
+            opacity var(--d-o, 0.2s),
             -webkit-transform var(--d-t, 0.3s) var(--d-t-e, ease);
-        transition: opacity var(--d-o, 0.2s),
+        transition:
+            opacity var(--d-o, 0.2s),
             -webkit-transform var(--d-t, 0.3s) var(--d-t-e, ease);
-        transition: transform var(--d-t, 0.3s) var(--d-t-e, ease),
+        transition:
+            transform var(--d-t, 0.3s) var(--d-t-e, ease),
             opacity var(--d-o, 0.2s);
-        transition: transform var(--d-t, 0.3s) var(--d-t-e, ease),
+        transition:
+            transform var(--d-t, 0.3s) var(--d-t-e, ease),
             opacity var(--d-o, 0.2s),
             -webkit-transform var(--d-t, 0.3s) var(--d-t-e, ease);
     }

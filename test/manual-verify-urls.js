@@ -23,9 +23,11 @@
         arxiv: "https://arxiv.org/abs/1703.10593",
         biorxiv: "https://www.biorxiv.org/content/10.1101/2021.11.08.467690v2",
         cell: "https://www.cell.com/cell/fulltext/S0092-8674(25)01089-X",
-        chemrxiv: "https://chemrxiv.org/engage/chemrxiv/article-details/65957d349138d231611ad8f7",
+        chemrxiv:
+            "https://chemrxiv.org/engage/chemrxiv/article-details/65957d349138d231611ad8f7",
         cvf: "https://openaccess.thecvf.com/content_CVPR_2020/html/Bhattacharjee_DUNIT_Detection-Based_Unsupervised_Image-to-Image_Translation_CVPR_2020_paper.html",
-        frontiers: "https://www.frontiersin.org/articles/10.3389/fpace.2022.892330/full",
+        frontiers:
+            "https://www.frontiersin.org/articles/10.3389/fpace.2022.892330/full",
         hal: "https://hal.science/hal-03171076",
         ijcai: "https://www.ijcai.org/proceedings/2020/1",
         ieee: "https://ieeexplore.ieee.org/document/9090146",
@@ -34,7 +36,8 @@
         jmlr: "https://www.jmlr.org/papers/v13/bergstra12a.html",
         mdpi: "https://www.mdpi.com/2076-328X/13/12/961",
         nature: "https://www.nature.com/articles/s41467-018-07210-0",
-        neurips: "https://proceedings.neurips.cc/paper/2019/hash/0118a063b4aae95277f0bc1752c75abf-Abstract.html",
+        neurips:
+            "https://proceedings.neurips.cc/paper/2019/hash/0118a063b4aae95277f0bc1752c75abf-Abstract.html",
         openreview: "https://openreview.net/forum?id=xQUe1pOKPam",
         oup: "https://academic.oup.com/brain/article/147/3/743/7617466",
         pmc: "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7249434",
@@ -42,7 +45,8 @@
         wiley: "https://onlinelibrary.wiley.com/doi/abs/10.1002/acr2.11440",
         pnas: "https://www.pnas.org/doi/full/10.1073/pnas.2114679118",
         science: "https://science.org/doi/full/10.1126/scirobotics.abm6597",
-        sciencedirect: "https://www.sciencedirect.com/science/article/pii/S2589721721000349",
+        sciencedirect:
+            "https://www.sciencedirect.com/science/article/pii/S2589721721000349",
         springer: "https://link.springer.com/article/10.1007/s41095-022-0271-y",
         plos: "https://journals.plos.org/climate/article?id=10.1371/journal.pclm.0000068",
         rsc: "https://pubs.rsc.org/en/content/articlelanding/2022/dd/d2dd00066k",
@@ -56,13 +60,18 @@
         const missing = [];
 
         for (const [source, url] of Object.entries(expectedUrls)) {
-            const normalizedUrl = url.toLowerCase().replace(/\?.*$/, "").replace(/\/$/, "");
+            const normalizedUrl = url
+                .toLowerCase()
+                .replace(/\?.*$/, "")
+                .replace(/\/$/, "");
             const match = papersList.find((p) => {
                 const paperUrls = [p.source, p.pdfLink, ...(p.urls || [])]
                     .filter(Boolean)
-                    .map((u) => u.toLowerCase().replace(/\?.*$/, "").replace(/\/$/, ""));
+                    .map((u) =>
+                        u.toLowerCase().replace(/\?.*$/, "").replace(/\/$/, ""),
+                    );
                 return paperUrls.some(
-                    (pu) => pu.includes(normalizedUrl) || normalizedUrl.includes(pu)
+                    (pu) => pu.includes(normalizedUrl) || normalizedUrl.includes(pu),
                 );
             });
 
@@ -82,7 +91,7 @@
         if (found.length > 0) {
             console.log(
                 `%c✓ Found papers (${found.length}):`,
-                "color: green; font-weight: bold"
+                "color: green; font-weight: bold",
             );
             console.table(found);
         }
@@ -90,13 +99,13 @@
         if (missing.length > 0) {
             console.log(
                 `%c✗ Missing papers (${missing.length}):`,
-                "color: red; font-weight: bold"
+                "color: red; font-weight: bold",
             );
             console.table(missing);
         } else {
             console.log(
                 `%c✓ All sources were successfully parsed!`,
-                "color: green; font-weight: bold; font-size: 14px"
+                "color: green; font-weight: bold; font-size: 14px",
             );
         }
     });

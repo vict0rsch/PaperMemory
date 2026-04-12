@@ -135,7 +135,7 @@ describe("Popup Menu Tests", function () {
                 current[key] = value;
                 await PMDebug.data.setStorage("prefs", current);
             },
-            { key, value }
+            { key, value },
         );
         await page.reload({ waitUntil: "networkidle0" });
         await waitForPopupReady(page);
@@ -151,7 +151,7 @@ describe("Popup Menu Tests", function () {
                     current[key] = value;
                     await PMDebug.data.setStorage("prefs", current);
                 },
-                { key, value }
+                { key, value },
             );
             await page.reload({ waitUntil: "networkidle0" });
             await waitForPopupReady(page);
@@ -172,14 +172,14 @@ describe("Popup Menu Tests", function () {
             });
             await verifyElementClickable(
                 await verifySelectorExists("#menu-switch", PMPage),
-                PMPage
+                PMPage,
             );
             await safeClick("#menu-switch", PMPage);
             // Wait for animation/display change
             await PMPage.waitForFunction(
                 () =>
                     document.getElementById("menu-container").style.display !== "none",
-                { timeout: 5000 }
+                { timeout: 5000 },
             );
             const visible = await isMenuVisible(PMPage);
             expect(visible).toBe(true);
@@ -190,7 +190,7 @@ describe("Popup Menu Tests", function () {
             await PMPage.waitForFunction(
                 () =>
                     document.getElementById("menu-container").style.display === "none",
-                { timeout: 5000 }
+                { timeout: 5000 },
             );
             const visible = await isMenuVisible(PMPage);
             expect(visible).toBe(false);
@@ -201,7 +201,7 @@ describe("Popup Menu Tests", function () {
             await PMPage.waitForFunction(
                 () =>
                     document.getElementById("menu-container").style.display !== "none",
-                { timeout: 5000 }
+                { timeout: 5000 },
             );
             const visible = await isMenuVisible(PMPage);
             expect(visible).toBe(true);
@@ -212,7 +212,7 @@ describe("Popup Menu Tests", function () {
             await PMPage.waitForFunction(
                 () =>
                     document.getElementById("menu-container").style.display === "none",
-                { timeout: 5000 }
+                { timeout: 5000 },
             );
             const visible = await isMenuVisible(PMPage);
             expect(visible).toBe(false);
@@ -364,7 +364,7 @@ describe("Popup Menu Tests", function () {
                 await setPreference(PMPage, "checkDirectOpen", true);
                 const memoryContainer = await PMPage.$("#memory-container");
                 const isVisible = await memoryContainer.evaluate(
-                    (el) => el.style.display !== "none"
+                    (el) => el.style.display !== "none",
                 );
                 expect(isVisible).toBe(false);
             });
@@ -376,12 +376,12 @@ describe("Popup Menu Tests", function () {
                 });
                 await PMPage.reload();
                 await PMPage.waitForFunction(
-                    () => typeof window.PMDebug !== "undefined"
+                    () => typeof window.PMDebug !== "undefined",
                 );
 
                 const memoryContainer = await PMPage.$("#memory-container");
                 const isVisible = await memoryContainer.evaluate(
-                    (el) => el.style.display !== "none"
+                    (el) => el.style.display !== "none",
                 );
                 expect(isVisible).toBe(true);
                 await PMPage.evaluateOnNewDocument(() => {
@@ -451,7 +451,7 @@ describe("Popup Menu Tests", function () {
                         ];
                     },
                     arxivPaperUrl,
-                    paperTitle
+                    paperTitle,
                 );
 
                 await setPreference(PMPage, "checkStore", true);
@@ -460,11 +460,11 @@ describe("Popup Menu Tests", function () {
                 await PMPage.waitForFunction(
                     (id) => !!document.getElementById(id),
                     { timeout: 5000 },
-                    btnId
+                    btnId,
                 );
                 const exists = await PMPage.evaluate(
                     (id) => !!document.getElementById(id),
-                    btnId
+                    btnId,
                 );
                 expect(exists).toBe(true);
 
@@ -492,7 +492,7 @@ describe("Popup Menu Tests", function () {
                         ];
                     },
                     arxivPaperUrl,
-                    paperTitle
+                    paperTitle,
                 );
 
                 await setPreference(PMPage, "checkStore", false);
@@ -501,11 +501,11 @@ describe("Popup Menu Tests", function () {
                 await PMPage.waitForFunction(
                     (id) => !!document.getElementById(id),
                     { timeout: 5000 },
-                    btnId
+                    btnId,
                 );
                 const exists = await PMPage.evaluate(
                     (id) => !!document.getElementById(id),
-                    btnId
+                    btnId,
                 );
                 expect(exists).toBe(true);
 
@@ -562,13 +562,13 @@ describe("Popup Menu Tests", function () {
                 await PMPage.bringToFront();
                 await PMPage.reload();
                 await PMPage.waitForFunction(
-                    () => typeof window.PMDebug !== "undefined"
+                    () => typeof window.PMDebug !== "undefined",
                 );
 
                 // 3. Verify memory is NOT open (checkDirectOpen suppressed)
                 const memoryContainer = await PMPage.$("#memory-container");
                 const isHidden = await memoryContainer.evaluate(
-                    (el) => el.style.display === "none"
+                    (el) => el.style.display === "none",
                 );
                 expect(isHidden).toBe(true);
 
@@ -589,7 +589,7 @@ describe("Popup Menu Tests", function () {
                 }, unknownPaperUrl);
                 await PMPage.reload();
                 await PMPage.waitForFunction(
-                    () => typeof window.PMDebug !== "undefined"
+                    () => typeof window.PMDebug !== "undefined",
                 );
 
                 const manualBtnSelector = "#manual-trigger-btn";
@@ -648,7 +648,7 @@ describe("Popup Menu Tests", function () {
                 await PMPage.waitForFunction(
                     () =>
                         document.getElementById("memory-container").style.display !==
-                        "none"
+                        "none",
                 );
 
                 // Focus the memory item
@@ -666,22 +666,22 @@ describe("Popup Menu Tests", function () {
                 try {
                     await PMPage.waitForFunction(
                         () => window.__mockDownloadsOpenId !== undefined,
-                        { timeout: 2000 }
+                        { timeout: 2000 },
                     );
                     const openedId = await PMPage.evaluate(
-                        () => window.__mockDownloadsOpenId
+                        () => window.__mockDownloadsOpenId,
                     );
                     expect(openedId).toBe(123);
                 } catch (e) {
                     // If failed, check if it tried to open a tab instead (fallback)
                     const tabOpened = await PMPage.evaluate(
-                        () => window.__mockTabsCreate || window.__mockTabsUpdate
+                        () => window.__mockTabsCreate || window.__mockTabsUpdate,
                     );
                     if (tabOpened) {
                         throw new Error(
                             `Expected download open, but got tab open: ${JSON.stringify(
-                                tabOpened
-                            )}`
+                                tabOpened,
+                            )}`,
                         );
                     }
                     throw e;
@@ -726,7 +726,8 @@ describe("Popup Menu Tests", function () {
             await resetPage(PMPage, pmURLs.popupURL);
             await safeClick("#menu-switch", PMPage);
             await PMPage.waitForFunction(
-                () => document.getElementById("menu-container").style.display !== "none"
+                () =>
+                    document.getElementById("menu-container").style.display !== "none",
             );
         });
 
@@ -785,7 +786,7 @@ describe("Popup Menu Tests", function () {
             // Verify shortcuts list is populated
             const shortcuts = await PMPage.$$eval(
                 "#user-guide-shortcuts-ul li",
-                (els) => els.map((e) => e.innerText)
+                (els) => els.map((e) => e.innerText),
             );
             expect(shortcuts.length).toBeGreaterThan(0);
             // Check for a known shortcut description
@@ -846,7 +847,8 @@ describe("Popup Menu Tests", function () {
             await PMPage.keyboard.press("a"); // Open memory
             await PMPage.waitForFunction(
                 () =>
-                    document.getElementById("memory-container").style.display !== "none"
+                    document.getElementById("memory-container").style.display !==
+                    "none",
             );
 
             // 6. Focus a memory item and press Enter
