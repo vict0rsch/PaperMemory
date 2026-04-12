@@ -34,7 +34,7 @@ function htmlIncludePlugin(basePath) {
 
 export default defineConfig({
     srcDir: "src",
-    outDir: ".output",
+    outDir: "dist",
     manifest: {
         name: "Paper Memory",
         version: "1.1.0",

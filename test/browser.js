@@ -13,7 +13,7 @@ export const makeBrowser = async (headless = false, windowSize = "1200,900") => 
         ignoreHTTPSErrors: true,
         ignoreDefaultArgs: ["--disable-extensions"],
         args: [
-            `--load-extension=${root}/.output/chrome-mv3`,
+            `--load-extension=${root}/dist/chrome-mv3`,
             `--window-size=${windowSize}`,
             "--no-sandbox",
             "--disable-setuid-sandbox",

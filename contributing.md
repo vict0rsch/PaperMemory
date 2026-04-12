@@ -13,7 +13,7 @@ The project uses modern ES modules and [WXT](https://wxt.dev/) for bundling, dev
 1. [Install `npm`](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm) (Node.js 22+ recommended)
 2. Install dependencies: `npm install`
 3. Start the dev server: `npm run dev`
-4. Load the extension in Chrome from `.output/chrome-mv3/` (see [Loading the extension](#loading-the-extension))
+4. Load the extension in Chrome from `dist/chrome-mv3/` (see [Loading the extension](#loading-the-extension))
 5. Edit files — WXT auto-reloads!
 
 ## What is WXT?
@@ -25,7 +25,7 @@ The project uses modern ES modules and [WXT](https://wxt.dev/) for bundling, dev
 - **Dev server**: Hot module reloading with `npm run dev`
 - **Zip packaging**: `npm run zip` produces ready-to-submit archives for both browsers
 
-You do **not** need to know WXT internals to contribute. The key thing to know is that WXT discovers entry points from `src/entrypoints/` and builds them into `.output/`.
+You do **not** need to know WXT internals to contribute. The key thing to know is that WXT discovers entry points from `src/entrypoints/` and builds them into `dist/`.
 
 ## Build commands
 
@@ -42,7 +42,7 @@ npm run zip:chrome       # Build + zip for Chrome only
 npm run zip:firefox      # Build + zip for Firefox only
 ```
 
-Build output goes to `.output/chrome-mv3/` and `.output/firefox-mv2/`.
+Build output goes to `dist/chrome-mv3/` and `dist/firefox-mv2/`.
 
 ## Loading the extension
 
@@ -50,14 +50,14 @@ Build output goes to `.output/chrome-mv3/` and `.output/firefox-mv2/`.
 
 1. Run `npm run dev` (or `npm run build:chrome`)
 2. Open `chrome://extensions/`, enable "Developer mode"
-3. Click "Load unpacked" and select the `.output/chrome-mv3/` directory
+3. Click "Load unpacked" and select the `dist/chrome-mv3/` directory
 4. The extension auto-reloads on file changes when using `npm run dev`
 
 ### Firefox
 
 1. Run `npm run dev:firefox`
 2. Open `about:debugging#/runtime/this-firefox`
-3. Click "Load Temporary Add-on" and select any file inside `.output/firefox-mv2/`
+3. Click "Load Temporary Add-on" and select any file inside `dist/firefox-mv2/`
 
 More info: https://extensionworkshop.com/documentation/develop/temporary-installation-in-firefox/
 
