@@ -949,7 +949,7 @@ const setupSync = async () => {
             const { file, pat, gistId } = payload;
             log("Gist ID", gistId);
             log("Data URL", file.raw_url);
-            log("Personal Access Token", pat);
+            log("Personal Access Token", "[REDACTED]");
             setHTML("pat-feedback", "Ok! Token is valid.");
             toggleSync();
         }

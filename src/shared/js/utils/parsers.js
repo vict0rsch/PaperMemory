@@ -1924,12 +1924,22 @@ export const autoTagPaper = async (paper) => {
             if (!at.tags?.length) continue;
             if (!at.title && !at.author) continue;
 
-            const titleMatch = at.title
-                ? new RegExp(at.title, "i").test(paper.title)
-                : true;
-            const authorMatch = at.author
-                ? new RegExp(at.author, "i").test(paper.author)
-                : true;
+            let titleMatch = true;
+            let authorMatch = true;
+            try {
+                if (at.title) {
+                    titleMatch = paper.title
+                        .toLowerCase()
+                        .includes(at.title.toLowerCase());
+                }
+                if (at.author) {
+                    authorMatch = paper.author
+                        .toLowerCase()
+                        .includes(at.author.toLowerCase());
+                }
+            } catch (e) {
+                continue;
+            }
 
             if (titleMatch && authorMatch) {
                 at.tags.forEach((t) => tags.add(t));
