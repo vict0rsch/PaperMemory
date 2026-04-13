@@ -448,7 +448,8 @@ const contentScriptMain = async ({
             if (!state.papers.hasOwnProperty(id)) return;
             const paper = state.papers[id];
             const maxWait = 60 * 1000;
-            while (1) {
+            const maxIters = 20;
+            while (PDF_TITLE_ITERS < maxIters) {
                 const waitTime = Math.min(maxWait, 250 * 2 ** PDF_TITLE_ITERS);
                 await sleep(waitTime);
                 document.title = "";
