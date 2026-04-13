@@ -811,11 +811,15 @@ export const prepareOverwriteData = async (data) => {
         for (const id in papersToWrite) {
             if (!id.startsWith("__")) {
                 let paperWarnings = validatePaper(papersToWrite[id]).warnings;
-                if (paperWarnings && paperWarnings.length > 0) {
+                const hasWarnings = Object.values(paperWarnings).some(
+                    (v) => v.length > 0,
+                );
+                if (hasWarnings) {
                     warning +=
                         "<br/>" +
                         Object.entries(paperWarnings)
-                            .map((k, v) => `<h5>${k}</h5>${v.join("<br/>")}`)
+                            .filter(([, v]) => v.length > 0)
+                            .map(([k, v]) => `<h5>${k}</h5>${v.join("<br/>")}`)
                             .join("<br/>");
                 }
             }
