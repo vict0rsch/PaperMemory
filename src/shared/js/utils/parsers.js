@@ -1928,14 +1928,10 @@ export const autoTagPaper = async (paper) => {
             let authorMatch = true;
             try {
                 if (at.title) {
-                    titleMatch = paper.title
-                        .toLowerCase()
-                        .includes(at.title.toLowerCase());
+                    titleMatch = new RegExp(at.title, "i").test(paper.title);
                 }
                 if (at.author) {
-                    authorMatch = paper.author
-                        .toLowerCase()
-                        .includes(at.author.toLowerCase());
+                    authorMatch = new RegExp(at.author, "i").test(paper.author);
                 }
             } catch (e) {
                 continue;

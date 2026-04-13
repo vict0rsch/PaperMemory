@@ -136,7 +136,6 @@ $.extend($.easing, {
     },
 });
 
-var PDF_TITLE_ITERS = 0;
 
 /**
  * Centralizes HTML svg codes
@@ -450,12 +449,13 @@ const contentScriptMain = async ({
             const paper = state.papers[id];
             const maxWait = 60 * 1000;
             const maxIters = 20;
-            while (PDF_TITLE_ITERS < maxIters) {
-                const waitTime = Math.min(maxWait, 250 * 2 ** PDF_TITLE_ITERS);
+            let pdfTitleIters = 0;
+            while (pdfTitleIters < maxIters) {
+                const waitTime = Math.min(maxWait, 250 * 2 ** pdfTitleIters);
                 await sleep(waitTime);
                 document.title = "";
                 document.title = paper.title;
-                PDF_TITLE_ITERS++;
+                pdfTitleIters++;
             }
         };
         makeTitle(id);
@@ -660,6 +660,7 @@ const huggingfacePapers = (paper, url) => {
     const abstractH2 = queryAll("h2").find((h) => h.innerText.trim() === "Abstract");
     if (!abstractH2) {
         log("Missing 'Abstract' h2 title on HuggingFace paper page.");
+        return;
     }
     const authorDiv = abstractH2.parentElement.previousElementSibling;
     log("Adding venue to HuggingFace paper page.");

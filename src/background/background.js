@@ -87,7 +87,9 @@ export function initBackground() {
     // Remove DOM-dependent setFaviconCode since it's not needed in service worker
 
     const fetchOpenReviewNoteJSON = async (url) => {
-        const id = url.match(/id=([\w-]+)/)[1];
+        const match = url.match(/id=([\w-]+)/);
+        if (!match) return;
+        const id = match[1];
         const api = `https://api.openreview.net/notes?id=${id}`;
         let response = await fetch(api);
         let json = await response.json();
@@ -101,7 +103,9 @@ export function initBackground() {
     };
 
     const fetchOpenReviewForumJSON = async (url) => {
-        const id = url.match(/id=([\w-]+)/)[1];
+        const match = url.match(/id=([\w-]+)/);
+        if (!match) return;
+        const id = match[1];
         const api = `https://api.openreview.net/notes?forum=${id}`;
         let response = await fetch(api);
         let json = await response.json();

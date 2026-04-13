@@ -919,7 +919,7 @@ const setupSync = async () => {
 
     if (!ok) {
         if (error) {
-            setHTML("pat-feedback", "Invalid PAT" + "<br/><br/>" + error);
+            setHTML("pat-feedback", "Invalid PAT" + "<br/><br/>" + escapeHtml(String(error)));
         }
         hideId("pat-loader");
         await toggleSync({ hideAll: true });
@@ -944,7 +944,7 @@ const setupSync = async () => {
         const { ok, payload, error } = await getGist({ pat });
         if (!ok) {
             logError(error);
-            setHTML("pat-feedback", error.response.data.message);
+            setHTML("pat-feedback", escapeHtml(String(error.response.data.message)));
         } else {
             const { file, pat, gistId } = payload;
             log("Gist ID", gistId);

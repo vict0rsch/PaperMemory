@@ -21,7 +21,7 @@ export const getPaperInfoTable = (paper) => {
     if (paper.venue)
         tableData.push([
             "Publication",
-            `<strong>${paper.venue} ${paper.year}</strong>`,
+            `<strong>${escapeHtml(paper.venue)} ${escapeHtml(String(paper.year))}</strong>`,
         ]);
     return /*html*/ `
         <table class="paper-info-table">
