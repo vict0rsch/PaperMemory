@@ -1,6 +1,6 @@
 // ES Module imports
 import { state, knownPaperPages, svgActionsHoverTitles } from "@pmu/config.js";
-import { getDisplayId, tablerSvg, isPdfUrl, cutAuthors } from "@pmu/functions.js";
+import { getDisplayId, tablerSvg, isPdfUrl, cutAuthors, escapeHtml } from "@pmu/functions.js";
 import { getTagsOptions } from "@pmu/state.js";
 import { isPaper } from "@pmu/paper.js";
 /**
@@ -53,7 +53,7 @@ export const getMemoryItemHTML = (paper) => {
     const favoriteClass = paper.favorite ? "favorite" : "";
     const titles = { ...svgActionsHoverTitles };
     // titles behave differently in build/watch mode. This works in build
-    titles.pdfLink = `Open tab to ${paper.title}`;
+    titles.pdfLink = `Open tab to ${escapeHtml(paper.title)}`;
     titles.copyLink = `Copy URL to the paper's ${
         state.prefs.checkPreferPdf ? "PDF" : "abstract"
     }`;
@@ -62,7 +62,7 @@ export const getMemoryItemHTML = (paper) => {
         <small class="memory-item-faded">
 
             <div class="memory-code-link"> ${
-                paper.codeLink.replace(/^https?:\/\//, "") || ""
+                escapeHtml(paper.codeLink.replace(/^https?:\/\//, "") || "")
             } </div>
             <div class="memory-website-url">
                 ${
@@ -78,7 +78,7 @@ export const getMemoryItemHTML = (paper) => {
         noteDiv = /*html*/ `
             <div class="memory-note-div memory-item-faded">
                 <span class="note-content-header">Note:</span>
-                <span class="note-content">${note}</span>
+                <span class="note-content">${escapeHtml(note)}</span>
             </div>
         `;
     }
@@ -163,7 +163,7 @@ export const getMemoryItemHTML = (paper) => {
                         favoriteClass,
                     ])}
                 </span>
-                ${paper.title}
+                ${escapeHtml(paper.title)}
                 <div class="title-tooltip" style="display: none;">
                     ${titleInfoTable}
                 </div>
@@ -171,7 +171,7 @@ export const getMemoryItemHTML = (paper) => {
             <div class="my-1 mx-0">
                 <small class="tag-list">
                     ${[...tags]
-                        .map((t) => `<span class="memory-tag" >${t}</span>`)
+                        .map((t) => `<span class="memory-tag" >${escapeHtml(t)}</span>`)
                         .join("")}
                 </small>
                 <div class="edit-tags p-0" style="display: none">
@@ -187,7 +187,7 @@ export const getMemoryItemHTML = (paper) => {
                     </div>
                 </div>
             </div>
-            <small class="memory-authors">${cutAuthors(paper.author)}</small>
+            <small class="memory-authors">${cutAuthors(escapeHtml(paper.author))}</small>
 
             <div class="code-and-note">${codeDiv} ${noteDiv}</div>
 
@@ -256,7 +256,7 @@ export const getMemoryItemHTML = (paper) => {
                             <input
                                 type="text"
                                 class="form-code-input"
-                                value="${paper.codeLink || ""}"
+                                value="${escapeHtml(paper.codeLink || "")}"
                                 placeholder="Add link"
                             />
                         </div>
@@ -267,7 +267,7 @@ export const getMemoryItemHTML = (paper) => {
                                 class="form-note-textarea"
                                 placeholder="Anything to note?"
                             >
-${note}</textarea
+${escapeHtml(note)}</textarea
                             >
                         </div>
                         <div class="form-note-buttons">
@@ -324,7 +324,7 @@ export const getPopupEditFormHTML = (paper) => {
                         id="popup-form-codeLink--${id}"
                         type="text"
                         class="form-code-input mt-0"
-                        value="${paper.codeLink || ""}"
+                        value="${escapeHtml(paper.codeLink || "")}"
                         placeholder="Add code link"
                     />
                 </div>
@@ -336,7 +336,7 @@ export const getPopupEditFormHTML = (paper) => {
                         id="popup-form-note-textarea--${id}"
                         placeholder="Anything to note?"
                     >
-${note}</textarea
+${escapeHtml(note)}</textarea
                     >
                 </div>
             </div>
