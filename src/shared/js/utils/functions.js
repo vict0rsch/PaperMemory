@@ -372,7 +372,7 @@ async function pasteRich(rich, plain) {
  * @returns {void}
  * */
 export const copyHyperLinkToClipboard = (url, title) => {
-    const linkHtml = `<a href="${url}">${title}</a>`;
+    const linkHtml = `<a href="${escapeHtml(url)}">${escapeHtml(title)}</a>`;
     pasteRich(linkHtml, `${title} ${url}`);
 };
 
@@ -801,10 +801,12 @@ export const stringifyError = (e) => {
     return e.stack
         .split("\n")
         .map((line) =>
-            line
-                .split(" ")
-                .map((word) => word.split(extId).last())
-                .join(" "),
+            escapeHtml(
+                line
+                    .split(" ")
+                    .map((word) => word.split(extId).last())
+                    .join(" "),
+            ),
         )
         .join("<br/>");
 };

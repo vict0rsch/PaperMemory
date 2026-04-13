@@ -9,7 +9,7 @@ import {
     hideId,
     querySelector,
 } from "@pmu/miniquery.js";
-import { copyTextToClipboard } from "@pmu/functions.js";
+import { copyTextToClipboard, escapeHtml } from "@pmu/functions.js";
 import { BibtexParser, bibtexToObject, bibtexToString } from "@pmu/bibtexParser.js";
 import {
     tryDBLP,
@@ -313,7 +313,7 @@ const matchItems = async (papersToMatch) => {
         setHTML("matching-status-index", idx + 1);
         setHTML(
             "matching-status-title",
-            paper.title.replaceAll("{", "").replaceAll("}", ""),
+            escapeHtml(paper.title.replaceAll("{", "").replaceAll("}", "")),
         );
         changeProgress(parseInt((idx / papersToMatch.length) * 100));
 
@@ -365,10 +365,10 @@ const updateMatchedTitles = (matchedBibtexStrs, sources, venues) => {
         for (const [idx, title] of titles.entries()) {
             htmls.push(
                 `<tr>
-                    <th class="match-citation-key">${keys[idx]}</th>
-                    <th class='match-title'>${title}</th>
-                    <th class="match-venue">${venues[idx]}</th>
-                    <th class="match-source">${sources[idx]}</th>
+                    <th class="match-citation-key">${escapeHtml(keys[idx])}</th>
+                    <th class='match-title'>${escapeHtml(title)}</th>
+                    <th class="match-venue">${escapeHtml(venues[idx])}</th>
+                    <th class="match-source">${escapeHtml(sources[idx])}</th>
                 </tr>`,
             );
         }
