@@ -19,6 +19,7 @@ import {
     sendMessageToBackground,
     downloadURI,
     dummyEvent,
+    escapeHtml,
 } from "@pmu/functions.js";
 import { bibtexToString, bibtexToObject } from "@pmu/bibtexParser.js";
 import {
@@ -254,8 +255,8 @@ const makePaperMemoryHTMLDiv = (paper) => {
                 style="display: flex; justify-content: center; align-items: center;" 
                 id="pm-venue"
             >
-                <span id="pm-venue-name">${paper.venue}</span>
-                <span id="pm-venue-year">${bibtexToObject(paper.bibtex).year}</span>
+                <span id="pm-venue-name">${escapeHtml(paper.venue)}</span>
+                <span id="pm-venue-year">${escapeHtml(bibtexToObject(paper.bibtex).year)}</span>
             </div>
             <p
                 style="text-align: center; font-size: 12px; color: #666; margin: 0;"
@@ -609,8 +610,8 @@ const displayPaperVenue = (paper) => {
     const venueDiv = /*html*/ `
         <div id="pm-publication-wrapper">
             <div id="pm-publication-venue">
-                <span id="pm-venue-name">${paper.venue}</span>
-                <span id="pm-venue-year">${bibtexToObject(paper.bibtex).year}</span>
+                <span id="pm-venue-name">${escapeHtml(paper.venue)}</span>
+                <span id="pm-venue-year">${escapeHtml(bibtexToObject(paper.bibtex).year)}</span>
             </div>
         </div>`;
     findEl({ element: "pm-publication-wrapper" })?.remove();
@@ -628,9 +629,11 @@ const displayPaperCode = (paper) => {
     if (!paper.codeLink) {
         return;
     }
+    const safeLink = /^https?:\/\//.test(paper.codeLink) ? escapeHtml(paper.codeLink) : "";
+    if (!safeLink) return;
     const code = /*html*/ `
         <div id="pm-code">
-        <h3>Code:</h3> <a id="pm-code-link" href="${paper.codeLink}">${paper.codeLink}</a>
+        <h3>Code:</h3> <a id="pm-code-link" href="${safeLink}">${safeLink}</a>
         </div>
     `;
     findEl({ element: "pm-code" })?.remove();
@@ -649,8 +652,8 @@ const huggingfacePapers = (paper, url) => {
     const venueDiv = /*html*/ `
         <div id="pm-publication-wrapper">
             <div id="pm-publication-venue">
-                <span id="pm-venue-name">${paper.venue}</span>
-                <span id="pm-venue-year">${bibtexToObject(paper.bibtex).year}</span>
+                <span id="pm-venue-name">${escapeHtml(paper.venue)}</span>
+                <span id="pm-venue-year">${escapeHtml(bibtexToObject(paper.bibtex).year)}</span>
                 <span id="pm-hf-label">(PaperMemory)</span>
             </div>
         </div>`;
@@ -853,7 +856,7 @@ const updateCompleteSecretHTML = (paper) => {
                 .querySelector("head")
                 .insertAdjacentHTML(
                     "beforeend",
-                    /*html*/ `<meta name="pm-complete-secret-html" content="${paper.id}">`,
+                    /*html*/ `<meta name="pm-complete-secret-html" content="${escapeHtml(paper.id)}">`,
                 );
         }
     }, 50);

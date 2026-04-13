@@ -10,6 +10,21 @@ import { LOGTRACE } from "@pmu/logTrace.js";
 import { val, hasClass, findEl } from "@pmu/miniquery.js";
 
 /**
+ * Escapes HTML special characters to prevent XSS when inserting into HTML.
+ * @param {string} str The string to escape
+ * @returns {string} The escaped string
+ */
+export const escapeHtml = (str) => {
+    if (typeof str !== "string") return String(str ?? "");
+    return str
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+};
+
+/**
  * Generate a random integer between 0 and max
  * @param {number} max The maximum value of the random integer
  * @returns {number} The random integer
