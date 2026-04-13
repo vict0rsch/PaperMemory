@@ -32,6 +32,7 @@ import {
     cleanPapers,
     sendMessageToBackground,
     parseTags,
+    escapeHtml,
 } from "@pmu/functions.js";
 import {
     makePaper,
@@ -140,7 +141,7 @@ const handleSelectImportJson = () => {
     findEl({ element: "import-json-papers-button" }).disabled = false;
 };
 
-const validateImportPaper = (p) => {
+const validateImportPaper = (p, i) => {
     if (typeof p === "string") {
         if (!isValidHttpUrl(p)) {
             alert(`${p} (entry ${i}) is not a valid URL`);
@@ -213,7 +214,7 @@ const handleParseImportJson = async (e) => {
                 throw new Error("The JSON file must contain a *list* of papers");
             }
             for (const [i, p] of papersToParse.entries()) {
-                if (!validateImportPaper(p)) {
+                if (!validateImportPaper(p, i)) {
                     return;
                 }
             }
@@ -248,7 +249,7 @@ const handleParseImportJson = async (e) => {
                 if (!Object.values(is).some((i) => i)) {
                     feedback.innerHTML += `<li>[${
                         i + 1
-                    }]&nbsp; &times;&nbsp; Error: ${url} does not come from a known source</li>`;
+                    }]&nbsp; &times;&nbsp; Error: ${escapeHtml(url)} does not come from a known source</li>`;
                     warn("Aborting.");
                 } else {
                     let paper;
@@ -266,12 +267,12 @@ const handleParseImportJson = async (e) => {
                     if (exists) {
                         feedback.innerHTML += `<li>[${
                             i + 1
-                        }]&nbsp; &times;&nbsp; Warning: ${url} already exists and has been ignored</li>`;
+                        }]&nbsp; &times;&nbsp; Warning: ${escapeHtml(url)} already exists and has been ignored</li>`;
                         warn("Aborting.");
                     } else {
                         feedback.innerHTML += `<li>[${
                             i + 1
-                        }]&nbsp; &#10004; ${url} has been successfully added to your Memory!</li>`;
+                        }]&nbsp; &#10004; ${escapeHtml(url)} has been successfully added to your Memory!</li>`;
                     }
                 }
             } catch (error) {
@@ -279,7 +280,7 @@ const handleParseImportJson = async (e) => {
                 warn("Aborting.");
                 feedback.innerHTML += `<li>[${
                     i + 1
-                }]&nbsp; &times;&nbsp; Error: ${url} (open the JavaScript Console for more info)</li>`;
+                }]&nbsp; &times;&nbsp; Error: ${escapeHtml(url)} (open the JavaScript Console for more info)</li>`;
             }
         }
         await pushToRemote();
@@ -348,13 +349,13 @@ const getAutoTagHTML = (at) => {
     return /*html*/ `
     <div class="row auto-tags-item" id="auto-tags-item--${id}">
         <div class="col-3">
-            <input type="text" id="auto-tags-item-title--${id}" value="${title}" />
+            <input type="text" id="auto-tags-item-title--${id}" value="${escapeHtml(title)}" />
         </div>
         <div class="col-3">
-            <input type="text" id="auto-tags-item-authors--${id}" value="${authors}" />
+            <input type="text" id="auto-tags-item-authors--${id}" value="${escapeHtml(authors)}" />
         </div>
         <div class="col-3">
-            <input type="text" id="auto-tags-item-tags--${id}" value="${tags}" />
+            <input type="text" id="auto-tags-item-tags--${id}" value="${escapeHtml(tags)}" />
         </div>
         <div class="col-3">
             <div class="row">
@@ -496,14 +497,14 @@ const addPreprintUpdate = (update) => {
     for (const [k, v] of Object.entries(update)) {
         if (k !== "paper" && k !== "bibtex") {
             if (v) {
-                contents.push(`<span>${k}:</span>&nbsp;<span>${v}</span>`);
+                contents.push(`<span>${escapeHtml(k)}:</span>&nbsp;<span>${escapeHtml(v)}</span>`);
             }
         }
     }
     contents = contents.join("<br>");
     const html = /*html*/ `
     <div class="paper-update-item" id="paper-update-item--${paper.id}">
-        <h4>${paper.title}</h4>
+        <h4>${escapeHtml(paper.title)}</h4>
         <div>
             <div class="preprint-update-contents">
                 <div>Updates to approve:</div>
@@ -555,13 +556,13 @@ const startMatching = async (papersToMatch) => {
     for (const [idx, paper] of papersToMatch.entries()) {
         console.log("idx: ", idx);
         setHTML("matching-status-index", idx + 1);
-        setHTML("matching-status-title", paper.title);
+        setHTML("matching-status-title", escapeHtml(paper.title));
         changeProgress(parseInt((idx / papersToMatch.length) * 100));
 
         var bibtex, venue, note, code, match;
 
         setHTML("matching-status-provider", "paperswithcode.org ...");
-        pwcMatch = await tryPWCMatch(paper);
+        const pwcMatch = await tryPWCMatch(paper);
         console.log("pwcMatch: ", pwcMatch);
         code = !paper.codeLink && pwcMatch?.url;
         note = !paper.note && pwcMatch?.note;
@@ -918,7 +919,7 @@ const setupSync = async () => {
 
     if (!ok) {
         if (error) {
-            setHTML("pat-feedback", "Invalid PAT" + "<br/><br/>" + error);
+            setHTML("pat-feedback", "Invalid PAT" + "<br/><br/>" + escapeHtml(String(error)));
         }
         hideId("pat-loader");
         await toggleSync({ hideAll: true });
@@ -943,12 +944,12 @@ const setupSync = async () => {
         const { ok, payload, error } = await getGist({ pat });
         if (!ok) {
             logError(error);
-            setHTML("pat-feedback", error.response.data.message);
+            setHTML("pat-feedback", escapeHtml(String(error.response.data.message)));
         } else {
             const { file, pat, gistId } = payload;
             log("Gist ID", gistId);
             log("Data URL", file.raw_url);
-            log("Personal Access Token", pat);
+            log("Personal Access Token", "[REDACTED]");
             setHTML("pat-feedback", "Ok! Token is valid.");
             toggleSync();
         }
@@ -1092,7 +1093,7 @@ const setupSync = async () => {
                 }
             }
         } catch (e) {
-            setHTML("overwriteRemoteFeedback", e);
+            setHTML("overwriteRemoteFeedback", escapeHtml(String(e)));
         }
         await sendMessageToBackground({ type: "restartGist" });
         hideId("sync-loader");

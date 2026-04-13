@@ -87,7 +87,9 @@ export function initBackground() {
     // Remove DOM-dependent setFaviconCode since it's not needed in service worker
 
     const fetchOpenReviewNoteJSON = async (url) => {
-        const id = url.match(/id=([\w-])+/)[0].replace("id=", "");
+        const match = url.match(/id=([\w-]+)/);
+        if (!match) return;
+        const id = match[1];
         const api = `https://api.openreview.net/notes?id=${id}`;
         let response = await fetch(api);
         let json = await response.json();
@@ -101,7 +103,9 @@ export function initBackground() {
     };
 
     const fetchOpenReviewForumJSON = async (url) => {
-        const id = url.match(/id=([\w-])+/)[0].replace("id=", "");
+        const match = url.match(/id=([\w-]+)/);
+        if (!match) return;
+        const id = match[1];
         const api = `https://api.openreview.net/notes?forum=${id}`;
         let response = await fetch(api);
         let json = await response.json();
@@ -161,29 +165,8 @@ export function initBackground() {
     };
 
     const fetchPWCData = async (arxivId, title) => {
-        return; // PWC API discontinued, to fix later
-        let pwcPath = `https://paperswithcode.com/api/v1/papers/?`;
-        if (arxivId) {
-            log("Fetching PWC data for arxivId:", arxivId);
-            pwcPath += new URLSearchParams({ arxiv_id: arxivId });
-        } else if (title) {
-            log("Fetching PWC data for paper:", title);
-            pwcPath += new URLSearchParams({ title });
-        }
-        const response = await fetch(pwcPath);
-        try {
-            const json = await response.json();
-        } catch (error) {
-            logError("[fetchPWCData]", error);
-            return;
-        }
-
-        if (json["count"] !== 1) {
-            log("No PWC entry match.");
-            return;
-        }
-        log("PWC entry match:", json["results"][0]["id"]);
-        return json["results"][0];
+        // PWC API discontinued, to fix later
+        return;
     };
 
     const findCodesForPaper = async (request) => {
@@ -323,7 +306,6 @@ export function initBackground() {
 
     const pushSyncPapers = async () => {
         if (!(await shouldSync())) return;
-        const identifier = await getIdentifier();
         try {
             const start = Date.now();
             consoleHeader(`Pushing ${String.fromCodePoint("0x23EB")}`);
@@ -359,6 +341,9 @@ export function initBackground() {
     };
 
     chrome.runtime.onMessage.addListener((payload, sender, sendResponse) => {
+        if (sender.id !== chrome.runtime.id) {
+            return;
+        }
         if (payload.type === "update-title") {
             const { title, url } = payload.options;
             paperTitles[url] = title.replaceAll('"', "'");
@@ -379,12 +364,15 @@ export function initBackground() {
                     });
                 }
                 const safeTitle = payload.title
-                    .replaceAll("?", "")
-                    .replaceAll(":", "")
-                    .replaceAll("..", "")
-                    .replaceAll("/", "_")
-                    .replaceAll("\\", "_");
+                    .replace(/[<>:"/\\|?*\x00-\x1f]/g, "_")
+                    .replace(/\.{2,}/g, ".")
+                    .replace(/^\.+|\.+$/g, "")
+                    .slice(0, 200);
                 const filename = "PaperMemoryStore/" + safeTitle;
+                if (!/^https?:\/\//.test(payload.pdfUrl)) {
+                    sendResponse(false);
+                    return;
+                }
                 chrome.downloads.download({ url: payload.pdfUrl, filename });
                 sendResponse(true);
             });
@@ -434,11 +422,10 @@ export function initBackground() {
                     console.log(">>> Setting tab title to :", paperTitle);
                     chrome.scripting.executeScript({
                         target: { tabId },
-                        code: `
-                        ${setTitleCode(paperTitle)};
-                        ${setFaviconCode};
-                    `,
-                        runAt: "document_start",
+                        func: (title) => {
+                            document.title = title;
+                        },
+                        args: [paperTitle],
                     });
                 }
             }

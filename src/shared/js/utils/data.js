@@ -11,6 +11,7 @@ import {
     miniHash,
     parseUrl,
     stringifyError,
+    escapeHtml,
 } from "@pmu/functions.js";
 import {
     state,
@@ -495,9 +496,9 @@ export const versionToSemantic = (dataVersionInt) => {
     // 209 -> 0.2.9
     // 1293 -> 0.12.93
     // 23439 -> 2.34.39
-    major = parseInt(dataVersionInt / 1e4, 10);
+    const major = parseInt(dataVersionInt / 1e4, 10);
     dataVersionInt -= major * 1e4;
-    minor = parseInt(dataVersionInt / 1e2, 10);
+    const minor = parseInt(dataVersionInt / 1e2, 10);
     dataVersionInt -= minor * 1e2;
     return `${major}.${minor}.${dataVersionInt}`;
 };
@@ -811,11 +812,15 @@ export const prepareOverwriteData = async (data) => {
         for (const id in papersToWrite) {
             if (!id.startsWith("__")) {
                 let paperWarnings = validatePaper(papersToWrite[id]).warnings;
-                if (paperWarnings && paperWarnings.length > 0) {
+                const hasWarnings = Object.values(paperWarnings).some(
+                    (v) => v.length > 0,
+                );
+                if (hasWarnings) {
                     warning +=
                         "<br/>" +
                         Object.entries(paperWarnings)
-                            .map((k, v) => `<h5>${k}</h5>${v.join("<br/>")}`)
+                            .filter(([, v]) => v.length > 0)
+                            .map(([k, v]) => `<h5>${escapeHtml(k)}</h5>${v.map(escapeHtml).join("<br/>")}`)
                             .join("<br/>");
                 }
             }

@@ -173,11 +173,11 @@ export const extractAuthor = (bibtex) =>
 
 export const extractCrossrefData = (crossrefResponse) => {
     if (!crossrefResponse.status || crossrefResponse.status !== "ok") {
-        error("Cannot parse CrossRef response", crossrefResponse);
+        logError("Cannot parse CrossRef response", crossrefResponse);
         return;
     }
     if (crossrefResponse["message-type"] !== "work") {
-        error("Unknown `message-type` from CrossRef", crossrefResponse);
+        logError("Unknown `message-type` from CrossRef", crossrefResponse);
         return;
     }
 
@@ -193,14 +193,14 @@ export const extractCrossrefData = (crossrefResponse) => {
           : null;
 
     if (!year) {
-        error("Cannot find year in CrossRef data", data);
+        logError("Cannot find year in CrossRef data", data);
         return;
     }
 
     const title = data.title[0];
 
     if (!title) {
-        error("Cannot find title in CrossRef data", data);
+        logError("Cannot find title in CrossRef data", data);
         return;
     }
 
@@ -1924,12 +1924,18 @@ export const autoTagPaper = async (paper) => {
             if (!at.tags?.length) continue;
             if (!at.title && !at.author) continue;
 
-            const titleMatch = at.title
-                ? new RegExp(at.title, "i").test(paper.title)
-                : true;
-            const authorMatch = at.author
-                ? new RegExp(at.author, "i").test(paper.author)
-                : true;
+            let titleMatch = true;
+            let authorMatch = true;
+            try {
+                if (at.title) {
+                    titleMatch = new RegExp(at.title, "i").test(paper.title);
+                }
+                if (at.author) {
+                    authorMatch = new RegExp(at.author, "i").test(paper.author);
+                }
+            } catch (e) {
+                continue;
+            }
 
             if (titleMatch && authorMatch) {
                 at.tags.forEach((t) => tags.add(t));
