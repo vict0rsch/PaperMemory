@@ -173,11 +173,11 @@ export const extractAuthor = (bibtex) =>
 
 export const extractCrossrefData = (crossrefResponse) => {
     if (!crossrefResponse.status || crossrefResponse.status !== "ok") {
-        error("Cannot parse CrossRef response", crossrefResponse);
+        logError("Cannot parse CrossRef response", crossrefResponse);
         return;
     }
     if (crossrefResponse["message-type"] !== "work") {
-        error("Unknown `message-type` from CrossRef", crossrefResponse);
+        logError("Unknown `message-type` from CrossRef", crossrefResponse);
         return;
     }
 
@@ -193,14 +193,14 @@ export const extractCrossrefData = (crossrefResponse) => {
           : null;
 
     if (!year) {
-        error("Cannot find year in CrossRef data", data);
+        logError("Cannot find year in CrossRef data", data);
         return;
     }
 
     const title = data.title[0];
 
     if (!title) {
-        error("Cannot find title in CrossRef data", data);
+        logError("Cannot find title in CrossRef data", data);
         return;
     }
 

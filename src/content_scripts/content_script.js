@@ -653,7 +653,7 @@ const huggingfacePapers = (paper, url) => {
                 <span id="pm-hf-label">(PaperMemory)</span>
             </div>
         </div>`;
-    abstractH2 = queryAll("h2").find((h) => h.innerText.trim() === "Abstract");
+    const abstractH2 = queryAll("h2").find((h) => h.innerText.trim() === "Abstract");
     if (!abstractH2) {
         log("Missing 'Abstract' h2 title on HuggingFace paper page.");
     }

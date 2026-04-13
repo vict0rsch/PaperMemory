@@ -495,9 +495,9 @@ export const versionToSemantic = (dataVersionInt) => {
     // 209 -> 0.2.9
     // 1293 -> 0.12.93
     // 23439 -> 2.34.39
-    major = parseInt(dataVersionInt / 1e4, 10);
+    const major = parseInt(dataVersionInt / 1e4, 10);
     dataVersionInt -= major * 1e4;
-    minor = parseInt(dataVersionInt / 1e2, 10);
+    const minor = parseInt(dataVersionInt / 1e2, 10);
     dataVersionInt -= minor * 1e2;
     return `${major}.${minor}.${dataVersionInt}`;
 };

@@ -140,7 +140,7 @@ const handleSelectImportJson = () => {
     findEl({ element: "import-json-papers-button" }).disabled = false;
 };
 
-const validateImportPaper = (p) => {
+const validateImportPaper = (p, i) => {
     if (typeof p === "string") {
         if (!isValidHttpUrl(p)) {
             alert(`${p} (entry ${i}) is not a valid URL`);
@@ -213,7 +213,7 @@ const handleParseImportJson = async (e) => {
                 throw new Error("The JSON file must contain a *list* of papers");
             }
             for (const [i, p] of papersToParse.entries()) {
-                if (!validateImportPaper(p)) {
+                if (!validateImportPaper(p, i)) {
                     return;
                 }
             }
@@ -561,7 +561,7 @@ const startMatching = async (papersToMatch) => {
         var bibtex, venue, note, code, match;
 
         setHTML("matching-status-provider", "paperswithcode.org ...");
-        pwcMatch = await tryPWCMatch(paper);
+        const pwcMatch = await tryPWCMatch(paper);
         console.log("pwcMatch: ", pwcMatch);
         code = !paper.codeLink && pwcMatch?.url;
         note = !paper.note && pwcMatch?.note;
