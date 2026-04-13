@@ -337,6 +337,9 @@ export function initBackground() {
     };
 
     chrome.runtime.onMessage.addListener((payload, sender, sendResponse) => {
+        if (sender.id !== chrome.runtime.id) {
+            return;
+        }
         if (payload.type === "update-title") {
             const { title, url } = payload.options;
             paperTitles[url] = title.replaceAll('"', "'");
@@ -357,12 +360,15 @@ export function initBackground() {
                     });
                 }
                 const safeTitle = payload.title
-                    .replaceAll("?", "")
-                    .replaceAll(":", "")
-                    .replaceAll("..", "")
-                    .replaceAll("/", "_")
-                    .replaceAll("\\", "_");
+                    .replace(/[<>:"/\\|?*\x00-\x1f]/g, "_")
+                    .replace(/\.{2,}/g, ".")
+                    .replace(/^\.+|\.+$/g, "")
+                    .slice(0, 200);
                 const filename = "PaperMemoryStore/" + safeTitle;
+                if (!/^https?:\/\//.test(payload.pdfUrl)) {
+                    sendResponse(false);
+                    return;
+                }
                 chrome.downloads.download({ url: payload.pdfUrl, filename });
                 sendResponse(true);
             });
