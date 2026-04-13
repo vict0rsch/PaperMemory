@@ -19,6 +19,7 @@ import {
     sendMessageToBackground,
     downloadURI,
     dummyEvent,
+    escapeHtml,
 } from "@pmu/functions.js";
 import { bibtexToString, bibtexToObject } from "@pmu/bibtexParser.js";
 import {
@@ -135,7 +136,6 @@ $.extend($.easing, {
     },
 });
 
-var PDF_TITLE_ITERS = 0;
 
 /**
  * Centralizes HTML svg codes
@@ -254,8 +254,8 @@ const makePaperMemoryHTMLDiv = (paper) => {
                 style="display: flex; justify-content: center; align-items: center;" 
                 id="pm-venue"
             >
-                <span id="pm-venue-name">${paper.venue}</span>
-                <span id="pm-venue-year">${bibtexToObject(paper.bibtex).year}</span>
+                <span id="pm-venue-name">${escapeHtml(paper.venue)}</span>
+                <span id="pm-venue-year">${escapeHtml(bibtexToObject(paper.bibtex).year)}</span>
             </div>
             <p
                 style="text-align: center; font-size: 12px; color: #666; margin: 0;"
@@ -448,12 +448,14 @@ const contentScriptMain = async ({
             if (!state.papers.hasOwnProperty(id)) return;
             const paper = state.papers[id];
             const maxWait = 60 * 1000;
-            while (1) {
-                const waitTime = Math.min(maxWait, 250 * 2 ** PDF_TITLE_ITERS);
+            const maxIters = 20;
+            let pdfTitleIters = 0;
+            while (pdfTitleIters < maxIters) {
+                const waitTime = Math.min(maxWait, 250 * 2 ** pdfTitleIters);
                 await sleep(waitTime);
                 document.title = "";
                 document.title = paper.title;
-                PDF_TITLE_ITERS++;
+                pdfTitleIters++;
             }
         };
         makeTitle(id);
@@ -608,8 +610,8 @@ const displayPaperVenue = (paper) => {
     const venueDiv = /*html*/ `
         <div id="pm-publication-wrapper">
             <div id="pm-publication-venue">
-                <span id="pm-venue-name">${paper.venue}</span>
-                <span id="pm-venue-year">${bibtexToObject(paper.bibtex).year}</span>
+                <span id="pm-venue-name">${escapeHtml(paper.venue)}</span>
+                <span id="pm-venue-year">${escapeHtml(bibtexToObject(paper.bibtex).year)}</span>
             </div>
         </div>`;
     findEl({ element: "pm-publication-wrapper" })?.remove();
@@ -627,9 +629,11 @@ const displayPaperCode = (paper) => {
     if (!paper.codeLink) {
         return;
     }
+    const safeLink = /^https?:\/\//.test(paper.codeLink) ? escapeHtml(paper.codeLink) : "";
+    if (!safeLink) return;
     const code = /*html*/ `
         <div id="pm-code">
-        <h3>Code:</h3> <a id="pm-code-link" href="${paper.codeLink}">${paper.codeLink}</a>
+        <h3>Code:</h3> <a id="pm-code-link" href="${safeLink}">${safeLink}</a>
         </div>
     `;
     findEl({ element: "pm-code" })?.remove();
@@ -648,14 +652,15 @@ const huggingfacePapers = (paper, url) => {
     const venueDiv = /*html*/ `
         <div id="pm-publication-wrapper">
             <div id="pm-publication-venue">
-                <span id="pm-venue-name">${paper.venue}</span>
-                <span id="pm-venue-year">${bibtexToObject(paper.bibtex).year}</span>
+                <span id="pm-venue-name">${escapeHtml(paper.venue)}</span>
+                <span id="pm-venue-year">${escapeHtml(bibtexToObject(paper.bibtex).year)}</span>
                 <span id="pm-hf-label">(PaperMemory)</span>
             </div>
         </div>`;
-    abstractH2 = queryAll("h2").find((h) => h.innerText.trim() === "Abstract");
+    const abstractH2 = queryAll("h2").find((h) => h.innerText.trim() === "Abstract");
     if (!abstractH2) {
         log("Missing 'Abstract' h2 title on HuggingFace paper page.");
+        return;
     }
     const authorDiv = abstractH2.parentElement.previousElementSibling;
     log("Adding venue to HuggingFace paper page.");
@@ -852,7 +857,7 @@ const updateCompleteSecretHTML = (paper) => {
                 .querySelector("head")
                 .insertAdjacentHTML(
                     "beforeend",
-                    /*html*/ `<meta name="pm-complete-secret-html" content="${paper.id}">`,
+                    /*html*/ `<meta name="pm-complete-secret-html" content="${escapeHtml(paper.id)}">`,
                 );
         }
     }, 50);

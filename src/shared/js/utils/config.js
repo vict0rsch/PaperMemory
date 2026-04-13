@@ -6,7 +6,7 @@ import { miniHash } from "@pmu/functions.js";
 if (!Array.prototype.last) {
     Object.defineProperty(Array.prototype, "last", {
         value: function (i = 0) {
-            return this.reverse()[i];
+            return this[this.length - 1 - i];
         },
         configurable: true,
     });

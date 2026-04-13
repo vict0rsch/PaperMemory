@@ -441,11 +441,9 @@ export const mergePapers = (options = { newPaper: {}, oldPaper: {} }) => {
         if (newPaper.lastOpenDate > oldPaper.lastOpenDate) {
             mergedPaper.lastOpenDate = newPaper.lastOpenDate;
         }
-        mergedPaper.addDate = newPaper.addDate;
         // keep oldest add date
-        if (newPaper.addDate > oldPaper.addDate) {
-            mergedPaper.addDate = newPaper.addDate;
-        }
+        mergedPaper.addDate =
+            newPaper.addDate < oldPaper.addDate ? newPaper.addDate : oldPaper.addDate;
     }
     for (const attribute of opts.overwrites) {
         if (newPaper.hasOwnProperty(attribute)) {
@@ -477,7 +475,12 @@ export const addOrUpdatePaper = async ({
     prefs,
     tab,
     store = true,
-    contentScriptCallbacks = { update: () => {}, preprints: () => {}, feedback: null },
+    contentScriptCallbacks = {
+        update: () => {},
+        preprints: () => {},
+        done: () => {},
+        feedback: null,
+    },
 }) => {
     // start time
     const aouStart = Date.now();
