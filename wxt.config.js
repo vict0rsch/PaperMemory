@@ -93,7 +93,7 @@ export default defineConfig({
         },
         browser_specific_settings: {
             gecko: {
-                id: "paper-memory",
+                id: "papermemory@vict0rsch",
             },
         },
     },
