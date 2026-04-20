@@ -94,9 +94,9 @@ const setListeners = () => {
         const matched = arxivs.length ? await matchItems(arxivs) : [];
         matched.length &&
             setTimeout(() => {
-                findEl({ element: "papers-successfully-matched" })?.scrollIntoView(
-                    true,
-                );
+                findEl({
+                    element: "papers-successfully-matched",
+                })?.scrollIntoView(true);
             }, 250);
         showBibliography(parsed, matched, arxivIndices);
         addListener("show-only-matches", "change", () => {

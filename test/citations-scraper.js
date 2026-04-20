@@ -140,7 +140,11 @@ const getCoauthors = (page, max = 4) => {
                     data[name] = author;
                     const coauthors = await getCoauthors(page);
                     for (const [k, ca] of coauthors.entries()) {
-                        nextId.push({ id: ca, order: k, level: currentLevel + 1 });
+                        nextId.push({
+                            id: ca,
+                            order: k,
+                            level: currentLevel + 1,
+                        });
                     }
                     // create the directory if it doesn't exist
                     fs.mkdirSync(`./tmp`, { recursive: true });

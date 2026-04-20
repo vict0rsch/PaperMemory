@@ -311,7 +311,9 @@ export function initBackground() {
             consoleHeader(`Pushing ${String.fromCodePoint("0x23EB")}`);
             log("Writing to Github...");
             badgeWait("Push...");
-            chrome.action.setBadgeBackgroundColor({ color: "rgb(189, 127, 10)" });
+            chrome.action.setBadgeBackgroundColor({
+                color: "rgb(189, 127, 10)",
+            });
             const papers = (await getStorage("papers")) ?? {};
             const syncId = await getIdentifier();
             log("Papers to write: ", papers);
@@ -453,7 +455,9 @@ export function initBackground() {
         console.log(`Received command: ${command}`);
         if (command === "manualParsing") {
             chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
-                chrome.tabs.sendMessage(tabs[0].id, { message: "manualParsing" });
+                chrome.tabs.sendMessage(tabs[0].id, {
+                    message: "manualParsing",
+                });
             });
         } else if (command === "downloadPdf") {
             chrome.tabs.query(
@@ -474,7 +478,9 @@ export function initBackground() {
             );
         } else if (command === "defaultAction") {
             chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
-                chrome.tabs.sendMessage(tabs[0].id, { message: "defaultAction" });
+                chrome.tabs.sendMessage(tabs[0].id, {
+                    message: "defaultAction",
+                });
             });
         }
     });
