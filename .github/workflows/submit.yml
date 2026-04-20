@@ -22,11 +22,8 @@ jobs:
     uses: ./.github/workflows/_test-matrix.yml
     secrets: inherit
 
-  build:
-    uses: ./.github/workflows/_build.yml
-
   submit:
-    needs: [test-matrix, build]
+    needs: test-matrix
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
