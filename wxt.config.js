@@ -98,7 +98,14 @@ export default defineConfig({
         },
     },
     zip: {
-        excludeSources: ["extra/**", "docs/**", "test/**", "scripts/**", "CNAME", "mkdocs.yml"],
+        excludeSources: [
+            "extra/**",
+            "docs/**",
+            "test/**",
+            "scripts/**",
+            "CNAME",
+            "mkdocs.yml",
+        ],
     },
     vite: ({ command }) => ({
         resolve: {

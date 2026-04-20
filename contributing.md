@@ -279,12 +279,12 @@ headless=false onlySources=arxiv,neurips npm run test:file test/test-storage.js
 
 The repo has four workflow files under `.github/workflows/`:
 
-| File | Trigger | What it does |
-| --- | --- | --- |
-| `build.yml` | `push`, `pull_request` | Builds Chrome + Firefox to catch build regressions |
-| `test.yml` | `push` | Runs the full test matrix and the storage tests |
-| `submit.yml` | Manual dispatch only | Builds, tests, and submits to the Chrome Web Store and Firefox Add-ons |
-| `_test-matrix.yml`, `_build.yml` | `workflow_call` only | Reusable workflows consumed by the above (the leading `_` signals "not a top-level workflow") |
+| File                             | Trigger                | What it does                                                                                  |
+| -------------------------------- | ---------------------- | --------------------------------------------------------------------------------------------- |
+| `build.yml`                      | `push`, `pull_request` | Builds Chrome + Firefox to catch build regressions                                            |
+| `test.yml`                       | `push`                 | Runs the full test matrix and the storage tests                                               |
+| `submit.yml`                     | Manual dispatch only   | Builds, tests, and submits to the Chrome Web Store and Firefox Add-ons                        |
+| `_test-matrix.yml`, `_build.yml` | `workflow_call` only   | Reusable workflows consumed by the above (the leading `_` signals "not a top-level workflow") |
 
 `build.yml` and `test.yml`'s `test-matrix` job are thin wrappers that delegate to the reusable workflows — the actual steps live in `_build.yml` and `_test-matrix.yml`, so `submit.yml` can reuse them as gates without duplicating configuration.
 
@@ -308,6 +308,7 @@ Before running with `dry_run: false`, make sure `package.json`'s `version` has b
 **Retrying a partial failure.** If Chrome succeeds and Firefox fails (or vice versa), re-dispatch manually with `target` set to the failed store. Only that side will be re-submitted; the already-successful side is untouched.
 
 **Required secrets** (repo settings → Secrets and variables → Actions):
+
 - Chrome: `CHROME_EXTENSION_ID`, `CHROME_CLIENT_ID`, `CHROME_CLIENT_SECRET`, `CHROME_REFRESH_TOKEN`
 - Firefox: `FIREFOX_EXTENSION_ID`, `FIREFOX_JWT_ISSUER`, `FIREFOX_JWT_SECRET`
 - Tests: `VICT0RSCH_GITHUB_PAT` (used by the test matrix for GitHub API calls)
