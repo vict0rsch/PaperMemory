@@ -94,7 +94,12 @@
     const POLL_INTERVAL = 100;
     const MAX_WAIT = 10_000;
 
-    const normalize = (u) => u.toLowerCase().replace(/\?.*$/, "").replace(/\/$/, "");
+    // Some sources tag papers with an id prefix that differs from the source
+    // name (e.g. openreview → `OR-...`). Everything else uses the source tag
+    // itself as the id prefix, case-insensitively.
+    const idPrefixOverrides = { openreview: "or" };
+    const idPrefixFor = (source) =>
+        (idPrefixOverrides[source] || source).toLowerCase();
 
     const getPaperCount = () =>
         new Promise((resolve) => {
@@ -160,14 +165,11 @@
             const missing = [];
 
             for (const [source, url] of urls) {
-                const normalizedUrl = normalize(url);
+                const prefix = idPrefixFor(source);
                 const match = papersList.find((p) => {
-                    const paperUrls = [p.source, p.pdfLink, ...(p.urls || [])]
-                        .filter(Boolean)
-                        .map(normalize);
-                    return paperUrls.some(
-                        (pu) =>
-                            pu.includes(normalizedUrl) || normalizedUrl.includes(pu),
+                    const pid = (p.id || "").toLowerCase();
+                    return (
+                        pid.startsWith(`${prefix}-`) || pid.startsWith(`${prefix}_`)
                     );
                 });
                 if (match) {
