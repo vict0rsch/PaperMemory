@@ -90,9 +90,12 @@ export default defineConfig({
         },
         browser_specific_settings: {
             gecko: {
-                id: "papermemory@vict0rsch",
+                id: "paper-memory",
             },
         },
+    },
+    zip: {
+        excludeSources: ["extra/**", "docs/**", "test/**", "scripts/**", "CNAME", "mkdocs.yml"],
     },
     vite: ({ command }) => ({
         resolve: {
