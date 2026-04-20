@@ -1,21 +1,41 @@
 // ============================================================================
-// MANUAL TEST: Open all urls.json abstract pages for PaperMemory to parse.
+// MANUAL TEST: Reset memory, open every urls.json source so PaperMemory can
+// parse it, then verify what was actually parsed.
 //
 // HOW TO USE:
 //   1. Run `npm run dev:watch` to start the dev browser with PaperMemory loaded
-//   2. Open the PaperMemory options page (right-click extension icon > Options)
-//   3. Open the browser DevTools console on that options page
+//   2. Open the extension's service worker DevTools (chrome://extensions →
+//      PaperMemory → "Inspect views: service worker"). The options page
+//      console also works.
+//   3. Set `deleteMemory = true` at the top of this script (safety gate)
 //   4. Copy-paste this entire script into the console and press Enter
 //
 // WHAT IT DOES:
-//   - Creates a single tab and navigates it to each abstract URL sequentially
-//   - After each navigation, polls chrome.storage.local until a new paper
-//     appears (or 3s timeout), then moves to the next URL
-//   - Logs success/timeout for each source
+//   Phase 1 (open):
+//     - Wipes chrome.storage.local.papers (guarded by `deleteMemory` flag)
+//     - For each source, opens the URL in a background tab and polls
+//       chrome.storage.local until a new paper appears (or times out)
+//     - On success: closes the tab
+//     - On timeout: LEAVES THE TAB OPEN so you can inspect the failure
+//   Phase 2 (verify):
+//     - Reads chrome.storage.local.papers
+//     - Logs found/missing tables
+//     - Does NOT reopen missing URLs — their tabs from phase 1 are still open
 //
-// NOTE: Run manual-verify-urls.js afterwards to check results.
+// Safe in a service-worker console: no window-only APIs (no confirm/alert).
 // ============================================================================
 (() => {
+    // Safety gate: set to true manually before pasting to confirm you really
+    // want to wipe chrome.storage.local.papers. Left false by default so an
+    // accidental paste never destroys your memory.
+    const deleteMemory = false;
+    if (!deleteMemory) {
+        console.warn(
+            "Aborted: `deleteMemory` is false. This script will reset ALL papers in chrome.storage.local. Set `const deleteMemory = true;` at the top of the script to proceed.",
+        );
+        return;
+    }
+
     const urls = [
         ["acl", "https://aclanthology.org/2020.acl-main.405"],
         [
@@ -24,9 +44,15 @@
         ],
         ["acm", "https://dl.acm.org/doi/10.5555/3491440.3491756"],
         ["acs", "https://pubs.acs.org/doi/10.1021/acs.jpca.9b00311"],
-        ["aps", "https://journals.aps.org/prl/abstract/10.1103/PhysRevLett.128.171101"],
+        [
+            "aps",
+            "https://journals.aps.org/prl/abstract/10.1103/PhysRevLett.128.171101",
+        ],
         ["arxiv", "https://arxiv.org/abs/1703.10593"],
-        ["biorxiv", "https://www.biorxiv.org/content/10.1101/2021.11.08.467690v2"],
+        [
+            "biorxiv",
+            "https://www.biorxiv.org/content/10.1101/2021.11.08.467690v2",
+        ],
         ["cell", "https://www.cell.com/cell/fulltext/S0092-8674(25)01089-X"],
         [
             "chemrxiv",
@@ -63,27 +89,35 @@
             "sciencedirect",
             "https://www.sciencedirect.com/science/article/pii/S2589721721000349",
         ],
-        ["springer", "https://link.springer.com/article/10.1007/s41095-022-0271-y"],
+        [
+            "springer",
+            "https://link.springer.com/article/10.1007/s41095-022-0271-y",
+        ],
         [
             "plos",
             "https://journals.plos.org/climate/article?id=10.1371/journal.pclm.0000068",
         ],
-        ["rsc", "https://pubs.rsc.org/en/content/articlelanding/2022/dd/d2dd00066k"],
+        [
+            "rsc",
+            "https://pubs.rsc.org/en/content/articlelanding/2022/dd/d2dd00066k",
+        ],
     ];
 
     const POLL_INTERVAL = 100;
-    const MAX_WAIT = 5000;
+    const MAX_WAIT = 10_000;
 
-    function getPaperCount() {
-        return new Promise((resolve) => {
+    const normalize = (u) =>
+        u.toLowerCase().replace(/\?.*$/, "").replace(/\/$/, "");
+
+    const getPaperCount = () =>
+        new Promise((resolve) => {
             chrome.storage.local.get("papers", (data) => {
                 resolve(Object.keys(data.papers || {}).length);
             });
         });
-    }
 
-    function waitForNewPaper(prevCount, elapsed) {
-        return new Promise((resolve) => {
+    const waitForNewPaper = (prevCount, elapsed) =>
+        new Promise((resolve) => {
             if (elapsed >= MAX_WAIT) {
                 resolve(false);
                 return;
@@ -93,54 +127,108 @@
                     if (count > prevCount) {
                         resolve(true);
                     } else {
-                        resolve(waitForNewPaper(prevCount, elapsed + POLL_INTERVAL));
+                        resolve(
+                            waitForNewPaper(prevCount, elapsed + POLL_INTERVAL),
+                        );
                     }
                 });
             }, POLL_INTERVAL);
         });
-    }
 
-    let i = 0;
-    let tabId = null;
-
-    function openNext() {
-        if (i >= urls.length) {
-            console.log("Done! All pages visited.");
-            return;
-        }
-        const [source, url] = urls[i];
-
-        getPaperCount().then((prevCount) => {
-            console.log(
-                `[${i + 1}/${urls.length}] Opening ${source} (papers: ${prevCount})`,
-            );
-
-            const onNavigated = () => {
-                const start = Date.now();
-                waitForNewPaper(prevCount, 0).then((found) => {
-                    const elapsed = ((Date.now() - start) / 1000).toFixed(1);
-                    if (found) {
-                        console.log(`  ✓ ${source} parsed in ${elapsed}s`);
-                    } else {
-                        console.log(`  ✗ ${source} timed out after ${elapsed}s`);
-                    }
-                    i++;
-                    openNext();
-                });
-            };
-
-            if (tabId === null) {
+    const openOne = (source, url, index, total) =>
+        new Promise((resolve) => {
+            getPaperCount().then((prevCount) => {
+                console.log(
+                    `[${index + 1}/${total}] Opening ${source} (papers: ${prevCount})`,
+                );
                 chrome.tabs.create({ url, active: false }, (tab) => {
-                    tabId = tab.id;
-                    onNavigated();
+                    const started = Date.now();
+                    waitForNewPaper(prevCount, 0).then((found) => {
+                        const elapsed = ((Date.now() - started) / 1000).toFixed(
+                            1,
+                        );
+                        if (found) {
+                            console.log(`  ✓ ${source} parsed in ${elapsed}s`);
+                            chrome.tabs.remove(tab.id, () => resolve());
+                        } else {
+                            console.log(
+                                `  ✗ ${source} timed out after ${elapsed}s — leaving tab ${tab.id} open`,
+                            );
+                            resolve();
+                        }
+                    });
                 });
+            });
+        });
+
+    const openAll = async () => {
+        console.log(`\n===== Phase 1: Opening ${urls.length} URLs =====`);
+        for (let i = 0; i < urls.length; i++) {
+            const [source, url] = urls[i];
+            await openOne(source, url, i, urls.length);
+        }
+        console.log("Open phase complete.\n");
+    };
+
+    const verify = () => {
+        chrome.storage.local.get("papers", (data) => {
+            const papersList = Object.values(data.papers || {});
+            const found = [];
+            const missing = [];
+
+            for (const [source, url] of urls) {
+                const normalizedUrl = normalize(url);
+                const match = papersList.find((p) => {
+                    const paperUrls = [p.source, p.pdfLink, ...(p.urls || [])]
+                        .filter(Boolean)
+                        .map(normalize);
+                    return paperUrls.some(
+                        (pu) =>
+                            pu.includes(normalizedUrl) ||
+                            normalizedUrl.includes(pu),
+                    );
+                });
+                if (match) {
+                    found.push({ source, title: match.title, id: match.id });
+                } else {
+                    missing.push({ source, url });
+                }
+            }
+
+            console.log(`===== Phase 2: Verification =====`);
+            console.log(`Total papers in storage: ${papersList.length}`);
+            console.log(`Expected sources: ${urls.length}`);
+            console.log(`Found: ${found.length}`);
+            console.log(`Missing: ${missing.length}\n`);
+
+            if (found.length > 0) {
+                console.log(
+                    `%c✓ Found papers (${found.length}):`,
+                    "color: green; font-weight: bold",
+                );
+                console.table(found);
+            }
+
+            if (missing.length > 0) {
+                console.log(
+                    `%c✗ Missing papers (${missing.length}):`,
+                    "color: red; font-weight: bold",
+                );
+                console.table(missing);
+                console.log(
+                    "Tabs for missing sources were left open in phase 1 — inspect them directly.",
+                );
             } else {
-                chrome.tabs.update(tabId, { url }, () => {
-                    onNavigated();
-                });
+                console.log(
+                    `%c✓ All sources were successfully parsed!`,
+                    "color: green; font-weight: bold; font-size: 14px",
+                );
             }
         });
-    }
+    };
 
-    openNext();
+    chrome.storage.local.remove("papers", () => {
+        console.log("Memory reset: chrome.storage.local.papers cleared.");
+        openAll().then(verify);
+    });
 })();
