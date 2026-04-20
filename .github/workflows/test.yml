@@ -1,6 +1,9 @@
 name: Tests CI
 on: push
 
+permissions:
+  contents: read
+
 jobs:
   test-matrix:
     uses: ./.github/workflows/_test-matrix.yml

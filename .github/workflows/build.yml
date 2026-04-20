@@ -1,6 +1,9 @@
 name: Build CI
 on: [push, pull_request]
 
+permissions:
+  contents: read
+
 jobs:
   build:
     uses: ./.github/workflows/_build.yml

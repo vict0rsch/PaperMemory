@@ -6,6 +6,9 @@ on:
       VICT0RSCH_GITHUB_PAT:
         required: true
 
+permissions:
+  contents: read
+
 jobs:
   test-matrix:
     runs-on: ubuntu-latest

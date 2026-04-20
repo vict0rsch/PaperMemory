@@ -17,6 +17,9 @@ concurrency:
   group: submit-stores
   cancel-in-progress: false
 
+permissions:
+  contents: read
+
 jobs:
   test-matrix:
     uses: ./.github/workflows/_test-matrix.yml
