@@ -4,6 +4,9 @@
 extra/archives/
 node_modules/
 keys.json
+.env
+.env.submit
+.env.*
 test/tmp/
 .nyc_output/
 coverage

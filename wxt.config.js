@@ -1,7 +1,10 @@
 import { defineConfig } from "wxt";
 import path from "path";
 import fs from "fs";
+import { createRequire } from "module";
 import { glob } from "glob";
+
+const pkg = createRequire(import.meta.url)("./package.json");
 
 function htmlIncludePlugin(basePath) {
     return {
@@ -37,7 +40,7 @@ export default defineConfig({
     outDir: "dist",
     manifest: {
         name: "Paper Memory",
-        version: "1.1.0",
+        version: pkg.version,
         description:
             "Automatically record papers and their codes from Arxiv, OpenReview & more! Organize your library with tags, links and quick notes.",
         homepage_url: "https://papermemory.org",
@@ -93,6 +96,23 @@ export default defineConfig({
                 id: "papermemory@vict0rsch",
             },
         },
+    },
+    zip: {
+        excludeSources: [
+            "extra/**",
+            "docs/**",
+            "test/**",
+            "scripts/**",
+            "CNAME",
+            "mkdocs.yml",
+            // Defense in depth: never ship credentials/keys in the sources zip
+            // uploaded to AMO, even if one ends up in the workspace.
+            "**/.env*",
+            "**/keys.json",
+            "**/credentials*",
+            "**/*.pem",
+            "**/*.key",
+        ],
     },
     vite: ({ command }) => ({
         resolve: {
