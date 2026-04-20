@@ -277,7 +277,7 @@ headless=false onlySources=arxiv,neurips npm run test:file test/test-storage.js
 
 ## Github Workflows
 
-The repo has four workflow files under `.github/workflows/`:
+The repo has five workflow files under `.github/workflows/`:
 
 | File                             | Trigger                | What it does                                                                                  |
 | -------------------------------- | ---------------------- | --------------------------------------------------------------------------------------------- |
@@ -286,7 +286,7 @@ The repo has four workflow files under `.github/workflows/`:
 | `submit.yml`                     | Manual dispatch only   | Builds, tests, and submits to the Chrome Web Store and Firefox Add-ons                        |
 | `_test-matrix.yml`, `_build.yml` | `workflow_call` only   | Reusable workflows consumed by the above (the leading `_` signals "not a top-level workflow") |
 
-`build.yml` and `test.yml`'s `test-matrix` job are thin wrappers that delegate to the reusable workflows — the actual steps live in `_build.yml` and `_test-matrix.yml`, so `submit.yml` can reuse them as gates without duplicating configuration.
+`build.yml` and `test.yml`'s `test-matrix` job are thin wrappers that delegate to the reusable workflows — the actual steps live in `_build.yml` and `_test-matrix.yml`, so `submit.yml` can reuse `_test-matrix.yml` as its test gate without duplicating configuration.
 
 ### Submitting to the stores (`submit.yml`)
 
@@ -294,7 +294,7 @@ This workflow submits to the Chrome Web Store and Firefox Add-ons via [`wxt subm
 
 **What it does on every run, in order:**
 
-1. Runs the reusable `_test-matrix.yml` and `_build.yml` workflows in parallel. The submit job is gated on both passing.
+1. Runs the reusable `_test-matrix.yml` workflow as a gate — the submit job only runs if all tests pass.
 2. `npm ci` + `npm run zip` to produce the Chrome zip, the Firefox zip, and the Firefox sources zip under `dist/`.
 3. Submits to Chrome and/or Firefox, each in a separate step with only that store's secrets in scope.
 
@@ -303,7 +303,7 @@ This workflow submits to the Chrome Web Store and Firefox Add-ons via [`wxt subm
 - `target` — `both` (default), `chrome`, or `firefox`. Submits only to the selected store(s).
 - `dry_run` — default `true`. Passes `--dry-run` to `wxt submit`, which validates credentials without actually uploading. Use this to verify secrets are wired up correctly, or as a first step after rotating tokens. Set to `false` to perform a real submission.
 
-Before running with `dry_run: false`, make sure `package.json`'s `version` has been bumped — `wxt.config.js` reads the manifest version from `package.json`, so whatever is on the default branch at dispatch time is what the stores will receive.
+Before running with `dry_run: false`, make sure `package.json`'s `version` has been bumped — `wxt.config.js` reads the manifest version from `package.json`, so whatever is on the ref selected in the "Run workflow" dialog at dispatch time is what the stores will receive.
 
 **Retrying a partial failure.** If Chrome succeeds and Firefox fails (or vice versa), re-dispatch manually with `target` set to the failed store. Only that side will be re-submitted; the already-successful side is untouched.
 
