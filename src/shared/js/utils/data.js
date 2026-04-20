@@ -820,7 +820,10 @@ export const prepareOverwriteData = async (data) => {
                         "<br/>" +
                         Object.entries(paperWarnings)
                             .filter(([, v]) => v.length > 0)
-                            .map(([k, v]) => `<h5>${escapeHtml(k)}</h5>${v.map(escapeHtml).join("<br/>")}`)
+                            .map(
+                                ([k, v]) =>
+                                    `<h5>${escapeHtml(k)}</h5>${v.map(escapeHtml).join("<br/>")}`,
+                            )
                             .join("<br/>");
                 }
             }

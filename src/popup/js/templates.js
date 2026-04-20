@@ -1,6 +1,12 @@
 // ES Module imports
 import { state, knownPaperPages, svgActionsHoverTitles } from "@pmu/config.js";
-import { getDisplayId, tablerSvg, isPdfUrl, cutAuthors, escapeHtml } from "@pmu/functions.js";
+import {
+    getDisplayId,
+    tablerSvg,
+    isPdfUrl,
+    cutAuthors,
+    escapeHtml,
+} from "@pmu/functions.js";
 import { getTagsOptions } from "@pmu/state.js";
 import { isPaper } from "@pmu/paper.js";
 /**
@@ -61,9 +67,9 @@ export const getMemoryItemHTML = (paper) => {
     let codeDiv = /*html*/ `
         <small class="memory-item-faded">
 
-            <div class="memory-code-link"> ${
-                escapeHtml(paper.codeLink.replace(/^https?:\/\//, "") || "")
-            } </div>
+            <div class="memory-code-link"> ${escapeHtml(
+                paper.codeLink.replace(/^https?:\/\//, "") || "",
+            )} </div>
             <div class="memory-website-url">
                 ${
                     (paper.source == "website" &&
