@@ -35,6 +35,7 @@ import {
     extractBibtexValue,
     bibtexToString,
     bibtexToObject,
+    sanitizeBibtexObject,
 } from "@pmu/bibtexParser.js";
 import { queryAll, querySelector } from "@pmu/miniquery.js";
 import { sleep } from "@pmu/sync.js";
@@ -1929,7 +1930,15 @@ export const initPaper = async (paper) => {
     paper.lastOpenDate = paper.addDate;
     paper.count = 1;
     paper.code = {};
-    paper.doi = paper.doi ?? bibtexToObject(paper.bibtex).doi ?? "";
+    // Sanitize parsed bibtex (e.g. strip abstracts) before it is ever
+    // persisted alongside the paper.
+    if (paper.bibtex) {
+        const bibObj = sanitizeBibtexObject(bibtexToObject(paper.bibtex));
+        paper.bibtex = bibtexToString(bibObj);
+        paper.doi = paper.doi ?? bibObj.doi ?? "";
+    } else {
+        paper.doi = paper.doi ?? "";
+    }
     for (const k in paper) {
         if (paper.hasOwnProperty(k) && typeof paper[k] === "string") {
             paper[k] = paper[k].trim();

@@ -353,6 +353,32 @@ export const safeRemoveSurroundingBraces = (str) => {
     return str;
 };
 
+/**
+ * Keys (case-insensitive) that should never be persisted inside a paper's
+ * bibtex. Extend this list to filter out additional noisy / privacy-sensitive
+ * fields.
+ */
+export const SANITIZED_BIBTEX_KEYS = ["abstract"];
+
+/**
+ * Mutates and returns a bibtex object with sanitized keys removed.
+ * Currently strips the `abstract` field so full abstracts are not stored
+ * alongside parsed papers (they can be very long and are generally unwanted
+ * in the stored bibtex).
+ * @param {Object} bibObj A bibtex object as returned by `bibtexToObject`.
+ * @returns {Object} The same object, with sanitized keys removed.
+ */
+export const sanitizeBibtexObject = (bibObj) => {
+    if (!bibObj || typeof bibObj !== "object") return bibObj;
+    const sanitized = new Set(SANITIZED_BIBTEX_KEYS.map((k) => k.toLowerCase()));
+    for (const key of Object.keys(bibObj)) {
+        if (sanitized.has(key.toLowerCase())) {
+            delete bibObj[key];
+        }
+    }
+    return bibObj;
+};
+
 export const bibtexToObject = (bibtex) => {
     var b = new BibtexParser();
     /*
