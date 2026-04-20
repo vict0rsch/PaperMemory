@@ -105,6 +105,13 @@ export default defineConfig({
             "scripts/**",
             "CNAME",
             "mkdocs.yml",
+            // Defense in depth: never ship credentials/keys in the sources zip
+            // uploaded to AMO, even if one ends up in the workspace.
+            "**/.env*",
+            "**/keys.json",
+            "**/credentials*",
+            "**/*.pem",
+            "**/*.key",
         ],
     },
     vite: ({ command }) => ({
