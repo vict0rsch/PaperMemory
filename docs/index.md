@@ -99,3 +99,5 @@ PaperMemory is designed to be a fast, automated and user-friendly in-browser ref
     [:octicons-arrow-right-24: All features](features.md)
 
     ***
+
+<p style="text-align: center; opacity: 0.4; font-size: 0.75rem; margin-top: 2rem;"><a href="privacy-policy/">Privacy Policy</a></p>
