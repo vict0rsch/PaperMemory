@@ -21,7 +21,8 @@
         "postinstall": "wxt prepare",
         "pretest": "npm run build:chrome",
         "test": "node --import ./register.mjs ./node_modules/.bin/mocha test/test-*.js --exclude test/test-sync.js --exit",
-        "test:file": "node --import ./register.mjs ./node_modules/.bin/mocha --exit"
+        "test:file": "node --import ./register.mjs ./node_modules/.bin/mocha --exit",
+        "format": "prettier --write \"**/*.{js,mjs,json,yaml,yml,html,css,md}\""
     },
     "repository": {
         "type": "git",
@@ -46,6 +47,7 @@
         "mocha": "^10.2.0",
         "ora": "^5.4.1",
         "postcss": "^8.5.6",
+        "prettier": "^3.8.3",
         "puppeteer": "^24.16.0",
         "puppeteer-extra": "^3.3.6",
         "puppeteer-extra-plugin-stealth": "^2.11.2",

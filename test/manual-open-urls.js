@@ -44,15 +44,9 @@
         ],
         ["acm", "https://dl.acm.org/doi/10.5555/3491440.3491756"],
         ["acs", "https://pubs.acs.org/doi/10.1021/acs.jpca.9b00311"],
-        [
-            "aps",
-            "https://journals.aps.org/prl/abstract/10.1103/PhysRevLett.128.171101",
-        ],
+        ["aps", "https://journals.aps.org/prl/abstract/10.1103/PhysRevLett.128.171101"],
         ["arxiv", "https://arxiv.org/abs/1703.10593"],
-        [
-            "biorxiv",
-            "https://www.biorxiv.org/content/10.1101/2021.11.08.467690v2",
-        ],
+        ["biorxiv", "https://www.biorxiv.org/content/10.1101/2021.11.08.467690v2"],
         ["cell", "https://www.cell.com/cell/fulltext/S0092-8674(25)01089-X"],
         [
             "chemrxiv",
@@ -89,25 +83,18 @@
             "sciencedirect",
             "https://www.sciencedirect.com/science/article/pii/S2589721721000349",
         ],
-        [
-            "springer",
-            "https://link.springer.com/article/10.1007/s41095-022-0271-y",
-        ],
+        ["springer", "https://link.springer.com/article/10.1007/s41095-022-0271-y"],
         [
             "plos",
             "https://journals.plos.org/climate/article?id=10.1371/journal.pclm.0000068",
         ],
-        [
-            "rsc",
-            "https://pubs.rsc.org/en/content/articlelanding/2022/dd/d2dd00066k",
-        ],
+        ["rsc", "https://pubs.rsc.org/en/content/articlelanding/2022/dd/d2dd00066k"],
     ];
 
     const POLL_INTERVAL = 100;
     const MAX_WAIT = 10_000;
 
-    const normalize = (u) =>
-        u.toLowerCase().replace(/\?.*$/, "").replace(/\/$/, "");
+    const normalize = (u) => u.toLowerCase().replace(/\?.*$/, "").replace(/\/$/, "");
 
     const getPaperCount = () =>
         new Promise((resolve) => {
@@ -127,9 +114,7 @@
                     if (count > prevCount) {
                         resolve(true);
                     } else {
-                        resolve(
-                            waitForNewPaper(prevCount, elapsed + POLL_INTERVAL),
-                        );
+                        resolve(waitForNewPaper(prevCount, elapsed + POLL_INTERVAL));
                     }
                 });
             }, POLL_INTERVAL);
@@ -144,9 +129,7 @@
                 chrome.tabs.create({ url, active: false }, (tab) => {
                     const started = Date.now();
                     waitForNewPaper(prevCount, 0).then((found) => {
-                        const elapsed = ((Date.now() - started) / 1000).toFixed(
-                            1,
-                        );
+                        const elapsed = ((Date.now() - started) / 1000).toFixed(1);
                         if (found) {
                             console.log(`  ✓ ${source} parsed in ${elapsed}s`);
                             chrome.tabs.remove(tab.id, () => resolve());
@@ -184,8 +167,7 @@
                         .map(normalize);
                     return paperUrls.some(
                         (pu) =>
-                            pu.includes(normalizedUrl) ||
-                            normalizedUrl.includes(pu),
+                            pu.includes(normalizedUrl) || normalizedUrl.includes(pu),
                     );
                 });
                 if (match) {

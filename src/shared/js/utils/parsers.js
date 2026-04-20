@@ -389,7 +389,18 @@ export const extractDataFromDCMetaTags = (dom) => {
     });
     const note = venue ? `Published @ ${venue} (${year})` : "";
 
-    return { author, year, publisher, title, venue, key, doi, bibtex, pdfLink, note };
+    return {
+        author,
+        year,
+        publisher,
+        title,
+        venue,
+        key,
+        doi,
+        bibtex,
+        pdfLink,
+        note,
+    };
 };
 
 export const makeArxivPaper = async (url) => {
@@ -1261,7 +1272,17 @@ export const makeScienceDirectPaper = async (url) => {
     const venue = journal ?? "Science Direct";
     const pdfLink = `https://reader.elsevier.com/reader/sd/pii/${pii}`;
 
-    return { author, bibtex, id, key: citationKey, note, pdfLink, title, venue, year };
+    return {
+        author,
+        bibtex,
+        id,
+        key: citationKey,
+        note,
+        pdfLink,
+        title,
+        venue,
+        year,
+    };
 };
 
 export const makeSciencePaper = async (url) => {
@@ -1759,7 +1780,10 @@ export const tryDBLP = async (paper, toBackground) => {
 
 export const trySemanticScholar = async (paper, toBackground) => {
     if (toBackground) {
-        return await sendMessageToBackground({ type: "try-semantic-scholar", paper });
+        return await sendMessageToBackground({
+            type: "try-semantic-scholar",
+            paper,
+        });
     }
     try {
         const { data, status } = await fetchJSON(
@@ -1816,7 +1840,10 @@ export const trySemanticScholar = async (paper, toBackground) => {
 };
 
 export const tryGoogleScholar = async (paper) => {
-    const resp = await sendMessageToBackground({ type: "google-scholar", paper });
+    const resp = await sendMessageToBackground({
+        type: "google-scholar",
+        paper,
+    });
     resp.note && info("Found a Google Scholar match", resp.note);
     return resp;
 };

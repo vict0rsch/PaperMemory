@@ -1,0 +1,6 @@
+*.min.*
+**/dist/
+**/build/
+**/bundle/
+**/bundles/
+**.bundle.**

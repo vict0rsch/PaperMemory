@@ -183,10 +183,10 @@
                 </p>
 
                 <p>
-                    For instance, to match all papers containing <code>"GAN"</code> the
-                    corresponding Title RegEx could be <code>.*gan.*</code> (note this
-                    would match <em>any</em> title containing those 3 letters
-                    subsequently).
+                    For instance, to match all papers containing
+                    <code>"GAN"</code> the corresponding Title RegEx could be
+                    <code>.*gan.*</code> (note this would match <em>any</em> title
+                    containing those 3 letters subsequently).
                 </p>
 
                 <div id="auto-tags-container">
@@ -196,7 +196,9 @@
                         <div class="col-3">
                             <strong>Tags to use</strong> (coma-seprated)
                         </div>
-                        <div class="col-3"><span id="auto-tags-feedback"></span></div>
+                        <div class="col-3">
+                            <span id="auto-tags-feedback"></span>
+                        </div>
                     </div>
                     <div id="auto-tags-list"></div>
                     <div id="auto-tags-new" class="row">
@@ -265,8 +267,9 @@
                 </p>
 
                 <p>
-                    You currently have <span id="preprints-number"></span> papers
-                    missing a publication venue.
+                    You currently have
+                    <span id="preprints-number"></span> papers missing a publication
+                    venue.
                 </p>
                 <button id="start-matching">Start the matching procedure</button>
 
@@ -299,10 +302,10 @@
                     PaperMemory can handle, you can disable them here.
                 </p>
                 <p>
-                    Note that you can only disable per <strong>source</strong> not exact
-                    venue. For instance you cannot distinguish between Nature
-                    Communications and Nature Climate Change (both
-                    <code>nature</code> venues) or between CVPR and ICCV (both
+                    Note that you can only disable per
+                    <strong>source</strong> not exact venue. For instance you cannot
+                    distinguish between Nature Communications and Nature Climate Change
+                    (both <code>nature</code> venues) or between CVPR and ICCV (both
                     <code>cvf</code> venues).
                 </p>
                 <p>Sources to parse papers from:</p>
@@ -460,7 +463,9 @@
                         </button>
                     </div>
                     <div class="col-6"></div>
-                    <div class="col-6 mt-2"><span id="overwrite-file-name"></span></div>
+                    <div class="col-6 mt-2">
+                        <span id="overwrite-file-name"></span>
+                    </div>
 
                     <div
                         style="display: none; margin: auto; margin-top: 1rem"
@@ -639,8 +644,8 @@
 
                 <ul>
                     <li>
-                        Your Memory data gets written to a <code>.json</code> file as a
-                        gist on your Github account (<a
+                        Your Memory data gets written to a
+                        <code>.json</code> file as a gist on your Github account (<a
                             href="https://docs.github.com/en/get-started/writing-on-github/editing-and-sharing-content-with-gists/creating-gists#about-gists"
                             target="_blank"
                             rel="noopener noreferrer"
@@ -684,8 +689,9 @@
                 <h4 id="sync-syncing-state-title">Syncing</h4>
 
                 <div>
-                    PaperMemory relies on Github's <em>Personal Access Tokens</em> which
-                    you can easily generate from your Github account. Make sure
+                    PaperMemory relies on Github's
+                    <em>Personal Access Tokens</em> which you can easily generate from
+                    your Github account. Make sure
                     <ol>
                         <li>It has no expiration date</li>
                         <li>The <code>gist</code> scope is selected</li>
