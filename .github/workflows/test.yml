@@ -4,7 +4,8 @@ on: push
 jobs:
   test-matrix:
     uses: ./.github/workflows/_test-matrix.yml
-    secrets: inherit
+    secrets:
+      VICT0RSCH_GITHUB_PAT: ${{ secrets.VICT0RSCH_GITHUB_PAT }}
 
   test-storage:
     runs-on: ubuntu-latest

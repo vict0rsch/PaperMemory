@@ -47,8 +47,10 @@ jobs:
 
       - uses: nick-fields/retry@v3
         name: Run Test
+        env:
+          github_pat: ${{ secrets.VICT0RSCH_GITHUB_PAT }}
         with:
           timeout_minutes: 20
           max_attempts: 2
           retry_on: error
-          command: github_pat=${{ secrets.VICT0RSCH_GITHUB_PAT }} npm run test:file ${{ matrix.files }}
+          command: npm run test:file ${{ matrix.files }}
