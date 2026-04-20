@@ -497,7 +497,9 @@ const addPreprintUpdate = (update) => {
     for (const [k, v] of Object.entries(update)) {
         if (k !== "paper" && k !== "bibtex") {
             if (v) {
-                contents.push(`<span>${escapeHtml(k)}:</span>&nbsp;<span>${escapeHtml(v)}</span>`);
+                contents.push(
+                    `<span>${escapeHtml(k)}:</span>&nbsp;<span>${escapeHtml(v)}</span>`,
+                );
             }
         }
     }
@@ -919,7 +921,10 @@ const setupSync = async () => {
 
     if (!ok) {
         if (error) {
-            setHTML("pat-feedback", "Invalid PAT" + "<br/><br/>" + escapeHtml(String(error)));
+            setHTML(
+                "pat-feedback",
+                "Invalid PAT" + "<br/><br/>" + escapeHtml(String(error)),
+            );
         }
         hideId("pat-loader");
         await toggleSync({ hideAll: true });

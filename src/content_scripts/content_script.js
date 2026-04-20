@@ -136,7 +136,6 @@ $.extend($.easing, {
     },
 });
 
-
 /**
  * Centralizes HTML svg codes
  * @param {string} name svg type
@@ -629,7 +628,9 @@ const displayPaperCode = (paper) => {
     if (!paper.codeLink) {
         return;
     }
-    const safeLink = /^https?:\/\//.test(paper.codeLink) ? escapeHtml(paper.codeLink) : "";
+    const safeLink = /^https?:\/\//.test(paper.codeLink)
+        ? escapeHtml(paper.codeLink)
+        : "";
     if (!safeLink) return;
     const code = /*html*/ `
         <div id="pm-code">
