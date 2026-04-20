@@ -27,28 +27,30 @@ describe("Meta Tests - CI Workflow Coverage", function () {
         return true;
     });
 
-    // 2. Read test.yml and find all listed files
-    const workflowPath = path.join(rootDir, ".github/workflows/test.yml");
-    const workflowContent = fs.readFileSync(workflowPath, "utf8");
-    const workflow = YAML.parse(workflowContent);
+    // 2. Read workflow files and find all listed files.
+    //    The matrix definition lives in the reusable _test-matrix.yml, while
+    //    test.yml wires up the rest (e.g. the test-storage job).
+    const workflowFiles = [
+        path.join(rootDir, ".github/workflows/_test-matrix.yml"),
+        path.join(rootDir, ".github/workflows/test.yml"),
+    ];
 
     const listedFiles = new Set();
 
-    // Extract files from the matrix strategy
-    const matrixInclude = workflow.jobs["test-matrix"]?.strategy?.matrix?.include || [];
-    matrixInclude.forEach((item) => {
-        if (item.files) {
-            item.files.split(" ").forEach((f) => listedFiles.add(f.trim()));
-        }
-    });
+    workflowFiles.forEach((workflowPath) => {
+        const workflow = YAML.parse(fs.readFileSync(workflowPath, "utf8"));
 
-    // Extract files from other jobs (like test-storage)
-    Object.values(workflow.jobs).forEach((job) => {
-        // Skip the matrix job itself as we handled it above
-        if (job === workflow.jobs["test-matrix"]) return;
+        // Matrix entries: jobs.<job>.strategy.matrix.include[].files
+        Object.values(workflow.jobs || {}).forEach((job) => {
+            const matrixInclude = job?.strategy?.matrix?.include || [];
+            matrixInclude.forEach((item) => {
+                if (item.files) {
+                    item.files.split(" ").forEach((f) => listedFiles.add(f.trim()));
+                }
+            });
 
-        if (job.steps) {
-            job.steps.forEach((step) => {
+            // Step commands: look for `npm run test:file <files...>`
+            (job.steps || []).forEach((step) => {
                 if (step.with && step.with.command) {
                     const match = step.with.command.match(/npm run test:file\s+(.+)/);
                     if (match) {
@@ -56,7 +58,7 @@ describe("Meta Tests - CI Workflow Coverage", function () {
                     }
                 }
             });
-        }
+        });
     });
 
     // 3. Generate a test for each file
@@ -65,7 +67,8 @@ describe("Meta Tests - CI Workflow Coverage", function () {
             const relativePath = `test/${file}`;
             if (!listedFiles.has(relativePath)) {
                 throw new Error(
-                    `${file} is not listed in .github/workflows/test.yml. Please add it to the workflow or add '// ` +
+                    `${file} is not listed in .github/workflows/test.yml or _test-matrix.yml. ` +
+                        `Please add it to a workflow or add '// ` +
                         `test-meta:ignore' to the file.`,
                 );
             }

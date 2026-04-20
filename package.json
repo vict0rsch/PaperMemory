@@ -12,6 +12,12 @@
         "zip": "wxt zip && wxt zip --browser firefox",
         "zip:chrome": "wxt zip",
         "zip:firefox": "wxt zip --browser firefox",
+        "submit": "wxt submit --chrome-zip \"dist/*-chrome.zip\" --firefox-zip \"dist/*-firefox.zip\" --firefox-sources-zip \"dist/*-sources.zip\"",
+        "submit:chrome": "wxt submit --chrome-zip \"dist/*-chrome.zip\"",
+        "submit:firefox": "wxt submit --firefox-zip \"dist/*-firefox.zip\" --firefox-sources-zip \"dist/*-sources.zip\"",
+        "submit:dry-run": "npm run submit -- --dry-run",
+        "submit:chrome:dry-run": "npm run submit:chrome -- --dry-run",
+        "submit:firefox:dry-run": "npm run submit:firefox -- --dry-run",
         "postinstall": "wxt prepare",
         "pretest": "npm run build:chrome",
         "test": "node --import ./register.mjs ./node_modules/.bin/mocha test/test-*.js --exclude test/test-sync.js --exit",
@@ -45,7 +51,7 @@
         "puppeteer-extra-plugin-stealth": "^2.11.2",
         "readline-sync": "^1.4.10",
         "uuid": "^9.0.1",
-        "wxt": "^0.20.20",
+        "wxt": "^0.20.25",
         "yaml": "^2.3.4"
     }
 }
