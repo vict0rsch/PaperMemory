@@ -1,23 +1,65 @@
-name: Submit
+name: Submit to stores
 
 on:
   workflow_dispatch:
     inputs:
-      tag:
-        description: "Release tag to submit, i.e 0.4.3"
-        required: true
+      target:
+        description: "Which store(s) to submit to"
+        type: choice
+        options: [both, chrome, firefox]
+        default: both
+      dry_run:
+        description: "Dry run (validate credentials without submitting)"
+        type: boolean
+        default: true
+
+concurrency:
+  group: submit-stores
+  cancel-in-progress: false
 
 jobs:
+  test-matrix:
+    uses: ./.github/workflows/_test-matrix.yml
+    secrets: inherit
+
+  build:
+    uses: ./.github/workflows/_build.yml
+
   submit:
+    needs: [test-matrix, build]
     runs-on: ubuntu-latest
     steps:
-      - name: Download Github Release Assets
-        uses: plasmo-corp/download-release-asset@v1.0.0
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
         with:
-          files: papermemory-*
-          tag: ${{ github.event.inputs.tag }}
-      - name: Browser Plugin Publish
-        uses: plasmo-corp/bpp@v1
-        with:
-          artifact: "papermemory-${{ github.event.inputs.tag }}-chrome.zip"
-          keys: ${{ secrets.SUBMIT_KEYS }}
+          node-version: "22.x"
+          cache: "npm"
+
+      - run: npm ci
+
+      - run: npm run zip
+
+      - name: Submit to Chrome Web Store
+        if: github.event.inputs.target == 'both' || github.event.inputs.target == 'chrome'
+        run: |
+          npx wxt submit \
+            ${{ github.event.inputs.dry_run == 'true' && '--dry-run' || '' }} \
+            --chrome-zip "dist/*-chrome.zip"
+        env:
+          CHROME_EXTENSION_ID: ${{ secrets.CHROME_EXTENSION_ID }}
+          CHROME_CLIENT_ID: ${{ secrets.CHROME_CLIENT_ID }}
+          CHROME_CLIENT_SECRET: ${{ secrets.CHROME_CLIENT_SECRET }}
+          CHROME_REFRESH_TOKEN: ${{ secrets.CHROME_REFRESH_TOKEN }}
+
+      - name: Submit to Firefox Add-ons
+        if: github.event.inputs.target == 'both' || github.event.inputs.target == 'firefox'
+        run: |
+          npx wxt submit \
+            ${{ github.event.inputs.dry_run == 'true' && '--dry-run' || '' }} \
+            --firefox-zip "dist/*-firefox.zip" \
+            --firefox-sources-zip "dist/*-sources.zip"
+        env:
+          FIREFOX_EXTENSION_ID: ${{ secrets.FIREFOX_EXTENSION_ID }}
+          FIREFOX_JWT_ISSUER: ${{ secrets.FIREFOX_JWT_ISSUER }}
+          FIREFOX_JWT_SECRET: ${{ secrets.FIREFOX_JWT_SECRET }}
