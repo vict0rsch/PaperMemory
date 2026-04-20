@@ -275,6 +275,62 @@ Environment variables (see `test/test-storage.js`):
 headless=false onlySources=arxiv,neurips npm run test:file test/test-storage.js
 ```
 
+## Github Workflows
+
+The repo has four workflow files under `.github/workflows/`:
+
+| File | Trigger | What it does |
+| --- | --- | --- |
+| `build.yml` | `push`, `pull_request` | Builds Chrome + Firefox to catch build regressions |
+| `test.yml` | `push` | Runs the full test matrix and the storage tests |
+| `submit.yml` | Manual dispatch only | Builds, tests, and submits to the Chrome Web Store and Firefox Add-ons |
+| `_test-matrix.yml`, `_build.yml` | `workflow_call` only | Reusable workflows consumed by the above (the leading `_` signals "not a top-level workflow") |
+
+`build.yml` and `test.yml`'s `test-matrix` job are thin wrappers that delegate to the reusable workflows — the actual steps live in `_build.yml` and `_test-matrix.yml`, so `submit.yml` can reuse them as gates without duplicating configuration.
+
+### Submitting to the stores (`submit.yml`)
+
+This workflow submits to the Chrome Web Store and Firefox Add-ons via [`wxt submit`](https://wxt.dev/guide/essentials/publishing.html). **It only runs when triggered manually** — there is no automatic submission on release, so publishing to the stores is always a deliberate act.
+
+**What it does on every run, in order:**
+
+1. Runs the reusable `_test-matrix.yml` and `_build.yml` workflows in parallel. The submit job is gated on both passing.
+2. `npm ci` + `npm run zip` to produce the Chrome zip, the Firefox zip, and the Firefox sources zip under `dist/`.
+3. Submits to Chrome and/or Firefox, each in a separate step with only that store's secrets in scope.
+
+**How to run it.** On the Actions page, pick "Submit to stores" → "Run workflow". Two inputs:
+
+- `target` — `both` (default), `chrome`, or `firefox`. Submits only to the selected store(s).
+- `dry_run` — default `true`. Passes `--dry-run` to `wxt submit`, which validates credentials without actually uploading. Use this to verify secrets are wired up correctly, or as a first step after rotating tokens. Set to `false` to perform a real submission.
+
+Before running with `dry_run: false`, make sure `package.json`'s `version` has been bumped — `wxt.config.js` reads the manifest version from `package.json`, so whatever is on the default branch at dispatch time is what the stores will receive.
+
+**Retrying a partial failure.** If Chrome succeeds and Firefox fails (or vice versa), re-dispatch manually with `target` set to the failed store. Only that side will be re-submitted; the already-successful side is untouched.
+
+**Required secrets** (repo settings → Secrets and variables → Actions):
+- Chrome: `CHROME_EXTENSION_ID`, `CHROME_CLIENT_ID`, `CHROME_CLIENT_SECRET`, `CHROME_REFRESH_TOKEN`
+- Firefox: `FIREFOX_EXTENSION_ID`, `FIREFOX_JWT_ISSUER`, `FIREFOX_JWT_SECRET`
+- Tests: `VICT0RSCH_GITHUB_PAT` (used by the test matrix for GitHub API calls)
+
+Each secret is only exposed to the step that needs it, so a compromised Chrome step cannot leak Firefox credentials and vice versa.
+
+**Local equivalents** (useful for debugging credentials without going through CI):
+
+```bash
+npm run submit                       # Both stores
+npm run submit:chrome                # Chrome only
+npm run submit:firefox               # Firefox only
+npm run submit:dry-run               # Both stores, dry run
+npm run submit:chrome:dry-run        # Chrome only, dry run
+npm run submit:firefox:dry-run       # Firefox only, dry run
+```
+
+These scripts read credentials from a local `.env.submit` file (see WXT's [publishing docs](https://wxt.dev/guide/essentials/publishing.html)). **Never commit `.env.submit`** — it's in `.gitignore`.
+
+### Concurrency
+
+`submit.yml` uses a `submit-stores` concurrency group (no cancellation), so overlapping manual dispatches queue up instead of racing each other.
+
 ## Building the documentation
 
 We use [MkDocs](https://www.mkdocs.org/) to build the documentation, with the [Material theme](https://squidfunk.github.io/mkdocs-material/).
