@@ -46,7 +46,7 @@
         { source: "acs", url: "https://pubs.acs.org/doi/10.1021/acs.jpca.9b00311" },
         {
             source: "aps",
-            url: "https://journals.aps.org/prl/abstract/10.1103/PhysRevLett.128.1711101",
+            url: "https://journals.aps.org/prl/abstract/10.1103/PhysRevLett.111.111101",
         },
         { source: "arxiv", url: "https://arxiv.org/abs/1703.10593" },
         {
@@ -133,7 +133,7 @@
     // name (e.g. openreview → `OR-...`). Everything else uses the source tag
     // itself as the id prefix, case-insensitively.
     const idPrefixFor = (target) =>
-        target.idPrefix.toLowerCase() || target.toLowerCase();
+        (target.idPrefix || target.source).toLowerCase();
 
     const getPaperCount = () =>
         new Promise((resolve) => {
@@ -201,7 +201,7 @@
 
             for (const target of urls) {
                 const { source, url } = target;
-                const prefix = idPrefixFor(source);
+                const prefix = idPrefixFor(target);
                 const match = papersList.find((p) => {
                     const pid = (p.id || "").toLowerCase();
                     return pid.startsWith(`${prefix}-`) || pid.startsWith(`${prefix}_`);
