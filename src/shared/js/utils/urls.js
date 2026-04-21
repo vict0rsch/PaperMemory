@@ -50,14 +50,19 @@ export const parseIdFromUrl = async (url, tab = null) => {
         findPaperForProperty,
     };
 
+    let matchedSource = false;
     for (const name of SOURCE_DISPATCH_ORDER) {
         if (is[name]) {
+            matchedSource = true;
             idForUrl = await getSource(name).urlToId(url, ctx);
             break;
         }
     }
 
-    if (idForUrl === undefined) {
+    // A matched source returning undefined means "not in storage yet"; let the
+    // caller (addOrUpdatePaper) take the makePaper path. Only throw when the URL
+    // was not recognized as any known source.
+    if (!matchedSource && idForUrl === undefined) {
         if (is.localFile) {
             idForUrl = is.localFile;
         } else if (is.parsedWebsite) {
