@@ -1,5 +1,6 @@
 // ES Module imports
-import { state, knownPaperPages, svgActionsHoverTitles } from "@pmu/config.js";
+import { state, svgActionsHoverTitles } from "@pmu/config.js";
+import { knownPaperPages } from "@pmu/sources/index.js";
 import {
     getDisplayId,
     tablerSvg,
@@ -51,7 +52,7 @@ export const getPaperInfoTable = (paper) => {
  * @returns HTML string
  */
 export const getMemoryItemHTML = (paper) => {
-    const displayId = getDisplayId(paper.id);
+    const displayId = getDisplayId(paper);
     const note = paper.note || "";
     const id = paper.id;
     const tags = new Set(paper.tags);
@@ -301,7 +302,7 @@ export const getPopupEditFormHTML = (paper) => {
     const tagOptions = getTagsOptions(paper);
     const note = paper.note || "";
     const checked = "";
-    const displayId = getDisplayId(paper.id);
+    const displayId = getDisplayId(paper);
 
     return /*html*/ ` <div
         style="max-width: 100%; display: flex; justify-content: space-between; align-items: center; padding: 4px 16px;"

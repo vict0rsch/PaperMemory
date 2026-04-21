@@ -20,7 +20,8 @@ import {
     prepareOverwriteData,
 } from "@pmu/data.js";
 import { bibtexToString } from "@pmu/bibtexParser.js";
-import { knownPaperPages, select2Options, state } from "@pmu/config.js";
+import { select2Options, state } from "@pmu/config.js";
+import { knownPaperPages } from "@pmu/sources/index.js";
 import {
     log,
     info,
@@ -35,15 +36,14 @@ import {
     escapeHtml,
 } from "@pmu/functions.js";
 import {
-    makePaper,
     tryPreprintMatch,
     tryPWCMatch,
     tryDBLP,
     tryCrossRef,
     trySemanticScholar,
     tryUnpaywall,
-} from "@pmu/parsers.js";
-import { mergePapers } from "@pmu/paper.js";
+} from "@pmu/preprintMatching.js";
+import { mergePapers, makePaper } from "@pmu/paper.js";
 import {
     shouldSync,
     pushToRemote,

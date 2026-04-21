@@ -11,25 +11,13 @@ import {
     getStoredFiles,
     noParamUrl,
     urlToWebsiteId,
-    parseUrl,
     consoleHeader,
     logOk,
     silentPromiseTimeout,
     cleanPapers,
-    arxivIdFromURL,
-    cleanBiorxivURL,
-    parseCVFUrl,
     isPdfUrl,
 } from "@pmu/functions.js";
-import {
-    state,
-    knownPaperPages,
-    preprintSources,
-    overrideORConfs,
-    overridePMLRConfs,
-    overrideDBLPVenues,
-    sourceExtras,
-} from "@pmu/config.js";
+import { state } from "@pmu/config.js";
 import {
     getStorage,
     setStorage,
@@ -40,16 +28,20 @@ import {
     deletePaperInStorage,
     updateDuplicatedUrls,
 } from "@pmu/data.js";
-import { bibtexToObject } from "@pmu/bibtexParser.js";
-import { pushToRemote } from "@pmu/sync.js";
 import {
-    tryPWCMatch,
-    tryPreprintMatch,
-    makePaper,
-    findCellPii,
-    parseAIPIdOrDOI,
-} from "@pmu/parsers.js";
-import { parseIdFromUrl } from "@pmu/urls.js";
+    bibtexToObject,
+    bibtexToString,
+    sanitizeBibtexObject,
+} from "@pmu/bibtexParser.js";
+import { pushToRemote } from "@pmu/sync.js";
+import { tryPWCMatch, tryPreprintMatch } from "@pmu/preprintMatching.js";
+import {
+    getSource,
+    knownPaperPages,
+    preprintSources,
+    sourceFromIs,
+} from "@pmu/sources/index.js";
+import { parseIdFromUrl, findPaperForProperty } from "@pmu/urls.js";
 import { findLocalFile, isKnownLocalFile } from "@pmu/files.js";
 
 /**
@@ -93,7 +85,7 @@ export const findFuzzyPaperMatch = (hashes, paper) => {
     if (hashes.hasOwnProperty(paperHash)) {
         const matches = hashes[paperHash];
         const nonPreprint = matches.find(
-            (m) => !preprintSources.some((s) => m.toLowerCase().startsWith(s)),
+            (m) => !preprintSources().some((s) => m.toLowerCase().startsWith(s)),
         );
         if (nonPreprint) {
             return nonPreprint;
@@ -112,164 +104,8 @@ export const findFuzzyPaperMatch = (hashes, paper) => {
  * @returns {string} the url to the paper's abstract
  */
 export const paperToAbs = (paper) => {
-    var journal, type, doi, pii;
-    const pdf = paper.pdfLink;
-    var abs = "";
-    switch (paper.source) {
-        case "arxiv":
-            abs = pdf.replace("/pdf/", "/abs/").replace(".pdf", "");
-            break;
-
-        case "neurips":
-            abs = pdf
-                .replace("/file/", "/hash/")
-                .replace("-Paper.pdf", "-Abstract.html");
-            break;
-
-        case "cvf":
-            abs = pdf.replace("/papers/", "/html/").replace(".pdf", ".html");
-            break;
-
-        case "openreview":
-            abs = pdf.replace("/pdf?", "/forum?");
-            break;
-
-        case "biorxiv":
-            abs = pdf.replace(".full.pdf", "");
-            break;
-
-        case "pmlr":
-            abs = pdf.split("/").slice(0, -1).join("/") + ".html";
-            break;
-
-        case "acl":
-            abs = pdf.replace(".pdf", "");
-            break;
-        case "pnas":
-            abs = pdf.replace(".full.pdf", "").replace("/doi/pdf/", "/doi/full/");
-            break;
-        case "nature":
-            abs = pdf.replace(".pdf", "");
-            break;
-        case "acs":
-            abs = pdf
-                .replace("pubs.acs.org/doi/pdf/", "pubs.acs.org/doi/")
-                .split("?")[0];
-            break;
-        case "iop":
-            abs = pdf.split("#")[0].replace(/\/pdf$/, "");
-            break;
-        case "jmlr":
-            abs =
-                pdf
-                    .split("/")
-                    .slice(0, -1)
-                    .join("/")
-                    .replace("/papers/volume", "/papers/v") + ".html";
-            break;
-        case "pmc":
-            const pmcid = pdf.match(/PMC\d+/)[0];
-            abs = pdf.split(pmcid)[0] + pmcid;
-            break;
-
-        case "ijcai":
-            const procId = pdf
-                .replace(".pdf", "")
-                .split("/")
-                .last()
-                .match(/[1-9]\d*/);
-            const year = pdf.match(/proceedings\/\d+/gi)[0].split("/")[1];
-            abs = `https://www.ijcai.org/proceedings/${year}/${procId}`;
-            break;
-        case "acm":
-            abs = pdf.replace("/doi/pdf/", "/doi/");
-            break;
-
-        case "ieee":
-            abs = `https://ieeexplore.ieee.org/document/${paper.key}`;
-            break;
-
-        case "springer":
-            abs = paper.extra.url;
-            break;
-
-        case "aps":
-            const urlParts = parseUrl(pdf).pathname.split("/").slice(1, 3);
-            journal = urlParts[0];
-            type = urlParts[1];
-            abs = pdf.replace(`/${journal}/${type}/`, `/${journal}/abstract/`);
-            break;
-
-        case "wiley":
-            abs = pdf.replace(/\/doi\/e?pdf\//g, `/doi/abs/`);
-            break;
-
-        case "sciencedirect":
-            pii = pdf.split("/pii/")[1].split("/")[0].split("#")[0].split("?")[0];
-            abs = `https://www.sciencedirect.com/science/article/pii/${pii}`;
-            break;
-
-        case "science":
-            doi = pdf.split("/doi/")[1];
-            if (!doi.startsWith("10.")) {
-                doi = doi.split("/").slice(1).join("/");
-            }
-            abs = `https://science.org/doi/full/${doi}`;
-            break;
-
-        case "frontiers":
-            abs = pdf.replace(/\/pdf$/, "/full");
-            break;
-
-        case "ihep":
-            abs = `https://inspirehep.net/literature/${paper.id.split("-")[1]}`;
-            break;
-
-        case "plos":
-            abs = pdf.replace("/article/file?", "/article?").split("&")[0];
-            break;
-
-        case "rsc":
-            abs = pdf.replace("/articlepdf/", "/articlelanding/");
-            break;
-
-        case "website":
-            abs = paper.pdfLink;
-            break;
-
-        case "mdpi":
-            abs = paper.pdfLink.split("/pdf")[0];
-            break;
-
-        case "oup":
-            abs = `https://doi.org/${paper.doi}`;
-            break;
-
-        case "hal":
-            abs = pdf.split("/file/")[0].split("/document")[0];
-            break;
-
-        case "chemrxiv":
-            abs = `https://chemrxiv.org/engage/chemrxiv/article-details/${
-                pdf.split("/item/")[1].split("/")[0]
-            }`;
-            break;
-
-        case "cell":
-            journal = paper.id.split("_")[0].split("fulltext")[0];
-            pii = new URL(pdf).searchParams.get("pii");
-            abs = `https://www.cell.com/${journal}/fulltext/${pii}`;
-            break;
-
-        case "aip":
-            abs = `https://doi.org/${paper.doi}`;
-            break;
-
-        default:
-            abs = "https://xkcd.com/1969/";
-            break;
-    }
-
+    const src = getSource(paper.source);
+    const abs = src ? src.toAbs(paper) : paper.pdfLink;
     return abs.replace("http://", "https://");
 };
 
@@ -280,124 +116,116 @@ export const paperToAbs = (paper) => {
  * @returns {string} the url to the paper's pdf
  */
 export const paperToPDF = (paper) => {
-    let pdf = paper.pdfLink;
-    switch (paper.source) {
-        case "arxiv":
-            // remove potential version so it's to the latest
-            pdf = pdf
-                .replace("arxiv.org/abs/", "arxiv.org/pdf/")
-                .replace(/\.pdf$/, "")
-                .replace(/v\d+$/gi, "");
-            pdf += ".pdf";
+    const src = getSource(paper.source);
+    const pdf = src ? src.toPDF(paper) : paper.pdfLink;
+    return pdf.replace("http://", "https://");
+};
 
-            break;
+export const autoTagPaper = async (paper) => {
+    try {
+        const autoTags = await getStorage("autoTags");
+        if (!autoTags || !autoTags.length) return paper;
+        let tags = new Set();
+        for (const at of autoTags) {
+            if (!at.tags?.length) continue;
+            if (!at.title && !at.author) continue;
 
-        case "neurips":
-            pdf = pdf
-                .replace("/hash/", "/file/")
-                .replace("-Abstract.html", "-Paper.pdf");
-            break;
+            let titleMatch = true;
+            let authorMatch = true;
+            try {
+                if (at.title) {
+                    titleMatch = new RegExp(at.title, "i").test(paper.title);
+                }
+                if (at.author) {
+                    authorMatch = new RegExp(at.author, "i").test(paper.author);
+                }
+            } catch (e) {
+                continue;
+            }
 
-        case "cvf":
-            pdf = pdf.replace("/html/", "/papers/").replace(".html", ".pdf");
-            break;
+            if (titleMatch && authorMatch) {
+                at.tags.forEach((t) => tags.add(t));
+            }
+        }
+        paper.tags = [...tags].sort();
+        if (paper.tags.length) {
+            log("Automatically adding tags:", paper.tags);
+        }
+        return paper;
+    } catch (error) {
+        log("Error auto-tagging:", error);
+        log("Paper:", paper);
+        return paper;
+    }
+};
 
-        case "openreview":
-            pdf = pdf.replace("/forum?", "/pdf?");
-            break;
-
-        case "biorxiv":
-            pdf = cleanBiorxivURL(pdf) + ".full.pdf";
-            break;
-
-        case "pmlr":
-            break;
-
-        case "acl":
-            break;
-
-        case "pnas":
-            break;
-
-        case "nature":
-            if (!pdf.endsWith(".pdf")) pdf += ".pdf";
-            break;
-        case "iop":
-            if (!pdf.endsWith("/pdf")) pdf += "/pdf";
-            break;
-
-        case "acs":
-            break;
-
-        case "jmlr":
-            break;
-
-        case "pmc":
-            break;
-
-        case "ijcai":
-            break;
-
-        case "acm":
-            break;
-
-        case "ieee":
-            break;
-
-        case "springer":
-            break;
-
-        case "aps":
-            break;
-
-        case "wiley":
-            break;
-
-        case "sciencedirect":
-            break;
-
-        case "science":
-            break;
-
-        case "frontiers":
-            break;
-
-        case "ihep":
-            break;
-
-        case "plos":
-            break;
-
-        case "rsc":
-            break;
-
-        case "mdpi":
-            break;
-
-        case "oup":
-            break;
-
-        case "hal":
-            break;
-
-        case "chemrxiv":
-            break;
-
-        case "website":
-            break;
-
-        case "cell":
-            break;
-
-        case "aip":
-            break;
-
-        default:
-            pdf = "https://xkcd.com/1969/";
-            break;
+export const initPaper = async (paper) => {
+    if (!paper.note) {
+        paper.note = "";
     }
 
-    return pdf.replace("http://", "https://");
+    paper.md = `[${paper.title}](${paper.pdfLink})`;
+    paper.tags = [];
+    paper.codeLink = paper.codeLink ?? "";
+    paper.favorite = false;
+    paper.favoriteDate = "";
+    paper.addDate = new Date().toJSON();
+    paper.lastOpenDate = paper.addDate;
+    paper.count = 1;
+    paper.code = {};
+    if (paper.bibtex) {
+        const bibObj = sanitizeBibtexObject(bibtexToObject(paper.bibtex));
+        paper.bibtex = bibtexToString(bibObj);
+        paper.doi = paper.doi ?? bibObj.doi ?? "";
+    } else {
+        paper.doi = paper.doi ?? "";
+    }
+    for (const k in paper) {
+        if (paper.hasOwnProperty(k) && typeof paper[k] === "string") {
+            paper[k] = paper[k].trim();
+        }
+    }
+
+    paper = await autoTagPaper(paper);
+    validatePaper(paper);
+
+    return paper;
+};
+
+export const makePaper = async (is, url, tab = false) => {
+    let paper;
+    let start = performance.now();
+    info("Making paper...");
+    try {
+        const src = tab ? getSource("website") : sourceFromIs(is);
+        if (!src) {
+            console.error({ is, url });
+            throw new Error(
+                "Could not parse paper (in `makePaper`). Unknown paper source, see above.",
+            );
+        }
+        const ctx = {
+            papers: Object.values(cleanPapers(state.papers)),
+            titleHashToIds: state.titleHashToIds,
+            findPaperForProperty,
+        };
+        paper = await src.parse(url, tab, ctx);
+        if (paper) paper.source = src.name;
+    } catch (e) {
+        logError("Error in makePaper:", e);
+        if (e.message?.includes("Unknown paper source")) {
+            throw e;
+        }
+        return;
+    }
+
+    if (typeof paper === "undefined") {
+        return;
+    }
+    const elapsed = (performance.now() - start) / 1000;
+    info(`Paper parsed in ${elapsed.toFixed(2)}s`);
+
+    return await initPaper(paper);
 };
 
 export const mergePapers = (options = { newPaper: {}, oldPaper: {} }) => {

@@ -15,17 +15,13 @@ import {
 } from "@pmu/functions.js";
 import {
     state,
-    preprintSources,
-    overrideORConfs,
-    overridePMLRConfs,
     overrideDBLPVenues,
     prefsCheckNames,
-    knownPaperPages,
     prefsStorageKeys,
     prefsCheckDefaultFalse,
 } from "@pmu/config.js";
 import { bibtexToString, bibtexToObject } from "@pmu/bibtexParser.js";
-import { makeCVFPaper, makeOpenReviewPaper } from "@pmu/parsers.js";
+import { getSource, knownPaperPages } from "@pmu/sources/index.js";
 import { sortMemory } from "@pmu/state.js";
 
 /**
@@ -854,60 +850,8 @@ export const prepareOverwriteData = async (data) => {
 };
 
 export const makeVenue = async (paper) => {
-    let venue = "";
-    if (paper.note && paper.note.match(/(accepted|published)\ @\ .+\(?\d{4}\)?/i)) {
-        venue = paper.note
-            .split("@")[1]
-            .trim()
-            .replace(/\(?\d{4}\)?/, "")
-            .split("--")[0]
-            .trim();
-    }
-    if (venue) {
-        if (venue.toLowerCase() === "neurips") venue = "NeurIPS";
-    }
-    switch (paper.source) {
-        case "arxiv":
-            break;
-        case "neurips":
-            venue = "NeurIPS";
-            break;
-        case "cvf":
-            if (!venue) {
-                venue = (await makeCVFPaper(paper.pdfLink)).venue;
-            }
-            break;
-        case "openreview":
-            if (!venue) {
-                venue = (await makeOpenReviewPaper(paper.pdfLink)).venue;
-            }
-            break;
-        case "biorxiv":
-            break;
-        case "pmlr":
-            venue = paper.conf?.split(/\d{4}/)[0] ?? "";
-            break;
-        case "acl":
-            venue = paper.conf ?? "";
-            break;
-        case "pnas":
-            venue = "PNAS";
-            break;
-        case "nature":
-            if (!venue) {
-                venue = paper.venue;
-            }
-            break;
-        case "iop":
-            venue = paper.venue;
-            break;
-        case "acs":
-            venue = paper.venue;
-            break;
-        default:
-            break;
-    }
-    return venue;
+    const src = getSource(paper.source);
+    return src ? await src.venue(paper) : "";
 };
 
 /**

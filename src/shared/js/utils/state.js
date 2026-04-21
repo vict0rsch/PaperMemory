@@ -15,7 +15,6 @@ import {
 import {
     state,
     descendingSortKeys,
-    preprintSources,
     journalAbbreviations,
     storeReadme,
 } from "@pmu/config.js";
