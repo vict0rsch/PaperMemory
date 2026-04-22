@@ -172,12 +172,10 @@ const openOne = async (source, url, index, total) => {
     if (found) {
         console.log(`  ✓ ${source} parsed in ${elapsed}s`);
         await chrome.tabs.remove(tab.id);
-        return;
     } else {
         console.log(
             `  ✗ ${source} timed out after ${elapsed}s — leaving tab ${tab.id} open`,
         );
-        resolve();
     }
 };
 

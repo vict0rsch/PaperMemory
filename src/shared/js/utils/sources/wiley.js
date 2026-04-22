@@ -27,14 +27,14 @@ export class WileySource extends BasePaperSource {
         const absLink = pdfLink.replace("/doi/pdf/", "/doi/abs/");
         const doi = absLink.split("/doi/abs/")[1];
         const paper = await fetchBibtexToPaper({ doi });
-        const { author, title, year, bibtex, venue, note } = paper;
+        const { author, title, year, bibtex, venue, note, key } = paper;
         const id = `Wiley-${year}_${miniHash(doi)}`;
 
         return {
             author,
             bibtex,
             id,
-            key: miniHash(doi),
+            key,
             note,
             pdfLink,
             title,

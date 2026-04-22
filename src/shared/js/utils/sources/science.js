@@ -38,13 +38,13 @@ export class ScienceSource extends BasePaperSource {
             note = `Published @ ${venue} (${year})`;
         } else {
             const dom = await fetchDom(absUrl);
-            ({ author, year, publisher, title, venue, key, bibtex, note } =
+            ({ author, year, title, venue, key, bibtex, note } =
                 extractDataFromDCMetaTags(dom));
         }
 
         id = `Science-${year}_${miniHash(doi)}`;
 
-        return { author, bibtex, id, key, note, pdfLink, title, venue, year };
+        return { author, bibtex, id, key, note, pdfLink, title, venue, year, doi };
     }
 
     static toAbs(paper) {
