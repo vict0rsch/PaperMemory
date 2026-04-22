@@ -132,8 +132,7 @@
     // Some sources tag papers with an id prefix that differs from the source
     // name (e.g. openreview → `OR-...`). Everything else uses the source tag
     // itself as the id prefix, case-insensitively.
-    const idPrefixFor = (target) =>
-        (target.idPrefix || target.source).toLowerCase();
+    const idPrefixFor = (target) => (target.idPrefix || target.source).toLowerCase();
 
     const getPaperCount = () =>
         new Promise((resolve) => {
@@ -245,8 +244,12 @@
         });
     };
 
-    chrome.storage.local.remove("papers", () => {
+    const main = async () => {
+        await chrome.storage.local.remove("papers");
         console.log("Memory reset: chrome.storage.local.papers cleared.");
-        openAll().then(verify);
-    });
+        await openAll();
+        await verify();
+    };
+
+    main();
 })();
