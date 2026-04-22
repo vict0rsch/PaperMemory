@@ -246,7 +246,7 @@ Prettier is used for consistent formatting. The config lives in `.prettierrc`:
 Run the formatter with:
 
 ```bash
-npx prettier --write .
+npm run format
 ```
 
 Most editors can auto-format on save with the Prettier extension. For VS Code, install the [Prettier - Code formatter](https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode) extension.
@@ -262,12 +262,12 @@ Most editors can auto-format on save with the Prettier extension. For VS Code, i
     - `toAbs(paper)` / `toPDF(paper)` — return absolute URL strings for the abs ↔ PDF toggle
 2. **Register** the class in `sources/index.js` (`ALL_SOURCES` / dispatch order). `knownPaperPages` is derived from the registry (`PMUtils.config.knownPaperPages` still works via re-export from `config.js`).
 3. **Reuse** shared HTTP/BibTeX/DOM helpers from `parsers.js` instead of duplicating fetches.
-4. **Optional overrides** on the class: `displayId(paper, baseId)`, `venue(paper)`, `static isPreprint = true` (only for preprint servers used in fuzzy dedup).
-5. **Add** URLs under `test/data/urls.json` for the new source so `test/test-storage.js` keeps coverage.
+4. **Optional overrides** on the class: `displayId(paper, baseId)`, `venue(paper)`, `static isPreprint = true` (only for preprint servers used in fuzzy deduplication).
+5. **Add** URLs under `test/data/urls.json` and into `test/test-storage.js` to keep test coverage.
 
 ### Why stateless handlers, not class instances
 
-Saved papers are **plain objects** (JSON in `chrome.storage`, messages, Gist sync). MV3 service workers also terminate often, so there is no long-lived “paper with methods” to hydrate. Each source module exports a **stateless** subclass of `BasePaperSource`: the registry does a name lookup and calls static-ish methods on the class (`ArxivSource.parse`, …). That matches one hash lookup per dispatch, same cost order as the old large `switch` statements, without prototype loss across storage boundaries.
+Saved papers are **plain objects** (JSON in `chrome.storage`, messages, Gist sync). MV3 service workers also terminate often, so there is no long-lived "paper with methods" to hydrate. Each source module exports a **stateless** subclass of `BasePaperSource`: the registry does a name lookup and calls static-ish methods on the class (`ArxivSource.parse`, …). That matches one hash lookup per dispatch, same cost order as the old large `switch` statements, without prototype loss across storage boundaries.
 
 ## Creating a new paper attribute
 
