@@ -92,6 +92,13 @@ export const fetchJSON = async (url) => {
     }
 };
 
+/**
+ * Fetches a bibtex string from a url or doi and converts it to a paper object.
+ * @param {Object} options - The options object. Either `url` or `doi` must be provided, but not both.
+ * @param {string} options.url - The url to fetch the bibtex from.
+ * @param {string} options.doi - The doi to fetch the bibtex from.
+ * @returns {Object} The paper object. Typically does not contain the `id` and `pdfLink` keys.
+ */
 export const fetchBibtexToPaper = async ({ url, doi }) => {
     let bibtex;
     if (url && doi) {
@@ -111,9 +118,10 @@ export const fetchBibtexToPaper = async ({ url, doi }) => {
     bibtex = bibtexToString(bibObj);
     bibObj.bibtex = bibtex;
     bibObj.key = bibObj.citationKey;
-    if (bibObj.journal) {
-        bibObj.venue = bibObj.journal;
-        bibObj.note = `Published in ${bibObj.journal} (${bibObj.year})`;
+    const bibVenue = bibObj.journal || bibObj.booktitle || "";
+    if (bibVenue) {
+        bibObj.venue = bibVenue;
+        bibObj.note = `Published in ${bibVenue} (${bibObj.year})`;
     }
     return bibObj;
 };
