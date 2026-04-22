@@ -10,9 +10,9 @@ import { ChemrxivSource } from "./chemrxiv.js";
 import { CVFSource } from "./cvf.js";
 import { FrontiersSource } from "./frontiers.js";
 import { HalSource } from "./hal.js";
+import { IeeeSource } from "./ieee.js";
 import { IhepSource } from "./ihep.js";
 import { IjcaiSource } from "./ijcai.js";
-import { IeeeSource } from "./ieee.js";
 import { IopSource } from "./iop.js";
 import { JmlrSource } from "./jmlr.js";
 import { MdpiSource } from "./mdpi.js";
@@ -25,148 +25,92 @@ import { PmcSource } from "./pmc.js";
 import { PMLRSource } from "./pmlr.js";
 import { PnasSource } from "./pnas.js";
 import { RscSource } from "./rsc.js";
-import { SciencedirectSource } from "./sciencedirect.js";
 import { ScienceSource } from "./science.js";
+import { SciencedirectSource } from "./sciencedirect.js";
 import { SpringerSource } from "./springer.js";
-import { WebsiteSource } from "./website.js";
 import { WileySource } from "./wiley.js";
+import { WebsiteSource } from "./website.js";
 
-/** Key order in knownPaperPages (must match former config.js for stable iteration). */
-const CONFIG_KEY_ORDER = [
-    "acl",
-    "acm",
-    "aps",
-    "acs",
-    "arxiv",
-    "biorxiv",
-    "cell",
-    "chemrxiv",
-    "cvf",
-    "frontiers",
-    "hal",
-    "ihep",
-    "ijcai",
-    "ieee",
-    "iop",
-    "jmlr",
-    "mdpi",
-    "nature",
-    "neurips",
-    "openreview",
-    "oup",
-    "plos",
-    "pmc",
-    "pmlr",
-    "pnas",
-    "rsc",
-    "science",
-    "sciencedirect",
-    "springer",
-    "website",
-    "wiley",
-    "aip",
+/**
+ * Single source of truth for all paper sources. Add a new source here (once)
+ * after creating its module file. Order is irrelevant: patterns across sources
+ * are mutually exclusive (enforced by the "Source Pattern Mutual Exclusion"
+ * test in test/test-meta.js).
+ *
+ * `WebsiteSource` is the universal fallback and is NOT dispatched via
+ * `sourceFromIs` / `matchUrl`; it is invoked explicitly in paper.js.
+ */
+const ALL_SOURCES = [
+    AclSource,
+    AcmSource,
+    AcsSource,
+    AipSource,
+    ApsSource,
+    ArxivSource,
+    BiorxivSource,
+    CellSource,
+    ChemrxivSource,
+    CVFSource,
+    FrontiersSource,
+    HalSource,
+    IeeeSource,
+    IhepSource,
+    IjcaiSource,
+    IopSource,
+    JmlrSource,
+    MdpiSource,
+    NatureSource,
+    NeuripsSource,
+    OpenReviewSource,
+    OupSource,
+    PlosSource,
+    PmcSource,
+    PMLRSource,
+    PnasSource,
+    RscSource,
+    ScienceSource,
+    SciencedirectSource,
+    SpringerSource,
+    WileySource,
+    WebsiteSource,
 ];
 
-/** First match wins for makePaper / parseIdFromUrl (must match former cascades). */
-export const SOURCE_DISPATCH_ORDER = [
-    "arxiv",
-    "neurips",
-    "cvf",
-    "openreview",
-    "biorxiv",
-    "pmlr",
-    "acl",
-    "pnas",
-    "nature",
-    "acs",
-    "iop",
-    "jmlr",
-    "pmc",
-    "ijcai",
-    "acm",
-    "ieee",
-    "springer",
-    "aps",
-    "wiley",
-    "sciencedirect",
-    "science",
-    "frontiers",
-    "ihep",
-    "plos",
-    "rsc",
-    "mdpi",
-    "oup",
-    "hal",
-    "chemrxiv",
-    "cell",
-    "aip",
-];
+const DISPATCH_SOURCES = ALL_SOURCES.filter((S) => S !== WebsiteSource);
 
-const BY_NAME = {
-    acl: AclSource,
-    acm: AcmSource,
-    aps: ApsSource,
-    acs: AcsSource,
-    arxiv: ArxivSource,
-    biorxiv: BiorxivSource,
-    cell: CellSource,
-    chemrxiv: ChemrxivSource,
-    cvf: CVFSource,
-    frontiers: FrontiersSource,
-    hal: HalSource,
-    ihep: IhepSource,
-    ijcai: IjcaiSource,
-    ieee: IeeeSource,
-    iop: IopSource,
-    jmlr: JmlrSource,
-    mdpi: MdpiSource,
-    nature: NatureSource,
-    neurips: NeuripsSource,
-    openreview: OpenReviewSource,
-    oup: OupSource,
-    plos: PlosSource,
-    pmc: PmcSource,
-    pmlr: PMLRSource,
-    pnas: PnasSource,
-    rsc: RscSource,
-    science: ScienceSource,
-    sciencedirect: SciencedirectSource,
-    springer: SpringerSource,
-    website: WebsiteSource,
-    wiley: WileySource,
-    aip: AipSource,
-};
+const BY_NAME = Object.fromEntries(ALL_SOURCES.map((S) => [S.name, S]));
 
 /** @param {string} name */
 export const getSource = (name) => BY_NAME[name];
 
-export const allSources = () => CONFIG_KEY_ORDER.map((k) => BY_NAME[k]);
+export const allSources = () => [...ALL_SOURCES];
 
 export const knownPaperPages = Object.fromEntries(
-    CONFIG_KEY_ORDER.map((k) => {
-        const S = BY_NAME[k];
-        return [k, { patterns: S.patterns, name: S.displayName }];
-    }),
+    ALL_SOURCES.map((S) => [S.name, { patterns: S.patterns, name: S.displayName }]),
 );
 
 /** @param {Record<string, boolean>} is from isPaper() */
 export const sourceFromIs = (is) => {
-    for (const name of SOURCE_DISPATCH_ORDER) {
-        if (is[name]) return BY_NAME[name];
+    for (const S of DISPATCH_SOURCES) {
+        if (is[S.name]) return S;
     }
     return null;
 };
 
 /** @param {string} url */
 export const matchUrl = (url) => {
-    for (const name of SOURCE_DISPATCH_ORDER) {
-        const S = BY_NAME[name];
+    for (const S of DISPATCH_SOURCES) {
         if (S.matches(url)) return S;
     }
     return null;
 };
 
 /** Lowercase source names used for fuzzy de-duplication (arxiv, biorxiv). */
-export const preprintSources = SOURCE_DISPATCH_ORDER.filter(
-    (name) => BY_NAME[name].isPreprint,
-).map((n) => n.toLowerCase());
+export const preprintSources = DISPATCH_SOURCES.filter((S) => S.isPreprint).map((S) =>
+    S.name.toLowerCase(),
+);
+
+/**
+ * Retained for consumers (e.g. urls.js) that key into `is` by string name.
+ * Order is not semantically meaningful — patterns are mutually exclusive.
+ */
+export const SOURCE_DISPATCH_ORDER = DISPATCH_SOURCES.map((S) => S.name);

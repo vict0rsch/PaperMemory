@@ -260,7 +260,7 @@ Most editors can auto-format on save with the Prettier extension. For VS Code, i
     - `urlToId(url, ctx)` — stable id from URL (optional second arg is only used where the legacy code needed `parseIdFromUrl` while resolving nested URLs)
     - `parse(url, tab, ctx)` — async; returns a plain paper object (fields documented as `ParsedPaperFields` on `BasePaperSource.parse` in `base.js`)
     - `toAbs(paper)` / `toPDF(paper)` — return absolute URL strings for the abs ↔ PDF toggle
-2. **Register** the class in `sources/index.js` (add to `BY_NAME` and to `SOURCE_DISPATCH_ORDER`). `knownPaperPages` is derived from the registry (`PMUtils.config.knownPaperPages` still works via re-export from `config.js`).
+2. **Register** the class in `sources/index.js`: add its import and insert the class reference into the `ALL_SOURCES` array (once). `BY_NAME`, `SOURCE_DISPATCH_ORDER`, `knownPaperPages`, `preprintSources`, and `allSources()` are all derived automatically. The mutual-exclusion test in `test/test-meta.js` enforces that your patterns don't overlap with any existing source. The settings page renders sources alphabetically by display name.
 3. **Reuse** shared HTTP/BibTeX/DOM helpers from `parsers.js` instead of duplicating fetches.
 4. **Optional overrides** on the class: `displayId(paper, baseId)`, `venue(paper)`, `static isPreprint = true` (only for preprint servers used in fuzzy deduplication).
 5. **Add** URLs under `test/data/urls.json` and into `test/test-storage.js` to keep test coverage.
