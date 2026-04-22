@@ -71,7 +71,7 @@ const PMDebug = {
     },
 
     get getPapers() {
-        return config.state.papers;
+        return () => config.state.papers;
     },
 
     // Utility to list all available functions
