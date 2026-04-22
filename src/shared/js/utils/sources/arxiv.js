@@ -90,8 +90,4 @@ export class ArxivSource extends BasePaperSource {
         pdf += ".pdf";
         return pdf;
     }
-
-    static async venue() {
-        return "";
-    }
 }

@@ -30,8 +30,9 @@
 // accidental paste never destroys your memory.
 const deleteMemory = false;
 
-// Test only specific sources
-const testOnly = new Set(["iop"]);
+// Restrict the run to specific sources (e.g. `new Set(["iop", "acm"])`).
+// Leave empty to test every source in the `urls` list below.
+const testOnly = new Set([]);
 
 if (!deleteMemory) {
     console.warn(

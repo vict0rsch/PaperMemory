@@ -2,6 +2,17 @@
  * Stateless paper source handler (Option A). Papers remain plain objects; this
  * class is never instantiated — only static methods are used.
  *
+ * IMPORTANT — circular import constraint:
+ *   `functions.js` imports `getSource` from `sources/index.js`, which in turn
+ *   imports every concrete source module (including ones that import back from
+ *   `functions.js`). This cycle is safe today because every source module only
+ *   consumes `functions.js` bindings inside method bodies (runtime, after all
+ *   modules have been evaluated). Do NOT evaluate `functions.js` exports at
+ *   source-module top level (e.g. inside `static patterns = [...]` initialisers
+ *   that call functions from `functions.js`); doing so hits a Temporal Dead
+ *   Zone at load time and crashes the extension.
+ *
+
  * @typedef {Object} ParsedPaperFields
  * @property {string} author
  * @property {string} bibtex

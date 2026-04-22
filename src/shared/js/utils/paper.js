@@ -85,7 +85,7 @@ export const findFuzzyPaperMatch = (hashes, paper) => {
     if (hashes.hasOwnProperty(paperHash)) {
         const matches = hashes[paperHash];
         const nonPreprint = matches.find(
-            (m) => !preprintSources().some((s) => m.toLowerCase().startsWith(s)),
+            (m) => !preprintSources.some((s) => m.toLowerCase().startsWith(s)),
         );
         if (nonPreprint) {
             return nonPreprint;

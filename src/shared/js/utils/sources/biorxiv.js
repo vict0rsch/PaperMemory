@@ -69,8 +69,4 @@ export class BiorxivSource extends BasePaperSource {
     static toPDF(paper) {
         return cleanBiorxivURL(paper.pdfLink) + ".full.pdf";
     }
-
-    static async venue() {
-        return "";
-    }
 }

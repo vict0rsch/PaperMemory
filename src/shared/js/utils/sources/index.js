@@ -167,7 +167,6 @@ export const matchUrl = (url) => {
 };
 
 /** Lowercase source names used for fuzzy de-duplication (arxiv, biorxiv). */
-export const preprintSources = () =>
-    SOURCE_DISPATCH_ORDER.filter((name) => BY_NAME[name].isPreprint).map((n) =>
-        n.toLowerCase(),
-    );
+export const preprintSources = SOURCE_DISPATCH_ORDER.filter(
+    (name) => BY_NAME[name].isPreprint,
+).map((n) => n.toLowerCase());

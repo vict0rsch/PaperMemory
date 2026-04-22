@@ -151,10 +151,16 @@ export const consoleHeader = (text) =>
     console.groupCollapsed(`%c${text}`, consolHeaderStyle);
 
 /** Gets the string to display from a paper (id + source-specific suffixes).
- * @param {object} paper The paper (uses paper.id)
+ * Accepts either a full paper object or a bare id string for backward
+ * compatibility with pre-refactor callers; when called with a string, the
+ * source-specific `displayId` override is skipped and only the base id
+ * shortening is applied.
+ * @param {object|string} paperOrId The paper (uses paper.id + paper.source) or
+ *   a bare paper id string.
  * @returns {string} The string to display
  */
-export const getDisplayId = (paper) => {
+export const getDisplayId = (paperOrId) => {
+    const paper = typeof paperOrId === "string" ? { id: paperOrId } : paperOrId;
     const fullId = paper.id;
     let id = fullId.split("_")[0].split(".")[0];
     if (!id.startsWith("OR-")) {
