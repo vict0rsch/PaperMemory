@@ -1,8 +1,6 @@
 import { BasePaperSource } from "./base.js";
 import { miniHash, noParamUrl } from "@pmu/functions.js";
-import { bibtexToObject, bibtexToString } from "@pmu/bibtexParser.js";
-import { fetchText } from "@pmu/parsers.js";
-import { flipAndAuthors } from "@pmu/parsers.js";
+import { fetchBibtexToPaper } from "@pmu/parsers.js";
 
 export class HalSource extends BasePaperSource {
     static name = "hal";
@@ -28,19 +26,13 @@ export class HalSource extends BasePaperSource {
         ); // remove version
         const halId = url.match(/(hal-\d+)/)[1];
         const bibURL = `https://hal.science/${halId}/bibtex`;
-        let bibtex = await fetchText(bibURL);
-        const paper = bibtexToObject(bibtex);
-        let { title, year, journal, author, doi, pdf } = paper;
+        const { author, bibtex, key, note, title, venue, year } =
+            await fetchBibtexToPaper({ url: bibURL });
 
-        const venue = journal;
-        const note = venue ? `Published @ ${venue} (${year})` : "";
-        const key = paper.citationKey;
-        author = flipAndAuthors(author);
-        bibtex = bibtexToString(bibtex);
         const id = `HAL-${year}_${miniHash(halId)}`;
-        const pdfLink = pdf ?? url;
+        const pdfLink = url;
 
-        return { author, bibtex, id, key, note, pdfLink, title, venue, year, doi };
+        return { author, bibtex, id, key, note, pdfLink, title, venue, year };
     }
 
     static toAbs(paper) {

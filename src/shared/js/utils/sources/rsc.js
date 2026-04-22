@@ -1,7 +1,6 @@
 import { BasePaperSource } from "./base.js";
 import { miniHash, noParamUrl } from "@pmu/functions.js";
 import { fetchBibtexToPaper } from "@pmu/parsers.js";
-import { flipAndAuthors } from "@pmu/parsers.js";
 
 export class RscSource extends BasePaperSource {
     static name = "rsc";
@@ -31,8 +30,8 @@ export class RscSource extends BasePaperSource {
         let { bibtex, key, author, venue, title, note, year, doi } =
             await fetchBibtexToPaper({
                 url: `https://pubs.rsc.org/en/content/formatedresult?markedids=${rscId}&downloadtype=article&managertype=bibtex`,
+                flipAuthors: true,
             });
-        author = flipAndAuthors(author);
         const id = `RSC-${venue.replaceAll(" ", "")}_${miniHash(rscId)}`;
         return { author, bibtex, id, key, note, pdfLink, title, venue, year, doi };
     }

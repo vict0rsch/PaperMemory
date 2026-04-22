@@ -1,8 +1,6 @@
 import { BasePaperSource } from "./base.js";
 import { miniHash, noParamUrl, isPdfUrl } from "@pmu/functions.js";
-import { bibtexToObject, bibtexToString } from "@pmu/bibtexParser.js";
-import { fetchText } from "@pmu/parsers.js";
-import { flipAndAuthors } from "@pmu/parsers.js";
+import { fetchBibtexToPaper } from "@pmu/parsers.js";
 
 export class OupSource extends BasePaperSource {
     static name = "oup";
@@ -27,16 +25,13 @@ export class OupSource extends BasePaperSource {
     static async parse(url) {
         url = noParamUrl(url);
         const resourceId = url.split("/").last();
-        let bibtex = await fetchText(
-            `https://academic.oup.com/Citation/Download?resourceId=${resourceId}&resourceType=3&citationFormat=2`,
-        );
-        const paper = bibtexToObject(bibtex);
-        delete paper.abstract;
-        bibtex = bibtexToString(paper);
-        let { title, year, author, journal, doi, citationKey, eprint } = paper;
-        author = flipAndAuthors(author);
+        const paper = await fetchBibtexToPaper({
+            url: `https://academic.oup.com/Citation/Download?resourceId=${resourceId}&resourceType=3&citationFormat=2`,
+            flipAuthors: true,
+        });
+        const { title, year, author, journal, doi, citationKey, eprint, bibtex, note } =
+            paper;
         const venue = journal;
-        const note = `Published @ ${venue} (${year})`;
         const key = citationKey;
         const num = url
             .split("https://academic.oup.com/")[1]

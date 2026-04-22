@@ -1,7 +1,6 @@
 import { BasePaperSource } from "./base.js";
 import { miniHash, noParamUrl } from "@pmu/functions.js";
-import { fetchText } from "@pmu/parsers.js";
-import { bibtexToObject } from "@pmu/bibtexParser.js";
+import { fetchBibtexToPaper } from "@pmu/parsers.js";
 
 export class AcsSource extends BasePaperSource {
     static name = "acs";
@@ -20,12 +19,9 @@ export class AcsSource extends BasePaperSource {
         url = url.replace("pubs.acs.org/doi/pdf/", "pubs.acs.org/doi/").split("?")[0];
         const doi = url.replace("/abs/", "/").split("/doi/")[1];
         const citeUrl = `https://pubs.acs.org/action/downloadCitation?doi=${doi}&include=cit&format=bibtex&direct=true`;
-        const bibtex = await fetchText(citeUrl);
-        const data = bibtexToObject(bibtex);
+        const data = await fetchBibtexToPaper({ url: citeUrl });
         const author = data.author.replaceAll("\n", "").trim();
-        const title = data.title.trim();
-        const year = data.year.trim();
-        const key = data.citationKey.trim();
+        const { bibtex, title, year, key } = data;
         const pdfLink = `https://pubs.acs.org/doi/pdf/${doi}`;
         const note = `Published @ ${data.journal} (${data.year})`;
         const id = `ACS_${doi.replaceAll(".", "").replaceAll("/", "")}`;

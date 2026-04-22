@@ -97,9 +97,10 @@ export const fetchJSON = async (url) => {
  * @param {Object} options - The options object. Either `url` or `doi` must be provided, but not both.
  * @param {string} options.url - The url to fetch the bibtex from.
  * @param {string} options.doi - The doi to fetch the bibtex from.
+ * @param {boolean} [options.flipAuthors=false] - Whether to flip "Last, First" to "First Last".
  * @returns {Object} The paper object. Typically does not contain the `id` and `pdfLink` keys.
  */
-export const fetchBibtexToPaper = async ({ url, doi }) => {
+export const fetchBibtexToPaper = async ({ url, doi, flipAuthors = false }) => {
     let bibtex;
     if (url && doi) {
         throw new Error("fetchBibtexToPaper: both url and doi provided");
@@ -118,10 +119,13 @@ export const fetchBibtexToPaper = async ({ url, doi }) => {
     bibtex = bibtexToString(bibObj);
     bibObj.bibtex = bibtex;
     bibObj.key = bibObj.citationKey;
+    if (flipAuthors && bibObj.author) {
+        bibObj.author = flipAndAuthors(bibObj.author);
+    }
     const bibVenue = bibObj.journal || bibObj.booktitle || "";
     if (bibVenue) {
         bibObj.venue = bibVenue;
-        bibObj.note = `Published in ${bibVenue} (${bibObj.year})`;
+        bibObj.note = `Published @ ${bibVenue} (${bibObj.year})`;
     }
     return bibObj;
 };

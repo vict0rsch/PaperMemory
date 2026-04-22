@@ -1,7 +1,6 @@
 import { BasePaperSource } from "./base.js";
 import { miniHash } from "@pmu/functions.js";
-import { fetchText } from "@pmu/parsers.js";
-import { bibtexToObject } from "@pmu/bibtexParser.js";
+import { fetchBibtexToPaper } from "@pmu/parsers.js";
 
 export class SciencedirectSource extends BasePaperSource {
     static name = "sciencedirect";
@@ -19,12 +18,10 @@ export class SciencedirectSource extends BasePaperSource {
 
     static async parse(url) {
         const pii = url.split("/pii/")[1].split("/")[0].split("#")[0].split("?")[0];
-        const bibtex = await fetchText(
-            `https://www.sciencedirect.com/sdfe/arp/cite?pii=${pii}&format=text%2Fx-bibtex&withabstract=false`,
-        );
-        const data = bibtexToObject(bibtex);
-
-        const { author, journal, year, doi, title, citationKey } = data;
+        const data = await fetchBibtexToPaper({
+            url: `https://www.sciencedirect.com/sdfe/arp/cite?pii=${pii}&format=text%2Fx-bibtex&withabstract=false`,
+        });
+        const { author, bibtex, journal, year, title, citationKey } = data;
         const note = `Published @ ${journal} (${year})`;
         const id = `ScienceDirect-${year}_${miniHash(pii)}`;
         const venue = journal ?? "Science Direct";

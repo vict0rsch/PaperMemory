@@ -1,6 +1,5 @@
 import { BasePaperSource } from "./base.js";
-import { bibtexToObject } from "@pmu/bibtexParser.js";
-import { fetchText } from "@pmu/parsers.js";
+import { fetchBibtexToPaper } from "@pmu/parsers.js";
 
 export class JmlrSource extends BasePaperSource {
     static name = "jmlr";
@@ -28,11 +27,8 @@ export class JmlrSource extends BasePaperSource {
         }
         url = url.replace(".html", "");
         const jid = url.split("/").last();
-        const citeUrl = url + ".bib";
-        const bibtex = await fetchText(citeUrl);
-        const data = bibtexToObject(bibtex);
-
-        const { author, year, title, citationKey } = data;
+        const data = await fetchBibtexToPaper({ url: `${url}.bib` });
+        const { author, bibtex, year, title, citationKey } = data;
         const key = citationKey.trim();
         const id = `JMLR-${year}_${jid}`;
         const note = `Published @ JMLR (${year})`;

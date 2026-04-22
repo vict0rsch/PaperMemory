@@ -1,7 +1,6 @@
 import { BasePaperSource } from "./base.js";
 import { miniHash } from "@pmu/functions.js";
 import { fetchBibtexToPaper } from "@pmu/parsers.js";
-import { flipAndAuthors } from "@pmu/parsers.js";
 
 export class PlosSource extends BasePaperSource {
     static name = "plos";
@@ -18,11 +17,11 @@ export class PlosSource extends BasePaperSource {
         let { bibtex, key, author, venue, title, note, year } =
             await fetchBibtexToPaper({
                 doi,
+                flipAuthors: true,
             });
         const pdfLink = `${url.split("/article")[0]}/article/file?id=${doi}&type=printable`;
         const section = url.split("journals.plos.org/")[1].split("/")[0];
 
-        author = flipAndAuthors(author);
         const id = `PLOS-${section}_${miniHash(doi)}`;
 
         return { author, bibtex, id, key, note, pdfLink, title, venue, year, doi };

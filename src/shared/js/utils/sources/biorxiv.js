@@ -1,11 +1,6 @@
 import { BasePaperSource } from "./base.js";
 import { cleanBiorxivURL } from "@pmu/functions.js";
-import { bibtexToString } from "@pmu/bibtexParser.js";
-import {
-    extractAuthor,
-    fetchBibtexToPaper,
-    extractDataFromDCMetaTags,
-} from "@pmu/parsers.js";
+import { fetchBibtexToPaper, extractDataFromDCMetaTags } from "@pmu/parsers.js";
 
 export class BiorxivSource extends BasePaperSource {
     static name = "biorxiv";
