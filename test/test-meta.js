@@ -90,7 +90,9 @@ describe("Meta Tests - Source Pattern Mutual Exclusion", function () {
         for (const [expected, entries] of Object.entries(urlsBySource)) {
             const urls = entries.filter((u) => typeof u === "string");
             for (const url of urls) {
-                const matches = sources.filter((S) => S.matches(url)).map((S) => S.name);
+                const matches = sources
+                    .filter((S) => S.matches(url))
+                    .map((S) => S.name);
                 if (matches.length > 1) {
                     offenders.push({ url, expected, matches });
                 }
