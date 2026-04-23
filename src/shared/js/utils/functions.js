@@ -6,6 +6,7 @@ import {
     consolHeaderStyle,
     englishStopWords,
 } from "@pmu/config.js";
+import { getSource } from "@pmu/sources/index.js";
 import { LOGTRACE } from "@pmu/logTrace.js";
 import { val, hasClass, findEl } from "@pmu/miniquery.js";
 
@@ -149,43 +150,24 @@ export const logError = (...args) => log(...["[error]", ...args]);
 export const consoleHeader = (text) =>
     console.groupCollapsed(`%c${text}`, consolHeaderStyle);
 
-/** Gets the string to display from a paper's id, typically
- * splitting on _ and taking the first part
- * @param {string} id The id of the paper
+/** Gets the string to display from a paper (id + source-specific suffixes).
+ * Accepts either a full paper object or a bare id string for backward
+ * compatibility with pre-refactor callers; when called with a string, the
+ * source-specific `displayId` override is skipped and only the base id
+ * shortening is applied.
+ * @param {object|string} paperOrId The paper (uses paper.id + paper.source) or
+ *   a bare paper id string.
  * @returns {string} The string to display
  */
-export const getDisplayId = (id) => {
-    const baseId = id;
-    id = id.split("_")[0].split(".")[0];
+export const getDisplayId = (paperOrId) => {
+    const paper = typeof paperOrId === "string" ? { id: paperOrId } : paperOrId;
+    const fullId = paper.id;
+    let id = fullId.split("_")[0].split(".")[0];
     if (!id.startsWith("OR-")) {
         id = id.split("-").slice(0, 2).join("-");
     }
-    if (state.papers.hasOwnProperty(baseId)) {
-        const paper = state.papers[baseId];
-        if (paper.source === "nature") {
-            if (paper.note.match(/^Published\ @.+\(\d+\)$/)) {
-                const journal = paper.note.split("@")[1].split("(")[0].trim();
-                id += `-${journal
-                    .split(" ")
-                    .map((j) => j[0].toUpperCase())
-                    .join("")}`;
-            }
-            if (!id.includes(paper.year + "")) {
-                id += `-${paper.year}`;
-            }
-        }
-        if (paper.source === "acs") {
-            if (!id.includes(paper.year + "")) {
-                id += `-${paper.year}`;
-            }
-        }
-        if (paper.source === "iop") {
-            if (!id.includes(paper.year + "")) {
-                id += `-${paper.year}`;
-            }
-        }
-    }
-    return id;
+    const src = getSource(paper.source);
+    return src ? src.displayId(paper, id) : id;
 };
 
 /** Whether or not a variable is an object

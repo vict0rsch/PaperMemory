@@ -3,6 +3,7 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import YAML from "yaml";
+import { allSources } from "@pmu/sources/index.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -73,5 +74,30 @@ describe("Meta Tests - CI Workflow Coverage", function () {
                 );
             }
         });
+    });
+});
+
+describe("Meta Tests - Source Pattern Mutual Exclusion", function () {
+    const urlsPath = path.join(rootDir, "test/data/urls.json");
+    const urlsBySource = JSON.parse(fs.readFileSync(urlsPath, "utf8"));
+    const sources = allSources().filter((S) => S.name !== "website");
+
+    it("no test URL matches more than one source", function () {
+        // Some URLs in urls.json are CDN/PDF-redirect URLs (e.g. silverchair.com)
+        // that are stored as pdfLink values and don't match any dispatch pattern —
+        // that is fine. What must never happen is a URL matching multiple sources.
+        const offenders = [];
+        for (const [expected, entries] of Object.entries(urlsBySource)) {
+            const urls = entries.filter((u) => typeof u === "string");
+            for (const url of urls) {
+                const matches = sources
+                    .filter((S) => S.matches(url))
+                    .map((S) => S.name);
+                if (matches.length > 1) {
+                    offenders.push({ url, expected, matches });
+                }
+            }
+        }
+        expect(offenders).toEqual([]);
     });
 });

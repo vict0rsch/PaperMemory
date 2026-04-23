@@ -20,7 +20,8 @@ import {
     prepareOverwriteData,
 } from "@pmu/data.js";
 import { bibtexToString } from "@pmu/bibtexParser.js";
-import { knownPaperPages, select2Options, state } from "@pmu/config.js";
+import { select2Options, state } from "@pmu/config.js";
+import { knownPaperPages } from "@pmu/sources/index.js";
 import {
     log,
     info,
@@ -35,15 +36,14 @@ import {
     escapeHtml,
 } from "@pmu/functions.js";
 import {
-    makePaper,
     tryPreprintMatch,
     tryPWCMatch,
     tryDBLP,
     tryCrossRef,
     trySemanticScholar,
     tryUnpaywall,
-} from "@pmu/parsers.js";
-import { mergePapers } from "@pmu/paper.js";
+} from "@pmu/preprintMatching.js";
+import { mergePapers, makePaper } from "@pmu/paper.js";
 import {
     shouldSync,
     pushToRemote,
@@ -879,13 +879,15 @@ const makeSource = ([key, sourceDict], idx) => {
 };
 
 const setupSourcesSelection = async () => {
-    const sources = knownPaperPages;
-    const table = Object.entries(sources).map(makeSource).join("");
+    const sorted = Object.entries(knownPaperPages).sort(([, a], [, b]) =>
+        a.name.localeCompare(b.name),
+    );
+    const table = sorted.map(makeSource).join("");
     setHTML("select-sources-container", table);
 
     let ignoreSources = (await getStorage("ignoreSources")) ?? {};
 
-    for (const key of Object.keys(sources)) {
+    for (const [key] of sorted) {
         ignoreSources[key] = ignoreSources.hasOwnProperty(key)
             ? ignoreSources[key]
             : false;
@@ -896,13 +898,13 @@ const setupSourcesSelection = async () => {
     }
     setStorage("ignoreSources", ignoreSources);
 
-    for (const key of Object.keys(sources)) {
+    for (const [key] of sorted) {
         addListener(`source-${key}`, "change", async (e) => {
-            const key = e.target.id.replace("source-", "");
+            const k = e.target.id.replace("source-", "");
             let ignoreSources = (await getStorage("ignoreSources")) ?? {};
             const el = findEl({ element: e.target.id });
-            ignoreSources[key] = !el.checked;
-            console.log("Updating source", key, "to", ignoreSources[key]);
+            ignoreSources[k] = !el.checked;
+            console.log("Updating source", k, "to", ignoreSources[k]);
             setStorage("ignoreSources", ignoreSources);
         });
     }

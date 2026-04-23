@@ -29,7 +29,7 @@ import {
 } from "@pmu/data.js";
 import { isPaper, addOrUpdatePaper } from "@pmu/paper.js";
 import { state } from "@pmu/config.js";
-import { makeArxivPaper } from "@pmu/parsers.js";
+import { getSource } from "@pmu/sources/index.js";
 import { initSyncAndState, sleep } from "@pmu/sync.js";
 import {
     handleOpenItemAr5iv,
@@ -762,7 +762,7 @@ const arxiv = async (checks) => {
 
     let paper = state.papers.hasOwnProperty(id)
         ? state.papers[id]
-        : await makeArxivPaper(url);
+        : await getSource("arxiv").parse(url, null, {});
 
     if (paper.venue) {
         displayPaperVenue(paper);

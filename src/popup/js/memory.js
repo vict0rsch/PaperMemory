@@ -413,7 +413,9 @@ export const searchMemory = (letters) => {
             } else if (typeof paper[key] === "string") {
                 return paper[key].toLowerCase();
             }
-            logError(`searchMemory: non-string & non-array content for key ${key}`);
+            logError(
+                `searchMemory: non-string & non-array content for key ${key}. See paper:`,
+            );
             log(paper);
             return "";
         });

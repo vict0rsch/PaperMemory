@@ -17,7 +17,7 @@ import {
     tryCrossRef,
     tryUnpaywall,
     tryGoogleScholar,
-} from "@pmu/parsers.js";
+} from "@pmu/preprintMatching.js";
 import { sleep } from "@pmu/sync.js";
 
 var STOPMATCH = false;

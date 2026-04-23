@@ -10,14 +10,13 @@ import {
 import { getStorage, setStorage } from "@pmu/data.js";
 import { isSourceURL, parseIdFromUrl } from "@pmu/urls.js";
 import { initState, downloadPaperPdf } from "@pmu/state.js";
+import { fetchText, fetchJSON } from "@pmu/parsers.js";
 import {
-    fetchText,
-    fetchJSON,
     trySemanticScholar,
     tryCrossRef,
     tryDBLP,
     tryUnpaywall,
-} from "@pmu/parsers.js";
+} from "@pmu/preprintMatching.js";
 import { bibtexToObject, bibtexToString } from "@pmu/bibtexParser.js";
 import {
     log,

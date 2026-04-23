@@ -13,6 +13,8 @@ import * as state from "@pmu/state.js";
 import * as urls from "@pmu/urls.js";
 import * as files from "@pmu/files.js";
 import * as parsers from "@pmu/parsers.js";
+import * as sources from "@pmu/sources/index.js";
+import * as preprintMatching from "@pmu/preprintMatching.js";
 // Import popup-specific modules (when available)
 // Important: these modules themselves import popup.js which contains
 // immediately-invoked functions that should not be called twice. This is why
@@ -38,6 +40,8 @@ const PMDebug = {
     urls,
     files,
     parsers,
+    sources,
+    preprintMatching,
     // Popup modules
     templates,
     handlers,
@@ -67,7 +71,7 @@ const PMDebug = {
     },
 
     get getPapers() {
-        return config.state.papers;
+        return () => config.state.papers;
     },
 
     // Utility to list all available functions
@@ -86,6 +90,8 @@ const PMDebug = {
             "templates",
             "handlers",
             "parsers",
+            "sources",
+            "preprintMatching",
             "memory",
         ];
         modules.forEach((moduleName) => {

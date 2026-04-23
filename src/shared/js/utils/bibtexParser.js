@@ -358,7 +358,7 @@ export const safeRemoveSurroundingBraces = (str) => {
  * bibtex. Extend this list to filter out additional noisy / privacy-sensitive
  * fields.
  */
-export const SANITIZED_BIBTEX_KEYS = ["abstract"];
+export const SANITIZED_BIBTEX_KEYS = ["abstract", "abstractNote"];
 
 /**
  * Mutates and returns a bibtex object with sanitized keys removed.
