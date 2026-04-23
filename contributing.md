@@ -79,10 +79,17 @@ PMDebug.config.state.papers; // All stored papers
 PMDebug.data.getStorage(); // Raw chrome.storage access
 PMDebug.urls.parseIdFromUrl("https://arxiv.org/abs/2301.12345");
 PMDebug.paper.isPaper("https://arxiv.org/abs/2301.12345");
+// Per-source handlers (parse, urlToId, toAbs, toPDF, displayId, …)
+PMDebug.sources.getSource("arxiv").toAbs({
+    pdfLink: "https://arxiv.org/pdf/1234.56789v2.pdf",
+    source: "arxiv",
+});
 PMDebug.listAllFunctions(); // Discover everything available
 ```
 
-Available modules: `config`, `functions`, `miniquery`, `data`, `paper`, `bibtexParser`, `sync`, `state`, `urls`, `files`, `templates`, `handlers`, `memory`.
+Available modules: `config`, `functions`, `miniquery`, `data`, `paper`, `bibtexParser`, `sync`, `state`, `urls`, `files`, `parsers`, `sources`, `preprintMatching`, `templates`, `handlers`, `memory`.
+
+Paper-specific logic lives under `PMDebug.sources`, not on `PMDebug.parsers` (e.g. there is no `PMDebug.parsers.makeArxivPaper`).
 
 The debug system is implemented in `src/debug/debug.js` and imported by each entry point's `main.js`.
 
@@ -143,12 +150,14 @@ The debug system is implemented in `src/debug/debug.js` and imported by each ent
         ├── js/
         │   ├── jquery-setup.js   ➤ jQuery + select2 global setup (import $ from 'jquery')
         │   └── utils/            ➤ Core modules (the heart of PaperMemory)
-        │       ├── config.js     ➤ Global state, constants, paper source definitions
+        │       ├── config.js     ➤ Global state, journal data, DBLP venue overrides
         │       ├── functions.js  ➤ Utility functions (logging, clipboard, string ops)
         │       ├── miniquery.js  ➤ DOM utilities (findEl, setHTML, addListener)
         │       ├── data.js       ➤ Storage, validation, data migrations
-        │       ├── paper.js      ➤ Paper CRUD, URL conversions
-        │       ├── parsers.js    ➤ Website-specific paper parsers
+        │       ├── paper.js      ➤ Paper CRUD, makePaper, URL conversions
+        │       ├── parsers.js    ➤ Shared fetch/DOM/BibTeX helpers used by sources
+        │       ├── sources/      ➤ One module per paper source (registry in index.js)
+        │       ├── preprintMatching.js ➤ tryCrossRef, tryDBLP, trySemanticScholar, …
         │       ├── state.js      ➤ App state initialization, sorting
         │       ├── sync.js       ➤ GitHub Gist sync
         │       ├── urls.js       ➤ URL parsing and paper ID extraction
@@ -207,11 +216,13 @@ Files in `public/` are copied as-is to the build output. Use this for:
 
 **Core Logic** (`src/shared/js/utils/`):
 
-- `config.js` — Global state and settings. Start here to understand data structures.
+- `config.js` — Global state and settings. Start here to understand data structures. Re-exports `knownPaperPages` / `preprintSources` from `sources/index.js` for backward compatibility.
 - `functions.js` — Utility functions used everywhere.
 - `data.js` — How papers are stored, validated, and migrated between versions.
-- `parsers.js` — Add new paper sources here. Contains website-specific parsing logic.
-- `paper.js` — Paper object operations. How papers are created, updated, and linked.
+- `sources/` — **Add new paper sources here** (`sources/<name>.js` + register in `sources/index.js`). See below.
+- `parsers.js` — Shared helpers (fetchDom, fetchText, BibTeX glue, DC meta extraction, …) used by source modules.
+- `preprintMatching.js` — Cross-source enrichment in `addOrUpdatePaper` (CrossRef, DBLP, Semantic Scholar, …).
+- `paper.js` — Paper object operations: `makePaper`, updates, linking, `paperToAbs` / `paperToPDF`.
 
 **User Interface** (`src/popup/js/`):
 
@@ -235,24 +246,28 @@ Prettier is used for consistent formatting. The config lives in `.prettierrc`:
 Run the formatter with:
 
 ```bash
-npx prettier --write .
+npm run format
 ```
 
 Most editors can auto-format on save with the Prettier extension. For VS Code, install the [Prettier - Code formatter](https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode) extension.
 
 ## Adding a paper source
 
-The following functions and constants should be updated:
+1. **Create** `src/shared/js/utils/sources/<name>.js` exporting a class that extends `BasePaperSource` from `sources/base.js`. Implement at minimum:
+    - `name` (lowercase key, e.g. `"arxiv"`)
+    - `displayName` (human label)
+    - `patterns` — URL matchers for `isPaper` / tab detection (same semantics as before: strings, regexes, or predicate functions)
+    - `urlToId(url, ctx)` — stable id from URL (optional second arg is only used where the legacy code needed `parseIdFromUrl` while resolving nested URLs)
+    - `parse(url, tab, ctx)` — async; returns a plain paper object (fields documented as `ParsedPaperFields` on `BasePaperSource.parse` in `base.js`)
+    - `toAbs(paper)` / `toPDF(paper)` — return absolute URL strings for the abs ↔ PDF toggle
+2. **Register** the class in `sources/index.js`: add its import and insert the class reference into the `ALL_SOURCES` array (once). `BY_NAME`, `SOURCE_DISPATCH_ORDER`, `knownPaperPages`, `preprintSources`, and `allSources()` are all derived automatically. The mutual-exclusion test in `test/test-meta.js` enforces that your patterns don't overlap with any existing source. The settings page renders sources alphabetically by display name.
+3. **Reuse** shared HTTP/BibTeX/DOM helpers from `parsers.js` instead of duplicating fetches.
+4. **Optional overrides** on the class: `displayId(paper, baseId)`, `venue(paper)`, `static isPreprint = true` (only for preprint servers used in fuzzy deduplication).
+5. **Add** URLs under `test/data/urls.json` and into `test/test-storage.js` to keep test coverage.
 
-- `config.js:global.knownPaperPages` with `source: {patterns: [array of url matches to trigger paper parsing, or boolean functions taking it as input], name: displayName}`
-    - will be used by `paper.js:isPaper()` to determine whether `content_script.js` should parse the current page into a paper with `addOrUpdatePaper()` (or update the existing one's visits count) and `popup.js` to display the current paper
-- `parsers.js:makePaper()` to create a new entry
-    - Typically, add a parser function in `parsers.js`
-- `state:parseIdFromUrl()`
-- `paper.js:paperToAbs()` and `paper.js:paperToPDF()` to enable to pdf<->webpage button
-- `functions.js:getDisplayId()` if necessary
-- `functions.js:isPdfUrl()` if necessary
-- `test/data/urls.json` to test that the integration works (and keeps working!)
+### Why stateless handlers, not class instances
+
+Saved papers are **plain objects** (JSON in `chrome.storage`, messages, Gist sync). MV3 service workers also terminate often, so there is no long-lived "paper with methods" to hydrate. Each source module exports a **stateless** subclass of `BasePaperSource`: the registry does a name lookup and calls static-ish methods on the class (`ArxivSource.parse`, …). That matches one hash lookup per dispatch, same cost order as the old large `switch` statements, without prototype loss across storage boundaries.
 
 ## Creating a new paper attribute
 
@@ -262,6 +277,8 @@ The following functions and constants should be updated:
 ## Tests
 
 Tests use Puppeteer to launch a real Chrome instance with the extension loaded. `npm test` builds the extension first (`pretest` runs `npm run build:chrome`), then runs all test suites.
+
+The integration suites `test/test-duplicates.js` and `test/test-storage.js` hit many live publisher pages; they are valuable as smoke checks but are **not expected to pass entirely** (timeouts, bot walls, and DOM drift are common). `npm test` excludes `test/test-sync.js`; run it explicitly with `npm run test:file test/test-sync.js` when working on Gist sync — that file has the same “best effort” expectations.
 
 ```bash
 npm test                                 # Build + run all tests
