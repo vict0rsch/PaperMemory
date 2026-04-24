@@ -1,7 +1,21 @@
 import { BasePaperSource } from "./base.js";
 import { extractBibtexValue, bibtexToString } from "@pmu/bibtexParser.js";
 import { fetchDom } from "@pmu/parsers.js";
-import { extractAuthor } from "@pmu/parsers.js";
+
+/**
+ * Extract the author from a bibtex string, as an "and" separated list of names.
+ * eg: "John Doe and Jane Doe"
+ * @param {string} bibtex The bibtex string to extract the author from.
+ * @returns {string} The author.
+ */
+const extractAuthor = (bibtex) =>
+    extractBibtexValue(bibtex, "author")
+        .replaceAll("{", "")
+        .replaceAll("}", "")
+        .replaceAll("\\", "")
+        .split(" and ")
+        .map((a) => a.split(", ").reverse().join(" "))
+        .join(" and ");
 
 export class PMLRSource extends BasePaperSource {
     static name = "pmlr";

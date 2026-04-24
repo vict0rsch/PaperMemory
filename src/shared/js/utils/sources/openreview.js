@@ -5,14 +5,63 @@ import {
     firstNonStopLowercase,
     log,
     logError,
+    sendMessageToBackground,
 } from "@pmu/functions.js";
 import { bibtexToObject, bibtexToString } from "@pmu/bibtexParser.js";
-import {
-    extractAPIv2ContentValue,
-    getOpenReviewForumJSON,
-    getOpenReviewNoteJSON,
-    makeOpenReviewBibTex,
-} from "@pmu/parsers.js";
+
+const getOpenReviewNoteJSON = (url) => {
+    return sendMessageToBackground({ type: "OpenReviewNoteJSON", url });
+};
+
+const getOpenReviewForumJSON = (url) => {
+    return sendMessageToBackground({ type: "OpenReviewForumJSON", url });
+};
+
+/**
+ * Extracts the value of the `value` key in the `content` object of a paper
+ * returned by the OpenReview API v2.
+ * Eg. v1: { content: { title: "My title" }
+ * Eg. v2: { content: { title: { value: "My title" } }
+ * @param {Object} paper - A paper returned by the OpenReview API v2 or v1.
+ * @returns {Object} The paper with the `value` key extracted from the `content` object.
+ */
+const extractAPIv2ContentValue = (paper) => {
+    const content = {};
+    let isV2 = false;
+    for (const [k, v] of Object.entries(paper.content)) {
+        if (v && v.value) {
+            content[k] = v.value;
+            isV2 = true;
+        } else {
+            content[k] = v;
+        }
+    }
+    paper.content = content;
+    return { isV2, paper };
+};
+
+const makeOpenReviewBibTex = (paper, url) => {
+    const title = paper.content.title;
+    const author = paper.content.authors.join(" and ");
+    const year = paper.cdate ? new Date(paper.cdate).getFullYear() : "0000";
+    if (!paper.cdate) {
+        log("makeOpenReviewBibTex: no cdate found in", paper);
+    }
+
+    let key = paper.content.authors[0].split(" ").last();
+    key += year;
+    key += firstNonStopLowercase(title);
+
+    let bibtex = "";
+    bibtex += `@inproceedings{${key},\n`;
+    bibtex += `    title={${title}},\n`;
+    bibtex += `    author={${author}},\n`;
+    bibtex += `    year={${year}},\n`;
+    bibtex += `    url={${url}},\n`;
+    bibtex += `}`;
+
+    return bibtex;
+};
 
 export class OpenReviewSource extends BasePaperSource {
     static name = "openreview";

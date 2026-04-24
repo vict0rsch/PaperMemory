@@ -1,7 +1,35 @@
 import { BasePaperSource } from "./base.js";
 import { parseCVFUrl } from "@pmu/functions.js";
 import { bibtexToString } from "@pmu/bibtexParser.js";
-import { fetchCvfHTML } from "@pmu/parsers.js";
+
+const fetchCvfHTML = async (url) => {
+    let paperPage, text;
+    if (url.endsWith(".pdf")) {
+        paperPage = url
+            .replace("/papers_backup/", "/papers/")
+            .replace("/papers/", "/html/")
+            .replace(".pdf", ".html");
+    } else {
+        paperPage = url;
+    }
+
+    text = await fetch(paperPage).then((response) => {
+        return response.ok ? response.text() : "";
+    });
+
+    if (!text && paperPage.includes("thecvf.com/content_")) {
+        const { conf, year } = parseCVFUrl(url);
+        paperPage = paperPage.replace(
+            `/content_${conf}_${year}/`,
+            `/content_${conf.toLowerCase()}_${year}/`,
+        );
+        text = await fetch(paperPage).then((response) => {
+            return response.ok ? response.text() : "";
+        });
+    }
+
+    return text;
+};
 
 export class CVFSource extends BasePaperSource {
     static name = "cvf";

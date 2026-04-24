@@ -1,6 +1,12 @@
 import { BasePaperSource } from "./base.js";
 import { bibtexToObject, bibtexToString } from "@pmu/bibtexParser.js";
-import { fetchDom, findACLValue } from "@pmu/parsers.js";
+import { fetchDom } from "@pmu/parsers.js";
+import { queryAll } from "@pmu/miniquery.js";
+
+export const findACLValue = (dom, key) => {
+    const dt = queryAll("dt", dom).filter((v) => v.innerText.includes(key))[0];
+    return dt.nextElementSibling.innerText;
+};
 
 export class AclSource extends BasePaperSource {
     static name = "acl";

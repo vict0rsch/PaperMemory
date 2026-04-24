@@ -1,6 +1,39 @@
 import { BasePaperSource } from "./base.js";
-import { miniHash } from "@pmu/functions.js";
-import { fetchBibtexToPaper, fetchDom, findCellPii } from "@pmu/parsers.js";
+import { miniHash, warn, noParamUrl } from "@pmu/functions.js";
+import { fetchBibtexToPaper, fetchDom } from "@pmu/parsers.js";
+import { state } from "@pmu/config.js";
+
+const findCellPii = async (url) => {
+    const isPdf = url.toLowerCase().includes("showpdf");
+    const isPdfExtended = url.toLowerCase().includes("pdfextended");
+    let pii;
+    if (isPdf || isPdfExtended) {
+        const cellData = state.cellJournalData;
+        pii = isPdf ? new URL(url).searchParams.get("pii") : url.split("/").last();
+        const issn = pii.match(/\d{4}-\d{3}[0-9X]/g)[0];
+        let venue;
+        Object.entries(cellData).forEach(([key, value]) => {
+            if (value.issn.includes(issn)) {
+                venue = key;
+            }
+        });
+        if (!venue) {
+            warn(`[findCellPii] No Cell journal found for ISSN: ${issn}`);
+            return { pii, url };
+        }
+        const target = venue
+            .split(" ")
+            .map((w) => w.toLowerCase())
+            .join("-");
+        url = isPdf
+            ? noParamUrl(url).split("/showPdf")[0] + `/${target}/fulltext/${pii}`
+            : noParamUrl(url).split("/pdfExtended")[0] + `/fulltext/${pii}`;
+        url = url.replace("/action/", "/");
+    } else {
+        pii = noParamUrl(url).split("/").last();
+    }
+    return { pii, url };
+};
 
 export class CellSource extends BasePaperSource {
     static name = "cell";

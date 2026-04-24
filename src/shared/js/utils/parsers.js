@@ -22,45 +22,11 @@ import {
 } from "@pmu/bibtexParser.js";
 import { queryAll, querySelector } from "@pmu/miniquery.js";
 import { readJournalAbbreviations } from "@pmu/state.js";
+
 export const flipAuthor = (author) => author.split(", ").reverse().join(" ");
+
 export const flipAndAuthors = (authors) =>
     authors.split(" and ").map(flipAuthor).join(" and ");
-export const fetchCvfHTML = async (url) => {
-    let paperPage, text;
-    if (url.endsWith(".pdf")) {
-        paperPage = url
-            .replace("/papers_backup/", "/papers/")
-            .replace("/papers/", "/html/")
-            .replace(".pdf", ".html");
-    } else {
-        paperPage = url;
-    }
-
-    text = await fetch(paperPage).then((response) => {
-        return response.ok ? response.text() : "";
-    });
-
-    if (!text && paperPage.includes("thecvf.com/content_")) {
-        const { conf, year } = parseCVFUrl(url);
-        paperPage = paperPage.replace(
-            `/content_${conf}_${year}/`,
-            `/content_${conf.toLowerCase()}_${year}/`,
-        );
-        text = await fetch(paperPage).then((response) => {
-            return response.ok ? response.text() : "";
-        });
-    }
-
-    return text;
-};
-
-export const getOpenReviewNoteJSON = (url) => {
-    return sendMessageToBackground({ type: "OpenReviewNoteJSON", url });
-};
-
-export const getOpenReviewForumJSON = (url) => {
-    return sendMessageToBackground({ type: "OpenReviewForumJSON", url });
-};
 
 export const fetchDom = async (url) => {
     const html = await fetch(url).then((response) =>
@@ -133,21 +99,6 @@ export const fetchBibtexToPaper = async ({ url, doi, flipAuthors = false }) => {
 // -------------------
 // -----  Parse  -----
 // -------------------
-
-/**
- * Extract the author from a bibtex string, as an "and" separated list of names.
- * eg: "John Doe and Jane Doe"
- * @param {string} bibtex The bibtex string to extract the author from.
- * @returns {string} The author.
- */
-export const extractAuthor = (bibtex) =>
-    extractBibtexValue(bibtex, "author")
-        .replaceAll("{", "")
-        .replaceAll("}", "")
-        .replaceAll("\\", "")
-        .split(" and ")
-        .map((a) => a.split(", ").reverse().join(" "))
-        .join(" and ");
 
 export const extractCrossrefData = (crossrefResponse) => {
     if (!crossrefResponse.status || crossrefResponse.status !== "ok") {
@@ -246,6 +197,7 @@ const getDCPatterns = (value) => {
     const caps = ["dc.", "DC:", "DC.", "dc:"].map((v) => v + spec.capitalize());
     return [...lowers, ...caps];
 };
+
 export const getMetaContent = ({
     selector,
     dom,
@@ -379,104 +331,4 @@ export const extractDataFromDCMetaTags = (dom) => {
         pdfLink,
         note,
     };
-};
-
-export const makeOpenReviewBibTex = (paper, url) => {
-    const title = paper.content.title;
-    const author = paper.content.authors.join(" and ");
-    const year = paper.cdate ? new Date(paper.cdate).getFullYear() : "0000";
-    if (!paper.cdate) {
-        log("makeOpenReviewBibTex: no cdate found in", paper);
-    }
-
-    let key = paper.content.authors[0].split(" ").last();
-    key += year;
-    key += firstNonStopLowercase(title);
-
-    let bibtex = "";
-    bibtex += `@inproceedings{${key},\n`;
-    bibtex += `    title={${title}},\n`;
-    bibtex += `    author={${author}},\n`;
-    bibtex += `    year={${year}},\n`;
-    bibtex += `    url={${url}},\n`;
-    bibtex += `}`;
-
-    return bibtex;
-};
-
-/**
- * Extracts the value of the `value` key in the `content` object of a paper
- * returned by the OpenReview API v2.
- * Eg. v1: { content: { title: "My title" }
- * Eg. v2: { content: { title: { value: "My title" } }
- * @param {Object} paper - A paper returned by the OpenReview API v2 or v1.
- * @returns {Object} The paper with the `value` key extracted from the `content` object.
- */
-export const extractAPIv2ContentValue = (paper) => {
-    const content = {};
-    let isV2 = false;
-    for (const [k, v] of Object.entries(paper.content)) {
-        if (v && v.value) {
-            content[k] = v.value;
-            isV2 = true;
-        } else {
-            content[k] = v;
-        }
-    }
-    paper.content = content;
-    return { isV2, paper };
-};
-export const findACLValue = (dom, key) => {
-    const dt = queryAll("dt", dom).filter((v) => v.innerText.includes(key))[0];
-    return dt.nextElementSibling.innerText;
-};
-export const parseAIPIdOrDOI = (url) => {
-    if (isPdfUrl(noParamUrl(url))) {
-        return {
-            doi: noParamUrl(url)
-                .split("/")
-                .last()
-                .split("_")
-                .last()
-                .replace(".pdf", ""),
-        };
-    }
-    return {
-        aipId: url.includes("/article/")
-            ? url.split("/article/")[1].split("/")[3]
-            : url.includes("/article-split/")
-              ? url.split("/article-split/")[1].split("/")[3]
-              : url.split("/article-abstract/")[1].split("/")[3],
-    };
-};
-export const findCellPii = async (url) => {
-    const isPdf = url.toLowerCase().includes("showpdf");
-    const isPdfExtended = url.toLowerCase().includes("pdfextended");
-    let pii;
-    if (isPdf || isPdfExtended) {
-        const cellData = state.cellJournalData;
-        pii = isPdf ? new URL(url).searchParams.get("pii") : url.split("/").last();
-        const issn = pii.match(/\d{4}-\d{3}[0-9X]/g)[0];
-        let venue;
-        Object.entries(cellData).forEach(([key, value]) => {
-            if (value.issn.includes(issn)) {
-                venue = key;
-            }
-        });
-        if (!venue) {
-            warn(`[findCellPii] No Cell journal found for ISSN: ${issn}`);
-            return { pii, url };
-        }
-        const target = venue
-            .split(" ")
-            .map((w) => w.toLowerCase())
-            .join("-");
-        url = isPdf
-            ? noParamUrl(url).split("/showPdf")[0] + `/${target}/fulltext/${pii}`
-            : noParamUrl(url).split("/pdfExtended")[0] + `/fulltext/${pii}`;
-        url = url.replace("/action/", "/");
-    } else {
-        pii = noParamUrl(url).split("/").last();
-    }
-    return { pii, url };
 };

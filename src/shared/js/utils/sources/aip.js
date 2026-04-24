@@ -1,6 +1,26 @@
 import { BasePaperSource } from "./base.js";
 import { miniHash, noParamUrl, isPdfUrl, warn } from "@pmu/functions.js";
-import { fetchBibtexToPaper, parseAIPIdOrDOI } from "@pmu/parsers.js";
+import { fetchBibtexToPaper } from "@pmu/parsers.js";
+
+const parseAIPIdOrDOI = (url) => {
+    if (isPdfUrl(noParamUrl(url))) {
+        return {
+            doi: noParamUrl(url)
+                .split("/")
+                .last()
+                .split("_")
+                .last()
+                .replace(".pdf", ""),
+        };
+    }
+    return {
+        aipId: url.includes("/article/")
+            ? url.split("/article/")[1].split("/")[3]
+            : url.includes("/article-split/")
+              ? url.split("/article-split/")[1].split("/")[3]
+              : url.split("/article-abstract/")[1].split("/")[3],
+    };
+};
 
 export class AipSource extends BasePaperSource {
     static name = "aip";
