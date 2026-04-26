@@ -2,9 +2,11 @@
 import {
     prefsCheckDefaultFalse,
     prefsCheckNames,
-    select2Options,
+    tomSelectOptions,
     state,
 } from "@pmu/config.js";
+import TomSelect from "tom-select";
+import "tom-select/dist/css/tom-select.css";
 import {
     arxivIdFromPaperID,
     cutAuthors,
@@ -445,10 +447,7 @@ export const popupMain = async (url, is, manualTrigger = false, tab = null) => {
         // --------------------------
         // -----  Paper  edits  -----
         // --------------------------
-        $(`#popup-item-tags--${eid}`).select2({
-            ...select2Options,
-            width: "87%",
-        });
+        new TomSelect(`#popup-item-tags--${eid}`, tomSelectOptions);
         addListener(`popup-form-note-textarea--${id}`, "focus", function () {
             var that = this;
             textareaFocusEnd(that);

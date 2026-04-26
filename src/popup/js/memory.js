@@ -519,7 +519,7 @@ export const updatePaperTagsHTML = (id) => {
 };
 
 /**
- * Update the select2 input for tags, with options from the paper's tags array attribute,
+ * Update the tag input options for a paper from its tags array attribute,
  * using getTagsOptions.
  * @param {string} id The paper's id
  */
@@ -531,7 +531,7 @@ export const updateTagOptions = (id) => {
 };
 
 /**
- * Update a paper's tags array attribute from the user's selection in a select2 multi-select input.
+ * Update a paper's tags array attribute from the user's selection in the tag multi-select input.
  * @param {string} id The paper's id
  * @param {string} elementId The paper's html element selector (either an id for the popup main tags, or a class for a memory item)
  */
@@ -552,12 +552,12 @@ export const updatePaperTags = (id, elementId) => {
 
     // If there's a change: update the global set of tags:
     // we need to add or remove tags to the global suggestions array
-    // for select2
+    // update global tag suggestions
     if (updated) {
         chrome.storage.local.set({ papers: state.papers }, () => {
             // update the global set of tags
             makeTags();
-            // update the selected tags in the select2 input for this paper
+            // update the selected tags in the tag input for this paper
             updateTagOptions(id);
             // update the displayed tags for this paper
             updatePaperTagsHTML(id);

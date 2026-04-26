@@ -9,6 +9,7 @@ import {
     getPMURLs,
     resetPage,
     setStorage,
+    getMemoryPapers,
     verifySelectorExists,
     safeClick,
     verifyClipboardContent,
@@ -466,6 +467,55 @@ describe("Test PaperMemory Popup UI - Known Paper Page", function () {
             expect(alphaxivButton).toBeFalsy();
             expect(ar5ivButton).toBeFalsy();
             expect(huggingfaceButton).toBeFalsy();
+        });
+    });
+
+    describe("Tag auto-save", function () {
+        it("should auto-save a new tag added via the tag input", async function () {
+            await setupPopupWithMockedTab(PMPage, arxivPaperUrl, arxivPaperId);
+
+            // Ensure the paper starts with no tags
+            const papersBefore = await getMemoryPapers(PMPage);
+            expect(papersBefore[arxivPaperId].tags).toEqual([]);
+
+            // Click the TomSelect control to focus it
+            const tsControlSelector = `#popup-memory-edit .ts-control`;
+            await PMPage.waitForSelector(tsControlSelector);
+            await PMPage.click(tsControlSelector);
+
+            // Type a new tag and press Enter to create it
+            const newTag = "test-autosave-tag";
+            await PMPage.keyboard.type(newTag);
+            await PMPage.keyboard.press("Enter");
+
+            // Wait for the debounced save (300ms delay + storage write)
+            await new Promise((r) => setTimeout(r, 800));
+
+            // Verify the tag was persisted to storage
+            const papersAfter = await getMemoryPapers(PMPage);
+            expect(papersAfter[arxivPaperId].tags).toContain(newTag);
+        });
+
+        it("should auto-save when a tag is removed via the remove button", async function () {
+            // Set up paper with a pre-existing tag
+            const taggedData = structuredClone(testData);
+            taggedData[arxivPaperId].tags = ["removable-tag"];
+            await setStorage(PMPage, "papers", taggedData);
+
+            await setupPopupWithMockedTab(PMPage, arxivPaperUrl, arxivPaperId);
+
+            // Wait for TomSelect to render the existing tag item
+            await PMPage.waitForSelector(`#popup-memory-edit .ts-control .item`);
+
+            // Click the remove button (×) on the tag item
+            await PMPage.click(`#popup-memory-edit .ts-control .item .remove`);
+
+            // Wait for the debounced save
+            await new Promise((r) => setTimeout(r, 800));
+
+            // Verify the tag was removed from storage
+            const papersAfter = await getMemoryPapers(PMPage);
+            expect(papersAfter[arxivPaperId].tags).not.toContain("removable-tag");
         });
     });
 });

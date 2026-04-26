@@ -37,7 +37,7 @@
     "dependencies": {
         "@octokit/request": "^8.1.6",
         "jquery": "^4.0.0",
-        "select2": "^4.1.0-rc.0"
+        "tom-select": "^2.6.0"
     },
     "devDependencies": {
         "expect": "^29.7.0",

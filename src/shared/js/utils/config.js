@@ -93,15 +93,12 @@ export const svgActionsHoverTitles = {
     copyHypeLink: "Copy url as hyperlink",
 };
 
-/**
- * Shared configuration for the Tags' select2 inputs
- */
-export const select2Options = {
+export const tomSelectOptions = {
     placeholder: "Tag paper",
-    maximumSelectionLength: 5,
-    allowClear: true,
-    tags: true,
-    tokenSeparators: [",", " "],
+    maxItems: 5,
+    create: true,
+    delimiter: ",",
+    plugins: ["caret_position", "remove_button"],
 };
 
 /**
