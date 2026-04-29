@@ -175,7 +175,8 @@ export const fillUserGuideShortcuts = () => {
  */
 export const setStandardPopupClicks = () => {
     queryAll(".link-in-new-tab").forEach((el) => {
-        addListener(el, "click", () => {
+        addListener(el, "click", (e) => {
+            e.preventDefault();
             chrome.tabs.create({ url: el.getAttribute("href") });
         });
     });
