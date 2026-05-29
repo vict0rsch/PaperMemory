@@ -64,6 +64,17 @@ textarea {
     box-shadow: none;
 }
 
+.ts-wrapper .ts-control {
+    min-height: 25px !important;
+}
+.ts-wrapper .ts-control > input {
+    min-height: 25px !important;
+    min-width: 58px !important;
+    width: 58px !important;
+    max-width: 58px !important;
+    flex: 0 0 58px !important;
+}
+
 #popup-header {
     background-color: var(--red);
     padding: 12px;
