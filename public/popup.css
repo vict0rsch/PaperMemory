@@ -58,7 +58,7 @@ textarea {
     font-family: "Yantramanav";
 }
 
-*:not(.select2-search__field, .switch):focus,
+*:not(.ts-control input, .switch):focus,
 .memory-search-wrapper:focus-within {
     outline: 2px solid var(--outline) !important;
     box-shadow: none;
@@ -743,9 +743,6 @@ button.changed {
     border: 0px;
 }
 
-.select2-search__field {
-    font-size: 0.85rem !important;
-}
 .errorTitle {
     margin: 0px;
 }

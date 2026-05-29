@@ -20,7 +20,9 @@ import {
     prepareOverwriteData,
 } from "@pmu/data.js";
 import { bibtexToString } from "@pmu/bibtexParser.js";
-import { select2Options, state } from "@pmu/config.js";
+import { tomSelectOptions, state } from "@pmu/config.js";
+import TomSelect from "tom-select";
+import "tom-select/dist/css/tom-select.css";
 import { knownPaperPages } from "@pmu/sources/index.js";
 import {
     log,
@@ -853,11 +855,10 @@ const setupDataManagement = () => {
         })
         .join("");
     setHTML("export-tags-select", tagOptions);
-    $(`#export-tags-select`).select2({
-        ...select2Options,
+    new TomSelect(`#export-tags-select`, {
+        ...tomSelectOptions,
         placeholder: "Tags to export",
-        width: "100%",
-        tags: false,
+        create: false,
     });
     addListener("export-tags-confirm", "click", handleExportTagsConfirm);
 };

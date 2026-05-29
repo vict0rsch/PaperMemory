@@ -142,9 +142,9 @@ More customization options and features are available in the **Advanced Options 
 - Paste one of those URLs in your address bar
     ```bash
     # Chrome / Brave / Edge:
-    chrome-extension://ehchlpggdaffcncbeopdopnndhdjelbc/src/options/options.html
+    chrome-extension://ehchlpggdaffcncbeopdopnndhdjelbc/options.html
     # Firefox:
-    moz-extension://05b6ef8a-7314-4c1d-a519-80f48a5794a6/src/options/options.html
+    moz-extension://05b6ef8a-7314-4c1d-a519-80f48a5794a6/options.html
     ```
 
 `PapersWithCode preferences`

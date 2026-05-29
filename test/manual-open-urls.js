@@ -3,7 +3,7 @@
 // parse it, then verify what was actually parsed.
 //
 // HOW TO USE:
-//   1. Run `npm run dev:watch` to start the dev browser with PaperMemory loaded
+//   1. Run `npm run dev` to start the dev browser with PaperMemory loaded
 //   2. Open the extension's service worker DevTools (chrome://extensions →
 //      PaperMemory → "Inspect views: service worker"). The options page
 //      console also works.
