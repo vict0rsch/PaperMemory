@@ -35,7 +35,9 @@ import {
     removeClass,
     setPlaceholder,
 } from "@pmu/miniquery.js";
-import { state, select2Options } from "@pmu/config.js";
+import { state, tomSelectOptions } from "@pmu/config.js";
+import TomSelect from "tom-select";
+import "tom-select/dist/css/tom-select.css";
 import {
     setStorage,
     getStorage,
@@ -438,7 +440,7 @@ export const handleTogglePaperEdit = (e) => {
     const authors = findEl({ paperId: id, memoryItemClass: "memory-authors" });
     const tagEdit = findEl({ paperId: id, memoryItemClass: "edit-tags" });
     const actions = findEl({ paperId: id, memoryItemClass: "memory-item-actions" });
-    const tagSelect2 = $(findEl({ paperId: id, memoryItemClass: "memory-item-tags" }));
+    const tagEl = findEl({ paperId: id, memoryItemClass: "memory-item-tags" });
 
     if (hasClass(container, "expand-open")) {
         // The edit form is open
@@ -451,24 +453,23 @@ export const handleTogglePaperEdit = (e) => {
         // Close inputs
         slideUp(editPaper, 150);
         slideUp(tagEdit, 150);
-        // destroy to enable options update in HTML
-        setTimeout(() => {
-            tagSelect2.select2("destroy");
-        }, 500);
+        // Destroy synchronously so quick close->open cycles cannot reuse
+        // an instance that is still alive.
+        tagEl.tomselect?.destroy();
     } else {
         // The edit form is closed
         addClass(container, "expand-open");
-        // Enable select2 tags input
-        tagSelect2.select2({
-            select2Options,
-            width: "86%",
-        });
-        if (!hasClass(container, "has-monitoring")) {
-            // only listen for changes once
-            tagSelect2.on("change", monitorPaperEdits(id, false));
-        }
-        // monitorPaperEdits listener has been added
-        container.classList.add("has-monitoring");
+        // Refresh underlying <select> options before instantiating TomSelect:
+        // TomSelect.destroy() restores the innerHTML snapshot taken at instantiation,
+        // so without this the select would be stale after a previous edit cycle.
+        setHTML(tagEl, getTagsOptions(state.papers[id]));
+        // Guard against races where an instance still exists during fast toggles.
+        tagEl.tomselect?.destroy();
+        // Enable tom-select tags input
+        const ts = new TomSelect(tagEl, tomSelectOptions);
+        // Attach the change listener to every new TomSelect instance: the previous
+        // one was destroyed on close, so its listeners no longer exist.
+        ts.on("change", () => monitorPaperEdits(id, false)());
         // Close display elements
         slideUp(codeAndNote, 150);
         slideUp(tagList, 150);
@@ -975,12 +976,12 @@ export const handleHideAllTitleTooltips = (e) => {
 export const setFormChangeListener = (id, isPopup) => {
     let refTags, refNote, refCodeLink, refFavorite;
     if (isPopup) {
-        refTags = `#popup-item-tags--${id.replace(".", "\\.")}`;
+        refTags = `popup-item-tags--${id}`;
         refCodeLink = `popup-form-codeLink--${id}`;
         refNote = `popup-form-note-textarea--${id}`;
         refFavorite = `checkFavorite--${id}`;
 
-        $(refTags).on("change", delay(monitorPaperEdits(id, isPopup), 300)); // select2 required
+        addListener(refTags, "change", delay(monitorPaperEdits(id, isPopup), 300));
         addListener(refCodeLink, "keyup", delay(monitorPaperEdits(id, isPopup), 300));
         addListener(refNote, "keyup", delay(monitorPaperEdits(id, isPopup), 300));
         addListener(refFavorite, "change", delay(monitorPaperEdits(id, isPopup), 300));

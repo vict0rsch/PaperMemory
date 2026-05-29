@@ -20,6 +20,7 @@ import {
     readDuplicates,
     root,
     loadConfig,
+    indent,
 } from "./utilsForTests.js";
 
 // make all functions in utils.min.js available in the `global` scope
@@ -155,7 +156,9 @@ describe("Paper de-duplication", function () {
 
                     // visit the paper urls
                     for (const dup of duplicates) {
-                        console.log(`      (${n + 1}/${nUrls}) visiting ${dup.url}`);
+                        console.log(
+                            `${indent(2)}(${n + 1}/${nUrls}) visiting ${dup.url}`,
+                        );
                         await visitPaperPage(browser, dup.url, {
                             keepOpen,
                             timeout: pageTimeout,

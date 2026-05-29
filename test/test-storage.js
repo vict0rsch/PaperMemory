@@ -15,7 +15,13 @@ import {
     visitPaperPage,
 } from "./browser.js";
 
-import { readURLs, root, loadConfig, loadPaperMemoryUtils } from "./utilsForTests.js";
+import {
+    readURLs,
+    root,
+    loadConfig,
+    loadPaperMemoryUtils,
+    indent,
+} from "./utilsForTests.js";
 import { allAttributes } from "./processMemory.js";
 
 // make all functions in utils.min.js available in the `global` scope
@@ -186,8 +192,9 @@ describe("Test paper detection and storage", function () {
                             (orderIdx > 0 ? 1 - sourceOrderIdx : sourceOrderIdx) *
                                 nUrls +
                             1;
-                        const prefix = `${" ".repeat(6)}(${n}/${nUrls * 2})`;
-                        console.log(`${prefix} Going to: ${target}`);
+                        console.log(
+                            `${indent(2)}(${n}/${nUrls * 2}) Going to: ${target}`,
+                        );
 
                         await visitPaperPage(browser, target, {
                             timeout: pageTimeout,

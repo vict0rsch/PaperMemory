@@ -44,7 +44,7 @@ export class PMLRSource extends BasePaperSource {
 
         const absURL = url.includes(".html")
             ? url
-            : url.split("/").slice(0, -2).join("/") + `/${key}.html`;
+            : url.split("/").slice(0, -1).join("/") + `/${key}.html`;
 
         const pdfLink = absURL.replace(".html", "") + `/${key}.pdf`;
 

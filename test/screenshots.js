@@ -1,4 +1,4 @@
-import { makeBrowser, baseExtensionPopupURL } from "./browser.js";
+import { makeBrowser, findExtensionId, getPMURLs } from "./browser.js";
 
 const nowStr = () => {
     d = new Date().toJSON();
@@ -6,8 +6,6 @@ const nowStr = () => {
 };
 
 (async () => {
-    const root = baseExtensionPopupURL.split("/src/")[0];
-
     let capture = ["options", "menu"];
     if (process.env.capture) {
         if (capture.indexOf(process.env.capture) < 0) {
@@ -23,7 +21,9 @@ const nowStr = () => {
     if (capture.indexOf("options") > -1) {
         browser = await makeBrowser("2000,1000");
         page = await browser.newPage();
-        await page.goto(`${root}/src/options/options.html`, {
+        const extensionId = await findExtensionId(browser);
+        const optionsURL = `chrome-extension://${extensionId}/options.html`;
+        await page.goto(optionsURL, {
             waitUntil: "domcontentloaded",
         });
         await new Promise((resolve) => {
@@ -44,7 +44,9 @@ const nowStr = () => {
     if (capture.indexOf("menu") > -1) {
         browser = await makeBrowser();
         page = await browser.newPage();
-        await page.goto(`${root}/src/popup/min/popup.min.html`, {
+        const extensionId = await findExtensionId(browser);
+        const { popupURL } = getPMURLs(extensionId);
+        await page.goto(popupURL, {
             waitUntil: "domcontentloaded",
         });
         await page.waitForTimeout(1e3);

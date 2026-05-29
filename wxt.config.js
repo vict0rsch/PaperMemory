@@ -5,6 +5,7 @@ import { createRequire } from "module";
 import { glob } from "glob";
 
 const pkg = createRequire(import.meta.url)("./package.json");
+const disableBrowserStartup = process.env.WXT_NO_BROWSER === "1";
 
 function htmlIncludePlugin(basePath) {
     return {
@@ -38,6 +39,9 @@ function htmlIncludePlugin(basePath) {
 export default defineConfig({
     srcDir: "src",
     outDir: "dist",
+    webExt: {
+        disabled: disableBrowserStartup,
+    },
     manifest: {
         name: "Paper Memory",
         version: pkg.version,

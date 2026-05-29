@@ -1,10 +1,11 @@
 {
     "name": "papermemory",
-    "version": "1.1.0",
+    "version": "1.1.1",
     "description": "N/A",
     "type": "module",
     "scripts": {
         "dev": "wxt",
+        "dev:watch": "WXT_NO_BROWSER=1 wxt",
         "dev:firefox": "wxt --browser firefox",
         "build": "wxt build && wxt build --browser firefox",
         "build:chrome": "wxt build",
@@ -37,7 +38,7 @@
     "dependencies": {
         "@octokit/request": "^8.1.6",
         "jquery": "^4.0.0",
-        "select2": "^4.1.0-rc.0"
+        "tom-select": "^2.6.0"
     },
     "devDependencies": {
         "expect": "^29.7.0",

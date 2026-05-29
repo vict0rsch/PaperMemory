@@ -27,3 +27,15 @@ export async function resolve(specifier, context, defaultResolve) {
     // Fall back to the default resolver for all other imports
     return defaultResolve(specifier, context);
 }
+
+export async function load(url, context, defaultLoad) {
+    if (url.endsWith(".css")) {
+        return {
+            format: "module",
+            source: "export default {};",
+            shortCircuit: true,
+        };
+    }
+
+    return defaultLoad(url, context);
+}

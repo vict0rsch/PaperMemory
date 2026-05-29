@@ -344,23 +344,19 @@ describe("Test PaperMemory Extension Loading", function () {
                 );
             }
 
-            // Check if popup files exist
-            const popupPath = `${root}/src/popup/min/popup.min.html`;
-            const fullMemoryPath = `${root}/src/fullMemory/fullMemory.html`;
-
-            console.log(`   Popup file exists: ${fs.existsSync(popupPath)}`);
-            console.log(`   Full memory file exists: ${fs.existsSync(fullMemoryPath)}`);
-
-            // Check if built files exist
-            const bundleFiles = [
-                "src/popup/min/popup.bundle.js",
-                "src/background/background.bundle.js",
-                "src/content_scripts/content.bundle.js",
+            const distRoot = `${root}/dist/chrome-mv3`;
+            const wxtOutputFiles = [
+                "popup.html",
+                "fullMemory.html",
+                "options.html",
+                "manifest.json",
             ];
 
-            bundleFiles.forEach((file) => {
-                const filePath = `${root}/${file}`;
-                console.log(`   ${file} exists: ${fs.existsSync(filePath)}`);
+            wxtOutputFiles.forEach((file) => {
+                const filePath = `${distRoot}/${file}`;
+                console.log(
+                    `   dist/chrome-mv3/${file} exists: ${fs.existsSync(filePath)}`,
+                );
             });
 
             console.log("✓ Extension diagnostics completed");

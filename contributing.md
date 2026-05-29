@@ -4,7 +4,7 @@
 
 PaperMemory is pure JS+HTML with minimal dependencies: no framework, (almost) no external dependencies so it's easy to help :)
 
-The only external deps are [`select2.js`](https://select2.org/) (which requires `jQuery`) -- both installed via npm.
+The only external deps are [`tom-select`](https://tom-select.js.org/) (tag inputs) and [`jQuery`](https://jquery.com/) (content-script page UI only) — both installed via npm.
 
 The project uses modern ES modules and [WXT](https://wxt.dev/) for bundling, dev server, manifest generation, and cross-browser packaging.
 
@@ -113,7 +113,7 @@ The debug system is implemented in `src/debug/debug.js` and imported by each ent
     │   ├── content.js            ➤ Content script — wrapped in defineContentScript()
     │   ├── popup/                ➤ Extension popup
     │   │   ├── index.html        ➤ Popup HTML (uses <!--=include --> for partials)
-    │   │   └── main.js           ➤ Imports jquery-setup + popup.js + debug.js
+    │   │   └── main.js           ➤ Imports popup.js + debug.js
     │   ├── options/              ➤ Advanced settings page
     │   │   ├── index.html
     │   │   └── main.js
@@ -148,7 +148,7 @@ The debug system is implemented in `src/debug/debug.js` and imported by each ent
     │
     └── shared/                   ➤ Shared utilities and resources
         ├── js/
-        │   ├── jquery-setup.js   ➤ jQuery + select2 global setup (import $ from 'jquery')
+        │   ├── jquery-setup.js   ➤ jQuery global setup for content script (import $ from 'jquery')
         │   └── utils/            ➤ Core modules (the heart of PaperMemory)
         │       ├── config.js     ➤ Global state, journal data, DBLP venue overrides
         │       ├── functions.js  ➤ Utility functions (logging, clipboard, string ops)
@@ -163,7 +163,7 @@ The debug system is implemented in `src/debug/debug.js` and imported by each ent
         │       ├── urls.js       ➤ URL parsing and paper ID extraction
         │       ├── files.js      ➤ Local file detection
         │       └── bibtexParser.js ➤ BibTeX parsing and formatting
-        └── css/                  ➤ Shared stylesheets (variables, loader animations)
+        └── css/                  ➤ Content-script loader styles (extension-page CSS lives in public/)
 ```
 
 ### How WXT entry points work
@@ -178,9 +178,10 @@ WXT uses a **file-based convention** in `src/entrypoints/`:
 
 Each HTML entry point's `main.js` is a thin wrapper that imports:
 
-1. `@pm/shared/js/jquery-setup.js` — sets up `window.$` globally
-2. The actual page logic (e.g. `@pm/popup/js/popup.js`)
-3. `@pm/debug/debug.js` — exposes `PMDebug` to the console
+1. The actual page logic (e.g. `@pm/popup/js/popup.js`)
+2. `@pm/debug/debug.js` — exposes `PMDebug` to the console
+
+The content-script entry point additionally imports `@pm/shared/js/jquery-setup.js` to set up `window.$` globally for injected page UI.
 
 The background and content-script entry points (`src/entrypoints/background.js` and `src/entrypoints/content.js`) are thin wrappers around the canonical source files:
 
@@ -200,9 +201,11 @@ Two aliases are configured in `wxt.config.js` (for Vite/WXT) and `jsconfig.json`
 
 The popup HTML uses `<!--=include path -->` directives to inline partial HTML files (menu, modals, SVGs). A custom Vite plugin in `wxt.config.js` processes these at build time.
 
-### jQuery / select2
+### jQuery / Tom Select
 
-jQuery and select2 are installed via npm. A single file `src/shared/js/jquery-setup.js` imports them and sets `window.$ = window.jQuery`. This file is imported once at the top of each HTML entry point's `main.js`.
+jQuery is installed via npm and exposed globally by `src/shared/js/jquery-setup.js`, imported only by the content-script entry point (`src/entrypoints/content.js`) for injected page UI.
+
+Tag inputs use [Tom Select](https://tom-select.js.org/), imported directly in `src/popup/js/popup.js`, `src/popup/js/handlers.js`, and `src/options/options.js`.
 
 ### Static assets (`public/`)
 

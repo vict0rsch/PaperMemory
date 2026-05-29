@@ -1,0 +1,56 @@
+/*
+-----------------------
+----- Tom Select  -----
+-----------------------
+*/
+
+#pm-popup .ts-wrapper .ts-control {
+    min-height: 25px !important;
+}
+#pm-popup .ts-wrapper .ts-control > input {
+    min-height: 25px !important;
+    min-width: 58px !important;
+    width: 58px !important;
+    max-width: 58px !important;
+    flex: 0 0 58px !important;
+}
+
+#pm-popup .ts-control input {
+    font-size: 0.85rem !important;
+}
+
+.ts-control a {
+    color: var(--color) !important;
+}
+
+.ts-control .item {
+    border-radius: var(--rounder);
+}
+
+.ts-dropdown {
+    box-shadow: 1px 6px 4px 4px #9a9a9b84 !important;
+    margin: 0px !important;
+    border-radius: 0 0 var(--rounder) var(--rounder) !important;
+}
+
+.ts-dropdown .active {
+    background-color: var(--color) !important;
+}
+
+/* Dropdown option: hover */
+.ts-dropdown .option:hover,
+.ts-dropdown .option.active {
+    background-color: #0000001f !important;
+    color: var(--color) !important;
+}
+
+/* Tag selects: fill flex row (label + ts-wrapper) */
+#popup-memory-edit .ts-wrapper,
+.flex-center-between .ts-wrapper {
+    flex: 1;
+    min-width: 0;
+}
+
+#pm-options .ts-wrapper {
+    width: 100% !important;
+}
