@@ -5,6 +5,7 @@
     "type": "module",
     "scripts": {
         "dev": "wxt",
+        "dev:watch": "WXT_NO_BROWSER=1 wxt",
         "dev:firefox": "wxt --browser firefox",
         "build": "wxt build && wxt build --browser firefox",
         "build:chrome": "wxt build",
