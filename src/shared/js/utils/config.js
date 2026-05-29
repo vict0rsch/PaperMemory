@@ -93,6 +93,11 @@ export const svgActionsHoverTitles = {
     copyHypeLink: "Copy url as hyperlink",
 };
 
+/**
+ * Shared TomSelect defaults for PaperMemory tag fields.
+ * - `maxItems` and `delimiter` enforce compact comma-separated tag storage.
+ * - Plugins assume caret navigation and per-tag removal affordances.
+ */
 export const tomSelectOptions = {
     placeholder: "Tag paper",
     maxItems: 5,

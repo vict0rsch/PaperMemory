@@ -453,10 +453,9 @@ export const handleTogglePaperEdit = (e) => {
         // Close inputs
         slideUp(editPaper, 150);
         slideUp(tagEdit, 150);
-        // destroy to enable options update in HTML
-        setTimeout(() => {
-            tagEl.tomselect?.destroy();
-        }, 500);
+        // Destroy synchronously so quick close->open cycles cannot reuse
+        // an instance that is still alive.
+        tagEl.tomselect?.destroy();
     } else {
         // The edit form is closed
         addClass(container, "expand-open");
@@ -464,6 +463,8 @@ export const handleTogglePaperEdit = (e) => {
         // TomSelect.destroy() restores the innerHTML snapshot taken at instantiation,
         // so without this the select would be stale after a previous edit cycle.
         setHTML(tagEl, getTagsOptions(state.papers[id]));
+        // Guard against races where an instance still exists during fast toggles.
+        tagEl.tomselect?.destroy();
         // Enable tom-select tags input
         const ts = new TomSelect(tagEl, tomSelectOptions);
         // Attach the change listener to every new TomSelect instance: the previous
