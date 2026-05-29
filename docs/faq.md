@@ -57,9 +57,9 @@ Sure! In the extension popup's menu, there's a link at the bottom to the full-pa
 
 ```bash
 # Copy-paste this url (Chrome / Brave / Edge):
-chrome-extension://ehchlpggdaffcncbeopdopnndhdjelbc/src/fullMemory/fullMemory.html
+chrome-extension://ehchlpggdaffcncbeopdopnndhdjelbc/fullMemory.html
 # Firefox:
-moz-extension://05b6ef8a-7314-4c1d-a519-80f48a5794a6/src/fullMemory/fullMemory.html
+moz-extension://05b6ef8a-7314-4c1d-a519-80f48a5794a6/fullMemory.html
 ```
 
 ### Can I exclude a paper source?
@@ -68,9 +68,9 @@ Yep. In the extension popup's advanced options page: right-click the extension's
 
 ```bash
 # Copy-paste this url (Chrome / Brave / Edge):
-chrome-extension://ehchlpggdaffcncbeopdopnndhdjelbc/src/options/options.html
+chrome-extension://ehchlpggdaffcncbeopdopnndhdjelbc/options.html
 # Firefox:
-moz-extension://05b6ef8a-7314-4c1d-a519-80f48a5794a6/src/options/options.html
+moz-extension://05b6ef8a-7314-4c1d-a519-80f48a5794a6/options.html
 ```
 
 ### Are there data backups?
