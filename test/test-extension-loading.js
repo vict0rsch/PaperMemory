@@ -354,7 +354,9 @@ describe("Test PaperMemory Extension Loading", function () {
 
             wxtOutputFiles.forEach((file) => {
                 const filePath = `${distRoot}/${file}`;
-                console.log(`   dist/chrome-mv3/${file} exists: ${fs.existsSync(filePath)}`);
+                console.log(
+                    `   dist/chrome-mv3/${file} exists: ${fs.existsSync(filePath)}`,
+                );
             });
 
             console.log("✓ Extension diagnostics completed");
