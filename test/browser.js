@@ -1,26 +1,20 @@
 import { expect } from "expect";
 
-import puppeteer from "puppeteer-extra";
-import StealthPlugin from "puppeteer-extra-plugin-stealth";
+import { launch } from "cloakbrowser/puppeteer";
 import { sleep, root } from "./utilsForTests.js";
 import fs from "fs";
 
-puppeteer.use(StealthPlugin());
-
 export const makeBrowser = async (headless = false, windowSize = "1200,900") => {
-    const browser = await puppeteer.launch({
+    const browser = await launch({
         headless,
-        ignoreHTTPSErrors: true,
-        ignoreDefaultArgs: ["--disable-extensions"],
+        extensionPaths: [`${root}/dist/chrome-mv3`],
         args: [
-            `--load-extension=${root}/dist/chrome-mv3`,
             `--window-size=${windowSize}`,
             "--no-sandbox",
             "--disable-setuid-sandbox",
-            "--disable-web-security",
             "--disable-dev-shm-usage",
-            "--disable-gpu",
         ],
+        launchOptions: { acceptInsecureCerts: true },
     });
     return browser;
 };
