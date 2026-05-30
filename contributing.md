@@ -8,6 +8,10 @@ The only external deps are [`tom-select`](https://tom-select.js.org/) (tag input
 
 The project uses modern ES modules and [WXT](https://wxt.dev/) for bundling, dev server, manifest generation, and cross-browser packaging.
 
+### Related documentation
+
+**This guide covers how to set up, build, and contribute** (commands, conventions, step-by-step how-tos, tests, release). For **how the system works** — the mental model, data flow, core abstractions, component responsibilities, and design rationale — see [`system-architecture.md`](system-architecture.md) (e.g. its [Technical Stack](system-architecture.md#technical-stack) for the full dependency and tooling list).
+
 ## Set-up
 
 1. [Install `npm`](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm) (Node.js 22+ recommended)
@@ -25,7 +29,7 @@ The project uses modern ES modules and [WXT](https://wxt.dev/) for bundling, dev
 - **Dev server**: Hot module reloading with `npm run dev`
 - **Zip packaging**: `npm run zip` produces ready-to-submit archives for both browsers
 
-You do **not** need to know WXT internals to contribute. The key thing to know is that WXT discovers entry points from `src/entrypoints/` and builds them into `dist/`.
+You do **not** need to know WXT internals to contribute. The key thing to know is that WXT discovers entry points from `src/entrypoints/` and builds them into `dist/`. For how WXT (and these entry points) fit the overall architecture, see [`system-architecture.md` → System Architecture](system-architecture.md#system-architecture).
 
 ## Build commands
 
@@ -217,26 +221,17 @@ Files in `public/` are copied as-is to the build output. Use this for:
 
 ### Key source files for contributors
 
-**Core Logic** (`src/shared/js/utils/`):
+The tree above shows **where** each file lives. For **what each component does and
+how they relate** (responsibilities, data flow, the parse → enrich → store
+pipeline), see [`system-architecture.md` → Component Deep-Dive](system-architecture.md#component-deep-dive).
+A few starting points for common contributions:
 
-- `config.js` — Global state and settings. Start here to understand data structures. Re-exports `knownPaperPages` / `preprintSources` from `sources/index.js` for backward compatibility.
-- `functions.js` — Utility functions used everywhere.
-- `data.js` — How papers are stored, validated, and migrated between versions.
-- `sources/` — **Add new paper sources here** (`sources/<name>.js` + register in `sources/index.js`). See below.
-- `parsers.js` — Shared helpers (fetchDom, fetchText, BibTeX glue, DC meta extraction, …) used by source modules.
-- `preprintMatching.js` — Cross-source enrichment in `addOrUpdatePaper` (CrossRef, DBLP, Semantic Scholar, …).
-- `paper.js` — Paper object operations: `makePaper`, updates, linking, `paperToAbs` / `paperToPDF`.
-
-**User Interface** (`src/popup/js/`):
-
-- `popup.js` — Main popup logic. How the extension popup initializes and displays papers.
-- `memory.js` — Memory table functionality. Search, sorting, and display of saved papers.
-- `handlers.js` — User interactions. Button clicks, keyboard shortcuts, form handling.
-
-**Background Processing**:
-
-- `src/background/background.js` — Handles sync, notifications, and browser API calls.
-- `src/content_scripts/content_script.js` — Automatically detects papers when browsing websites.
+- **Understand the data structures** → `src/shared/js/utils/config.js` (the `state`
+  shape) and `data.js` (paper schema in `validatePaper`).
+- **Add a paper source** → `src/shared/js/utils/sources/` ([Adding a paper source](#adding-a-paper-source)).
+- **Add a paper attribute** → `src/shared/js/utils/data.js` ([Creating a new paper attribute](#creating-a-new-paper-attribute)).
+- **Popup / UI work** → `src/popup/js/` (`popup.js`, `memory.js`, `handlers.js`, `templates.js`).
+- **Background / content-script behavior** → `src/background/background.js`, `src/content_scripts/content_script.js`.
 
 ### Prettier
 
@@ -256,6 +251,11 @@ Most editors can auto-format on save with the Prettier extension. For VS Code, i
 
 ## Adding a paper source
 
+> For the conceptual model behind sources (the registry, the `is` map dispatch, and
+> the **load-order/TDZ constraint** you must respect — never call `functions.js`
+> exports at a source module's top level), see
+> [`system-architecture.md` → Core Concepts & Abstractions](system-architecture.md#core-concepts--abstractions).
+
 1. **Create** `src/shared/js/utils/sources/<name>.js` exporting a class that extends `BasePaperSource` from `sources/base.js`. Implement at minimum:
     - `name` (lowercase key, e.g. `"arxiv"`)
     - `displayName` (human label)
@@ -270,7 +270,7 @@ Most editors can auto-format on save with the Prettier extension. For VS Code, i
 
 ### Why stateless handlers, not class instances
 
-Saved papers are **plain objects** (JSON in `chrome.storage`, messages, Gist sync). MV3 service workers also terminate often, so there is no long-lived "paper with methods" to hydrate. Each source module exports a **stateless** subclass of `BasePaperSource`: the registry does a name lookup and calls static-ish methods on the class (`ArxivSource.parse`, …). That matches one hash lookup per dispatch, same cost order as the old large `switch` statements, without prototype loss across storage boundaries.
+Sources are **stateless** `BasePaperSource` subclasses (the registry does a name lookup and calls static methods like `ArxivSource.parse`), not instances. For the rationale — MV3 worker lifetime, plain-object serialization across storage/messages/Gist, and dispatch cost — see [`system-architecture.md` → Key Design Decisions](system-architecture.md#key-design-decisions). The load-order/TDZ constraint that sources must respect is documented in the same file under [Core Concepts & Abstractions](system-architecture.md#core-concepts--abstractions).
 
 ## Creating a new paper attribute
 
