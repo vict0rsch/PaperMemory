@@ -332,9 +332,11 @@ the `downloads` API), `functions.js` (49 misc helpers incl. `miniHash`,
 - **Runtime libs:** jQuery 4, Tom Select 2 (tag inputs), `@octokit/request` (Gist).
 - **Language:** plain ES modules (`"type": "module"`), JSDoc-typed, no TypeScript;
   `jsconfig.json` + `@pm`/`@pmu` path aliases.
-- **Tooling:** Prettier; Mocha + jsdom + Puppeteer (stealth) for the
-  `test/test-*.js` suite (unit + headless-browser integration). `npm test` builds
-  Chrome first (`pretest`) then runs Mocha.
+- **Tooling:** Prettier; Mocha + jsdom + [cloakbrowser](https://github.com/CloakHQ/cloakbrowser)
+  (source-level stealth Chromium, Puppeteer-core API) for the `test/test-*.js`
+  suite (unit + headless-browser integration). `npm test` builds Chrome first
+  (`pretest`) then runs Mocha. The cloakbrowser binary (~200MB) auto-downloads
+  to `~/.cloakbrowser` on first use; CI caches it via `actions/cache`.
 - **External APIs (no project backend):** arXiv, OpenReview, GitHub Gist, CrossRef,
   DBLP, Semantic Scholar, Unpaywall, Google Scholar, (historically PapersWithCode —
   its API is currently stubbed out in `background.js`).

@@ -279,7 +279,7 @@ Sources are **stateless** `BasePaperSource` subclasses (the registry does a name
 
 ## Tests
 
-Tests use Puppeteer to launch a real Chrome instance with the extension loaded. `npm test` builds the extension first (`pretest` runs `npm run build:chrome`), then runs all test suites.
+Tests use [cloakbrowser](https://github.com/CloakHQ/cloakbrowser) (a source-level stealth Chromium with the Puppeteer-core API) to launch a real Chrome instance with the extension loaded. On first run, cloakbrowser auto-downloads its custom Chromium binary (~200MB) to `~/.cloakbrowser`; subsequent runs use the cached binary. `CHROME_PATH` is not used for the stealth browser. `npm test` builds the extension first (`pretest` runs `npm run build:chrome`), then runs all test suites.
 
 The integration suites `test/test-duplicates.js` and `test/test-storage.js` hit many live publisher pages; they are valuable as smoke checks but are **not expected to pass entirely** (timeouts, bot walls, and DOM drift are common). `npm test` excludes `test/test-sync.js`; run it explicitly with `npm run test:file test/test-sync.js` when working on Gist sync — that file has the same “best effort” expectations.
 

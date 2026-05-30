@@ -45,6 +45,15 @@ jobs:
       - name: Install Dependencies
         run: npm ci
 
+      - name: Cache cloakbrowser binary
+        uses: actions/cache@v4
+        with:
+          path: ~/.cloakbrowser
+          key: cloakbrowser-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('package-lock.json') }}
+
+      - name: Prefetch cloakbrowser binary
+        run: npx cloakbrowser install
+
       - name: Build Extension
         run: npm run build:chrome
 
