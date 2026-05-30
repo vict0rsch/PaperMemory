@@ -1,5 +1,5 @@
 import { BasePaperSource } from "./base.js";
-import { miniHash, noParamUrl, isPdfUrl } from "@pmu/functions.js";
+import { miniHash, noParamUrl } from "@pmu/functions.js";
 import { extractDataFromDCMetaTags, fetchDom } from "@pmu/parsers.js";
 
 export class ChemrxivSource extends BasePaperSource {
@@ -14,7 +14,7 @@ export class ChemrxivSource extends BasePaperSource {
     ];
 
     static async urlToId(url, ctx) {
-        let chemRxivId = isPdfUrl(url)
+        let chemRxivId = url.includes("/item/")
             ? url.split("/item/")[1].split("/")[0]
             : noParamUrl(url).split("/").last();
         return ctx.findPaperForProperty(ctx.papers, "chemrxiv", miniHash(chemRxivId));
@@ -23,12 +23,15 @@ export class ChemrxivSource extends BasePaperSource {
     static async parse(url) {
         let chemRxivId;
         let absUrl = url;
-        if (isPdfUrl(url)) {
+        if (url.includes("/item/")) {
             chemRxivId = url.split("/item/")[1].split("/")[0];
             absUrl =
                 "https://chemrxiv.org/engage/chemrxiv/article-details/" + chemRxivId;
         } else {
             chemRxivId = noParamUrl(url).split("/").last();
+            if (url.includes("/doi/pdf/")) {
+                absUrl = url.replace("/doi/pdf/", "/doi/full/");
+            }
         }
         const dom = await fetchDom(absUrl);
         const {
@@ -49,9 +52,12 @@ export class ChemrxivSource extends BasePaperSource {
 
     static toAbs(paper) {
         const pdf = paper.pdfLink;
-        return `https://chemrxiv.org/engage/chemrxiv/article-details/${
-            pdf.split("/item/")[1].split("/")[0]
-        }`;
+        if (pdf.includes("/item/")) {
+            return `https://chemrxiv.org/engage/chemrxiv/article-details/${
+                pdf.split("/item/")[1].split("/")[0]
+            }`;
+        }
+        return pdf.replace("/doi/pdf/", "/doi/full/");
     }
 
     static toPDF(paper) {
