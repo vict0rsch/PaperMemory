@@ -51,7 +51,23 @@ export const visitPaperPage = async (browser, target, options = {}) => {
     const opts = { ...defaults, ...options };
 
     const p = opts.page || (await browser.pages())[0] || (await browser.newPage());
-    await p.goto(target);
+    // A leftover page from the previous source (e.g. a Cloudflare "Just a moment..."
+    // challenge) can perform a client-side navigation that aborts this goto with
+    // net::ERR_ABORTED. Retry a few times so the competing navigation can settle.
+    const maxNavAttempts = 3;
+    let gotoError = null;
+    for (let attempt = 1; attempt <= maxNavAttempts; attempt++) {
+        try {
+            await p.goto(target);
+            gotoError = null;
+            break;
+        } catch (e) {
+            gotoError = e;
+            if (!String(e.message).includes("net::ERR_ABORTED")) break;
+            if (attempt < maxNavAttempts) await sleep(1000);
+        }
+    }
+    if (gotoError) throw gotoError;
     const paperIsStored = new Promise((resolve, reject) => {
         let screenshotTimeout;
         p.waitForSelector("meta[name='pm-complete-secret-html']")
