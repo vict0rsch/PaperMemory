@@ -43,16 +43,13 @@ The test: Every changed line should trace directly to the user's request.
 
 **Every plan must be clear, exhaustive, imperative, and verifiable.**
 
-When writing a plan:
+Hard rules when writing a plan so a small model can follow literally without guessing intent:
 - Use numbered imperative steps (`Do X`, `Then do Y`), never vague goals.
 - Make the plan exhaustive for the requested scope: no hidden steps, no implicit work.
 - State assumptions and prerequisites explicitly before execution steps.
 - For each step, define an objective verification check (test, command, observable output, or diff condition).
 - Define concrete completion criteria so an agent can truthfully decide "done" vs "not done."
 - Use language that a small model can follow literally without guessing intent.
-
-Hard rule:
-- If a small-capability agent could not implement the plan truthfully from the plan text alone, the plan is invalid and must be rewritten.
 
 # 5. Agent Entry Point (Shared Across Providers)
 
