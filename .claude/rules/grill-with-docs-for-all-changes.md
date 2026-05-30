@@ -1,6 +1,6 @@
 # Use /grill-with-docs For Development
 
-When a user asks to develop this codebase, use the `/grill-with-docs` skill before implementation.
+When a user asks to change anything in this codebase, use the `/grill-with-docs` skill before implementation.
 
 ## Required behavior
 
