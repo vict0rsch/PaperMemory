@@ -8,7 +8,7 @@ const findCellPii = async (url) => {
     const isPdfExtended = url.toLowerCase().includes("pdfextended");
     let pii;
     if (isPdf || isPdfExtended) {
-        const cellData = state.cellJournalData;
+        const cellData = state.cellJournalData ?? {};
         pii = isPdf ? new URL(url).searchParams.get("pii") : url.split("/").last();
         const issn = pii.match(/\d{4}-\d{3}[0-9X]/g)[0];
         let venue;
