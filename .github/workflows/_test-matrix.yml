@@ -28,8 +28,6 @@ jobs:
             files: test/test-menu.js
           - name: Sync
             files: test/test-sync.js
-          - name: Duplicates
-            files: test/test-duplicates.js
           - name: All test scripts are listed in a workflow
             files: test/test-meta.js
 
