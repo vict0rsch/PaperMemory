@@ -69,10 +69,9 @@ export const parseIdFromUrl = async (url, tab = null) => {
             } else if (is.parsedWebsite) {
                 idForUrl = is.parsedWebsite.id;
             } else {
-                throw new Error(
-                    "`parseIdFromUrl` failed, unknown paper url. Is: " +
-                        JSON.stringify(is),
-                );
+                // Not a recognized paper source: this is an expected outcome
+                // (e.g. arbitrary URLs), so return null rather than throwing.
+                return null;
             }
         }
 
