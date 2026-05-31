@@ -157,11 +157,12 @@ describe("Paper de-duplication", function () {
                     // visit the paper urls
                     for (const dup of duplicates) {
                         console.log(
-                            `${indent(2)}(${n + 1}/${nUrls}) visiting ${dup.url}`,
+                            `${indent(2)}(${n + 1}/${nUrls}) visiting ${dup.name || "pre-duplicate"} (${dup.url.slice(0, 30)}[...])`,
                         );
                         await visitPaperPage(browser, dup.url, {
                             keepOpen,
                             timeout: pageTimeout,
+                            indents: 3,
                         });
                         n += 1;
                     }
