@@ -167,6 +167,7 @@ describe("Test paper detection and storage", function () {
 
                 for (const sourceOrderIdx of sourceOrder) {
                     for (const [targetIdx, targets] of Object.values(urls).entries()) {
+                        const currentSource = Object.keys(urls)[targetIdx];
                         // for each target url (abstract, pdf), visit the url
                         // and wait a little for it to load
                         const isPDF = sourceOrderIdx === 1;
@@ -193,12 +194,13 @@ describe("Test paper detection and storage", function () {
                                 nUrls +
                             1;
                         console.log(
-                            `${indent(2)}(${n}/${nUrls * 2}) Going to: ${target}`,
+                            `${indent(2)}(${n}/${nUrls * 2}) Going to: ${currentSource} (${target.slice(0, 30)}[...])`,
                         );
 
                         await visitPaperPage(browser, target, {
                             timeout: pageTimeout,
                             keepOpen,
+                            indents: 3,
                         });
                     }
                 }

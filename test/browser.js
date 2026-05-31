@@ -1,7 +1,7 @@
 import { expect } from "expect";
 
 import { launch } from "cloakbrowser/puppeteer";
-import { sleep, root } from "./utilsForTests.js";
+import { sleep, root, indent } from "./utilsForTests.js";
 import fs from "fs";
 
 export const makeBrowser = async (headless = false, windowSize = "1200,900") => {
@@ -47,6 +47,7 @@ export const visitPaperPage = async (browser, target, options = {}) => {
         timeout: null,
         keepOpen: false,
         dontScreenshot: false,
+        indents: 0,
     };
     const opts = { ...defaults, ...options };
 
@@ -83,28 +84,32 @@ export const visitPaperPage = async (browser, target, options = {}) => {
                 return document.querySelector("meta[name='pm-complete-secret-html']");
             });
             if (!element && !opts.dontScreenshot) {
-                console.log(`No element found: taking a screenshot`);
                 if (!fs.existsSync(`${root}/tmp`)) {
-                    console.log(`Creating tmp directory in ${root}/tmp`);
+                    console.log(
+                        `${indent(opts.indents)}Creating tmp directory in ${root}/tmp`,
+                    );
                     fs.mkdirSync(`${root}/tmp`);
                 }
                 let screenshotName = `screenshot_${Date.now()}_${target
                     .replaceAll("https://", "")
-                    .replaceAll("/", "__")}.jpg`;
-                screenshotName = screenshotName
+                    .replaceAll("/", "__")
                     .replace(/[^a-zA-Z0-9\-_\.]/g, "")
-                    .slice(0, 100);
+                    .slice(0, 50)}.jpg`;
                 const screenshotPath = `${root}/tmp/${screenshotName}`;
                 await p.screenshot({
                     path: screenshotPath,
                     fullPage: true,
                 });
-                console.log(`Screenshot taken and saved to ${screenshotPath}\n\n`);
+                reject(
+                    new Error(
+                        `Timeout for ${target} -> Screenshot taken and saved to ${screenshotPath}`,
+                    ),
+                );
             }
             resolve();
-        }, 5000);
+        }, 15000);
     });
-    opts.timeout > 0 && (await paperIsStored);
+    await paperIsStored;
     opts.timeout > 0 && (await sleep(opts.timeout));
     !opts.keepOpen && (await p.close());
 };
