@@ -50,10 +50,7 @@
     ],
     "cell": [
         "https://www.cell.com/cell/fulltext/S0092-8674(25)01089-X",
-        "https://www.cell.com/action/showPdf?pii=S0092-8674%2825%2901089-X",
-        {
-            "botPrevention": true
-        }
+        "https://www.cell.com/action/showPdf?pii=S0092-8674%2825%2901089-X"
     ],
     "chemrxiv": [
         "https://chemrxiv.org/engage/chemrxiv/article-details/65957d349138d231611ad8f7",
@@ -105,8 +102,7 @@
         "https://iopscience.iop.org/article/10.1149/2.1051908jes",
         "https://iopscience.iop.org/article/10.1149/2.1051908jes/pdf",
         {
-            "venue": "Journal of The Electrochemical Society",
-            "botPrevention": true
+            "venue": "Journal of The Electrochemical Society"
         }
     ],
     "jmlr": [
@@ -152,7 +148,8 @@
         "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7249434",
         "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7249434/pdf/12961_2020_Article_544.pdf",
         {
-            "venue": "Health research policy and systems"
+            "venue": "Health research policy and systems",
+            "botPrevention": true
         }
     ],
     "pmlr": [
@@ -179,10 +176,7 @@
     ],
     "sciencedirect": [
         "https://www.sciencedirect.com/science/article/pii/S2589721721000349",
-        "https://reader.elsevier.com/reader/sd/pii/S2589721721000349",
-        {
-            "botPrevention": true
-        }
+        "https://www.sciencedirect.com/science/article/pii/S2589721721000349/pdfft"
     ],
     "springer": [
         "https://link.springer.com/article/10.1007/s41095-022-0271-y",
