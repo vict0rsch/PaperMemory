@@ -26,8 +26,6 @@ jobs:
             files: test/test-memory-item-actions.js test/test-memory-table-ui.js
           - name: Menu
             files: test/test-menu.js
-          - name: Sync
-            files: test/test-sync.js
           - name: All test scripts are listed in a workflow
             files: test/test-meta.js
 

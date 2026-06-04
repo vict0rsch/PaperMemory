@@ -10,7 +10,7 @@ import {
     getPaperMemoryState,
     findExtensionId,
     getPMURLs,
-    visitPaperPage,
+    makeVisitFailureCollector,
 } from "./browser.js";
 
 import {
@@ -132,6 +132,9 @@ describe("Paper de-duplication", function () {
             before(async function () {
                 // create browser
                 browser = await makeBrowser(headless);
+                const visitFailures = makeVisitFailureCollector(
+                    `Duplicate visits for order ${order}`,
+                );
                 // visit non-duplicated papers first, then known duplicates
                 const allVisits = [...preDuplicates, ...allDuplicates];
                 // count total number of urls to visit
@@ -159,7 +162,7 @@ describe("Paper de-duplication", function () {
                         console.log(
                             `${indent(2)}(${n + 1}/${nUrls}) visiting ${dup.name || "pre-duplicate"} (${dup.url.slice(0, 30)}[...])`,
                         );
-                        await visitPaperPage(browser, dup.url, {
+                        await visitFailures.visit(browser, dup.url, {
                             keepOpen,
                             timeout: pageTimeout,
                             indents: 3,
@@ -167,6 +170,7 @@ describe("Paper de-duplication", function () {
                         n += 1;
                     }
                 }
+                visitFailures.throwIfFailed();
 
                 // go to the extension popup's page
                 memoryPage = (await browser.pages())[0];

@@ -12,7 +12,7 @@ import {
     getMemoryPapers,
     findExtensionId,
     getPMURLs,
-    visitPaperPage,
+    makeVisitFailureCollector,
 } from "./browser.js";
 
 import {
@@ -156,6 +156,9 @@ describe("Test paper detection and storage", function () {
                 !Object.keys(urls).length && this.skip();
                 // create browser
                 browser = await makeBrowser(headless);
+                const visitFailures = makeVisitFailureCollector(
+                    `Storage visits for parsing order ${order}`,
+                );
 
                 // count total urls to visit depending on maxSources
                 const nUrls = sources.length;
@@ -197,13 +200,14 @@ describe("Test paper detection and storage", function () {
                             `${indent(2)}(${n}/${nUrls * 2}) Going to: ${currentSource} (${target.slice(0, 30)}[...])`,
                         );
 
-                        await visitPaperPage(browser, target, {
+                        await visitFailures.visit(browser, target, {
                             timeout: pageTimeout,
                             keepOpen,
                             indents: 3,
                         });
                     }
                 }
+                visitFailures.throwIfFailed();
 
                 // go to the extension's popup url
                 const page = await browser.newPage();
