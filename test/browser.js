@@ -114,6 +114,38 @@ export const visitPaperPage = async (browser, target, options = {}) => {
     !opts.keepOpen && (await p.close());
 };
 
+export const makeVisitFailureCollector = (label = "paper page visits") => {
+    const failures = [];
+
+    return {
+        failures,
+        visit: async (browser, target, options = {}) => {
+            try {
+                await visitPaperPage(browser, target, options);
+            } catch (error) {
+                const message = error instanceof Error ? error.message : String(error);
+                failures.push({ target, message });
+                console.error(
+                    `${indent(options.indents || 0)}Visit failed: ${message}`,
+                );
+            }
+        },
+        throwIfFailed: () => {
+            if (!failures.length) return;
+
+            const summary = failures
+                .map(
+                    ({ target, message }, index) =>
+                        `${index + 1}. ${target}\n   ${message}`,
+                )
+                .join("\n");
+            throw new Error(
+                `${label}: ${failures.length} visit(s) failed after completing the batch:\n${summary}`,
+            );
+        },
+    };
+};
+
 // Helper function to find the actual extension ID from the Chrome extensions page
 export const findExtensionId = async (browser) => {
     const page = await browser.newPage();
