@@ -12,7 +12,7 @@
         {
             "noPdf": true,
             "venue": "APL Machine Learning",
-            "botPrevention": true
+            "ciBotPrevention": true
         }
     ],
     "acm": [
@@ -21,7 +21,7 @@
         {
             "code": true,
             "venue": "ijcai",
-            "botPrevention": true
+            "ciBotPrevention": true
         }
     ],
     "acs": [
@@ -151,7 +151,7 @@
         "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC7249434/pdf/12961_2020_Article_544.pdf",
         {
             "venue": "Health research policy and systems",
-            "botPrevention": true
+            "ciBotPrevention": true
         }
     ],
     "pmlr": [
