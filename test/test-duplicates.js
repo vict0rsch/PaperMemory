@@ -21,6 +21,7 @@ import {
     root,
     loadConfig,
     indent,
+    hasCiBotPrevention,
 } from "./utilsForTests.js";
 
 // make all functions in utils.min.js available in the `global` scope
@@ -84,7 +85,7 @@ if (maxSources > 0) {
 let preDuplicates = Object.entries(urls)
     .filter(([source, urls]) => !ignoreSources.includes(source))
     .map(([source, urls]) => urls)
-    .filter((urls) => urls.length < 3 || !urls[2].botPrevention)
+    .filter((urls) => !hasCiBotPrevention(urls))
     .map((urls) => [{ url: urls[0] }])
     .map((value) => ({ value, sort: Math.random() })) // shuffle
     .sort((a, b) => a.sort - b.sort)

@@ -132,6 +132,14 @@ export const asyncMap = (arr, func) => Promise.all(arr.map(func));
  */
 export const readURLs = () => readJSON(`${root}/test/data/urls.json`);
 
+export const urlTestConfig = (entries) => entries[2] || {};
+
+export const hasCiBotPrevention = (entries) =>
+    Boolean(urlTestConfig(entries).ciBotPrevention);
+
+export const hasManualBotPrevention = (entries) =>
+    Boolean(urlTestConfig(entries).manualBotPrevention);
+
 /**
  * Read the duplicates data file.
  */

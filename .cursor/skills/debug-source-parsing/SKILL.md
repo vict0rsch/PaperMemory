@@ -55,7 +55,7 @@ Note which order fails (`abs;pdf` vs `pdf;abs`) and the exact URL in the timeout
 | --- | --- |
 | Fails in **one** order only | **parse** — the URL conversion for the *other* page is wrong. Inspect `absURL` / `pdfLink` / `toAbs` / `toPDF`. |
 | Fails in **both** orders, page **rendered fine** | **parse** — a selector/field the publisher changed, so `dom.getElementById(...)`/`getElementsByTagName(...)` returns null and throws (or returns a wrong/`undefined` field). |
-| Fails in **both** orders, page is a **challenge/blank** | **detect or fetch blocked** — bot-wall. Confirm with a visible browser; the source may need the `botPrevention` flag in `urls.json`. |
+| Fails in **both** orders, page is a **challenge/blank** | **detect or fetch blocked** — bot-wall. Confirm with a visible browser; the source may need the `ciBotPrevention` flag in `urls.json`. |
 | Stored, but a field is wrong/`undefined` | **parse** — the extraction logic for that field; check against the live DOM. |
 
 ### 4. Confirm in cloakbrowser
@@ -109,4 +109,5 @@ All cases must pass in **both** orders. Then delete the throwaway script (`test/
 ## Notes
 
 - Set `headless` to `false` (e.g. `HEADLESS=0` for `test/manual-open-urls-browser.js`, or `makeBrowser(false)`) when you need to watch the page interactively.
-- Sources flagged `botPrevention` in `urls.json` are skipped by the automated test — debug those manually with a visible browser.
+- Sources flagged `ciBotPrevention` in `urls.json` are skipped by the automated test — debug those manually with a visible browser.
+- Sources flagged `manualBotPrevention` in `urls.json` are also skipped by `test/manual-open-urls-browser.js`.

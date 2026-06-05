@@ -21,6 +21,7 @@ import {
     loadConfig,
     loadPaperMemoryUtils,
     indent,
+    hasCiBotPrevention,
 } from "./utilsForTests.js";
 import { allAttributes } from "./processMemory.js";
 
@@ -106,7 +107,7 @@ describe("Test paper detection and storage", function () {
 
     for (const source in urls) {
         const targets = urls[source];
-        if (targets.length === 3 && targets[2].botPrevention) {
+        if (hasCiBotPrevention(targets)) {
             console.log(
                 `\n>>> Skipping test for "${source}" because its website ` +
                     `prevents automated browsing. Remember to test manually:` +
