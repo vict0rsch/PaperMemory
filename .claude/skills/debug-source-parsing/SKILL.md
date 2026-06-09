@@ -108,6 +108,6 @@ All cases must pass in **both** orders. Then delete the throwaway script (`test/
 
 ## Notes
 
-- Set `headless` to `false` (e.g. `HEADLESS=0` for `test/manual-open-urls-browser.js`, or `makeBrowser(false)`) when you need to watch the page interactively.
+- Set `headless` to `false` (e.g. `headless=false npm run test:file test/manual-open-urls.js`, or `makeBrowser(false)`) when you need to watch the page interactively.
 - Sources flagged `ciBotPrevention` in `urls.json` are skipped by the automated test — debug those manually with a visible browser.
-- Sources flagged `manualBotPrevention` in `urls.json` are also skipped by `test/manual-open-urls-browser.js`.
+- Sources flagged `manualBotPrevention` in `urls.json` are also skipped by `test/manual-open-urls.js`.
