@@ -1,8 +1,5 @@
 import Heap from "heap";
-import puppeteer from "puppeteer-extra";
-import StealthPlugin from "puppeteer-extra-plugin-stealth";
-
-puppeteer.use(StealthPlugin());
+import { launch } from "cloakbrowser/puppeteer";
 import fs from "fs";
 import { glob } from "glob";
 
@@ -110,7 +107,7 @@ const getCoauthors = (page, max = 4) => {
     nextId.push({ id: knownIds.pop(), order: 0, level: 0 });
     knownIds = new Set(knownIds ?? []);
 
-    const browser = await puppeteer.launch({ headless: false });
+    const browser = await launch({ headless: false });
     const page = await browser.newPage();
     await page.setViewport({ width: 1200, height: 900 });
     console.log("knownIds: ", knownIds);

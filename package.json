@@ -23,6 +23,7 @@
         "pretest": "npm run build:chrome",
         "test": "node --import ./register.mjs ./node_modules/.bin/mocha test/test-*.js --exclude test/test-sync.js --exit",
         "test:file": "node --import ./register.mjs ./node_modules/.bin/mocha --exit",
+        "browser": "npm run build:chrome && openBrowser=true node test/tmpBrowser.js",
         "format": "prettier --write \"**/*.{js,mjs,json,yaml,yml,html,css,md}\""
     },
     "repository": {
@@ -49,9 +50,8 @@
         "ora": "^5.4.1",
         "postcss": "^8.5.6",
         "prettier": "^3.8.3",
-        "puppeteer": "^24.16.0",
-        "puppeteer-extra": "^3.3.6",
-        "puppeteer-extra-plugin-stealth": "^2.11.2",
+        "cloakbrowser": "^0.3.31",
+        "puppeteer-core": "^24.16.0",
         "readline-sync": "^1.4.10",
         "uuid": "^9.0.1",
         "wxt": "^0.20.25",

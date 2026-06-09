@@ -1,26 +1,20 @@
 import { expect } from "expect";
 
-import puppeteer from "puppeteer-extra";
-import StealthPlugin from "puppeteer-extra-plugin-stealth";
-import { sleep, root } from "./utilsForTests.js";
+import { launch } from "cloakbrowser/puppeteer";
+import { sleep, root, indent } from "./utilsForTests.js";
 import fs from "fs";
 
-puppeteer.use(StealthPlugin());
-
 export const makeBrowser = async (headless = false, windowSize = "1200,900") => {
-    const browser = await puppeteer.launch({
+    const browser = await launch({
         headless,
-        ignoreHTTPSErrors: true,
-        ignoreDefaultArgs: ["--disable-extensions"],
+        extensionPaths: [`${root}/dist/chrome-mv3`],
         args: [
-            `--load-extension=${root}/dist/chrome-mv3`,
             `--window-size=${windowSize}`,
             "--no-sandbox",
             "--disable-setuid-sandbox",
-            "--disable-web-security",
             "--disable-dev-shm-usage",
-            "--disable-gpu",
         ],
+        launchOptions: { acceptInsecureCerts: true },
     });
     return browser;
 };
@@ -53,11 +47,28 @@ export const visitPaperPage = async (browser, target, options = {}) => {
         timeout: null,
         keepOpen: false,
         dontScreenshot: false,
+        indents: 0,
     };
     const opts = { ...defaults, ...options };
 
     const p = opts.page || (await browser.pages())[0] || (await browser.newPage());
-    await p.goto(target);
+    // A leftover page from the previous source (e.g. a Cloudflare "Just a moment..."
+    // challenge) can perform a client-side navigation that aborts this goto with
+    // net::ERR_ABORTED. Retry a few times so the competing navigation can settle.
+    const maxNavAttempts = 3;
+    let gotoError = null;
+    for (let attempt = 1; attempt <= maxNavAttempts; attempt++) {
+        try {
+            await p.goto(target);
+            gotoError = null;
+            break;
+        } catch (e) {
+            gotoError = e;
+            if (!String(e.message).includes("net::ERR_ABORTED")) break;
+            if (attempt < maxNavAttempts) await sleep(1000);
+        }
+    }
+    if (gotoError) throw gotoError;
     const paperIsStored = new Promise((resolve, reject) => {
         let screenshotTimeout;
         p.waitForSelector("meta[name='pm-complete-secret-html']")
@@ -73,30 +84,66 @@ export const visitPaperPage = async (browser, target, options = {}) => {
                 return document.querySelector("meta[name='pm-complete-secret-html']");
             });
             if (!element && !opts.dontScreenshot) {
-                console.log(`No element found: taking a screenshot`);
                 if (!fs.existsSync(`${root}/tmp`)) {
-                    console.log(`Creating tmp directory in ${root}/tmp`);
+                    console.log(
+                        `${indent(opts.indents)}Creating tmp directory in ${root}/tmp`,
+                    );
                     fs.mkdirSync(`${root}/tmp`);
                 }
                 let screenshotName = `screenshot_${Date.now()}_${target
                     .replaceAll("https://", "")
-                    .replaceAll("/", "__")}.jpg`;
-                screenshotName = screenshotName
+                    .replaceAll("/", "__")
                     .replace(/[^a-zA-Z0-9\-_\.]/g, "")
-                    .slice(0, 100);
+                    .slice(0, 50)}.jpg`;
                 const screenshotPath = `${root}/tmp/${screenshotName}`;
                 await p.screenshot({
                     path: screenshotPath,
                     fullPage: true,
                 });
-                console.log(`Screenshot taken and saved to ${screenshotPath}\n\n`);
+                reject(
+                    new Error(
+                        `Timeout for ${target} -> Screenshot taken and saved to ${screenshotPath}`,
+                    ),
+                );
             }
             resolve();
-        }, 5000);
+        }, 15000);
     });
-    opts.timeout > 0 && (await paperIsStored);
+    await paperIsStored;
     opts.timeout > 0 && (await sleep(opts.timeout));
     !opts.keepOpen && (await p.close());
+};
+
+export const makeVisitFailureCollector = (label = "paper page visits") => {
+    const failures = [];
+
+    return {
+        failures,
+        visit: async (browser, target, options = {}) => {
+            try {
+                await visitPaperPage(browser, target, options);
+            } catch (error) {
+                const message = error instanceof Error ? error.message : String(error);
+                failures.push({ target, message });
+                console.error(
+                    `${indent(options.indents || 0)}Visit failed: ${message}`,
+                );
+            }
+        },
+        throwIfFailed: () => {
+            if (!failures.length) return;
+
+            const summary = failures
+                .map(
+                    ({ target, message }, index) =>
+                        `${index + 1}. ${target}\n   ${message}`,
+                )
+                .join("\n");
+            throw new Error(
+                `${label}: ${failures.length} visit(s) failed after completing the batch:\n${summary}`,
+            );
+        },
+    };
 };
 
 // Helper function to find the actual extension ID from the Chrome extensions page

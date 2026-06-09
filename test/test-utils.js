@@ -6,6 +6,9 @@ import { loadPaperMemoryUtils, range, readJSON } from "./utilsForTests.js";
 await loadPaperMemoryUtils();
 // create fake `document`, parseUrl() will need it for instance
 global.document = new JSDOM(`<!DOCTYPE html>`).window.document;
+// initState() (which loads the Cell journal data) does not run in unit tests,
+// so populate it directly from the same source the extension fetches at runtime.
+PMUtils.config.state.cellJournalData = readJSON("./public/data/cell.json");
 
 describe("Bibtex parser", function () {
     var bdata = readJSON("./test/data/bibtexs.json");
@@ -164,5 +167,25 @@ describe("paper.js", () => {
                 expect(isp).toEqual(target);
             });
         }
+    });
+
+    describe("#sciencedirect signed PDF redirect", () => {
+        // Sanitised stand-in for the pdf.sciencedirectassets.com redirect: the
+        // real one carries an AWS X-Amz-Security-Token and expires in minutes, so
+        // we only keep the PII-bearing parts and drop every credential param.
+        const signedUrl =
+            "https://pdf.sciencedirectassets.com/271664/1-s2.0-S0001457526X20048/1-s2.0-S0001457526002083/main.pdf?pii=S0001457526002083&type=client";
+
+        it("is recognised as a sciencedirect page", async () => {
+            const isp = await PMUtils.paper.isPaper(signedUrl);
+            expect(isp.sciencedirect).toBe(true);
+        });
+
+        it("resolves to the abstract page from its PII", () => {
+            const paper = { source: "sciencedirect", pdfLink: signedUrl };
+            expect(PMUtils.paper.paperToAbs(paper)).toEqual(
+                "https://www.sciencedirect.com/science/article/pii/S0001457526002083",
+            );
+        });
     });
 });

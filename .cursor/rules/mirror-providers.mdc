@@ -1,3 +1,9 @@
+---
+description: Keep .cursor and .claude skills/rules mirrored when adding, editing, renaming, or deleting any rule or skill
+globs: .cursor/rules/**,.cursor/skills/**,.claude/rules/**,.claude/skills/**
+alwaysApply: false
+---
+
 # Mirror Providers Rule
 
 ## Policy

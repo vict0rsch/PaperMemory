@@ -10,7 +10,7 @@ import {
     getPaperMemoryState,
     findExtensionId,
     getPMURLs,
-    visitPaperPage,
+    makeVisitFailureCollector,
 } from "./browser.js";
 
 import {
@@ -21,6 +21,7 @@ import {
     root,
     loadConfig,
     indent,
+    hasCiBotPrevention,
 } from "./utilsForTests.js";
 
 // make all functions in utils.min.js available in the `global` scope
@@ -84,7 +85,7 @@ if (maxSources > 0) {
 let preDuplicates = Object.entries(urls)
     .filter(([source, urls]) => !ignoreSources.includes(source))
     .map(([source, urls]) => urls)
-    .filter((urls) => urls.length < 3 || !urls[2].botPrevention)
+    .filter((urls) => !hasCiBotPrevention(urls))
     .map((urls) => [{ url: urls[0] }])
     .map((value) => ({ value, sort: Math.random() })) // shuffle
     .sort((a, b) => a.sort - b.sort)
@@ -132,6 +133,9 @@ describe("Paper de-duplication", function () {
             before(async function () {
                 // create browser
                 browser = await makeBrowser(headless);
+                const visitFailures = makeVisitFailureCollector(
+                    `Duplicate visits for order ${order}`,
+                );
                 // visit non-duplicated papers first, then known duplicates
                 const allVisits = [...preDuplicates, ...allDuplicates];
                 // count total number of urls to visit
@@ -157,15 +161,17 @@ describe("Paper de-duplication", function () {
                     // visit the paper urls
                     for (const dup of duplicates) {
                         console.log(
-                            `${indent(2)}(${n + 1}/${nUrls}) visiting ${dup.url}`,
+                            `${indent(2)}(${n + 1}/${nUrls}) visiting ${dup.name || "pre-duplicate"} (${dup.url.slice(0, 30)}[...])`,
                         );
-                        await visitPaperPage(browser, dup.url, {
+                        await visitFailures.visit(browser, dup.url, {
                             keepOpen,
                             timeout: pageTimeout,
+                            indents: 3,
                         });
                         n += 1;
                     }
                 }
+                visitFailures.throwIfFailed();
 
                 // go to the extension popup's page
                 memoryPage = (await browser.pages())[0];

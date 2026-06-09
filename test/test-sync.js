@@ -1,3 +1,5 @@
+// test-meta:ignore -- manual-only Gist sync test; requires a GitHub PAT.
+
 import {
     makeBrowser,
     getPMURLs,

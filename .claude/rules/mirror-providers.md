@@ -1,3 +1,11 @@
+---
+paths:
+  - ".cursor/rules/**"
+  - ".cursor/skills/**"
+  - ".claude/rules/**"
+  - ".claude/skills/**"
+---
+
 # Mirror Providers Rule
 
 ## Policy
