@@ -751,8 +751,6 @@ describe("Test PaperMemory Memory Item Actions", function () {
                     ".memory-item-scirate",
                     PMPage,
                 );
-            const initialPagesCount = (await browser.pages()).length;
-
             await safeClick(scirateSelector, PMPage);
 
             const matchingPage = await verifyPageNavigation(/scirate\.com/, browser);
