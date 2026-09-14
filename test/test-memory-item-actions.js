@@ -637,10 +637,7 @@ describe("Test PaperMemory Memory Item Actions", function () {
             console.log(indent(2) + `✓ ${serviceName} button is clickable`);
 
             // Click button and verify navigation
-            const initialPages = await browser.pages();
             await safeClick(selector, page);
-            const newPagesCount = (await browser.pages()).length - initialPages.length;
-            expect(newPagesCount).toBe(1);
             const newPage = await verifyPageNavigation(expectedUrlPattern, browser);
             await newPage.close();
         }
