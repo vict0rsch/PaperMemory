@@ -25,6 +25,8 @@ transparent to bot detection.
 - On macOS the binary trails one Chromium major version behind linux/windows (145 vs
   146 as of the initial adoption). This has not caused test divergence.
 - `CHROME_PATH` / the system-installed Chrome is no longer used for tests.
-- `--disable-web-security` and `--disable-gpu` remain in the test args for now;
-  they partially undermine stealth and are candidates for removal once stability is
-  confirmed.
+- The stealth-undermining `--disable-web-security` and `--disable-gpu` flags were
+  dropped with this migration; the remaining launch args are `--window-size`,
+  `--no-sandbox`, `--disable-setuid-sandbox`, and `--disable-dev-shm-usage`, and
+  HTTPS-error tolerance is handled by `launchOptions.acceptInsecureCerts` in
+  `test/browser.js`.
