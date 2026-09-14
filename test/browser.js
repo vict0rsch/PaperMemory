@@ -352,25 +352,15 @@ export const verifyClipboardContent = async (
 };
 
 export const verifyPageNavigation = async (expectedUrlPattern, browser) => {
-    // Check if any existing or new page has the expected URL
-    const allPages = await browser.pages();
-    const allPagesAndURLs = await Promise.all(
-        allPages.map(async (page) => {
-            try {
-                const url = await getURL(page);
-                return { page, url };
-            } catch (e) {
-                return { page, url: null };
-            }
-        }),
-    );
-
-    const matchingPageAndURL = allPagesAndURLs.find((pageAndURL) =>
+    // Wait for any existing or new page to reach the expected URL; the target's
+    // URL commits asynchronously after the click, so a single pages() sample races it.
+    const matches = (url) =>
         expectedUrlPattern.test
-            ? expectedUrlPattern.test(pageAndURL.url)
-            : pageAndURL.url && pageAndURL.url.includes(expectedUrlPattern),
+            ? expectedUrlPattern.test(url)
+            : url && url.includes(expectedUrlPattern);
+    const target = await browser.waitForTarget(
+        (t) => t.type() === "page" && matches(t.url()),
+        { timeout: 10000 },
     );
-
-    expect(matchingPageAndURL).toBeTruthy();
-    return matchingPageAndURL.page;
+    return await target.page();
 };
