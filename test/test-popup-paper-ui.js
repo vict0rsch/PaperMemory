@@ -380,8 +380,6 @@ describe("Test PaperMemory Popup UI - Known Paper Page", function () {
             console.log(indent(2) + `✓ ${serviceName} button is clickable`);
 
             // Click button and verify navigation
-            const initialPages = await browser.pages();
-
             await safeClick(selector, PMPage);
 
             // Verify page url
