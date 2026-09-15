@@ -89,6 +89,9 @@ describe("Test PaperMemory MemoryTable UI", function () {
 
             // Step 3: Reload the page to reflect the injected data
             await page.reload({ waitUntil: "networkidle0" });
+            await page.waitForFunction(() => window.__pmPopupReady === true, {
+                timeout: 10000,
+            });
         });
 
         afterEach(async function () {
