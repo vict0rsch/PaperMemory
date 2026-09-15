@@ -111,7 +111,7 @@ describe("Test PaperMemory Popup Search Functionality", function () {
             } catch {}
             page = await browser.newPage();
             await resetPage(page, pmURLs.popupURL);
-            await setupPageWithData(PMPage, testData);
+            await setupPageWithData(page, testData);
         }
         return page;
     }
