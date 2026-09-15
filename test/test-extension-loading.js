@@ -191,38 +191,39 @@ describe("Test PaperMemory Extension Loading", function () {
 
                 // Wait for extensions page to load
 
-                // Check if the PaperMemory extension is visible and enabled
-                // This is more complex as it requires interacting with shadow DOM
-                const extensionEnabled = await page.evaluate(() => {
-                    // Look for the extension in the extensions page
-                    const extensionManager =
-                        document.querySelector("extensions-manager");
-                    if (!extensionManager) return false;
+                // Check that the PaperMemory extension is listed; the extensions
+                // list renders asynchronously, so wait for the item by name in
+                // the shadow DOM
+                await page.waitForFunction(
+                    () => {
+                        const extensionManager =
+                            document.querySelector("extensions-manager");
+                        if (!extensionManager || !extensionManager.shadowRoot)
+                            return false;
 
-                    // Access shadow root
-                    const shadowRoot = extensionManager.shadowRoot;
-                    if (!shadowRoot) return false;
+                        const itemList =
+                            extensionManager.shadowRoot.querySelector(
+                                "extensions-item-list",
+                            );
+                        if (!itemList || !itemList.shadowRoot) return false;
 
-                    // Look for extension items
-                    const itemList = shadowRoot.querySelector("extensions-item-list");
-                    if (!itemList) return false;
-
-                    const itemShadowRoot = itemList.shadowRoot;
-                    if (!itemShadowRoot) return false;
-
-                    // Check if any extension item exists (indicating extensions are loaded)
-                    const extensionItems =
-                        itemShadowRoot.querySelectorAll("extensions-item");
-                    return extensionItems.length > 0;
-                });
-
-                console.log(
-                    `Extension found in Chrome extensions: ${extensionEnabled}`,
+                        const extensionItems =
+                            itemList.shadowRoot.querySelectorAll("extensions-item");
+                        for (const item of extensionItems) {
+                            if (!item.shadowRoot) continue;
+                            const nameElement =
+                                item.shadowRoot.querySelector("#name");
+                            if (
+                                nameElement &&
+                                nameElement.textContent.includes("Paper Memory")
+                            ) {
+                                return true;
+                            }
+                        }
+                        return false;
+                    },
+                    { timeout: 10000, polling: 100 },
                 );
-
-                // Note: We can't easily check for the specific PaperMemory extension due to shadow DOM complexity
-                // But we can verify that the browser is capable of showing extensions
-                expect(typeof extensionEnabled).toBe("boolean");
 
                 console.log("✓ Chrome extensions page accessible");
             } finally {
@@ -262,35 +263,29 @@ describe("Test PaperMemory Extension Loading", function () {
             }
         });
 
-        it("should have extension content scripts capability", async function () {
+        it("should have extension APIs available on extension pages", async function () {
             const page = await browser.newPage();
 
             try {
-                // Navigate to a simple webpage to test content script injection
-                await page.goto(
-                    "data:text/html,<html><head><title>Test</title></head><body><p>Test page for extension</p></body></html>",
-                );
+                // Navigate to the extension popup page, where chrome.* APIs are
+                // expected to be available
+                await page.goto(pmURLs.popupURL, {
+                    waitUntil: "networkidle0",
+                    timeout: 10000,
+                });
 
-                // Check if the page loaded
-                const title = await page.title();
-                expect(title).toBe("Test");
-
-                // Try to inject a simple script to test if the extension context is available
                 const hasExtensionAccess = await page.evaluate(() => {
-                    // Check if chrome extension APIs are available
                     return (
                         typeof chrome !== "undefined" &&
-                        typeof chrome.runtime !== "undefined"
+                        typeof chrome.runtime !== "undefined" &&
+                        typeof chrome.runtime.id === "string"
                     );
                 });
 
                 console.log(`Chrome extension APIs available: ${hasExtensionAccess}`);
+                expect(hasExtensionAccess).toBe(true);
 
-                // Note: Content scripts may not have access to all chrome APIs,
-                // so we don't fail if this is false
-                expect(typeof hasExtensionAccess).toBe("boolean");
-
-                console.log("✓ Content script context test completed");
+                console.log("✓ Extension API context available");
             } finally {
                 await page.close();
             }
@@ -358,6 +353,11 @@ describe("Test PaperMemory Extension Loading", function () {
                     `   dist/chrome-mv3/${file} exists: ${fs.existsSync(filePath)}`,
                 );
             });
+
+            // The built extension output must exist for the browser to load it
+            for (const file of wxtOutputFiles) {
+                expect(fs.existsSync(`${distRoot}/${file}`)).toBe(true);
+            }
 
             console.log("✓ Extension diagnostics completed");
         });
