@@ -80,33 +80,44 @@ export const visitPaperPage = async (browser, target, options = {}) => {
                 // Ignore errors (e.g. timeout or target closed)
             });
         screenshotTimeout = setTimeout(async () => {
-            const element = await p.evaluate(() => {
-                return document.querySelector("meta[name='pm-complete-secret-html']");
-            });
-            if (!element && !opts.dontScreenshot) {
-                if (!fs.existsSync(`${root}/tmp`)) {
-                    console.log(
-                        `${indent(opts.indents)}Creating tmp directory in ${root}/tmp`,
-                    );
-                    fs.mkdirSync(`${root}/tmp`);
-                }
-                let screenshotName = `screenshot_${Date.now()}_${target
-                    .replaceAll("https://", "")
-                    .replaceAll("/", "__")
-                    .replace(/[^a-zA-Z0-9\-_\.]/g, "")
-                    .slice(0, 50)}.jpg`;
-                const screenshotPath = `${root}/tmp/${screenshotName}`;
-                await p.screenshot({
-                    path: screenshotPath,
-                    fullPage: true,
+            // Every path must settle the promise: an evaluate/screenshot throw
+            // (e.g. target closed) must reject, not hang the suite.
+            try {
+                const element = await p.evaluate(() => {
+                    return document.querySelector("meta[name='pm-complete-secret-html']");
                 });
+                if (!element && !opts.dontScreenshot) {
+                    if (!fs.existsSync(`${root}/tmp`)) {
+                        console.log(
+                            `${indent(opts.indents)}Creating tmp directory in ${root}/tmp`,
+                        );
+                        fs.mkdirSync(`${root}/tmp`);
+                    }
+                    let screenshotName = `screenshot_${Date.now()}_${target
+                        .replaceAll("https://", "")
+                        .replaceAll("/", "__")
+                        .replace(/[^a-zA-Z0-9\-_\.]/g, "")
+                        .slice(0, 50)}.jpg`;
+                    const screenshotPath = `${root}/tmp/${screenshotName}`;
+                    await p.screenshot({
+                        path: screenshotPath,
+                        fullPage: true,
+                    });
+                    reject(
+                        new Error(
+                            `Timeout for ${target} -> Screenshot taken and saved to ${screenshotPath}`,
+                        ),
+                    );
+                    return;
+                }
+                resolve();
+            } catch (e) {
                 reject(
                     new Error(
-                        `Timeout for ${target} -> Screenshot taken and saved to ${screenshotPath}`,
+                        `Timeout for ${target} and diagnostic capture failed: ${e.message}`,
                     ),
                 );
             }
-            resolve();
         }, 15000);
     });
     await paperIsStored;
@@ -152,29 +163,39 @@ export const findExtensionId = async (browser) => {
     try {
         await page.goto("chrome://extensions/", { waitUntil: "networkidle0" });
 
-        // Extract extension IDs from the page
-        const extensionId = await page.evaluate(() => {
-            const extensionManager = document.querySelector("extensions-manager");
-            if (!extensionManager || !extensionManager.shadowRoot) return null;
+        // The extensions list populates asynchronously (chrome.developerPrivate
+        // callback, not a network request), so networkidle0 does not settle it.
+        // Poll the shadow DOM until the Paper Memory item renders.
+        const handle = await page.waitForFunction(
+            () => {
+                const extensionManager = document.querySelector("extensions-manager");
+                if (!extensionManager || !extensionManager.shadowRoot) return null;
 
-            const itemList =
-                extensionManager.shadowRoot.querySelector("extensions-item-list");
-            if (!itemList || !itemList.shadowRoot) return null;
+                const itemList =
+                    extensionManager.shadowRoot.querySelector("extensions-item-list");
+                if (!itemList || !itemList.shadowRoot) return null;
 
-            const extensionItems =
-                itemList.shadowRoot.querySelectorAll("extensions-item");
-            for (const item of extensionItems) {
-                if (!item.shadowRoot) continue;
+                const extensionItems =
+                    itemList.shadowRoot.querySelectorAll("extensions-item");
+                for (const item of extensionItems) {
+                    if (!item.shadowRoot) continue;
 
-                const nameElement = item.shadowRoot.querySelector("#name");
-                if (nameElement && nameElement.textContent.includes("Paper Memory")) {
-                    return item.id;
+                    const nameElement = item.shadowRoot.querySelector("#name");
+                    if (
+                        nameElement &&
+                        nameElement.textContent.includes("Paper Memory")
+                    ) {
+                        return item.id;
+                    }
                 }
-            }
-            return null;
-        });
-
-        return extensionId;
+                return null;
+            },
+            { timeout: 10000, polling: 100 },
+        );
+        return await handle.jsonValue();
+    } catch (e) {
+        // Timed out waiting for the extension to appear; callers handle null.
+        return null;
     } finally {
         await page.close();
     }
@@ -241,14 +262,21 @@ export const verifyElementClickable = async (el, page) => {
     return isClickable;
 };
 
-export const getURL = async (page) => {
+export const getURL = async (page, timeout = 10000) => {
+    const deadline = Date.now() + timeout;
     let documentState = null;
     while (documentState !== "complete") {
+        if (Date.now() > deadline) {
+            throw new Error("getURL: timed out waiting for document readyState 'complete'");
+        }
         documentState && (await sleep(50));
         documentState = await page.evaluate(() => document.readyState);
     }
     let url = await page.evaluate(() => document.location.href);
     while (url === "about:blank") {
+        if (Date.now() > deadline) {
+            throw new Error("getURL: timed out waiting for URL to leave about:blank");
+        }
         await sleep(50);
         url = await page.evaluate(() => document.location.href);
     }
@@ -304,11 +332,10 @@ export const setPreferencesAndReload = async (prefs, page) => {
     });
 };
 
-export const getClipboardText = async (page) => {
-    const indent = (n) => " ".repeat(n * 4);
-    try {
+export const getClipboardText = async (page, timeout = 2000) => {
+    const readOnce = () =>
         // Add timeout to prevent hanging on permission dialogs
-        return await Promise.race([
+        Promise.race([
             page.evaluate(async () => {
                 try {
                     const text = await navigator.clipboard.readText();
@@ -325,14 +352,20 @@ export const getClipboardText = async (page) => {
                     return result ? content : null;
                 }
             }),
-            new Promise((_, reject) =>
-                setTimeout(() => reject(new Error("Clipboard read timeout")), 1000),
-            ),
+            new Promise((resolve) => setTimeout(() => resolve(null), 1000)),
         ]);
-    } catch (error) {
-        console.log(indent(3) + `⚠ Clipboard read failed: ${error.message}`);
-        return null;
+    // The copy handlers' clipboard write is async and un-awaited, so a single
+    // read right after a click races it; poll until content lands.
+    const deadline = Date.now() + timeout;
+    let text = await readOnce();
+    while (!text && Date.now() < deadline) {
+        await sleep(50);
+        text = await readOnce();
     }
+    if (!text) {
+        console.log(indent(3) + "⚠ Clipboard read failed or empty after retries");
+    }
+    return text;
 };
 
 export const verifyClipboardContent = async (
