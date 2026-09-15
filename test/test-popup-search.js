@@ -223,6 +223,11 @@ describe("Test PaperMemory Popup Search Functionality", function () {
 
         expect(stateInfo.papersListLength).toBe(expectedCount);
 
+        // Cross-check the rendered table so a render bug (state updated but DOM
+        // not re-rendered) cannot pass the suite.
+        const visibleCount = (await getVisibleMemoryItems(page)).length;
+        expect(visibleCount).toBe(expectedCount);
+
         if (expectedPaperIds.length > 0) {
             for (const expectedId of expectedPaperIds) {
                 expect(stateInfo.papersListIds).toContain(expectedId);
@@ -357,55 +362,8 @@ describe("Test PaperMemory Popup Search Functionality", function () {
         });
 
         it("should be able to set search value and trigger search", async function () {
-            // Test basic search functionality
-            await PMPage.evaluate(() => {
-                const searchInput = document.getElementById("memory-search");
-                searchInput.value = "Cycle";
-                // Trigger search manually
-                if (
-                    window.PMDebug &&
-                    window.PMDebug.config &&
-                    window.PMDebug.config.state
-                ) {
-                    const state = window.PMDebug.config.state;
-                    // Call search function directly
-                    if (window.PMDebug.searchMemory) {
-                        window.PMDebug.searchMemory("Cycle");
-                    }
-                }
-            });
-        });
-
-        it("should debug available search functions", async function () {
-            const debugInfo = await PMPage.evaluate(() => {
-                const available = {};
-                if (window.PMDebug) {
-                    available.PMDebugExists = true;
-                    available.searchMemory = typeof window.PMDebug.searchMemory;
-                    available.searchMemoryByTags =
-                        typeof window.PMDebug.searchMemoryByTags;
-                    available.searchMemoryByCode =
-                        typeof window.PMDebug.searchMemoryByCode;
-                    available.searchMemoryByYear =
-                        typeof window.PMDebug.searchMemoryByYear;
-                    available.displayMemoryTable =
-                        typeof window.PMDebug.displayMemoryTable;
-                    available.handleMemorySearchKeyPress =
-                        typeof window.PMDebug.handleMemorySearchKeyPress;
-
-                    // Check what's in the config
-                    if (window.PMDebug.config) {
-                        available.hasConfig = true;
-                        if (window.PMDebug.config.state) {
-                            available.hasState = true;
-                            available.stateKeys = Object.keys(
-                                window.PMDebug.config.state,
-                            );
-                        }
-                    }
-                }
-                return available;
-            });
+            await executeSearch(PMPage, "Cycle");
+            await verifySearchByState(PMPage, 1, [PAPER_IDS.CYCLE_GAN]);
         });
 
         it("should verify search consistency between state and displayed items", async function () {
@@ -488,23 +446,27 @@ describe("Test PaperMemory Popup Search Functionality", function () {
         });
 
         it("should handle tag click to search", async function () {
+            await setupPaperTags(PMPage, PAPER_IDS);
+
             // First ensure we have tags visible
             await typeInSearch(PMPage, "t: ");
             await sleep(100);
 
-            // Click on a tag
+            // Click on a tag — must render, or the test has asserted nothing
             const tagElement = await PMPage.$(".memory-tag");
-            if (tagElement) {
-                await safeClick(".memory-tag", PMPage);
+            expect(tagElement).toBeTruthy();
+            const tagText = await PMPage.evaluate(
+                (el) => el.textContent.trim(),
+                tagElement,
+            );
 
-                // Verify search input contains the tag
-                const searchValue = await PMPage.evaluate(() => {
-                    return document.getElementById("memory-search").value;
-                });
-                expect(searchValue).toContain("t: ");
-            } else {
-                // No tags available for click test
-            }
+            await safeClick(".memory-tag", PMPage);
+
+            // The concrete tag the click appended must land in the search input
+            const searchValue = await PMPage.evaluate(() => {
+                return document.getElementById("memory-search").value;
+            });
+            expect(searchValue).toContain(tagText);
         });
     });
 
@@ -648,23 +610,12 @@ describe("Test PaperMemory Popup Search Functionality", function () {
             await safeClick("#filter-favorites", PMPage);
             await sleep(100);
 
-            // Search for something that should match multiple papers
-            await PMPage.evaluate(() => {
-                const searchInput = document.getElementById("memory-search");
-                searchInput.value = "machine";
-
-                if (window.PMDebug && window.PMDebug.searchMemory) {
-                    window.PMDebug.searchMemory("machine");
-                    if (window.PMDebug.displayMemoryTable) {
-                        window.PMDebug.displayMemoryTable();
-                    }
-                }
-            });
-
-            await sleep(100);
+            // Search through the real input path: "machine" only matches the
+            // non-favorite NANOWIRE, so a composed filter+search yields 0.
+            await executeSearch(PMPage, "machine");
 
             // Should only show favorite papers that match
-            await verifySearchResults(PMPage, 1);
+            await verifySearchResults(PMPage, 0);
         });
 
         it("should update search placeholder when favorites filter is active", async function () {
@@ -800,19 +751,36 @@ describe("Test PaperMemory Popup Search Functionality", function () {
             await executeSearch(PMPage, "Cycle");
             await verifySearchByState(PMPage, 1, [PAPER_IDS.CYCLE_GAN]);
 
-            // Change sort order
-            await PMPage.evaluate(() => {
-                if (
-                    window.PMDebug &&
-                    window.PMDebug.config &&
-                    window.PMDebug.config.state
-                ) {
-                    window.PMDebug.config.state.sortKey = "year";
-                }
-            });
-
+            // Change sort order through the UI select
+            await PMPage.select("#memory-select", "year");
             await sleep(100);
+
             await verifySearchByState(PMPage, 1, [PAPER_IDS.CYCLE_GAN]);
+        });
+
+        it("should order rendered papers by the selected sort key", async function () {
+            // All 3 papers visible; years: HYPERPARAMETER 2012 < CYCLE_GAN 2017
+            // < NANOWIRE 2022
+            await executeSearch(PMPage, "");
+            await verifySearchByState(PMPage, 3);
+
+            await PMPage.select("#memory-select", "year");
+            await sleep(100);
+
+            const orderedIds = await PMPage.evaluate(() =>
+                Array.from(
+                    document.querySelectorAll("#memory-table .memory-container"),
+                ).map((el) => el.id.replace("memory-container--", "")),
+            );
+            const byYearAsc = [
+                PAPER_IDS.HYPERPARAMETER,
+                PAPER_IDS.CYCLE_GAN,
+                PAPER_IDS.NANOWIRE,
+            ];
+            const byYearDesc = [...byYearAsc].reverse();
+            expect([byYearAsc.join(), byYearDesc.join()]).toContain(
+                orderedIds.join(),
+            );
         });
     });
 
