@@ -750,15 +750,18 @@ describe("Popup Menu Tests", function () {
                 }, selector);
                 expect(newChecked).toBe(!initialChecked);
 
-                // Verify Storage update
-                const storedPrefs = await PMPage.evaluate(() => {
-                    return new Promise((resolve) => {
-                        chrome.storage.local.get("prefs", (result) => {
-                            resolve(result.prefs || {});
-                        });
-                    });
-                });
-                expect(storedPrefs[checkboxId]).toBe(newChecked);
+                // Verify Storage update — the pref write is async; poll until it lands
+                await PMPage.waitForFunction(
+                    (id, checked) =>
+                        new Promise((resolve) => {
+                            chrome.storage.local.get("prefs", (result) => {
+                                resolve((result.prefs || {})[id] === checked);
+                            });
+                        }),
+                    { timeout: 5000, polling: 100 },
+                    checkboxId,
+                    newChecked,
+                );
 
                 // Toggle back to restore state
                 await safeClick(selector, PMPage);
@@ -830,15 +833,19 @@ describe("Popup Menu Tests", function () {
             await verifySelectorExists(selector, PMPage);
             await PMPage.select(selector, "c");
 
-            // 3. Verify storage update
-            const storedAction = await PMPage.evaluate(() => {
-                return new Promise((resolve) => {
-                    chrome.storage.local.get("defaultKeyboardAction", (result) => {
-                        resolve(result.defaultKeyboardAction);
-                    });
-                });
-            });
-            expect(storedAction).toBe("c");
+            // 3. Verify storage update — the write is async; poll until it lands
+            await PMPage.waitForFunction(
+                () =>
+                    new Promise((resolve) => {
+                        chrome.storage.local.get(
+                            "defaultKeyboardAction",
+                            (result) => {
+                                resolve(result.defaultKeyboardAction === "c");
+                            },
+                        );
+                    }),
+                { timeout: 5000, polling: 100 },
+            );
 
             // 4. Close menu
             await safeClick("#menu-switch", PMPage);

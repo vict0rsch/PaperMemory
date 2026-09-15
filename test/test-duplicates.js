@@ -15,7 +15,6 @@ import {
 
 import {
     loadPaperMemoryUtils,
-    sleep,
     readURLs,
     readDuplicates,
     root,
@@ -178,8 +177,12 @@ describe("Paper de-duplication", function () {
                 const extensionId = await findExtensionId(browser);
                 const { popupURL } = getPMURLs(extensionId);
                 await memoryPage.goto(popupURL);
-                // wait for it to load
-                await sleep(1e3);
+                // The popup populates its in-memory state asynchronously; wait
+                // for readiness instead of a fixed sleep
+                await memoryPage.waitForFunction(
+                    () => window.__pmPopupReady === true,
+                    { timeout: 10000 },
+                );
                 // get PaperMemory's state
                 memoryState = await getPaperMemoryState(memoryPage);
 
