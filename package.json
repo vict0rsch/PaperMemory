@@ -42,6 +42,7 @@
         "tom-select": "^2.6.2"
     },
     "devDependencies": {
+        "cloakbrowser": "^0.6.5",
         "expect": "^30.5.1",
         "glob": "^13.0.6",
         "heap": "^0.2.7",
@@ -50,7 +51,6 @@
         "ora": "^9.4.1",
         "postcss": "^8.5.28",
         "prettier": "^3.9.6",
-        "cloakbrowser": "^0.5.10",
         "puppeteer-core": "^25.11.0",
         "readline-sync": "^1.4.10",
         "uuid": "^14.0.2",

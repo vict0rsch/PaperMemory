@@ -24,6 +24,11 @@ transparent to bot detection.
   per platform. CI caches it via `actions/cache` keyed on `package-lock.json`.
 - On macOS the binary trails one Chromium major version behind linux/windows (145 vs
   146 as of the initial adoption). This has not caused test divergence.
+- The wrapper is held on `^0.6.x`, the last keyless line (it still downloads the
+  v146/v145 build above). From 0.7.0 every launch needs a license key, and the free
+  key allows one concurrent session, which would collide with the parallel CI test
+  matrix. Moving to 0.7+ means adding a `CLOAKBROWSER_LICENSE_KEY` CI secret and
+  either a Pro key or a serialized matrix.
 - `CHROME_PATH` / the system-installed Chrome is no longer used for tests.
 - The stealth-undermining `--disable-web-security` and `--disable-gpu` flags were
   dropped with this migration; the remaining launch args are `--window-size`,
