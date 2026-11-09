@@ -14,6 +14,7 @@ import {
     safeClick,
     verifyClipboardContent,
     getClipboardText,
+    seedClipboard,
     verifyElementClickable,
     setPreferencesAndReload,
     verifyPageNavigation,
@@ -213,6 +214,7 @@ describe("Test PaperMemory Popup UI - Known Paper Page", function () {
             // Find and click the copy link button
             const copyLinkSelector = `#popup-memory-item-copy-link--${arxivPaperIdEscaped}`;
             const copyLinkBtn = await verifySelectorExists(copyLinkSelector, PMPage);
+            await seedClipboard(PMPage);
             await safeClick(copyLinkSelector, PMPage);
 
             // Verify clipboard contains the correct URL
@@ -246,6 +248,7 @@ describe("Test PaperMemory Popup UI - Known Paper Page", function () {
                 copyHyperlinkSelector,
                 PMPage,
             );
+            await seedClipboard(PMPage);
             await safeClick(copyHyperlinkSelector, PMPage);
 
             // Verify clipboard contains both title and URL
@@ -272,6 +275,7 @@ describe("Test PaperMemory Popup UI - Known Paper Page", function () {
             // Find and click the copy markdown button
             const copyMdSelector = `#popup-memory-item-md--${arxivPaperIdEscaped}`;
             const copyMdBtn = await verifySelectorExists(copyMdSelector, PMPage);
+            await seedClipboard(PMPage);
             await safeClick(copyMdSelector, PMPage);
 
             // Verify clipboard contains valid markdown format [title](url)
@@ -302,6 +306,7 @@ describe("Test PaperMemory Popup UI - Known Paper Page", function () {
                 copyBibtexSelector,
                 PMPage,
             );
+            await seedClipboard(PMPage);
             await safeClick(copyBibtexSelector, PMPage);
 
             // Verify clipboard contains valid bibtex format

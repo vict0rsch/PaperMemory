@@ -13,6 +13,7 @@ import {
     makeBrowser,
     getPMURLs,
     getClipboardText,
+    seedClipboard,
     resetPage,
     setStorage,
     verifySelectorExists,
@@ -376,6 +377,7 @@ describe("Test PaperMemory Memory Item Actions", function () {
                 return PMDebug.config.state.papers[paperId];
             }, firstPaperId);
 
+            await seedClipboard(PMPage);
             await safeClick(
                 `#memory-container--${firstQueryId} .memory-item-copy-link`,
                 PMPage,
@@ -428,6 +430,7 @@ describe("Test PaperMemory Memory Item Actions", function () {
                     )}..."`,
             );
 
+            await seedClipboard(PMPage);
             await safeClick(
                 `#memory-container--${firstQueryId} .memory-item-copy-hyperlink`,
                 PMPage,
@@ -457,6 +460,7 @@ describe("Test PaperMemory Memory Item Actions", function () {
                 return PMDebug.config.state.papers[paperId];
             }, firstPaperId);
 
+            await seedClipboard(PMPage);
             await safeClick(
                 `#memory-container--${firstQueryId} .memory-item-md`,
                 PMPage,
@@ -487,6 +491,7 @@ describe("Test PaperMemory Memory Item Actions", function () {
                 return PMDebug.config.state.papers[paperId];
             }, firstPaperId);
 
+            await seedClipboard(PMPage);
             await safeClick(
                 `#memory-container--${firstQueryId} .memory-item-bibtex`,
                 PMPage,
@@ -705,6 +710,7 @@ describe("Test PaperMemory Memory Item Actions", function () {
                     ".memory-item-bibtex",
                     PMPage,
                 );
+            await seedClipboard(PMPage);
             await safeClick(bibtexSelector, PMPage);
 
             // Verify bibtex was copied
