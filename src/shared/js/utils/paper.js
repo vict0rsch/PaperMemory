@@ -282,7 +282,8 @@ export const updatePaperVisits = (paper) => {
  * @param {string} url The url from which to parse a paper
  * @param {object} is The paper's source info
  * @param {object} checks The user's preferences
- * @returns
+ * @returns {Promise<{paper: object, id: string}|undefined>} The paper and its id
+ * (`paper.id`, not the id resolved from `url`), or undefined if parsing failed
  */
 export const addOrUpdatePaper = async ({
     url,
@@ -560,7 +561,7 @@ export const addOrUpdatePaper = async ({
         contentScriptCallbacks["done"](paper);
     });
 
-    return { paper, id };
+    return { paper, id: paper.id };
 };
 
 /**
