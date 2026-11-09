@@ -178,7 +178,10 @@ A paper's identity is its `id` (e.g. `Arxiv-2103.12345`, `Website_<hash>`). Two
 fuzzy de-dup mechanisms keep the library clean:
 
 - **`urlHashToId`** — `miniHash(url) → id`, a fast cache so a revisited URL
-  resolves without re-parsing.
+  resolves without re-parsing. `addOrUpdatePaper` also records the visited URL on
+  capture when it does not already resolve to the stored id (e.g. sources whose
+  URLs carry no id). Keys are the full normalised URL (`miniHash` lowercases and
+  strips non-word characters; it is not a hash).
 - **`titleHashToIds`** — `miniHash(title) → [ids]`, used by `findFuzzyPaperMatch` to
   detect that a freshly parsed paper is the same work as an existing one under a
   different source (e.g. an arXiv preprint and its NeurIPS published version).
