@@ -113,7 +113,7 @@ graph TB
 - **Storage as the integration bus.** All contexts read/write the same
   `chrome.storage.local` `papers` object. `addOrUpdatePaper` re-reads `papers`
   immediately before every write and merges, because multiple tabs may parse the
-  same paper concurrently (see *Concurrency* below).
+  same paper concurrently (see _Concurrency_ below).
 
 ### Why the background worker brokers fetches
 
@@ -192,19 +192,19 @@ fuzzy de-dup mechanisms keep the library clean:
 The single domain entity. It is a plain object validated (and defaulted) by
 [`validatePaper`](src/shared/js/utils/data.js) against a schema of expected keys:
 
-| Field | Type | Notes |
-|---|---|---|
-| `id` | string | Unique PaperMemory id; primary key in `papers` |
-| `source` | string | A registered source `name` |
-| `title`, `author`, `year`, `venue` | string | Core metadata (`author` is ` and `-separated) |
-| `bibtex`, `key`, `doi` | string | Citation data; `key` is the BibTeX key |
-| `pdfLink`, `md` | string | PDF URL and a pre-rendered Markdown link |
-| `codeLink`, `code` | string/object | Repo URL + raw PapersWithCode payload |
-| `note` | string | Free-text + auto-generated "Accepted @ …" venue notes |
-| `tags` | string[] | User + auto-tags (`autoTagPaper`) |
-| `favorite`, `favoriteDate` | bool/string | Starring |
-| `count`, `addDate`, `lastOpenDate` | number/string | Visit tracking + sort keys |
-| `extras` | object | Optional per-source overflow |
+| Field                              | Type          | Notes                                                 |
+| ---------------------------------- | ------------- | ----------------------------------------------------- |
+| `id`                               | string        | Unique PaperMemory id; primary key in `papers`        |
+| `source`                           | string        | A registered source `name`                            |
+| `title`, `author`, `year`, `venue` | string        | Core metadata (`author` is `and`-separated)           |
+| `bibtex`, `key`, `doi`             | string        | Citation data; `key` is the BibTeX key                |
+| `pdfLink`, `md`                    | string        | PDF URL and a pre-rendered Markdown link              |
+| `codeLink`, `code`                 | string/object | Repo URL + raw PapersWithCode payload                 |
+| `note`                             | string        | Free-text + auto-generated "Accepted @ …" venue notes |
+| `tags`                             | string[]      | User + auto-tags (`autoTagPaper`)                     |
+| `favorite`, `favoriteDate`         | bool/string   | Starring                                              |
+| `count`, `addDate`, `lastOpenDate` | number/string | Visit tracking + sort keys                            |
+| `extras`                           | object        | Optional per-source overflow                          |
 
 ### Storage layout (`chrome.storage.local`)
 
@@ -232,6 +232,7 @@ the worker, popup, content script, and full-memory page.
 ## Component Deep-Dive
 
 ### `paper.js` — the parse/enrich/store orchestrator
+
 **Location:** [`src/shared/js/utils/paper.js`](src/shared/js/utils/paper.js)
 The heart of the system. `addOrUpdatePaper({url, is, prefs, tab, ...})` is the single
 funnel through which papers enter the Memory. Its pipeline: resolve id
@@ -243,12 +244,14 @@ venue/bibtex → second write. Caller-supplied `contentScriptCallbacks`
 feedback. `makePaper` dispatches to `src.parse()` and stamps `paper.source`.
 
 ### `sources/*` — source plugins
+
 **Location:** [`src/shared/js/utils/sources/`](src/shared/js/utils/sources/)
 ~32 `BasePaperSource` subclasses + the `index.js` registry + `WebsiteSource`
-fallback. See *Core Concepts*. Source-specific scraping helpers were factored out of
+fallback. See _Core Concepts_. Source-specific scraping helpers were factored out of
 `functions.js` into per-source modules (recent refactor, commits `1b18d72`/`ebf02e1`).
 
 ### `background.js` — service worker
+
 **Location:** [`src/background/background.js`](src/background/background.js)
 (entrypoint wrapper at `src/entrypoints/background.js`). Hosts the message router,
 brokered fetches (arXiv XML, OpenReview notes/forums, Google Scholar, the
@@ -259,6 +262,7 @@ preprint-matching APIs), the toolbar badge state machine
 sync.
 
 ### `content_script.js` — page integration
+
 **Location:** [`src/content_scripts/content_script.js`](src/content_scripts/content_script.js)
 Injected at `document_start` on `<all_urls>`. On load it runs `initSyncAndState`,
 pings the worker (`hello`), then calls `isPaper(url)`; on a hit it invokes
@@ -267,8 +271,10 @@ worker-pushed commands and provides in-page actions (copy BibTeX/MD link, open
 abstract/PDF/ar5iv/HuggingFace, etc., shared with the popup's `handlers.js`).
 
 ### UI surfaces — `popup`, `fullMemory`, `options`, `bibMatcher`
+
 **Location:** `src/popup/`, `src/fullMemory/`, `src/options/`, `src/bibMatcher/`
 (thin `src/entrypoints/*/main.js` wrappers import the real logic + `debug.js`).
+
 - **popup** ([`popup/js/popup.js`](src/popup/js/popup.js), `memory.js`, `handlers.js`,
   `templates.js`) — primary surface: searchable/sortable memory list, per-paper
   actions, the preferences menu, and on-open parsing of the active tab. HTML is
@@ -282,6 +288,7 @@ abstract/PDF/ar5iv/HuggingFace, etc., shared with the popup's `handlers.js`).
   published venues. Built directly on `preprintMatching.js`.
 
 ### `sync.js` — GitHub Gist synchronisation
+
 **Location:** [`src/shared/js/utils/sync.js`](src/shared/js/utils/sync.js)
 Optional cross-device sync via a private GitHub Gist using a user-supplied Personal
 Access Token (`@octokit/request`). `getIdentifier` stamps writes with a per-device
@@ -289,6 +296,7 @@ Access Token (`@octokit/request`). `getIdentifier` stamps writes with a per-devi
 after every storage write; pull/merge happens on init and popup connect.
 
 ### Supporting utilities
+
 `data.js` (storage/migration/validation/prefs), `urls.js` (id resolution),
 `parsers.js` (DOM/JSON/BibTeX fetch helpers + DC meta-tag extraction),
 `bibtexParser.js`, `files.js` (matching downloaded PDFs in `PaperMemoryStore/` via

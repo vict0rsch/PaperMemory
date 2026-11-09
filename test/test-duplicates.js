@@ -179,10 +179,9 @@ describe("Paper de-duplication", function () {
                 await memoryPage.goto(popupURL);
                 // The popup populates its in-memory state asynchronously; wait
                 // for readiness instead of a fixed sleep
-                await memoryPage.waitForFunction(
-                    () => window.__pmPopupReady === true,
-                    { timeout: 10000 },
-                );
+                await memoryPage.waitForFunction(() => window.__pmPopupReady === true, {
+                    timeout: 10000,
+                });
                 // get PaperMemory's state
                 memoryState = await getPaperMemoryState(memoryPage);
 

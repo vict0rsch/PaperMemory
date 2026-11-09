@@ -51,12 +51,12 @@ Note which order fails (`abs;pdf` vs `pdf;abs`) and the exact URL in the timeout
 
 ### 3. Hypothesize (clue -> cause)
 
-| Clue | Likely stage & cause |
-| --- | --- |
-| Fails in **one** order only | **parse** — the URL conversion for the *other* page is wrong. Inspect `absURL` / `pdfLink` / `toAbs` / `toPDF`. |
-| Fails in **both** orders, page **rendered fine** | **parse** — a selector/field the publisher changed, so `dom.getElementById(...)`/`getElementsByTagName(...)` returns null and throws (or returns a wrong/`undefined` field). |
-| Fails in **both** orders, page is a **challenge/blank** | **detect or fetch blocked** — bot-wall. Confirm with a visible browser; the source may need the `ciBotPrevention` flag in `urls.json`. |
-| Stored, but a field is wrong/`undefined` | **parse** — the extraction logic for that field; check against the live DOM. |
+| Clue                                                    | Likely stage & cause                                                                                                                                                         |
+| ------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Fails in **one** order only                             | **parse** — the URL conversion for the _other_ page is wrong. Inspect `absURL` / `pdfLink` / `toAbs` / `toPDF`.                                                              |
+| Fails in **both** orders, page **rendered fine**        | **parse** — a selector/field the publisher changed, so `dom.getElementById(...)`/`getElementsByTagName(...)` returns null and throws (or returns a wrong/`undefined` field). |
+| Fails in **both** orders, page is a **challenge/blank** | **detect or fetch blocked** — bot-wall. Confirm with a visible browser; the source may need the `ciBotPrevention` flag in `urls.json`.                                       |
+| Stored, but a field is wrong/`undefined`                | **parse** — the extraction logic for that field; check against the live DOM.                                                                                                 |
 
 ### 4. Confirm in cloakbrowser
 
@@ -81,7 +81,12 @@ for (const [label, u] of Object.entries(candidates)) {
         const r = await fetch(u);
         const text = r.ok ? await r.text() : "";
         const dom = new DOMParser().parseFromString(text, "text/html");
-        return { u, status: r.status, ok: r.ok, hasKeyEl: !!dom.getElementById("bibtex") };
+        return {
+            u,
+            status: r.status,
+            ok: r.ok,
+            hasKeyEl: !!dom.getElementById("bibtex"),
+        };
     }, u);
     console.log(label, res);
 }

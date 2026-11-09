@@ -422,9 +422,7 @@ describe("Popup Menu Tests", function () {
                     await setPreference(PMPage, "checkWebsiteParsing", false);
 
                     const selector = "#website-trigger-btn";
-                    await PMPage.evaluate(
-                        () => new Promise((r) => setTimeout(r, 500)),
-                    );
+                    await PMPage.evaluate(() => new Promise((r) => setTimeout(r, 500)));
                     const exists = await PMPage.$(selector);
                     expect(exists).toBeNull();
                 } finally {
@@ -854,12 +852,9 @@ describe("Popup Menu Tests", function () {
             await PMPage.waitForFunction(
                 () =>
                     new Promise((resolve) => {
-                        chrome.storage.local.get(
-                            "defaultKeyboardAction",
-                            (result) => {
-                                resolve(result.defaultKeyboardAction === "c");
-                            },
-                        );
+                        chrome.storage.local.get("defaultKeyboardAction", (result) => {
+                            resolve(result.defaultKeyboardAction === "c");
+                        });
                     }),
                 { timeout: 5000, polling: 100 },
             );

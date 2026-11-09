@@ -84,7 +84,9 @@ export const visitPaperPage = async (browser, target, options = {}) => {
             // (e.g. target closed) must reject, not hang the suite.
             try {
                 const element = await p.evaluate(() => {
-                    return document.querySelector("meta[name='pm-complete-secret-html']");
+                    return document.querySelector(
+                        "meta[name='pm-complete-secret-html']",
+                    );
                 });
                 if (!element && !opts.dontScreenshot) {
                     if (!fs.existsSync(`${root}/tmp`)) {
@@ -267,7 +269,9 @@ export const getURL = async (page, timeout = 10000) => {
     let documentState = null;
     while (documentState !== "complete") {
         if (Date.now() > deadline) {
-            throw new Error("getURL: timed out waiting for document readyState 'complete'");
+            throw new Error(
+                "getURL: timed out waiting for document readyState 'complete'",
+            );
         }
         documentState && (await sleep(50));
         documentState = await page.evaluate(() => document.readyState);

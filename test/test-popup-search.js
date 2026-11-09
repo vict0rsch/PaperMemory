@@ -756,9 +756,7 @@ describe("Test PaperMemory Popup Search Functionality", function () {
                 PAPER_IDS.NANOWIRE,
             ];
             const byYearDesc = [...byYearAsc].reverse();
-            expect([byYearAsc.join(), byYearDesc.join()]).toContain(
-                orderedIds.join(),
-            );
+            expect([byYearAsc.join(), byYearDesc.join()]).toContain(orderedIds.join());
         });
     });
 

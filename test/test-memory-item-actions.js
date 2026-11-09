@@ -443,9 +443,7 @@ describe("Test PaperMemory Memory Item Actions", function () {
             // For hyperlink, clipboard should contain both title and URL
             const clipboardText = await getClipboardText(PMPage);
             expect(clipboardText).toBeTruthy();
-            console.log(
-                indent(3) + `Debug: Clipboard content is: "${clipboardText}"`,
-            );
+            console.log(indent(3) + `Debug: Clipboard content is: "${clipboardText}"`);
             expect(clipboardText).toContain(paperData.title);
             expect(clipboardText).toMatch(/https?:\/\//);
             console.log(
