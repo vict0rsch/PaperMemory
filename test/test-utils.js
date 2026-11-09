@@ -2,6 +2,7 @@ import { expect } from "expect";
 import { JSDOM } from "jsdom";
 
 import { loadPaperMemoryUtils, range, readJSON } from "./utilsForTests.js";
+import { getSource } from "@pmu/sources/index.js";
 
 await loadPaperMemoryUtils();
 // create fake `document`, parseUrl() will need it for instance
@@ -214,6 +215,23 @@ describe("paper.js", () => {
             const paper = { source: "sciencedirect", pdfLink: signedUrl };
             expect(PMUtils.paper.paperToAbs(paper)).toEqual(
                 "https://www.sciencedirect.com/science/article/pii/S0001457526002083",
+            );
+        });
+    });
+
+    describe("#oup urlToId", () => {
+        it("gives an http:// URL the same id as its https:// URL", async () => {
+            // id of the paper stored from the urls.json abstract URL (path numbers)
+            const id = "OUP-2024_14737437617466";
+            const ctx = {
+                papers: [{ source: "oup", id }],
+                findPaperForProperty: PMUtils.urls.findPaperForProperty,
+            };
+            const url = allUrls.oup[0];
+            const oup = getSource("oup");
+            expect(await oup.urlToId(url, ctx)).toEqual(id);
+            expect(await oup.urlToId(url.replace("https://", "http://"), ctx)).toEqual(
+                id,
             );
         });
     });

@@ -11,7 +11,7 @@ export class OupSource extends BasePaperSource {
     ];
 
     static async urlToId(url, ctx) {
-        let u = noParamUrl(url).split("https://academic.oup.com/").last();
+        let u = new URL(url).pathname.slice(1);
         if (isPdfUrl(u)) {
             u = u.split("/").slice(0, -1).join("/");
         }
@@ -30,11 +30,7 @@ export class OupSource extends BasePaperSource {
             paper;
         const venue = journal;
         const key = citationKey;
-        const num = url
-            .split("https://academic.oup.com/")[1]
-            .split("/")
-            .slice(2)
-            .join("");
+        const num = new URL(url).pathname.slice(1).split("/").slice(2).join("");
         const id = `OUP-${year}_${miniHash(num)}`;
         const pdfLink = eprint?.replaceAll("\\", "") ?? url;
 
