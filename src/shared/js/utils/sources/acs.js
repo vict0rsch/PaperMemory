@@ -8,7 +8,17 @@ export class AcsSource extends BasePaperSource {
     static patterns = [
         "pubs.acs.org/doi/",
         // Silverchair article pages: /<journal>/article/... and /<journal>/article-abstract/...
-        (url) => /pubs\.acs\.org\/[^/]+\/article(-abstract)?\//.test(url),
+        (url) => {
+            try {
+                const { hostname, pathname } = new URL(url);
+                return (
+                    hostname === "pubs.acs.org" &&
+                    /^\/[^/]+\/article(-abstract)?\//.test(pathname)
+                );
+            } catch (e) {
+                return false;
+            }
+        },
     ];
 
     static async urlToId(url, ctx) {
@@ -28,7 +38,10 @@ export class AcsSource extends BasePaperSource {
             ? url.replace("/abs/", "/").split("/doi/")[1]
             : (await fetchDom(url))
                   .querySelector('meta[name="citation_doi"]')
-                  .getAttribute("content");
+                  ?.getAttribute("content");
+        if (!/^10\.\d{4,9}\/[-._;()\/:A-Za-z0-9]+$/.test(doi)) {
+            throw new Error(`ACS: invalid or missing DOI (${doi}) for ${url}`);
+        }
         const data = await fetchBibtexToPaper({ doi });
         const author = data.author.replaceAll("\n", "").trim();
         const { bibtex, title, year, key } = data;
