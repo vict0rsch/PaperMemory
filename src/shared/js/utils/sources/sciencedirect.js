@@ -44,7 +44,7 @@ export class SciencedirectSource extends BasePaperSource {
 
     static async parse(url) {
         const pii = sciencedirectPii(url);
-        if (!/^S[0-9X]{16}$/.test(pii)) {
+        if (!/^[A-Za-z0-9()-]+$/.test(pii ?? "")) {
             throw new Error(`ScienceDirect: missing or invalid PII: ${pii}`);
         }
         const data = await fetchBibtexToPaper({
