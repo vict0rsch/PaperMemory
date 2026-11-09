@@ -8,11 +8,6 @@
 > abstractions, design rationale, invariants. For how to set up, build, and
 > contribute (commands, conventions, step-by-step how-tos, tests, release), see
 > [`contributing.md`](contributing.md).
->
-> **This doc covers how the system works** — mental model, data flow,
-> abstractions, design rationale, invariants. For how to set up, build, and
-> contribute (commands, conventions, step-by-step how-tos, tests, release), see
-> [`contributing.md`](contributing.md).
 
 ## Overview
 
