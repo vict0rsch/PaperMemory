@@ -14,9 +14,9 @@ Vocabulary (detect / parse / store, abstract URL, pdf URL, parsing order, comple
 - A visited page becomes a stored paper through a strict three-stage pipeline; each stage runs only if the previous succeeded:
     1. **detect** — `isSourceURL(url)` / `isPaper(url)` decide the URL belongs to a source. If this fails, `parse` never runs.
     2. **parse** — the source's `parse(url)` builds metadata, usually via `fetchDom(absURL)`.
-    3. **store** — `addOrUpdatePaper({ store: true })` persists it, then the content script injects the **completion meta** `meta[name='pm-complete-secret-html']`.
-- Source storage tests live in `test/test-storage.js`. They visit each source's **abstract** and **pdf** URLs (from `test/data/urls.json`) and assert the paper was stored. `test/browser.js` → `visitPaperPage` waits ~15s for the completion meta; on timeout it screenshots the page to `tmp/` and throws `Timeout for <url> -> Screenshot ...`.
-- **A timeout only means "not stored" — it does not pinpoint the stage.** The failure could be detect, parse, or store. Don't assume `parse`.
+    3. **store** — `addOrUpdatePaper({ store: true })` persists it, then the content script injects the **completion meta** `meta[name='pm-complete-secret-html']` once processing finishes (the meta marks the end of processing, which in the storage test's default configuration means the paper was stored).
+- Source storage tests live in `test/test-storage.js`. They visit each source's **abstract** and **pdf** URLs (from `test/data/urls.json`) and assert the paper was stored (via the completion meta, which marks the end of processing). `test/browser.js` → `visitPaperPage` waits ~15s for the completion meta; on timeout it screenshots the page to `tmp/` and throws `Timeout for <url> -> Screenshot ...`.
+- **A timeout only means "processing never finished (in the default configuration: not stored)" — it does not pinpoint the stage.** The failure could be detect, parse, or store. Don't assume `parse`.
 - Each source is visited in **both parsing orders**: `abs;pdf` (abstract first) and `pdf;abs` (pdf first).
 - `fetchDom` (`src/shared/js/utils/parsers.js`) returns an **empty DOM on a non-OK response** (no throw). The throw then happens later on `dom.getElementById(...).innerText`, so a wrong/blocked URL surfaces as a timeout, not a fetch error.
 - Always `npm run build:chrome` before running browser tests — they load the built `dist/chrome-mv3`.

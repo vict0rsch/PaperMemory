@@ -37,20 +37,20 @@ The sequence in which a paper's two URLs are visited during the storage test —
 _Avoid_: direction, mode
 
 **Completion meta**:
-The `meta[name='pm-complete-secret-html']` element the content script injects once a paper is **Store**d, used by the test harness to detect success.
+The `meta[name='pm-complete-secret-html']` element the content script injects once paper processing has finished (the `done` callback of `addOrUpdatePaper`), used by the test harness to detect success. It fires even when nothing is stored (`store: false`, e.g. arXiv with `checkNoAuto` or `checkPdfOnly`); in the storage test's default configuration, finished processing means the paper was stored.
 _Avoid_: done flag, marker
 
 ## Relationships
 
 - A **Source** owns the logic to **Detect**, **Parse**, and convert between an **Abstract URL** and a **PDF URL** (`toAbs` / `toPDF`).
 - **Detect** → **Parse** → **Store** is a strict pipeline: each stage only runs if the previous succeeded.
-- A **Store** triggers exactly one **Completion meta**; its absence (a test timeout) means the pipeline stopped at **Detect**, **Parse**, or **Store** — not necessarily **Parse**.
+- Finished processing triggers exactly one **Completion meta**, and in the storage test's default configuration that means the paper was stored; its absence (a test timeout) means the pipeline stopped at **Detect**, **Parse**, or **Store** — not necessarily **Parse**.
 - The storage test visits both **Abstract URL** and **PDF URL** in each **Parsing order**; an order-dependent failure implicates the **Abstract URL**↔**PDF URL** conversion.
 
 ## Example dialogue
 
 > **Dev:** "The PMLR storage test times out — is `parse` broken?"
-> **Maintainer:** "A timeout only tells you the **Completion meta** never appeared, i.e. the paper wasn't **Store**d. It could have failed to **Detect** or **Parse**. Here it failed only in `pdf;abs` **Parsing order**, so `parse` derived a bad **Abstract URL** from the **PDF URL**."
+> **Maintainer:** "A timeout only tells you the **Completion meta** never appeared, i.e. processing never finished, so in the default configuration the paper wasn't **Store**d. It could have failed to **Detect** or **Parse**. Here it failed only in `pdf;abs` **Parsing order**, so `parse` derived a bad **Abstract URL** from the **PDF URL**."
 
 ## Flagged ambiguities
 
