@@ -293,6 +293,11 @@ describe("Test PaperMemory Extension Loading", function () {
 
     describe("Extension URL Structure", function () {
         it("should have valid extension URLs with correct extension ID", async function () {
+            if (!pmURLs) {
+                throw new Error(
+                    "pmURLs is not set: extension ID discovery failed or did not run",
+                );
+            }
             // Check that the extension URLs follow the expected pattern
             const extensionIdPattern = /chrome-extension:\/\/([a-z]+)\/.*$/;
 
