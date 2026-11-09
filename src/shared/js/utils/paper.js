@@ -348,10 +348,10 @@ export const addOrUpdatePaper = async ({
                     oldPaper: existingPaper,
                     incrementCount: false,
                 });
-                updateDuplicatedUrls(url, existingId);
+                await updateDuplicatedUrls(url, existingId);
             } else if (newPaper.venue) {
-                updateDuplicatedUrls(paperToAbs(existingPaper), newPaper.id);
-                updateDuplicatedUrls(paperToPDF(existingPaper), newPaper.id);
+                await updateDuplicatedUrls(paperToAbs(existingPaper), newPaper.id);
+                await updateDuplicatedUrls(paperToPDF(existingPaper), newPaper.id);
                 await deletePaperInStorage(existingPaper.id, state.papers);
                 existingPaper = mergePapers({
                     newPaper: newPaper,
@@ -422,10 +422,9 @@ export const addOrUpdatePaper = async ({
 
     // Map the visited url to the paper if it does not resolve to it yet (e.g. its
     // source reads no id from this url), ahead of the papers write so it is stored
-    // by the time the paper is. Re-read the map first: other pages write to it too.
+    // by the time the paper is.
     if (store && !state.deleted[paper.id] && paper.id !== id) {
-        state.urlHashToId = (await getStorage("urlHashToId")) ?? {};
-        updateDuplicatedUrls(url, paper.id);
+        await updateDuplicatedUrls(url, paper.id);
     }
 
     // state.papers still holds the papers read before parsing: a new paper already

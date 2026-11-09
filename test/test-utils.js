@@ -1,8 +1,8 @@
 import { expect } from "expect";
 import { JSDOM } from "jsdom";
+import { getSource } from "@pmu/sources/index.js";
 
 import { loadPaperMemoryUtils, range, readJSON } from "./utilsForTests.js";
-import { getSource } from "@pmu/sources/index.js";
 
 await loadPaperMemoryUtils();
 // create fake `document`, parseUrl() will need it for instance
@@ -233,6 +233,75 @@ describe("paper.js", () => {
             expect(await oup.urlToId(url.replace("https://", "http://"), ctx)).toEqual(
                 id,
             );
+        });
+    });
+
+    describe("#addOrUpdatePaper", () => {
+        // ACS Silverchair article url: AcsSource.urlToId reads no DOI from it
+        const url = "https://pubs.acs.org/jpca/article/123/12/2345/123456/Some-Title";
+        const id = "ACS_101021acsjpca9b00311";
+        const acs = getSource("acs");
+        const parse = acs.parse;
+        // in-memory chrome.storage.local
+        const storage = {};
+
+        before(() => {
+            global.chrome = {
+                storage: {
+                    local: {
+                        get: (key, cb) => cb({ [key]: structuredClone(storage[key]) }),
+                        set: (items, cb) => {
+                            Object.assign(storage, structuredClone(items));
+                            cb && cb();
+                        },
+                    },
+                },
+                runtime: { sendMessage: (payload, cb) => cb() },
+            };
+            // parse without network
+            acs.parse = async () => ({
+                author: "Jane Doe",
+                bibtex: "@article{doe2019,\n  title = {CO2 reduction},\n  year = {2019}\n}",
+                id,
+                key: "doe2019",
+                note: "Published @ The Journal of Physical Chemistry A (2019)",
+                pdfLink: "https://pubs.acs.org/doi/pdf/10.1021/acs.jpca.9b00311",
+                title: "CO2 reduction",
+                venue: "The Journal of Physical Chemistry A",
+                year: "2019",
+            });
+        });
+
+        after(() => {
+            acs.parse = parse;
+            delete global.chrome;
+        });
+
+        it("first capture from a url urlToId cannot resolve maps it to the stored id", async () => {
+            const state = PMUtils.config.state;
+            // another page mapped a url after this one read the map
+            state.urlHashToId = {};
+            storage.urlHashToId = { otherpageurl: "Other-id" };
+            expect(await PMUtils.urls.parseIdFromUrl(url)).toBeFalsy();
+
+            const is = await PMUtils.paper.isPaper(url, true);
+            await new Promise((done) =>
+                PMUtils.paper.addOrUpdatePaper({
+                    url,
+                    is,
+                    contentScriptCallbacks: {
+                        update: () => {},
+                        preprints: () => {},
+                        done,
+                    },
+                }),
+            );
+            expect(storage.papers[id]).toBeDefined();
+
+            // resolve the url from the stored map, as another page would
+            state.urlHashToId = await PMUtils.data.getStorage("urlHashToId");
+            expect(await PMUtils.urls.parseIdFromUrl(url)).toEqual(id);
+            expect(state.urlHashToId.otherpageurl).toEqual("Other-id");
         });
     });
 });

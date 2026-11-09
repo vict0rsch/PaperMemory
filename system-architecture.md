@@ -326,7 +326,8 @@ the `downloads` API), `functions.js` (49 misc helpers incl. `miniHash`,
   `addOrUpdatePaper` re-reads `papers` from storage immediately before each
   `chrome.storage.local.set` and merges (`mergePapers`, `incrementCount`) rather
   than blindly overwriting. Treat `state.papers` as a stale snapshot, never the
-  source of truth at write time.
+  source of truth at write time. Likewise, `updateDuplicatedUrls` re-reads
+  `urlHashToId` before applying its change and writing the map back.
 - **Pattern mutual exclusion** across sources is a hard invariant (test-enforced).
 - **No top-level use of `functions.js` exports inside source modules** (TDZ — see
   the `base.js` constraint above).

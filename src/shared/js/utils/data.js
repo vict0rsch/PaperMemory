@@ -326,10 +326,10 @@ export const deletePaperInStorage = async (id, papers) => {
     }
     let deleted = false;
     if (papers.hasOwnProperty(id)) {
-        updateDuplicatedUrls(null, id, true);
         deleted = delete state.titleHashToIds[miniHash(papers[id].title)];
         deleted = deleted && delete papers[id];
         delete state.papers[id];
+        await updateDuplicatedUrls(null, id, true);
     }
     if (deleted) {
         await setStorage("papers", papers);
@@ -872,10 +872,12 @@ export const makeTitleHashToIdList = (papers) => {
     return titleHashToIds;
 };
 
-export const updateDuplicatedUrls = (url, id, remove = false) => {
+export const updateDuplicatedUrls = async (url, id, remove = false) => {
+    // re-read the map before writing it whole: other pages write to it too
+    state.urlHashToId = (await getStorage("urlHashToId")) ?? {};
     if (!remove) {
         state.urlHashToId[miniHash(url)] = id;
-        setStorage("urlHashToId", state.urlHashToId);
+        await setStorage("urlHashToId", state.urlHashToId);
     } else {
         let hashedUrls;
         if (!url) {
@@ -890,7 +892,7 @@ export const updateDuplicatedUrls = (url, id, remove = false) => {
                 warn("Removing duplicated url", url, "for", id);
                 delete state.urlHashToId[hashedUrl];
             }
-            setStorage("urlHashToId", state.urlHashToId);
+            await setStorage("urlHashToId", state.urlHashToId);
         }
     }
 };
