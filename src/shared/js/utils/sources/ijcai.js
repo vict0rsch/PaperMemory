@@ -34,7 +34,7 @@ export class IjcaiSource extends BasePaperSource {
 
         const bibtex = (
             await fetchText(
-                `https://www.ijcai.org/proceedings/${year}/bibtex/${procId}`,
+                `https://ijcai.org/proceedings/${year}/bibtex/${procId}`,
             )
         ).replace(/}\n/gi, "},\n");
         const data = bibtexToObject(
