@@ -153,7 +153,11 @@ describe("paper.js", () => {
                 });
             }
         }
-        for (const [u, url] of ["arxiv.org", "https://google.com"].entries()) {
+        for (const [u, url] of [
+            "arxiv.org",
+            "https://google.com",
+            "https://notarxiv.org/abs/1703.10593",
+        ].entries()) {
             it(`Negative ${u} (${url})`, async () => {
                 const isp = await PMUtils.paper.isPaper(url);
                 let target = Object.fromEntries(
@@ -161,6 +165,28 @@ describe("paper.js", () => {
                 );
                 target.stored = false;
                 expect(isp).toEqual(target);
+            });
+        }
+        // Another site's URL that only contains a paper URL (in its query,
+        // fragment or path, or as a host prefix) is not that paper's page.
+        for (const [source, urls] of Object.entries(allUrls)) {
+            it(`Negative cross-host ${source}`, async () => {
+                const offenders = [];
+                for (const url of urls.slice(0, 2)) {
+                    const { hostname } = new URL(url);
+                    const bare = url.replace(/^https?:\/\//, "");
+                    for (const crafted of [
+                        `https://evil.example/?x=${bare}`,
+                        `https://evil.example/#${url}`,
+                        `https://evil.example/${bare}`,
+                        url.replace(hostname, `${hostname}.evil.example`),
+                    ]) {
+                        const isp = await PMUtils.paper.isPaper(crafted);
+                        const detected = Object.keys(isp).filter((k) => isp[k]);
+                        if (detected.length) offenders.push({ crafted, detected });
+                    }
+                }
+                expect(offenders).toEqual([]);
             });
         }
     });
@@ -175,6 +201,13 @@ describe("paper.js", () => {
         it("is recognised as a sciencedirect page", async () => {
             const isp = await PMUtils.paper.isPaper(signedUrl);
             expect(isp.sciencedirect).toBe(true);
+        });
+
+        it("is not recognised inside another site's URL", async () => {
+            const isp = await PMUtils.paper.isPaper(
+                `https://evil.example/?x=${signedUrl.replace("https://", "")}`,
+            );
+            expect(isp.sciencedirect).toBe(false);
         });
 
         it("resolves to the abstract page from its PII", () => {
