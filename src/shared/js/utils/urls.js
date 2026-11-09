@@ -25,10 +25,17 @@ export const isSourceURL = async (url, noStored) =>
 
 /**
  * Parses a paper's id from a url.
- * Throws error if the url is not a paper source as defined per isPaper(url).
  *
  * @param {string} url The url to use in order to find a matching paper
- * @returns {string} The id of the paper found.
+ * @param {object} [tab] The tab, for manual website parsing
+ * @returns {Promise<string|undefined|null>} Never rejects. Resolves to:
+ *  - a string: `urlToWebsiteId(url)` if `tab` is given; otherwise the id `url` is
+ *    mapped to in `state.urlHashToId`, else the matching source's `urlToId` result,
+ *    else the id of the matching local file or stored website paper.
+ *  - `undefined` if a source matches the url but its `urlToId` resolves no id
+ *    (e.g. the paper is not stored yet, or the url carries no identifier).
+ *  - `null` if the url matches no source, local file or stored website paper, or
+ *    if an error was thrown (it is logged).
  */
 export const parseIdFromUrl = async (url, tab = null) => {
     try {
