@@ -1,4 +1,4 @@
-import { BasePaperSource } from "./base.js";
+import { BasePaperSource, isOnHost } from "./base.js";
 import {
     arxivIdFromURL,
     firstNonStopLowercase,
@@ -17,9 +17,7 @@ export class ArxivSource extends BasePaperSource {
         "ar5iv.labs.arxiv.org/html/",
         "alphaxiv.org/abs/",
         "alphaxiv.org/pdf/",
-        (url) =>
-            url.includes("huggingface.co/papers/") &&
-            url.split("huggingface.co/papers/")[1].match(/\d+\.\d+/),
+        (url) => isOnHost(url, "huggingface.co", /^\/papers\/\d+\.\d+/),
     ];
 
     static async urlToId(url, ctx) {

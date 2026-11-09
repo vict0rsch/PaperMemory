@@ -1,11 +1,13 @@
-import { BasePaperSource } from "./base.js";
+import { BasePaperSource, isOnHost } from "./base.js";
 import { miniHash } from "@pmu/functions.js";
 import { fetchBibtexToPaper } from "@pmu/parsers.js";
 
 export class PlosSource extends BasePaperSource {
     static name = "plos";
     static displayName = "PLOS (Public Library of Science)";
-    static patterns = [(url) => /journals\.plos\.org\/.+\/article.+id=/gi.test(url)];
+    static patterns = [
+        (url) => isOnHost(url, "journals.plos.org", /^\/.+\/article.+id=/i),
+    ];
 
     static async urlToId(url, ctx) {
         const doi = url.split("?id=").last().split("&")[0];

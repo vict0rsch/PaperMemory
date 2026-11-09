@@ -1,4 +1,4 @@
-import { BasePaperSource } from "./base.js";
+import { BasePaperSource, isOnHost } from "./base.js";
 import { isPdfUrl, noParamUrl } from "@pmu/functions.js";
 import { fetchBibtexToPaper, fetchText } from "@pmu/parsers.js";
 
@@ -8,7 +8,7 @@ export class PmcSource extends BasePaperSource {
     static patterns = [
         "ncbi.nlm.nih.gov/pmc/articles/PMC",
         "ncbi.nlm.nih.gov/articles/PMC",
-        (url) => url.match(/ncbi.nlm.nih.gov\/\d+/),
+        (url) => isOnHost(url, "ncbi.nlm.nih.gov", /^\/\d+/),
     ];
 
     static async urlToId(url, ctx) {

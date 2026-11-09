@@ -1,4 +1,4 @@
-import { BasePaperSource } from "./base.js";
+import { BasePaperSource, isOnHost } from "./base.js";
 import { miniHash, noParamUrl, isPdfUrl } from "@pmu/functions.js";
 import { fetchBibtexToPaper } from "@pmu/parsers.js";
 
@@ -6,11 +6,8 @@ export class OupSource extends BasePaperSource {
     static name = "oup";
     static displayName = "OUP (Oxford University Press)";
     static patterns = [
-        (url) =>
-            (url
-                .split("https://academic.oup.com/")[1]
-                ?.split("/")[1]
-                ?.indexOf("article") ?? -1) >= 0,
+        // /<journal>/article/..., /<journal>/article-abstract/..., /<journal>/advance-article/...
+        (url) => isOnHost(url, "academic.oup.com", /^\/[^/]+\/[^/]*article/),
     ];
 
     static async urlToId(url, ctx) {

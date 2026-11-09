@@ -130,8 +130,9 @@ the class is never instantiated; only static members are used, and papers stay
 plain objects. Each source declares:
 
 - `name` — internal key, matches `paper.source` and the `is.{name}` flag.
-- `displayName`, `isPreprint`, and `patterns` (string substrings or
-  `(url) => boolean` predicates).
+- `displayName`, `isPreprint`, and `patterns` (`"host/path"` strings, matched on
+  the parsed URL's host or a subdomain and a path prefix, or `(url) => boolean`
+  predicates that anchor on the host with `isOnHost` from `base.js`).
 - `matches(url)`, `urlToId(url, ctx)`, `parse(url, tab, ctx)`, plus URL
   transforms `toAbs` / `toPDF` and venue helpers.
 

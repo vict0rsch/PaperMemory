@@ -144,10 +144,6 @@ describe("paper.js", () => {
                         this.skip();
                     }
                     const isp = await PMUtils.paper.isPaper(url);
-                    if (source === "cell") {
-                        expect(isp[source]).toHaveLength(1);
-                        return;
-                    }
                     let target = Object.fromEntries(
                         Object.keys(isp).map((k) => [k, false]),
                     );

@@ -1,4 +1,4 @@
-import { BasePaperSource } from "./base.js";
+import { BasePaperSource, isOnHost } from "./base.js";
 import { bibtexToObject } from "@pmu/bibtexParser.js";
 import { fetchText } from "@pmu/parsers.js";
 import { flipAndAuthors } from "@pmu/parsers.js";
@@ -7,7 +7,9 @@ export class IjcaiSource extends BasePaperSource {
     static name = "ijcai";
     static displayName =
         "IJCAI (International Joint Conferences on Artificial Intelligence)";
-    static patterns = [(url) => /ijcai\.org\/proceedings\/\d{4}\/\d+/gi.test(url)];
+    static patterns = [
+        (url) => isOnHost(url, "ijcai.org", /^\/proceedings\/\d{4}\/\d+/i),
+    ];
 
     static async urlToId(url) {
         const procId = url.endsWith(".pdf")

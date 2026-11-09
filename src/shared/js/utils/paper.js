@@ -47,7 +47,7 @@ import { findLocalFile, isKnownLocalFile } from "@pmu/files.js";
 /**
  * Is this url associated with a known paper source?
  * For each known paper source in config.js/knownPaperPages, this function
- * checks whether the url includes one of the listed paths.
+ * checks whether the url matches one of its patterns (BasePaperSource.matches).
  * Also checks for local files in the PaperMemoryStore
  *
  * @param {string} url the url to check
@@ -58,20 +58,7 @@ export const isPaper = async (url, noStored = false) => {
     let is = {};
     if (!url) return is;
     for (const source in knownPaperPages) {
-        const patterns = knownPaperPages[source].patterns;
-        // default source status: false
-        is[source] = false;
-        for (const pattern of patterns) {
-            if (typeof pattern === "string") {
-                if (url.includes(pattern)) {
-                    // known pattern: store as true
-                    is[source] = true;
-                }
-            } else if (typeof pattern === "function") {
-                is[source] = pattern(url) ?? false;
-            }
-            if (is[source]) break;
-        }
+        is[source] = getSource(source).matches(url);
     }
     // is the url a local file in the memory?
     is.localFile = isKnownLocalFile(url) ?? false;

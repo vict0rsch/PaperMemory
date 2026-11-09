@@ -1,4 +1,4 @@
-import { BasePaperSource } from "./base.js";
+import { BasePaperSource, isOnHost } from "./base.js";
 import { miniHash, noParamUrl, isPdfUrl, warn } from "@pmu/functions.js";
 import { fetchBibtexToPaper } from "@pmu/parsers.js";
 
@@ -27,11 +27,11 @@ export class AipSource extends BasePaperSource {
     static displayName = "AIP (American Institute of Physics)";
     static patterns = [
         (url) =>
-            Boolean(
-                url.match(
-                    /pubs.aip.org\/aip\/.+\/(article|article-abstract|article-split)\//g,
-                ) || url.match(/watermark.silverchair.com\/.+\.pdf/g),
-            ),
+            isOnHost(
+                url,
+                "pubs.aip.org",
+                /^\/aip\/.+\/(article|article-abstract|article-split)\//,
+            ) || isOnHost(url, "watermark.silverchair.com", /^\/.+\.pdf/),
     ];
 
     static async urlToId(url, ctx) {

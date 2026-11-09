@@ -85,7 +85,7 @@ export const getSource = (name) => BY_NAME[name];
 export const allSources = () => [...ALL_SOURCES];
 
 export const knownPaperPages = Object.fromEntries(
-    ALL_SOURCES.map((S) => [S.name, { patterns: S.patterns, name: S.displayName }]),
+    ALL_SOURCES.map((S) => [S.name, { name: S.displayName }]),
 );
 
 /** @param {Record<string, boolean>} is from isPaper() */
