@@ -88,7 +88,11 @@ export const visitPaperPage = async (browser, target, options = {}) => {
                         "meta[name='pm-complete-secret-html']",
                     );
                 });
-                if (!element && !opts.dontScreenshot) {
+                if (!element) {
+                    if (opts.dontScreenshot) {
+                        reject(new Error(`Timeout for ${target}`));
+                        return;
+                    }
                     if (!fs.existsSync(`${root}/tmp`)) {
                         console.log(
                             `${indent(opts.indents)}Creating tmp directory in ${root}/tmp`,
