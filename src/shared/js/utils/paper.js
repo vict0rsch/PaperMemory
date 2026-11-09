@@ -428,16 +428,36 @@ export const addOrUpdatePaper = async ({
         updateDuplicatedUrls(url, paper.id);
     }
 
+    // state.papers still holds the papers read before parsing: a new paper already
+    // there is a re-parsed stored paper (e.g. its url resolves no stored id), not one
+    // created by another page in the meantime
+    const wasStored = state.papers.hasOwnProperty(paper.id);
     state.papers = (await getStorage("papers")) ?? {};
 
     // minimize risk of concurrent writes to the same paper
     if (isNew && state.papers.hasOwnProperty(paper.id)) {
-        warn("Paper has been created by another page: merging papers.");
-        paper = mergePapers({
-            newPaper: state.papers[paper.id],
-            oldPaper: paper,
-            incrementCount: true,
-        });
+        if (wasStored) {
+            // update it like the fuzzy match above updates an existing paper, so the
+            // re-parse does not overwrite its user fields and visits
+            let overwrites = ["lastOpenDate"];
+            if (state.papers[paper.id].author.toLowerCase() === "anonymous") {
+                overwrites.push("author", "year", "venue", "bibtex", "note");
+            }
+            paper = updatePaperVisits(
+                mergePapers({
+                    newPaper: paper,
+                    overwrites,
+                    oldPaper: state.papers[paper.id],
+                }),
+            );
+        } else {
+            warn("Paper has been created by another page: merging papers.");
+            paper = mergePapers({
+                newPaper: state.papers[paper.id],
+                oldPaper: paper,
+                incrementCount: true,
+            });
+        }
         isNew = false;
     }
 
