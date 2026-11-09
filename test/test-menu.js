@@ -413,22 +413,28 @@ describe("Popup Menu Tests", function () {
             });
 
             it("should NOT show manual parsing button when disabled", async function () {
-                await PMPage.evaluateOnNewDocument(() => {
-                    window.__mockTabUrl = "https://google.com";
-                });
+                const { identifier: googleUrlMockId } =
+                    await PMPage.evaluateOnNewDocument(() => {
+                        window.__mockTabUrl = "https://google.com";
+                    });
 
-                await setPreference(PMPage, "checkWebsiteParsing", false);
+                try {
+                    await setPreference(PMPage, "checkWebsiteParsing", false);
 
-                const selector = "#website-trigger-btn";
-                await PMPage.evaluate(() => new Promise((r) => setTimeout(r, 500)));
-                const exists = await PMPage.$(selector);
-                expect(exists).toBeNull();
-
-                // Cleanup
-                await PMPage.evaluateOnNewDocument(() => {
-                    window.__mockTabUrl = null;
-                });
-                // await PMPage.reload();
+                    const selector = "#website-trigger-btn";
+                    await PMPage.evaluate(
+                        () => new Promise((r) => setTimeout(r, 500)),
+                    );
+                    const exists = await PMPage.$(selector);
+                    expect(exists).toBeNull();
+                } finally {
+                    // Stop future navigations from reapplying this spec's URL, then
+                    // clear the value already set on the current document.
+                    await PMPage.removeScriptToEvaluateOnNewDocument(googleUrlMockId);
+                    await PMPage.evaluate(() => {
+                        window.__mockTabUrl = null;
+                    });
+                }
             });
         });
 
@@ -615,87 +621,98 @@ describe("Popup Menu Tests", function () {
         describe("checkEnterLocalPdf", function () {
             it("should try to open local file when pressing 'o' if checkEnterLocalPdf is true", async function () {
                 // Mock file existence, chrome.downloads.open and chrome.tabs.create
-                await PMPage.evaluateOnNewDocument((url) => {
-                    window.__mockFiles = [
-                        {
-                            id: 123,
-                            url: url,
-                            finalUrl: url,
-                            state: "complete",
-                            exists: true,
-                            filename: "PaperMemoryStore/test_paper.pdf",
-                        },
-                    ];
-                    window.chrome = window.chrome || {};
-                    window.chrome.downloads = window.chrome.downloads || {};
-                    window.chrome.downloads.open = (id) => {
-                        window.__mockDownloadsOpenId = id;
-                    };
-                    window.chrome.tabs = window.chrome.tabs || {};
-                    window.chrome.tabs.create = (props) => {
-                        window.__mockTabsCreate = props;
-                    };
-                    window.chrome.tabs.update = (id, props) => {
-                        window.__mockTabsUpdate = { id, props };
-                    };
-                }, arxivPaperUrl);
+                const { identifier: localPdfMockId } =
+                    await PMPage.evaluateOnNewDocument((url) => {
+                        window.__mockFiles = [
+                            {
+                                id: 123,
+                                url: url,
+                                finalUrl: url,
+                                state: "complete",
+                                exists: true,
+                                filename: "PaperMemoryStore/test_paper.pdf",
+                            },
+                        ];
+                        window.chrome = window.chrome || {};
+                        window.chrome.downloads = window.chrome.downloads || {};
+                        window.chrome.downloads.open = (id) => {
+                            window.__mockDownloadsOpenId = id;
+                        };
+                        window.chrome.tabs = window.chrome.tabs || {};
+                        window.chrome.tabs.create = (props) => {
+                            window.__mockTabsCreate = props;
+                        };
+                        window.chrome.tabs.update = (id, props) => {
+                            window.__mockTabsUpdate = { id, props };
+                        };
+                    }, arxivPaperUrl);
 
-                await setPreference(PMPage, "checkEnterLocalPdf", true);
-                await setPreference(PMPage, "checkStore", true);
-
-                // Open memory view
-                await PMPage.keyboard.press("a");
-                await PMPage.waitForFunction(
-                    () =>
-                        document.getElementById("memory-container").style.display !==
-                        "none",
-                );
-
-                // Focus the memory item
-                const itemSelector = `#memory-container--${escapedArxivPaperId}`;
-                // Use evaluate to focus because PMPage.focus might be flaky with custom divs
-                await PMPage.evaluate((sel) => {
-                    const el = document.querySelector(sel);
-                    if (el) el.focus();
-                }, itemSelector);
-
-                // Press 'o'
-                await PMPage.keyboard.press("o");
-
-                // Check if download opened
                 try {
+                    await setPreference(PMPage, "checkEnterLocalPdf", true);
+                    await setPreference(PMPage, "checkStore", true);
+
+                    // Open memory view
+                    await PMPage.keyboard.press("a");
                     await PMPage.waitForFunction(
-                        () => window.__mockDownloadsOpenId !== undefined,
-                        { timeout: 2000 },
+                        () =>
+                            document.getElementById("memory-container").style
+                                .display !== "none",
                     );
-                    const openedId = await PMPage.evaluate(
-                        () => window.__mockDownloadsOpenId,
-                    );
-                    expect(openedId).toBe(123);
-                } catch (e) {
-                    // If failed, check if it tried to open a tab instead (fallback)
-                    const tabOpened = await PMPage.evaluate(
-                        () => window.__mockTabsCreate || window.__mockTabsUpdate,
-                    );
-                    if (tabOpened) {
-                        throw new Error(
-                            `Expected download open, but got tab open: ${JSON.stringify(
-                                tabOpened,
-                            )}`,
+
+                    // Focus the memory item
+                    const itemSelector = `#memory-container--${escapedArxivPaperId}`;
+                    // Use evaluate to focus because PMPage.focus might be flaky with custom divs
+                    await PMPage.evaluate((sel) => {
+                        const el = document.querySelector(sel);
+                        if (el) el.focus();
+                    }, itemSelector);
+
+                    // Press 'o'
+                    await PMPage.keyboard.press("o");
+
+                    // Check if download opened
+                    try {
+                        await PMPage.waitForFunction(
+                            () => window.__mockDownloadsOpenId !== undefined,
+                            { timeout: 2000 },
                         );
+                        const openedId = await PMPage.evaluate(
+                            () => window.__mockDownloadsOpenId,
+                        );
+                        expect(openedId).toBe(123);
+                    } catch (e) {
+                        // If failed, check if it tried to open a tab instead (fallback)
+                        const tabOpened = await PMPage.evaluate(
+                            () => window.__mockTabsCreate || window.__mockTabsUpdate,
+                        );
+                        if (tabOpened) {
+                            throw new Error(
+                                `Expected download open, but got tab open: ${JSON.stringify(
+                                    tabOpened,
+                                )}`,
+                            );
+                        }
+                        throw e;
                     }
-                    throw e;
+                } finally {
+                    // Remove the temporary preload so later reloads only apply the
+                    // suite-wide recording mocks, then restore the preference (which
+                    // reloads and waits for popup readiness).
+                    await PMPage.removeScriptToEvaluateOnNewDocument(localPdfMockId);
+                    await setPreference(PMPage, "checkEnterLocalPdf", false);
                 }
 
-                // Cleanup
-                await setPreference(PMPage, "checkEnterLocalPdf", false);
-                await PMPage.evaluateOnNewDocument(() => {
-                    window.__mockFiles = [];
-                    window.__mockDownloadsOpenId = undefined;
-                    window.__mockTabsCreate = undefined;
-                    window.__mockTabsUpdate = undefined;
+                // The suite-wide chrome.tabs.update recording mock must own the API
+                // again: the removed local-PDF override would record into
+                // __mockTabsUpdate instead of __lastTabUpdate.
+                const lastTabUpdate = await PMPage.evaluate(() => {
+                    window.__lastTabUpdate = undefined;
+                    chrome.tabs.update({ url: "https://example.test/restored" });
+                    return window.__lastTabUpdate;
                 });
-                await PMPage.reload();
+                expect(lastTabUpdate).toEqual({
+                    url: "https://example.test/restored",
+                });
             });
         });
     });

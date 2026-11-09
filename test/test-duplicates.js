@@ -173,7 +173,7 @@ describe("Paper de-duplication", function () {
                 visitFailures.throwIfFailed();
 
                 // go to the extension popup's page
-                memoryPage = (await browser.pages())[0];
+                memoryPage = await browser.newPage();
                 const extensionId = await findExtensionId(browser);
                 const { popupURL } = getPMURLs(extensionId);
                 await memoryPage.goto(popupURL);

@@ -142,18 +142,8 @@ describe("Test PaperMemory Popup Search Functionality", function () {
         await page.keyboard.up("Control");
         await page.keyboard.press("Backspace");
 
-        // Set the value directly and trigger the search event
-        await page.evaluate((text) => {
-            const searchInput = document.getElementById("memory-search");
-            searchInput.value = text;
-            // Trigger the search event manually
-            const event = new Event("keypress");
-            event.key = "Enter";
-            searchInput.dispatchEvent(event);
-        }, text);
-
-        // Wait for search to complete
-        await sleep(100);
+        // Set the value and trigger the search through the shared helper
+        await executeSearch(page, text);
     }
 
     async function clearSearch(page) {
@@ -680,19 +670,7 @@ describe("Test PaperMemory Popup Search Functionality", function () {
             await verifySearchPlaceholder(PMPage, "Search 1 entries");
 
             // Search for something
-            await PMPage.evaluate(() => {
-                const searchInput = document.getElementById("memory-search");
-                searchInput.value = "machine";
-
-                const event = new KeyboardEvent("keypress", {
-                    key: "Enter",
-                    bubbles: true,
-                    cancelable: true,
-                });
-                searchInput.dispatchEvent(event);
-            });
-
-            await sleep(100);
+            await executeSearch(PMPage, "machine");
 
             // Verify by checking state.papersList
             await verifySearchByState(PMPage, 1, [PAPER_IDS.NANOWIRE]);
@@ -746,7 +724,7 @@ describe("Test PaperMemory Popup Search Functionality", function () {
             await verifySearchByState(PMPage, 1, [PAPER_IDS.CYCLE_GAN]);
         });
 
-        it("should update search results when sort order changes", async function () {
+        it("should preserve search results when sort order changes to year", async function () {
             // First search
             await executeSearch(PMPage, "Cycle");
             await verifySearchByState(PMPage, 1, [PAPER_IDS.CYCLE_GAN]);
@@ -789,7 +767,7 @@ describe("Test PaperMemory Popup Search Functionality", function () {
             PMPage = await quickReset(PMPage);
         });
 
-        it("should update search results when sort order changes", async function () {
+        it("should preserve search results when sort order changes to title", async function () {
             // First search for something
             await executeSearch(PMPage, "machine");
             await verifySearchByState(PMPage, 1, [PAPER_IDS.NANOWIRE]);

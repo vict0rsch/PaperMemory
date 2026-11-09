@@ -487,7 +487,7 @@ describe("Test PaperMemory Popup UI - Known Paper Page", function () {
             await PMPage.keyboard.press("Enter");
 
             // Wait for the debounced save (300ms delay + storage write)
-            await new Promise((r) => setTimeout(r, 800));
+            await sleep(800);
 
             // Verify the tag was persisted to storage
             const papersAfter = await getMemoryPapers(PMPage);
@@ -509,7 +509,7 @@ describe("Test PaperMemory Popup UI - Known Paper Page", function () {
             await PMPage.click(`#popup-memory-edit .ts-control .item .remove`);
 
             // Wait for the debounced save
-            await new Promise((r) => setTimeout(r, 800));
+            await sleep(800);
 
             // Verify the tag was removed from storage
             const papersAfter = await getMemoryPapers(PMPage);

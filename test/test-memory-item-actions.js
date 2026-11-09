@@ -197,8 +197,8 @@ describe("Test PaperMemory Memory Item Actions", function () {
             PMPage = await quickReset(PMPage);
         });
 
-        runs.forEach(() => {
-            it("should handle toggle favorite action (memory-item-favorite)", async function () {
+        runs.forEach((run) => {
+            it(`should handle toggle favorite action (memory-item-favorite, pass ${run + 1}/${runs.length})`, async function () {
                 // Check initial favorite state
                 const initialState = await getPaperMemoryState(PMPage);
                 const initialFavorite = initialState.papers[firstPaperId].favorite;
