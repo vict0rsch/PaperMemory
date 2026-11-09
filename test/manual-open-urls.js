@@ -8,7 +8,6 @@ import {
     makeBrowser,
     makeVisitFailureCollector,
     setStorage,
-    visitPaperPage,
 } from "./browser.js";
 import {
     hasManualBotPrevention,
