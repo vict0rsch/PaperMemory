@@ -33,7 +33,7 @@ export class AcsSource extends BasePaperSource {
     }
 
     static async parse(url) {
-        url = url.replace("pubs.acs.org/doi/pdf/", "pubs.acs.org/doi/").split("?")[0];
+        url = noParamUrl(url).replace("pubs.acs.org/doi/pdf/", "pubs.acs.org/doi/");
         const doi = url.includes("pubs.acs.org/doi/")
             ? url.replace("/abs/", "/").split("/doi/")[1]
             : (await fetchDom(url))
