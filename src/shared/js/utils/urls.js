@@ -32,8 +32,9 @@ export const isSourceURL = async (url, noStored) =>
  *  - a string: `urlToWebsiteId(url)` if `tab` is given; otherwise the id `url` is
  *    mapped to in `state.urlHashToId`, else the matching source's `urlToId` result,
  *    else the id of the matching local file or stored website paper.
- *  - `undefined` if a source matches the url but its `urlToId` resolves no id
- *    (e.g. the paper is not stored yet, or the url carries no identifier).
+ *  - `undefined` (or another falsy value) if a source matches the url but its
+ *    `urlToId` resolves no id (e.g. the paper is not stored yet, or the url
+ *    carries no identifier).
  *  - `null` if the url matches no source, local file or stored website paper, or
  *    if an error was thrown (it is logged).
  */
