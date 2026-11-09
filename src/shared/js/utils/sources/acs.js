@@ -1,13 +1,20 @@
 import { BasePaperSource } from "./base.js";
 import { miniHash, noParamUrl } from "@pmu/functions.js";
-import { fetchBibtexToPaper } from "@pmu/parsers.js";
+import { fetchBibtexToPaper, fetchDom } from "@pmu/parsers.js";
 
 export class AcsSource extends BasePaperSource {
     static name = "acs";
     static displayName = "ACS (American Chemical Society)";
-    static patterns = ["pubs.acs.org/doi/"];
+    static patterns = [
+        "pubs.acs.org/doi/",
+        // Silverchair article pages: /<journal>/article/... and /<journal>/article-abstract/...
+        (url) => /pubs\.acs\.org\/[^/]+\/article(-abstract)?\//.test(url),
+    ];
 
     static async urlToId(url, ctx) {
+        // Silverchair article URLs carry no DOI: return undefined so that
+        // addOrUpdatePaper parses the page and matches the paper on its DOI-based id.
+        if (!url.includes("pubs.acs.org/doi/")) return;
         let u = noParamUrl(url)
             .replace("pubs.acs.org/doi/pdf/", "/doi/")
             .replace("pubs.acs.org/doi/abs/", "/doi/");
@@ -17,9 +24,12 @@ export class AcsSource extends BasePaperSource {
 
     static async parse(url) {
         url = url.replace("pubs.acs.org/doi/pdf/", "pubs.acs.org/doi/").split("?")[0];
-        const doi = url.replace("/abs/", "/").split("/doi/")[1];
-        const citeUrl = `https://pubs.acs.org/action/downloadCitation?doi=${doi}&include=cit&format=bibtex&direct=true`;
-        const data = await fetchBibtexToPaper({ url: citeUrl });
+        const doi = url.includes("pubs.acs.org/doi/")
+            ? url.replace("/abs/", "/").split("/doi/")[1]
+            : (await fetchDom(url))
+                  .querySelector('meta[name="citation_doi"]')
+                  .getAttribute("content");
+        const data = await fetchBibtexToPaper({ doi });
         const author = data.author.replaceAll("\n", "").trim();
         const { bibtex, title, year, key } = data;
         const pdfLink = `https://pubs.acs.org/doi/pdf/${doi}`;
