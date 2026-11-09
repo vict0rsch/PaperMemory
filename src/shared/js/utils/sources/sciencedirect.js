@@ -44,6 +44,9 @@ export class SciencedirectSource extends BasePaperSource {
 
     static async parse(url) {
         const pii = sciencedirectPii(url);
+        if (!/^S[0-9X]{16}$/.test(pii)) {
+            throw new Error(`ScienceDirect: missing or invalid PII: ${pii}`);
+        }
         const data = await fetchBibtexToPaper({
             url: `https://www.sciencedirect.com/sdfe/arp/cite?pii=${pii}&format=text%2Fx-bibtex&withabstract=false`,
         });
