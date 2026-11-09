@@ -742,6 +742,10 @@ describe("Test PaperMemory Popup Search Functionality", function () {
             await executeSearch(PMPage, "");
             await verifySearchByState(PMPage, 3);
 
+            // The previous spec left the sort on "year": move away first so
+            // selecting "year" is a real change
+            await PMPage.select("#memory-select", "title");
+            await sleep(100);
             await PMPage.select("#memory-select", "year");
             await sleep(100);
 
@@ -750,13 +754,13 @@ describe("Test PaperMemory Popup Search Functionality", function () {
                     document.querySelectorAll("#memory-table .memory-container"),
                 ).map((el) => el.id.replace("memory-container--", "")),
             );
-            const byYearAsc = [
-                PAPER_IDS.HYPERPARAMETER,
-                PAPER_IDS.CYCLE_GAN,
+            // "year" is a descending sort key: newest first
+            const byYearDesc = [
                 PAPER_IDS.NANOWIRE,
+                PAPER_IDS.CYCLE_GAN,
+                PAPER_IDS.HYPERPARAMETER,
             ];
-            const byYearDesc = [...byYearAsc].reverse();
-            expect([byYearAsc.join(), byYearDesc.join()]).toContain(orderedIds.join());
+            expect(orderedIds.join()).toBe(byYearDesc.join());
         });
     });
 
