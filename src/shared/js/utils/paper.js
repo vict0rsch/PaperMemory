@@ -354,6 +354,9 @@ export const addOrUpdatePaper = async ({
             } else if (newPaper.venue) {
                 await updateDuplicatedUrls(paperToAbs(existingPaper), newPaper.id);
                 await updateDuplicatedUrls(paperToPDF(existingPaper), newPaper.id);
+                // deletePaperInStorage writes back the papers it is given: re-read them,
+                // as other pages may have stored papers since they were read above
+                state.papers = (await getStorage("papers")) ?? {};
                 await deletePaperInStorage(existingPaper.id, state.papers);
                 existingPaper = mergePapers({
                     newPaper: newPaper,
@@ -440,10 +443,11 @@ export const addOrUpdatePaper = async ({
     if (isNew && state.papers.hasOwnProperty(paper.id)) {
         if (wasStored) {
             // update it like the fuzzy match above updates an existing paper, so the
-            // re-parse does not overwrite its user fields and visits
+            // re-parse does not overwrite its user fields and visits. Unlike there, an
+            // anonymous paper keeps its note: mergePapers only fills an empty one
             let overwrites = ["lastOpenDate"];
             if (state.papers[paper.id].author.toLowerCase() === "anonymous") {
-                overwrites.push("author", "year", "venue", "bibtex", "note");
+                overwrites.push("author", "year", "venue", "bibtex");
             }
             paper = updatePaperVisits(
                 mergePapers({

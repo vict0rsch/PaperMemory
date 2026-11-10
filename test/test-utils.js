@@ -246,6 +246,8 @@ describe("paper.js", () => {
         const { log, groupCollapsed, groupEnd } = console;
         // in-memory chrome.storage.local
         let storage = {};
+        // runs before each storage read: lets a test write as another page would
+        let beforeGet = () => {};
         // the paper stored by an earlier capture, with user fields: its title hashes
         // differently from the re-parsed one (see acs.parse below)
         const stored = {
@@ -282,7 +284,10 @@ describe("paper.js", () => {
             global.chrome = {
                 storage: {
                     local: {
-                        get: (key, cb) => cb({ [key]: structuredClone(storage[key]) }),
+                        get: (key, cb) => {
+                            beforeGet(key);
+                            cb({ [key]: structuredClone(storage[key]) });
+                        },
                         set: (items, cb) => {
                             Object.assign(storage, structuredClone(items));
                             cb && cb();
@@ -307,6 +312,7 @@ describe("paper.js", () => {
 
         beforeEach(() => {
             storage = {};
+            beforeGet = () => {};
             PMUtils.config.state.urlHashToId = {};
         });
 
@@ -354,7 +360,7 @@ describe("paper.js", () => {
             );
         });
 
-        it("re-parse of an anonymous stored paper refreshes its author and venue", async () => {
+        it("re-parse of an anonymous stored paper refreshes its author and venue, keeps its note", async () => {
             storage.papers = {
                 [id]: { ...stored, author: "Anonymous", venue: "Under review" },
             };
@@ -362,9 +368,33 @@ describe("paper.js", () => {
             expect(storage.papers[id]).toMatchObject({
                 author: "Jane Doe",
                 venue: "The Journal of Physical Chemistry A",
+                note: "my note",
                 tags: ["mytag"],
                 count: 6,
             });
+        });
+
+        it("fuzzy-match promotion keeps a paper another page stored meanwhile", async () => {
+            // a stored preprint which the parsed publication matches by title
+            const preprint = {
+                ...stored,
+                id: "Arxiv-1234.56789",
+                source: "arxiv",
+                title: "CO2 reduction",
+                venue: "",
+                pdfLink: "https://arxiv.org/pdf/1234.56789.pdf",
+            };
+            const other = { ...stored, id: "Other-paper", title: "Another paper" };
+            storage.papers = { [preprint.id]: preprint };
+            // another page stores a paper while the preprint's urls are remapped
+            beforeGet = (key) => {
+                if (key !== "urlHashToId") return;
+                storage.papers = { ...storage.papers, [other.id]: other };
+                beforeGet = () => {};
+            };
+            await capture();
+            // the preprint is promoted to the publication's id, the other paper kept
+            expect(Object.keys(storage.papers).sort()).toEqual([id, other.id].sort());
         });
     });
 });
