@@ -308,6 +308,7 @@ export const addOrUpdatePaper = async ({
 
     // Extract id from url
     state.papers = (await getStorage("papers")) ?? {};
+    const papersBeforeParse = state.papers;
     const id = await parseIdFromUrl(url, tab);
     const paperExists = state.papers.hasOwnProperty(id);
     prefs &&
@@ -428,10 +429,11 @@ export const addOrUpdatePaper = async ({
         await updateDuplicatedUrls(url, paper.id);
     }
 
-    // state.papers still holds the papers read before parsing: a new paper already
+    // papersBeforeParse holds the papers read before parsing (not the shared
+    // state.papers, which a concurrent call may have refreshed): a new paper already
     // there is a re-parsed stored paper (e.g. its url resolves no stored id), not one
     // created by another page in the meantime
-    const wasStored = state.papers.hasOwnProperty(paper.id);
+    const wasStored = papersBeforeParse.hasOwnProperty(paper.id);
     state.papers = (await getStorage("papers")) ?? {};
 
     // minimize risk of concurrent writes to the same paper

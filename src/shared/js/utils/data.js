@@ -325,14 +325,17 @@ export const deletePaperInStorage = async (id, papers) => {
         papers = (await getStorage("papers")) ?? {};
     }
     let deleted = false;
-    if (papers.hasOwnProperty(id)) {
+    const existed = papers.hasOwnProperty(id);
+    if (existed) {
         deleted = delete state.titleHashToIds[miniHash(papers[id].title)];
         deleted = deleted && delete papers[id];
         delete state.papers[id];
+        // write papers before the awaited url map update, which would otherwise
+        // widen the window for a stale whole-object write to clobber another tab
+        if (deleted) await setStorage("papers", papers);
         await updateDuplicatedUrls(null, id, true);
     }
     if (deleted) {
-        await setStorage("papers", papers);
         state.papersList = Object.values(cleanPapers(state.papers));
         sortMemory();
         log("Successfully deleted paper", id);
