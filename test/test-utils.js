@@ -242,10 +242,43 @@ describe("paper.js", () => {
         const id = "ACS_101021acsjpca9b00311";
         const acs = getSource("acs");
         const parse = acs.parse;
+        // PaperMemory logs through these (mocha keeps its own console.log)
+        const { log, groupCollapsed, groupEnd } = console;
         // in-memory chrome.storage.local
-        const storage = {};
+        let storage = {};
+        // the paper stored by an earlier capture, with user fields: its title hashes
+        // differently from the re-parsed one (see acs.parse below)
+        const stored = {
+            id,
+            source: "acs",
+            title: "CO<sub>2</sub> reduction",
+            author: "Jane Doe",
+            year: "2019",
+            venue: "The Journal of Physical Chemistry A",
+            key: "doe2019co",
+            note: "my note",
+            tags: ["mytag"],
+            favorite: true,
+            addDate: "2020-01-01T00:00:00.000Z",
+            lastOpenDate: "2020-01-02T00:00:00.000Z",
+            count: 5,
+        };
+
+        // run addOrUpdatePaper on `url` and wait until it is done processing
+        const capture = async () => {
+            let done;
+            const processed = new Promise((resolve) => (done = resolve));
+            const returned = await PMUtils.paper.addOrUpdatePaper({
+                url,
+                is: await PMUtils.paper.isPaper(url, true),
+                contentScriptCallbacks: { update: () => {}, preprints: () => {}, done },
+            });
+            await processed;
+            return returned;
+        };
 
         before(() => {
+            console.log = console.groupCollapsed = console.groupEnd = () => {};
             global.chrome = {
                 storage: {
                     local: {
@@ -272,7 +305,13 @@ describe("paper.js", () => {
             });
         });
 
+        beforeEach(() => {
+            storage = {};
+            PMUtils.config.state.urlHashToId = {};
+        });
+
         after(() => {
+            Object.assign(console, { log, groupCollapsed, groupEnd });
             acs.parse = parse;
             delete global.chrome;
         });
@@ -280,28 +319,52 @@ describe("paper.js", () => {
         it("first capture from a url urlToId cannot resolve maps it to the stored id", async () => {
             const state = PMUtils.config.state;
             // another page mapped a url after this one read the map
-            state.urlHashToId = {};
             storage.urlHashToId = { otherpageurl: "Other-id" };
             expect(await PMUtils.urls.parseIdFromUrl(url)).toBeFalsy();
 
-            const is = await PMUtils.paper.isPaper(url, true);
-            await new Promise((done) =>
-                PMUtils.paper.addOrUpdatePaper({
-                    url,
-                    is,
-                    contentScriptCallbacks: {
-                        update: () => {},
-                        preprints: () => {},
-                        done,
-                    },
-                }),
-            );
+            await capture();
             expect(storage.papers[id]).toBeDefined();
 
             // resolve the url from the stored map, as another page would
             state.urlHashToId = await PMUtils.data.getStorage("urlHashToId");
             expect(await PMUtils.urls.parseIdFromUrl(url)).toEqual(id);
             expect(state.urlHashToId.otherpageurl).toEqual("Other-id");
+        });
+
+        it("first capture from a url urlToId cannot resolve returns the paper's id", async () => {
+            const { paper, id: returnedId } = await capture();
+            expect(returnedId).toEqual(id);
+            expect(returnedId).toEqual(paper.id);
+        });
+
+        it("re-parse of a stored paper keeps its user fields and counts the visit", async () => {
+            storage.papers = { [id]: stored };
+            await capture();
+            const paper = storage.papers[id];
+            expect(paper).toMatchObject({
+                tags: ["mytag"],
+                note: "my note",
+                count: 6,
+                addDate: stored.addDate,
+                key: stored.key,
+                favorite: true,
+            });
+            expect(Date.parse(paper.lastOpenDate)).toBeGreaterThan(
+                Date.parse(stored.lastOpenDate),
+            );
+        });
+
+        it("re-parse of an anonymous stored paper refreshes its author and venue", async () => {
+            storage.papers = {
+                [id]: { ...stored, author: "Anonymous", venue: "Under review" },
+            };
+            await capture();
+            expect(storage.papers[id]).toMatchObject({
+                author: "Jane Doe",
+                venue: "The Journal of Physical Chemistry A",
+                tags: ["mytag"],
+                count: 6,
+            });
         });
     });
 });
