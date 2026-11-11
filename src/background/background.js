@@ -335,10 +335,12 @@ export function initBackground() {
 
     const fetchArxivXML = async (paperId) => {
         const arxivId = paperId.replace("Arxiv-", "").replace("_", "/");
-        return await fetch(
+        const response = await fetch(
             "https://export.arxiv.org/api/query?" +
                 new URLSearchParams({ id_list: arxivId }),
-        ).then((res) => res.text());
+        );
+        const text = await response.text();
+        return text;
     };
 
     chrome.runtime.onMessage.addListener((payload, sender, sendResponse) => {
