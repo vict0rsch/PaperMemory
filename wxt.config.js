@@ -116,6 +116,7 @@ export default defineConfig({
             "**/credentials*",
             "**/*.pem",
             "**/*.key",
+            "tmp/**",
         ],
     },
     vite: ({ command }) => ({
