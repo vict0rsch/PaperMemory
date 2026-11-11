@@ -339,8 +339,10 @@ export function initBackground() {
             "https://export.arxiv.org/api/query?" +
                 new URLSearchParams({ id_list: arxivId }),
         );
-        const text = await response.text();
-        return text;
+        if (!response.ok) {
+            throw new Error(`arXiv API responded with ${response.status}`);
+        }
+        return response.text();
     };
 
     chrome.runtime.onMessage.addListener((payload, sender, sendResponse) => {
@@ -400,7 +402,12 @@ export function initBackground() {
         } else if (payload.type === "try-unpaywall") {
             tryUnpaywall(payload.paper, false).then(sendResponse);
         } else if (payload.type === "fetch-arxiv-xml") {
-            fetchArxivXML(payload.paperId).then(sendResponse);
+            fetchArxivXML(payload.paperId)
+                .then(sendResponse)
+                .catch((e) => {
+                    logError("[fetchArxivXML]", e);
+                    sendResponse("");
+                });
         }
         return true;
     });

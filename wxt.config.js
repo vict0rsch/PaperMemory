@@ -117,6 +117,9 @@ export default defineConfig({
             "**/*.pem",
             "**/*.key",
             "tmp/**",
+            "coverage/**",
+            "site/**",
+            "**/*.log",
         ],
     },
     vite: ({ command }) => ({

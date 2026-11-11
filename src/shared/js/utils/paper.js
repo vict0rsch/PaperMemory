@@ -198,6 +198,8 @@ export const makePaper = async (is, url, tab = false) => {
             titleHashToIds: state.titleHashToIds,
             findPaperForProperty,
         };
+        // Unwrap here too: makePaper is also called directly (e.g. options.js
+        // manual add), bypassing the unwrap in addOrUpdatePaper.
         paper = await src.parse(tab ? url : unwrapUrl(url), tab, ctx);
         if (paper) paper.source = src.name;
     } catch (e) {
