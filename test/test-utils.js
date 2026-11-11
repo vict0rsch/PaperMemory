@@ -1,6 +1,6 @@
 import { expect } from "expect";
 import { JSDOM } from "jsdom";
-import { getSource } from "@pmu/sources/index.js";
+import { getSource, unwrapUrl } from "@pmu/sources/index.js";
 
 import { loadPaperMemoryUtils, range, readJSON } from "./utilsForTests.js";
 
@@ -185,6 +185,29 @@ describe("paper.js", () => {
                         const isp = await PMUtils.paper.isPaper(crafted);
                         const detected = Object.keys(isp).filter((k) => isp[k]);
                         if (detected.length) offenders.push({ crafted, detected });
+                    }
+                }
+                expect(offenders).toEqual([]);
+            });
+        }
+        // A URL that wraps a full (scheme included) paper URL in its path or
+        // query (proxies, PDF viewers) is detected as the inner paper's source.
+        for (const [source, urls] of Object.entries(allUrls)) {
+            it(`Positive wrapped ${source}`, async () => {
+                const offenders = [];
+                for (const url of urls.slice(0, 2)) {
+                    const crafted = [
+                        `https://proxy.univ.edu/${url}`,
+                        `chrome-extension://abcdefghijklmnop/viewer.html?file=${encodeURIComponent(url)}`,
+                        `chrome-extension://abcdefghijklmnop/${url}`,
+                    ];
+                    // a raw url holding `&` would be split by URLSearchParams
+                    if (!url.includes("&")) {
+                        crafted.push(`https://login.ezproxy.univ.edu/login?url=${url}`);
+                    }
+                    for (const c of crafted) {
+                        const isp = await PMUtils.paper.isPaper(c);
+                        if (isp[source] !== true) offenders.push({ crafted: c, isp });
                     }
                 }
                 expect(offenders).toEqual([]);
@@ -396,5 +419,85 @@ describe("paper.js", () => {
             // the preprint is promoted to the publication's id, the other paper kept
             expect(Object.keys(storage.papers).sort()).toEqual([id, other.id].sort());
         });
+    });
+});
+
+describe("unwrapUrl", () => {
+    const arxiv = "https://arxiv.org/pdf/1703.10593";
+    const acs = "https://pubs.acs.org/doi/10.1021/acs.jctc.2c00001";
+    const nature = "https://www.nature.com/articles/s41467-018-07210-0";
+
+    for (const [wrapped, inner] of [
+        [`chrome-extension://oemmndcbldboiebfnladdacbdfmadadm/${arxiv}`, arxiv],
+        [
+            "chrome-extension://abc/viewer.html?file=https%3A%2F%2Farxiv.org%2Fpdf%2F1703.10593",
+            arxiv,
+        ],
+        [`https://login.ezproxy.univ.edu/login?url=${acs}`, acs],
+        [`https://proxy.univ.edu/${nature}`, nature],
+        [
+            "https://login.example/login?return=https://univ.edu/home&url=https://arxiv.org/abs/1703.10593",
+            "https://arxiv.org/abs/1703.10593",
+        ],
+        // an encoded url in the path keeps the outer query as its own
+        [
+            "https://proxy.x/https%3A%2F%2Fopenreview.net%2Fforum?id=abc123",
+            "https://openreview.net/forum?id=abc123",
+        ],
+        [
+            "https://proxy.x/https://openreview.net/forum%3Fid%3Dabc123",
+            "https://openreview.net/forum?id=abc123",
+        ],
+        // a raw url in the path keeps its own query's escapes
+        [
+            "https://proxy.x/https://arxiv.org/abs/1703.10593?q=a%26b",
+            "https://arxiv.org/abs/1703.10593?q=a%26b",
+        ],
+    ]) {
+        it(`unwraps ${wrapped}`, () => {
+            expect(unwrapUrl(wrapped)).toEqual(inner);
+        });
+    }
+
+    for (const url of [
+        "https://arxiv.org/abs/1703.10593",
+        "https://google.com",
+        "https://evil.example/#https://arxiv.org/abs/1703.10593",
+        "https://evil.example/?x=arxiv.org/abs/1703.10593",
+        // host-rewrite proxies are out of scope
+        "https://pubs-acs-org.ezproxy.univ.edu/doi/10.1021/acs.jctc.2c00001",
+        "https://redirect.example/?next=https://google.com",
+        // the paper url is two levels deep: only one level is unwrapped
+        "https://a.example/?u=https%3A%2F%2Fb.example%2F%3Fu%3Dhttps%253A%252F%252Farxiv.org%252Fabs%252F1703.10593",
+        // "https" is the host here, not an embedded url's scheme
+        "https://https://arxiv.org/abs/1703.10593",
+        "not a url",
+        "",
+    ]) {
+        it(`leaves "${url}" unchanged`, () => {
+            expect(unwrapUrl(url)).toEqual(url);
+        });
+    }
+
+    it("parseIdFromUrl resolves a wrapped url like the inner one", async () => {
+        const wrapped = "https://proxy.univ.edu/https://arxiv.org/abs/1703.10593";
+        expect(await PMUtils.urls.parseIdFromUrl(wrapped)).toEqual("Arxiv-1703.10593");
+    });
+
+    it("parseIdFromUrl resolves an encoded viewer url like the inner one", async () => {
+        const wrapped =
+            "chrome-extension://abc/viewer.html?file=https%3A%2F%2Farxiv.org%2Fabs%2F1703.10593";
+        expect(await PMUtils.urls.parseIdFromUrl(wrapped)).toEqual("Arxiv-1703.10593");
+    });
+
+    it("acs urlToId does not throw on an unwrapped url", async () => {
+        // the raw wrapped url used to throw in acs.urlToId
+        const ctx = {
+            papers: [],
+            titleHashToIds: {},
+            findPaperForProperty: () => null,
+        };
+        const wrapped = `https://login.ezproxy.univ.edu/login?url=${acs}`;
+        await getSource("acs").urlToId(unwrapUrl(wrapped), ctx);
     });
 });
