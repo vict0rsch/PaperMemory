@@ -453,6 +453,27 @@ describe("unwrapUrl", () => {
             "https://proxy.x/https://arxiv.org/abs/1703.10593?q=a%26b",
             "https://arxiv.org/abs/1703.10593?q=a%26b",
         ],
+        // an encoded url with its own query ignores the outer one
+        [
+            "https://proxy.x/https%3A%2F%2Fopenreview.net%2Fforum%3Fid%3Dabc?foo=bar",
+            "https://openreview.net/forum?id=abc",
+        ],
+        [`https://login.ezproxy.univ.edu/login/?qurl=${acs}`, acs],
+        [
+            "chrome-extension://abc/viewer.html?file=HTTPS://ARXIV.ORG/abs/1703.10593",
+            "https://arxiv.org/abs/1703.10593",
+        ],
+        // an encoded delimiter decodes the whole embedded part
+        ["https://proxy.x/https://arxiv.org/pdf%2F1703.10593", arxiv],
+        [
+            "moz-extension://abc/viewer.html?file=https%3A%2F%2Farxiv.org%2Fpdf%2F1703.10593",
+            arxiv,
+        ],
+        // a url in the path is unwrapped on any host (archive snapshots)
+        [
+            "https://web.archive.org/web/2020/https://arxiv.org/abs/1703.10593",
+            "https://arxiv.org/abs/1703.10593",
+        ],
     ]) {
         it(`unwraps ${wrapped}`, () => {
             expect(unwrapUrl(wrapped)).toEqual(inner);
@@ -467,6 +488,16 @@ describe("unwrapUrl", () => {
         // host-rewrite proxies are out of scope
         "https://pubs-acs-org.ezproxy.univ.edu/doi/10.1021/acs.jctc.2c00001",
         "https://redirect.example/?next=https://google.com",
+        // query parameters are only unwrapped on extension and /login pages
+        "https://www.google.com/search?q=https://arxiv.org/abs/1703.10593",
+        "https://twitter.com/intent/tweet?url=https%3A%2F%2Farxiv.org%2Fabs%2F1703.10593",
+        "https://www.linkedin.com/sharing/share-offsite/?url=https://arxiv.org/abs/1703.10593",
+        "https://news.ycombinator.com/submitlink?u=https://arxiv.org/abs/1703.10593&t=x",
+        "https://www.reddit.com/submit?url=https://arxiv.org/abs/1703.10593",
+        "https://example.com/redirect?next=https://arxiv.org/abs/1703.10593",
+        "https://example.com/page?url=https://arxiv.org/abs/1703.10593",
+        "https://login.ezproxy.univ.edu/login?next=https://arxiv.org/abs/1703.10593",
+        "https://login.ezproxy.univ.edu/connect?url=https://arxiv.org/abs/1703.10593",
         // the paper url is two levels deep: only one level is unwrapped
         "https://a.example/?u=https%3A%2F%2Fb.example%2F%3Fu%3Dhttps%253A%252F%252Farxiv.org%252Fabs%252F1703.10593",
         // "https" is the host here, not an embedded url's scheme
@@ -490,7 +521,7 @@ describe("unwrapUrl", () => {
         expect(await PMUtils.urls.parseIdFromUrl(wrapped)).toEqual("Arxiv-1703.10593");
     });
 
-    it("acs urlToId does not throw on an unwrapped url", async () => {
+    it("acs urlToId resolves an unwrapped url", async () => {
         // the raw wrapped url used to throw in acs.urlToId
         const ctx = {
             papers: [],
@@ -498,6 +529,8 @@ describe("unwrapUrl", () => {
             findPaperForProperty: () => null,
         };
         const wrapped = `https://login.ezproxy.univ.edu/login?url=${acs}`;
-        await getSource("acs").urlToId(unwrapUrl(wrapped), ctx);
+        expect(await getSource("acs").urlToId(unwrapUrl(wrapped), ctx)).toEqual(
+            "ACS_101021acsjctc2c00001",
+        );
     });
 });
