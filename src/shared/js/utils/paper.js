@@ -40,6 +40,7 @@ import {
     knownPaperPages,
     preprintSources,
     sourceFromIs,
+    unwrapUrl,
 } from "@pmu/sources/index.js";
 import { parseIdFromUrl, findPaperForProperty } from "@pmu/urls.js";
 import { findLocalFile, isKnownLocalFile } from "@pmu/files.js";
@@ -57,6 +58,7 @@ import { findLocalFile, isKnownLocalFile } from "@pmu/files.js";
 export const isPaper = async (url, noStored = false) => {
     let is = {};
     if (!url) return is;
+    url = unwrapUrl(url);
     for (const source in knownPaperPages) {
         is[source] = getSource(source).matches(url);
     }
@@ -196,7 +198,7 @@ export const makePaper = async (is, url, tab = false) => {
             titleHashToIds: state.titleHashToIds,
             findPaperForProperty,
         };
-        paper = await src.parse(url, tab, ctx);
+        paper = await src.parse(tab ? url : unwrapUrl(url), tab, ctx);
         if (paper) paper.source = src.name;
     } catch (e) {
         logError("Error in makePaper:", e);
@@ -305,6 +307,9 @@ export const addOrUpdatePaper = async ({
     let pwc = {};
 
     consoleHeader(`PaperMemory Parsing ${String.fromCodePoint("0x1F4DD")}`);
+
+    // parse and store the paper URL a proxy / PDF-viewer URL embeds
+    if (!tab) url = unwrapUrl(url);
 
     // Extract id from url
     state.papers = (await getStorage("papers")) ?? {};

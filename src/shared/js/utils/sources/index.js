@@ -104,6 +104,44 @@ export const matchUrl = (url) => {
     return null;
 };
 
+/**
+ * The paper URL a wrapper URL embeds, e.g. a PDF-viewer extension's
+ * `chrome-extension://<id>/https://arxiv.org/pdf/...` or a proxy's
+ * `https://proxy.example/login?url=https://pubs.acs.org/doi/...`. Only URLs
+ * with an explicit `http(s)://` scheme in the path or in a query parameter's
+ * value are considered (never the fragment), one level deep, and only if a
+ * known source matches them.
+ * @param {string} url
+ * @returns {string} the embedded paper URL, else `url` unchanged
+ */
+export const unwrapUrl = (url) => {
+    if (!url || typeof url !== "string" || matchUrl(url)) return url;
+    let parsed;
+    try {
+        parsed = new URL(url);
+    } catch (e) {
+        return url;
+    }
+    const candidates = [];
+    // a URL embedded in the path runs to the end of the query (its own), not the
+    // outer fragment. Its path is decoded only if its delimiters are encoded: a
+    // raw one keeps its own escapes
+    const inPath = parsed.pathname.search(/https?(:\/\/|%3A%2F%2F)/i);
+    if (inPath >= 0) {
+        let embedded = parsed.pathname.slice(inPath);
+        if (/%(3A|2F|3F|26|3D|23)/i.test(embedded)) {
+            try {
+                embedded = decodeURIComponent(embedded);
+            } catch (e) {}
+        }
+        candidates.push(embedded + parsed.search);
+    }
+    for (const value of parsed.searchParams.values()) {
+        if (/^https?:\/\//i.test(value)) candidates.push(value);
+    }
+    return candidates.find((c) => matchUrl(c)) ?? url;
+};
+
 /** Lowercase source names used for fuzzy de-duplication (arxiv, biorxiv). */
 export const preprintSources = DISPATCH_SOURCES.filter((S) => S.isPreprint).map((S) =>
     S.name.toLowerCase(),

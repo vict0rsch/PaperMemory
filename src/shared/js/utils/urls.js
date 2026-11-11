@@ -1,7 +1,7 @@
 import { cleanPapers, urlToWebsiteId, miniHash } from "@pmu/functions.js";
 import { isPaper } from "@pmu/paper.js";
 import { state } from "@pmu/config.js";
-import { getSource, SOURCE_DISPATCH_ORDER } from "@pmu/sources/index.js";
+import { getSource, SOURCE_DISPATCH_ORDER, unwrapUrl } from "@pmu/sources/index.js";
 
 /**
  * Find the first paper from a source whose #id matches a certain string.
@@ -43,6 +43,7 @@ export const parseIdFromUrl = async (url, tab = null) => {
         if (tab) {
             return urlToWebsiteId(url);
         }
+        url = unwrapUrl(url);
         let idForUrl;
 
         const hashedUrl = miniHash(url);
