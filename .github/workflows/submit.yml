@@ -46,7 +46,7 @@ jobs:
         run: |
           npx wxt submit \
             ${{ github.event.inputs.dry_run == 'true' && '--dry-run' || '' }} \
-            --chrome-zip "dist/*-chrome.zip"
+            --chrome-zip dist/*-chrome.zip
         env:
           CHROME_API_VERSION: v2
           CHROME_EXTENSION_ID: ${{ secrets.CHROME_EXTENSION_ID }}
@@ -59,8 +59,8 @@ jobs:
         run: |
           npx wxt submit \
             ${{ github.event.inputs.dry_run == 'true' && '--dry-run' || '' }} \
-            --firefox-zip "dist/*-firefox.zip" \
-            --firefox-sources-zip "dist/*-sources.zip"
+            --firefox-zip dist/*-firefox.zip \
+            --firefox-sources-zip dist/*-sources.zip
         env:
           FIREFOX_EXTENSION_ID: ${{ secrets.FIREFOX_EXTENSION_ID }}
           FIREFOX_JWT_ISSUER: ${{ secrets.FIREFOX_JWT_ISSUER }}

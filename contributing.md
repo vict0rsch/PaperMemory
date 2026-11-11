@@ -338,11 +338,41 @@ Before running with `dry_run: false`, make sure `package.json`'s `version` has b
 
 **Required secrets** (repo settings → Secrets and variables → Actions):
 
-- Chrome: `CHROME_EXTENSION_ID`, `CHROME_CLIENT_ID`, `CHROME_CLIENT_SECRET`, `CHROME_REFRESH_TOKEN`
+- Chrome: `CHROME_EXTENSION_ID`, `CHROME_PUBLISHER_ID`, `CHROME_SERVICE_ACCOUNT_CLIENT_EMAIL`, `CHROME_SERVICE_ACCOUNT_PRIVATE_KEY`
 - Firefox: `FIREFOX_EXTENSION_ID`, `FIREFOX_JWT_ISSUER`, `FIREFOX_JWT_SECRET`
 - Tests: `VICT0RSCH_GITHUB_PAT` (used by the test matrix for GitHub API calls)
 
-Each secret is only exposed to the step that needs it, so a compromised Chrome step cannot leak Firefox credentials and vice versa.
+Each secret is only exposed to the step that needs it, so a compromised Chrome step cannot leak Firefox credentials and vice versa. `CHROME_API_VERSION: v2` is not a secret and is set inline in `submit.yml`.
+
+#### Submission variables reference
+
+`wxt submit` is a thin wrapper around [`publish-browser-extension`](https://github.com/aklinker1/publish-browser-extension): every CLI flag can be given as an environment variable instead (`--chrome-publisher-id` ↔ `CHROME_PUBLISHER_ID`). The same names are used for the GitHub secrets and in the local `.env.submit`.
+
+**Chrome Web Store** — uses the CWS API **v2**. API v1.1 (client ID / client secret / refresh token) was shut down on 2026-10-15 and must not be used anymore.
+
+| Variable                              | What it is                                                                            | Where it comes from                                                                                                                                                                                                                                                                                                                      |
+| ------------------------------------- | ------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `CHROME_API_VERSION`                  | Must be `v2`. Without it the tool silently falls back to the dead v1.1 API.           | Constant.                                                                                                                                                                                                                                                                                                                                |
+| `CHROME_EXTENSION_ID`                 | The 32-letter ID of the store item.                                                   | Store URL `https://chromewebstore.google.com/detail/<slug>/<extension-id>`, or the item page in the developer dashboard.                                                                                                                                                                                                                 |
+| `CHROME_PUBLISHER_ID`                 | ID of the publisher account that owns the item.                                       | URL of the developer dashboard once the right publisher is selected: `https://chrome.google.com/webstore/devconsole/<publisher-id>`.                                                                                                                                                                                                     |
+| `CHROME_SERVICE_ACCOUNT_CLIENT_EMAIL` | Email of the Google Cloud service account allowed to publish.                         | `client_email` field of the service account's JSON key. Set up following [Google's service account guide](https://developer.chrome.com/docs/webstore/service-accounts): enable the Chrome Web Store API in a Cloud project, create a service account, create a JSON key, and add the service account's email to the developer dashboard. |
+| `CHROME_SERVICE_ACCOUNT_PRIVATE_KEY`  | Private key of that service account (the full `-----BEGIN PRIVATE KEY-----…` string). | `private_key` field of the same JSON key. Treat it like a password; rotate by creating a new key and deleting the old one in Google Cloud.                                                                                                                                                                                               |
+| `CHROME_SKIP_SUBMIT_REVIEW`           | Optional, default `false`. `true` uploads the zip without submitting it for review.   | Choice.                                                                                                                                                                                                                                                                                                                                  |
+
+**Firefox Add-ons (AMO)**
+
+| Variable               | What it is                                                                                                              | Where it comes from                                                                                                       |
+| ---------------------- | ----------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------- |
+| `FIREFOX_EXTENSION_ID` | The add-on to update. **Use the numeric AMO ID `2728982`**, not the GUID (see below).                                   | `https://addons.mozilla.org/api/v5/addons/addon/paper-memory/` → `id` field.                                              |
+| `FIREFOX_JWT_ISSUER`   | AMO API key ("JWT issuer", looks like `user:12345:67`).                                                                 | [AMO API keys page](https://addons.mozilla.org/developers/addon/api/key/), logged in as the account that owns the add-on. |
+| `FIREFOX_JWT_SECRET`   | AMO API secret paired with the key above.                                                                               | Same page. Shown only once; regenerate the pair to rotate it.                                                             |
+| `FIREFOX_CHANNEL`      | Optional, default `listed`. `unlisted` would publish a self-distributed version instead of updating the public listing. | Choice.                                                                                                                   |
+
+**Why the numeric Firefox ID.** The add-on's GUID is `{ff9cbac9-82ff-4e2b-96ae-ae0845aa85f5}` (AMO generated it on the first upload, because the old `manifest.json` never set one). `publish-browser-extension` strips the curly braces from `FIREFOX_EXTENSION_ID` before calling AMO, but AMO only finds GUID add-ons _with_ the braces, so a GUID fails with `404 {"detail":"Not found."}` even in `--dry-run`. The numeric ID (or the slug `paper-memory`, which can be renamed) avoids this.
+
+**The GUID still matters in `wxt.config.js`.** `manifest.browser_specific_settings.gecko.id` must be exactly `{ff9cbac9-82ff-4e2b-96ae-ae0845aa85f5}` (braces included). AMO rejects uploads whose manifest ID differs from the listing's, and Firefox treats a different ID as a different extension — users would not get the update and their stored papers, which are tied to the extension ID, would not carry over.
+
+**Zip paths.** Neither `wxt submit` nor `publish-browser-extension` expands globs, so zip paths must reach the tool already resolved. `submit.yml` leaves `dist/*-chrome.zip` unquoted so the shell expands it (a fresh CI checkout has exactly one zip of each kind); the local npm scripts use the exact names (`dist/papermemory-$npm_package_version-<browser>.zip`) so stale zips from older versions in `dist/` are never picked up.
 
 **Local equivalents** (useful for debugging credentials without going through CI):
 
@@ -355,7 +385,25 @@ npm run submit:chrome:dry-run        # Chrome only, dry run
 npm run submit:firefox:dry-run       # Firefox only, dry run
 ```
 
-These scripts read credentials from a local `.env.submit` file (see WXT's [publishing docs](https://wxt.dev/guide/essentials/publishing.html)). **Never commit `.env.submit`** — it's in `.gitignore`.
+These scripts read credentials from a local `.env.submit` file at the repo root (see WXT's [publishing docs](https://wxt.dev/guide/essentials/publishing.html)), with the variables from the [reference above](#submission-variables-reference):
+
+```bash
+# .env.submit — real values live in the maintainer's password manager
+CHROME_API_VERSION=v2
+CHROME_EXTENSION_ID=...
+CHROME_PUBLISHER_ID=...
+CHROME_SERVICE_ACCOUNT_CLIENT_EMAIL=...
+CHROME_SERVICE_ACCOUNT_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
+CHROME_SKIP_SUBMIT_REVIEW=false
+FIREFOX_EXTENSION_ID=2728982
+FIREFOX_JWT_ISSUER=...
+FIREFOX_JWT_SECRET=...
+FIREFOX_CHANNEL=listed
+```
+
+`npx wxt submit init` walks through the same values interactively and writes this file. `submit` and `submit:dry-run` run Chrome then Firefox (`&&`), so Firefox is skipped if Chrome fails.
+
+**Never commit `.env.submit`** — it's in `.gitignore`, but `.gitignore` only applies to commits that already contain it: during a rebase or when checking out older commits, stage files explicitly (`git add <file>`) rather than with `git add -A` / "Stage All", or an untracked `.env.submit` can be swept into a commit. GitHub push protection will block such a push; if that happens, remove the file from the offending commit rather than allowing the secret.
 
 ### Concurrency
 
