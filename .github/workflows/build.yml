@@ -1,18 +1,9 @@
-name: automerge
+name: Build CI
 on: [push, pull_request]
 
-jobs:
-    build:
-        runs-on: ubuntu-latest
-        steps:
-            - uses: actions/checkout@v4
-            - uses: actions/setup-node@v4
-              with:
-                  node-version: "22.x"
+permissions:
+  contents: read
 
-            - name: Install Yarn
-              run: npm install --global yarn
-            - name: Install dependencies
-              run: yarn install
-            - name: Build
-              run: gulp build
+jobs:
+  build:
+    uses: ./.github/workflows/_build.yml

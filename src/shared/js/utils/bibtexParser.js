@@ -9,7 +9,7 @@
 //
 //Port to Browser lib by ORCID / RCPETERS
 
-function BibtexParser() {
+export function BibtexParser() {
     this.months = [
         "jan",
         "feb",
@@ -54,7 +54,7 @@ function BibtexParser() {
                     " -> expected " +
                     s +
                     ", found " +
-                    this.input.substring(this.pos)
+                    this.input.substring(this.pos),
             );
         }
         this.skipWhitespace(canCommentOut);
@@ -132,7 +132,7 @@ function BibtexParser() {
             if (this.pos >= this.input.length - 1) {
                 throw TypeError(
                     "Unterminated value: value_comment",
-                    +this.input.substring(start)
+                    +this.input.substring(start),
                 );
             }
             this.pos++;
@@ -153,7 +153,7 @@ function BibtexParser() {
                 } else if (this.pos >= this.input.length - 1) {
                     throw TypeError(
                         "Unterminated value: value_quotes",
-                        this.input.substring(start)
+                        this.input.substring(start),
                     );
                 }
             }
@@ -223,7 +223,7 @@ function BibtexParser() {
         } else {
             throw TypeError(
                 "Value expected, equals sign missing: key_equals_value",
-                this.input.substring(this.pos)
+                this.input.substring(this.pos),
             );
         }
     };
@@ -335,7 +335,7 @@ function BibtexParser() {
  * @param {string} str
  * @returns {string} str without surrounding braces
  */
-const safeRemoveSurroundingBraces = (str) => {
+export const safeRemoveSurroundingBraces = (str) => {
     let opened = 0;
     let closed = 0;
     let remove = true;
@@ -353,7 +353,33 @@ const safeRemoveSurroundingBraces = (str) => {
     return str;
 };
 
-const bibtexToObject = (bibtex) => {
+/**
+ * Keys (case-insensitive) that should never be persisted inside a paper's
+ * bibtex. Extend this list to filter out additional noisy / privacy-sensitive
+ * fields.
+ */
+export const SANITIZED_BIBTEX_KEYS = ["abstract", "abstractNote"];
+
+/**
+ * Mutates and returns a bibtex object with sanitized keys removed.
+ * Currently strips the `abstract` field so full abstracts are not stored
+ * alongside parsed papers (they can be very long and are generally unwanted
+ * in the stored bibtex).
+ * @param {Object} bibObj A bibtex object as returned by `bibtexToObject`.
+ * @returns {Object} The same object, with sanitized keys removed.
+ */
+export const sanitizeBibtexObject = (bibObj) => {
+    if (!bibObj || typeof bibObj !== "object") return bibObj;
+    const sanitized = new Set(SANITIZED_BIBTEX_KEYS.map((k) => k.toLowerCase()));
+    for (const key of Object.keys(bibObj)) {
+        if (sanitized.has(key.toLowerCase())) {
+            delete bibObj[key];
+        }
+    }
+    return bibObj;
+};
+
+export const bibtexToObject = (bibtex) => {
     var b = new BibtexParser();
     /*
     Fixing @article{Jain_Chacinska_Rehling_2025, title={Understanding mitochondrial protein import: a revised model of the presequence translocase}, volume={50}, url={http://dx.doi.org/10.1016/j.tibs.2025.03.001}, DOI={10.1016/j.tibs.2025.03.001}, number={7}, journal={Trends in Biochemical Sciences}, publisher={Elsevier BV}, author={Jain, Naintara and Chacinska, Agnieszka and Rehling, Peter}, year={2025}, month={july}, pages={585–595}, language={en}}'
@@ -382,7 +408,7 @@ const bibtexToObject = (bibtex) => {
     return obj;
 };
 
-const bibtexToString = (bibtex) => {
+export const bibtexToString = (bibtex) => {
     if (typeof bibtex === "string") {
         bibtex = bibtexToObject(bibtex);
     }
@@ -401,7 +427,12 @@ const bibtexToString = (bibtex) => {
     const keyLen = Math.max(...Object.keys(bibtex).map((k) => k.length));
     for (const key in bibtex) {
         if (bibtex.hasOwnProperty(key) && bibtex[key]) {
-            let value = bibtex[key].replaceAll(/\s+/g, " ").trim();
+            let candidate = bibtex[key];
+            if (typeof candidate !== "string") {
+                console.warn("Non-string value found for key", key, ":", candidate);
+                candidate = JSON.stringify(candidate);
+            }
+            let value = candidate.replaceAll(/\s+/g, " ").trim();
             if (value.startsWith("{") && value.endsWith("}")) {
                 value = safeRemoveSurroundingBraces(value);
             }
@@ -414,29 +445,8 @@ const bibtexToString = (bibtex) => {
     return (bstr.slice(0, -2) + "\n}").replaceAll("\t", "  ").replaceAll("--", "-");
 };
 
-const extractBibtexValue = (bibtex, key) => {
+export const extractBibtexValue = (bibtex, key) => {
     const b = bibtexToObject(bibtex);
     if (b.hasOwnProperty(key)) return b[key];
     return "";
 };
-
-const extractAuthor = (bibtex) =>
-    extractBibtexValue(bibtex, "author")
-        .replaceAll("{", "")
-        .replaceAll("}", "")
-        .replaceAll("\\", "")
-        .split(" and ")
-        .map((a) => a.split(", ").reverse().join(" "))
-        .join(" and ");
-
-if (typeof module !== "undefined" && module.exports != null) {
-    var dummyModule = module;
-    dummyModule.exports = {
-        BibtexParser,
-        safeRemoveSurroundingBraces,
-        bibtexToObject,
-        bibtexToString,
-        extractBibtexValue,
-        extractAuthor,
-    };
-}

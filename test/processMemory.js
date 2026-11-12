@@ -1,8 +1,8 @@
-exports.allIds = (memory) => {
+export const allIds = (memory) => {
     return Object.keys(memory);
 };
 
-exports.allAttributes = (memory, key, asObj = false) => {
+export const allAttributes = (memory, key, asObj = false) => {
     if (!asObj) {
         return Object.values(memory).map((item) => item[key]);
     }
@@ -11,4 +11,8 @@ exports.allAttributes = (memory, key, asObj = false) => {
         values[id] = memory[id][key];
     });
     return values;
+};
+
+export const paperForSource = (source, memory) => {
+    return Object.values(memory).find((p) => p?.source === source);
 };

@@ -1,3 +1,25 @@
+// ES Module imports
+import {
+    addListener,
+    findEl,
+    setHTML,
+    dispatch,
+    val,
+    showId,
+    hideId,
+    querySelector,
+} from "@pmu/miniquery.js";
+import { copyTextToClipboard, escapeHtml } from "@pmu/functions.js";
+import { BibtexParser, bibtexToObject, bibtexToString } from "@pmu/bibtexParser.js";
+import {
+    tryDBLP,
+    trySemanticScholar,
+    tryCrossRef,
+    tryUnpaywall,
+    tryGoogleScholar,
+} from "@pmu/preprintMatching.js";
+import { sleep } from "@pmu/sync.js";
+
 var STOPMATCH = false;
 var DISABLE_MATCH = {};
 
@@ -63,18 +85,18 @@ const setListeners = () => {
         arxivs.length
             ? setHTML(
                   "n-arxivs",
-                  `Matching ${arxivs.length} arXiv entries, out of ${parsed.length} total entries:`
+                  `Matching ${arxivs.length} arXiv entries, out of ${parsed.length} total entries:`,
               )
             : setHTML(
                   "n-arxivs",
-                  `No arXiv entries found in ${parsed.length} total entries.`
+                  `No arXiv entries found in ${parsed.length} total entries.`,
               );
         const matched = arxivs.length ? await matchItems(arxivs) : [];
         matched.length &&
             setTimeout(() => {
-                findEl({ element: "papers-successfully-matched" })?.scrollIntoView(
-                    true
-                );
+                findEl({
+                    element: "papers-successfully-matched",
+                })?.scrollIntoView(true);
             }, 250);
         showBibliography(parsed, matched, arxivIndices);
         addListener("show-only-matches", "change", () => {
@@ -110,7 +132,7 @@ const updateStatusInfo = () => {
     let reasons = Object.entries(DISABLE_MATCH)
         .map(
             ([key, value]) =>
-                `Disabling ${display[key]} for this matching process because the server returned a status of ${value}`
+                `Disabling ${display[key]} for this matching process because the server returned a status of ${value}`,
         )
         .join("<br/>");
     if (reasons) {
@@ -271,7 +293,7 @@ const matchItems = async (papersToMatch) => {
             <div>
                 Looking for publications on <span id="matching-status-provider"></span>
             </div>
-        </div>`
+        </div>`,
     );
 
     const progressbar = querySelector("#matching-progress-bar");
@@ -291,7 +313,7 @@ const matchItems = async (papersToMatch) => {
         setHTML("matching-status-index", idx + 1);
         setHTML(
             "matching-status-title",
-            paper.title.replaceAll("{", "").replaceAll("}", "")
+            escapeHtml(paper.title.replaceAll("{", "").replaceAll("}", "")),
         );
         changeProgress(parseInt((idx / papersToMatch.length) * 100));
 
@@ -337,17 +359,17 @@ const updateMatchedTitles = (matchedBibtexStrs, sources, venues) => {
     if (entries.length) {
         const keys = entries.map((e) => e.citationKey);
         const titles = entries.map((e) =>
-            e.title.replaceAll("{", "").replaceAll("}", "")
+            e.title.replaceAll("{", "").replaceAll("}", ""),
         );
         htmls.push("<table id='result-titles-table' class='w-100'>");
         for (const [idx, title] of titles.entries()) {
             htmls.push(
                 `<tr>
-                    <th class="match-citation-key">${keys[idx]}</th>
-                    <th class='match-title'>${title}</th>
-                    <th class="match-venue">${venues[idx]}</th>
-                    <th class="match-source">${sources[idx]}</th>
-                </tr>`
+                    <th class="match-citation-key">${escapeHtml(keys[idx])}</th>
+                    <th class='match-title'>${escapeHtml(title)}</th>
+                    <th class="match-venue">${escapeHtml(venues[idx])}</th>
+                    <th class="match-source">${escapeHtml(sources[idx])}</th>
+                </tr>`,
             );
         }
         htmls.push("</table>");
@@ -355,7 +377,7 @@ const updateMatchedTitles = (matchedBibtexStrs, sources, venues) => {
     setHTML(
         "matched-list",
         `<h4 id="papers-successfully-matched">Papers successfully matched: ${entries.length}</h4>` +
-            htmls.join("")
+            htmls.join(""),
     );
 };
 

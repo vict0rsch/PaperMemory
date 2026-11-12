@@ -1,3 +1,61 @@
+// ES Module imports
+import {
+    addListener,
+    setHTML,
+    findEl,
+    style,
+    querySelector,
+    addClass,
+    hasClass,
+    removeClass,
+    queryAll,
+} from "@pmu/miniquery.js";
+import {
+    copyTextToClipboard,
+    isPdfUrl,
+    warn,
+    log,
+    info,
+    sendMessageToBackground,
+    downloadURI,
+    dummyEvent,
+    escapeHtml,
+} from "@pmu/functions.js";
+import { bibtexToString, bibtexToObject } from "@pmu/bibtexParser.js";
+import {
+    getStorage,
+    deletePaperInStorage,
+    getDefaultKeyboardAction,
+} from "@pmu/data.js";
+import { isPaper, addOrUpdatePaper } from "@pmu/paper.js";
+import { state } from "@pmu/config.js";
+import { getSource } from "@pmu/sources/index.js";
+import { initSyncAndState, sleep } from "@pmu/sync.js";
+import {
+    handleOpenItemAr5iv,
+    handleCopyBibtex,
+    handleCopyPDFLink,
+    handleOpenItemLink,
+    handleCopyMarkdownLink,
+    handleOpenItemHuggingface,
+    handleOpenItemAlphaxiv,
+    handleOpenItemScirate,
+    handleCopyHyperLink,
+} from "@pm/popup/js/handlers.js";
+import { stateTitleFunction } from "@pmu/state.js";
+import { parseIdFromUrl, isSourceURL, isArxivAbstractUrl } from "@pmu/urls.js";
+
+// Notification object for feedback system
+var notif = {
+    element: null,
+    timeout: null,
+    prevent: false,
+    isLoading: false,
+    displayDuration: 5000,
+    showSpeed: 500,
+    hideSpeed: 200,
+};
+
 /*
  * jQuery Easing v1.3 - http://gsgd.co.uk/sandbox/jquery/easing/
  *
@@ -77,8 +135,6 @@ $.extend($.easing, {
         return (c / 2) * ((t -= 2) * t * (((s *= 1.525) + 1) * t + s) + 2) + b;
     },
 });
-
-var PDF_TITLE_ITERS = 0;
 
 /**
  * Centralizes HTML svg codes
@@ -197,8 +253,8 @@ const makePaperMemoryHTMLDiv = (paper) => {
                 style="display: flex; justify-content: center; align-items: center;" 
                 id="pm-venue"
             >
-                <span id="pm-venue-name">${paper.venue}</span>
-                <span id="pm-venue-year">${bibtexToObject(paper.bibtex).year}</span>
+                <span id="pm-venue-name">${escapeHtml(paper.venue)}</span>
+                <span id="pm-venue-year">${escapeHtml(bibtexToObject(paper.bibtex).year)}</span>
             </div>
             <p
                 style="text-align: center; font-size: 12px; color: #666; margin: 0;"
@@ -220,7 +276,7 @@ const handleDefaultAction = async () => {
     }
     if (!id) return;
     const e = dummyEvent(id);
-    const paper = global.state.papers[id];
+    const paper = state.papers[id];
     let text;
     if (!paper) return;
     switch (action) {
@@ -341,7 +397,7 @@ const contentScriptMain = async ({
         tryArxivDisplay({ url });
         await remoteReadyPromise;
     }
-    const prefs = global.state.prefs;
+    const prefs = state.prefs;
 
     let is = await isPaper(url, true);
 
@@ -366,17 +422,17 @@ const contentScriptMain = async ({
     } else {
         if (ignorePaper(is, ignoreSources)) {
             warn(
-                "Paper is being ignored because its source has been disabled in the Advanced Options."
+                "Paper is being ignored because its source has been disabled in the Advanced Options.",
             );
         } else if (prefs.checkPdfOnly && !isPdfUrl(url)) {
             warn(
                 `Paper is being ignored because you have checked the PDF-Only option ` +
-                    `and the current URL (${url}) is not that of a pdf's.`
+                    `and the current URL (${url}) is not that of a pdf's.`,
             );
         } else if (prefs.checkNoAuto && !manualTrigger) {
             warn(
                 "Paper is being ignored because you disabled automatic parsing" +
-                    " in the menu."
+                    " in the menu.",
             );
         }
     }
@@ -388,15 +444,17 @@ const contentScriptMain = async ({
 
     if (id && prefs.checkPdfTitle) {
         const makeTitle = async (id) => {
-            if (!global.state.papers.hasOwnProperty(id)) return;
-            const paper = global.state.papers[id];
+            if (!state.papers.hasOwnProperty(id)) return;
+            const paper = state.papers[id];
             const maxWait = 60 * 1000;
-            while (1) {
-                const waitTime = Math.min(maxWait, 250 * 2 ** PDF_TITLE_ITERS);
+            const maxIters = 20;
+            let pdfTitleIters = 0;
+            while (pdfTitleIters < maxIters) {
+                const waitTime = Math.min(maxWait, 250 * 2 ** pdfTitleIters);
                 await sleep(waitTime);
                 document.title = "";
                 document.title = paper.title;
-                PDF_TITLE_ITERS++;
+                pdfTitleIters++;
             }
         };
         makeTitle(id);
@@ -404,60 +462,60 @@ const contentScriptMain = async ({
 };
 
 const makeNotif = () => {
-    if (global.notif.element) return;
-    const notif = /*html*/ ` <div id="feedback-notif"></div> `;
-    document.body.insertAdjacentHTML("beforeend", notif);
-    global.notif.element = $("#feedback-notif");
+    if (notif.element) return;
+    const notifHtml = /*html*/ ` <div id="feedback-notif"></div> `;
+    document.body.insertAdjacentHTML("beforeend", notifHtml);
+    notif.element = $("#feedback-notif");
     style("feedback-notif", "padding", "0px");
 };
 
 const hideNotif = () =>
     new Promise(async (resolve) => {
         const end = ({ dontWait = false } = {}) => {
-            global.notif.prevent = false;
-            global.notif.isLoading = false;
+            notif.prevent = false;
+            notif.isLoading = false;
             querySelector("#feedback-notif")?.classList.remove("notif-small");
             setTimeout(resolve, dontWait ? 0 : 150);
         };
 
-        if (!global.notif.element) {
-            warn("[hideNotif] Notif element not found");
+        if (!notif.element) {
+            // warn("[hideNotif] Notif element not found");
             end({ dontWait: true });
             return;
         }
 
-        global.notif.element.animate(
+        notif.element.animate(
             { right: "-200px", opacity: "0" },
-            global.notif.hideSpeed,
+            notif.hideSpeed,
             "easeInOutBack",
-            end
+            end,
         );
         // sometimes animate does not call the callback
-        setTimeout(end, global.notif.hideSpeed + 50);
+        setTimeout(end, notif.hideSpeed + 50);
     });
 
 const setNotifContent = (text) => {
-    if (!global.notif.element) {
+    if (!notif.element) {
         warn("[setNotifContent] Notif element not found");
         return;
     }
-    global.notif.element.html(text);
+    notif.element.html(text);
 };
 
 const showNotif = () =>
     new Promise((resolve) => {
-        if (!global.notif.element) {
+        if (!notif.element) {
             console.warn("[PM][showNotif] Notif element not found");
             makeNotif();
         }
-        global.notif.element.animate(
+        notif.element.animate(
             {
                 right: "64px",
                 opacity: "1",
             },
-            global.notif.showSpeed,
+            notif.showSpeed,
             "easeInOutBack",
-            resolve
+            resolve,
         );
     });
 
@@ -470,7 +528,7 @@ const showNotif = () =>
 const feedback = async ({
     text,
     paper = null,
-    displayDuration = global.notif.displayDuration,
+    displayDuration = notif.displayDuration,
     loading = false,
 }) => {
     if (document.readyState === "loading") {
@@ -478,18 +536,18 @@ const feedback = async ({
         return;
     }
     makeNotif();
-    if (global.notif.prevent && !global.notif.isLoading) {
+    if (notif.prevent && !notif.isLoading) {
         setTimeout(() => feedback({ text, paper, displayDuration, loading }), 100);
         return;
     }
     try {
-        clearTimeout(global.notif.timeout);
+        clearTimeout(notif.timeout);
         await hideNotif();
-        global.notif.prevent = true;
+        notif.prevent = true;
     } catch (error) {}
 
     let content = "";
-    global.notif.isLoading = false;
+    notif.isLoading = false;
 
     if (paper) {
         content = /*html*/ ` <div id="notif-text">
@@ -499,7 +557,7 @@ const feedback = async ({
                 ${svg("notif-cancel")}
             </div>`;
     } else if (loading) {
-        global.notif.isLoading = true;
+        notif.isLoading = true;
         querySelector("#feedback-notif")?.classList.add("notif-small");
         content = /*html*/ `<div id="notif-text"><span class="pm-notif-loader"></span></div>`;
     } else {
@@ -510,18 +568,18 @@ const feedback = async ({
 
     setNotifContent(content);
     await showNotif();
-    global.notif.timeout = setTimeout(hideNotif, displayDuration);
+    notif.timeout = setTimeout(hideNotif, displayDuration);
 
     paper &&
         addListener("notif-cancel", "click", async () => {
-            clearTimeout(global.notif.timeout);
-            await deletePaperInStorage(paper.id, global.state.papers);
-            if (!global.state.deleted) {
-                global.state.deleted = {};
+            clearTimeout(notif.timeout);
+            await deletePaperInStorage(paper.id, state.papers);
+            if (!state.deleted) {
+                state.deleted = {};
             }
-            global.state.deleted[paper.id] = true;
-            setTimeout(() => delete global.state.deleted[paper.id], 30 * 1000);
-            global.notif.timeout = setTimeout(hideNotif, displayDuration);
+            state.deleted[paper.id] = true;
+            setTimeout(() => delete state.deleted[paper.id], 30 * 1000);
+            notif.timeout = setTimeout(hideNotif, displayDuration);
             setHTML("notif-text", "<div>Removed from memory</div>");
         });
 };
@@ -551,14 +609,14 @@ const displayPaperVenue = (paper) => {
     const venueDiv = /*html*/ `
         <div id="pm-publication-wrapper">
             <div id="pm-publication-venue">
-                <span id="pm-venue-name">${paper.venue}</span>
-                <span id="pm-venue-year">${bibtexToObject(paper.bibtex).year}</span>
+                <span id="pm-venue-name">${escapeHtml(paper.venue)}</span>
+                <span id="pm-venue-year">${escapeHtml(bibtexToObject(paper.bibtex).year)}</span>
             </div>
         </div>`;
     findEl({ element: "pm-publication-wrapper" })?.remove();
     findEl({ element: "pm-header-content" })?.insertAdjacentHTML(
         "afterbegin",
-        venueDiv
+        venueDiv,
     );
 };
 
@@ -570,9 +628,13 @@ const displayPaperCode = (paper) => {
     if (!paper.codeLink) {
         return;
     }
+    const safeLink = /^https?:\/\//.test(paper.codeLink)
+        ? escapeHtml(paper.codeLink)
+        : "";
+    if (!safeLink) return;
     const code = /*html*/ `
         <div id="pm-code">
-        <h3>Code:</h3> <a id="pm-code-link" href="${paper.codeLink}">${paper.codeLink}</a>
+        <h3>Code:</h3> <a id="pm-code-link" href="${safeLink}">${safeLink}</a>
         </div>
     `;
     findEl({ element: "pm-code" })?.remove();
@@ -591,14 +653,15 @@ const huggingfacePapers = (paper, url) => {
     const venueDiv = /*html*/ `
         <div id="pm-publication-wrapper">
             <div id="pm-publication-venue">
-                <span id="pm-venue-name">${paper.venue}</span>
-                <span id="pm-venue-year">${bibtexToObject(paper.bibtex).year}</span>
+                <span id="pm-venue-name">${escapeHtml(paper.venue)}</span>
+                <span id="pm-venue-year">${escapeHtml(bibtexToObject(paper.bibtex).year)}</span>
                 <span id="pm-hf-label">(PaperMemory)</span>
             </div>
         </div>`;
-    abstractH2 = queryAll("h2").find((h) => h.innerText.trim() === "Abstract");
+    const abstractH2 = queryAll("h2").find((h) => h.innerText.trim() === "Abstract");
     if (!abstractH2) {
         log("Missing 'Abstract' h2 title on HuggingFace paper page.");
+        return;
     }
     const authorDiv = abstractH2.parentElement.previousElementSibling;
     log("Adding venue to HuggingFace paper page.");
@@ -632,7 +695,7 @@ const arxiv = async (checks) => {
                 <div id="pm-header-content"></div>
             </div>
         </div>
-        <div id="pm-extras"></div>`
+        <div id="pm-extras"></div>`,
     );
     let pdfUrlButton = await queryOrWait({ query: ".abs-button.download-pdf" });
     let pdfUrl = pdfUrlButton?.href;
@@ -651,7 +714,7 @@ const arxiv = async (checks) => {
         findEl({ element: "pm-arxiv-direct-download" })?.remove();
         (await queryOrWait({ query: "#pm-header-content" }))?.insertAdjacentHTML(
             "beforeend",
-            button
+            button,
         );
         var downloadTimeout;
         addListener("arxiv-button", "click", async () => {
@@ -667,13 +730,13 @@ const arxiv = async (checks) => {
             }
             if (!pdfUrl) {
                 console.error(
-                    "Could not parse the PDF URL from HTML element: `.abs-button.download-pdf`"
+                    "Could not parse the PDF URL from HTML element: `.abs-button.download-pdf`",
                 );
                 return;
             }
-            if (!global.state.papers.hasOwnProperty(id)) {
+            if (!state.papers.hasOwnProperty(id)) {
                 const title = await fetch(
-                    `https://export.arxiv.org/api/query?id_list=${id.split("-")[1]}`
+                    `https://export.arxiv.org/api/query?id_list=${id.split("-")[1]}`,
                 ).then((data) => {
                     return $($(data).find("entry title")[0]).text();
                 });
@@ -697,9 +760,9 @@ const arxiv = async (checks) => {
     // -----  Markdown Link  -----
     // ---------------------------
 
-    let paper = global.state.papers.hasOwnProperty(id)
-        ? global.state.papers[id]
-        : await makeArxivPaper(url);
+    let paper = state.papers.hasOwnProperty(id)
+        ? state.papers[id]
+        : await getSource("arxiv").parse(url, null, {});
 
     if (paper.venue) {
         displayPaperVenue(paper);
@@ -710,8 +773,8 @@ const arxiv = async (checks) => {
     }
 
     if (checkMd) {
-        const mdTitle = global.state.papers.hasOwnProperty(id)
-            ? global.state.papers[id].title
+        const mdTitle = state.papers.hasOwnProperty(id)
+            ? state.papers[id].title
             : document.title;
         const mdContent = `[${mdTitle}](${pdfUrl})`;
         const mdHtml = /*html*/ `
@@ -746,7 +809,7 @@ const arxiv = async (checks) => {
                     ${svg("clipboard-default")} ${svg("clipboard-default-ok")}
                 </div>
                 <div id="pm-bibtex-textarea" class="pm-codify">${bibtexToString(
-                    paper.bibtex
+                    paper.bibtex,
                 ).replaceAll("\t", "  ")}</div>
             </div>
         `;
@@ -777,11 +840,28 @@ const arxiv = async (checks) => {
                 });
             });
             copyTextToClipboard(
-                findEl({ element: "markdown-link" }).innerText.replaceAll("\n", "")
+                findEl({ element: "markdown-link" }).innerText.replaceAll("\n", ""),
             );
             feedback({ text: "Markdown Link Copied!" });
         });
     }
+};
+
+// Because Puppeteer does not receive content script logs as "console" events,
+// we need another way to signal parsing completion to the testing script.
+const updateCompleteSecretHTML = (paper) => {
+    let intervalId = null;
+    intervalId = setInterval(() => {
+        if (document?.querySelector("head")?.insertAdjacentHTML) {
+            clearInterval(intervalId);
+            document
+                .querySelector("head")
+                .insertAdjacentHTML(
+                    "beforeend",
+                    /*html*/ `<meta name="pm-complete-secret-html" content="${escapeHtml(paper.id)}">`,
+                );
+        }
+    }, 50);
 };
 
 const tryArxivDisplay = async ({
@@ -792,13 +872,13 @@ const tryArxivDisplay = async ({
     // a paper was parsed
 
     // user preferences
-    const prefs = global.state.prefs;
+    const prefs = state.prefs;
 
     // paper.source may not be "arxiv" even on arxiv.org
     // because of the existing paper matching mechanism
     let is = await isPaper(url, true);
 
-    if (is.arxiv && !isPdfUrl(url)) {
+    if (is.arxiv && !isPdfUrl(url) && isArxivAbstractUrl(url)) {
         // larger arxiv column
         adjustArxivColWidth();
 
@@ -811,16 +891,16 @@ const tryArxivDisplay = async ({
             paper = await preprintsPromise;
         } else {
             const id = await parseIdFromUrl(url);
-            const paperExists = global.state.papers.hasOwnProperty(id);
+            const paperExists = state.papers.hasOwnProperty(id);
             if (!paperExists) return;
-            paper = global.state.papers[id];
+            paper = state.papers[id];
         }
 
         // update bibtex
         if (prefs.checkBib) {
             if (findEl({ element: "pm-bibtex-textarea" })) {
                 findEl({ element: "pm-bibtex-textarea" }).innerHTML = bibtexToString(
-                    paper.bibtex
+                    paper.bibtex,
                 ).replaceAll("\t", "  ");
             }
         }
@@ -833,7 +913,8 @@ const tryArxivDisplay = async ({
     }
 };
 
-(async () => {
+export async function initContentScript() {
+    log("Running PaperMemory's content script");
     var prefs, paper;
     var paperPromise, preprintsPromise, paperResolve, preprintsResolve;
     const url = window.location.href;
@@ -843,7 +924,7 @@ const tryArxivDisplay = async ({
     let stateIsReady = false;
     if (url.startsWith("file://")) {
         await initSyncAndState({ isContentScript: true });
-        prefs = global.state.prefs;
+        prefs = state.prefs;
         stateIsReady = true;
     }
 
@@ -865,6 +946,8 @@ const tryArxivDisplay = async ({
                 paperUpdateDoneCallbacks: {
                     update: paperResolve,
                     preprints: preprintsResolve,
+                    done: updateCompleteSecretHTML,
+                    feedback,
                 },
             });
         } else if (request.message === "manualParsing") {
@@ -876,6 +959,8 @@ const tryArxivDisplay = async ({
                 paperUpdateDoneCallbacks: {
                     update: paperResolve,
                     preprints: preprintsResolve,
+                    done: updateCompleteSecretHTML,
+                    feedback,
                 },
             });
         } else if (request.message === "defaultAction") {
@@ -900,6 +985,8 @@ const tryArxivDisplay = async ({
                     paperUpdateDoneCallbacks: {
                         update: paperResolve,
                         preprints: preprintsResolve,
+                        done: updateCompleteSecretHTML,
+                        feedback,
                     },
                 });
             } else {
@@ -933,4 +1020,4 @@ const tryArxivDisplay = async ({
         }
     }
     await hideNotif();
-})();
+} // end initContentScript

@@ -1,0 +1,45 @@
+name: Tests CI
+on: push
+
+permissions:
+  contents: read
+
+jobs:
+  test-matrix:
+    uses: ./.github/workflows/_test-matrix.yml
+    secrets:
+      VICT0RSCH_GITHUB_PAT: ${{ secrets.VICT0RSCH_GITHUB_PAT }}
+
+  test-storage:
+    runs-on: ubuntu-latest
+    name: Storage Tests
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22.x"
+          cache: "npm"
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Build Extension
+        run: npm run build:chrome
+
+      - uses: nick-fields/retry@ce71cc2ab81d554ebbe88c79ab5975992d79ba08 # v3.0.2
+        name: Run Storage Test
+        with:
+          timeout_minutes: 20
+          max_attempts: 2
+          retry_on: error
+          command: npm run test:file test/test-storage.js
+
+      - uses: actions/upload-artifact@v4
+        if: always() # Upload screenshots even on failure for debugging
+        with:
+          name: test-storage-screenshots
+          path: ./tmp/*.jpg
+          if-no-files-found: ignore
+          retention-days: 7
+          compression-level: 3

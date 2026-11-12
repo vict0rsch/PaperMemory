@@ -36,9 +36,9 @@ It's all stored locally in your browser's local storage. If you want to transfer
 
 Check out the [Advanced Options](./configuration.md#advanced-options)'s _Data Management_ section, you can export:
 
--   your full PaperMemory data as `.json` file
--   your full bibliography as `.bib` file (or `.json`)
--   papers based on the tags you'be assigned them as a `.bib` file
+- your full PaperMemory data as `.json` file
+- your full bibliography as `.bib` file (or `.json`)
+- papers based on the tags you'be assigned them as a `.bib` file
 
 ### Can I reference my PDF in PaperMemory?
 
@@ -48,8 +48,8 @@ Because of limitations Browser Extensions face, a file **must** be _downloaded f
 
 ### How do I resolve duplicates?
 
--   If you installed PaperMemory `<0.5.3` (May 2022) you may have duplicate papers in your Memory. The easiest way to resolve this is to go to a duplicate's page, then delete it from memory and refresh the page. The automatic de-duplication features in version `0.5.3` should handle the matching _if_ the 2 papers have the same title.
--   If you still see duplicates with PaperMemory `>=0.5.3` _and_ the 2 papers have the same title, this may be a problem with PaperMemory and you should open an issue here on Github.
+- If you installed PaperMemory `<0.5.3` (May 2022) you may have duplicate papers in your Memory. The easiest way to resolve this is to go to a duplicate's page, then delete it from memory and refresh the page. The automatic de-duplication features in version `0.5.3` should handle the matching _if_ the 2 papers have the same title.
+- If you still see duplicates with PaperMemory `>=0.5.3` _and_ the 2 papers have the same title, this may be a problem with PaperMemory and you should open an issue here on Github.
 
 ### Can I access the memory full-screen?
 
@@ -57,9 +57,9 @@ Sure! In the extension popup's menu, there's a link at the bottom to the full-pa
 
 ```bash
 # Copy-paste this url (Chrome / Brave / Edge):
-chrome-extension://ehchlpggdaffcncbeopdopnndhdjelbc/src/fullMemory/fullMemory.html
+chrome-extension://ehchlpggdaffcncbeopdopnndhdjelbc/fullMemory.html
 # Firefox:
-moz-extension://05b6ef8a-7314-4c1d-a519-80f48a5794a6/src/fullMemory/fullMemory.html
+moz-extension://05b6ef8a-7314-4c1d-a519-80f48a5794a6/fullMemory.html
 ```
 
 ### Can I exclude a paper source?
@@ -68,9 +68,9 @@ Yep. In the extension popup's advanced options page: right-click the extension's
 
 ```bash
 # Copy-paste this url (Chrome / Brave / Edge):
-chrome-extension://ehchlpggdaffcncbeopdopnndhdjelbc/src/options/options.html
+chrome-extension://ehchlpggdaffcncbeopdopnndhdjelbc/options.html
 # Firefox:
-moz-extension://05b6ef8a-7314-4c1d-a519-80f48a5794a6/src/options/options.html
+moz-extension://05b6ef8a-7314-4c1d-a519-80f48a5794a6/options.html
 ```
 
 ### Are there data backups?

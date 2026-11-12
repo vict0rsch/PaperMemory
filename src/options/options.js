@@ -1,14 +1,70 @@
+// ES Module imports
+import {
+    setHTML,
+    findEl,
+    querySelector,
+    style,
+    val,
+    showId,
+    hideId,
+    createElementFromHTML,
+    addListener,
+    queryAll,
+    dispatch,
+    addEventToClass,
+} from "@pmu/miniquery.js";
+import {
+    getStorage,
+    setStorage,
+    validatePaper,
+    prepareOverwriteData,
+} from "@pmu/data.js";
+import { bibtexToString } from "@pmu/bibtexParser.js";
+import { tomSelectOptions, state } from "@pmu/config.js";
+import TomSelect from "tom-select";
+import "tom-select/dist/css/tom-select.css";
+import { knownPaperPages } from "@pmu/sources/index.js";
+import {
+    log,
+    info,
+    warn,
+    logOk,
+    logError,
+    downloadTextFile,
+    stringifyError,
+    cleanPapers,
+    sendMessageToBackground,
+    parseTags,
+    escapeHtml,
+} from "@pmu/functions.js";
+import {
+    tryPreprintMatch,
+    tryPWCMatch,
+    tryDBLP,
+    tryCrossRef,
+    trySemanticScholar,
+    tryUnpaywall,
+} from "@pmu/preprintMatching.js";
+import { mergePapers, makePaper } from "@pmu/paper.js";
+import {
+    shouldSync,
+    pushToRemote,
+    getGist,
+    getDataForGistFile,
+    updateGistFile,
+    initSyncAndState,
+} from "@pmu/sync.js";
+import { isPaper } from "@pmu/paper.js";
+import { versionToSemantic } from "@pmu/data.js";
+
+// Global functions are now available from the ES modules bundle
+
 // TODO: data management: 1/ import css 2/ import functions 3/ remove from popup
 // TODO: fix biorxiv bibtex \t
 
 // -------------------------
 // -----  Local Utils  -----
 // -------------------------
-
-function getRandomInt(max) {
-    // https://developer.mozilla.org/fr/docs/Web/JavaScript/Reference/Global_Objects/Math/random
-    return Math.floor(Math.random() * max);
-}
 
 const isValidHttpUrl = (string) => {
     let url;
@@ -87,7 +143,7 @@ const handleSelectImportJson = () => {
     findEl({ element: "import-json-papers-button" }).disabled = false;
 };
 
-const validateImportPaper = (p) => {
+const validateImportPaper = (p, i) => {
     if (typeof p === "string") {
         if (!isValidHttpUrl(p)) {
             alert(`${p} (entry ${i}) is not a valid URL`);
@@ -97,7 +153,7 @@ const validateImportPaper = (p) => {
         if (!p.url || typeof p.url !== "string") {
             alert(
                 `Entry ${i} should have a "url" string field: \n\n`,
-                JSON.stringify(p)
+                JSON.stringify(p),
             );
             return;
         }
@@ -160,7 +216,7 @@ const handleParseImportJson = async (e) => {
                 throw new Error("The JSON file must contain a *list* of papers");
             }
             for (const [i, p] of papersToParse.entries()) {
-                if (!validateImportPaper(p)) {
+                if (!validateImportPaper(p, i)) {
                     return;
                 }
             }
@@ -187,7 +243,7 @@ const handleParseImportJson = async (e) => {
             changeProgress(((i + 1) / papersToParse.length) * 100);
             setHTML(
                 "import-json-status",
-                `Parsing paper ${i + 1} / ${papersToParse.length} ${url}`
+                `Parsing paper ${i + 1} / ${papersToParse.length} ${url}`,
             );
 
             try {
@@ -195,7 +251,7 @@ const handleParseImportJson = async (e) => {
                 if (!Object.values(is).some((i) => i)) {
                     feedback.innerHTML += `<li>[${
                         i + 1
-                    }]&nbsp; &times;&nbsp; Error: ${url} does not come from a known source</li>`;
+                    }]&nbsp; &times;&nbsp; Error: ${escapeHtml(url)} does not come from a known source</li>`;
                     warn("Aborting.");
                 } else {
                     let paper;
@@ -206,19 +262,19 @@ const handleParseImportJson = async (e) => {
                     }
                     if (p.tags && Array.isArray(p.tags) && p.tags.length > 0) {
                         paper.tags = p.tags.filter(
-                            (t) => typeof t === "string" && t.length > 0
+                            (t) => typeof t === "string" && t.length > 0,
                         );
                     }
                     const exists = await storeImportedPaper(paper);
                     if (exists) {
                         feedback.innerHTML += `<li>[${
                             i + 1
-                        }]&nbsp; &times;&nbsp; Warning: ${url} already exists and has been ignored</li>`;
+                        }]&nbsp; &times;&nbsp; Warning: ${escapeHtml(url)} already exists and has been ignored</li>`;
                         warn("Aborting.");
                     } else {
                         feedback.innerHTML += `<li>[${
                             i + 1
-                        }]&nbsp; &#10004; ${url} has been successfully added to your Memory!</li>`;
+                        }]&nbsp; &#10004; ${escapeHtml(url)} has been successfully added to your Memory!</li>`;
                     }
                 }
             } catch (error) {
@@ -226,7 +282,7 @@ const handleParseImportJson = async (e) => {
                 warn("Aborting.");
                 feedback.innerHTML += `<li>[${
                     i + 1
-                }]&nbsp; &times;&nbsp; Error: ${url} (open the JavaScript Console for more info)</li>`;
+                }]&nbsp; &times;&nbsp; Error: ${escapeHtml(url)} (open the JavaScript Console for more info)</li>`;
             }
         }
         await pushToRemote();
@@ -295,13 +351,13 @@ const getAutoTagHTML = (at) => {
     return /*html*/ `
     <div class="row auto-tags-item" id="auto-tags-item--${id}">
         <div class="col-3">
-            <input type="text" id="auto-tags-item-title--${id}" value="${title}" />
+            <input type="text" id="auto-tags-item-title--${id}" value="${escapeHtml(title)}" />
         </div>
         <div class="col-3">
-            <input type="text" id="auto-tags-item-authors--${id}" value="${authors}" />
+            <input type="text" id="auto-tags-item-authors--${id}" value="${escapeHtml(authors)}" />
         </div>
         <div class="col-3">
-            <input type="text" id="auto-tags-item-tags--${id}" value="${tags}" />
+            <input type="text" id="auto-tags-item-tags--${id}" value="${escapeHtml(tags)}" />
         </div>
         <div class="col-3">
             <div class="row">
@@ -382,14 +438,14 @@ const saveNewAutoTagItem = async () => {
     if (!at.title && !at.authors) {
         autoTagsFeedback(
             "You have to set at least one of: Title RegEx or Authors RegEx",
-            false
+            false,
         );
         return;
     }
     if (!at.tags.length) {
         autoTagsFeedback(
             "You have to set at least one tag (tags are coma-separated)",
-            false
+            false,
         );
         return;
     }
@@ -401,7 +457,7 @@ const saveNewAutoTagItem = async () => {
     autoTags.push(at);
     setStorage("autoTags", autoTags, () => {
         const items = findEl({ element: "auto-tags-list" }).getElementsByClassName(
-            "auto-tags-item"
+            "auto-tags-item",
         );
         const last = [...items].last();
         last.insertAdjacentHTML("afterend", getAutoTagHTML(at));
@@ -443,14 +499,16 @@ const addPreprintUpdate = (update) => {
     for (const [k, v] of Object.entries(update)) {
         if (k !== "paper" && k !== "bibtex") {
             if (v) {
-                contents.push(`<span>${k}:</span>&nbsp;<span>${v}</span>`);
+                contents.push(
+                    `<span>${escapeHtml(k)}:</span>&nbsp;<span>${escapeHtml(v)}</span>`,
+                );
             }
         }
     }
     contents = contents.join("<br>");
     const html = /*html*/ `
     <div class="paper-update-item" id="paper-update-item--${paper.id}">
-        <h4>${paper.title}</h4>
+        <h4>${escapeHtml(paper.title)}</h4>
         <div>
             <div class="preprint-update-contents">
                 <div>Updates to approve:</div>
@@ -502,13 +560,13 @@ const startMatching = async (papersToMatch) => {
     for (const [idx, paper] of papersToMatch.entries()) {
         console.log("idx: ", idx);
         setHTML("matching-status-index", idx + 1);
-        setHTML("matching-status-title", paper.title);
+        setHTML("matching-status-title", escapeHtml(paper.title));
         changeProgress(parseInt((idx / papersToMatch.length) * 100));
 
         var bibtex, venue, note, code, match;
 
         setHTML("matching-status-provider", "paperswithcode.org ...");
-        pwcMatch = await tryPWCMatch(paper);
+        const pwcMatch = await tryPWCMatch(paper);
         console.log("pwcMatch: ", pwcMatch);
         code = !paper.codeLink && pwcMatch?.url;
         note = !paper.note && pwcMatch?.note;
@@ -589,7 +647,7 @@ const handleDownloadMemoryClick = () => {
         downloadTextFile(
             JSON.stringify(papers),
             `PaperMemory-data-${date}-${time}.json`,
-            "text/json"
+            "text/json",
         );
     });
 };
@@ -608,7 +666,7 @@ const handleDownloadBibtexJsonClick = () => {
         downloadTextFile(
             JSON.stringify(bibtex),
             `PaperMemory-bibtex-${date}-${time}.json`,
-            "text/json"
+            "text/json",
         );
     });
 };
@@ -633,7 +691,7 @@ const handleDownloadBibtexPlainClick = () => {
         downloadTextFile(
             bibtex,
             `PaperMemory-bibtex-${date}-${time}.bib`,
-            "text/plain"
+            "text/plain",
         );
     });
 };
@@ -641,7 +699,7 @@ const handleDownloadBibtexPlainClick = () => {
 const handleConfirmOverwrite = (papersToWrite, warning) => (e) => {
     setHTML(
         "overwriteFeedback",
-        `<div class="pm-container"><div class="sk-folding-cube"><div class="sk-cube1 sk-cube"></div><div class="sk-cube2 sk-cube"></div><div class="sk-cube4 sk-cube"></div><div class="sk-cube3 sk-cube"></div></div></div>`
+        `<div class="pm-container"><div class="sk-folding-cube"><div class="sk-cube1 sk-cube"></div><div class="sk-cube2 sk-cube"></div><div class="sk-cube4 sk-cube"></div><div class="sk-cube3 sk-cube"></div></div></div>`,
     );
     setTimeout(async () => {
         if (warning) {
@@ -660,7 +718,7 @@ const handleConfirmOverwrite = (papersToWrite, warning) => (e) => {
         await pushToRemote();
         setHTML(
             "overwriteFeedback",
-            `<h4 style="margin: 1.5rem">Memory overwritten${pushed}.</h4>`
+            `<h4 style="margin: 1.5rem">Memory overwritten${pushed}.</h4>`,
         );
         val("overwrite-arxivmemory-input", "");
     }, 700);
@@ -685,7 +743,7 @@ const handleOverwriteMemory = () => {
             showId("overwriteFeedback");
             setHTML(
                 "overwriteFeedback",
-                `<div class="pm-container"><div class="sk-folding-cube"><div class="sk-cube1 sk-cube"></div><div class="sk-cube2 sk-cube"></div><div class="sk-cube4 sk-cube"></div><div class="sk-cube3 sk-cube"></div></div></div>`
+                `<div class="pm-container"><div class="sk-folding-cube"><div class="sk-cube1 sk-cube"></div><div class="sk-cube2 sk-cube"></div><div class="sk-cube4 sk-cube"></div><div class="sk-cube3 sk-cube"></div></div></div>`,
             );
             const confirm = `<button id="confirm-overwrite">Confirm</button>`;
             const cancel = `<button id="cancel-overwrite">Cancel</button>`;
@@ -699,19 +757,19 @@ const handleOverwriteMemory = () => {
                         const nWarnings = (warning.match(/<br\/>/g) ?? []).length;
                         setHTML(
                             "overwriteFeedback",
-                            `<h5 class="errorTitle">Done with ${nWarnings} warnings. Confirm overwrite?</h5>${warning}${overwriteDiv}`
+                            `<h5 class="errorTitle">Done with ${nWarnings} warnings. Confirm overwrite?</h5>${warning}${overwriteDiv}`,
                         );
                     } else {
                         style("overwriteFeedback", "text-align", "center");
                         setHTML(
                             "overwriteFeedback",
-                            `<h5 class="mb-0 mt-2">Data seems valid. Confirm overwrite?</h5>${overwriteDiv}`
+                            `<h5 class="mb-0 mt-2">Data seems valid. Confirm overwrite?</h5>${overwriteDiv}`,
                         );
                     }
                     addListener(
                         "confirm-overwrite",
                         "click",
-                        handleConfirmOverwrite(papersToWrite, warning)
+                        handleConfirmOverwrite(papersToWrite, warning),
                     );
                     addListener("cancel-overwrite", "click", handleCancelOverwrite);
                 } else {
@@ -721,7 +779,7 @@ const handleOverwriteMemory = () => {
         } catch (error) {
             setHTML(
                 "overwriteFeedback",
-                `<br/><strong>Error:</strong><br/>${stringifyError(error)}`
+                `<br/><strong>Error:</strong><br/>${stringifyError(error)}`,
             );
         }
     };
@@ -744,10 +802,10 @@ const handleExportTagsConfirm = () => {
     const operator = findEl({ element: "export-tags-operator" }).value;
     const format = findEl({ element: "export-tags-format" }).value;
 
-    let papers = global.state.sortedPapers.filter((p) =>
+    let papers = state.sortedPapers.filter((p) =>
         operator === "AND"
             ? p.tags && tags.every((t) => p.tags.includes(t))
-            : p.tags && tags.some((t) => p.tags.includes(t))
+            : p.tags && tags.some((t) => p.tags.includes(t)),
     );
     if (format === "bib") {
         papers = papers.map((p) => bibtexToString(p.bibtex)).join("\n");
@@ -766,7 +824,7 @@ const handleExportTagsConfirm = () => {
                 return e;
             }),
             null,
-            2
+            2,
         );
     }
     const now = new Date();
@@ -789,7 +847,7 @@ const setupDataManagement = () => {
     addListener("overwrite-arxivmemory-button", "click", handleOverwriteMemory);
     addListener("overwrite-arxivmemory-input", "change", handleSelectOverwriteFile);
 
-    const tagOptions = [...global.state.paperTags]
+    const tagOptions = [...state.paperTags]
         .sort()
         .map((t, i) => {
             const h = '<option value="' + t + '"'; // not string literal here for minification
@@ -797,11 +855,10 @@ const setupDataManagement = () => {
         })
         .join("");
     setHTML("export-tags-select", tagOptions);
-    $(`#export-tags-select`).select2({
-        ...global.select2Options,
+    new TomSelect(`#export-tags-select`, {
+        ...tomSelectOptions,
         placeholder: "Tags to export",
-        width: "100%",
-        tags: false,
+        create: false,
     });
     addListener("export-tags-confirm", "click", handleExportTagsConfirm);
 };
@@ -823,13 +880,15 @@ const makeSource = ([key, sourceDict], idx) => {
 };
 
 const setupSourcesSelection = async () => {
-    const sources = global.knownPaperPages;
-    const table = Object.entries(sources).map(makeSource).join("");
+    const sorted = Object.entries(knownPaperPages).sort(([, a], [, b]) =>
+        a.name.localeCompare(b.name),
+    );
+    const table = sorted.map(makeSource).join("");
     setHTML("select-sources-container", table);
 
     let ignoreSources = (await getStorage("ignoreSources")) ?? {};
 
-    for (const key of Object.keys(sources)) {
+    for (const [key] of sorted) {
         ignoreSources[key] = ignoreSources.hasOwnProperty(key)
             ? ignoreSources[key]
             : false;
@@ -840,13 +899,13 @@ const setupSourcesSelection = async () => {
     }
     setStorage("ignoreSources", ignoreSources);
 
-    for (const key of Object.keys(sources)) {
+    for (const [key] of sorted) {
         addListener(`source-${key}`, "change", async (e) => {
-            const key = e.target.id.replace("source-", "");
+            const k = e.target.id.replace("source-", "");
             let ignoreSources = (await getStorage("ignoreSources")) ?? {};
             const el = findEl({ element: e.target.id });
-            ignoreSources[key] = !el.checked;
-            console.log("Updating source", key, "to", ignoreSources[key]);
+            ignoreSources[k] = !el.checked;
+            console.log("Updating source", k, "to", ignoreSources[k]);
             setStorage("ignoreSources", ignoreSources);
         });
     }
@@ -865,7 +924,10 @@ const setupSync = async () => {
 
     if (!ok) {
         if (error) {
-            setHTML("pat-feedback", "Invalid PAT" + "<br/><br/>" + error);
+            setHTML(
+                "pat-feedback",
+                "Invalid PAT" + "<br/><br/>" + escapeHtml(String(error)),
+            );
         }
         hideId("pat-loader");
         await toggleSync({ hideAll: true });
@@ -890,12 +952,12 @@ const setupSync = async () => {
         const { ok, payload, error } = await getGist({ pat });
         if (!ok) {
             logError(error);
-            setHTML("pat-feedback", error.response.data.message);
+            setHTML("pat-feedback", escapeHtml(String(error.response.data.message)));
         } else {
             const { file, pat, gistId } = payload;
             log("Gist ID", gistId);
             log("Data URL", file.raw_url);
-            log("Personal Access Token", pat);
+            log("Personal Access Token", "[REDACTED]");
             setHTML("pat-feedback", "Ok! Token is valid.");
             toggleSync();
         }
@@ -945,10 +1007,10 @@ const setupSync = async () => {
                     downloadTextFile(
                         JSON.stringify(data),
                         `PaperMemory-remote-data-backup-${date}-${time}.json`,
-                        "text/json"
+                        "text/json",
                     );
                 }
-                await updateGistFile({ file, content: global.state.papers, gistId });
+                await updateGistFile({ file, content: state.papers, gistId });
                 await setSyncOk();
             } else if (userChoice === "local-remote") {
                 // overwrite local data with remote data
@@ -961,13 +1023,13 @@ const setupSync = async () => {
                         const nWarnings = (warning.match(/<br\/>/g) ?? []).length;
                         setHTML(
                             "overwriteRemoteFeedback",
-                            `<h5 class="errorTitle">Done with ${nWarnings} non-breaking warnings.</h5>${warning}<br/><br/>`
+                            `<h5 class="errorTitle">Done with ${nWarnings} non-breaking warnings.</h5>${warning}<br/><br/>`,
                         );
                     } else {
                         style("overwriteRemoteFeedback", "text-align", "center");
                         setHTML(
                             "overwriteRemoteFeedback",
-                            `<h5 class="mb-0 mt-2">Data is valid. Overwriting</h5>`
+                            `<h5 class="mb-0 mt-2">Data is valid. Overwriting</h5>`,
                         );
                     }
                     await setStorage("papers", papersToWrite);
@@ -982,12 +1044,12 @@ const setupSync = async () => {
                 downloadTextFile(
                     JSON.stringify(data),
                     `PaperMemory-merge--remote-data-backup-${date}-${time}.json`,
-                    "text/json"
+                    "text/json",
                 );
                 downloadTextFile(
                     JSON.stringify(await getStorage("papers")),
                     `PaperMemory-merge--local-data-backup-${date}-${time}.json`,
-                    "text/json"
+                    "text/json",
                 );
                 let mergedPapers = {};
                 const remotePapers = data;
@@ -1022,13 +1084,13 @@ const setupSync = async () => {
                         const nWarnings = (warning.match(/<br\/>/g) ?? []).length;
                         setHTML(
                             "overwriteRemoteFeedback",
-                            `<h5 class="errorTitle">Done with ${nWarnings} non-breaking warnings.</h5>${warning}<br/><br/>`
+                            `<h5 class="errorTitle">Done with ${nWarnings} non-breaking warnings.</h5>${warning}<br/><br/>`,
                         );
                     } else {
                         style("overwriteRemoteFeedback", "text-align", "center");
                         setHTML(
                             "overwriteRemoteFeedback",
-                            `<h5 class="mb-0 mt-2">Data is valid. Overwriting</h5>`
+                            `<h5 class="mb-0 mt-2">Data is valid. Overwriting</h5>`,
                         );
                     }
                     await setStorage("papers", papersToWrite);
@@ -1039,7 +1101,7 @@ const setupSync = async () => {
                 }
             }
         } catch (e) {
-            setHTML("overwriteRemoteFeedback", e);
+            setHTML("overwriteRemoteFeedback", escapeHtml(String(e)));
         }
         await sendMessageToBackground({ type: "restartGist" });
         hideId("sync-loader");
@@ -1113,7 +1175,7 @@ const toggleSync = async ({ hideAll = false } = {}) => {
 
 const makeSideBar = () => {
     const sections = queryAll(".section").filter(
-        (section) => !!section.querySelector("h2")
+        (section) => !!section.querySelector("h2"),
     );
     const lis = sections.map((section) => {
         const h2 = section.querySelector("h2");
@@ -1246,7 +1308,12 @@ const setupSidebar = async () => {
                 tocPath.setAttribute("stroke-dashoffset", "1");
                 tocPath.setAttribute(
                     "stroke-dasharray",
-                    "1, " + pathStart + ", " + (pathEnd - pathStart) + ", " + pathLength
+                    "1, " +
+                        pathStart +
+                        ", " +
+                        (pathEnd - pathStart) +
+                        ", " +
+                        pathLength,
                 );
                 tocPath.setAttribute("opacity", 1);
             }

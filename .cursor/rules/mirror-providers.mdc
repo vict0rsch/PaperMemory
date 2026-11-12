@@ -1,0 +1,23 @@
+# Mirror Providers Rule
+
+## Policy
+
+Keep both provider folders aligned:
+
+- skills are mirrored between `.cursor/skills/` and `.claude/skills/`
+- rules are mirrored between `.cursor/rules/` and `.claude/rules/`
+
+## Required behavior
+
+When creating, updating, renaming, or deleting a skill or rule in one provider folder, apply the equivalent change to the other provider folder in the same task.
+
+## Allowed differences
+
+Only vendor-required differences are allowed (format or loader specifics). Core guidance and intent must remain equivalent.
+
+## Verification checklist
+
+- Both provider folders contain equivalent skill directories and rule files.
+- Names map consistently across providers.
+- Referenced local docs/scripts resolve in each provider folder.
+- No secrets are introduced.

@@ -1,0 +1,294 @@
+:root {
+    --background: #222a35;
+    --lighterBackground: #323942;
+    --lightBackground: #4b535c;
+    --codeBackground: #3c3c3f;
+    --lightestBackground: #788089;
+    --dimColor: #8d9cac;
+    --noteColor: #aeb8c2;
+    --buttonBackground: #bec6d3;
+    --color: #c1cedb;
+    --lighterColor: #e5f0fc;
+    --aColor: #539bf5;
+    --red: #a31717;
+    --lightRed: rgb(208, 18, 14);
+    --green: #50e050;
+}
+
+/*
+-------------------
+-----  Popup  -----
+-------------------
+*/
+body,
+#delete-paper-modal {
+    color: var(--color);
+    background: var(--background);
+}
+#popup-header {
+    color: var(--lighterColor);
+}
+
+#custom-title-textarea {
+    background: var(--lighterBackground);
+    color: var(--color);
+    border-color: var(--color);
+}
+#header-icon {
+    color: var(--lighterColor) !important;
+    stroke: var(--lighterColor) !important;
+}
+#popup-feedback-copied {
+    color: var(--green);
+}
+.popup-display-id {
+    color: var(--dimColor);
+}
+a {
+    color: var(--aColor) !important;
+}
+code {
+    background: var(--codeBackground) !important;
+}
+*:not(.ts-control input):focus,
+.memory-search-wrapper:focus-within {
+    outline: 2px solid var(--color) !important;
+    box-shadow: none;
+}
+
+input[type="checkbox"].switch:not(:checked) {
+    background: bottom;
+}
+.popup-modal-contents {
+    background-color: var(--lighterBackground);
+    color: var(--color);
+}
+#close-popup-modal:hover,
+#close-popup-modal:focus {
+    color: var(--color);
+}
+#memory-item-default-action {
+    background-color: var(--lightBackground);
+    color: var(--color);
+}
+
+/*
+-----------------------
+----- Tom Select  -----
+-----------------------
+*/
+
+/* Clear button */
+.ts-wrapper .clear-button {
+    color: var(--color);
+}
+
+/* Dropdown options — !important beats tom-select CSS injected after dark.css */
+.ts-dropdown .option {
+    background: var(--lighterBackground) !important;
+    color: var(--color) !important;
+}
+
+/* Dropdown: no results */
+.ts-dropdown .no-results {
+    background: var(--lighterBackground) !important;
+    color: var(--color) !important;
+}
+
+/* Dropdown: selected option */
+.ts-dropdown .option.selected {
+    background-color: rgb(128, 128, 128) !important;
+}
+
+/* Input area */
+.ts-wrapper .ts-control {
+    background-color: var(--lighterBackground) !important;
+    color: var(--color) !important;
+}
+
+/* Selected tag items */
+.ts-wrapper.multi .ts-control > div {
+    background: var(--lightestBackground) !important;
+    border-color: var(--lightestBackground) !important;
+    color: var(--lighterColor) !important;
+}
+
+/* Input text color */
+.ts-control input {
+    color: var(--color) !important;
+}
+
+/* Dropdown option: hover */
+.ts-dropdown .option:hover,
+.ts-dropdown .option.active {
+    background-color: rgb(49, 49, 49) !important;
+    color: var(--color) !important;
+}
+
+.ts-dropdown {
+    box-shadow: 1px 6px 4px 4px #202833 !important;
+    margin: 0px !important;
+}
+
+/*
+---------------------
+-----  Buttons  -----
+---------------------
+*/
+
+button,
+.file-upload-label {
+    border-color: #adbac7 !important;
+    background-color: var(--buttonBackground) !important;
+    color: #15191f;
+}
+button:disabled,
+.file-upload-label:disabled {
+    color: #2e3742 !important;
+    background-color: #5c6268 !important;
+}
+button:not(.ts-delete):hover,
+.file-upload-label:hover {
+    border-color: #d8e7f7 !important;
+    background-color: #eeeeee !important;
+    color: #000000;
+}
+#memory-sort-arrow {
+    border: 1px solid var(--buttonBackground);
+    background-color: var(--lighterBackground);
+}
+/*
+--------------------
+-----  Inputs  -----
+--------------------
+*/
+
+.form-note-textarea,
+.popup-form-note-textarea,
+.form-code-input,
+#auto-tags-container input,
+#manual-website-form input,
+#manual-website-form textarea {
+    color: var(--color);
+    background: var(--lighterBackground);
+}
+
+/*
+-------------------------
+-----  Memory Item  -----
+-------------------------
+*/
+#memory-container {
+    background: var(--background);
+}
+#menu-container {
+    background: var(--background);
+}
+.memory-search-wrapper {
+    background: var(--codeBackground);
+    color: white;
+    border-color: var(--color);
+}
+#memory-search::placeholder {
+    color: var(--color);
+}
+#memory-select {
+    background: var(--lighterBackground);
+}
+#memory-select {
+    color: var(--color);
+}
+#memory-select {
+    border-color: var(--color);
+}
+.memory-title {
+    color: var(--color) !important;
+}
+.memory-tag {
+    color: var(--color);
+    background: var(--codeBackground);
+}
+.memory-note-div {
+    color: var(--noteColor);
+}
+.memory-authors,
+.memory-item-venue {
+    color: var(--dimColor);
+}
+.memory-display-id {
+    color: var(--dimColor);
+}
+.memory-code-link {
+    color: var(--aColor);
+}
+.memory-container {
+    border-color: var(--codeBackground);
+}
+.memory-delete {
+    background: var(--background);
+}
+.memory-container svg {
+    stroke: var(--buttonBackground);
+}
+.alphaxiv-icon {
+    fill: var(--buttonBackground) !important;
+}
+.memory-item-feedback {
+    color: var(--green);
+}
+#popup-title-tooltip,
+.title-tooltip {
+    box-shadow: 2px 2px 6px #252525;
+    background: var(--lightBackground);
+}
+
+/*
+-----------------------
+-----  SVG icons  -----
+-----------------------
+*/
+
+.menu-svg,
+#memory-switch-close,
+#menu-switch-svg,
+.popup-click-svg,
+.memory-sort-arrow-svg {
+    color: var(--color);
+    stroke: var(--color);
+    fill: var(--background);
+}
+
+/*
+------------------------
+-----  BibMatcher  -----
+------------------------
+*/
+
+#matching-feedback-container,
+#your-bib-container,
+#match-params-container {
+    background: var(--lighterBackground);
+    /* color: var(--color); */
+    box-shadow: 6px 5px 9px 4px #1e2632;
+}
+.option-help {
+    color: var(--dimColor);
+}
+#bib-text,
+#match-results {
+    background: var(--codeBackground);
+    color: var(--color);
+}
+#copy-results {
+    color: black;
+}
+#copy-results:hover {
+    color: black;
+    background-color: rgb(86, 168, 86, 0.8);
+}
+#match-bib-stop {
+    color: var(--red);
+}
+#bib-text::placeholder {
+    color: #aaa;
+}

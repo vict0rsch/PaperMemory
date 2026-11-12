@@ -12,7 +12,7 @@ keepOpen:
 # |> test-storage, test-duplicates
 pageTimeout:
   type: int
-  defaultValue: 1000
+  defaultValue: 200
 
 # Max number of sources to iterate through for debug. -1 is all sources.
 # |> test-storage, test-duplicates
@@ -50,3 +50,7 @@ singleName:
 ignoreSources:
   type: comma-separated-str
   defaultValue: ""
+
+headless:
+  type: bool
+  defaultValue: true

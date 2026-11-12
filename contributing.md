@@ -4,187 +4,353 @@
 
 PaperMemory is pure JS+HTML with minimal dependencies: no framework, (almost) no external dependencies so it's easy to help :)
 
-The only external deps. are [`select2.js`](https://select2.org/) which requires `JQuery` and some of the latter here and there (but I'm working on getting rid of it, replacing it with a simple set of helper functions in `src/shared/utils/miniquery.js`).
+The only external deps are [`tom-select`](https://tom-select.js.org/) (tag inputs) and [`jQuery`](https://jquery.com/) (content-script page UI only) — both installed via npm.
 
-`npm` and `gulp` are here to make the dev+release lifecycle easier, if you don't want to set it up there still are a lot of things you can help with in the raw source code (just don't bother with the `min` files)
+The project uses modern ES modules and [WXT](https://wxt.dev/) for bundling, dev server, manifest generation, and cross-browser packaging.
+
+### Related documentation
+
+**This guide covers how to set up, build, and contribute** (commands, conventions, step-by-step how-tos, tests, release). For **how the system works** — the mental model, data flow, core abstractions, component responsibilities, and design rationale — see [`system-architecture.md`](system-architecture.md) (e.g. its [Technical Stack](system-architecture.md#technical-stack) for the full dependency and tooling list).
 
 ## Set-up
 
-1. [Install `yarn`](https://classic.yarnpkg.com/lang/en/docs/install): Node's package manager
-2. [Install `gulp`](https://gulpjs.com/): a build tool
-3. Install dependencies: from the root of this repo `$ yarn install`
-4. Watch file changes: `$ gulp watch`
-5. Edit files!
+1. [Install `npm`](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm) (Node.js 22+ recommended)
+2. Install dependencies: `npm install`
+3. Start the dev server: `npm run dev`
+4. Load the extension in Chrome from `dist/chrome-mv3/` (see [Loading the extension](#loading-the-extension))
+5. Edit files — WXT auto-reloads!
 
-`gulp` mainly runs the concatenation of files into a single one (especially for css and js) and its minification.
+## What is WXT?
 
-In `popup.html` you will notice:
+[WXT](https://wxt.dev/) is a framework for building browser extensions:
 
-```html
-<!-- @if DEV -->
-<script defer src="../../shared/utils/miniquery.js"></script>
-<script defer src="../../shared/utils/config.js"></script>
-<script defer src="../../shared/utils/functions.js"></script>
-<script defer src="../../shared/utils/parsers.js"></script>
-<script defer src="../js/handlers.js"></script>
-<script defer src="../js/templates.js"></script>
-<script defer src="../js/memory.js"></script>
-<script defer src="../js/popup.js"></script>
-<!-- @else -->
-<script defer src="../../shared/utils.min.js"></script>
-<script defer src="popup.min.js"></script>
-<!-- @endif -->
+- **Bundling**: Uses Vite under the hood to bundle ES modules
+- **Manifest generation**: Writes `manifest.json` automatically from `wxt.config.js` (Chrome MV3 and Firefox MV2)
+- **Dev server**: Hot module reloading with `npm run dev`
+- **Zip packaging**: `npm run zip` produces ready-to-submit archives for both browsers
+
+You do **not** need to know WXT internals to contribute. The key thing to know is that WXT discovers entry points from `src/entrypoints/` and builds them into `dist/`. For how WXT (and these entry points) fit the overall architecture, see [`system-architecture.md` → System Architecture](system-architecture.md#system-architecture).
+
+## Build commands
+
+```bash
+npm run dev              # Dev server for Chrome (HMR, auto-reload)
+npm run dev:firefox      # Dev server for Firefox
+
+npm run build            # Production build for Chrome + Firefox
+npm run build:chrome     # Production build for Chrome only
+npm run build:firefox    # Production build for Firefox only
+
+npm run zip              # Build + zip for both browsers
+npm run zip:chrome       # Build + zip for Chrome only
+npm run zip:firefox      # Build + zip for Firefox only
 ```
 
-Those `@` commands are meant for `gulp` (using the `preprocess` package) to choose whether to use raw, un-minified files for development (`$ gulp watch`) or concatenated and minified ones for production (`$ gulp build`)
+Build output goes to `dist/chrome-mv3/` and `dist/firefox-mv2/`.
 
-Note: the file loaded in the popup is `src/popup/min/popup.min.html`, _not_ `src/popup/popup.html` so you _have_ to use `gulp watch` to see changes you make to `popup.html` reflected in the actual popup.
+## Loading the extension
 
-### Refreshing the extension
+### Chrome
 
-Once you load the local extension as an unpackaged extension, changes that affect the popup will directly take effect, no need to refresh anything.
+1. Run `npm run dev` (or `npm run build:chrome`)
+2. Open `chrome://extensions/`, enable "Developer mode"
+3. Click "Load unpacked" and select the `dist/chrome-mv3/` directory
+4. The extension auto-reloads on file changes when using `npm run dev`
 
-**Content scripts** however, are loaded and not binded to the source so you _have to_ refresh the extension in the settings (and then any web page you want to see changes on) for those to be taken into account.
+### Firefox
 
-## Loading in Firefox
+1. Run `npm run dev:firefox`
+2. Open `about:debugging#/runtime/this-firefox`
+3. Click "Load Temporary Add-on" and select any file inside `dist/firefox-mv2/`
 
-https://extensionworkshop.com/documentation/develop/temporary-installation-in-firefox/
+More info: https://extensionworkshop.com/documentation/develop/temporary-installation-in-firefox/
+
+## Refreshing the extension
+
+When using `npm run dev`:
+
+- **Popup / options / fullMemory changes**: Auto-reload via HMR
+- **Background script changes**: WXT reloads the service worker automatically
+- **Content script changes**: Require refreshing the web page where the content script runs
+
+### Debugging utilities (`PMDebug`)
+
+A global `PMDebug` object is available in all HTML pages (popup, options, fullMemory, bibMatcher) for inspecting internal state from the browser console:
+
+```javascript
+PMDebug.config.state; // Global state (papers, prefs, etc.)
+PMDebug.config.state.papers; // All stored papers
+PMDebug.data.getStorage(); // Raw chrome.storage access
+PMDebug.urls.parseIdFromUrl("https://arxiv.org/abs/2301.12345");
+PMDebug.paper.isPaper("https://arxiv.org/abs/2301.12345");
+// Per-source handlers (parse, urlToId, toAbs, toPDF, displayId, …)
+PMDebug.sources.getSource("arxiv").toAbs({
+    pdfLink: "https://arxiv.org/pdf/1234.56789v2.pdf",
+    source: "arxiv",
+});
+PMDebug.listAllFunctions(); // Discover everything available
+```
+
+Available modules: `config`, `functions`, `miniquery`, `data`, `paper`, `bibtexParser`, `sync`, `state`, `urls`, `files`, `parsers`, `sources`, `preprintMatching`, `templates`, `handlers`, `memory`.
+
+Paper-specific logic lives under `PMDebug.sources`, not on `PMDebug.parsers` (e.g. there is no `PMDebug.parsers.makeArxivPaper`).
+
+The debug system is implemented in `src/debug/debug.js` and imported by each entry point's `main.js`.
 
 ## Conventions
 
 ### File structure
 
-(slightly deprecated since some files have moved but names are unique enough for you to still understand I hope)
-
-```tree
-├── jsconfig.json ➤➤➤ vscode js config
-├── manifest.json ➤➤➤ the extension's configuration file for the browser
-└── src  ➤➤➤ actual code
-    ├── background ➤➤➤ background code
-    │   └── background.js ➤➤➤ background.js can interact with some browser apis content_scripts can't use
-    ├── content_scripts
-    │   ├── content_script.css  ➤➤➤ styling for pages modified by the content_script
-    │   ├── content_script.js ➤➤➤ the code run at the opening of a page matched in manifest.json
-    ├── popup
-    │   ├── css ➤➤➤ The popup's style
-    │   │   ├── dark.css ➤➤➤ Dark mode style sheet
-    │   │   ├── options.css ➤➤➤ Sliding checkboxes style
-    │   │   ├── popup.css ➤➤➤ Main style
-    │   │   ├── select2.min.css ➤➤➤ Style for the select2 dropdowns (don't modify)
-    │   ├── js  ➤➤➤ The javascript files specific to the popup, minified together in this order into js.min.js
-    │   │   ├── handlers.js  ➤➤➤ Event handlers
-    │   │   ├── memory.js ➤➤➤ Memory-specific functions
-    │   │   ├── popup.js ➤➤➤ Main execution
-    │   │   ├── theme.js ➤➤➤ The first thing that is executed when the popup is opened: selecting dark/light theme based on user preferences
-    │   │   ├── select2.min.js ➤➤➤ JQuery-based tagging lib for paper tags
-    │   │   └── templates.js ➤➤➤ HTML string templates: memory items and paper popup
-    │   ├── min
-    │   │   └── minified scripts
-    │   ├── popup.html  ➤➤➤ Main HTML file
-    └── shared
-        ├── jquery.min.js ➤➤➤ JQuery lib. Do not modify.
-        ├── utils ➤➤➤ Shared utility functions minified together in this order into utils.min.js
-        │   ├── bibtexParser.js ➤➤➤ Class to parse bibtex strings into objects
-        │   ├── config.js       ➤➤➤ Constants / State variables used throughout out the code
-        │   ├── data.js         ➤➤➤ Data/Memory manipulation (migrations, paper validation, overwrite etc.)
-        │   ├── functions.js    ➤➤➤ Utility functions, relying on config.js
-        │   ├── logTrace.js     ➤➤➤ Single var script to include the log stack trace in dev (gulp watch)
-        │   ├── miniquery.js    ➤➤➤ Custom vanilla js replacement for JQuery (working towards removing that dependency)
-        │   ├── parsers.js      ➤➤➤ Parsing functions to create papers
-        │   ├── paper.js        ➤➤➤ Single-paper-related functions (isPaper, paperToAbs, paperToPDF)
-        │   └── state.js        ➤➤➤ State-related functions (init, custom title function, addOrUpdatePaper etc.)
-        ├── utils.min.js ➤➤➤ Concatenation and minification of all files in src/shared/utils/
-        └── loader.css   ➤➤➤ the style for the loader before the BibTex entry is displayed on arxiv.org/abs/*
 ```
+├── wxt.config.js         ➤ WXT + Vite config (manifest, aliases, HTML include plugin)
+├── jsconfig.json         ➤ VS Code config with path aliases (@pm, @pmu)
+├── public/               ➤ Static assets copied verbatim to build output
+│   ├── theme.js          ➤ Dark mode detection (runs before modules, loaded via <script>)
+│   ├── data/             ➤ JSON data files (journals, abbreviations, art)
+│   ├── icons/            ➤ Extension icons
+│   ├── *.css             ➤ Stylesheets loaded at runtime via <link> or chrome.runtime.getURL
+│   └── highlight.min.js  ➤ Code highlighting library (options page)
+│
+└── src/
+    ├── entrypoints/              ➤ WXT entry points (only these are built into the extension)
+    │   ├── background.js         ➤ Service worker — wrapped in defineBackground()
+    │   ├── content.js            ➤ Content script — wrapped in defineContentScript()
+    │   ├── popup/                ➤ Extension popup
+    │   │   ├── index.html        ➤ Popup HTML (uses <!--=include --> for partials)
+    │   │   └── main.js           ➤ Imports popup.js + debug.js
+    │   ├── options/              ➤ Advanced settings page
+    │   │   ├── index.html
+    │   │   └── main.js
+    │   ├── fullMemory/           ➤ Full-page paper memory view
+    │   │   ├── index.html
+    │   │   └── main.js
+    │   └── bibMatcher/           ➤ BibTeX matching tool
+    │       ├── index.html
+    │       └── main.js
+    │
+    ├── popup/                    ➤ Popup source code (NOT moved — shared across builds)
+    │   ├── js/
+    │   │   ├── popup.js          ➤ Main popup logic and initialization
+    │   │   ├── handlers.js       ➤ Event handlers (clicks, keyboard, forms)
+    │   │   ├── memory.js         ➤ Memory table display, search, sorting
+    │   │   └── templates.js      ➤ HTML string templates for dynamic content
+    │   └── html/
+    │       ├── menu.html         ➤ Settings menu partial
+    │       ├── modals/           ➤ Dialog partials (user guide, warnings)
+    │       └── svgs/             ➤ SVG icon partials
+    │
+    ├── background/
+    │   └── background.js         ➤ Background logic (sync, notifications, browser APIs)
+    ├── content_scripts/
+    │   ├── content_script.js     ➤ Paper detection on web pages
+    │   └── content_script.css    ➤ Injected page styles
+    ├── debug/
+    │   └── debug.js              ➤ PMDebug global — imports all modules for console access
+    ├── options/                  ➤ Options page logic
+    ├── fullMemory/               ➤ Full memory page logic
+    ├── bibMatcher/               ➤ BibTeX matcher logic
+    │
+    └── shared/                   ➤ Shared utilities and resources
+        ├── js/
+        │   ├── jquery-setup.js   ➤ jQuery global setup for content script (import $ from 'jquery')
+        │   └── utils/            ➤ Core modules (the heart of PaperMemory)
+        │       ├── config.js     ➤ Global state, journal data, DBLP venue overrides
+        │       ├── functions.js  ➤ Utility functions (logging, clipboard, string ops)
+        │       ├── miniquery.js  ➤ DOM utilities (findEl, setHTML, addListener)
+        │       ├── data.js       ➤ Storage, validation, data migrations
+        │       ├── paper.js      ➤ Paper CRUD, makePaper, URL conversions
+        │       ├── parsers.js    ➤ Shared fetch/DOM/BibTeX helpers used by sources
+        │       ├── sources/      ➤ One module per paper source (registry in index.js)
+        │       ├── preprintMatching.js ➤ tryCrossRef, tryDBLP, trySemanticScholar, …
+        │       ├── state.js      ➤ App state initialization, sorting
+        │       ├── sync.js       ➤ GitHub Gist sync
+        │       ├── urls.js       ➤ URL parsing and paper ID extraction
+        │       ├── files.js      ➤ Local file detection
+        │       └── bibtexParser.js ➤ BibTeX parsing and formatting
+        └── css/                  ➤ Content-script loader styles (extension-page CSS lives in public/)
+```
+
+### How WXT entry points work
+
+WXT uses a **file-based convention** in `src/entrypoints/`:
+
+- `background.js` → background service worker
+- `content.js` → content script (injected into web pages)
+- `popup/index.html` → popup page (the `main.js` next to it is the `<script>` entry)
+- `options/index.html` → options page
+- etc.
+
+Each HTML entry point's `main.js` is a thin wrapper that imports:
+
+1. The actual page logic (e.g. `@pm/popup/js/popup.js`)
+2. `@pm/debug/debug.js` — exposes `PMDebug` to the console
+
+The content-script entry point additionally imports `@pm/shared/js/jquery-setup.js` to set up `window.$` globally for injected page UI.
+
+The background and content-script entry points (`src/entrypoints/background.js` and `src/entrypoints/content.js`) are thin wrappers around the canonical source files:
+
+- `src/background/background.js` exports `initBackground()` — the background entry point calls it inside `defineBackground()`
+- `src/content_scripts/content_script.js` exports `initContentScript()` — the content entry point calls it inside `defineContentScript()`
+
+All logic lives in those canonical files; the entry-point wrappers contain only the WXT boilerplate (`defineBackground`/`defineContentScript` with the right configuration).
+
+### Path aliases
+
+Two aliases are configured in `wxt.config.js` (for Vite/WXT) and `jsconfig.json` (for VS Code):
+
+- `@pm` → `src/` (e.g. `import "@pm/popup/js/popup.js"`)
+- `@pmu` → `src/shared/js/utils/` (e.g. `import { log } from "@pmu/functions.js"`)
+
+### HTML includes
+
+The popup HTML uses `<!--=include path -->` directives to inline partial HTML files (menu, modals, SVGs). A custom Vite plugin in `wxt.config.js` processes these at build time.
+
+### jQuery / Tom Select
+
+jQuery is installed via npm and exposed globally by `src/shared/js/jquery-setup.js`, imported only by the content-script entry point (`src/entrypoints/content.js`) for injected page UI.
+
+Tag inputs use [Tom Select](https://tom-select.js.org/), imported directly in `src/popup/js/popup.js`, `src/popup/js/handlers.js`, and `src/options/options.js`.
+
+### Static assets (`public/`)
+
+Files in `public/` are copied as-is to the build output. Use this for:
+
+- CSS loaded dynamically via `chrome.runtime.getURL()` (e.g. `dark.css`)
+- JSON data files accessed at runtime (e.g. `data/cell.json`)
+- `theme.js` (loaded via `<script src="/theme.js">` before modules)
+
+### Key source files for contributors
+
+The tree above shows **where** each file lives. For **what each component does and
+how they relate** (responsibilities, data flow, the parse → enrich → store
+pipeline), see [`system-architecture.md` → Component Deep-Dive](system-architecture.md#component-deep-dive).
+A few starting points for common contributions:
+
+- **Understand the data structures** → `src/shared/js/utils/config.js` (the `state`
+  shape) and `data.js` (paper schema in `validatePaper`).
+- **Add a paper source** → `src/shared/js/utils/sources/` ([Adding a paper source](#adding-a-paper-source)).
+- **Add a paper attribute** → `src/shared/js/utils/data.js` ([Creating a new paper attribute](#creating-a-new-paper-attribute)).
+- **Popup / UI work** → `src/popup/js/` (`popup.js`, `memory.js`, `handlers.js`, `templates.js`).
+- **Background / content-script behavior** → `src/background/background.js`, `src/content_scripts/content_script.js`.
 
 ### Prettier
 
-TODO
+Prettier is used for consistent formatting. The config lives in `.prettierrc`:
+
+- **4 spaces** for indentation (`tabWidth: 4`, `useTabs: false`)
+- **88 character** print width
+- YAML files use 2-space indentation
+
+Run the formatter with:
+
+```bash
+npm run format
+```
+
+Most editors can auto-format on save with the Prettier extension. For VS Code, install the [Prettier - Code formatter](https://marketplace.visualstudio.com/items?itemName=esbenp.prettier-vscode) extension.
 
 ## Adding a paper source
 
-The following functions and constants should be updated:
+> For the conceptual model behind sources (the registry, the `is` map dispatch, and
+> the **load-order/TDZ constraint** you must respect — never call `functions.js`
+> exports at a source module's top level), see
+> [`system-architecture.md` → Core Concepts & Abstractions](system-architecture.md#core-concepts--abstractions).
 
--   `config.js:global.knownPaperPages` with `source: {patterns: [array of url matches to trigger paper parsing, or boolean functions taking it as input], name: displayName}`
-    -   will be used by `paper.js:isPaper()` to determine whether `content_script.js` should parse the current page into a paper with `addOrUpdatePaper()` (or update the existing one's visits count) and `popup.js` to display the current paper
--   `parsers.js:makePaper()` to create a new entry
-    -   Typically, add a parser function in `parsers.js`
--   `state:parseIdFromUrl()`
--   `paper.js:paperToAbs()` and `paper.js:paperToPDF()` to enable to pdf<->webpage button
--   `functions.js:getDisplayId()` if necessary
--   `functions.js:isPdfUrl()` if necessary
--   `test/data/urls.json` to test that the integration works (and keeps working!)
+1. **Create** `src/shared/js/utils/sources/<name>.js` exporting a class that extends `BasePaperSource` from `sources/base.js`. Implement at minimum:
+    - `name` (lowercase key, e.g. `"arxiv"`)
+    - `displayName` (human label)
+    - `patterns` — URL matchers for `isPaper` / tab detection (same semantics as before: strings, regexes, or predicate functions)
+    - `urlToId(url, ctx)` — stable id from URL (optional second arg is only used where the legacy code needed `parseIdFromUrl` while resolving nested URLs)
+    - `parse(url, tab, ctx)` — async; returns a plain paper object (fields documented as `ParsedPaperFields` on `BasePaperSource.parse` in `base.js`)
+    - `toAbs(paper)` / `toPDF(paper)` — return absolute URL strings for the abs ↔ PDF toggle
+2. **Register** the class in `sources/index.js`: add its import and insert the class reference into the `ALL_SOURCES` array (once). `BY_NAME`, `SOURCE_DISPATCH_ORDER`, `knownPaperPages`, `preprintSources`, and `allSources()` are all derived automatically. The mutual-exclusion test in `test/test-meta.js` enforces that your patterns don't overlap with any existing source. The settings page renders sources alphabetically by display name.
+3. **Reuse** shared HTTP/BibTeX/DOM helpers from `parsers.js` instead of duplicating fetches.
+4. **Optional overrides** on the class: `displayId(paper, baseId)`, `venue(paper)`, `static isPreprint = true` (only for preprint servers used in fuzzy deduplication).
+5. **Add** URLs under `test/data/urls.json` and into `test/test-storage.js` to keep test coverage.
+
+### Why stateless handlers, not class instances
+
+Sources are **stateless** `BasePaperSource` subclasses (the registry does a name lookup and calls static methods like `ArxivSource.parse`), not instances. For the rationale — MV3 worker lifetime, plain-object serialization across storage/messages/Gist, and dispatch cost — see [`system-architecture.md` → Key Design Decisions](system-architecture.md#key-design-decisions). The load-order/TDZ constraint that sources must respect is documented in the same file under [Core Concepts & Abstractions](system-architecture.md#core-concepts--abstractions).
 
 ## Creating a new paper attribute
 
 1. Add an entry in `data.js:validatePaper`
 2. Add a default value to other papers in `data.js:migrateData`
 
-## Release process
-
-1. Ensure all features are working (no automated testing for now). Mostly:
-    1. All paper sources still work: papers are added and visit counts are updated
-    2. Make sure to check the popup and paper page consoles for errors
-    3. Memory still works:
-        1. It can open
-        2. You can search
-        3. You can select favorites
-        4. You can sort/order papers
-        5. Memory items work:
-            1. Content is displayed as usual
-            2. They can be deleted
-            3. They can be edited
-            4. The buttons (go to paper, copies etc.) are functional
-        6. Paper-in Popup works:
-            1. Same as memory items but when on a paper's page
-    4. The menu still works
-        1. It can open
-        2. Changes in configurations are working and persisted
-    5. Notable edge case: modifying a paper when on its page:
-        1. Changes in the memory should be reflected in the popup and vice-versa
-2. Document functions (docstrings & comments)
-3. Bump version
-4. Run `gulp build`
-5. Create a Github Release
-    1. At least use the auto-complete release feature from PRs
-    2. Add the Archive generated by `gulp build`
-6. Upload the new package to Chrome & Firefox web stores 7. There's now a [Github action](https://github.com/vict0rsch/PaperMemory/actions/workflows/submit.yml) for that thanks to @louisgv in [#51](https://github.com/vict0rsch/PaperMemory/pull/51)
-7. If necessary update Github and stores visuals
-
-I'm working on adding tests in [#26](https://github.com/vict0rsch/PaperMemory/pull/26)
-
 ## Tests
 
-Testing is WIP and relies on Puppeteer to a large extent.
-Run tests with
+Tests use Puppeteer to launch a real Chrome instance with the extension loaded. `npm test` builds the extension first (`pretest` runs `npm run build:chrome`), then runs all test suites.
+
+The integration suites `test/test-duplicates.js` and `test/test-storage.js` hit many live publisher pages; they are valuable as smoke checks but are **not expected to pass entirely** (timeouts, bot walls, and DOM drift are common). `npm test` excludes `test/test-sync.js`; run it explicitly with `npm run test:file test/test-sync.js` when working on Gist sync — that file has the same “best effort” expectations.
 
 ```bash
-npm run tests
+npm test                                 # Build + run all tests
+npm run test:file test/test-utils.js     # Run a single test file (no auto-build)
+npm run test:file test/test-menu.js test/test-popup-paper-ui.js  # Run multiple files
 ```
 
-You can adjust testing condition with `env` variables (see `tests/test-storage.js`)
+Environment variables (see `test/test-storage.js`):
 
 ```bash
-env keep_browser=true max_sources=3 npm run test
+headless=false onlySources=arxiv,neurips npm run test:file test/test-storage.js
 ```
 
-Currently, tests **only** check that a pre-defined set of papers (`tests/data/urls.json`) are correctly parsed to memory once the browser visits a given url. Much more testing can be done: testing functions (most of them are pure, it's easier), user options, UI etc.
+## Github Workflows
 
-Help wanted: [Puppeteer in Github Actions](https://stackoverflow.com/questions/62228154/puppeteer-fails-to-initiate-in-github-actions)
+The repo has five workflow files under `.github/workflows/`:
 
-### `module.export`
+| File                             | Trigger                | What it does                                                                                  |
+| -------------------------------- | ---------------------- | --------------------------------------------------------------------------------------------- |
+| `build.yml`                      | `push`, `pull_request` | Builds Chrome + Firefox to catch build regressions                                            |
+| `test.yml`                       | `push`                 | Runs the full test matrix and the storage tests                                               |
+| `submit.yml`                     | Manual dispatch only   | Builds, tests, and submits to the Chrome Web Store and Firefox Add-ons                        |
+| `_test-matrix.yml`, `_build.yml` | `workflow_call` only   | Reusable workflows consumed by the above (the leading `_` signals "not a top-level workflow") |
 
-Why do we need this?
+`build.yml` and `test.yml`'s `test-matrix` job are thin wrappers that delegate to the reusable workflows — the actual steps live in `_build.yml` and `_test-matrix.yml`, so `submit.yml` can reuse `_test-matrix.yml` as its test gate without duplicating configuration.
 
-```javascript
-if (typeof module !== "undefined" && module.exports != null) {
-    var dummyModule = module;
-    dummyModule.exports = { ... };
-}
+### Submitting to the stores (`submit.yml`)
+
+This workflow submits to the Chrome Web Store and Firefox Add-ons via [`wxt submit`](https://wxt.dev/guide/essentials/publishing.html). **It only runs when triggered manually** — there is no automatic submission on release, so publishing to the stores is always a deliberate act.
+
+**What it does on every run, in order:**
+
+1. Runs the reusable `_test-matrix.yml` workflow as a gate — the submit job only runs if all tests pass.
+2. `npm ci` + `npm run zip` to produce the Chrome zip, the Firefox zip, and the Firefox sources zip under `dist/`.
+3. Submits to Chrome and/or Firefox, each in a separate step with only that store's secrets in scope.
+
+**How to run it.** On the Actions page, pick "Submit to stores" → "Run workflow". Two inputs:
+
+- `target` — `both` (default), `chrome`, or `firefox`. Submits only to the selected store(s).
+- `dry_run` — default `true`. Passes `--dry-run` to `wxt submit`, which validates credentials without actually uploading. Use this to verify secrets are wired up correctly, or as a first step after rotating tokens. Set to `false` to perform a real submission.
+
+Before running with `dry_run: false`, make sure `package.json`'s `version` has been bumped — `wxt.config.js` reads the manifest version from `package.json`, so whatever is on the ref selected in the "Run workflow" dialog at dispatch time is what the stores will receive.
+
+**Retrying a partial failure.** If Chrome succeeds and Firefox fails (or vice versa), re-dispatch manually with `target` set to the failed store. Only that side will be re-submitted; the already-successful side is untouched.
+
+**Required secrets** (repo settings → Secrets and variables → Actions):
+
+- Chrome: `CHROME_EXTENSION_ID`, `CHROME_CLIENT_ID`, `CHROME_CLIENT_SECRET`, `CHROME_REFRESH_TOKEN`
+- Firefox: `FIREFOX_EXTENSION_ID`, `FIREFOX_JWT_ISSUER`, `FIREFOX_JWT_SECRET`
+- Tests: `VICT0RSCH_GITHUB_PAT` (used by the test matrix for GitHub API calls)
+
+Each secret is only exposed to the step that needs it, so a compromised Chrome step cannot leak Firefox credentials and vice versa.
+
+**Local equivalents** (useful for debugging credentials without going through CI):
+
+```bash
+npm run submit                       # Both stores
+npm run submit:chrome                # Chrome only
+npm run submit:firefox               # Firefox only
+npm run submit:dry-run               # Both stores, dry run
+npm run submit:chrome:dry-run        # Chrome only, dry run
+npm run submit:firefox:dry-run       # Firefox only, dry run
 ```
 
-1. `if (typeof dummyModule !== "undefined" && dummyModule.exports != null) {}` is required to make functions available as module exports for the `node` test environment. Without this, `const { func } = require("path/to/file")` would not work.
-2. `var dummyModule = module;` is there to be able to use IDE `Go to definition` functionalities. Without this, VSCode reads `module.exports = {...}` and thinks it's a module and does not discover functions in non-explicitly imported files
+These scripts read credentials from a local `.env.submit` file (see WXT's [publishing docs](https://wxt.dev/guide/essentials/publishing.html)). **Never commit `.env.submit`** — it's in `.gitignore`.
+
+### Concurrency
+
+`submit.yml` uses a `submit-stores` concurrency group (no cancellation), so overlapping manual dispatches queue up instead of racing each other.
 
 ## Building the documentation
 

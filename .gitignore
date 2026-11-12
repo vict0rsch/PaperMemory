@@ -4,9 +4,17 @@
 extra/archives/
 node_modules/
 keys.json
+.env
+.env.submit
+.env.*
 test/tmp/
 .nyc_output/
 coverage
 .cache
 .todo
 site/
+__pycache__
+tmp/
+dist/
+.wxt/
+*.log
