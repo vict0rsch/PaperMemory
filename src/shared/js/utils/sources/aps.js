@@ -1,4 +1,4 @@
-import { BasePaperSource } from "./base.js";
+import { BasePaperSource, isOnHost } from "./base.js";
 import { miniHash, parseUrl } from "@pmu/functions.js";
 import { journalAbbreviations } from "@pmu/config.js";
 import { fetchBibtexToPaper } from "@pmu/parsers.js";
@@ -8,7 +8,7 @@ export class ApsSource extends BasePaperSource {
     static name = "aps";
     static displayName = "APS (American Physical Society)";
     static patterns = [
-        (url) => Boolean(url.match(/journals\.aps\.org\/\w+\/(abstract|pdf)\//g)),
+        (url) => isOnHost(url, "journals.aps.org", /^\/\w+\/(abstract|pdf)\//),
     ];
 
     static async urlToId(url, ctx) {

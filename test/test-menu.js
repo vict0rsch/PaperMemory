@@ -9,6 +9,7 @@ import {
     verifyElementClickable,
     setStorage,
     getClipboardText,
+    seedClipboard,
     visitPaperPage,
 } from "./browser.js";
 
@@ -225,6 +226,7 @@ describe("Popup Menu Tests", function () {
             it("should copy PDF link when checkPreferPdf is true", async function () {
                 await setPreference(PMPage, "checkPreferPdf", true);
                 const copyLinkSelector = `#popup-memory-item-copy-link--${escapedArxivPaperId}`;
+                await seedClipboard(PMPage);
                 await safeClick(copyLinkSelector, PMPage);
                 const clipboardText = await getClipboardText(PMPage);
                 expect(clipboardText).toContain(".pdf");
@@ -234,6 +236,7 @@ describe("Popup Menu Tests", function () {
             it("should copy Abstract link when checkPreferPdf is false", async function () {
                 await setPreference(PMPage, "checkPreferPdf", false);
                 const copyLinkSelector = `#popup-memory-item-copy-link--${escapedArxivPaperId}`;
+                await seedClipboard(PMPage);
                 await safeClick(copyLinkSelector, PMPage);
                 const clipboardText = await getClipboardText(PMPage);
                 expect(clipboardText).not.toContain(".pdf");
@@ -246,6 +249,7 @@ describe("Popup Menu Tests", function () {
             it("should include year and venue in markdown link when enabled", async function () {
                 await setPreference(PMPage, "checkMdYearVenue", true);
                 const copyMdSelector = `#popup-memory-item-md--${escapedArxivPaperId}`;
+                await seedClipboard(PMPage);
                 await safeClick(copyMdSelector, PMPage);
                 const clipboardText = await getClipboardText(PMPage);
                 const paper = testData[arxivPaperId];
@@ -258,6 +262,7 @@ describe("Popup Menu Tests", function () {
             it("should NOT include year and venue in markdown link when disabled", async function () {
                 await setPreference(PMPage, "checkMdYearVenue", false);
                 const copyMdSelector = `#popup-memory-item-md--${escapedArxivPaperId}`;
+                await seedClipboard(PMPage);
                 await safeClick(copyMdSelector, PMPage);
                 const clipboardText = await getClipboardText(PMPage);
                 // We check strict format [Title](Link)
@@ -871,8 +876,8 @@ describe("Popup Menu Tests", function () {
             );
 
             // 6. Focus a memory item and press Enter
-            // Ensure clipboard is empty first
-            await PMPage.evaluate(() => navigator.clipboard.writeText(""));
+            // Ensure clipboard holds the sentinel first
+            await seedClipboard(PMPage);
 
             const itemSelector = `#memory-container--${escapedArxivPaperId}`;
             await PMPage.focus(itemSelector);

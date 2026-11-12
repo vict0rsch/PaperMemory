@@ -47,7 +47,7 @@ import { findLocalFile, isKnownLocalFile } from "@pmu/files.js";
 /**
  * Is this url associated with a known paper source?
  * For each known paper source in config.js/knownPaperPages, this function
- * checks whether the url includes one of the listed paths.
+ * checks whether the url matches one of its patterns (BasePaperSource.matches).
  * Also checks for local files in the PaperMemoryStore
  *
  * @param {string} url the url to check
@@ -58,20 +58,7 @@ export const isPaper = async (url, noStored = false) => {
     let is = {};
     if (!url) return is;
     for (const source in knownPaperPages) {
-        const patterns = knownPaperPages[source].patterns;
-        // default source status: false
-        is[source] = false;
-        for (const pattern of patterns) {
-            if (typeof pattern === "string") {
-                if (url.includes(pattern)) {
-                    // known pattern: store as true
-                    is[source] = true;
-                }
-            } else if (typeof pattern === "function") {
-                is[source] = pattern(url) ?? false;
-            }
-            if (is[source]) break;
-        }
+        is[source] = getSource(source).matches(url);
     }
     // is the url a local file in the memory?
     is.localFile = isKnownLocalFile(url) ?? false;
@@ -295,7 +282,8 @@ export const updatePaperVisits = (paper) => {
  * @param {string} url The url from which to parse a paper
  * @param {object} is The paper's source info
  * @param {object} checks The user's preferences
- * @returns
+ * @returns {Promise<{paper: object, id: string}|undefined>} The paper and its id
+ * (`paper.id`, not the id resolved from `url`), or undefined if parsing failed
  */
 export const addOrUpdatePaper = async ({
     url,
@@ -320,6 +308,7 @@ export const addOrUpdatePaper = async ({
 
     // Extract id from url
     state.papers = (await getStorage("papers")) ?? {};
+    const papersBeforeParse = state.papers;
     const id = await parseIdFromUrl(url, tab);
     const paperExists = state.papers.hasOwnProperty(id);
     prefs &&
@@ -361,10 +350,13 @@ export const addOrUpdatePaper = async ({
                     oldPaper: existingPaper,
                     incrementCount: false,
                 });
-                updateDuplicatedUrls(url, existingId);
+                await updateDuplicatedUrls(url, existingId);
             } else if (newPaper.venue) {
-                updateDuplicatedUrls(paperToAbs(existingPaper), newPaper.id);
-                updateDuplicatedUrls(paperToPDF(existingPaper), newPaper.id);
+                await updateDuplicatedUrls(paperToAbs(existingPaper), newPaper.id);
+                await updateDuplicatedUrls(paperToPDF(existingPaper), newPaper.id);
+                // deletePaperInStorage writes back the papers it is given: re-read them,
+                // as other pages may have stored papers since they were read above
+                state.papers = (await getStorage("papers")) ?? {};
                 await deletePaperInStorage(existingPaper.id, state.papers);
                 existingPaper = mergePapers({
                     newPaper: newPaper,
@@ -435,22 +427,43 @@ export const addOrUpdatePaper = async ({
 
     // Map the visited url to the paper if it does not resolve to it yet (e.g. its
     // source reads no id from this url), ahead of the papers write so it is stored
-    // by the time the paper is. Re-read the map first: other pages write to it too.
+    // by the time the paper is.
     if (store && !state.deleted[paper.id] && paper.id !== id) {
-        state.urlHashToId = (await getStorage("urlHashToId")) ?? {};
-        updateDuplicatedUrls(url, paper.id);
+        await updateDuplicatedUrls(url, paper.id);
     }
 
+    // papersBeforeParse holds the papers read before parsing (not the shared
+    // state.papers, which a concurrent call may have refreshed): a new paper already
+    // there is a re-parsed stored paper (e.g. its url resolves no stored id), not one
+    // created by another page in the meantime
+    const wasStored = papersBeforeParse.hasOwnProperty(paper.id);
     state.papers = (await getStorage("papers")) ?? {};
 
     // minimize risk of concurrent writes to the same paper
     if (isNew && state.papers.hasOwnProperty(paper.id)) {
-        warn("Paper has been created by another page: merging papers.");
-        paper = mergePapers({
-            newPaper: state.papers[paper.id],
-            oldPaper: paper,
-            incrementCount: true,
-        });
+        if (wasStored) {
+            // update it like the fuzzy match above updates an existing paper, so the
+            // re-parse does not overwrite its user fields and visits. Unlike there, an
+            // anonymous paper keeps its note: mergePapers only fills an empty one
+            let overwrites = ["lastOpenDate"];
+            if (state.papers[paper.id].author.toLowerCase() === "anonymous") {
+                overwrites.push("author", "year", "venue", "bibtex");
+            }
+            paper = updatePaperVisits(
+                mergePapers({
+                    newPaper: paper,
+                    overwrites,
+                    oldPaper: state.papers[paper.id],
+                }),
+            );
+        } else {
+            warn("Paper has been created by another page: merging papers.");
+            paper = mergePapers({
+                newPaper: state.papers[paper.id],
+                oldPaper: paper,
+                incrementCount: true,
+            });
+        }
         isNew = false;
     }
 
@@ -554,7 +567,7 @@ export const addOrUpdatePaper = async ({
         contentScriptCallbacks["done"](paper);
     });
 
-    return { paper, id };
+    return { paper, id: paper.id };
 };
 
 /**

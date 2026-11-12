@@ -1,5 +1,6 @@
 import { expect } from "expect";
 import { JSDOM } from "jsdom";
+import { getSource } from "@pmu/sources/index.js";
 
 import { loadPaperMemoryUtils, range, readJSON } from "./utilsForTests.js";
 
@@ -144,10 +145,6 @@ describe("paper.js", () => {
                         this.skip();
                     }
                     const isp = await PMUtils.paper.isPaper(url);
-                    if (source === "cell") {
-                        expect(isp[source]).toHaveLength(1);
-                        return;
-                    }
                     let target = Object.fromEntries(
                         Object.keys(isp).map((k) => [k, false]),
                     );
@@ -157,7 +154,11 @@ describe("paper.js", () => {
                 });
             }
         }
-        for (const [u, url] of ["arxiv.org", "https://google.com"].entries()) {
+        for (const [u, url] of [
+            "arxiv.org",
+            "https://google.com",
+            "https://notarxiv.org/abs/1703.10593",
+        ].entries()) {
             it(`Negative ${u} (${url})`, async () => {
                 const isp = await PMUtils.paper.isPaper(url);
                 let target = Object.fromEntries(
@@ -165,6 +166,28 @@ describe("paper.js", () => {
                 );
                 target.stored = false;
                 expect(isp).toEqual(target);
+            });
+        }
+        // Another site's URL that only contains a paper URL (in its query,
+        // fragment or path, or as a host prefix) is not that paper's page.
+        for (const [source, urls] of Object.entries(allUrls)) {
+            it(`Negative cross-host ${source}`, async () => {
+                const offenders = [];
+                for (const url of urls.slice(0, 2)) {
+                    const { hostname } = new URL(url);
+                    const bare = url.replace(/^https?:\/\//, "");
+                    for (const crafted of [
+                        `https://evil.example/?x=${bare}`,
+                        `https://evil.example/#${url}`,
+                        `https://evil.example/${bare}`,
+                        url.replace(hostname, `${hostname}.evil.example`),
+                    ]) {
+                        const isp = await PMUtils.paper.isPaper(crafted);
+                        const detected = Object.keys(isp).filter((k) => isp[k]);
+                        if (detected.length) offenders.push({ crafted, detected });
+                    }
+                }
+                expect(offenders).toEqual([]);
             });
         }
     });
@@ -181,11 +204,197 @@ describe("paper.js", () => {
             expect(isp.sciencedirect).toBe(true);
         });
 
+        it("is not recognised inside another site's URL", async () => {
+            const isp = await PMUtils.paper.isPaper(
+                `https://evil.example/?x=${signedUrl.replace("https://", "")}`,
+            );
+            expect(isp.sciencedirect).toBe(false);
+        });
+
         it("resolves to the abstract page from its PII", () => {
             const paper = { source: "sciencedirect", pdfLink: signedUrl };
             expect(PMUtils.paper.paperToAbs(paper)).toEqual(
                 "https://www.sciencedirect.com/science/article/pii/S0001457526002083",
             );
+        });
+    });
+
+    describe("#oup urlToId", () => {
+        it("gives an http:// URL the same id as its https:// URL", async () => {
+            // id of the paper stored from the urls.json abstract URL (path numbers)
+            const id = "OUP-2024_14737437617466";
+            const ctx = {
+                papers: [{ source: "oup", id }],
+                findPaperForProperty: PMUtils.urls.findPaperForProperty,
+            };
+            const url = allUrls.oup[0];
+            const oup = getSource("oup");
+            expect(await oup.urlToId(url, ctx)).toEqual(id);
+            expect(await oup.urlToId(url.replace("https://", "http://"), ctx)).toEqual(
+                id,
+            );
+        });
+    });
+
+    describe("#addOrUpdatePaper", () => {
+        // ACS Silverchair article url: AcsSource.urlToId reads no DOI from it
+        const url = "https://pubs.acs.org/jpca/article/123/12/2345/123456/Some-Title";
+        const id = "ACS_101021acsjpca9b00311";
+        const acs = getSource("acs");
+        const parse = acs.parse;
+        // PaperMemory logs through these (mocha keeps its own console.log)
+        const { log, groupCollapsed, groupEnd } = console;
+        // in-memory chrome.storage.local
+        let storage = {};
+        // runs before each storage read: lets a test write as another page would
+        let beforeGet = () => {};
+        // the paper stored by an earlier capture, with user fields: its title hashes
+        // differently from the re-parsed one (see acs.parse below)
+        const stored = {
+            id,
+            source: "acs",
+            title: "CO<sub>2</sub> reduction",
+            author: "Jane Doe",
+            year: "2019",
+            venue: "The Journal of Physical Chemistry A",
+            key: "doe2019co",
+            note: "my note",
+            tags: ["mytag"],
+            favorite: true,
+            addDate: "2020-01-01T00:00:00.000Z",
+            lastOpenDate: "2020-01-02T00:00:00.000Z",
+            count: 5,
+        };
+
+        // run addOrUpdatePaper on `url` and wait until it is done processing
+        const capture = async () => {
+            let done;
+            const processed = new Promise((resolve) => (done = resolve));
+            const returned = await PMUtils.paper.addOrUpdatePaper({
+                url,
+                is: await PMUtils.paper.isPaper(url, true),
+                contentScriptCallbacks: { update: () => {}, preprints: () => {}, done },
+            });
+            await processed;
+            return returned;
+        };
+
+        before(() => {
+            console.log = console.groupCollapsed = console.groupEnd = () => {};
+            global.chrome = {
+                storage: {
+                    local: {
+                        get: (key, cb) => {
+                            beforeGet(key);
+                            cb({ [key]: structuredClone(storage[key]) });
+                        },
+                        set: (items, cb) => {
+                            Object.assign(storage, structuredClone(items));
+                            cb && cb();
+                        },
+                    },
+                },
+                runtime: { sendMessage: (payload, cb) => cb() },
+            };
+            // parse without network
+            acs.parse = async () => ({
+                author: "Jane Doe",
+                bibtex: "@article{doe2019,\n  title = {CO2 reduction},\n  year = {2019}\n}",
+                id,
+                key: "doe2019",
+                note: "Published @ The Journal of Physical Chemistry A (2019)",
+                pdfLink: "https://pubs.acs.org/doi/pdf/10.1021/acs.jpca.9b00311",
+                title: "CO2 reduction",
+                venue: "The Journal of Physical Chemistry A",
+                year: "2019",
+            });
+        });
+
+        beforeEach(() => {
+            storage = {};
+            beforeGet = () => {};
+            PMUtils.config.state.urlHashToId = {};
+        });
+
+        after(() => {
+            Object.assign(console, { log, groupCollapsed, groupEnd });
+            acs.parse = parse;
+            delete global.chrome;
+        });
+
+        it("first capture from a url urlToId cannot resolve maps it to the stored id", async () => {
+            const state = PMUtils.config.state;
+            // another page mapped a url after this one read the map
+            storage.urlHashToId = { otherpageurl: "Other-id" };
+            expect(await PMUtils.urls.parseIdFromUrl(url)).toBeFalsy();
+
+            await capture();
+            expect(storage.papers[id]).toBeDefined();
+
+            // resolve the url from the stored map, as another page would
+            state.urlHashToId = await PMUtils.data.getStorage("urlHashToId");
+            expect(await PMUtils.urls.parseIdFromUrl(url)).toEqual(id);
+            expect(state.urlHashToId.otherpageurl).toEqual("Other-id");
+        });
+
+        it("first capture from a url urlToId cannot resolve returns the paper's id", async () => {
+            const { paper, id: returnedId } = await capture();
+            expect(returnedId).toEqual(id);
+            expect(returnedId).toEqual(paper.id);
+        });
+
+        it("re-parse of a stored paper keeps its user fields and counts the visit", async () => {
+            storage.papers = { [id]: stored };
+            await capture();
+            const paper = storage.papers[id];
+            expect(paper).toMatchObject({
+                tags: ["mytag"],
+                note: "my note",
+                count: 6,
+                addDate: stored.addDate,
+                key: stored.key,
+                favorite: true,
+            });
+            expect(Date.parse(paper.lastOpenDate)).toBeGreaterThan(
+                Date.parse(stored.lastOpenDate),
+            );
+        });
+
+        it("re-parse of an anonymous stored paper refreshes its author and venue, keeps its note", async () => {
+            storage.papers = {
+                [id]: { ...stored, author: "Anonymous", venue: "Under review" },
+            };
+            await capture();
+            expect(storage.papers[id]).toMatchObject({
+                author: "Jane Doe",
+                venue: "The Journal of Physical Chemistry A",
+                note: "my note",
+                tags: ["mytag"],
+                count: 6,
+            });
+        });
+
+        it("fuzzy-match promotion keeps a paper another page stored meanwhile", async () => {
+            // a stored preprint which the parsed publication matches by title
+            const preprint = {
+                ...stored,
+                id: "Arxiv-1234.56789",
+                source: "arxiv",
+                title: "CO2 reduction",
+                venue: "",
+                pdfLink: "https://arxiv.org/pdf/1234.56789.pdf",
+            };
+            const other = { ...stored, id: "Other-paper", title: "Another paper" };
+            storage.papers = { [preprint.id]: preprint };
+            // another page stores a paper while the preprint's urls are remapped
+            beforeGet = (key) => {
+                if (key !== "urlHashToId") return;
+                storage.papers = { ...storage.papers, [other.id]: other };
+                beforeGet = () => {};
+            };
+            await capture();
+            // the preprint is promoted to the publication's id, the other paper kept
+            expect(Object.keys(storage.papers).sort()).toEqual([id, other.id].sort());
         });
     });
 });

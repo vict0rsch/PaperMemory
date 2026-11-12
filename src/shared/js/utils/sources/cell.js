@@ -1,4 +1,4 @@
-import { BasePaperSource } from "./base.js";
+import { BasePaperSource, isOnHost } from "./base.js";
 import { miniHash, warn, noParamUrl } from "@pmu/functions.js";
 import { fetchBibtexToPaper, fetchDom } from "@pmu/parsers.js";
 import { state } from "@pmu/config.js";
@@ -39,9 +39,8 @@ export class CellSource extends BasePaperSource {
     static name = "cell";
     static displayName = "Cell";
     static patterns = [
-        (url) =>
-            url.includes("cell.com/") &&
-            url.split("cell.com/")[1].match(/\d{4}-\d{3}[0-9X]/),
+        // the journal ISSN is in the path (fulltext) or the query (showPdf?pii=)
+        (url) => isOnHost(url, "cell.com", /\d{4}-\d{3}[0-9X]/),
     ];
 
     static async urlToId(url, ctx) {

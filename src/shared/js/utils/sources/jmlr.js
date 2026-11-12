@@ -1,11 +1,11 @@
-import { BasePaperSource } from "./base.js";
+import { BasePaperSource, isOnHost } from "./base.js";
 import { fetchBibtexToPaper } from "@pmu/parsers.js";
 
 export class JmlrSource extends BasePaperSource {
     static name = "jmlr";
     static displayName = "JMLR (Journal of Machine Learning Research)";
     static patterns = [
-        (url) => url.includes("jmlr.org/papers/v") && !url.endsWith("/"),
+        (url) => isOnHost(url, "jmlr.org", "/papers/v") && !url.endsWith("/"),
     ];
 
     static async urlToId(url) {

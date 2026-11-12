@@ -8,11 +8,6 @@
 > abstractions, design rationale, invariants. For how to set up, build, and
 > contribute (commands, conventions, step-by-step how-tos, tests, release), see
 > [`contributing.md`](contributing.md).
->
-> **This doc covers how the system works** — mental model, data flow,
-> abstractions, design rationale, invariants. For how to set up, build, and
-> contribute (commands, conventions, step-by-step how-tos, tests, release), see
-> [`contributing.md`](contributing.md).
 
 ## Overview
 
@@ -135,8 +130,9 @@ the class is never instantiated; only static members are used, and papers stay
 plain objects. Each source declares:
 
 - `name` — internal key, matches `paper.source` and the `is.{name}` flag.
-- `displayName`, `isPreprint`, and `patterns` (string substrings or
-  `(url) => boolean` predicates).
+- `displayName`, `isPreprint`, and `patterns` (`"host/path"` strings, matched on
+  the parsed URL's host or a subdomain and a path prefix, or `(url) => boolean`
+  predicates that anchor on the host with `isOnHost` from `base.js`).
 - `matches(url)`, `urlToId(url, ctx)`, `parse(url, tab, ctx)`, plus URL
   transforms `toAbs` / `toPDF` and venue helpers.
 
@@ -330,7 +326,8 @@ the `downloads` API), `functions.js` (49 misc helpers incl. `miniHash`,
   `addOrUpdatePaper` re-reads `papers` from storage immediately before each
   `chrome.storage.local.set` and merges (`mergePapers`, `incrementCount`) rather
   than blindly overwriting. Treat `state.papers` as a stale snapshot, never the
-  source of truth at write time.
+  source of truth at write time. Likewise, `updateDuplicatedUrls` re-reads
+  `urlHashToId` before applying its change and writing the map back.
 - **Pattern mutual exclusion** across sources is a hard invariant (test-enforced).
 - **No top-level use of `functions.js` exports inside source modules** (TDZ — see
   the `base.js` constraint above).

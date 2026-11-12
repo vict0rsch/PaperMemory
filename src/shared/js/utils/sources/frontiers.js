@@ -1,4 +1,4 @@
-import { BasePaperSource } from "./base.js";
+import { BasePaperSource, isOnHost } from "./base.js";
 import { miniHash, noParamUrl } from "@pmu/functions.js";
 import { fetchBibtexToPaper } from "@pmu/parsers.js";
 
@@ -7,7 +7,7 @@ export class FrontiersSource extends BasePaperSource {
     static displayName = "Frontiers";
     static patterns = [
         "frontiersin.org/articles",
-        (url) => url.match(/frontiersin\.org\/.+\/articles\//),
+        (url) => isOnHost(url, "frontiersin.org", /^\/.+\/articles\//),
     ];
 
     static async urlToId(url, ctx) {

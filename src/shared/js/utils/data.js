@@ -325,14 +325,17 @@ export const deletePaperInStorage = async (id, papers) => {
         papers = (await getStorage("papers")) ?? {};
     }
     let deleted = false;
-    if (papers.hasOwnProperty(id)) {
-        updateDuplicatedUrls(null, id, true);
+    const existed = papers.hasOwnProperty(id);
+    if (existed) {
         deleted = delete state.titleHashToIds[miniHash(papers[id].title)];
         deleted = deleted && delete papers[id];
         delete state.papers[id];
+        // write papers before the awaited url map update, which would otherwise
+        // widen the window for a stale whole-object write to clobber another tab
+        if (deleted) await setStorage("papers", papers);
+        await updateDuplicatedUrls(null, id, true);
     }
     if (deleted) {
-        await setStorage("papers", papers);
         state.papersList = Object.values(cleanPapers(state.papers));
         sortMemory();
         log("Successfully deleted paper", id);
@@ -872,10 +875,12 @@ export const makeTitleHashToIdList = (papers) => {
     return titleHashToIds;
 };
 
-export const updateDuplicatedUrls = (url, id, remove = false) => {
+export const updateDuplicatedUrls = async (url, id, remove = false) => {
+    // re-read the map before writing it whole: other pages write to it too
+    state.urlHashToId = (await getStorage("urlHashToId")) ?? {};
     if (!remove) {
         state.urlHashToId[miniHash(url)] = id;
-        setStorage("urlHashToId", state.urlHashToId);
+        await setStorage("urlHashToId", state.urlHashToId);
     } else {
         let hashedUrls;
         if (!url) {
@@ -890,7 +895,7 @@ export const updateDuplicatedUrls = (url, id, remove = false) => {
                 warn("Removing duplicated url", url, "for", id);
                 delete state.urlHashToId[hashedUrl];
             }
-            setStorage("urlHashToId", state.urlHashToId);
+            await setStorage("urlHashToId", state.urlHashToId);
         }
     }
 };

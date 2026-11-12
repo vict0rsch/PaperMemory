@@ -259,7 +259,7 @@ Most editors can auto-format on save with the Prettier extension. For VS Code, i
 1. **Create** `src/shared/js/utils/sources/<name>.js` exporting a class that extends `BasePaperSource` from `sources/base.js`. Implement at minimum:
     - `name` (lowercase key, e.g. `"arxiv"`)
     - `displayName` (human label)
-    - `patterns` — URL matchers for `isPaper` / tab detection (same semantics as before: strings, regexes, or predicate functions)
+    - `patterns` — URL matchers for `isPaper` / tab detection: `"host/path"` strings (URLs on that host or a subdomain whose path starts with `/path`) or predicate functions that anchor on the host with `isOnHost` from `base.js` (never search the raw URL: another site's URL can contain a source's address)
     - `urlToId(url, ctx)` — stable id from URL (optional second arg is only used where the legacy code needed `parseIdFromUrl` while resolving nested URLs)
     - `parse(url, tab, ctx)` — async; returns a plain paper object (fields documented as `ParsedPaperFields` on `BasePaperSource.parse` in `base.js`)
     - `toAbs(paper)` / `toPDF(paper)` — return absolute URL strings for the abs ↔ PDF toggle

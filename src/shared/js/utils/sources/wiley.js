@@ -1,4 +1,4 @@
-import { BasePaperSource } from "./base.js";
+import { BasePaperSource, isOnHost } from "./base.js";
 import { miniHash, noParamUrl } from "@pmu/functions.js";
 import { fetchBibtexToPaper } from "@pmu/parsers.js";
 
@@ -7,10 +7,10 @@ export class WileySource extends BasePaperSource {
     static displayName = "Wiley";
     static patterns = [
         (url) =>
-            Boolean(
-                url.match(
-                    /onlinelibrary\.wiley\.com\/doi\/(abs\/|full\/|pdf\/|epdf\/|10\.)/g,
-                ),
+            isOnHost(
+                url,
+                "onlinelibrary.wiley.com",
+                /^\/doi\/(abs\/|full\/|pdf\/|epdf\/|10\.)/,
             ),
     ];
 

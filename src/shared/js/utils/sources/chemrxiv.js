@@ -1,4 +1,4 @@
-import { BasePaperSource } from "./base.js";
+import { BasePaperSource, isOnHost } from "./base.js";
 import { miniHash, noParamUrl } from "@pmu/functions.js";
 import { extractDataFromDCMetaTags, fetchDom } from "@pmu/parsers.js";
 
@@ -7,9 +7,9 @@ export class ChemrxivSource extends BasePaperSource {
     static displayName = "ChemRxiv";
     static patterns = [
         "chemrxiv.org/engage/chemrxiv/article-details/",
-        "https://chemrxiv.org/doi/",
+        "chemrxiv.org/doi/",
         (url) =>
-            url.includes("https://chemrxiv.org/engage/api-gateway/chemrxiv/assets") &&
+            isOnHost(url, "chemrxiv.org", "/engage/api-gateway/chemrxiv/assets") &&
             url.endsWith(".pdf"),
     ];
 

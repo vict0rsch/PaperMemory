@@ -29,12 +29,41 @@
  * @property {string|false} [codeLink]
  */
 
+/**
+ * Whether `url` is on `host` or one of its subdomains, and what follows the host
+ * (path, query and fragment) starts with `path` (a string) or matches it (a
+ * RegExp: anchor it with `^` to match from the start of the path). Checking the
+ * parsed host keeps another site's URL that merely contains a source's address
+ * (e.g. https://evil.example/?x=arxiv.org/abs/...) from being detected.
+ * @param {string} url
+ * @param {string} host e.g. "arxiv.org"
+ * @param {string|RegExp} path e.g. "/abs/"
+ * @returns {boolean} false when `url` does not parse
+ */
+export const isOnHost = (url, host, path) => {
+    try {
+        const { hostname, pathname, search, hash } = new URL(url);
+        const rest = pathname + search + hash;
+        return (
+            (hostname === host || hostname.endsWith(`.${host}`)) &&
+            (typeof path === "string" ? rest.startsWith(path) : path.test(rest))
+        );
+    } catch (e) {
+        return false;
+    }
+};
+
 export class BasePaperSource {
     /** @type {string} matches `paper.source` and `is.{name}` from isPaper() */
     static name = "";
     /** @type {string} human-readable name for UI (knownPaperPages[source].name) */
     static displayName = "";
-    /** @type {(string|((url: string) => boolean))[]} */
+    /**
+     * `"host/path"` strings match URLs on `host` (or a subdomain) whose path
+     * starts with `/path` (see `isOnHost`). Functions get the full URL: anchor
+     * them on the host too, with `isOnHost`.
+     * @type {(string|((url: string) => boolean))[]}
+     */
     static patterns = [];
     /** @type {boolean} true for preprint hosts (dedup fuzzy match) */
     static isPreprint = false;
@@ -47,7 +76,10 @@ export class BasePaperSource {
     static matches(url, patterns = this.patterns) {
         for (const pattern of patterns) {
             if (typeof pattern === "string") {
-                if (url.includes(pattern)) return true;
+                const slash = pattern.indexOf("/");
+                if (isOnHost(url, pattern.slice(0, slash), pattern.slice(slash))) {
+                    return true;
+                }
             } else if (typeof pattern === "function") {
                 if (pattern(url)) return true;
             }

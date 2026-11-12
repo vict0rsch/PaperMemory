@@ -125,7 +125,8 @@ describe("Paper de-duplication", function () {
     for (const [o, order] of orders.entries()) {
         describe(`Testing order ${order}`, function () {
             after(async function () {
-                await browser.close();
+                // keepOpen: leave only the last browser open for debugging
+                (!keepOpen || o < orders.length - 1) && (await browser.close());
             });
 
             // before the tests: visit paper pages
@@ -231,10 +232,6 @@ describe("Paper de-duplication", function () {
                     });
                 });
             }
-        });
-
-        after(async function () {
-            !keepOpen && (await browser.close());
         });
     }
 });

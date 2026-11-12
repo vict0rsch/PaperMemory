@@ -1,4 +1,4 @@
-import { BasePaperSource } from "./base.js";
+import { BasePaperSource, isOnHost } from "./base.js";
 import { miniHash, noParamUrl } from "@pmu/functions.js";
 import { fetchBibtexToPaper } from "@pmu/parsers.js";
 
@@ -6,8 +6,8 @@ export class HalSource extends BasePaperSource {
     static name = "hal";
     static displayName = "HAL";
     static patterns = [
-        (url) => /hal\.science\/\w+-\d+(v\d+)?(\/document)?$/gi.test(url),
-        (url) => /hal\.science\/\w+-\d+(v\d+)?\/file\/.+\.pdf$/gi.test(url),
+        (url) => isOnHost(url, "hal.science", /^\/\w+-\d+(v\d+)?(\/document)?$/i),
+        (url) => isOnHost(url, "hal.science", /^\/\w+-\d+(v\d+)?\/file\/.+\.pdf$/i),
     ];
 
     static async urlToId(url, ctx) {

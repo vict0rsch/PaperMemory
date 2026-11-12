@@ -1,4 +1,4 @@
-import { BasePaperSource } from "./base.js";
+import { BasePaperSource, isOnHost } from "./base.js";
 import { miniHash, noParamUrl } from "@pmu/functions.js";
 import {
     extractDataFromDCMetaTags,
@@ -10,7 +10,7 @@ export class ScienceSource extends BasePaperSource {
     static name = "science";
     static displayName = "Science";
     static patterns = [
-        (url) => Boolean(url.match(/science\.org\/doi\/?(abs|full|pdf|epdf)?\//g)),
+        (url) => isOnHost(url, "science.org", /^\/doi\/?(abs|full|pdf|epdf)?\//),
     ];
 
     static async urlToId(url, ctx) {

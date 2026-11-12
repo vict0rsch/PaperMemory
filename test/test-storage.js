@@ -352,7 +352,8 @@ describe("Test paper detection and storage", function () {
             });
 
             after(async () => {
-                !keepOpen && (await browser.close());
+                // keepOpen: leave only the last browser open for debugging
+                (!keepOpen || orderIdx < orders.length - 1) && (await browser.close());
             });
         });
     }

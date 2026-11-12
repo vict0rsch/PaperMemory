@@ -340,6 +340,19 @@ export const setPreferencesAndReload = async (prefs, page) => {
     });
 };
 
+export const CLIPBOARD_SENTINEL = "__pm_clipboard_sentinel__";
+
+// Seed the clipboard before a copy action so getClipboardText can tell
+// fresh content from stale text.
+export const seedClipboard = async (page) => {
+    await page.evaluate(
+        (text) => navigator.clipboard.writeText(text),
+        CLIPBOARD_SENTINEL,
+    );
+};
+
+// Polls until the clipboard is non-empty and differs from the sentinel;
+// returns null on timeout (no copy happened).
 export const getClipboardText = async (page, timeout = 2000) => {
     const readOnce = () =>
         // Add timeout to prevent hanging on permission dialogs
@@ -366,11 +379,12 @@ export const getClipboardText = async (page, timeout = 2000) => {
     // read right after a click races it; poll until content lands.
     const deadline = Date.now() + timeout;
     let text = await readOnce();
-    while (!text && Date.now() < deadline) {
+    while ((!text || text === CLIPBOARD_SENTINEL) && Date.now() < deadline) {
         await sleep(50);
         text = await readOnce();
     }
-    if (!text) {
+    if (!text || text === CLIPBOARD_SENTINEL) {
+        text = null;
         console.log(indent(3) + "⚠ Clipboard read failed or empty after retries");
     }
     return text;

@@ -1,11 +1,11 @@
-import { BasePaperSource } from "./base.js";
+import { BasePaperSource, isOnHost } from "./base.js";
 import { miniHash, noParamUrl } from "@pmu/functions.js";
 import { extractDataFromDCMetaTags, fetchDom } from "@pmu/parsers.js";
 
 export class MdpiSource extends BasePaperSource {
     static name = "mdpi";
     static displayName = "MDPI (Multidisciplinary Digital Publishing Institute)";
-    static patterns = [(url) => /mdpi\.com\/\d+-.+/gi.test(url)];
+    static patterns = [(url) => isOnHost(url, "mdpi.com", /^\/\d+-.+/)];
 
     static async urlToId(url, ctx) {
         const mdpiId = noParamUrl(
