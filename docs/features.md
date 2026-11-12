@@ -335,9 +335,11 @@ This feature can be enabled in the [Advanced Options](./configuration.md#advance
 
 ## Privacy
 
-None of your data ever leaves your computer, except when you enable Gist Synchronization.
+Your Memory is stored locally in your browser's extension storage. To fetch paper metadata, PaperMemory sends requests to academic and publication services (e.g. arXiv, CrossRef, DBLP, Semantic Scholar); these requests can include a paper's title or identifier.
 
-In this case, you voluntarily upload your data to Github Gists. Remember, although private Gists are non-discoverable, they are accessible to anyone with the link. So don't store personal or sensitive information in your paper notes if you enable Gists Synchronization.
+Your Memory is only uploaded to GitHub when you set up Gist Synchronization: saving your GitHub token in the options creates a private Gist containing your Memory if you don't already have one, even before you start syncing.
+
+In this case, you voluntarily upload your data to Github Gists. Remember, although private Gists are non-discoverable, they are accessible to anyone with the link. So don't store personal or sensitive information in your paper notes if you enable Gists Synchronization. Your GitHub token is stored in your browser's extension storage and sent to GitHub's API to authenticate sync requests.
 
 ## Feature requests
 

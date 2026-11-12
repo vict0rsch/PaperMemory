@@ -157,7 +157,7 @@ const showBibliography = (parsed, matched, arxivIndices) => {
     if (showOnlyMatches) {
         const html = matched
             .filter((e) => e)
-            .map(bibtexToString)
+            .map((e) => escapeHtml(bibtexToString(e)))
             .join("<br/>");
         showId("match-results");
         setHTML("match-results", html);
@@ -167,12 +167,14 @@ const showBibliography = (parsed, matched, arxivIndices) => {
         for (const [idx, entry] of parsed.entries()) {
             if (arxivIndices.includes(idx)) {
                 if (matched[arxivIndices.indexOf(idx)]) {
-                    htmls.push(bibtexToString(matched[arxivIndices.indexOf(idx)]));
+                    htmls.push(
+                        escapeHtml(bibtexToString(matched[arxivIndices.indexOf(idx)])),
+                    );
                 } else {
-                    htmls.push(bibtexToString(entry));
+                    htmls.push(escapeHtml(bibtexToString(entry)));
                 }
             } else {
-                htmls.push(bibtexToString(entry));
+                htmls.push(escapeHtml(bibtexToString(entry)));
             }
         }
         const html = htmls.join("<br/>");
@@ -200,7 +202,7 @@ const setKey = (bibtex, key) => {
 
 const showError = (msg) => {
     showId("errors-container");
-    setHTML("bibmatch-errors", msg);
+    setHTML("bibmatch-errors", escapeHtml(String(msg)));
 };
 
 const matchPaper = async (paper) => {
@@ -245,7 +247,7 @@ const matchPaper = async (paper) => {
         venue = match.venue;
         if (venue) {
             paper.journal = venue;
-            for (const [key, value] of paper.entries()) {
+            for (const [key, value] of Object.entries(paper)) {
                 if ((value + "").toLowerCase().includes("arxiv")) {
                     delete paper[key];
                 }
@@ -265,7 +267,7 @@ const matchPaper = async (paper) => {
         venue = match?.venue;
         if (venue) {
             paper.journal = venue;
-            for (const [key, value] of paper.entries()) {
+            for (const [key, value] of Object.entries(paper)) {
                 if ((value + "").toLowerCase().includes("arxiv")) {
                     delete paper[key];
                 }

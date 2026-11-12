@@ -16,7 +16,7 @@ import { val, hasClass, findEl } from "@pmu/miniquery.js";
  * @returns {string} The escaped string
  */
 export const escapeHtml = (str) => {
-    if (typeof str !== "string") return String(str ?? "");
+    if (typeof str !== "string") str = String(str ?? "");
     return str
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")

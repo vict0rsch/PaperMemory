@@ -102,7 +102,7 @@
                             <div>Synced &#9989;</div>
                         </div>
                         <div
-                            id="sync-popup-synced"
+                            id="sync-popup-error"
                             style="display: none; text-align: center"
                         >
                             <div>Sync failed &#10060;</div>
@@ -712,15 +712,18 @@
                     <input
                         name="pat-input"
                         id="pat-input"
-                        type="text"
-                        placeholder="ghp_0IurqH9T1wj0E1E3YuroyvykuYI17Rl5hdN9"
+                        type="password"
+                        placeholder="ghp_…"
                     />
                     <input id="save-pat" type="button" value="Save" />
                     <br />
                     <div>
                         <small
-                            >Note: your token is saved locally and does not leave your
-                            computer.</small
+                            >Note: your token is stored in your browser's extension
+                            storage and is only sent to GitHub's API to authenticate
+                            sync requests. Saving a token creates a private Gist
+                            containing your Memory if you don't already have
+                            one.</small
                         >
                     </div>
                     <div>
