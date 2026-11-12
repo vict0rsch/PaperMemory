@@ -26,8 +26,8 @@
 
 [![](https://img.shields.io/chrome-web-store/stars/hmebhknlgddhfbbdhgplnillngljgmdi)](https://chrome.google.com/webstore/detail/paper-memory/hmebhknlgddhfbbdhgplnillngljgmdi)
 [![](https://img.shields.io/badge/buy%20me-a%20coffee%20%E2%98%95%EF%B8%8F-FFDD03)](https://www.buymeacoffee.com/vict0rsch)
-[![](https://img.shields.io/badge/Source%20%5BWIP%5D-v1.0.3-important)](https://github.com/vict0rsch/PaperMemory)
-[![](https://img.shields.io/badge/Release-v1.0.3-A41716)](https://github.com/vict0rsch/PaperMemory/tree/1.0.3)
+[![](https://img.shields.io/badge/Source%20%5BWIP%5D-v1.2.0-important)](https://github.com/vict0rsch/PaperMemory)
+[![](https://img.shields.io/badge/Release-v1.2.0-A41716)](https://github.com/vict0rsch/PaperMemory/tree/1.2.0)
 
 <br/>
 
@@ -102,6 +102,11 @@ Share ideas 💡 in [issues](https://github.com/vict0rsch/PaperMemory/issues) an
 - Oxford University Press
 - HAL Archives ouvertes
 - Royal Society of Chemistry
+- American Institute of Physics (AIP)
+- Cell
+- ChemRxiv
+- INSPIRE - High Energy Physics (IHEP)
+- Journal of Machine Learning Research (JMLR)
 - [Sci-Hub](https://papermemory.org/faq/#can-i-reference-my-pdf-in-papermemory)
 - [Add more](https://github.com/vict0rsch/PaperMemory/issues/13)
 

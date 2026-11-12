@@ -30,17 +30,21 @@ icon: octicons/rocket-16
 === "Chrome / Brave / Edge"
 
     * Clone the repo
+    * Install dependencies with `npm install` (requires [`npm`](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm), Node.js 22+ recommended)
+    * Build the extension with `npm run build:chrome`
     * Go to Chrome/Brave's extension manager `chrome://extensions/`
     * Enable developer mode (top right)
-    * Click on the "Load unpackaged extension" button
-    * Select the downloaded folder
+    * Click on the "Load unpacked" button
+    * Select the `dist/chrome-mv3/` folder
 
 === "Firefox"
 
     * Clone the repo
+    * Install dependencies with `npm install` (requires [`npm`](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm), Node.js 22+ recommended)
+    * Build the extension with `npm run build:firefox`
     * Go to `about:debugging#/runtime/this-firefox` in the address bar
     * Click on "Load Temporary Add-on"
-    * Select the `manifest.json` file in the `PaperMemory/` folder
+    * Select the `manifest.json` file in the `dist/firefox-mv2/` folder
     * __NB__ this is a temporary install you may have to re-do this loading operation if you close Firefox
 
 !!! tip

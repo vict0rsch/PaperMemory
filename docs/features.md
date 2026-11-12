@@ -113,6 +113,11 @@ Whenever possible, PaperMemory queries the API the provider offers. If they don'
     * MDPI
     * Oxford University Press
     * HAL Archives ouvertes
+    * American Institute of Physics (AIP)
+    * Cell
+    * ChemRxiv
+    * INSPIRE - High Energy Physics (IHEP)
+    * Journal of Machine Learning Research (JMLR)
     * [Sci-Hub](./faq.md#can-i-reference-my-pdf-in-papermemory)
     * [Add more](https://github.com/vict0rsch/PaperMemory/issues/13)
 

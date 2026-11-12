@@ -26,11 +26,13 @@ I'm always looking for feedback, beta-testers or help with the development (:sim
 As much as possible, I try to avoid using external libraries. But I'll acknowledge:
 
 - [Tabler Icons](https://tabler-icons.io/)
-- [Rollup](https://rollupjs.org/)
+- [WXT](https://wxt.dev/)
+- [Vite](https://vite.dev/)
 - [Mocha](https://mochajs.org/)
 - [Gifox](https://gifox.app/)
 - [Shottr](https://shottr.cc/)
-- [Puppeteer](https://pptr.dev/)
+- [cloakbrowser](https://github.com/CloakHQ/cloakbrowser)
+- [Puppeteer](https://pptr.dev/) (`puppeteer-core`)
 - [Material for Mkdocs](https://squidfunk.github.io/mkdocs-material/)
 
 Fun fact: make pretty commits with [`gitmopy`](https://github.com/vict0rsch/gitmopy)
