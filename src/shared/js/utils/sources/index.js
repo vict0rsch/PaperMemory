@@ -104,6 +104,64 @@ export const matchUrl = (url) => {
     return null;
 };
 
+/**
+ * The paper URL a wrapper URL embeds, e.g. a PDF-viewer extension's
+ * `chrome-extension://<id>/https://arxiv.org/pdf/...` or a proxy's
+ * `https://proxy.example/login?url=https://pubs.acs.org/doi/...`. Only URLs
+ * with an explicit `http(s)://` scheme are considered (never the fragment), one
+ * level deep, and only if a known source matches them: one embedded in the
+ * path, or one in a query parameter's value when the outer URL is a browser
+ * extension page (any parameter, e.g. a PDF viewer's `?file=`) or an EZproxy
+ * `/login` page (`url` or `qurl` parameter). Other pages' query parameters
+ * (search, share, redirect links) are never unwrapped. Deliberate tradeoff: a
+ * URL embedded in the PATH is unwrapped on any host (path proxies, extension
+ * viewers, archive snapshots like `web.archive.org/web/<ts>/<url>`).
+ * @param {string} url
+ * @returns {string} the embedded paper URL (normalized by `URL`), else `url` unchanged
+ */
+export const unwrapUrl = (url) => {
+    if (!url || typeof url !== "string" || matchUrl(url)) return url;
+    let parsed;
+    try {
+        parsed = new URL(url);
+    } catch (e) {
+        return url;
+    }
+    const candidates = [];
+    // a URL embedded in the path runs to the end of the query (its own, unless
+    // it already has one), not the outer fragment. If any of its delimiters is
+    // encoded the embedded part is decoded (a DOI's %2F is decoded too, which
+    // sources match anyway); a fully raw one keeps its own escapes
+    const inPath = parsed.pathname.search(/https?(:\/\/|%3A%2F%2F)/i);
+    if (inPath >= 0) {
+        let embedded = parsed.pathname.slice(inPath);
+        if (/%(3A|2F|3F|26|3D|23)/i.test(embedded)) {
+            try {
+                embedded = decodeURIComponent(embedded);
+            } catch (e) {}
+        }
+        candidates.push(embedded.includes("?") ? embedded : embedded + parsed.search);
+    }
+    const isExtension = ["chrome-extension:", "moz-extension:"].includes(
+        parsed.protocol,
+    );
+    const isLogin = /\/login\/?$/i.test(parsed.pathname);
+    for (const [name, value] of parsed.searchParams) {
+        if (!isExtension && !(isLogin && ["url", "qurl"].includes(name))) continue;
+        if (/^https?:\/\//i.test(value)) candidates.push(value);
+    }
+    for (const c of candidates) {
+        let href;
+        try {
+            href = new URL(c).href;
+        } catch (e) {
+            continue;
+        }
+        if (matchUrl(href)) return href;
+    }
+    return url;
+};
+
 /** Lowercase source names used for fuzzy de-duplication (arxiv, biorxiv). */
 export const preprintSources = DISPATCH_SOURCES.filter((S) => S.isPreprint).map((S) =>
     S.name.toLowerCase(),

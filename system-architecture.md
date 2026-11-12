@@ -132,7 +132,13 @@ plain objects. Each source declares:
 - `name` — internal key, matches `paper.source` and the `is.{name}` flag.
 - `displayName`, `isPreprint`, and `patterns` (`"host/path"` strings, matched on
   the parsed URL's host or a subdomain and a path prefix, or `(url) => boolean`
-  predicates that anchor on the host with `isOnHost` from `base.js`).
+  predicates that anchor on the host with `isOnHost` from `base.js`). Wrapper
+  URLs (proxy or PDF-viewer URLs embedding an `http(s)://` paper URL in their
+  path, in any query parameter of an extension page, or in the `url` / `qurl`
+  parameter of an EZproxy `/login` page) are unwrapped with `unwrapUrl`
+  (`sources/index.js`) at the entry points (`isPaper`, `parseIdFromUrl`,
+  `makePaper`, `addOrUpdatePaper`) before matching, so patterns only ever see the
+  paper URL.
 - `matches(url)`, `urlToId(url, ctx)`, `parse(url, tab, ctx)`, plus URL
   transforms `toAbs` / `toPDF` and venue helpers.
 
