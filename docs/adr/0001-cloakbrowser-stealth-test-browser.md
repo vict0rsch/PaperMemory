@@ -1,0 +1,37 @@
+# Use cloakbrowser as the headless browser for integration tests
+
+The test suite drives a real Chrome instance with the unpacked extension loaded to
+visit live publisher pages. The previous stack (`puppeteer-extra` +
+`puppeteer-extra-plugin-stealth`) injects JavaScript patches that antibot systems
+increasingly detect — causing intermittent failures on Cloudflare-fronted and other
+bot-walled academic publisher pages. We replaced it with
+[cloakbrowser](https://github.com/CloakHQ/cloakbrowser), which applies stealth at
+the Chromium C++ source level rather than via JavaScript injection, making the patches
+transparent to bot detection.
+
+## Considered options
+
+- **Playwright mode** (`import { launch } from 'cloakbrowser'`) — the recommended
+  cloakbrowser API, better reCAPTCHA resistance. Rejected: would require rewriting all
+  test helpers that assume the Puppeteer `Browser`/`Page` API (`browser.pages()`,
+  `page.evaluate`, `waitForSelector`, `screenshot`, etc.).
+- **puppeteer-extra-plugin-stealth** (status quo) — easy but config-level: patches
+  break on every Chrome update and are detectable themselves.
+
+## Consequences
+
+- A custom Chromium binary (~200MB) auto-downloads to `~/.cloakbrowser` on first use
+  per platform. CI caches it via `actions/cache` keyed on `package-lock.json`.
+- On macOS the binary trails one Chromium major version behind linux/windows (145 vs
+  146 as of the initial adoption). This has not caused test divergence.
+- The wrapper is held on `^0.6.x`, the last keyless line (it still downloads the
+  v146/v145 build above). From 0.7.0 every launch needs a license key, and the free
+  key allows one concurrent session, which would collide with the parallel CI test
+  matrix. Moving to 0.7+ means adding a `CLOAKBROWSER_LICENSE_KEY` CI secret and
+  either a Pro key or a serialized matrix.
+- `CHROME_PATH` / the system-installed Chrome is no longer used for tests.
+- The stealth-undermining `--disable-web-security` and `--disable-gpu` flags were
+  dropped with this migration; the remaining launch args are `--window-size`,
+  `--no-sandbox`, `--disable-setuid-sandbox`, and `--disable-dev-shm-usage`, and
+  HTTPS-error tolerance is handled by `launchOptions.acceptInsecureCerts` in
+  `test/browser.js`.

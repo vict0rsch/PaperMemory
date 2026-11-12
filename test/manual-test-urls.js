@@ -1,7 +1,7 @@
 import { makeBrowser, visitPaperPage } from "./browser.js";
-import { readJSON, sleep, root } from "./utilsForTests.js";
+import { hasManualBotPrevention, readURLs } from "./utilsForTests.js";
 
-const testUrls = readJSON(`${root}/test/data/urls.json`);
+const testUrls = readURLs();
 
 const browser = await makeBrowser();
 
@@ -23,9 +23,9 @@ const gotToPaperPage = async (url) => {
 };
 
 for (const [source, urls] of Object.entries(testUrls)) {
-    if (urls[2]?.botPrevention) {
+    if (hasManualBotPrevention(urls)) {
         console.log(
-            `\nManual test for ${source} because it has bot prevention:\n  ${urls[0]}\n  ${urls[1]}`,
+            `\nManual test for ${source} because it has manual bot prevention:\n  ${urls[0]}\n  ${urls[1]}`,
         );
         await gotToPaperPage(urls[0]);
         await gotToPaperPage(urls[1]);

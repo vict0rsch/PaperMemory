@@ -433,6 +433,14 @@ export const addOrUpdatePaper = async ({
         }
     }
 
+    // Map the visited url to the paper if it does not resolve to it yet (e.g. its
+    // source reads no id from this url), ahead of the papers write so it is stored
+    // by the time the paper is. Re-read the map first: other pages write to it too.
+    if (store && !state.deleted[paper.id] && paper.id !== id) {
+        state.urlHashToId = (await getStorage("urlHashToId")) ?? {};
+        updateDuplicatedUrls(url, paper.id);
+    }
+
     state.papers = (await getStorage("papers")) ?? {};
 
     // minimize risk of concurrent writes to the same paper

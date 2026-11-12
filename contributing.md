@@ -266,7 +266,7 @@ Most editors can auto-format on save with the Prettier extension. For VS Code, i
 2. **Register** the class in `sources/index.js`: add its import and insert the class reference into the `ALL_SOURCES` array (once). `BY_NAME`, `SOURCE_DISPATCH_ORDER`, `knownPaperPages`, `preprintSources`, and `allSources()` are all derived automatically. The mutual-exclusion test in `test/test-meta.js` enforces that your patterns don't overlap with any existing source. The settings page renders sources alphabetically by display name.
 3. **Reuse** shared HTTP/BibTeX/DOM helpers from `parsers.js` instead of duplicating fetches.
 4. **Optional overrides** on the class: `displayId(paper, baseId)`, `venue(paper)`, `static isPreprint = true` (only for preprint servers used in fuzzy deduplication).
-5. **Add** URLs under `test/data/urls.json` and into `test/test-storage.js` to keep test coverage.
+5. **Add** URLs under `test/data/urls.json` and verify parsing locally with `test/manual-open-urls.js`.
 
 ### Why stateless handlers, not class instances
 
@@ -279,9 +279,18 @@ Sources are **stateless** `BasePaperSource` subclasses (the registry does a name
 
 ## Tests
 
-Tests use Puppeteer to launch a real Chrome instance with the extension loaded. `npm test` builds the extension first (`pretest` runs `npm run build:chrome`), then runs all test suites.
+Tests use [cloakbrowser](https://github.com/CloakHQ/cloakbrowser) (a source-level stealth Chromium with the Puppeteer-core API) to launch a real Chrome instance with the extension loaded. On first run, cloakbrowser auto-downloads its custom Chromium binary (~200MB) to `~/.cloakbrowser`; subsequent runs use the cached binary. `CHROME_PATH` is not used for the stealth browser. `npm test` builds the extension first (`pretest` runs `npm run build:chrome`), then runs all test suites.
 
-The integration suites `test/test-duplicates.js` and `test/test-storage.js` hit many live publisher pages; they are valuable as smoke checks but are **not expected to pass entirely** (timeouts, bot walls, and DOM drift are common). `npm test` excludes `test/test-sync.js`; run it explicitly with `npm run test:file test/test-sync.js` when working on Gist sync — that file has the same “best effort” expectations.
+The integration suites `test/test-duplicates.js` and `test/test-storage.js` hit many live publisher pages; they are valuable as smoke checks but are volatile (timeouts, bot walls, and DOM drift are common). Their visit phase is best-effort: one URL failure does not stop later URLs from being visited, but the suite still fails afterward with an aggregate visit-failure summary. `npm test` and CI exclude `test/test-sync.js`; run it explicitly with `npm run test:file test/test-sync.js` when working on Gist sync — that file requires a GitHub PAT and has the same live-service volatility.
+
+`test/manual-open-urls.js` is the actual end-to-end parsing correctness check for `test/data/urls.json`. It visits each **Abstract URL**, then each **PDF URL** in a fresh browser context, then reopens the **Abstract URLs** in the PDF context and asserts the expected visit counts. Run it locally on a developer laptop after adding or changing a source:
+
+```bash
+npm run build:chrome
+headless=false npm run test:file test/manual-open-urls.js
+```
+
+Do not rely on CI for this check. Publisher bot-prevention systems make cloud runners unreliable even when parsing is correct, so this test is intentionally a local validation step.
 
 ```bash
 npm test                                 # Build + run all tests

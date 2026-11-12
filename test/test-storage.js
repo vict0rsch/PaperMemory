@@ -12,7 +12,7 @@ import {
     getMemoryPapers,
     findExtensionId,
     getPMURLs,
-    visitPaperPage,
+    makeVisitFailureCollector,
 } from "./browser.js";
 
 import {
@@ -21,6 +21,7 @@ import {
     loadConfig,
     loadPaperMemoryUtils,
     indent,
+    hasCiBotPrevention,
 } from "./utilsForTests.js";
 import { allAttributes } from "./processMemory.js";
 
@@ -106,7 +107,7 @@ describe("Test paper detection and storage", function () {
 
     for (const source in urls) {
         const targets = urls[source];
-        if (targets.length === 3 && targets[2].botPrevention) {
+        if (hasCiBotPrevention(targets)) {
             console.log(
                 `\n>>> Skipping test for "${source}" because its website ` +
                     `prevents automated browsing. Remember to test manually:` +
@@ -156,6 +157,9 @@ describe("Test paper detection and storage", function () {
                 !Object.keys(urls).length && this.skip();
                 // create browser
                 browser = await makeBrowser(headless);
+                const visitFailures = makeVisitFailureCollector(
+                    `Storage visits for parsing order ${order}`,
+                );
 
                 // count total urls to visit depending on maxSources
                 const nUrls = sources.length;
@@ -167,6 +171,7 @@ describe("Test paper detection and storage", function () {
 
                 for (const sourceOrderIdx of sourceOrder) {
                     for (const [targetIdx, targets] of Object.values(urls).entries()) {
+                        const currentSource = Object.keys(urls)[targetIdx];
                         // for each target url (abstract, pdf), visit the url
                         // and wait a little for it to load
                         const isPDF = sourceOrderIdx === 1;
@@ -193,15 +198,17 @@ describe("Test paper detection and storage", function () {
                                 nUrls +
                             1;
                         console.log(
-                            `${indent(2)}(${n}/${nUrls * 2}) Going to: ${target}`,
+                            `${indent(2)}(${n}/${nUrls * 2}) Going to: ${currentSource} (${target.slice(0, 30)}[...])`,
                         );
 
-                        await visitPaperPage(browser, target, {
+                        await visitFailures.visit(browser, target, {
                             timeout: pageTimeout,
                             keepOpen,
+                            indents: 3,
                         });
                     }
                 }
+                visitFailures.throwIfFailed();
 
                 // go to the extension's popup url
                 const page = await browser.newPage();

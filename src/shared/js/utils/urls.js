@@ -25,56 +25,69 @@ export const isSourceURL = async (url, noStored) =>
 
 /**
  * Parses a paper's id from a url.
- * Throws error if the url is not a paper source as defined per isPaper(url).
  *
  * @param {string} url The url to use in order to find a matching paper
- * @returns {string} The id of the paper found.
+ * @param {object} [tab] The tab, for manual website parsing
+ * @returns {Promise<string|undefined|null>} Never rejects. Resolves to:
+ *  - a string: `urlToWebsiteId(url)` if `tab` is given; otherwise the id `url` is
+ *    mapped to in `state.urlHashToId`, else the matching source's `urlToId` result,
+ *    else the id of the matching local file or stored website paper.
+ *  - `undefined` (or another falsy value) if a source matches the url but its
+ *    `urlToId` resolves no id (e.g. the paper is not stored yet, or the url
+ *    carries no identifier).
+ *  - `null` if the url matches no source, local file or stored website paper, or
+ *    if an error was thrown (it is logged).
  */
 export const parseIdFromUrl = async (url, tab = null) => {
-    if (tab) {
-        return urlToWebsiteId(url);
-    }
-    let idForUrl;
-
-    const hashedUrl = miniHash(url);
-    const hashedId = state.urlHashToId[hashedUrl];
-    if (hashedId) {
-        return hashedId;
-    }
-
-    const is = await isPaper(url, true);
-    const papers = Object.values(cleanPapers(state.papers));
-    const ctx = {
-        papers,
-        titleHashToIds: state.titleHashToIds,
-        findPaperForProperty,
-    };
-
-    let matchedSource = false;
-    for (const name of SOURCE_DISPATCH_ORDER) {
-        if (is[name]) {
-            matchedSource = true;
-            idForUrl = await getSource(name).urlToId(url, ctx);
-            break;
+    try {
+        if (tab) {
+            return urlToWebsiteId(url);
         }
-    }
+        let idForUrl;
 
-    // A matched source returning undefined means "not in storage yet"; let the
-    // caller (addOrUpdatePaper) take the makePaper path. Only throw when the URL
-    // was not recognized as any known source.
-    if (!matchedSource && idForUrl === undefined) {
-        if (is.localFile) {
-            idForUrl = is.localFile;
-        } else if (is.parsedWebsite) {
-            idForUrl = is.parsedWebsite.id;
-        } else {
-            throw new Error(
-                "`parseIdFromUrl` failed, unknown paper url. Is: " + JSON.stringify(is),
-            );
+        const hashedUrl = miniHash(url);
+        const hashedId = state.urlHashToId[hashedUrl];
+        if (hashedId) {
+            return hashedId;
         }
-    }
 
-    return idForUrl;
+        const is = await isPaper(url, true);
+        const papers = Object.values(cleanPapers(state.papers));
+        const ctx = {
+            papers,
+            titleHashToIds: state.titleHashToIds,
+            findPaperForProperty,
+        };
+
+        let matchedSource = false;
+        for (const name of SOURCE_DISPATCH_ORDER) {
+            if (is[name]) {
+                matchedSource = true;
+                idForUrl = await getSource(name).urlToId(url, ctx);
+                break;
+            }
+        }
+
+        // A matched source returning undefined means "not in storage yet"; let the
+        // caller (addOrUpdatePaper) take the makePaper path. Only throw when the URL
+        // was not recognized as any known source.
+        if (!matchedSource && idForUrl === undefined) {
+            if (is.localFile) {
+                idForUrl = is.localFile;
+            } else if (is.parsedWebsite) {
+                idForUrl = is.parsedWebsite.id;
+            } else {
+                // Not a recognized paper source: this is an expected outcome
+                // (e.g. arbitrary URLs), so return null rather than throwing.
+                return null;
+            }
+        }
+
+        return idForUrl;
+    } catch (err) {
+        console.error("Error in parseIdFromUrl:", err);
+        return null;
+    }
 };
 
 export const isArxivAbstractUrl = (url) => url.startsWith("https://arxiv.org/abs/");

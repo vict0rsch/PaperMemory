@@ -1,26 +1,20 @@
 import { expect } from "expect";
 
-import puppeteer from "puppeteer-extra";
-import StealthPlugin from "puppeteer-extra-plugin-stealth";
-import { sleep, root } from "./utilsForTests.js";
+import { launch } from "cloakbrowser/puppeteer";
+import { sleep, root, indent } from "./utilsForTests.js";
 import fs from "fs";
 
-puppeteer.use(StealthPlugin());
-
 export const makeBrowser = async (headless = false, windowSize = "1200,900") => {
-    const browser = await puppeteer.launch({
+    const browser = await launch({
         headless,
-        ignoreHTTPSErrors: true,
-        ignoreDefaultArgs: ["--disable-extensions"],
+        extensionPaths: [`${root}/dist/chrome-mv3`],
         args: [
-            `--load-extension=${root}/dist/chrome-mv3`,
             `--window-size=${windowSize}`,
             "--no-sandbox",
             "--disable-setuid-sandbox",
-            "--disable-web-security",
             "--disable-dev-shm-usage",
-            "--disable-gpu",
         ],
+        launchOptions: { acceptInsecureCerts: true },
     });
     return browser;
 };
@@ -53,11 +47,28 @@ export const visitPaperPage = async (browser, target, options = {}) => {
         timeout: null,
         keepOpen: false,
         dontScreenshot: false,
+        indents: 0,
     };
     const opts = { ...defaults, ...options };
 
     const p = opts.page || (await browser.pages())[0] || (await browser.newPage());
-    await p.goto(target);
+    // A leftover page from the previous source (e.g. a Cloudflare "Just a moment..."
+    // challenge) can perform a client-side navigation that aborts this goto with
+    // net::ERR_ABORTED. Retry a few times so the competing navigation can settle.
+    const maxNavAttempts = 3;
+    let gotoError = null;
+    for (let attempt = 1; attempt <= maxNavAttempts; attempt++) {
+        try {
+            await p.goto(target);
+            gotoError = null;
+            break;
+        } catch (e) {
+            gotoError = e;
+            if (!String(e.message).includes("net::ERR_ABORTED")) break;
+            if (attempt < maxNavAttempts) await sleep(1000);
+        }
+    }
+    if (gotoError) throw gotoError;
     const paperIsStored = new Promise((resolve, reject) => {
         let screenshotTimeout;
         p.waitForSelector("meta[name='pm-complete-secret-html']")
@@ -69,34 +80,87 @@ export const visitPaperPage = async (browser, target, options = {}) => {
                 // Ignore errors (e.g. timeout or target closed)
             });
         screenshotTimeout = setTimeout(async () => {
-            const element = await p.evaluate(() => {
-                return document.querySelector("meta[name='pm-complete-secret-html']");
-            });
-            if (!element && !opts.dontScreenshot) {
-                console.log(`No element found: taking a screenshot`);
-                if (!fs.existsSync(`${root}/tmp`)) {
-                    console.log(`Creating tmp directory in ${root}/tmp`);
-                    fs.mkdirSync(`${root}/tmp`);
-                }
-                let screenshotName = `screenshot_${Date.now()}_${target
-                    .replaceAll("https://", "")
-                    .replaceAll("/", "__")}.jpg`;
-                screenshotName = screenshotName
-                    .replace(/[^a-zA-Z0-9\-_\.]/g, "")
-                    .slice(0, 100);
-                const screenshotPath = `${root}/tmp/${screenshotName}`;
-                await p.screenshot({
-                    path: screenshotPath,
-                    fullPage: true,
+            // Every path must settle the promise: an evaluate/screenshot throw
+            // (e.g. target closed) must reject, not hang the suite.
+            try {
+                const element = await p.evaluate(() => {
+                    return document.querySelector(
+                        "meta[name='pm-complete-secret-html']",
+                    );
                 });
-                console.log(`Screenshot taken and saved to ${screenshotPath}\n\n`);
+                if (!element) {
+                    if (opts.dontScreenshot) {
+                        reject(new Error(`Timeout for ${target}`));
+                        return;
+                    }
+                    if (!fs.existsSync(`${root}/tmp`)) {
+                        console.log(
+                            `${indent(opts.indents)}Creating tmp directory in ${root}/tmp`,
+                        );
+                        fs.mkdirSync(`${root}/tmp`);
+                    }
+                    let screenshotName = `screenshot_${Date.now()}_${target
+                        .replaceAll("https://", "")
+                        .replaceAll("/", "__")
+                        .replace(/[^a-zA-Z0-9\-_\.]/g, "")
+                        .slice(0, 50)}.jpg`;
+                    const screenshotPath = `${root}/tmp/${screenshotName}`;
+                    await p.screenshot({
+                        path: screenshotPath,
+                        fullPage: true,
+                    });
+                    reject(
+                        new Error(
+                            `Timeout for ${target} -> Screenshot taken and saved to ${screenshotPath}`,
+                        ),
+                    );
+                    return;
+                }
+                resolve();
+            } catch (e) {
+                reject(
+                    new Error(
+                        `Timeout for ${target} and diagnostic capture failed: ${e.message}`,
+                    ),
+                );
             }
-            resolve();
-        }, 5000);
+        }, 15000);
     });
-    opts.timeout > 0 && (await paperIsStored);
+    await paperIsStored;
     opts.timeout > 0 && (await sleep(opts.timeout));
     !opts.keepOpen && (await p.close());
+};
+
+export const makeVisitFailureCollector = (label = "paper page visits") => {
+    const failures = [];
+
+    return {
+        failures,
+        visit: async (browser, target, options = {}) => {
+            try {
+                await visitPaperPage(browser, target, options);
+            } catch (error) {
+                const message = error instanceof Error ? error.message : String(error);
+                failures.push({ target, message });
+                console.error(
+                    `${indent(options.indents || 0)}Visit failed: ${message}`,
+                );
+            }
+        },
+        throwIfFailed: () => {
+            if (!failures.length) return;
+
+            const summary = failures
+                .map(
+                    ({ target, message }, index) =>
+                        `${index + 1}. ${target}\n   ${message}`,
+                )
+                .join("\n");
+            throw new Error(
+                `${label}: ${failures.length} visit(s) failed after completing the batch:\n${summary}`,
+            );
+        },
+    };
 };
 
 // Helper function to find the actual extension ID from the Chrome extensions page
@@ -105,29 +169,39 @@ export const findExtensionId = async (browser) => {
     try {
         await page.goto("chrome://extensions/", { waitUntil: "networkidle0" });
 
-        // Extract extension IDs from the page
-        const extensionId = await page.evaluate(() => {
-            const extensionManager = document.querySelector("extensions-manager");
-            if (!extensionManager || !extensionManager.shadowRoot) return null;
+        // The extensions list populates asynchronously (chrome.developerPrivate
+        // callback, not a network request), so networkidle0 does not settle it.
+        // Poll the shadow DOM until the Paper Memory item renders.
+        const handle = await page.waitForFunction(
+            () => {
+                const extensionManager = document.querySelector("extensions-manager");
+                if (!extensionManager || !extensionManager.shadowRoot) return null;
 
-            const itemList =
-                extensionManager.shadowRoot.querySelector("extensions-item-list");
-            if (!itemList || !itemList.shadowRoot) return null;
+                const itemList =
+                    extensionManager.shadowRoot.querySelector("extensions-item-list");
+                if (!itemList || !itemList.shadowRoot) return null;
 
-            const extensionItems =
-                itemList.shadowRoot.querySelectorAll("extensions-item");
-            for (const item of extensionItems) {
-                if (!item.shadowRoot) continue;
+                const extensionItems =
+                    itemList.shadowRoot.querySelectorAll("extensions-item");
+                for (const item of extensionItems) {
+                    if (!item.shadowRoot) continue;
 
-                const nameElement = item.shadowRoot.querySelector("#name");
-                if (nameElement && nameElement.textContent.includes("Paper Memory")) {
-                    return item.id;
+                    const nameElement = item.shadowRoot.querySelector("#name");
+                    if (
+                        nameElement &&
+                        nameElement.textContent.includes("Paper Memory")
+                    ) {
+                        return item.id;
+                    }
                 }
-            }
-            return null;
-        });
-
-        return extensionId;
+                return null;
+            },
+            { timeout: 10000, polling: 100 },
+        );
+        return await handle.jsonValue();
+    } catch (e) {
+        // Timed out waiting for the extension to appear; callers handle null.
+        return null;
     } finally {
         await page.close();
     }
@@ -194,14 +268,23 @@ export const verifyElementClickable = async (el, page) => {
     return isClickable;
 };
 
-export const getURL = async (page) => {
+export const getURL = async (page, timeout = 10000) => {
+    const deadline = Date.now() + timeout;
     let documentState = null;
     while (documentState !== "complete") {
+        if (Date.now() > deadline) {
+            throw new Error(
+                "getURL: timed out waiting for document readyState 'complete'",
+            );
+        }
         documentState && (await sleep(50));
         documentState = await page.evaluate(() => document.readyState);
     }
     let url = await page.evaluate(() => document.location.href);
     while (url === "about:blank") {
+        if (Date.now() > deadline) {
+            throw new Error("getURL: timed out waiting for URL to leave about:blank");
+        }
         await sleep(50);
         url = await page.evaluate(() => document.location.href);
     }
@@ -257,11 +340,10 @@ export const setPreferencesAndReload = async (prefs, page) => {
     });
 };
 
-export const getClipboardText = async (page) => {
-    const indent = (n) => " ".repeat(n * 4);
-    try {
+export const getClipboardText = async (page, timeout = 2000) => {
+    const readOnce = () =>
         // Add timeout to prevent hanging on permission dialogs
-        return await Promise.race([
+        Promise.race([
             page.evaluate(async () => {
                 try {
                     const text = await navigator.clipboard.readText();
@@ -278,14 +360,20 @@ export const getClipboardText = async (page) => {
                     return result ? content : null;
                 }
             }),
-            new Promise((_, reject) =>
-                setTimeout(() => reject(new Error("Clipboard read timeout")), 1000),
-            ),
+            new Promise((resolve) => setTimeout(() => resolve(null), 1000)),
         ]);
-    } catch (error) {
-        console.log(indent(3) + `⚠ Clipboard read failed: ${error.message}`);
-        return null;
+    // The copy handlers' clipboard write is async and un-awaited, so a single
+    // read right after a click races it; poll until content lands.
+    const deadline = Date.now() + timeout;
+    let text = await readOnce();
+    while (!text && Date.now() < deadline) {
+        await sleep(50);
+        text = await readOnce();
     }
+    if (!text) {
+        console.log(indent(3) + "⚠ Clipboard read failed or empty after retries");
+    }
+    return text;
 };
 
 export const verifyClipboardContent = async (
@@ -305,25 +393,15 @@ export const verifyClipboardContent = async (
 };
 
 export const verifyPageNavigation = async (expectedUrlPattern, browser) => {
-    // Check if any existing or new page has the expected URL
-    const allPages = await browser.pages();
-    const allPagesAndURLs = await Promise.all(
-        allPages.map(async (page) => {
-            try {
-                const url = await getURL(page);
-                return { page, url };
-            } catch (e) {
-                return { page, url: null };
-            }
-        }),
-    );
-
-    const matchingPageAndURL = allPagesAndURLs.find((pageAndURL) =>
+    // Wait for any existing or new page to reach the expected URL; the target's
+    // URL commits asynchronously after the click, so a single pages() sample races it.
+    const matches = (url) =>
         expectedUrlPattern.test
-            ? expectedUrlPattern.test(pageAndURL.url)
-            : pageAndURL.url && pageAndURL.url.includes(expectedUrlPattern),
+            ? expectedUrlPattern.test(url)
+            : url && url.includes(expectedUrlPattern);
+    const target = await browser.waitForTarget(
+        (t) => t.type() === "page" && matches(t.url()),
+        { timeout: 10000 },
     );
-
-    expect(matchingPageAndURL).toBeTruthy();
-    return matchingPageAndURL.page;
+    return await target.page();
 };

@@ -141,7 +141,7 @@ describe("Test PaperMemory Memory Item Actions", function () {
             } catch {}
             page = await browser.newPage();
             await resetPage(page, pmURLs.popupURL);
-            await setupPageWithData(PMPage, testData);
+            await setupPageWithData(page, testData);
         }
         return page;
     }
@@ -197,8 +197,8 @@ describe("Test PaperMemory Memory Item Actions", function () {
             PMPage = await quickReset(PMPage);
         });
 
-        runs.forEach(() => {
-            it("should handle toggle favorite action (memory-item-favorite)", async function () {
+        runs.forEach((run) => {
+            it(`should handle toggle favorite action (memory-item-favorite, pass ${run + 1}/${runs.length})`, async function () {
                 // Check initial favorite state
                 const initialState = await getPaperMemoryState(PMPage);
                 const initialFavorite = initialState.papers[firstPaperId].favorite;
@@ -365,7 +365,7 @@ describe("Test PaperMemory Memory Item Actions", function () {
         it("should be able to read and write to the clipboard", async function () {
             const testText = "test clipboard paper memory";
             await PMPage.evaluate((text) => {
-                navigator.clipboard.writeText(text);
+                return navigator.clipboard.writeText(text);
             }, testText);
             await verifyClipboardContent(testText, false, PMPage);
         });
@@ -389,7 +389,8 @@ describe("Test PaperMemory Memory Item Actions", function () {
             console.log(indent(2) + `✓ Copy link feedback: "${feedbackText}"`);
 
             // Verify clipboard contains the correct URL
-            const clipboardText = await verifyClipboardContent("", true, PMPage);
+            const clipboardText = await getClipboardText(PMPage);
+            expect(clipboardText).toBeTruthy();
             console.log(indent(3) + "clipboardText :", clipboardText);
 
             expect(clipboardText).toMatch(/^https?:\/\//); // Should be a URL
@@ -440,22 +441,14 @@ describe("Test PaperMemory Memory Item Actions", function () {
             console.log(indent(2) + `✓ Copy hyperlink feedback: "${feedbackText}"`);
 
             // For hyperlink, clipboard should contain both title and URL
-            const clipboardText = await verifyClipboardContent("", true, PMPage);
-            if (clipboardText) {
-                console.log(
-                    indent(3) + `Debug: Clipboard content is: "${clipboardText}"`,
-                );
-                expect(clipboardText).toContain(paperData.title);
-                expect(clipboardText).toMatch(/https?:\/\//);
-                console.log(
-                    indent(2) + `✓ Clipboard contains hyperlink with title and URL`,
-                );
-            } else {
-                console.log(
-                    indent(3) +
-                        "⚠ Clipboard verification skipped due to test environment limitations",
-                );
-            }
+            const clipboardText = await getClipboardText(PMPage);
+            expect(clipboardText).toBeTruthy();
+            console.log(indent(3) + `Debug: Clipboard content is: "${clipboardText}"`);
+            expect(clipboardText).toContain(paperData.title);
+            expect(clipboardText).toMatch(/https?:\/\//);
+            console.log(
+                indent(2) + `✓ Clipboard contains hyperlink with title and URL`,
+            );
         });
 
         it("should handle copy markdown action (memory-item-md) and verify markdown format", async function () {
@@ -478,7 +471,8 @@ describe("Test PaperMemory Memory Item Actions", function () {
             console.log(indent(2) + `✓ Copy markdown feedback: "${feedbackText}"`);
 
             // Verify clipboard contains valid markdown format [title](url)
-            const clipboardText = await verifyClipboardContent("", true, PMPage);
+            const clipboardText = await getClipboardText(PMPage);
+            expect(clipboardText).toBeTruthy();
             expect(clipboardText).toMatch(/^\[.+\]\(https?:\/\/.+\)$/);
             expect(clipboardText).toContain(paperData.title);
 
@@ -505,27 +499,14 @@ describe("Test PaperMemory Memory Item Actions", function () {
 
             // Verify clipboard contains valid bibtex format
             const clipboardText = await getClipboardText(PMPage);
-            if (clipboardText && clipboardText.match(/^@\w+\{/)) {
-                expect(clipboardText).toMatch(/^@\w+\{/); // Should start with @type{
-                expect(clipboardText).toMatch(/title\s*=\s*\{/);
-                expect(clipboardText).toMatch(/author\s*=\s*\{/);
-                expect(await miniHash(clipboardText)).toContain(
-                    await miniHash(paperData.title),
-                );
-                console.log(indent(2) + `✓ Clipboard contains valid bibtex format`);
-            } else {
-                // In some test environments, bibtex generation might not work as expected
-                console.log(
-                    indent(2) +
-                        `⚠ Bibtex format verification limited in test environment`,
-                );
-                console.log(
-                    indent(2) +
-                        `    Clipboard content: "${
-                            clipboardText ? clipboardText.substring(0, 100) : "empty"
-                        }..."`,
-                );
-            }
+            expect(clipboardText).toBeTruthy();
+            expect(clipboardText).toMatch(/^@\w+\{/); // Should start with @type{
+            expect(clipboardText).toMatch(/title\s*=\s*\{/);
+            expect(clipboardText).toMatch(/author\s*=\s*\{/);
+            expect(await miniHash(clipboardText)).toContain(
+                await miniHash(paperData.title),
+            );
+            console.log(indent(2) + `✓ Clipboard contains valid bibtex format`);
         });
     });
 
@@ -637,10 +618,7 @@ describe("Test PaperMemory Memory Item Actions", function () {
             console.log(indent(2) + `✓ ${serviceName} button is clickable`);
 
             // Click button and verify navigation
-            const initialPages = await browser.pages();
             await safeClick(selector, page);
-            const newPagesCount = (await browser.pages()).length - initialPages.length;
-            expect(newPagesCount).toBe(1);
             const newPage = await verifyPageNavigation(expectedUrlPattern, browser);
             await newPage.close();
         }
@@ -730,22 +708,9 @@ describe("Test PaperMemory Memory Item Actions", function () {
             await safeClick(bibtexSelector, PMPage);
 
             // Verify bibtex was copied
-            const clipboardContent = await PMPage.evaluate(async () => {
-                try {
-                    return await navigator.clipboard.readText();
-                } catch (err) {
-                    return null;
-                }
-            });
-
-            if (clipboardContent) {
-                expect(clipboardContent).toMatch(/^@\w+\{/);
-                console.log(indent(2) + "✓ Bibtex successfully copied to clipboard");
-            } else {
-                console.log(
-                    indent(2) + "⚠ Clipboard access limited in test environment",
-                );
-            }
+            const clipboardContent = await getClipboardText(PMPage);
+            expect(clipboardContent).toMatch(/^@\w+\{/);
+            console.log(indent(2) + "✓ Bibtex successfully copied to clipboard");
 
             // Second test: Open SciRate link
             const { button: scirateButton, selector: scirateSelector } =
@@ -754,8 +719,6 @@ describe("Test PaperMemory Memory Item Actions", function () {
                     ".memory-item-scirate",
                     PMPage,
                 );
-            const initialPagesCount = (await browser.pages()).length;
-
             await safeClick(scirateSelector, PMPage);
 
             const matchingPage = await verifyPageNavigation(/scirate\.com/, browser);

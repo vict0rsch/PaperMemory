@@ -199,7 +199,7 @@ describe("Test PaperMemory Popup UI - Known Paper Page", function () {
 
             const testText = "test clipboard paper memory";
             await PMPage.evaluate((text) => {
-                navigator.clipboard.writeText(text);
+                return navigator.clipboard.writeText(text);
             }, testText);
             await verifyClipboardContent(testText, false, PMPage);
         });
@@ -216,7 +216,8 @@ describe("Test PaperMemory Popup UI - Known Paper Page", function () {
             await safeClick(copyLinkSelector, PMPage);
 
             // Verify clipboard contains the correct URL
-            const clipboardText = await verifyClipboardContent("", true, PMPage);
+            const clipboardText = await getClipboardText(PMPage);
+            expect(clipboardText).toBeTruthy();
             expect(clipboardText).toMatch(/^https?:\/\//); // Should be a URL
 
             // Verify it contains expected domain based on paper source
@@ -248,11 +249,10 @@ describe("Test PaperMemory Popup UI - Known Paper Page", function () {
             await safeClick(copyHyperlinkSelector, PMPage);
 
             // Verify clipboard contains both title and URL
-            const clipboardText = await verifyClipboardContent("", true, PMPage);
-            if (clipboardText) {
-                expect(clipboardText).toContain(paperData.title);
-                expect(clipboardText).toMatch(/https?:\/\//);
-            }
+            const clipboardText = await getClipboardText(PMPage);
+            expect(clipboardText).toBeTruthy();
+            expect(clipboardText).toContain(paperData.title);
+            expect(clipboardText).toMatch(/https?:\/\//);
 
             // Verify feedback message
             const feedbackElement = await verifySelectorExists(
@@ -275,7 +275,8 @@ describe("Test PaperMemory Popup UI - Known Paper Page", function () {
             await safeClick(copyMdSelector, PMPage);
 
             // Verify clipboard contains valid markdown format [title](url)
-            const clipboardText = await verifyClipboardContent("", true, PMPage);
+            const clipboardText = await getClipboardText(PMPage);
+            expect(clipboardText).toBeTruthy();
             expect(clipboardText).toMatch(/^\[.+\]\(https?:\/\/.+\)$/);
             expect(clipboardText).toContain(paperData.title);
 
@@ -305,11 +306,10 @@ describe("Test PaperMemory Popup UI - Known Paper Page", function () {
 
             // Verify clipboard contains valid bibtex format
             const clipboardText = await getClipboardText(PMPage);
-            if (clipboardText && clipboardText.match(/^@\w+\{/)) {
-                expect(clipboardText).toMatch(/^@\w+\{/); // Should start with @type{
-                expect(clipboardText).toMatch(/title\s*=\s*\{/);
-                expect(clipboardText).toMatch(/author\s*=\s*\{/);
-            }
+            expect(clipboardText).toBeTruthy();
+            expect(clipboardText).toMatch(/^@\w+\{/); // Should start with @type{
+            expect(clipboardText).toMatch(/title\s*=\s*\{/);
+            expect(clipboardText).toMatch(/author\s*=\s*\{/);
 
             // Verify feedback message
             const feedbackElement = await verifySelectorExists(
@@ -380,8 +380,6 @@ describe("Test PaperMemory Popup UI - Known Paper Page", function () {
             console.log(indent(2) + `✓ ${serviceName} button is clickable`);
 
             // Click button and verify navigation
-            const initialPages = await browser.pages();
-
             await safeClick(selector, PMPage);
 
             // Verify page url
@@ -489,7 +487,7 @@ describe("Test PaperMemory Popup UI - Known Paper Page", function () {
             await PMPage.keyboard.press("Enter");
 
             // Wait for the debounced save (300ms delay + storage write)
-            await new Promise((r) => setTimeout(r, 800));
+            await sleep(800);
 
             // Verify the tag was persisted to storage
             const papersAfter = await getMemoryPapers(PMPage);
@@ -511,7 +509,7 @@ describe("Test PaperMemory Popup UI - Known Paper Page", function () {
             await PMPage.click(`#popup-memory-edit .ts-control .item .remove`);
 
             // Wait for the debounced save
-            await new Promise((r) => setTimeout(r, 800));
+            await sleep(800);
 
             // Verify the tag was removed from storage
             const papersAfter = await getMemoryPapers(PMPage);
