@@ -3,6 +3,49 @@
     <ul>
         <li>
             <strong>Current: </strong>
+            <a href="https://github.com/vict0rsch/PaperMemory/releases/tag/1.2.0"
+                >1.2.0</a
+            >
+            <em>(2026-11-12)</em>
+            <ul>
+                <li>
+                    [feature] Detect papers opened through a proxy URL or a PDF viewer
+                    (e.g. another extension's) and save the underlying paper (proxies
+                    that rewrite the host name are not supported)
+                </li>
+                <li>
+                    [feature] Re-parsing an already saved paper no longer overwrites its
+                    tags, visit count, add date or favorite status
+                </li>
+                <li>
+                    [dev] Fix paper parsing for ACS, RSC (new platform), ScienceDirect,
+                    ChemRxiv, IJCAI, Cell and PMLR
+                </li>
+                <li>
+                    [dev] Detect paper sources from the website's host only, removing
+                    false detections; http:// ChemRxiv and OUP URLs are now detected
+                </li>
+                <li>
+                    [dev] Fix the PDF tab title not being set the first time an ACS/RSC
+                    paper is captured
+                </li>
+                <li>
+                    [dev] Fix race conditions and data-integrity issues when updating or
+                    de-duplicating stored papers
+                </li>
+                <li>
+                    [dev] Refactor the codebase to ES modules, built with WXT (Vite) for
+                    Chrome and Firefox; integration tests now run on cloakbrowser
+                </li>
+                <li>[dev] Add a privacy policy page to the docs</li>
+                <li>[dev] Rebuild the tag input without the select2 library</li>
+                <li>
+                    [deprecation] Automatic code repository discovery through Papers
+                    with Code is disabled since its API was discontinued
+                </li>
+            </ul>
+        </li>
+        <li>
             <a href="https://github.com/vict0rsch/PaperMemory/releases/tag/1.0.3"
                 >1.0.3</a
             >
