@@ -48,6 +48,7 @@ export const state = {
     ignoreSources: {}, // (source => bool)
     lastRefresh: new Date(),
     memoryIsOpen: false,
+    memoryFilters: [], // Memory search pills, in order: [{type: "tag"|"code"|"year"|"fav", value}]
     memoryItemsPerPage: 10,
     menuIsOpen: false,
     modalIsOpen: false,
@@ -61,6 +62,7 @@ export const state = {
     showFavorites: false,
     sortedPapers: [], // [papers]
     sortKey: "",
+    sortReversed: false, // Memory sort direction: oldest first (or Z to A, fewest first)
     timerIdMap: new WeakMap(), // memory title tooltips
     titleHashToIds: {}, // (miniHash(title) -> [ids])
     titleFunction: null, // function(paper) => string
@@ -129,6 +131,7 @@ export const prefsCheckNames = [
     "checkEnterLocalPdf",
     "checkWebsiteParsing",
     "checkPreferPdf",
+    "checkKeepMemorySearch",
 ];
 /**
  * Values of prefs.theme (public/theme.js applies it to every extension page)
@@ -149,6 +152,7 @@ export const prefsCheckDefaultFalse = [
     "checkNoAuto",
     "checkMdYearVenue",
     "checkPreferPdf",
+    "checkKeepMemorySearch",
 ];
 /**
  * All keys to retrieve from the menu, the checkboxes + the custom pdf function

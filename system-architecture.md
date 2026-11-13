@@ -281,8 +281,11 @@ abstract/PDF/ar5iv/HuggingFace, etc., shared with the popup's `handlers.js`).
 (thin `src/entrypoints/*/main.js` wrappers import the real logic + `debug.js`).
 
 - **popup** ([`popup/js/popup.js`](src/popup/js/popup.js), `memory.js`, `handlers.js`,
-  `templates.js`) — primary surface: searchable/sortable memory list, per-paper
-  actions, the preferences menu, and on-open parsing of the active tab. HTML is
+  `templates.js`, `tagfield.js`) — primary surface: the Memory list (search with
+  combinable `t:`/`c:`/`y:` filter pills, tag list, sort menu, in-row edit form), per-paper
+  actions, the preferences menu, and on-open parsing of the active tab. `tagfield.js` is
+  the tag input shared by the paper view and the row edit form (suggestions with counts,
+  near-duplicate hint). HTML is
   assembled from `popup/html/**` fragments via a custom `<!--=include -->` Vite
   plugin (`htmlIncludePlugin` in `wxt.config.js`).
 - **fullMemory** — the popup's memory view in a full browser tab.
@@ -343,7 +346,7 @@ the `downloads` API), `functions.js` (49 misc helpers incl. `miniHash`,
 ## Technical Stack
 
 - **Build:** WXT 0.21 (Vite under the hood), Manifest V3 for Chrome and Manifest V2 for Firefox; a `build:manifestGenerated` hook renames `_execute_action` to `_execute_browser_action` for MV2.
-- **Runtime libs:** jQuery 4, Tom Select 2 (tag inputs), `@octokit/request` (Gist).
+- **Runtime libs:** jQuery 4, Tom Select 2 (options-page tag inputs), `@octokit/request` (Gist).
 - **Language:** plain ES modules (`"type": "module"`), JSDoc-typed, no TypeScript;
   `jsconfig.json` + `@pm`/`@pmu` path aliases.
 - **Tooling:** Prettier; Mocha + jsdom + [cloakbrowser](https://github.com/CloakHQ/cloakbrowser)

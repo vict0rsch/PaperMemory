@@ -1,12 +1,5 @@
 // ES Module imports
-import {
-    prefsCheckDefaultFalse,
-    prefsCheckNames,
-    tomSelectOptions,
-    state,
-} from "@pmu/config.js";
-import TomSelect from "tom-select";
-import "tom-select/dist/css/tom-select.css";
+import { prefsCheckDefaultFalse, prefsCheckNames, state } from "@pmu/config.js";
 import {
     arxivIdFromPaperID,
     delay,
@@ -61,7 +54,6 @@ import {
 } from "@pm/popup/js/templates.js";
 import {
     closePopupModal,
-    handleHideAllTitleTooltips,
     handlePopupDeletePaper,
     handlePopupKeydown,
     handlePrefsCheckChange,
@@ -75,10 +67,11 @@ import {
     saveCodeLink,
     saveFavoriteItem,
     saveNote,
-    updatePaperTags,
+    savePaperTags,
     updatePopupPaperNoMemory,
 } from "@pm/popup/js/memory.js";
 import { icon, paintIcons } from "@pm/popup/js/icons.js";
+import { createTagField } from "@pm/popup/js/tagfield.js";
 import { downloadPaperPdf } from "@pmu/state.js";
 import { parseIdFromUrl, getCurrentUserTab } from "@pmu/urls.js";
 import { findLocalFile } from "@pmu/files.js";
@@ -90,6 +83,7 @@ let currentTab = null; // the user's active tab when the popup opened
 let parseRun = 0; // incremented to ignore the result of a cancelled website parse
 let whatsNewUnseen = false;
 let manualWebsitePaper = null; // the parsed website shown in the "Check the details" sheet
+let paperTagField = null; // the paper view's tag field (tagfield.js)
 const shortcuts = {}; // browser-level command name -> display string
 
 // ----------------------------
@@ -613,15 +607,24 @@ const editCodeLink = (focus = true) => {
         focus && findEl({ element: `popup-form-codeLink--${id}` }).focus();
         return;
     }
-    setHTML(
-        "popup-code-val",
-        `<div class="pm-pv-codeedit">
-            <input class="pm-input" type="text" id="popup-form-codeLink--${id}" placeholder="github.com/org/repo" autocomplete="off" spellcheck="false" />
-            <p class="pm-field-msg" id="popup-code-msg" hidden></p>
-        </div>`,
-    );
-    const input = findEl({ element: `popup-form-codeLink--${id}` });
-    const msg = findEl({ element: "popup-code-msg" });
+    // built with the DOM: the paper id (from a URL) never goes through HTML
+    const box = document.createElement("div");
+    box.className = "pm-pv-codeedit";
+    const input = document.createElement("input");
+    Object.assign(input, {
+        className: "pm-input",
+        type: "text",
+        id: `popup-form-codeLink--${id}`,
+        placeholder: "github.com/org/repo",
+        autocomplete: "off",
+        spellcheck: false,
+    });
+    const msg = document.createElement("p");
+    msg.className = "pm-field-msg";
+    msg.id = "popup-code-msg";
+    msg.hidden = true;
+    box.append(input, msg);
+    findEl({ element: "popup-code-val" }).replaceChildren(box);
     input.value = state.papers[id].codeLink ?? "";
     const check = (showError) => {
         const result = normalizeCodeLink(input.value);
@@ -663,7 +666,7 @@ const editCodeLink = (focus = true) => {
 };
 
 /** Grows a textarea with its text (up to 8 lines; then it scrolls) */
-const fitTextarea = (textarea) => {
+export const fitTextarea = (textarea) => {
     textarea.style.height = "auto";
     textarea.style.height = `${Math.min(textarea.scrollHeight + 2, 170)}px`;
 };
@@ -696,7 +699,37 @@ export const startPaperEdit = () => {
     if (!state.currentId || !findEl({ element: "popup-memory-edit" })) return;
     editCodeLink(false);
     editNote(false);
-    findEl({ element: `popup-item-tags--${state.currentId}` })?.tomselect?.focus();
+    paperTagField?.focus();
+};
+
+/**
+ * The paper was changed from its Memory row: re-render the paper view's tags, code link and
+ * note (each one only when it is not being edited)
+ * @param {string} id
+ */
+export const refreshPaperViewFields = (id) => {
+    const paper = state.papers[id];
+    if (state.currentId !== id || !paper || !findEl({ element: "popup-memory-edit" })) return;
+    if (paperTagField && document.activeElement !== paperTagField.input) mountPaperTags(id);
+    if (!findEl({ element: `popup-form-codeLink--${id}` })) {
+        setHTML("popup-code-val", getPopupCodeLinkHTML(paper));
+        paintIcons(findEl({ element: "popup-code-val" }));
+    }
+    const textarea = findEl({ element: `popup-form-note-textarea--${id}` });
+    if (textarea?.hidden) {
+        textarea.value = paper.note || "";
+        setHTML("popup-note-val", getPopupNoteHTML(paper));
+    }
+};
+
+/** Tags of the paper view: chips, suggestions with counts, near-duplicate hint; autosaved */
+const mountPaperTags = (id) => {
+    paperTagField = createTagField({
+        root: findEl({ element: `popup-item-tags--${id}` }),
+        tags: state.papers[id].tags ?? [],
+        inputId: "popup-tags-input",
+        onChange: (tags) => savePaperTags(id, tags),
+    });
 };
 
 /**
@@ -723,15 +756,9 @@ const showPaperView = (id, url, is) => {
     paintIcons(findEl({ element: "isArxiv" }));
 
     // ----- fields
-    const tags = new TomSelect(`#popup-item-tags--${id.replaceAll(".", "\\.")}`, {
-        ...tomSelectOptions,
-        placeholder: "Add tag…",
-    });
-    tags.on(
-        "change",
-        delay(() => updatePaperTags(id, `#popup-item-tags--${id}`), 300),
-    );
+    mountPaperTags(id);
     const note = findEl({ element: `popup-form-note-textarea--${id}` });
+    note.value = paper.note || ""; // not in the markup: a leading line break would be lost
     addListener(
         note,
         "input",
@@ -936,7 +963,6 @@ export const popupMain = async (url, is, manualTrigger = false, tab = null) => {
         findEl({ element: "pm-shell" }).classList.add("pm-is-loading");
         const url = tab.url;
         chrome.runtime.connect({ name: "PaperMemoryPopupSync" });
-        document.addEventListener("click", handleHideAllTitleTooltips);
 
         let stateReadyPromise, remoteIsReadyPromise;
         remoteIsReadyPromise = new Promise((remoteReadyResolve) => {

@@ -1,3 +1,276 @@
+/* ---------------------------------------------------------------------------------------
+   Base styles and list controls this page used from popup.css before the popup was
+   restyled (moved here in step 3b; the page is restyled in step 5). They come first: the
+   page's own rules below override them, as when popup.css was loaded before this file.
+   The rows are the popup's (.pm-item, components.css) inside #memory-table.pm-ui, which
+   these rules skip.
+   --------------------------------------------------------------------------------------- */
+html:where(:not(.pm-ui *)) {
+    min-width: 450px;
+    max-width: 450px;
+    min-height: 450px;
+    font-size: 16px;
+}
+
+body:where(:not(.pm-ui *)) {
+    margin: 0;
+    min-height: 100vh;
+    max-width: 450px;
+    min-width: 450px;
+    display: flex;
+    flex-direction: column;
+    font-family: var(--pm-font);
+    position: relative;
+}
+
+.pm-loader:where(:not(.pm-ui *)) {
+    animation: rotation 1.3s infinite linear;
+    height: 50px;
+    width: 50px;
+    border-left: 4px dotted salmon;
+    border-radius: 100%;
+    margin: auto;
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+}
+
+textarea:where(:not(.pm-ui *)) {
+    border-radius: var(--round);
+    border: 1px solid #aaaaaa;
+    font-family: var(--pm-font);
+}
+
+*:not(.ts-control input, .switch):focus:where(:not(.pm-ui *)),
+.memory-search-wrapper:where(:not(.pm-ui *)):focus-within {
+    outline: 2px solid var(--outline) !important;
+    box-shadow: none;
+}
+
+#filter-favorites:where(:not(.pm-ui *)) {
+    height: 32px;
+    width: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+h1:where(:not(.pm-ui *)) {
+    margin: 0;
+    font-weight: 300;
+    font-size: 1.5rem;
+}
+
+p:where(:not(.pm-ui *)) {
+    font-size: 1rem;
+}
+
+h3:where(:not(.pm-ui *)) {
+    font-size: 1.2rem;
+}
+
+h5:where(:not(.pm-ui *)) {
+    font-size: 0.9rem;
+}
+
+svg:where(:not(.pm-ui *)) {
+    stroke-width: 1.15;
+    stroke: #7c7f8b;
+    fill: none;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+strong:where(:not(.pm-ui *)) {
+    font-weight: 500;
+}
+
+button:where(:not(.pm-ui *)),
+.file-upload-label:where(:not(.pm-ui *)) {
+    border: 1px solid var(--red);
+    border-radius: var(--rounder);
+    padding: 4px 6px;
+    background-color: white;
+    transition: all ease 200ms;
+    cursor: pointer;
+}
+button:where(:not(.pm-ui *)):disabled,
+.file-upload-label:where(:not(.pm-ui *)):disabled {
+    cursor: not-allowed;
+    pointer-events: none;
+    border-color: #e7a9a9;
+}
+
+button:where(:not(.pm-ui *)):hover,
+.file-upload-label:where(:not(.pm-ui *)):hover {
+    border-color: var(--red);
+    background-color: rgb(253, 235, 235);
+}
+
+code:where(:not(.pm-ui *)) {
+    font-family: var(--pm-font-mono);
+    padding: 1px 4px;
+    /* vertical-align: middle; */
+    border-radius: var(--round);
+    background-color: rgb(238, 238, 238);
+    margin: 1px auto;
+    display: inline-block;
+}
+.code-font:where(:not(.pm-ui *)) {
+    font-family: var(--pm-font-mono);
+}
+
+#memory-filters:where(:not(.pm-ui *)) {
+    margin: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+#memory-search:where(:not(.pm-ui *)) {
+    background: none;
+    outline: none;
+    border: 0px;
+    color: inherit;
+    padding-right: 18px;
+}
+#memory-search:where(:not(.pm-ui *)):focus {
+    outline: none !important;
+}
+#memory-search-clear-icon:where(:not(.pm-ui *)) {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 10px;
+    cursor: pointer;
+    font-size: 1rem;
+    visibility: hidden;
+}
+.memory-search-wrapper:where(:not(.pm-ui *)) {
+    position: relative;
+    display: flex;
+    border-radius: var(--rounder);
+    border: 1px solid var(--outline);
+    padding: 8px;
+}
+
+#memory-select:where(:not(.pm-ui *)) {
+    border-radius: var(--rounder);
+    border: 1px solid var(--outline);
+    padding: 8px;
+}
+
+.memory-sort-arrow-svg:where(:not(.pm-ui *)) {
+    height: 30px;
+    width: 30px;
+    cursor: pointer;
+    stroke: rgb(49, 49, 49);
+}
+
+#memory-sort-arrow:where(:not(.pm-ui *)) {
+    border: 1px solid var(--outline);
+    border-radius: var(--rounder);
+    height: 33px;
+    width: 33px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: inherit;
+    stroke: inherit;
+}
+
+#delete-paper-modal:where(:not(.pm-ui *)) {
+    width: 100%;
+    height: 100%;
+    background-color: #e0e0e0;
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 100;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+}
+
+svg.favorite:where(:not(.pm-ui *)) {
+    stroke-width: 2px !important;
+    color: var(--red) !important;
+    stroke: var(--red) !important;
+}
+.btn-secondary:where(:not(.pm-ui *)) {
+    background-color: #4f6272;
+    color: rgb(240, 240, 240);
+    border: 0px;
+}
+.btn-secondary:where(:not(.pm-ui *)):hover {
+    background-color: #404e5c;
+    color: white;
+    border: 0px;
+}
+
+.flex-center-center:where(:not(.pm-ui *)) {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.flex-center-evenly:where(:not(.pm-ui *)) {
+    display: flex;
+    align-items: center;
+    justify-content: space-evenly;
+}
+.flex-center-between:where(:not(.pm-ui *)) {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+.flex-center-start:where(:not(.pm-ui *)) {
+    display: flex;
+    align-items: center;
+    justify-content: start;
+}
+
+#sync-popup-feedback:where(:not(.pm-ui *)) {
+    position: fixed;
+    bottom: 32px;
+    left: 65px;
+    font-family: var(--pm-font-mono);
+}
+@keyframes rotation {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(359deg);
+    }
+}
+
+summary:where(:not(.pm-ui *)) {
+    cursor: pointer;
+    padding: 4px 6px 2px;
+    border-radius: var(--round);
+    margin-left: 3px;
+}
+
+#memory-container:where(:not(.pm-ui *)) {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 100%;
+    background: white;
+    z-index: 2;
+    width: 100%;
+    height: 100%;
+    overflow: scroll;
+}
+
+#memory-table:where(:not(.pm-ui *)) {
+    padding: 16px;
+    padding-top: 0px;
+    margin-bottom: 40px;
+}
+
+/* ---------- this page ---------- */
 html {
     min-width: 100vw !important;
     max-width: 100vw !important;

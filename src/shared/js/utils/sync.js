@@ -9,10 +9,10 @@ import {
     log,
 } from "@pmu/functions.js";
 import { getStorage, setStorage } from "@pmu/data.js";
-import { setPlaceholder, showId, hideId } from "@pmu/miniquery.js";
+import { showId, hideId } from "@pmu/miniquery.js";
 import { state } from "@pmu/config.js";
 import { initState } from "@pmu/state.js";
-import { makeMemoryHTML } from "@pm/popup/js/memory.js";
+import { makeMemoryHTML, updateMemoryCount } from "@pm/popup/js/memory.js";
 import { fetchText, fetchJSON } from "@pmu/parsers.js";
 import { request as octokitRequest } from "@octokit/request";
 
@@ -276,8 +276,7 @@ export const initSyncAndState = async ({
     const remotePapers = await pullFromRemote(papers, isContentScript);
     if (remotePapers) {
         if (!isContentScript) {
-            const n = state.sortedPapers.length;
-            setPlaceholder("memory-search", `Search ${n} entries...`);
+            updateMemoryCount();
             if (
                 !state.memoryIsOpen &&
                 typeof window !== "undefined" &&

@@ -1,591 +1,6 @@
-html:where(:not(.pm-ui *)) {
-    min-width: 450px;
-    max-width: 450px;
-    min-height: 450px;
-    font-size: 16px;
-}
-
-body:where(:not(.pm-ui *)) {
-    margin: 0;
-    min-height: 100vh;
-    max-width: 450px;
-    min-width: 450px;
-    display: flex;
-    flex-direction: column;
-    font-family: var(--pm-font);
-    position: relative;
-}
-
-.pm-loader:where(:not(.pm-ui *)) {
-    animation: rotation 1.3s infinite linear;
-    height: 50px;
-    width: 50px;
-    border-left: 4px dotted salmon;
-    border-radius: 100%;
-    margin: auto;
-    margin-top: 1rem;
-    margin-bottom: 1rem;
-}
-
-textarea:where(:not(.pm-ui *)) {
-    border-radius: var(--round);
-    border: 1px solid #aaaaaa;
-    font-family: var(--pm-font);
-}
-
-*:not(.ts-control input, .switch):focus:where(:not(.pm-ui *)),
-.memory-search-wrapper:where(:not(.pm-ui *)):focus-within {
-    outline: 2px solid var(--outline) !important;
-    box-shadow: none;
-}
-
-#filter-favorites:where(:not(.pm-ui *)) {
-    height: 32px;
-    width: 32px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-}
-
-h1:where(:not(.pm-ui *)) {
-    margin: 0;
-    font-weight: 300;
-    font-size: 1.5rem;
-}
-
-p:where(:not(.pm-ui *)) {
-    font-size: 1rem;
-}
-
-h3:where(:not(.pm-ui *)) {
-    font-size: 1.2rem;
-}
-
-h5:where(:not(.pm-ui *)) {
-    font-size: 0.9rem;
-}
-
-svg:where(:not(.pm-ui *)) {
-    stroke-width: 1.15;
-    stroke: #7c7f8b;
-    fill: none;
-    stroke-linecap: round;
-    stroke-linejoin: round;
-}
-
-.alphaxiv-icon:where(:not(.pm-ui *)) {
-    fill: #7c7f8b;
-}
-
-strong:where(:not(.pm-ui *)) {
-    font-weight: 500;
-}
-
-button:where(:not(.pm-ui *)),
-.file-upload-label:where(:not(.pm-ui *)) {
-    border: 1px solid var(--red);
-    border-radius: var(--rounder);
-    padding: 4px 6px;
-    background-color: white;
-    transition: all ease 200ms;
-    cursor: pointer;
-}
-button:where(:not(.pm-ui *)):disabled,
-.file-upload-label:where(:not(.pm-ui *)):disabled {
-    cursor: not-allowed;
-    pointer-events: none;
-    border-color: #e7a9a9;
-}
-
-button:where(:not(.pm-ui *)):hover,
-.file-upload-label:where(:not(.pm-ui *)):hover {
-    border-color: var(--red);
-    background-color: rgb(253, 235, 235);
-}
-
-code:where(:not(.pm-ui *)) {
-    font-family: var(--pm-font-mono);
-    padding: 1px 4px;
-    /* vertical-align: middle; */
-    border-radius: var(--round);
-    background-color: rgb(238, 238, 238);
-    margin: 1px auto;
-    display: inline-block;
-}
-.code-font:where(:not(.pm-ui *)) {
-    font-family: var(--pm-font-mono);
-}
-
-.memory-icon-svg:where(:not(.pm-ui *)) {
-    height: 20px;
-    width: 20px;
-    pointer-events: none;
-}
-
-#tabler-copy-link:where(:not(.pm-ui *)) {
-    transition: all 0.2s ease-in-out;
-    cursor: pointer;
-    border-radius: 100000px;
-    color: var(--blue);
-}
-
-#tabler-copy-link:where(:not(.pm-ui *)):hover {
-    transform: scale(1.2);
-}
-
-.options-emoji:where(:not(.pm-ui *)) {
-    font-size: 1.2rem;
-}
-
-#helpButton:where(:not(.pm-ui *)) {
-    font-size: 0.8rem;
-    position: absolute;
-    bottom: 16px;
-    right: 16px;
-    border: 1px solid var(--red);
-    background: white;
-    padding: 2px 6px;
-    border-radius: 100px;
-    transition: all 0.1s ease-in-out;
-}
-
-#helpButton:where(:not(.pm-ui *)):hover {
-    transform: scale(1.5);
-}
-
-#markdown-header div:where(:not(.pm-ui *)) {
-    transition: all 0.2s ease-in-out;
-}
-
-#markdown-header div:where(:not(.pm-ui *)):hover {
-    transform: scale(1.2);
-}
-
-#check-feedback:where(:not(.pm-ui *)) {
-    position: fixed;
-    bottom: 48px;
-    right: -100px;
-    opacity: 0;
-    -webkit-box-shadow: 14px 30px 122px -30px rgba(0, 0, 0, 0.75);
-    -moz-box-shadow: 14px 30px 122px -30px rgba(0, 0, 0, 0.75);
-    box-shadow: 14px 30px 122px -30px rgba(0, 0, 0, 0.75);
-}
-
-#check-feedback svg:where(:not(.pm-ui *)) {
-    color: #00c854 !important;
-}
-
-#memory-container:where(:not(.pm-ui *)) {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    height: 100%;
-    background: white;
-    z-index: 2;
-    width: 100%;
-    height: 100%;
-    overflow: scroll;
-}
-
-#memory-table:where(:not(.pm-ui *)) {
-    padding: 16px;
-    padding-top: 0px;
-    margin-bottom: 40px;
-}
-
-.memory-container:where(:not(.pm-ui *)) {
-    padding: 12px 16px;
-    margin-bottom: 14px;
-    border: 1px solid rgba(230, 230, 230, 0.75);
-    position: relative;
-    border-radius: var(--rounder);
-    transition: all 0.1s ease !important;
-    font-size: 0.95rem;
-}
-
-.memory-container.favorite:where(:not(.pm-ui *)) {
-    border: 2px solid var(--red) !important;
-}
-.memory-container h4:where(:not(.pm-ui *)) {
-    font-weight: 500;
-    color: #3a3e52;
-    font-size: 1rem;
-}
-
-.memory-delete:where(:not(.pm-ui *)) {
-    color: var(--red);
-    position: absolute;
-    right: -8px;
-    top: -8px;
-    font-size: 2rem;
-    line-height: 20px;
-    cursor: pointer;
-    height: 20px;
-    width: 20px;
-    border-radius: 50%;
-    border: 1px solid var(--red);
-    padding-left: 0px;
-    text-align: center;
-    background-color: white;
-}
-
-.memory-title:where(:not(.pm-ui *)) {
-    margin: 0px;
-}
-
-#memory-filters:where(:not(.pm-ui *)) {
-    margin: 16px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-}
-
-.memory-item-svg-div:where(:not(.pm-ui *)) {
-    cursor: pointer;
-    display: flex;
-    border-radius: var(--rounder);
-}
-.memory-item-feedback:where(:not(.pm-ui *)) {
-    font-size: 0.75rem;
-    color: green;
-}
-.memory-display-id:where(:not(.pm-ui *)) {
-    cursor: pointer;
-}
-
-#memory-search:where(:not(.pm-ui *)) {
-    background: none;
-    outline: none;
-    border: 0px;
-    color: inherit;
-    padding-right: 18px;
-}
-#memory-search:where(:not(.pm-ui *)):focus {
-    outline: none !important;
-}
-#memory-search-clear-icon:where(:not(.pm-ui *)) {
-    position: absolute;
-    top: 8px;
-    right: 8px;
-    width: 10px;
-    cursor: pointer;
-    font-size: 1rem;
-    visibility: hidden;
-}
-.memory-search-wrapper:where(:not(.pm-ui *)) {
-    position: relative;
-    display: flex;
-    border-radius: var(--rounder);
-    border: 1px solid var(--outline);
-    padding: 8px;
-}
-
-#memory-select:where(:not(.pm-ui *)) {
-    border-radius: var(--rounder);
-    border: 1px solid var(--outline);
-    padding: 8px;
-}
-
-.memory-sort-arrow-svg:where(:not(.pm-ui *)) {
-    height: 30px;
-    width: 30px;
-    cursor: pointer;
-    stroke: rgb(49, 49, 49);
-}
-
-#memory-sort-arrow:where(:not(.pm-ui *)) {
-    border: 1px solid var(--outline);
-    border-radius: var(--rounder);
-    height: 33px;
-    width: 33px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    color: inherit;
-    stroke: inherit;
-}
-
-.memory-item-faded:where(:not(.pm-ui *)) {
-    color: rgba(54, 54, 54, 0.7);
-}
-
-.memory-item-venue:where(:not(.pm-ui *)) {
-    font-size: 0.9rem;
-    font-weight: 300 !important;
-    margin-bottom: 4px;
-}
-
-.memory-authors:where(:not(.pm-ui *)),
-.memory-item-venue:where(:not(.pm-ui *)) {
-    color: rgba(41, 41, 41, 1);
-}
-
-.label:where(:not(.pm-ui *)) {
-    font-family: var(--pm-font-mono);
-    margin-right: 16px;
-    font-size: 0.8rem;
-}
-
-.memory-note-div:where(:not(.pm-ui *)) {
-    font-size: 0.8rem;
-    margin-top: 4px;
-    word-wrap: break-word;
-}
-
-.edit-note-item:where(:not(.pm-ui *)) {
-    color: var(--blue);
-    cursor: pointer;
-}
-
-.edit-note-item:where(:not(.pm-ui *)):hover {
-    color: #6da4e4;
-    font-style: italic;
-}
-
-.note-content-header:where(:not(.pm-ui *)) {
-    font-weight: 600;
-    font-style: italic;
-    margin-right: 3px;
-}
-
-.extended-item div p:where(:not(.pm-ui *)) {
-    font-size: 0.8rem;
-}
-
-.form-code-input:where(:not(.pm-ui *)) {
-    width: 85%;
-    border-radius: var(--round);
-    border: 1px solid #aaa;
-    margin-top: 8px;
-    line-height: 1.1rem;
-    padding: 6px;
-    margin-bottom: 4px;
-}
-
-.memory-code-link:where(:not(.pm-ui *)),
-.memory-website-url:where(:not(.pm-ui *)) {
-    text-decoration: underline;
-    color: var(--aColor);
-    cursor: pointer;
-    margin-bottom: 4px;
-    word-break: break-all;
-    font-family: var(--pm-font-mono);
-    font-size: 0.7rem;
-}
-.memory-website-url:where(:not(.pm-ui *)) {
-    font-family: inherit;
-    font-size: 0.9rem;
-}
-.form-note textarea:where(:not(.pm-ui *)) {
-    width: 85%;
-    margin-top: 8px;
-    margin-bottom: 8px;
-    padding: 8px;
-    font-size: 0.9rem;
-}
-
-.form-note-buttons:where(:not(.pm-ui *)) {
-    text-align: end;
-}
-
-.memory-tag:where(:not(.pm-ui *)) {
-    color: #5c5c5c;
-    padding: 3px 6px;
-    background: #ececec;
-    margin-right: 8px;
-    border-radius: var(--round);
-    cursor: pointer;
-}
-.memory-display-id:where(:not(.pm-ui *)) {
-    font-size: 0.7rem;
-}
-
-#delete-paper-modal:where(:not(.pm-ui *)) {
-    width: 100%;
-    height: 100%;
-    background-color: #e0e0e0;
-    position: absolute;
-    top: 0;
-    left: 0;
-    z-index: 100;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    flex-direction: column;
-}
-
-.memory-item-favorite:where(:not(.pm-ui *)) {
-    cursor: pointer;
-    margin-right: 4px;
-    display: inline-flex;
-    justify-content: center;
-    align-items: center;
-    position: relative;
-    width: 18px;
-    height: 18px;
-}
-.memory-item-favorite-svg:where(:not(.pm-ui *)) {
-    position: absolute;
-    bottom: -5px;
-    left: -2px;
-}
-.memory-item-info:where(:not(.pm-ui *)) {
-    display: inline-flex;
-    justify-content: center;
-    align-items: center;
-    position: relative;
-    margin-left: 4px;
-    width: 1rem;
-    height: 1rem;
-}
-.title-tooltip:where(:not(.pm-ui *)) {
-    position: absolute;
-    background: var(--lighterBackground);
-    left: 50%;
-    top: 50%;
-    transform: translate(-50%, -50%);
-    padding: 1rem;
-    border-radius: 4px;
-    box-shadow: 2px 2px 6px #bdbdbd;
-    font-weight: 300;
-    font-size: 0.8rem;
-    z-index: 999;
-    text-align: left;
-    width: max-content;
-    max-width: 350px;
-}
-.title-tooltip tr:where(:not(.pm-ui *)),
-.title-popup-tooltip tr:where(:not(.pm-ui *)) {
-    vertical-align: top;
-}
-.title-tooltip table:where(:not(.pm-ui *)),
-.title-popup-tooltip table:where(:not(.pm-ui *)) {
-    width: 100%;
-}
-.title-tooltip td:where(:not(.pm-ui *)):not(:last-child),
-.title-popup-tooltip td:where(:not(.pm-ui *)):not(:last-child) {
-    padding-right: 12px;
-}
-/* https://stackoverflow.com/questions/20319908/dynamic-number-of-dots-for-cell-padding-via-css */
-.title-tooltip td > div:where(:not(.pm-ui *)),
-.title-popup-tooltip td > div:where(:not(.pm-ui *)) {
-    overflow: hidden;
-    position: relative;
-}
-.title-tooltip td:not(:last-child) > div:where(:not(.pm-ui *)):after,
-.title-popup-tooltip td:not(:last-child) > div:where(:not(.pm-ui *)):after {
-    content: "........................";
-    position: absolute;
-    font-weight: 100;
-    font-size: 12px;
-    bottom: 0px;
-    letter-spacing: 4px;
-    margin-left: 4px;
-}
-
-.expand-paper-authors:where(:not(.pm-ui *)) {
-    cursor: pointer;
-}
-.paper-info-span:where(:not(.pm-ui *)) {
-    font-family: var(--pm-font-mono);
-    font-size: 0.7rem;
-}
-
-svg.favorite:where(:not(.pm-ui *)) {
-    stroke-width: 2px !important;
-    color: var(--red) !important;
-    stroke: var(--red) !important;
-}
-button.changed:where(:not(.pm-ui *)) {
-    border: 3px solid green;
-}
-.btn-secondary:where(:not(.pm-ui *)) {
-    background-color: #4f6272;
-    color: rgb(240, 240, 240);
-    border: 0px;
-}
-.btn-secondary:where(:not(.pm-ui *)):hover {
-    background-color: #404e5c;
-    color: white;
-    border: 0px;
-}
-
-.errorTitle:where(:not(.pm-ui *)) {
-    margin: 0px;
-}
-
-.flex-center-center:where(:not(.pm-ui *)) {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-.flex-center-evenly:where(:not(.pm-ui *)) {
-    display: flex;
-    align-items: center;
-    justify-content: space-evenly;
-}
-.flex-center-between:where(:not(.pm-ui *)) {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-}
-.flex-center-start:where(:not(.pm-ui *)) {
-    display: flex;
-    align-items: center;
-    justify-content: start;
-}
-
-#custom-title-textarea:where(:not(.pm-ui *)) {
-    font-family: var(--pm-font-mono);
-}
-
-#sync-popup-feedback:where(:not(.pm-ui *)) {
-    position: fixed;
-    bottom: 32px;
-    left: 65px;
-    font-family: var(--pm-font-mono);
-}
-@keyframes rotation {
-    from {
-        transform: rotate(0deg);
-    }
-    to {
-        transform: rotate(359deg);
-    }
-}
-
-#tags-list-container:where(:not(.pm-ui *)) {
-    margin: 16px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    width: calc(100% - 32px);
-}
-#all-tags-list li:where(:not(.pm-ui *)) {
-    display: inline-block;
-    margin-bottom: 8px;
-}
-#all-tags-list:where(:not(.pm-ui *)) {
-    display: block;
-    list-style-type: none;
-    padding: 0;
-    margin-bottom: -8px;
-}
-summary:where(:not(.pm-ui *)) {
-    cursor: pointer;
-    padding: 4px 6px 2px;
-    border-radius: var(--round);
-    margin-left: 3px;
-}
-
-/*
-=====================================================================================
------  Popup v2 (design-review/v2/popup.html, popup-states.html): the .pm-ui shell  -----
------  The rules above are the Memory list's (and fullMemory's) until it is restyled;  -----
------  they never apply inside .pm-ui.                                                 -----
-=====================================================================================
-*/
+/* Popup v2 (design-review/v2/popup.html, popup-states.html): the .pm-ui shell.
+   fullMemory also loads this file (for the .pm-* row components); popup layout rules are
+   scoped to #pm-popup / #pm-shell. */
 
 #pm-popup {
     position: relative;
@@ -615,12 +30,6 @@ summary:where(:not(.pm-ui *)) {
 }
 #popup-header #menu-switch.pm-btn {
     margin-right: -4px;
-}
-/* the Memory list sits under the header, over the paper view */
-#pm-popup #memory-container {
-    top: 48px;
-    bottom: 0;
-    height: auto;
 }
 #popup-body {
     display: flex;
@@ -892,95 +301,19 @@ summary:where(:not(.pm-ui *)) {
     margin: -5px 0;
 }
 
-/* tags: Tom Select, drawn as chips + "Add tag…" (beats public/tom-select.css) */
-#pm-popup #popup-memory-edit .ts-wrapper {
+/* tags: the shared tag field (tagfield.js), borderless inside the field group */
+.pm-pv-tags .pm-tagfield {
     flex: 1;
-    min-width: 0;
-    min-height: 0;
-}
-#pm-popup #popup-memory-edit .ts-wrapper .ts-control {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 5px;
-    min-height: 20px !important;
+    min-height: 20px;
     padding: 0;
     border: 0;
-    border-radius: 0;
     background: none;
+}
+.pm-pv-tags .pm-tagfield:focus-within {
     box-shadow: none;
-    color: var(--pm-text);
-    font-size: var(--pm-fs-base);
-    cursor: text;
 }
-#pm-popup #popup-memory-edit .ts-wrapper .ts-control > .item {
-    display: inline-flex;
-    align-items: center;
-    height: 20px;
-    margin: 0;
-    padding: 0 0 0 8px;
-    border: 0;
-    border-radius: var(--pm-r-pill);
-    background: var(--pm-surface-3);
-    color: var(--pm-text-2);
-    font-size: var(--pm-fs-xs);
-    font-weight: var(--pm-fw-medium);
-}
-#pm-popup #popup-memory-edit .ts-wrapper .ts-control > .item.active {
-    background: var(--pm-selected);
-    color: var(--pm-text);
-}
-#pm-popup #popup-memory-edit .ts-wrapper .item .remove {
-    margin: 0 0 0 2px;
-    padding: 0 6px 0 3px;
-    border: 0;
-    border-radius: 0 var(--pm-r-pill) var(--pm-r-pill) 0;
-    color: var(--pm-text-3);
-    font-size: 13px;
-}
-#pm-popup #popup-memory-edit .ts-wrapper .item .remove:hover {
-    background: none;
-    color: var(--pm-text);
-}
-#pm-popup #popup-memory-edit .ts-wrapper .ts-control > input {
-    flex: 1 1 64px !important;
-    width: auto !important;
-    min-width: 64px !important;
-    max-width: none !important;
-    min-height: 20px !important;
-    margin: 0 !important;
-    color: var(--pm-text);
-    font-size: var(--pm-fs-base) !important;
-}
-#pm-popup #popup-memory-edit .ts-wrapper .ts-control > input::placeholder {
-    color: var(--pm-text-3);
-}
-#pm-popup #popup-memory-edit .ts-dropdown {
-    z-index: 10;
-    margin-top: 8px !important;
-    padding: 4px;
-    border: 1px solid var(--pm-border);
-    border-radius: var(--pm-r-lg) !important;
-    background: var(--pm-surface);
-    box-shadow: var(--pm-shadow-lg) !important;
-    color: var(--pm-text);
-    font-size: var(--pm-fs-sm);
-}
-[data-theme="dark"] #pm-popup #popup-memory-edit .ts-dropdown {
-    border-color: var(--pm-border-strong);
-    background: var(--pm-surface-2);
-}
-#pm-popup #popup-memory-edit .ts-dropdown .option,
-#pm-popup #popup-memory-edit .ts-dropdown .create,
-#pm-popup #popup-memory-edit .ts-dropdown .no-results {
-    padding: 4px 8px;
-    border-radius: 5px;
-    color: var(--pm-text);
-}
-#pm-popup #popup-memory-edit .ts-dropdown .active,
-#pm-popup #popup-memory-edit .ts-dropdown .option:hover {
-    background: var(--pm-surface-3) !important;
-    color: var(--pm-text) !important;
+.pm-pv-tags .pm-tagsugg {
+    left: -60px;
 }
 
 .pm-pv-also {
@@ -1589,4 +922,228 @@ button.pm-banner {
     transform: translateX(-50%);
     box-shadow: var(--pm-shadow-md);
     pointer-events: none;
+}
+
+/* ---------- Memory tab (design-review/v2/popup.html frames 2, 2c, 8a–9b) ---------- */
+/* the tab replaces the paper view and its key-hint footer */
+#pm-shell.pm-mem-open #popup-body,
+#pm-shell.pm-mem-open #popup-hints {
+    display: none;
+}
+#pm-popup #memory-container {
+    position: relative;
+    flex: 1;
+    flex-direction: column;
+    min-height: 0;
+}
+/* hybrid scroll: the tab header scrolls away with the list (back on a wheel / touch
+   scroll-up); the search field stays pinned */
+#pm-shell .pm-hdr {
+    transition: margin-top var(--pm-motion);
+}
+#pm-shell.pm-mem-open.pm-mv-scrolled .pm-hdr {
+    margin-top: -48px;
+}
+.pm-mv-tools {
+    position: relative;
+    flex: none;
+    padding: var(--pm-s-3) var(--pm-s-4);
+}
+.pm-mv-search {
+    height: var(--pm-h-lg);
+    padding: 0 6px 0 10px;
+    gap: var(--pm-s-2);
+}
+.pm-mv-search > .pm-i {
+    color: var(--pm-text-3);
+}
+.pm-mv-search input {
+    flex: 1;
+    min-width: 0;
+    height: 100%;
+    padding: 0;
+    border: 0;
+    outline: none;
+    background: none;
+    color: var(--pm-text);
+    font-size: var(--pm-fs-base);
+}
+.pm-mv-search input:focus-visible,
+.pm-tagin:focus-visible,
+.pm-codefield input:focus-visible {
+    box-shadow: none;
+}
+.pm-mv-search input::placeholder {
+    color: var(--pm-text-3);
+}
+.pm-mv-search .pm-count {
+    flex: none;
+    font-size: var(--pm-fs-sm);
+    font-weight: var(--pm-fw);
+    white-space: nowrap;
+}
+.pm-mv-sep {
+    flex: none;
+    width: 1px;
+    height: 16px;
+    margin: 0 2px;
+    background: var(--pm-border);
+}
+.pm-mv-search .pm-quiet {
+    margin: 0 -2px;
+}
+.pm-ic {
+    justify-content: center;
+    width: 28px;
+    padding: 0;
+}
+.pm-ic .pm-i {
+    width: 15px;
+    height: 15px;
+}
+.pm-quiet[aria-expanded="true"] {
+    background: var(--pm-surface-3);
+    color: var(--pm-text);
+}
+#filter-favorites[aria-pressed="true"] .pm-i {
+    color: var(--pm-accent);
+    fill: currentColor;
+}
+/* "N filters": replaces the pills while the list is scrolled; a click shows them again */
+.pm-fchip {
+    display: none;
+    flex: none;
+    border: 0;
+    cursor: pointer;
+}
+.pm-fchip .pm-i {
+    width: 11px;
+    height: 11px;
+}
+#pm-shell.pm-mv-scrolled .pm-fchip:not([hidden]) {
+    display: inline-flex;
+}
+/* pills: their own line under the field, only when there are some; the 10px gap clears
+   the field's focus halo */
+.pm-pillrow {
+    display: flex;
+    flex: none;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: -2px;
+    padding: 0 var(--pm-s-4) var(--pm-s-3);
+}
+#pm-shell.pm-mv-scrolled .pm-pillrow {
+    display: none;
+}
+.pm-pillrow .pm-chip {
+    max-width: 100%;
+    height: 22px;
+    padding-right: 4px;
+    white-space: normal;
+}
+.pm-pillrow .pm-chip > span {
+    overflow-wrap: anywhere;
+}
+.pm-pillrow .pm-chip > b,
+.pm-pillrow .pm-chip-x {
+    flex: none;
+}
+.pm-mv-list {
+    flex: 1;
+    min-height: 0;
+    padding: 0 var(--pm-s-2) var(--pm-s-2);
+    border-top: 1px solid var(--pm-border);
+    overflow: hidden auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+}
+/* the downloaded PDF has no button in the popup's rows (mockup); o opens it when
+   "Open the downloaded PDF" is on. fullMemory shows it. */
+#pm-popup .memory-item-openLocal {
+    display: none;
+}
+#memory-table > .pm-item:first-child {
+    margin-top: 4px;
+}
+/* menus opened from the field */
+.pm-mv-tools .pm-sugg {
+    position: absolute;
+    z-index: 6;
+    top: calc(100% - 8px);
+    right: var(--pm-s-4);
+    left: var(--pm-s-4);
+}
+.pm-mv-sugg .pm-sugg-list {
+    max-height: 260px;
+    overflow: hidden auto;
+}
+.pm-sortmenu.pm-sugg {
+    left: auto;
+    width: 216px;
+}
+.pm-sortmenu .pm-sugg-row {
+    width: 100%;
+    border: 0;
+    background: none;
+    font-size: var(--pm-fs-sm);
+    text-align: left;
+}
+.pm-sortmenu .pm-sugg-row:hover {
+    background: var(--pm-surface-3);
+}
+.pm-sortmenu .pm-seg {
+    display: flex;
+    margin: 4px;
+}
+.pm-sortmenu .pm-seg button {
+    flex: 1;
+    padding: 0 6px;
+    white-space: nowrap;
+}
+/* tag list: over the list, right under the field / pills */
+.pm-tagpanel {
+    position: absolute;
+    z-index: 5;
+    right: var(--pm-s-3);
+    left: var(--pm-s-3);
+    display: flex;
+    flex-direction: column;
+}
+.pm-tagpanel[hidden] {
+    display: none;
+}
+.pm-tagpanel-head {
+    display: flex;
+    align-items: center;
+    gap: var(--pm-s-2);
+    padding: 6px 4px 6px 8px;
+}
+.pm-tagpanel-head .pm-quiet {
+    height: 24px;
+}
+.pm-tagpanel-head .pm-quiet .pm-i {
+    width: 13px;
+    height: 13px;
+}
+.pm-tagpanel-list {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    align-content: start;
+    gap: 0 var(--pm-s-2);
+    min-height: 0;
+    overflow: hidden auto;
+}
+.pm-tagpanel .pm-sugg-foot a {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+.pm-tagpanel .pm-ext {
+    width: 12px;
+    height: 12px;
+}
+/* no result / empty Memory */
+.pm-mv-empty {
+    min-height: 420px;
 }

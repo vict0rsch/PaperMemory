@@ -171,12 +171,11 @@ describe("Test PaperMemory Memory Item Actions", function () {
         }, prefs);
     }
 
+    // copy feedback: the popup's toast (Memory rows no longer have their own text)
     async function verifyFeedbackMessage(paperId, expectedText, page) {
-        const queryId = paperId.replaceAll(".", "\\.");
-        const feedback = await page.$(
-            `#memory-container--${queryId} .memory-item-feedback`,
+        const feedbackText = await page.evaluate(
+            () => document.querySelector("#popup-feedback-copied span").textContent,
         );
-        const feedbackText = await page.evaluate((el) => el.textContent, feedback);
         expect(feedbackText).toContain(expectedText);
         return feedbackText;
     }
@@ -263,30 +262,16 @@ describe("Test PaperMemory Memory Item Actions", function () {
             expect(isVisible).toBe(true);
             console.log(indent(2) + "✓ Edit form opened successfully");
 
-            // Close edit form
-            await sleep(250); // Let the form slide events finish
+            // Close edit form (Done): the form is removed from the row
             await PMPage.$eval(
-                `#memory-container--${firstQueryId} .done-note-form`,
+                `#memory-container--${firstQueryId} .memory-edit-done`,
                 (el) => el.click(),
             );
-
-            // Wait for edit form to be hidden
             await PMPage.waitForFunction(
-                (selector) => {
-                    const el = document.querySelector(selector);
-                    return el && getComputedStyle(el).display === "none";
-                },
+                (selector) => !document.querySelector(selector),
                 { timeout: 2000 },
                 `#memory-container--${firstQueryId} .extended-item`,
             );
-
-            // Verify edit form is closed
-            const isHidden = await PMPage.evaluate(
-                (el) => getComputedStyle(el).display === "none",
-                editForm,
-            );
-
-            expect(isHidden).toBe(true);
             console.log(indent(2) + "✓ Edit form closed successfully");
         });
 
@@ -438,7 +423,7 @@ describe("Test PaperMemory Memory Item Actions", function () {
 
             const feedbackText = await verifyFeedbackMessage(
                 firstPaperId,
-                "Hyperlink copied",
+                "Rich link copied",
                 PMPage,
             );
             console.log(indent(2) + `✓ Copy hyperlink feedback: "${feedbackText}"`);
@@ -498,7 +483,7 @@ describe("Test PaperMemory Memory Item Actions", function () {
             );
             const feedbackText = await verifyFeedbackMessage(
                 firstPaperId,
-                "Bibtex",
+                "BibTeX",
                 PMPage,
             );
 
@@ -609,6 +594,11 @@ describe("Test PaperMemory Memory Item Actions", function () {
             page,
         ) {
             await setPreferencesAndReload({ [preferenceKey]: true }, page);
+            // the services are in the row's "…" menu
+            await safeClick(
+                `#memory-container--${arxivQueryId} .memory-item-more`,
+                page,
+            );
 
             const { button, selector } = await verifyMemoryItemButtonExists(
                 arxivPaperId,
@@ -718,7 +708,11 @@ describe("Test PaperMemory Memory Item Actions", function () {
             expect(clipboardContent).toMatch(/^@\w+\{/);
             console.log(indent(2) + "✓ Bibtex successfully copied to clipboard");
 
-            // Second test: Open SciRate link
+            // Second test: Open SciRate link (in the row's "…" menu)
+            await safeClick(
+                `#memory-container--${arxivQueryId} .memory-item-more`,
+                PMPage,
+            );
             const { button: scirateButton, selector: scirateSelector } =
                 await verifyMemoryItemButtonExists(
                     arxivPaperId,
@@ -731,6 +725,363 @@ describe("Test PaperMemory Memory Item Actions", function () {
             await matchingPage.close();
 
             console.log(indent(2) + "✓ Complete workflow test passed");
+        });
+    });
+
+    describe("Rows: edit form, notes, height, hybrid scroll", function () {
+        const CYCLE = "Arxiv-1703.10593";
+        const NANOWIRE = "RSC-DigitalDiscovery_d2dd00066k";
+        const rowSel = (id) => `#memory-container--${id.replaceAll(".", "\\.")}`;
+
+        async function openWith(data) {
+            await resetPage(PMPage, pmURLs.popupURL);
+            await setupPageWithData(PMPage, data);
+            await sleep(200);
+        }
+
+        it("should suggest the existing tag when a new one is almost the same", async function () {
+            const data = structuredClone(testData);
+            data[NANOWIRE].tags = ["reading-group"];
+            data[CYCLE].tags = [];
+            await openWith(data);
+            await PMPage.focus(rowSel(CYCLE));
+            await PMPage.keyboard.press("e");
+            await PMPage.waitForSelector(`${rowSel(CYCLE)} .pm-edit .pm-tagin`);
+            // the tag input has the focus
+            expect(
+                await PMPage.evaluate(() => document.activeElement.className),
+            ).toContain("pm-tagin");
+            await PMPage.keyboard.type("Reading Groups");
+            await PMPage.waitForSelector(`${rowSel(CYCLE)} .pm-tagsugg:not([hidden])`);
+            const sugg = await PMPage.$eval(`${rowSel(CYCLE)} .pm-tagsugg`, (el) => ({
+                note: el.querySelector(".pm-sugg-note")?.textContent,
+                active: el.querySelector(".pm-sugg-row.is-active span")?.textContent,
+                create: el.querySelector(".pm-sugg-create")?.textContent,
+            }));
+            expect(sugg.note).toContain("Almost the same");
+            expect(sugg.active).toBe("reading-group");
+            expect(sugg.create).toContain("Create “Reading Groups” anyway");
+            // Enter uses the existing tag
+            await PMPage.keyboard.press("Enter");
+            const chips = await PMPage.$$eval(
+                `${rowSel(CYCLE)} .pm-tagfield .pm-chip-t`,
+                (els) => els.map((el) => el.textContent),
+            );
+            expect(chips).toEqual(["reading-group"]);
+            // ⌘↵ / Ctrl+↵ saves the form
+            await PMPage.keyboard.down("Control");
+            await PMPage.keyboard.press("Enter");
+            await PMPage.keyboard.up("Control");
+            await PMPage.waitForFunction(
+                (sel) => !document.querySelector(`${sel} .pm-edit`),
+                {},
+                rowSel(CYCLE),
+            );
+            const stored = await PMPage.evaluate(
+                (id) => PMDebug.data.getStorage("papers").then((p) => p[id].tags),
+                CYCLE,
+            );
+            expect(stored).toEqual(["reading-group"]);
+            // the focus is back on the row
+            expect(await PMPage.evaluate(() => document.activeElement.id)).toBe(
+                `memory-container--${CYCLE}`,
+            );
+        });
+
+        it("should cap the note at 3 rendered lines, keep its line breaks, and expand on more…", async function () {
+            const data = structuredClone(testData);
+            data[NANOWIRE].note = "first line\n\nthird line\nfourth line\nfifth line";
+            await openWith(data);
+            const note = await PMPage.$eval(
+                `${rowSel(NANOWIRE)} .pm-item-note`,
+                (el) => {
+                    const p = el.querySelector("p");
+                    const lh = parseFloat(getComputedStyle(p).lineHeight);
+                    return {
+                        lines: Math.round(p.clientHeight / lh),
+                        text: p.textContent,
+                        whiteSpace: getComputedStyle(p).whiteSpace,
+                        more: !el.querySelector(".pm-note-more").hidden,
+                    };
+                },
+            );
+            expect(note.lines).toBe(3); // the blank line counts
+            expect(note.text).toBe("first line\n\nthird line\nfourth line\nfifth line");
+            expect(note.whiteSpace).toBe("pre-line");
+            expect(note.more).toBe(true);
+            await PMPage.click(`${rowSel(NANOWIRE)} .pm-note-more`);
+            const open = await PMPage.$eval(
+                `${rowSel(NANOWIRE)} .pm-item-note`,
+                (el) => {
+                    const p = el.querySelector("p");
+                    return {
+                        lines: Math.round(
+                            p.clientHeight / parseFloat(getComputedStyle(p).lineHeight),
+                        ),
+                        label: el.querySelector(".pm-note-more").textContent,
+                    };
+                },
+            );
+            expect(open).toEqual({ lines: 5, label: "less" });
+        });
+
+        it("should keep every row's height on hover and focus", async function () {
+            const data = structuredClone(testData);
+            data[CYCLE].favorite = false;
+            await openWith(data);
+            const heights = () =>
+                PMPage.$$eval("#memory-table .memory-container", (els) =>
+                    els.map((el) => el.getBoundingClientRect().height),
+                );
+            const rest = await heights();
+            await PMPage.hover(`${rowSel(CYCLE)} .pm-item-meta`);
+            expect(await heights()).toEqual(rest);
+            await PMPage.focus(rowSel(CYCLE));
+            expect(await heights()).toEqual(rest);
+            await PMPage.mouse.move(5, 595);
+            await PMPage.keyboard.press("Tab");
+            expect(await heights()).toEqual(rest);
+        });
+
+        it("should hide the tab header on scroll and bring it back on a wheel scroll-up only", async function () {
+            const data = structuredClone(testData);
+            for (let i = 0; i < 12; i++) {
+                const id = `Arxiv-2101.000${String(i).padStart(2, "0")}`;
+                data[id] = {
+                    ...data[CYCLE],
+                    id,
+                    title: `Bulk paper ${i}`,
+                    tags: ["bulk"],
+                };
+            }
+            await openWith(data);
+            const scrolled = () =>
+                PMPage.$eval("#pm-shell", (el) =>
+                    el.classList.contains("pm-mv-scrolled"),
+                );
+            const headerVisible = () =>
+                PMPage.$eval(
+                    "#popup-header",
+                    (el) => el.getBoundingClientRect().bottom > 1,
+                );
+            // a filter, to see it fold into the chip
+            await PMPage.keyboard.type("t:bulk");
+            await PMPage.keyboard.press("Tab");
+            expect(await scrolled()).toBe(false);
+            await PMPage.mouse.move(225, 400);
+            await PMPage.mouse.wheel({ deltaY: 400 });
+            await PMPage.waitForFunction(() =>
+                document
+                    .getElementById("pm-shell")
+                    .classList.contains("pm-mv-scrolled"),
+            );
+            await sleep(300);
+            expect(await headerVisible()).toBe(false);
+            // the search field stays; the pill folds into "1 filter"
+            expect(
+                await PMPage.$eval(
+                    "#memory-search",
+                    (el) => el.getBoundingClientRect().top >= 0,
+                ),
+            ).toBe(true);
+            expect(
+                await PMPage.$eval("#memory-pills", (el) => el.offsetParent === null),
+            ).toBe(true);
+            expect(
+                await PMPage.$eval("#memory-filter-chip", (el) => [
+                    el.offsetParent !== null,
+                    el.textContent.trim(),
+                ]),
+            ).toEqual([true, "1 filter"]);
+            // Tab-induced scrolling (back to the first row) never brings the header back
+            await PMPage.focus("#memory-search");
+            await PMPage.keyboard.press("Tab");
+            await sleep(300);
+            expect(await PMPage.$eval("#memory-scroll", (el) => el.scrollTop)).toBe(0);
+            expect(await scrolled()).toBe(true);
+            // a wheel scroll-up does
+            await PMPage.mouse.wheel({ deltaY: -100 });
+            await PMPage.waitForFunction(
+                () =>
+                    !document
+                        .getElementById("pm-shell")
+                        .classList.contains("pm-mv-scrolled"),
+            );
+            await sleep(300);
+            expect(await headerVisible()).toBe(true);
+            expect(
+                await PMPage.$eval("#memory-pills", (el) => el.offsetParent !== null),
+            ).toBe(true);
+        });
+
+        const storedPaper = (id) =>
+            PMPage.evaluate(
+                (id) => PMDebug.data.getStorage("papers").then((p) => p[id]),
+                id,
+            );
+
+        it("should autosave the edit form as you type and close it with Done", async function () {
+            await openWith(structuredClone(testData));
+            await PMPage.focus(rowSel(CYCLE));
+            await PMPage.keyboard.press("e");
+            await PMPage.waitForSelector(`${rowSel(CYCLE)} .pm-edit`);
+            // a single Done button, no Cancel
+            expect(await PMPage.$(`${rowSel(CYCLE)} .memory-edit-done`)).toBeTruthy();
+            expect(
+                await PMPage.$$eval(
+                    `${rowSel(CYCLE)} .pm-edit button.pm-btn`,
+                    (b) => b.length,
+                ),
+            ).toBe(1);
+            await PMPage.$eval(`${rowSel(CYCLE)} .form-note-textarea`, (el) => {
+                el.focus();
+                el.select();
+            });
+            await PMPage.keyboard.type("autosaved note");
+            await sleep(600);
+            // saved while the form is still open
+            expect(await PMPage.$(`${rowSel(CYCLE)} .pm-edit`)).toBeTruthy();
+            expect((await storedPaper(CYCLE)).note).toBe("autosaved note");
+            await PMPage.click(`${rowSel(CYCLE)} .memory-edit-done`);
+            await PMPage.waitForFunction(
+                (sel) => !document.querySelector(`${sel} .pm-edit`),
+                {},
+                rowSel(CYCLE),
+            );
+            expect(
+                await PMPage.$eval(
+                    `${rowSel(CYCLE)} .pm-item-note p`,
+                    (el) => el.textContent,
+                ),
+            ).toBe("autosaved note");
+        });
+
+        it("should keep a note's leading line break through the edit form", async function () {
+            const data = structuredClone(testData);
+            data[NANOWIRE].note = "\nstarts with a blank line";
+            await openWith(data);
+            await PMPage.focus(rowSel(NANOWIRE));
+            await PMPage.keyboard.press("e");
+            await PMPage.waitForSelector(`${rowSel(NANOWIRE)} .pm-edit`);
+            expect(
+                await PMPage.$eval(
+                    `${rowSel(NANOWIRE)} .form-note-textarea`,
+                    (el) => el.value,
+                ),
+            ).toBe("\nstarts with a blank line");
+            await PMPage.click(`${rowSel(NANOWIRE)} .memory-edit-done`);
+            await sleep(300);
+            expect((await storedPaper(NANOWIRE)).note).toBe(
+                "\nstarts with a blank line",
+            );
+        });
+
+        it("should split pasted comma-separated tags into separate tags", async function () {
+            const data = structuredClone(testData);
+            data[CYCLE].tags = [];
+            await openWith(data);
+            await PMPage.focus(rowSel(CYCLE));
+            await PMPage.keyboard.press("e");
+            await PMPage.waitForSelector(`${rowSel(CYCLE)} .pm-tagin`);
+            // a paste: the whole text arrives in one input event
+            await PMPage.$eval(`${rowSel(CYCLE)} .pm-tagin`, (el) => {
+                el.value = "alpha,beta";
+                el.dispatchEvent(new Event("input"));
+            });
+            // "beta" stays in the input until a comma, Enter or Done
+            await PMPage.keyboard.press("Enter");
+            const chips = await PMPage.$$eval(`${rowSel(CYCLE)} .pm-chip-t`, (els) =>
+                els.map((el) => el.textContent),
+            );
+            expect(chips).toEqual(["alpha", "beta"]);
+            await sleep(200);
+            expect((await storedPaper(CYCLE)).tags).toEqual(["alpha", "beta"]);
+        });
+
+        it("should take a paper out of the filtered list once its edit removes the filtered tag", async function () {
+            const data = structuredClone(testData);
+            data[CYCLE].tags = ["vision"];
+            data[NANOWIRE].tags = ["vision"];
+            await openWith(data);
+            await PMPage.keyboard.type("t:vision");
+            await PMPage.keyboard.press("Tab");
+            await PMPage.focus(rowSel(CYCLE));
+            await PMPage.keyboard.press("e");
+            await PMPage.waitForSelector(`${rowSel(CYCLE)} .pm-chip-x`);
+            await PMPage.click(`${rowSel(CYCLE)} .pm-chip-x`);
+            await PMPage.keyboard.down("Control");
+            await PMPage.keyboard.press("Enter");
+            await PMPage.keyboard.up("Control");
+            await sleep(300);
+            const ids = await PMPage.$$eval("#memory-table .memory-container", (els) =>
+                els.map((el) => el.id.replace("memory-container--", "")),
+            );
+            expect(ids).toEqual([NANOWIRE]);
+            // the focus moved to the row now in its place
+            expect(await PMPage.evaluate(() => document.activeElement.id)).toBe(
+                `memory-container--${NANOWIRE}`,
+            );
+        });
+
+        it("should keep the search and filters across Paper / Memory with the pref on", async function () {
+            await setPreferencesAndReload({ checkKeepMemorySearch: true }, PMPage);
+            await setupPageWithData(PMPage, structuredClone(testData));
+            await PMPage.focus("#memory-search");
+            await PMPage.keyboard.type("y:2017");
+            await PMPage.keyboard.press("Tab");
+            await PMPage.keyboard.type("cycle");
+            await sleep(200);
+            await PMPage.click("#tab-paper");
+            await PMPage.click("#tab-memory");
+            await sleep(200);
+            expect(await PMPage.$eval("#memory-search", (el) => el.value)).toBe(
+                "cycle",
+            );
+            expect(
+                await PMPage.$$eval("#memory-pills .pm-chip", (els) =>
+                    els.map((e) => e.textContent),
+                ),
+            ).toEqual(["year2017"]);
+            // off (the default): cleared
+            await setPreferencesAndReload({ checkKeepMemorySearch: false }, PMPage);
+            await setupPageWithData(PMPage, structuredClone(testData));
+            await PMPage.focus("#memory-search");
+            await PMPage.keyboard.type("y:2017");
+            await PMPage.keyboard.press("Tab");
+            await PMPage.click("#tab-paper");
+            await PMPage.click("#tab-memory");
+            await sleep(200);
+            expect(
+                await PMPage.$$eval("#memory-pills .pm-chip", (els) => els.length),
+            ).toBe(0);
+        });
+
+        it("should switch to the paper's open tab instead of opening a new one", async function () {
+            await openWith(structuredClone(testData));
+            const url = "https://arxiv.org/abs/1703.10593";
+            const paperTab = await browser.newPage();
+            await paperTab.goto(url, { waitUntil: "domcontentloaded" }).catch(() => {});
+            const count = async () =>
+                (await browser.pages()).filter((p) => p.url().includes("1703.10593"))
+                    .length;
+            const before = await count();
+            await PMPage.bringToFront();
+            await PMPage.focus(rowSel(CYCLE));
+            // the popup's own tab watches which tab gets activated
+            await PMPage.evaluate(() => {
+                window.__activated = null;
+                chrome.tabs.onActivated.addListener(({ tabId }) =>
+                    chrome.tabs.get(tabId, (t) => (window.__activated = t.url)),
+                );
+            });
+            await PMPage.keyboard.press("o");
+            await PMPage.waitForFunction(() => window.__activated, { timeout: 5000 });
+            expect(await PMPage.evaluate(() => window.__activated)).toContain(
+                "1703.10593",
+            );
+            await sleep(500);
+            expect(await count()).toBe(before);
+            await paperTab.close();
         });
     });
 });

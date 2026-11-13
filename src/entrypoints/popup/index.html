@@ -13,7 +13,6 @@
         <link rel="stylesheet" type="text/css" href="/components.css" wxt-ignore />
         <link rel="stylesheet" type="text/css" href="/vars.css" wxt-ignore />
         <link rel="stylesheet" type="text/css" href="/popup.css" wxt-ignore />
-        <link rel="stylesheet" type="text/css" href="/tom-select.css" wxt-ignore />
         <!-- after every stylesheet: applies the theme before first paint -->
         <script src="/theme.js"></script>
 
@@ -21,8 +20,7 @@
     </head>
 
     <body id="pm-popup">
-        <!-- the restyled popup (.pm-ui). The Memory list (#memory-container, below) keeps its
-             own styles until it is restyled; it sits under the header, over the paper view. -->
+        <!-- the restyled popup (.pm-ui): header, Paper view / Memory list, sheets -->
         <div id="pm-shell" class="pm-ui">
             <header class="pm-hdr" id="popup-header">
                 <span class="pm-brand"><i data-i="mark"></i>PaperMemory</span>
@@ -89,6 +87,75 @@
                 <div id="isArxiv" style="display: none"></div>
             </main>
 
+            <!-- Memory tab (design-review/v2/popup.html frames 2, 2c, 8a–9b). The tab header
+                 scrolls away with the list (#pm-shell.pm-mv-scrolled) and comes back on a
+                 wheel / touch scroll-up; the search field stays. -->
+            <div id="memory-container" class="pm-mv" style="display: none">
+                <div class="pm-mv-tools" id="memory-filters">
+                    <div class="pm-field pm-mv-search" id="memory-search-field">
+                        <i data-i="search"></i>
+                        <button
+                            type="button"
+                            class="pm-chip pm-chip-filter pm-fchip"
+                            id="memory-filter-chip"
+                            tabindex="-1"
+                            hidden
+                        ></button>
+                        <input
+                            id="memory-search"
+                            type="text"
+                            placeholder="Search, or t: c: y: filters"
+                            autocomplete="off"
+                            spellcheck="false"
+                            aria-label="Search your Memory"
+                        />
+                        <span class="pm-count" id="memory-result-count"></span>
+                        <span class="pm-mv-sep"></span>
+                        <button
+                            type="button"
+                            class="pm-quiet pm-ic"
+                            id="memory-tags-button"
+                            tabindex="-1"
+                            title="Browse tags"
+                            aria-label="Browse tags"
+                            aria-expanded="false"
+                        >
+                            <i data-i="tag"></i>
+                        </button>
+                        <button
+                            type="button"
+                            class="pm-quiet pm-ic"
+                            id="filter-favorites"
+                            tabindex="-1"
+                            title="Favourites only"
+                            aria-label="Favourites only"
+                            aria-pressed="false"
+                        >
+                            <i data-i="star"></i>
+                        </button>
+                        <button
+                            type="button"
+                            class="pm-quiet pm-ic"
+                            id="memory-sort-button"
+                            tabindex="-1"
+                            title="Sort: last opened, newest first"
+                            aria-label="Sort: last opened, newest first"
+                            aria-haspopup="menu"
+                            aria-expanded="false"
+                        >
+                            <i data-i="swap"></i>
+                        </button>
+                    </div>
+                    <div class="pm-sugg pm-mv-sugg" id="memory-tag-suggestions" role="listbox" hidden></div>
+                    <div class="pm-sugg pm-sortmenu" id="memory-sort-menu" role="menu" hidden></div>
+                </div>
+                <div class="pm-pillrow" id="memory-pills" hidden></div>
+                <div class="pm-sugg pm-tagpanel" id="memory-tag-panel" hidden></div>
+                <div class="pm-mv-list" id="memory-scroll">
+                    <div id="memory-table"></div>
+                </div>
+            </div>
+
             <footer class="pm-hints" id="popup-hints">
                 <span class="pm-hint-nav"><span class="pm-kbd">a</span> Memory</span>
                 <span class="pm-hint-nav"><span class="pm-kbd">p</span> Settings</span>
@@ -141,38 +208,5 @@
             </div>
         </div>
 
-        <div id="memory-container" style="display: none">
-            <div id="memory-filters">
-                <div class="memory-search-wrapper">
-                    <input
-                        id="memory-search"
-                        placeholder="Search"
-                        type="text"
-                        autocomplete="off"
-                    />
-                    <span id="memory-search-clear-icon">&times;</span>
-                </div>
-                <span
-                    tabindex="-1"
-                    id="filter-favorites"
-                    title="Show favorites only"
-                    class="rounded"
-                >
-                    <!--=include svgs/filter-favorites.html -->
-                </span>
-                <select tabindex="-1" style="width: 30%" id="memory-select">
-                    <option value="lastOpenDate">Last Open</option>
-                    <option value="addDate">Last Added</option>
-                    <option value="year">Year</option>
-                    <option value="title">Title</option>
-                    <option value="count"># Visits</option>
-                    <option value="id">ID</option>
-                </select>
-                <span tabindex="-1" id="memory-sort-arrow">
-                    <!--=include svgs/memory-sort-arrow.html -->
-                </span>
-            </div>
-            <div id="memory-table" width="100%"></div>
-        </div>
     </body>
 </html>

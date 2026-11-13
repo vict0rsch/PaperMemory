@@ -491,10 +491,10 @@ describe("Test PaperMemory Popup UI - Known Paper Page", function () {
             const papersBefore = await getMemoryPapers(PMPage);
             expect(papersBefore[arxivPaperId].tags).toEqual([]);
 
-            // Click the TomSelect control to focus it
-            const tsControlSelector = `#popup-memory-edit .ts-control`;
-            await PMPage.waitForSelector(tsControlSelector);
-            await PMPage.click(tsControlSelector);
+            // Click the tag field to focus it
+            const tagInputSelector = `#popup-memory-edit .pm-tagin`;
+            await PMPage.waitForSelector(tagInputSelector);
+            await PMPage.click(tagInputSelector);
 
             // Type a new tag and press Enter to create it
             const newTag = "test-autosave-tag";
@@ -517,11 +517,11 @@ describe("Test PaperMemory Popup UI - Known Paper Page", function () {
 
             await setupPopupWithMockedTab(PMPage, arxivPaperUrl, arxivPaperId);
 
-            // Wait for TomSelect to render the existing tag item
-            await PMPage.waitForSelector(`#popup-memory-edit .ts-control .item`);
+            // Wait for the tag field to render the existing tag chip
+            await PMPage.waitForSelector(`#popup-memory-edit .pm-tagfield .pm-chip`);
 
-            // Click the remove button (×) on the tag item
-            await PMPage.click(`#popup-memory-edit .ts-control .item .remove`);
+            // Click the remove button (×) on the tag chip
+            await PMPage.click(`#popup-memory-edit .pm-tagfield .pm-chip .pm-chip-x`);
 
             // Wait for the debounced save
             await sleep(800);
@@ -529,6 +529,32 @@ describe("Test PaperMemory Popup UI - Known Paper Page", function () {
             // Verify the tag was removed from storage
             const papersAfter = await getMemoryPapers(PMPage);
             expect(papersAfter[arxivPaperId].tags).not.toContain("removable-tag");
+        });
+
+        it("should suggest an existing tag that is almost the same (near-duplicate)", async function () {
+            const data = structuredClone(testData);
+            const otherId = Object.keys(data).find(
+                (k) => !k.startsWith("__") && k !== arxivPaperId,
+            );
+            data[otherId].tags = ["reading-group"];
+            data[arxivPaperId].tags = [];
+            await setStorage(PMPage, "papers", data);
+            await setupPopupWithMockedTab(PMPage, arxivPaperUrl, arxivPaperId);
+
+            await PMPage.click(`#popup-memory-edit .pm-tagin`);
+            await PMPage.keyboard.type("Reading_groups");
+            await PMPage.waitForSelector(`#popup-memory-edit .pm-tagsugg:not([hidden])`);
+            const hint = await PMPage.$eval(`#popup-memory-edit .pm-tagsugg`, (el) => [
+                el.querySelector(".pm-sugg-note").textContent,
+                el.querySelector(".pm-sugg-row.is-active span").textContent,
+                el.querySelector(".pm-sugg-row.is-active .pm-count").textContent,
+            ]);
+            expect(hint).toEqual(["Almost the same as an existing tag", "reading-group", "1"]);
+            // Enter uses the existing tag, autosaved
+            await PMPage.keyboard.press("Enter");
+            await sleep(300);
+            const papersAfter = await getMemoryPapers(PMPage);
+            expect(papersAfter[arxivPaperId].tags).toEqual(["reading-group"]);
         });
     });
 

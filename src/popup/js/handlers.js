@@ -1,74 +1,47 @@
 // ES Module imports
-import {
-    eventId,
-    arxivIdFromPaperID,
-    copyTextToClipboard,
-    copyHyperLinkToClipboard,
-    sendMessageToBackground,
-    textareaFocusEnd,
-    parseTags,
-    getPaperEdits,
-    cutAuthors,
-    delay,
-    log,
-    info,
-    warn,
-    arraysIdentical,
-    escapeHtml,
-} from "@pmu/functions.js";
-import {
-    findEl,
-    slideUp,
-    slideDown,
-    setHTML,
-    dispatch,
-    addListener,
-    queryAll,
-    hideId,
-    showId,
-    style,
-    val,
-    querySelector,
-    addEventToClass,
-    hasClass,
-    addClass,
-    removeClass,
-    setPlaceholder,
-} from "@pmu/miniquery.js";
-import { state, tomSelectOptions } from "@pmu/config.js";
-import TomSelect from "tom-select";
-import "tom-select/dist/css/tom-select.css";
+import { eventId, arxivIdFromPaperID, delay, info, isPdfUrl, log } from "@pmu/functions.js";
+import { parseIdFromUrl } from "@pmu/urls.js";
+import { findEl, dispatch, addListener, hideId, showId } from "@pmu/miniquery.js";
+import { state } from "@pmu/config.js";
 import {
     setStorage,
-    getStorage,
     getDefaultKeyboardAction,
     deletePaperInStorage,
     updatePrefs,
 } from "@pmu/data.js";
 import { bibtexToString, bibtexToObject } from "@pmu/bibtexParser.js";
-import { initSyncAndState } from "@pmu/sync.js";
 import { updatePaperVisits, paperToAbs, paperToPDF, makeMdLink } from "@pmu/paper.js";
-import { getTagsOptions, sortMemory } from "@pmu/state.js";
+import { sortMemory } from "@pmu/state.js";
 import {
-    displayMemoryTable,
-    openMemory,
+    applyMemorySearch,
+    clearMemorySearch,
     closeMemory,
-    focusExistingOrCreateNewURLTab,
-    saveFavoriteItem,
-    updatePopupPaperNoMemory,
-    searchMemoryByTags,
-    searchMemory,
-    searchMemoryByYear,
-    searchMemoryByCode,
+    commitSearchFilter,
     copyAndConfirmMemoryItem,
-    updatePaperTags,
-    saveNote,
-    saveCodeLink,
-    toggleTagsCollapse,
-    reverseMemory,
+    flushMemorySearch,
+    focusExistingOrCreateNewURLTab,
+    handleSortMenuClick,
+    handleTagPanelClick,
+    hideSearchSuggestions,
+    loadMoreMemoryItems,
+    moveSearchSuggestion,
+    openMemory,
+    openMemoryItemEdit,
+    pickSearchSuggestion,
+    removeFilter,
+    flushSearchSuggestions,
+    scheduleSearchSuggestions,
+    saveFavoriteItem,
+    scheduleMemorySearch,
+    setMemoryScrolled,
+    setMemorySort,
     setMemorySortArrow,
-    setMemorySearchPlaceholder,
+    addFilter,
+    toggleFavouritesFilter,
+    toggleSortMenu,
+    toggleTagPanel,
     updateMemoryCount,
+    updatePopupPaperNoMemory,
 } from "@pm/popup/js/memory.js";
 import {
     closeMenu,
@@ -87,13 +60,6 @@ export const closePopupModal = () => {
     state.modalReturnFocus?.isConnected &&
         state.modalReturnFocus.focus({ preventScroll: true });
     state.modalReturnFocus = null;
-};
-
-export const hideAllTooltips = () => {
-    queryAll(".title-tooltip,#popup-title-tooltip").forEach((el) => {
-        hideId(el);
-    });
-    state.tooltipIsOpen = false;
 };
 
 /**
@@ -210,62 +176,19 @@ const deleteModalIsOpen = () =>
     findEl({ element: "delete-paper-modal" })?.style.display === "flex";
 
 /**
- * Monitors the memory's table of papers' edits.
- * Triggers `handleMemorySaveEdits` if a change is detected.
- *
- * @param {string} id Optional id of the paper to monitor (otherwise read from the event)
+ * Infinite list: the next rows are rendered when the list is scrolled near its end
+ * (fullMemory: the window; the popup uses its own scroller, see addEventsToMemoryControls)
+ * @param {boolean} isPopup
  */
-export const monitorPaperEdits = (id) => (e) => {
-    let paperId;
-    if (typeof id === "undefined") {
-        paperId = eventId(e);
-    } else {
-        paperId = id;
-    }
-    const edits = getPaperEdits(paperId);
-    const paper = state.papers[paperId];
-    let change = false;
-    let refs = {};
-    for (const key in edits) {
-        const ref = paper[key];
-        refs[key] = ref;
-        const value = edits[key];
-        if (key === "tags") {
-            if (!arraysIdentical(ref, value)) change = true;
-        } else {
-            if (ref !== value) {
-                change = true;
-            }
-        }
-    }
-    if (change) {
-        log("Updating meta data for", paperId);
-        handleMemorySaveEdits(paperId);
-    }
-};
-
 export const displayOnScroll = (isPopup) =>
     delay(() => {
-        const { bottom } = findEl({ element: "memory-table" }).getBoundingClientRect();
-        const height = isPopup
-            ? findEl({ element: "memory-container" }).getBoundingClientRect().height
-            : window.innerHeight;
-        const currentPapers = state.currentMemoryPagination * state.memoryItemsPerPage;
-        if (
-            Math.abs(bottom - height) < height &&
-            currentPapers < state.papersList.length
-        ) {
-            state.currentMemoryPagination += 1;
-            displayMemoryTable(state.currentMemoryPagination);
-        }
+        const scroller = isPopup ? findEl({ element: "memory-scroll" }) : null;
+        const bottom = scroller
+            ? scroller.scrollTop + scroller.clientHeight
+            : window.scrollY + window.innerHeight;
+        const height = scroller ? scroller.scrollHeight : document.body.scrollHeight;
+        if (height - bottom < 400) loadMoreMemoryItems();
     }, 50);
-
-export const handleBackToFocus = (e) => {
-    const id = eventId(e);
-    setTimeout(() => {
-        dispatch(`memory-container--${id}`, "focus");
-    }, 250);
-};
 
 export const handleDeleteItem = (e) => {
     const id = eventId(e);
@@ -324,12 +247,6 @@ export const handleOpenItemHuggingface = (e) => {
     setStorage("papers", state.papers);
 };
 
-export const handleOpenItemCodeLink = async (e) => {
-    const id = eventId(e);
-    const url = state.papers[id].codeLink;
-    await focusExistingOrCreateNewURLTab(url);
-};
-
 export const handleOpenItemWebsiteURL = async (e) => {
     const id = eventId(e);
     const url = state.papers[id].pdfLink;
@@ -342,14 +259,11 @@ export const handleCopyMarkdownLink = async (e) => {
     const id = eventId(e);
     const prefs = state.prefs;
     const paper = state.papers[id];
-    const text =
-        paper.source === "website" ? "URL" : prefs.checkPreferPdf ? "PDF" : "Abstract";
     const md = makeMdLink(paper, prefs);
     await copyAndConfirmMemoryItem({
         id,
         textToCopy: md,
-        feedbackText: `Markdown ${text} link copied!`,
-        context: state.memoryIsOpen ? "memory" : "popup",
+        feedbackText: "Markdown link copied",
     });
 };
 
@@ -366,8 +280,7 @@ export const handleCopyBibtex = async (e) => {
     await copyAndConfirmMemoryItem({
         id,
         textToCopy: bibtexToString(bibobj),
-        feedbackText: "Bibtex copied!",
-        context: state.memoryIsOpen ? "memory" : "popup",
+        feedbackText: "BibTeX copied",
     });
 };
 
@@ -381,8 +294,7 @@ export const handleCopyPDFLink = async (e) => {
     await copyAndConfirmMemoryItem({
         id,
         textToCopy: link,
-        feedbackText: `${text} link copied!`,
-        context: state.memoryIsOpen ? "memory" : "popup",
+        feedbackText: `${text} URL copied`,
     });
 };
 
@@ -394,16 +306,14 @@ export const handleCopyHyperLink = async (e) => {
     await copyAndConfirmMemoryItem({
         id,
         textToCopy: link,
-        feedbackText: `Hyperlink copied!`,
+        feedbackText: "Rich link copied",
         hyperLinkTitle: paper.title,
-        context: state.memoryIsOpen ? "memory" : "popup",
     });
 };
 
 export const handleAddItemToFavorites = (e) => {
     const id = eventId(e);
-    const isFavorite = hasClass(`memory-container--${id}`, "favorite");
-    saveFavoriteItem(id, !isFavorite);
+    saveFavoriteItem(id, !state.papers[id].favorite);
 };
 
 export const handleMemoryOpenLocal = (e) => {
@@ -418,195 +328,6 @@ export const handleMemoryOpenLocal = (e) => {
     window?.close && window.close();
 };
 
-export const handleTextareaFocus = (e) => {
-    textareaFocusEnd(e.target);
-};
-
-export const handleMemorySaveEdits = (id) => {
-    const { note, codeLink } = getPaperEdits(id);
-
-    // Update metadata
-    saveNote(id, note);
-    saveCodeLink(id, codeLink);
-    updatePaperTags(id, "memory-item-tags");
-};
-
-export const handleCancelPaperEdit = (e) => {
-    e.preventDefault();
-    const id = eventId(e);
-    const paper = state.papers[id];
-    val(findEl({ paperId: id, memoryItemClass: "form-note-textarea" }), paper.note);
-    setHTML(
-        findEl({ paperId: id, memoryItemClass: "memory-item-tags" }),
-        getTagsOptions(paper),
-    );
-    dispatch(findEl({ paperId: id, memoryItemClass: "memory-item-edit" }), "click");
-};
-
-export const handleTogglePaperEdit = (e) => {
-    e.preventDefault();
-    // find elements
-    const id = eventId(e);
-    const container = findEl({ element: `memory-container--${id}` });
-    const codeAndNote = findEl({ paperId: id, memoryItemClass: "code-and-note" });
-    const editPaper = findEl({ paperId: id, memoryItemClass: "extended-item" });
-    const tagList = findEl({ paperId: id, memoryItemClass: "tag-list" });
-    const authors = findEl({ paperId: id, memoryItemClass: "memory-authors" });
-    const tagEdit = findEl({ paperId: id, memoryItemClass: "edit-tags" });
-    const actions = findEl({ paperId: id, memoryItemClass: "memory-item-actions" });
-    const tagEl = findEl({ paperId: id, memoryItemClass: "memory-item-tags" });
-
-    if (hasClass(container, "expand-open")) {
-        // The edit form is open
-        removeClass(container, "expand-open");
-        // Open display elements
-        slideDown(codeAndNote, 150);
-        slideDown(tagList, 150);
-        slideDown(actions, 150);
-        slideDown(authors, 150);
-        // Close inputs
-        slideUp(editPaper, 150);
-        slideUp(tagEdit, 150);
-        // Destroy synchronously so quick close->open cycles cannot reuse
-        // an instance that is still alive.
-        tagEl.tomselect?.destroy();
-    } else {
-        // The edit form is closed
-        addClass(container, "expand-open");
-        // Refresh underlying <select> options before instantiating TomSelect:
-        // TomSelect.destroy() restores the innerHTML snapshot taken at instantiation,
-        // so without this the select would be stale after a previous edit cycle.
-        setHTML(tagEl, getTagsOptions(state.papers[id]));
-        // Guard against races where an instance still exists during fast toggles.
-        tagEl.tomselect?.destroy();
-        // Enable tom-select tags input
-        const ts = new TomSelect(tagEl, tomSelectOptions);
-        // Attach the change listener to every new TomSelect instance: the previous
-        // one was destroyed on close, so its listeners no longer exist.
-        ts.on("change", () => monitorPaperEdits(id)());
-        // Close display elements
-        slideUp(codeAndNote, 150);
-        slideUp(tagList, 150);
-        slideUp(actions, 150);
-        slideUp(authors, 150);
-        // Show form
-        slideDown(editPaper, 150);
-        slideDown(tagEdit, 150);
-    }
-};
-
-export const handleMemorySelectChange = (e) => {
-    const sort = e.target.value;
-    state.sortKey = sort;
-    sortMemory();
-    displayMemoryTable();
-    setMemorySortArrow("down");
-};
-
-export const handleMemorySortArrow = (e) => {
-    if (querySelector("#memory-sort-arrow svg").id === "memory-sort-arrow-down") {
-        setMemorySortArrow("up");
-    } else {
-        setMemorySortArrow("down");
-    }
-    reverseMemory();
-    displayMemoryTable();
-};
-
-export const handleFilterFavorites = () => {
-    const showFavorites = !state.showFavorites;
-    state.showFavorites = showFavorites;
-    if (showFavorites) {
-        addClass(
-            findEl({ element: "filter-favorites" }).querySelector("svg"),
-            "favorite",
-        );
-        sortMemory();
-        state.papersList = state.papersList.filter((p) => p.favorite);
-        displayMemoryTable();
-        setMemorySortArrow("down");
-        findEl({
-            element: "memory-select",
-        }).innerHTML += `<option value="favoriteDate">Last favoured</option>`;
-        setMemorySearchPlaceholder();
-    } else {
-        removeClass(
-            findEl({ element: "filter-favorites" }).querySelector("svg"),
-            "favorite",
-        );
-
-        if (val("memory-select") === "favoriteDate") {
-            val("memory-select", "lastOpenDate");
-            state.sortKey = "lastOpenDate";
-        }
-        querySelector(`#memory-select option[value="favoriteDate"]`).remove();
-        sortMemory();
-        setMemorySortArrow("down");
-
-        if (val("memory-search").trim()) {
-            dispatch("memory-search", "keypress");
-        } else {
-            state.papersList = state.sortedPapers;
-            displayMemoryTable();
-        }
-        setMemorySearchPlaceholder();
-    }
-};
-
-export const handleMemorySearchKeyPress = (allowEmptySearch) => (e) => {
-    // read input, return if empty (after trim)
-    const query = val("memory-search").trim();
-
-    log(query);
-
-    if (!query) {
-        setTimeout(() => {
-            style("memory-search-clear-icon", "visibility", "hidden");
-        }, 0);
-    }
-
-    if (!query) {
-        if (state.papersList.length !== state.sortedPapers.length) {
-            // empty query but not all papers are displayed
-            state.papersList = state.sortedPapers;
-            displayMemoryTable();
-            return;
-        }
-        if (!allowEmptySearch && e.key !== "Backspace") {
-            return;
-        }
-    }
-    style("memory-search-clear-icon", "visibility", "visible");
-    if (query.startsWith("t:")) {
-        // look into tags
-        searchMemoryByTags(query);
-    } else if (query.startsWith("c:")) {
-        // look into code links
-        searchMemoryByCode(query);
-    } else if (query.startsWith("y:")) {
-        // look into publication year
-        searchMemoryByYear(query);
-    } else {
-        // look into title & authors & notes & conf
-        searchMemory(query);
-    }
-    // display filtered papers
-    toggleTagsCollapse(query.startsWith("t:"));
-    displayMemoryTable();
-};
-
-export const handleMemorySearchKeyUp = (e) => {
-    // keyup because keypress does not listen to backspaces
-    if (e.key == "Backspace") {
-        var backspaceEvent = new Event("keypress");
-        backspaceEvent.key = "Backspace";
-        dispatch("memory-search", backspaceEvent);
-    }
-    if (e.target.id === "memory-search") {
-        dispatch("memory-search", "keypress");
-    }
-};
-
 export const handleCancelModalClick = () => {
     hideId("delete-paper-modal");
     state.deleteReturnFocus?.isConnected &&
@@ -617,38 +338,50 @@ export const handleConfirmDeleteModalClick = async (e) => {
     const id = findEl({ element: "delete-paper-modal-hidden-id" }).textContent;
     const title = state.papers[id].title;
     const url = state.papers[id].pdfLink;
+    // the row that takes the focus once this one is gone: the next one, or the previous one
+    const rows = [...document.querySelectorAll("#memory-table .memory-container")];
+    const index = rows.findIndex((r) => r.id === `memory-container--${id}`);
+    const returnToRow = state.memoryIsOpen && !!rows[index]?.contains(state.deleteReturnFocus);
     await deletePaperInStorage(id, state.papers);
-    displayMemoryTable();
+    sortMemory();
+    if (state.sortReversed) state.sortedPapers.reverse();
+    applyMemorySearch();
     hideId("delete-paper-modal");
     info(`Successfully deleted "${title}" (${id}) from PaperMemory`);
     if (state.currentId === id) {
         await updatePopupPaperNoMemory(url);
     }
-    setPlaceholder("memory-search", `Search ${state.papersList.length} entries ...`);
     updateMemoryCount();
-    state.deleteReturnFocus?.isConnected &&
-        state.deleteReturnFocus.focus({ preventScroll: true });
+    if (returnToRow) {
+        const left = document.querySelectorAll("#memory-table .memory-container");
+        (
+            left[Math.min(index, left.length - 1)] ??
+            findEl({ element: "memory-search" })
+        )?.focus();
+    } else {
+        state.deleteReturnFocus?.isConnected &&
+            state.deleteReturnFocus.focus({ preventScroll: true });
+    }
 };
 
+/** A tag in a row: adds it as a filter pill (fullMemory: searches for it) */
 export const handleTagClick = (e) => {
-    const tagEl = e.target;
-    const query = tagEl.textContent;
-    val("memory-search", `t: ${query}`);
-    dispatch("memory-search", "keypress");
+    const tag = e.target.closest(".memory-tag").textContent;
+    if (findEl({ element: "memory-pills" }))
+        return addFilter({ type: "tag", value: tag });
+    const input = findEl({ element: "memory-search" });
+    input.value = `t:${tag}`;
+    applyMemorySearch();
 };
 
-export const handleClearSearch = (e) => {
-    val("memory-search", "");
-    dispatch("memory-search", "clear-search");
-    style("memory-search-clear-icon", "visibility", "hidden");
-};
+/** Clears the search field and every filter */
+export const handleClearSearch = () => clearMemorySearch();
 
 export const handlePopupKeydown = async (e) => {
     let key = e.key;
     const isCtrlOrMeta = e.ctrlKey || e.metaKey;
     const isEnter = key === "Enter" && !isCtrlOrMeta;
-    const isCmdEnter = key === "Enter" && isCtrlOrMeta;
-    if (isCtrlOrMeta && !isCmdEnter) return;
+    if (isCtrlOrMeta) return;
     if (
         [
             "Backspace",
@@ -730,33 +463,12 @@ export const handlePopupKeydown = async (e) => {
         return;
     }
 
-    if (isCmdEnter) {
-        if (eventId(e)) {
-            const id = eventId(e);
-            const div = findEl({ paperId: id, memoryItemClass: "extended-item" });
-            const isVisible = div.style.display !== "none";
-            const doneButton = div.querySelector(".done-note-form");
-            if (doneButton && isVisible) {
-                doneButton.click();
-            }
-        }
-    }
-
-    // Menu is closed
-
+    // Menu is closed. Typing in a field never triggers a shortcut.
     if (inputIsFocused && key !== "Escape") {
         return;
     }
 
     // no input is focused
-
-    if (key === "Escape" && state.tooltipIsOpen) {
-        handleHideAllTitleTooltips(e);
-        e.preventDefault();
-        return;
-    }
-
-    // no tooltip is open
 
     if (key === "a") {
         // a opens the Memory, and closes it again
@@ -774,45 +486,42 @@ export const handlePopupKeydown = async (e) => {
         // / focuses the search field, in the Memory only
         if (state.memoryIsOpen) {
             e.preventDefault();
-            dispatch("memory-search", "focus");
+            findEl({ element: "memory-search" })?.focus();
         }
         return;
     }
 
-    if (isEnter) {
-        // enable Enter on favorites and sort arrows
-        const favoriteBtn = querySelector("#filter-favorites:focus");
-        if (favoriteBtn) {
-            return dispatch("filter-favorites", "click");
-        }
-        const arrowBtn = querySelector("#memory-sort-arrow:focus");
-        if (arrowBtn) {
-            return dispatch("memory-sort-arrow", "click");
-        }
-        // a focused button or link does its own thing
-        if (focused?.matches?.("button, a, summary, select")) return;
-    }
-
-    // Enter was not pressed on a button
+    // a focused button or link does its own thing with Enter
+    if (isEnter && focused?.matches?.("button, a, summary, select")) return;
 
     let id, paperItem;
-    if (state.currentId && !state.memoryIsOpen) {
+    if (state.memoryIsOpen) {
+        // the focused row, or the row of the focused control
+        paperItem = focused?.closest?.("#memory-table .memory-container");
+        if (key === "Escape") {
+            if (paperItem?.classList.contains("menu-open")) {
+                closeRowMenus();
+                return e.preventDefault();
+            }
+            e.preventDefault();
+            return closeMemory();
+        }
+        if (!paperItem) return;
+        id = paperItem.id.split("--")[1];
+        if (!state.papers[id]) return;
+    } else if (state.currentId) {
         // the paper view (not the "not in your Memory" state)
-        if (!state.papers[state.currentId]) return;
+        if (!state.papers[state.currentId] || key === "Escape") return;
         id = state.currentId;
     } else {
-        paperItem = querySelector(".memory-container:focus");
-        if (key !== "Escape") {
-            if (!paperItem) return;
-            id = paperItem.id.split("--")[1];
-        }
+        return;
     }
 
     if (isEnter) {
         key = await getDefaultKeyboardAction();
     }
 
-    if (!paperItem && id) {
+    if (!paperItem) {
         // paper view: edit fields in place, Details block
         if (key === "e") {
             e.preventDefault();
@@ -821,119 +530,50 @@ export const handlePopupKeydown = async (e) => {
         if (key === "d") return toggleDetails();
     }
 
-    const localFindEl = ({ id, memoryItemClass, paperItem }) => {
-        if (paperItem) {
-            // memory select
-            return findEl({ paperId: id, memoryItemClass });
-        } else {
-            // popup select
-            return findEl({ element: `popup-${memoryItemClass}--${id}` });
-        }
-    };
+    // the control for an action: in the row, or the paper view's #popup-<class>--<id>
+    const control = (cls) =>
+        paperItem
+            ? paperItem.querySelector(`.${cls}`)
+            : findEl({ element: `popup-${cls}--${id}` });
+    // .click(): a bubbling click, which the rows' delegated listener receives
+    const click = (cls) => control(cls)?.click();
 
     if (key === "Backspace") {
-        // delete
-        dispatch(
-            localFindEl({ id, paperItem, memoryItemClass: "memory-delete" }),
-            "click",
-        );
+        e.preventDefault();
+        click("memory-delete");
     } else if (key === "o") {
-        // open paper
         const target =
             state.papers[id].source === "website"
-                ? localFindEl({ id, paperItem, memoryItemClass: "memory-website-url" })
+                ? control("memory-website-url")
                 : (state.prefs.checkEnterLocalPdf &&
-                      localFindEl({
-                          id,
-                          paperItem,
-                          memoryItemClass: "memory-item-openLocal",
-                      })) ||
-                  localFindEl({ id, paperItem, memoryItemClass: "memory-item-link" });
-        dispatch(target, "click");
-    } else if (key === "Escape") {
-        // close paper edits or memory
-        if (paperItem && hasClass(paperItem, "expand-open")) {
-            e.preventDefault();
-            handleTogglePaperEdit(e);
-        } else {
-            if (state.memoryIsOpen) {
-                e.preventDefault();
-                closeMemory();
-            }
-        }
+                      control("memory-item-openLocal")) ||
+                  control("memory-item-link");
+        target?.click();
     } else if (key === "e") {
-        // edit item
-        dispatch(
-            localFindEl({ id, paperItem, memoryItemClass: "memory-item-edit" }),
-            "click",
-        );
-    } else if (key === "c") {
-        // copy link
-        dispatch(
-            localFindEl({ id, paperItem, memoryItemClass: "memory-item-copy-link" }),
-            "click",
-        );
-    } else if (key === "m") {
-        // copy link
-        dispatch(
-            localFindEl({ id, paperItem, memoryItemClass: "memory-item-md" }),
-            "click",
-        );
-    } else if (key === "b") {
-        // copy bibtex
-        dispatch(
-            localFindEl({ id, paperItem, memoryItemClass: "memory-item-bibtex" }),
-            "click",
-        );
-    } else if (key === "5") {
-        // copy pdf link
-        dispatch(
-            localFindEl({ id, paperItem, memoryItemClass: "memory-item-ar5iv" }),
-            "click",
-        );
-    } else if (key === "x") {
-        // copy pdf link
-        dispatch(
-            localFindEl({ id, paperItem, memoryItemClass: "memory-item-alphaxiv" }),
-            "click",
-        );
-    } else if (key === "f") {
-        // copy pdf link
-        dispatch(
-            localFindEl({ id, paperItem, memoryItemClass: "memory-item-huggingface" }),
-            "click",
-        );
-    } else if (key === "s") {
-        // copy pdf link
-        dispatch(
-            localFindEl({ id, paperItem, memoryItemClass: "memory-item-scirate" }),
-            "click",
-        );
-    } else if (key === "h") {
-        // copy hyperlink
-        dispatch(
-            localFindEl({
-                id,
-                paperItem,
-                memoryItemClass: "memory-item-copy-hyperlink",
-            }),
-            "click",
-        );
+        e.preventDefault();
+        openMemoryItemEdit(id);
+    } else if (key === "d") {
+        // the row's details: added, last opened, visits, ID, source
+        const details = paperItem.querySelector(".pm-item-details");
+        if (details) details.hidden = !details.hidden;
     } else if (key === "t") {
-        // copy title
-        const title = state.papers[id].title;
         await copyAndConfirmMemoryItem({
             id,
-            textToCopy: title,
-            feedbackText: paperItem ? "Title copied!" : "Title copied",
-            context: Boolean(paperItem) ? "memory" : "popup",
+            textToCopy: state.papers[id].title,
+            feedbackText: "Title copied",
         });
-    } else if (key === "d") {
-        // display id
-        dispatch(
-            localFindEl({ id, paperItem, memoryItemClass: "memory-display-id" }),
-            "click",
-        );
+    } else {
+        const classes = {
+            c: "memory-item-copy-link",
+            m: "memory-item-md",
+            b: "memory-item-bibtex",
+            h: "memory-item-copy-hyperlink",
+            5: "memory-item-ar5iv",
+            x: "memory-item-alphaxiv",
+            f: "memory-item-huggingface",
+            s: "memory-item-scirate",
+        };
+        classes[key] && click(classes[key]);
     }
 };
 
@@ -955,147 +595,212 @@ export const handlePopupDeletePaper = (id) => () => {
     showConfirmDeleteModal(id);
 };
 
-export const showTitleTooltip = (id, isPopup) => {
-    const div = isPopup
-        ? findEl({ element: "popup-title-tooltip" })
-        : findEl({ paperId: id, memoryItemClass: ".title-tooltip" });
-    if (!div) return;
-    hideAllTooltips();
-    state.tooltipIsOpen = true;
-    showId(div);
-};
-export const hideTitleTooltip = (id, isPopup) => {
-    const div = isPopup
-        ? findEl({ element: "popup-title-tooltip" })
-        : findEl({ paperId: id, memoryItemClass: ".title-tooltip" });
-    if (!div) return;
-    hideId(div);
-    state.tooltipIsOpen = false;
-};
+/** Closes the rows' "…" menus (all, or all but one row's) */
+const closeRowMenus = (except = null) =>
+    document
+        .querySelectorAll("#memory-table .memory-container.menu-open")
+        .forEach((r) => {
+            if (r === except) return;
+            r.classList.remove("menu-open");
+            r.querySelector(".memory-item-more")?.setAttribute(
+                "aria-expanded",
+                "false",
+            );
+        });
 
-export const getHandleTitleTooltip = (func, delay, isPopup) => {
-    return (e) => {
-        const id = isPopup ? state.currentId : eventId(e);
-        let timerId = state.timerIdMap.get(e.target) ?? 0;
-        clearTimeout(timerId);
-        timerId = setTimeout(() => func(id, isPopup), delay);
-        state.timerIdMap.set(e.target, timerId);
-    };
-};
-
-export const handleExpandAuthors = (e) => {
-    let id, authorsEl;
-    if (e.target.parentElement?.id === "popup-authors") {
-        id = state.currentId;
-        authorsEl = findEl({ element: "popup-authors" });
-    } else {
-        id = eventId(e);
-        authorsEl = findEl({ paperId: id, memoryItemClass: "memory-authors" });
+/** Clicks in the Memory list (one delegated listener: rows are re-rendered freely) */
+const handleMemoryTableClick = (e) => {
+    const t = e.target;
+    if (t.closest("#memory-empty-clear")) {
+        clearMemorySearch();
+        return findEl({ element: "memory-search" })?.focus();
     }
-    setHTML(authorsEl, escapeHtml(cutAuthors(state.papers[id].author, 100000)));
-};
-
-export const handleHideAllTitleTooltips = (e) => {
-    if (!e.composedPath().some((el) => el.classList?.contains("title-tooltip"))) {
-        hideAllTooltips();
+    if (t.closest("#memory-empty-tags")) return toggleTagPanel(true);
+    const row = t.closest(".memory-container");
+    if (!row || t.closest(".pm-edit")) return;
+    const id = row.id.split("--")[1];
+    if (!state.papers[id]) return;
+    if (t.closest(".pm-note-more")) {
+        const note = t.closest(".pm-item-note");
+        const open = note.classList.toggle("is-open");
+        t.closest(".pm-note-more").textContent = open ? "less" : "more…";
+        return;
+    }
+    if (t.closest(".memory-tag")) return handleTagClick(e);
+    if (t.closest(".memory-item-more")) {
+        closeRowMenus(row);
+        const open = row.classList.toggle("menu-open");
+        row.querySelector(".memory-item-more").setAttribute(
+            "aria-expanded",
+            String(open),
+        );
+        return;
+    }
+    if (t.closest(".memory-item-edit")) return openMemoryItemEdit(id);
+    const actions = [
+        [".memory-delete", handleDeleteItem],
+        [".memory-item-link", handleOpenItemLink],
+        [".memory-website-url", handleOpenItemWebsiteURL],
+        [".memory-item-openLocal", handleMemoryOpenLocal],
+        [".memory-item-scirate", handleOpenItemScirate],
+        [".memory-item-alphaxiv", handleOpenItemAlphaxiv],
+        [".memory-item-ar5iv", handleOpenItemAr5iv],
+        [".memory-item-huggingface", handleOpenItemHuggingface],
+        [".memory-item-md", handleCopyMarkdownLink],
+        [".memory-item-bibtex", handleCopyBibtex],
+        [".memory-item-copy-link", handleCopyPDFLink],
+        [".memory-item-copy-hyperlink", handleCopyHyperLink],
+        [".memory-item-favorite", handleAddItemToFavorites],
+    ];
+    for (const [selector, handler] of actions) {
+        if (t.closest(selector)) {
+            closeRowMenus();
+            return handler(e);
+        }
     }
 };
 
 /**
- * Sets the edit listeners on the memory items' code and note inputs
- * (tags listeners are set in handleTogglePaperEdit)
+ * Click handling of the Memory rows. Delegated to #memory-table, so it is set once and works
+ * for every row rendered later.
  */
-export const setFormChangeListener = () => {
-    addEventToClass(".form-code-input", "keyup", delay(monitorPaperEdits(), 300));
-    addEventToClass(".form-note-textarea", "keyup", delay(monitorPaperEdits(), 300));
-};
-
 export const addEventsToMemoryItems = () => {
-    // Add events
-    // after a click on such a button, the focus returns to the
-    // container to navigate with tab
-    addEventToClass(".back-to-focus", "click", handleBackToFocus);
-    // delete memory item
-    addEventToClass(".memory-delete", "click", handleDeleteItem);
-    // Open paper page
-    addEventToClass(".memory-item-link", "click", handleOpenItemLink);
-    // Open on Scirate
-    addEventToClass(".memory-item-scirate", "click", handleOpenItemScirate);
-    // Open on Alphaxiv
-    addEventToClass(".memory-item-alphaxiv", "click", handleOpenItemAlphaxiv);
-    // Open on Ar5iv
-    addEventToClass(".memory-item-ar5iv", "click", handleOpenItemAr5iv);
-    // Open on Huggingface Papers
-    addEventToClass(".memory-item-huggingface", "click", handleOpenItemHuggingface);
-    // Open code page
-    addEventToClass(".memory-code-link", "click", handleOpenItemCodeLink);
-    // Open Website URL
-    addEventToClass(".memory-website-url", "click", handleOpenItemWebsiteURL);
-    // Copy markdown link
-    addEventToClass(".memory-item-md", "click", handleCopyMarkdownLink);
-    // Copy bibtex citation
-    addEventToClass(".memory-item-bibtex", "click", handleCopyBibtex);
-    // Copy pdf link
-    addEventToClass(".memory-item-copy-link", "click", handleCopyPDFLink);
-    // Copy hyperlink
-    addEventToClass(".memory-item-copy-hyperlink", "click", handleCopyHyperLink);
-    // Open local file
-    addEventToClass(".memory-item-openLocal", "click", handleMemoryOpenLocal);
-    // Add to favorites
-    addEventToClass(".memory-item-favorite", "click", handleAddItemToFavorites);
-    // Cancel edits: bring previous values from state back
-    addEventToClass(".done-note-form", "click", handleCancelPaperEdit);
-    // When clicking on the edit button, either open or close the edit form
-    addEventToClass(".memory-item-edit", "click", handleTogglePaperEdit);
-    // When clicking on a tag, search for it
-    addEventToClass(".memory-tag", "click", handleTagClick);
-    // Monitor form changes
-    setFormChangeListener();
-    // show / remove title tooltips
-    addEventToClass(
-        ".memory-display-id",
-        "click",
-        getHandleTitleTooltip(showTitleTooltip, 0),
-    );
-    addEventToClass(
-        ".memory-display-id",
-        "mouseleave",
-        getHandleTitleTooltip(hideTitleTooltip, 10000),
-    );
-    // expand authorlist on click
-    addEventToClass(".expand-paper-authors", "click", handleExpandAuthors);
-
-    // Put cursor at the end of the textarea's text on focus
-    // (default puts the cursor at the beginning of the text)
-    addEventToClass(".form-note-textarea", "focus", handleTextareaFocus);
+    const table = findEl({ element: "memory-table" });
+    if (!table || table.dataset.events) return;
+    table.dataset.events = "1";
+    table.addEventListener("click", handleMemoryTableClick);
+    // Tab reaching the last rendered row renders the next ones
+    table.addEventListener("focusin", (e) => {
+        if (e.target === table.lastElementChild) loadMoreMemoryItems();
+    });
 };
 
-export const addEventsToMemoryControls = () => {
-    // Calculate delay time based on number of papers
-    let delayTime = 300;
-    if (state.papersList.length < 20) {
-        delayTime = 0;
-    } else if (state.papersList.length < 100) {
-        delayTime = 150;
+/** Keys in the search field: filters, tag suggestions, Backspace on an empty field */
+const handleSearchKeydown = (e) => {
+    const input = e.target;
+    if (["ArrowDown", "ArrowUp", "Enter", "Tab"].includes(e.key)) flushSearchSuggestions();
+    const suggOpen = !findEl({ element: "memory-tag-suggestions" })?.hidden;
+    if ((e.key === "ArrowDown" || e.key === "ArrowUp") && suggOpen) {
+        e.preventDefault();
+        moveSearchSuggestion(e.key === "ArrowDown" ? 1 : -1);
+    } else if (e.key === "Enter" && !(e.metaKey || e.ctrlKey)) {
+        e.preventDefault();
+        commitSearchFilter() && applyMemorySearch();
+    } else if (e.key === "Tab" && !e.shiftKey) {
+        // a complete filter becomes a pill; otherwise Tab moves on to the list
+        if (commitSearchFilter()) {
+            e.preventDefault();
+            applyMemorySearch();
+        } else {
+            flushMemorySearch(); // the list is final before the focus enters it
+        }
+    } else if (e.key === "Backspace" && !input.value && state.memoryFilters.length) {
+        e.preventDefault();
+        removeFilter(state.memoryFilters.length - 1);
+    } else if (e.key === "Escape" && suggOpen) {
+        e.preventDefault();
+        e.stopPropagation();
+        hideSearchSuggestions();
     }
+};
 
-    addListener(
-        "memory-search",
-        "keypress",
-        delay(handleMemorySearchKeyPress(), delayTime),
+/**
+ * The tab header scrolls away with the list and returns on a wheel or touch scroll-up, never
+ * on the scroll caused by Tab moving the focus. The search field stays.
+ */
+const setupMemoryScroll = () => {
+    const scroller = findEl({ element: "memory-scroll" });
+    if (!scroller) return;
+    let lastTop = 0;
+    scroller.addEventListener(
+        "scroll",
+        () => {
+            const top = scroller.scrollTop;
+            if (top > lastTop && top > 4) setMemoryScrolled(true);
+            lastTop = top;
+        },
+        { passive: true },
     );
-    addListener("memory-search", "clear-search", handleMemorySearchKeyPress(true));
-    addListener("memory-search", "keyup", handleMemorySearchKeyUp);
+    scroller.addEventListener("scroll", displayOnScroll(true), { passive: true });
+    scroller.addEventListener(
+        "wheel",
+        (e) => e.deltaY < 0 && setMemoryScrolled(false),
+        {
+            passive: true,
+        },
+    );
+    let touchY = null;
+    scroller.addEventListener("touchstart", (e) => (touchY = e.touches[0]?.clientY), {
+        passive: true,
+    });
+    scroller.addEventListener(
+        "touchmove",
+        (e) => {
+            if (touchY !== null && e.touches[0]?.clientY - touchY > 6)
+                setMemoryScrolled(false);
+        },
+        { passive: true },
+    );
+    // a control of the hidden header that gets the focus (Shift+Tab) shows it
+    addListener("popup-header", "focusin", () => setMemoryScrolled(false));
+    addListener("memory-filter-chip", "click", () => setMemoryScrolled(false));
+};
+
+let memoryControlsReady = false;
+/**
+ * Search field, filter controls, tag list, sort menu, delete sheet (popup); search,
+ * favourites and the legacy sort controls (fullMemory). Set once.
+ */
+export const addEventsToMemoryControls = () => {
+    if (memoryControlsReady) return;
+    memoryControlsReady = true;
+
+    const search = findEl({ element: "memory-search" });
+    addListener(search, "input", () => {
+        scheduleSearchSuggestions();
+        scheduleMemorySearch();
+    });
+    // programmatic searches (tests, fullMemory) dispatch keypress / clear-search
+    addListener(search, "keypress", scheduleMemorySearch);
+    addListener(search, "clear-search", applyMemorySearch);
+    addListener(search, "keydown", handleSearchKeydown);
+    addListener(search, "blur", () => setTimeout(hideSearchSuggestions, 150));
+    const sugg = findEl({ element: "memory-tag-suggestions" });
+    addListener(sugg, "mousedown", (e) => e.preventDefault()); // keep the focus
+    addListener(sugg, "click", (e) => {
+        const row = e.target.closest(".pm-sugg-row");
+        row && pickSearchSuggestion(Number(row.dataset.i));
+    });
+
     addListener("delete-paper-modal-cancel-button", "click", handleCancelModalClick);
     addListener(
         "delete-paper-modal-confirm-button",
         "click",
         handleConfirmDeleteModalClick,
     );
-    addListener("filter-favorites", "click", handleFilterFavorites);
-    // listen to sorting feature change
-    addListener("memory-select", "change", handleMemorySelectChange);
-    // listen to sorting direction change
-    addListener("memory-sort-arrow", "click", handleMemorySortArrow);
-    addListener("memory-container", "scroll", displayOnScroll(true));
+    addListener("filter-favorites", "click", toggleFavouritesFilter);
+    addListener("memory-tags-button", "click", () => toggleTagPanel());
+    addListener("memory-sort-button", "click", () => toggleSortMenu());
+    addListener("memory-tag-panel", "click", handleTagPanelClick);
+    addListener("memory-sort-menu", "click", handleSortMenuClick);
+    // a click elsewhere closes the tag list, the sort menu and the rows' "…" menus
+    addListener(document, "mousedown", (e) => {
+        const t = e.target;
+        if (!t.closest?.("#memory-tag-panel, #memory-tags-button, #memory-empty-tags"))
+            toggleTagPanel(false);
+        if (!t.closest?.("#memory-sort-menu, #memory-sort-button"))
+            toggleSortMenu(false);
+        if (!t.closest?.(".memory-item-more, .pm-pop")) closeRowMenus();
+    });
+    setupMemoryScroll();
+
+    // fullMemory: sort select + direction arrow
+    addListener("memory-select", "change", (e) => {
+        setMemorySort(e.target.value, false);
+        setMemorySortArrow("down");
+    });
+    addListener("memory-sort-arrow", "click", () => {
+        setMemorySort(state.sortKey, !state.sortReversed);
+        setMemorySortArrow(state.sortReversed ? "up" : "down");
+    });
 };

@@ -801,7 +801,7 @@
     overflow-wrap: anywhere; /* only a tag longer than the row breaks inside itself */
 }
 .pm-item-tags .pm-tg:not(:last-child)::after {
-    content: " ·";
+    content: " \00b7"; /* escaped: pages without a charset (fullMemory) */
     opacity: 0.6;
 }
 /* note: its own block inside the row, tied to the paper by a hairline on its left */
@@ -957,4 +957,258 @@
     color: var(--pm-link);
     text-decoration: underline;
     text-underline-offset: 2px;
+}
+
+/* ---------- memory row: live states and controls (step 3b) ---------- */
+/* keyboard focus: the same quiet card as .is-focus (tint, hairline, 3px blue left edge),
+   never the generic focus ring; only colours change, so the row keeps its size */
+.pm-item:focus,
+.pm-item:focus-within {
+    outline: none;
+    background: var(--pm-surface-2);
+    box-shadow:
+        inset 3px 0 0 var(--pm-focus),
+        inset 0 0 0 1px var(--pm-border);
+}
+.pm-item:focus::before,
+.pm-item:focus + .pm-item::before,
+.pm-item:focus-within::before,
+.pm-item:focus-within + .pm-item::before {
+    border-color: transparent;
+}
+.pm-item-head {
+    min-width: 0;
+}
+.pm-item-title {
+    overflow-wrap: anywhere;
+}
+/* favourite star: red when on; otherwise drawn only on hover / focus (opacity, no layout) */
+.pm-item-fav {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
+    margin: -2px -2px -2px 0;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--pm-text-3);
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity var(--pm-motion);
+}
+.pm-item-fav[aria-pressed="true"] {
+    color: var(--pm-accent);
+    opacity: 1;
+}
+.pm-item-fav[aria-pressed="true"] .pm-i {
+    fill: currentColor;
+}
+.pm-item:hover .pm-item-fav,
+.pm-item:focus .pm-item-fav,
+.pm-item:focus-within .pm-item-fav {
+    opacity: 1;
+}
+.pm-item-fav:hover {
+    color: var(--pm-accent);
+}
+.pm-item-side .pm-item-fav .pm-i {
+    fill: none;
+}
+.pm-item-side .pm-item-fav[aria-pressed="true"] .pm-i {
+    fill: currentColor;
+}
+/* a tag in a row is a button (click: filter by it); drawn as text */
+.pm-item-tags .pm-tg {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    font: inherit;
+    line-height: inherit;
+    text-align: left;
+}
+.pm-item-note p {
+    overflow-wrap: anywhere;
+}
+.pm-item-note.is-open p {
+    -webkit-line-clamp: unset;
+}
+/* d: added, last opened, visits, ID, source */
+.pm-item-details {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 1px var(--pm-s-3);
+    margin: 8px 0 0;
+    color: var(--pm-text-3);
+    font-size: var(--pm-fs-xs);
+}
+.pm-item-details dd {
+    margin: 0;
+    color: var(--pm-text-2);
+    overflow-wrap: anywhere;
+}
+/* delete sits at the far right, after "…" when there is one */
+.pm-item-actions .pm-del {
+    margin-left: auto;
+}
+.pm-item-actions .pm-more + .pm-del {
+    margin-left: 0;
+}
+.pm-pop button .pm-kbd {
+    min-width: 0;
+    background: none;
+}
+/* copy feedback in the row: pages without the popup's toast (fullMemory) */
+.pm-item-feedback {
+    margin-left: 6px;
+    color: var(--pm-success);
+    font-size: var(--pm-fs-xs);
+}
+
+/* row edit form: tags, code, note; the row's tags, note and actions are hidden meanwhile */
+.pm-item.is-edit .pm-item-tags,
+.pm-item.is-edit .pm-item-note,
+.pm-item.is-edit .pm-item-details,
+.pm-item.is-edit .pm-item-actions,
+.pm-item.is-edit .pm-pop {
+    display: none;
+}
+.pm-item.is-edit {
+    padding-bottom: 14px;
+}
+.pm-edit {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: 40px minmax(0, 1fr);
+    gap: var(--pm-s-2);
+    align-items: start;
+    margin-top: var(--pm-s-3);
+}
+.pm-edit > label {
+    padding-top: 7px;
+    color: var(--pm-text-3);
+    font-size: var(--pm-fs-sm);
+    font-weight: var(--pm-fw-medium);
+}
+.pm-edit .pm-textarea {
+    white-space: pre-wrap;
+}
+.pm-edit-foot {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    gap: var(--pm-s-2);
+    margin-top: 2px;
+}
+.pm-edit-hint {
+    color: var(--pm-text-3);
+    font-size: var(--pm-fs-xs);
+}
+.pm-codefield {
+    padding-right: 3px;
+}
+.pm-codefield input {
+    flex: 1;
+    min-width: 0;
+    height: 24px;
+    padding: 0;
+    border: 0;
+    outline: none;
+    background: none;
+    color: var(--pm-text);
+    font-size: var(--pm-fs-base);
+}
+.pm-codefield .pm-quiet {
+    width: 26px;
+    height: 24px;
+    padding: 0;
+    justify-content: center;
+}
+
+/* tag field (paper view and row edit form): chips with ×, "Add tag…", suggestions */
+.pm-tagfield {
+    position: relative;
+    flex-wrap: wrap;
+    min-width: 0;
+    cursor: text;
+}
+.pm-tagchips {
+    display: contents;
+}
+.pm-tagfield .pm-chip {
+    max-width: 100%;
+    padding-right: 3px;
+}
+.pm-chip-t {
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.pm-tagin {
+    flex: 1 1 72px;
+    min-width: 72px;
+    height: 22px;
+    padding: 0;
+    border: 0;
+    outline: none;
+    background: none;
+    color: var(--pm-text);
+    font-size: var(--pm-fs-base);
+}
+.pm-tagin::placeholder {
+    color: var(--pm-text-3);
+}
+.pm-tagsugg {
+    position: absolute;
+    z-index: 6;
+    top: calc(100% + 6px);
+    right: 0;
+    left: -1px;
+    cursor: default;
+}
+/* the × in a chip (tags, filter pills) */
+.pm-chip-x {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: none;
+    width: 16px;
+    height: 16px;
+    margin-right: -3px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: none;
+    color: inherit;
+    cursor: pointer;
+}
+.pm-chip-x:hover {
+    background: color-mix(in srgb, currentColor 14%, transparent);
+}
+.pm-chip .pm-chip-x .pm-i {
+    width: 10px;
+    height: 10px;
+    opacity: 0.8;
+}
+.pm-sugg-row .pm-sugg-enter {
+    visibility: hidden;
+}
+.pm-sugg-row.is-active .pm-sugg-enter {
+    visibility: visible;
+}
+.pm-sugg-create {
+    color: var(--pm-text-2);
+}
+.pm-sugg-create .pm-i {
+    vertical-align: -2px;
+}
+.pm-sugg-row.is-on {
+    color: var(--pm-link);
+}
+.pm-sugg-row .pm-i {
+    width: 12px;
+    height: 12px;
+    vertical-align: -1px;
 }

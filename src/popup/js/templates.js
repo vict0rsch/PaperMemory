@@ -1,298 +1,170 @@
 // ES Module imports
-import { state, svgActionsHoverTitles } from "@pmu/config.js";
+import { state } from "@pmu/config.js";
 import { knownPaperPages } from "@pmu/sources/index.js";
-import {
-    getDisplayId,
-    tablerSvg,
-    isPdfUrl,
-    cutAuthors,
-    escapeHtml,
-    arxivIdFromPaperID,
-} from "@pmu/functions.js";
-import { getTagsOptions } from "@pmu/state.js";
+import { getDisplayId, isPdfUrl, escapeHtml, arxivIdFromPaperID } from "@pmu/functions.js";
 import { bibtexToObject } from "@pmu/bibtexParser.js";
 import { icon } from "@pm/popup/js/icons.js";
+/** "2 h", "1 d", "3 wk", then "Mar 2025": how long ago a paper was last opened */
+export const timeAgo = (date) => {
+    const d = new Date(date);
+    const s = (Date.now() - d.getTime()) / 1e3;
+    if (!(s >= 0)) return "";
+    if (s < 3600) return `${Math.max(1, Math.round(s / 60))} min`;
+    if (s < 86400) return `${Math.round(s / 3600)} h`;
+    if (s < 7 * 86400) return `${Math.round(s / 86400)} d`;
+    if (s < 35 * 86400) return `${Math.round(s / (7 * 86400))} wk`;
+    return d.toLocaleDateString("en-GB", { month: "short", year: "numeric" });
+};
+
+/** "NeurIPS 2017 · Vaswani, Shazeer, Parmar +5" (escaped) */
+const memoryItemMeta = (paper) => {
+    const where =
+        paper.source === "website"
+            ? (paper.pdfLink ?? "").replace(/^https?:\/\/(www\.)?/, "").split("/")[0]
+            : paper.venue || knownPaperPages[paper.source]?.name || "";
+    const authors = authorList(paper.author);
+    const names = authors.slice(0, 3).map((a) => a.split(" ").pop());
+    const more = authors.length > 3 ? ` +${authors.length - 3}` : "";
+    const head = [where, paper.year].filter(Boolean).join(" ");
+    return escapeHtml([head, names.join(", ") + more].filter(Boolean).join(" · "));
+};
+
 /**
- * Return a formatted HTML string describing some metadata about a paper
- * added date, last open date, number of visits, venue if available
+ * A paper in the Memory list (design-review/v2/popup.html frames 2 and 2b): title, favourite
+ * and last-opened time, venue · authors, all tags, the note (3 lines, then "more…") and the
+ * quiet action line. The row is the only Tab stop: its buttons have tabindex -1 and keys.
+ * Class names (memory-container, memory-item-*, memory-delete…) are the ones the keyboard
+ * handler, fullMemory and the tests look for.
  * @param {object} paper A paper object
  * @returns {string} HTML string
  */
-export const getPaperInfoTable = (paper) => {
-    const addDate = new Date(paper.addDate).toLocaleString().replace(",", "");
-    const lastOpenDate = new Date(paper.lastOpenDate).toLocaleString().replace(",", "");
-    const tableData = [
-        ["Added", addDate],
-        ["Last open", lastOpenDate],
+export const getMemoryItemHTML = (paper) => {
+    const id = escapeHtml(paper.id); // only used in attributes
+    const prefs = state.prefs;
+    const isArxiv = paper.source === "arxiv";
+    const fav = !!paper.favorite;
+    const target = prefs.checkPreferPdf ? "PDF" : "abstract page";
+    const act = (cls, label, key, title) =>
+        key
+            ? `<button type="button" class="pm-ia ${cls}" tabindex="-1" title="${title} (${key})">${label} <span class="pm-kbd">${key}</span></button>`
+            : `<button type="button" class="pm-ia ${cls}" tabindex="-1" title="${title}">${label}</button>`;
+    const open =
+        paper.source === "website"
+            ? act("memory-website-url", "Open", "o", "Open the page in a new tab")
+            : act("memory-item-link", "Open", "o", `Open the ${target}`);
+    const local = state.files.hasOwnProperty(paper.id)
+        ? act("memory-item-openLocal", "PDF", "", "Open the downloaded PDF")
+        : "";
+    const elsewhere = [
+        ["checkAr5iv", "ar5iv", "ar5iv", "5"],
+        ["checkAlphaxiv", "alphaxiv", "alphaXiv", "x"],
+        ["checkHuggingface", "huggingface", "Hugging Face", "f"],
+        ["checkScirate", "scirate", "SciRate", "s"],
+    ]
+        .filter(([pref]) => isArxiv && prefs[pref])
+        .map(
+            ([, cls, name, key]) =>
+                `<button type="button" role="menuitem" class="memory-item-${cls}" tabindex="-1" title="Open on ${name} (${key})">${name} <span class="pm-kbd">${key}</span></button>`,
+        )
+        .join("");
+    const tags = (paper.tags ?? [])
+        .map(
+            (t) =>
+                `<button type="button" class="pm-tg memory-tag" tabindex="-1" title="Show the papers tagged ${escapeHtml(t)}">${escapeHtml(t)}</button>`,
+        )
+        .join("");
+    const lastOpen = timeAgo(paper.lastOpenDate);
+    const details = [
+        ["Added", shortDate(paper.addDate)],
+        ["Last opened", shortDate(paper.lastOpenDate)],
         ["Visits", paper.count],
-        ["Source", knownPaperPages[paper.source].name],
-    ];
-    if (paper.venue)
-        tableData.push([
-            "Publication",
-            `<strong>${escapeHtml(paper.venue)} ${escapeHtml(String(paper.year))}</strong>`,
-        ]);
+        ["ID", getDisplayId(paper)],
+        ["Source", knownPaperPages[paper.source]?.name ?? paper.source],
+    ]
+        .map(([k, v]) => `<dt>${k}</dt><dd>${escapeHtml(v)}</dd>`)
+        .join("");
+
     return /*html*/ `
-        <table class="paper-info-table">
-            ${tableData
-                .map((row) => {
-                    return /*html*/ `
-                        <tr>
-                            <td><div class="info-table-key">${row[0]}</div></td>
-                            <td><div class="info-table-value">${row[1]}</div></td>
-                        </tr>
-                    `;
-                })
-                .join("")}
-        </table>
-    `;
+        <article class="pm-item memory-container${fav ? " favorite" : ""}" tabindex="0" id="memory-container--${id}" aria-label="${escapeHtml(paper.title)}">
+            <div class="pm-item-head">
+                <h3 class="pm-item-title memory-title">${escapeHtml(paper.title.replace(/\s+/g, " "))}</h3>
+                <p class="pm-item-meta memory-authors">${memoryItemMeta(paper)}</p>
+            </div>
+            <div class="pm-item-side">
+                <button type="button" class="pm-item-fav memory-item-favorite" tabindex="-1" aria-pressed="${fav}" title="${fav ? "Remove from favourites" : "Add to favourites"}">${icon("star")}</button>
+                <time title="Last opened ${escapeHtml(shortDate(paper.lastOpenDate))}">${escapeHtml(lastOpen)}</time>
+            </div>
+            ${tags ? `<div class="pm-item-tags">${icon("tag")}${tags}</div>` : ""}
+            ${paper.note ? `<div class="pm-item-note memory-note-div"><p>${escapeHtml(paper.note)}</p><button type="button" class="pm-note-more" tabindex="-1" hidden>more…</button></div>` : ""}
+            <dl class="pm-item-details memory-display-id" hidden>${details}</dl>
+            <div class="pm-item-actions memory-item-actions">
+                ${open}
+                ${act("memory-item-copy-link", "URL", "c", `Copy the URL of the ${target}`)}
+                ${act("memory-item-copy-hyperlink", "Rich link", "h", "Copy the title as a clickable link, for docs, Slack, email…")}
+                ${act("memory-item-md", "Markdown", "m", "Copy a Markdown link")}
+                ${act("memory-item-bibtex", "BibTeX", "b", "Copy the BibTeX citation")}
+                ${act("memory-item-edit", "Edit", "e", "Edit tags, code link and note")}
+                ${local}
+                ${elsewhere ? `<button type="button" class="pm-ia pm-more memory-item-more" tabindex="-1" title="Open on ar5iv, alphaXiv, Hugging Face, SciRate" aria-label="Open elsewhere" aria-haspopup="menu" aria-expanded="false">${icon("more", "pm-i-sm")}</button>` : ""}
+                <button type="button" class="pm-ia pm-del memory-delete" tabindex="-1" title="Delete (⌫)" aria-label="Delete">${icon("trash", "pm-i-sm")}</button>
+                <span class="pm-item-feedback memory-item-feedback" role="status" hidden></span>
+            </div>
+            ${elsewhere ? `<div class="pm-pop" role="menu"><span class="pm-label-caps">Open on</span>${elsewhere}</div>` : ""}
+        </article>`;
 };
 
 /**
- * Return a formatted HTML string from a paper
- * @param {object} paper A paper object
- * @returns HTML string
+ * The row edit form (design-review/v2/popup.html frame 5): tags, code link, note; saved as
+ * you type, Done (⌘↵) closes it. The note's value is set in JS: inside <textarea> markup a
+ * leading line break would be dropped by the HTML parser.
+ * @param {object} paper
+ * @returns {string} HTML
  */
-export const getMemoryItemHTML = (paper) => {
-    const displayId = getDisplayId(paper);
-    const note = paper.note || "";
-    const id = escapeHtml(paper.id); // only used in attributes
-    const tags = new Set(paper.tags);
-    const tagOptions = getTagsOptions(paper);
-    const favoriteClass = paper.favorite ? "favorite" : "";
-    const titles = { ...svgActionsHoverTitles };
-    // titles behave differently in build/watch mode. This works in build
-    titles.pdfLink = `Open tab to ${escapeHtml(paper.title)}`;
-    titles.copyLink = `Copy URL to the paper's ${
-        state.prefs.checkPreferPdf ? "PDF" : "abstract"
-    }`;
-    titles.displayId = `Click to see metadata`;
-    let codeDiv = /*html*/ `
-        <small class="memory-item-faded">
-
-            <div class="memory-code-link"> ${escapeHtml(
-                paper.codeLink.replace(/^https?:\/\//, "") || "",
-            )} </div>
-            <div class="memory-website-url">
-                ${
-                    (paper.source == "website" &&
-                        escapeHtml(paper.pdfLink.replace(/^https?:\/\//, ""))) ||
-                    ""
-                }
+export const getMemoryEditHTML = (paper) => /*html*/ `
+    <form class="pm-edit extended-item" novalidate>
+        <label>Tags</label>
+        <div class="pm-edit-tags"></div>
+        <label>Code</label>
+        <div>
+            <div class="pm-field pm-codefield">
+                <input class="form-code-input" type="text" placeholder="github.com/org/repo" autocomplete="off" spellcheck="false" aria-label="Code link" value="${escapeHtml(paper.codeLink || "")}" />
+                <button type="button" class="pm-quiet pm-ic pm-code-open" tabindex="-1" title="Open this link in a new tab" aria-label="Open this link in a new tab">${icon("open")}</button>
             </div>
-        </small>
-    `;
-    let noteDiv = /*html*/ `<div class="memory-note-div memory-item-faded"></div>`;
-    if (paper.note) {
-        noteDiv = /*html*/ `
-            <div class="memory-note-div memory-item-faded">
-                <span class="note-content-header">Note:</span>
-                <span class="note-content">${escapeHtml(note)}</span>
-            </div>
-        `;
-    }
-
-    const openLocalDiv = state.files.hasOwnProperty(paper.id)
-        ? /*html*/ `
-            <div
-                class="memory-item-openLocal memory-item-svg-div"
-                title='${titles.openLocal}'
-            >
-                ${tablerSvg("vocabulary", "", ["memory-icon-svg"])}
-            </div>`
-        : ``;
-
-    const openLinkDiv =
-        paper.source === "website"
-            ? ""
-            : /*html*/ `
-            <div
-                class="memory-item-link memory-item-svg-div"
-                title='${titles.pdfLink}'
-            >
-                ${tablerSvg("external-link", "", ["memory-icon-svg"])}
-            </div>`;
-
-    let scirate = "";
-    if (state.prefs.checkScirate && paper.source === "arxiv") {
-        scirate = /*html*/ `
-        <div
-            class="memory-item-scirate memory-item-svg-div"
-            title="Open on SciRate"
-        >
-            ${tablerSvg("messages", "", ["memory-icon-svg"])}
-        </div>`;
-    }
-
-    let alphaxiv = "";
-    if (state.prefs.checkAlphaxiv && paper.source === "arxiv") {
-        alphaxiv = /*html*/ `
-        <div
-            class="memory-item-alphaxiv memory-item-svg-div"
-            title="Open on AlphaXiv"
-        >
-            ${tablerSvg("alphaxiv", "", ["memory-icon-svg", "alphaxiv-icon"])}
-        </div>`;
-    }
-
-    let ar5iv = "";
-    if (state.prefs.checkAr5iv && paper.source === "arxiv") {
-        ar5iv = /*html*/ `
-        <div
-            class="memory-item-ar5iv memory-item-svg-div"
-            title="Open on ar5iv"
-        >
-            ${tablerSvg("ar5iv", "", ["memory-icon-svg"])}
-        </div>`;
-    }
-
-    let huggingface = "";
-    if (state.prefs.checkHuggingface && paper.source === "arxiv") {
-        huggingface = /*html*/ `
-        <div
-            class="memory-item-huggingface memory-item-svg-div"
-            title="Open on HuggingFace Papers"
-        >
-            ${tablerSvg("huggingface", "", ["memory-icon-svg"])}
-        </div>`;
-    }
-
-    const titleInfoTable = getPaperInfoTable(paper);
-
-    return /*html*/ `
-        <div
-            class="memory-container ${favoriteClass}"
-            tabindex="0"
-            id="memory-container--${id}"
-        >
-            <h4 class="memory-title">
-                <span class="memory-item-favorite">
-                    ${tablerSvg("star", "", [
-                        "memory-item-favorite-svg",
-                        favoriteClass,
-                    ])}
-                </span>
-                ${escapeHtml(paper.title)}
-                <div class="title-tooltip" style="display: none;">
-                    ${titleInfoTable}
-                </div>
-            </h4>
-            <div class="my-1 mx-0">
-                <small class="tag-list">
-                    ${[...tags]
-                        .map((t) => `<span class="memory-tag" >${escapeHtml(t)}</span>`)
-                        .join("")}
-                </small>
-                <div class="edit-tags p-0" style="display: none">
-                    <div class="flex-center-between">
-                        <span class="label">Tags:</span>
-                        <select
-                            class="memory-item-tags"
-                            id="memory-item-tags--${id}"
-                            multiple="multiple"
-                        >
-                            ${tagOptions}
-                        </select>
-                    </div>
-                </div>
-            </div>
-            <small class="memory-authors">${cutAuthors(escapeHtml(paper.author))}</small>
-
-            <div class="code-and-note">${codeDiv} ${noteDiv}</div>
-
-            <div class="memory-item-actions flex-center-between mt-2">
-                <div class="d-flex align-items-center">
-                    <div
-                        class="memory-item-edit memory-item-svg-div me-2"
-                        title='${titles.edit}'
-                    >
-                        ${tablerSvg("writing", "", ["memory-icon-svg"])}
-                    </div>
-
-                    <small class="memory-item-faded memory-display-id" title='${
-                        titles.displayId
-                    }'>
-                        ${escapeHtml(displayId)}
-                    </small>
-                </div>
-
-                ${openLocalDiv}
-                ${openLinkDiv}
-                ${huggingface}
-                ${alphaxiv}
-                ${ar5iv}
-                ${scirate}
-
-
-                <div
-                    class="memory-item-copy-link memory-item-svg-div"
-                    title='${titles.copyLink}'
-                >
-                    ${tablerSvg("link", "", ["memory-icon-svg"])}
-                </div>
-
-                <div
-                    class="memory-item-copy-hyperlink memory-item-svg-div"
-                    title='${titles.copyHypeLink}'
-                >
-                    ${tablerSvg("device-desktop-code", "", ["memory-icon-svg"])}
-                </div>
-
-
-
-                <div class="memory-item-md memory-item-svg-div" title='${
-                    titles.copyMd
-                }'>
-                    ${tablerSvg("markdown", "", ["memory-icon-svg"])}
-                </div>
-
-                <div
-                    class="memory-item-bibtex memory-item-svg-div"
-                    title='${titles.copyBibtext}'
-                >
-                    ${tablerSvg("math-function", "", ["memory-icon-svg"])}
-                </div>
-
-                <span style="display: none" class="memory-item-feedback"></span>
-
-            </div>
-
-            <div class="extended-item" style="display: none">
-                <div class="item-note">
-                    <form class="form-note">
-                        <div class="flex-center-start">
-                            <span class="label">Code:</span>
-                            <input
-                                type="text"
-                                class="form-code-input"
-                                value="${escapeHtml(paper.codeLink || "")}"
-                                placeholder="Add link"
-                            />
-                        </div>
-                        <div class="flex-center-start">
-                            <span class="label">Note:</span>
-                            <textarea
-                                rows="2"
-                                class="form-note-textarea"
-                                placeholder="Anything to note?"
-                            >
-${escapeHtml(note)}</textarea
-                            >
-                        </div>
-                        <div class="form-note-buttons">
-                            <button class="done-note-form back-to-focus">
-                                Done
-                            </button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-
-            <div class="memory-delete" title="Delete from Memory">-</div>
+            <p class="pm-field-msg pm-code-msg" hidden></p>
         </div>
-    `;
-};
+        <label>Note</label>
+        <textarea class="pm-textarea form-note-textarea" rows="3" placeholder="Anything to note?" aria-label="Note"></textarea>
+        <div class="pm-edit-foot">
+            <span class="pm-edit-hint">Changes are saved as you type</span>
+            <span class="pm-spacer"></span>
+            <button type="submit" class="pm-btn pm-btn-primary pm-btn-sm memory-edit-done">Done <span class="pm-kbd" data-mod-enter>⌘↵</span></button>
+        </div>
+    </form>`;
 
+/**
+ * Memory list with nothing to show (popup-states.html frame 12)
+ * @param {string} query The free text typed in the search field
+ * @param {boolean} empty Whether the Memory itself is empty
+ * @returns {string} HTML
+ */
+export const getMemoryEmptyHTML = (query, empty) =>
+    empty
+        ? /*html*/ `
+        <div class="pm-empty pm-mv-empty">
+            ${icon("doc")}
+            <h2>Your Memory is empty</h2>
+            <p>Open a paper on arXiv, OpenReview, Nature and many other sites and PaperMemory saves it here, in your browser.</p>
+        </div>`
+        : /*html*/ `
+        <div class="pm-empty pm-mv-empty">
+            ${icon("search")}
+            <h2>${query ? `No paper matches “${escapeHtml(query)}”` : "No paper matches these filters"}</h2>
+            <p>Search looks at titles, authors and notes. Filters: <span class="pm-kbd">t:</span> tag, <span class="pm-kbd">c:</span> code link, <span class="pm-kbd">y:</span> year, then <span class="pm-kbd">tab</span>.</p>
+            <div class="pm-empty-btns">
+                <button type="button" class="pm-btn" id="memory-empty-clear">Clear search</button>
+                <button type="button" class="pm-btn" id="memory-empty-tags">Browse tags</button>
+            </div>
+        </div>`;
 
 // ---------------------------------------------------------------------------------------
 // -----  Popup paper view and states (design-review/v2/popup.html, popup-states.html)  -----
@@ -453,7 +325,7 @@ export const getPopupPaperHTML = (paper, currentUrl, is, { downloadKey, detailsO
         .map(([k, v]) => `<dt>${k}</dt><dd title="${v.replace(/<[^>]+>/g, "")}">${v}</dd>`)
         .join("");
 
-    const visits = `${paper.count} visit${paper.count === 1 ? "" : "s"}`;
+    const visits = `${escapeHtml(paper.count)} visit${paper.count === 1 ? "" : "s"}`;
 
     return /*html*/ `
         <div class="pm-pv">
@@ -474,10 +346,8 @@ export const getPopupPaperHTML = (paper, currentUrl, is, { downloadKey, detailsO
 
             <div class="pm-pv-group" id="popup-memory-edit">
                 <div class="pm-pv-frow">
-                    <label for="popup-item-tags--${id}-ts-control">Tags</label>
-                    <div class="pm-pv-val pm-pv-tags">
-                        <select id="popup-item-tags--${id}" multiple="multiple">${getTagsOptions(paper)}</select>
-                    </div>
+                    <label for="popup-tags-input">Tags</label>
+                    <div class="pm-pv-val pm-pv-tags" id="popup-item-tags--${id}"></div>
                 </div>
                 <div class="pm-pv-frow">
                     <label>Code</label>
@@ -487,7 +357,7 @@ export const getPopupPaperHTML = (paper, currentUrl, is, { downloadKey, detailsO
                     <label for="popup-form-note-textarea--${id}">Note</label>
                     <div class="pm-pv-val pm-pv-noteval">
                         <span id="popup-note-val">${getPopupNoteHTML(paper)}</span>
-                        <textarea class="pm-textarea" id="popup-form-note-textarea--${id}" rows="3" placeholder="Anything to note?" hidden>${escapeHtml(paper.note || "")}</textarea>
+                        <textarea class="pm-textarea" id="popup-form-note-textarea--${id}" rows="3" placeholder="Anything to note?" hidden></textarea>
                     </div>
                 </div>
             </div>
