@@ -14,13 +14,13 @@ import {
     info,
     warn,
     arraysIdentical,
+    escapeHtml,
 } from "@pmu/functions.js";
 import {
     findEl,
     slideUp,
     slideDown,
     setHTML,
-    setTextId,
     dispatch,
     addListener,
     queryAll,
@@ -43,7 +43,6 @@ import {
     getStorage,
     getDefaultKeyboardAction,
     deletePaperInStorage,
-    saveThemePref,
     updatePrefs,
 } from "@pmu/data.js";
 import { bibtexToString, bibtexToObject } from "@pmu/bibtexParser.js";
@@ -69,15 +68,25 @@ import {
     reverseMemory,
     setMemorySortArrow,
     setMemorySearchPlaceholder,
+    updateMemoryCount,
 } from "@pm/popup/js/memory.js";
-import { showPopupModal, closeMenu } from "@pm/popup/js/popup.js";
+import {
+    closeMenu,
+    openMenu,
+    showPopupModal,
+    startPaperEdit,
+    toggleDetails,
+} from "@pm/popup/js/popup.js";
 
 /**
- * Closes the popup modal
+ * Closes the open bottom sheet and gives the focus back to where it was
  */
 export const closePopupModal = () => {
     state.modalIsOpen = false;
-    style("popup-modal-wrapper", "display", "none");
+    hideId("popup-modal-wrapper");
+    state.modalReturnFocus?.isConnected &&
+        state.modalReturnFocus.focus({ preventScroll: true });
+    state.modalReturnFocus = null;
 };
 
 export const hideAllTooltips = () => {
@@ -185,28 +194,35 @@ export const focusExistingOrCreateNewPaperTab = async (paper, fromMemoryItem) =>
  */
 export const showConfirmDeleteModal = (id) => {
     const title = state.papers[id].title;
-    setTextId("delete-modal-title", title);
-    setHTML("delete-paper-modal-hidden-id", id);
+    state.deleteReturnFocus = document.activeElement;
+    findEl({ element: "delete-modal-title" }).textContent = title.replace(/\s+/g, " ");
+    findEl({ element: "delete-paper-modal-hidden-id" }).textContent = id;
     showId("delete-paper-modal", "flex");
+    // the sheet (popup) or the confirm button (fullMemory) takes the focus: Enter confirms
+    (
+        document.querySelector("#delete-paper-modal .pm-sheet") ??
+        findEl({ element: "delete-paper-modal-confirm-button" })
+    )?.focus({ preventScroll: true });
 };
 
+/** Whether the delete confirmation is shown */
+const deleteModalIsOpen = () =>
+    findEl({ element: "delete-paper-modal" })?.style.display === "flex";
+
 /**
- * Monitors the popup's paper edits or the memory's table of papers' edits.
- * Triggers `handleMemorySaveEdits` or `handlePopupSaveEdits` (depending on `isPopup`)
- * if a change is detected.
+ * Monitors the memory's table of papers' edits.
+ * Triggers `handleMemorySaveEdits` if a change is detected.
  *
- * @param {string} id Optional id of the paper to monitor (when called for the popup edit form)
- * @param {boolean} isPopup Whether the function is called to monitor the single
- * popup edit form or the set of memory-items' forms
+ * @param {string} id Optional id of the paper to monitor (otherwise read from the event)
  */
-export const monitorPaperEdits = (id, isPopup) => (e) => {
+export const monitorPaperEdits = (id) => (e) => {
     let paperId;
     if (typeof id === "undefined") {
         paperId = eventId(e);
     } else {
         paperId = id;
     }
-    const edits = getPaperEdits(paperId, isPopup);
+    const edits = getPaperEdits(paperId);
     const paper = state.papers[paperId];
     let change = false;
     let refs = {};
@@ -224,11 +240,7 @@ export const monitorPaperEdits = (id, isPopup) => (e) => {
     }
     if (change) {
         log("Updating meta data for", paperId);
-        if (isPopup) {
-            handlePopupSaveEdits(paperId);
-        } else {
-            handleMemorySaveEdits(paperId);
-        }
+        handleMemorySaveEdits(paperId);
     }
 };
 
@@ -471,7 +483,7 @@ export const handleTogglePaperEdit = (e) => {
         const ts = new TomSelect(tagEl, tomSelectOptions);
         // Attach the change listener to every new TomSelect instance: the previous
         // one was destroyed on close, so its listeners no longer exist.
-        ts.on("change", () => monitorPaperEdits(id, false)());
+        ts.on("change", () => monitorPaperEdits(id)());
         // Close display elements
         slideUp(codeAndNote, 150);
         slideUp(tagList, 150);
@@ -597,10 +609,12 @@ export const handleMemorySearchKeyUp = (e) => {
 
 export const handleCancelModalClick = () => {
     hideId("delete-paper-modal");
+    state.deleteReturnFocus?.isConnected &&
+        state.deleteReturnFocus.focus({ preventScroll: true });
 };
 
 export const handleConfirmDeleteModalClick = async (e) => {
-    const id = findEl({ element: "delete-paper-modal-hidden-id" }).innerHTML;
+    const id = findEl({ element: "delete-paper-modal-hidden-id" }).textContent;
     const title = state.papers[id].title;
     const url = state.papers[id].pdfLink;
     await deletePaperInStorage(id, state.papers);
@@ -611,7 +625,9 @@ export const handleConfirmDeleteModalClick = async (e) => {
         await updatePopupPaperNoMemory(url);
     }
     setPlaceholder("memory-search", `Search ${state.papersList.length} entries ...`);
-    addListener("memory-switch", "click", handleMemorySwitchClick);
+    updateMemoryCount();
+    state.deleteReturnFocus?.isConnected &&
+        state.deleteReturnFocus.focus({ preventScroll: true });
 };
 
 export const handleTagClick = (e) => {
@@ -625,10 +641,6 @@ export const handleClearSearch = (e) => {
     val("memory-search", "");
     dispatch("memory-search", "clear-search");
     style("memory-search-clear-icon", "visibility", "hidden");
-};
-
-export const handleMemorySwitchClick = () => {
-    state.memoryIsOpen ? closeMemory() : openMemory();
 };
 
 export const handlePopupKeydown = async (e) => {
@@ -656,29 +668,64 @@ export const handlePopupKeydown = async (e) => {
             "f",
             "x",
             "s",
+            "?",
+            "/",
         ].indexOf(key) < 0
     ) {
         return;
     }
 
+    const focused = document.activeElement;
+    const inputIsFocused = ["INPUT", "TEXTAREA"].includes(focused?.tagName);
+
+    // Escape is never advertised (Firefox closes the whole popup with it) but keeps
+    // working where the browser lets the popup see it.
+
+    // delete confirmation sheet: Enter confirms
+    if (deleteModalIsOpen()) {
+        if (key === "Enter" && focused?.matches?.("#delete-paper-modal button")) {
+            return; // Cancel / Delete buttons do their own thing
+        }
+        if (key === "Enter") {
+            e.preventDefault();
+            dispatch("delete-paper-modal-confirm-button", "click");
+        } else if (key === "Escape") {
+            e.preventDefault();
+            dispatch("delete-paper-modal-cancel-button", "click");
+        }
+        return;
+    }
+
     if (state.modalIsOpen) {
-        if (key === "Escape") {
+        const closesSheet =
+            key === "Escape" ||
+            (key === "?" && state.modalIsOpen === "shortcuts" && !inputIsFocused);
+        if (closesSheet) {
             e.preventDefault();
             closePopupModal();
         }
         return;
     }
 
-    // no modal is open
+    // no sheet is open
+
+    if (key === "?") {
+        // ? opens the shortcut sheet from anywhere (and closes it, above)
+        if (!inputIsFocused) {
+            e.preventDefault();
+            showPopupModal("shortcuts");
+        }
+        return;
+    }
 
     if (state.prefsIsOpen) {
-        if (key === "Escape") {
-            // escape closes menu
+        if (key === "Escape" || key === "p") {
+            // p (or escape) closes the menu
             e.preventDefault();
             closeMenu();
-        } else if (key === "Enter") {
-            let el = querySelector("#menu-switch:focus");
-            if (el) closeMenu();
+        } else if (key === "a") {
+            e.preventDefault();
+            openMemory();
         }
         return;
     }
@@ -697,9 +744,6 @@ export const handlePopupKeydown = async (e) => {
 
     // Menu is closed
 
-    const inputIsFocused = queryAll(":focus").some((el) =>
-        ["INPUT", "TEXTAREA"].includes(el.tagName),
-    );
     if (inputIsFocused && key !== "Escape") {
         return;
     }
@@ -714,30 +758,26 @@ export const handlePopupKeydown = async (e) => {
 
     // no tooltip is open
 
-    if (!state.memoryIsOpen) {
-        if (key === "a") {
-            // a opens the arxiv memory
-            state.papers && dispatch("memory-switch", "click");
-        } else if (key === "Enter") {
-            // enter on the arxiv memory button opens it
-            const focused = querySelector(":focus");
-            // if (!focused || !focused.length < 1) return;
-            if (focused?.id === "memory-switch-open") {
-                return dispatch("memory-switch", "click");
-            } else if (focused?.id === "menu-switch") {
-                dispatch("menu-switch", "click");
-                return dispatch("menu-switch", "blur");
-            } else if (hasClass(focused, "memory-item-svg-div")) {
-                return dispatch(focused, "click");
-            }
-        } else if (key === "p") {
-            if (!state.prefsIsOpen) {
-                return dispatch("menu-switch", "click");
-            }
-        }
+    if (key === "a") {
+        // a opens the Memory, and closes it again
+        e.preventDefault();
+        if (state.memoryIsOpen) closeMemory();
+        else state.papers && openMemory();
+        return;
     }
-
-    // Memory is open
+    if (key === "p") {
+        e.preventDefault();
+        openMenu();
+        return;
+    }
+    if (key === "/") {
+        // / focuses the search field, in the Memory only
+        if (state.memoryIsOpen) {
+            e.preventDefault();
+            dispatch("memory-search", "focus");
+        }
+        return;
+    }
 
     if (isEnter) {
         // enable Enter on favorites and sort arrows
@@ -749,12 +789,16 @@ export const handlePopupKeydown = async (e) => {
         if (arrowBtn) {
             return dispatch("memory-sort-arrow", "click");
         }
+        // a focused button or link does its own thing
+        if (focused?.matches?.("button, a, summary, select")) return;
     }
 
-    // Memory is open and Enter was not pressed on a button
+    // Enter was not pressed on a button
 
     let id, paperItem;
     if (state.currentId && !state.memoryIsOpen) {
+        // the paper view (not the "not in your Memory" state)
+        if (!state.papers[state.currentId]) return;
         id = state.currentId;
     } else {
         paperItem = querySelector(".memory-container:focus");
@@ -766,6 +810,15 @@ export const handlePopupKeydown = async (e) => {
 
     if (isEnter) {
         key = await getDefaultKeyboardAction();
+    }
+
+    if (!paperItem && id) {
+        // paper view: edit fields in place, Details block
+        if (key === "e") {
+            e.preventDefault();
+            return startPaperEdit();
+        }
+        if (key === "d") return toggleDetails();
     }
 
     const localFindEl = ({ id, memoryItemClass, paperItem }) => {
@@ -872,7 +925,7 @@ export const handlePopupKeydown = async (e) => {
         await copyAndConfirmMemoryItem({
             id,
             textToCopy: title,
-            feedbackText: "Title copied!",
+            feedbackText: paperItem ? "Title copied!" : "Title copied",
             context: Boolean(paperItem) ? "memory" : "popup",
         });
     } else if (key === "d") {
@@ -884,33 +937,18 @@ export const handlePopupKeydown = async (e) => {
     }
 };
 
-export const handleThemeChange = (e) => saveThemePref(e.target.value);
-
 export const handlePrefsCheckChange = async (e) => {
     const key = e.target.id;
-    const checked = findEl({ element: key }).checked;
-    updatePrefs({ [key]: checked }).then(() =>
-        log(`Settings saved for ${key} (${checked})`),
+    const el = findEl({ element: key });
+    // "Record papers automatically" is checkNoAuto, inverted
+    const value = el.hasAttribute("data-invert") ? !el.checked : el.checked;
+    updatePrefs({ [key]: value }).then(() =>
+        log(`Settings saved for ${key} (${value})`),
     );
-    if (checked && key === "checkNoAuto") {
-        chrome.commands.getAll((commands) => {
-            const { shortcut } = commands.find(
-                (command) => command.name === "manualParsing",
-            );
-            console.log("shortcut: ", shortcut);
-            if (!shortcut) {
-                showPopupModal("manualParsing");
-            }
-        });
+    if (value && key === "checkNoAuto") {
+        // explain how to add papers from now on, with the browser shortcut
+        showPopupModal("manualParsing");
     }
-};
-
-export const handlePopupSaveEdits = (id) => {
-    const { note, codeLink, favorite } = getPaperEdits(id, true);
-    updatePaperTags(id, `#popup-item-tags--${id}`);
-    saveNote(id, note);
-    saveCodeLink(id, codeLink);
-    saveFavoriteItem(id, favorite);
 };
 
 export const handlePopupDeletePaper = (id) => () => {
@@ -954,7 +992,7 @@ export const handleExpandAuthors = (e) => {
         id = eventId(e);
         authorsEl = findEl({ paperId: id, memoryItemClass: "memory-authors" });
     }
-    setHTML(authorsEl, cutAuthors(state.papers[id].author, 100000));
+    setHTML(authorsEl, escapeHtml(cutAuthors(state.papers[id].author, 100000)));
 };
 
 export const handleHideAllTitleTooltips = (e) => {
@@ -964,39 +1002,12 @@ export const handleHideAllTitleTooltips = (e) => {
 };
 
 /**
- * Sets the form edit listeners on the 4 inputs: tags, code, note, favorite
- * @param {string} id Optional id (for the popup's paper)
- * @param {*} isPopup Is the function called from the popup?
+ * Sets the edit listeners on the memory items' code and note inputs
+ * (tags listeners are set in handleTogglePaperEdit)
  */
-export const setFormChangeListener = (id, isPopup) => {
-    let refTags, refNote, refCodeLink, refFavorite;
-    if (isPopup) {
-        refTags = `popup-item-tags--${id}`;
-        refCodeLink = `popup-form-codeLink--${id}`;
-        refNote = `popup-form-note-textarea--${id}`;
-        refFavorite = `checkFavorite--${id}`;
-
-        addListener(refTags, "change", delay(monitorPaperEdits(id, isPopup), 300));
-        addListener(refCodeLink, "keyup", delay(monitorPaperEdits(id, isPopup), 300));
-        addListener(refNote, "keyup", delay(monitorPaperEdits(id, isPopup), 300));
-        addListener(refFavorite, "change", delay(monitorPaperEdits(id, isPopup), 300));
-    } else {
-        // tags listeners is set in handleTogglePaperEdit
-        refTags = ".memory-item-tags";
-        refCodeLink = ".form-code-input";
-        refNote = ".form-note-textarea";
-
-        addEventToClass(
-            refCodeLink,
-            "keyup",
-            delay(monitorPaperEdits(undefined, isPopup), 300),
-        );
-        addEventToClass(
-            refNote,
-            "keyup",
-            delay(monitorPaperEdits(undefined, isPopup), 300),
-        );
-    }
+export const setFormChangeListener = () => {
+    addEventToClass(".form-code-input", "keyup", delay(monitorPaperEdits(), 300));
+    addEventToClass(".form-note-textarea", "keyup", delay(monitorPaperEdits(), 300));
 };
 
 export const addEventsToMemoryItems = () => {
@@ -1039,7 +1050,7 @@ export const addEventsToMemoryItems = () => {
     // When clicking on a tag, search for it
     addEventToClass(".memory-tag", "click", handleTagClick);
     // Monitor form changes
-    setFormChangeListener(undefined, false);
+    setFormChangeListener();
     // show / remove title tooltips
     addEventToClass(
         ".memory-display-id",

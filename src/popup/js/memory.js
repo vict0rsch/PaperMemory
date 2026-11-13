@@ -7,6 +7,8 @@ import {
     copyTextToClipboard,
     copyHyperLinkToClipboard,
     logError,
+    cleanPapers,
+    escapeHtml,
     log,
     info,
     warn,
@@ -34,12 +36,16 @@ import {
     fadeIn,
     fadeOut,
     dispatch,
-    slideDown,
-    slideUp,
 } from "@pmu/miniquery.js";
 import { parseIdFromUrl } from "@pmu/urls.js";
-import { getMemoryItemHTML } from "@pm/popup/js/templates.js";
-import { closeMenu, showPopupModal, popupMain } from "@pm/popup/js/popup.js";
+import {
+    getMemoryItemHTML,
+    getNoMemoryHTML,
+    getPopupCodeLinkHTML,
+    getPopupNoteHTML,
+} from "@pm/popup/js/templates.js";
+import { closeMenu, popupMain, setActiveTab, showToast } from "@pm/popup/js/popup.js";
+import { icon, paintIcons } from "@pm/popup/js/icons.js";
 import {
     handleTagClick,
     addEventsToMemoryItems,
@@ -53,7 +59,7 @@ export const toggleTagsCollapse = (on) => {
         const contents = /*html*/ `
             <ul id="all-tags-list">
                 ${[...state.paperTags]
-                    .map((t) => /*html*/ `<li class="memory-tag" >${t}</li>`)
+                    .map((t) => /*html*/ `<li class="memory-tag" >${escapeHtml(t)}</li>`)
                     .join("")}
             </ul>`;
         const details = /*html*/ `
@@ -80,101 +86,37 @@ export const updateAllMemoryPaperTagOptions = () => {
     }
 };
 
-export const sampleAsciiArt = async () => {
-    try {
-        const artPath = chrome.runtime.getURL("data/art.json");
-        const art = await fetch(artPath).then((res) => res.json());
-        const nArts = Object.keys(art).length;
-        const u = Math.floor(Math.random() * nArts);
-        const [animal, ascii] = Object.entries(art)[u];
-        return { animal, ascii };
-    } catch (e) {
-        console.error("Error sampling ascii art:", e);
-        return { animal: "cat", ascii: " /\\_/\\\n( o.o )\n > ^ <" };
-    }
-};
-
+/**
+ * Paper page whose paper is not in the Memory: "Add it now" (parses and stores it), and the
+ * reasons it may be missing
+ * @param {string} url The active tab's url
+ */
 export const updatePopupPaperNoMemory = async (url) => {
-    const { animal, ascii } = await sampleAsciiArt();
-    let noPaperHtml = /* html */ `
-        <div class="no-paper-div">
-            <h3>This paper is not in your Memory&nbsp;
-            <span id="no-paper-why-span">
-                <button class="code-font" id="no-paper-why-code">?</button>
-            </span>
-            </h3>
-            <div>
-                <div>Here's a ${animal} for your trouble</div><br>
-                <div id="ascii-art-div"><div style="text-align:">${ascii}</div></div>
-            </div>
-        </div>
-    `;
+    hideId("notArxiv");
+    setHTML("isArxiv", getNoMemoryHTML(url));
+    showId("isArxiv", "flex");
+    paintIcons(findEl({ element: "isArxiv" }));
 
-    const isFirefox = navigator.userAgent.search("Firefox") > -1;
-    const allowManualParsing = isFirefox || state.prefs.checkNoAuto;
-    let ff_warning = "";
-    if (isFirefox) {
-        ff_warning = /* html */ `
-            <div id="ff-warning">
-                Firefox does not support content scripts on PDFs.<br/>
-                Use the button below to parse this paper.<br/>
-            </div>
-        `;
-    }
-    if (allowManualParsing) {
-        noPaperHtml += /* html */ `
-            <div id="manual-trigger-wrapper">
-                ${ff_warning}
-                <div id="manual-trigger-btn">Try manual trigger</div>
-                <div id="manual-loader-container" class="pm-container" style='display: none;'>
-                    <div class="sk-folding-cube">
-                        <div class="sk-cube1 sk-cube"></div>
-                        <div class="sk-cube2 sk-cube"></div>
-                        <div class="sk-cube4 sk-cube"></div>
-                        <div class="sk-cube3 sk-cube"></div>
-                    </div>
-                </div>
-                <div id="manual-parsing-error"></div>
-            </div>
-        `;
-    }
-
-    const previousIsArxiv = findEl({ element: "isArxiv" }).innerHTML;
-    setHTML("isArxiv", noPaperHtml);
-
-    addListener("no-paper-why-code", "click", () => {
-        showPopupModal("noPaper");
+    addListener("manual-trigger-btn", "click", async () => {
+        const btn = findEl({ element: "manual-trigger-btn" });
+        btn.disabled = true;
+        btn.innerHTML = `<span class="pm-spinner"></span>Adding…`;
+        setHTML("manual-parsing-error", "");
+        try {
+            const is = await isPaper(url);
+            const update = await addOrUpdatePaper({ url, is });
+            if (!update?.paper) throw new Error("No paper could be parsed");
+            popupMain(url, is, true);
+        } catch (error) {
+            warn("Manual Parsing Error:", error);
+            btn.disabled = false;
+            btn.textContent = "Try again";
+            setHTML(
+                "manual-parsing-error",
+                `<div class="pm-banner pm-banner-err">${icon("alert")}<div><b>Couldn’t add this paper</b>The page could not be read. If it should work, please report it.</div></div>`,
+            );
+        }
     });
-
-    if (allowManualParsing) {
-        addListener("manual-trigger-btn", "click", async () => {
-            showId("manual-loader-container");
-            try {
-                const is = await isPaper(url);
-                let paper;
-                const update = await addOrUpdatePaper({ url, is });
-                if (update) {
-                    paper = update.paper;
-                } else {
-                    return;
-                }
-                if (paper) {
-                    hideId("manual-loader-container");
-                    setHTML("isArxiv", previousIsArxiv);
-                    popupMain(url, is, true);
-                }
-            } catch (error) {
-                hideId("manual-loader-container");
-                const errorText =
-                    "There was an issue parsing this paper. <br/> " +
-                    "Raise an issue on Github if you think it is a bug.<br/>" +
-                    "Attempted url: " +
-                    url;
-                setHTML("manual-parsing-error", `<strong>${errorText}</strong>`);
-                warn("Manual Parsing Error:", error);
-            }
-        });
-    }
 };
 
 /**
@@ -197,12 +139,11 @@ export const copyAndConfirmMemoryItem = async ({
     } else {
         await copyHyperLinkToClipboard(textToCopy, hyperLinkTitle);
     }
+    if (context === "popup") return showToast(feedbackText);
     const element =
-        context === "popup"
-            ? findEl({ element: "popup-feedback-copied" })
-            : context === "memory"
-              ? findEl({ paperId: id, memoryItemClass: "memory-item-feedback" })
-              : null;
+        context === "memory"
+            ? findEl({ paperId: id, memoryItemClass: "memory-item-feedback" })
+            : null;
     if (!element) return;
     element.innerText = feedbackText;
     fadeIn(element);
@@ -276,12 +217,16 @@ export const saveNote = (id, note) => {
             note
                 ? /*html*/ ` <div class="memory-note-div memory-item-faded">
                       <span class="note-content-header">Note:</span>
-                      <span class="note-content">${note}</span>
+                      <span class="note-content">${escapeHtml(note)}</span>
                   </div>`
                 : /*html*/ `<div class="memory-note-div memory-item-faded"></div>`,
         );
+        // the popup's paper view, when it shows this paper and its note is not being edited
         const textarea = findEl({ element: `popup-form-note-textarea--${id}` });
-        val(textarea, note);
+        if (textarea && textarea.hidden) {
+            val(textarea, note);
+            setHTML("popup-note-val", getPopupNoteHTML({ note }));
+        }
         val(findEl({ paperId: id, memoryItemClass: "form-note-textarea" }), note);
     });
 };
@@ -299,15 +244,18 @@ export const saveCodeLink = (id, codeLink) => {
     state.papers[id].codeLink = codeLink;
     chrome.storage.local.set({ papers: state.papers }, () => {
         const displayLink = codeLink.replace(/^https?:\/\//, "");
-        setHTML(
-            findEl({ paperId: id, memoryItemClass: "memory-code-link" }),
-            displayLink,
-        );
-        setHTML(`popup-code-link`, displayLink);
+        const codeEl = findEl({ paperId: id, memoryItemClass: "memory-code-link" });
+        if (codeEl) codeEl.textContent = displayLink;
         val(findEl({ paperId: id, memoryItemClass: "form-code-input" }), codeLink);
-        codeLink ? showId("popup-code-link") : hideId("popup-code-link");
-        const codeInput = findEl({ element: `popup-form-codeLink--${id}` });
-        val(codeInput, codeLink);
+        // the popup's paper view, when it shows this paper and its link is not being edited
+        if (
+            state.currentId === id &&
+            findEl({ element: "popup-code-val" }) &&
+            !findEl({ element: `popup-form-codeLink--${id}` })
+        ) {
+            setHTML("popup-code-val", getPopupCodeLinkHTML({ codeLink }));
+            paintIcons(findEl({ element: "popup-code-val" }));
+        }
     });
 };
 
@@ -315,24 +263,19 @@ export const saveFavoriteItem = (id, favorite) => {
     state.papers[id].favorite = favorite;
     state.papers[id].favoriteDate = new Date().toJSON();
     chrome.storage.local.set({ papers: state.papers }, () => {
+        // the memory item may not be displayed (pagination)
+        const star = findEl({ element: `memory-container--${id}` })
+            ? findEl({
+                  paperId: id,
+                  memoryItemClass: "memory-item-favorite",
+              })?.querySelector("svg")
+            : null;
         if (favorite) {
             addClass(`memory-container--${id}`, "favorite");
-            addClass(
-                findEl({
-                    paperId: id,
-                    memoryItemClass: "memory-item-favorite",
-                }).querySelector("svg"),
-                "favorite",
-            );
+            star && addClass(star, "favorite");
         } else {
             removeClass(`memory-container--${id}`, "favorite");
-            removeClass(
-                findEl({
-                    paperId: id,
-                    memoryItemClass: "memory-item-favorite",
-                }).querySelector("svg"),
-                "favorite",
-            );
+            star && removeClass(star, "favorite");
         }
 
         if (state.sortKey === "favoriteDate") {
@@ -347,10 +290,11 @@ export const saveFavoriteItem = (id, favorite) => {
             }
         }
 
-        let checkFavorite = findEl({ element: `checkFavorite--${id}` });
-        if (checkFavorite) {
-            checkFavorite.checked = favorite;
-        }
+        // the popup's paper view star
+        findEl({ element: `checkFavorite--${id}` })?.setAttribute(
+            "aria-pressed",
+            String(favorite),
+        );
     });
 };
 
@@ -513,7 +457,7 @@ export const updatePaperTagsHTML = (id) => {
     setHTML(
         findEl({ paperId: id, memoryItemClass: "tag-list" }),
         state.papers[id].tags
-            .map((t) => `<span class="memory-tag">${t}</span>`)
+            .map((t) => `<span class="memory-tag">${escapeHtml(t)}</span>`)
             .join(""),
     );
 };
@@ -627,6 +571,7 @@ export const setMemorySearchPlaceholder = () =>
 export const makeMemoryHTML = async () => {
     // Fill-in input placeholder
     setMemorySearchPlaceholder();
+    updateMemoryCount();
     displayMemoryTable();
 
     // search keypress events.
@@ -634,19 +579,19 @@ export const makeMemoryHTML = async () => {
     addEventsToMemoryControls();
 };
 
+/** Number of papers, next to the Memory tab */
+export const updateMemoryCount = () =>
+    setHTML("memory-count", Object.keys(cleanPapers(state.papers)).length);
+
+/**
+ * Opens the Memory tab (from the tab, `a`, or "Open Memory")
+ */
 export const openMemory = () => {
     state.prefsIsOpen && closeMenu();
     state.memoryIsOpen = true;
-    // hide menu button
-    hideId("memory-switch-open");
-    showId("memory-switch-close");
-    hideId("menu-switch");
-    dispatch("memory-switch", "blur");
-    slideDown("memory-container", 200, () => {
-        setTimeout(() => {
-            dispatch("memory-search", "focus");
-        }, 100);
-    });
+    setActiveTab();
+    showId("memory-container");
+    dispatch("memory-search", "focus");
     setTimeout(() => {
         addListener("memory-search-clear-icon", "click", handleClearSearch);
         // set default sort to lastOpenDate
@@ -657,19 +602,15 @@ export const openMemory = () => {
 };
 
 /**
- * Closes the memory overlay with slideUp
+ * Closes the Memory tab, back to the Paper tab
  */
 export const closeMemory = () => {
-    dispatch("memory-switch", "blur");
-    hideId("memory-switch-close");
-    showId("memory-switch-open");
-    slideUp("memory-container", 200, () => {
-        val("memory-search", "");
-        dispatch("memory-search", "clear-search");
-        state.memoryIsOpen = false;
-        if (state.showFavorites) {
-            dispatch("filter-favorites", "click");
-        }
-        showId("menu-switch", "flex");
-    });
+    hideId("memory-container");
+    val("memory-search", "");
+    dispatch("memory-search", "clear-search");
+    state.memoryIsOpen = false;
+    if (state.showFavorites) {
+        dispatch("filter-favorites", "click");
+    }
+    setActiveTab();
 };

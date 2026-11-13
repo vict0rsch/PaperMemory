@@ -11,6 +11,7 @@ import {
     getStoredFiles,
     miniHash,
     getRandomInt,
+    escapeHtml,
 } from "@pmu/functions.js";
 import {
     state,
@@ -324,11 +325,11 @@ export const getTagsOptions = (paper) => {
     return [...state.paperTags]
         .sort()
         .map((t, i) => {
-            let h = '<option value="' + t + '"'; // not string literal here for minification
+            let h = '<option value="' + escapeHtml(t) + '"'; // not string literal here for minification
             if (tags.has(t)) {
                 h += ' selected="selected" ';
             }
-            return h + `>${t}</option>`;
+            return h + `>${escapeHtml(t)}</option>`;
         })
         .join("");
 };

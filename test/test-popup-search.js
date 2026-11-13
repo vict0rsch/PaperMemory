@@ -787,11 +787,11 @@ describe("Test PaperMemory Popup Search Functionality", function () {
             await verifySearchByState(PMPage, 0);
 
             // Close memory
-            await safeClick("#memory-switch-close", PMPage);
+            await safeClick("#tab-paper", PMPage);
             await sleep(100);
 
             // Reopen memory
-            await safeClick("#memory-switch-open", PMPage);
+            await safeClick("#tab-memory", PMPage);
             await sleep(100);
 
             // Search should be cleared

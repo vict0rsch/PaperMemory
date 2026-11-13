@@ -1,41 +1,57 @@
-<div id="modal-manual-website-content" class="popup-modal-content">
-    <!-- A form to update the title, author, note and year of a parsed paper -->
-    <h3>Confirm or edit parsed data</h3>
-    <p id="manual-website-url"></p>
-    <form id="manual-website-form" class="form">
-        <div class="form-group">
-            <label for="manual-website-pdfLink">URL:</label>
-            <textarea
-                type="text"
-                id="manual-website-pdfLink"
-                name="pdfLink"
-                class="form-control"
-                required
-                rows="2"
-            ></textarea>
+<!-- check (or fill in) a parsed website before it is saved -->
+<div
+    id="modal-manual-website-content"
+    class="popup-modal-content pm-sheet"
+    role="dialog"
+    tabindex="-1"
+    aria-labelledby="modal-manual-website-heading"
+    style="display: none"
+>
+    <div class="pm-sheet-head">
+        <h2 id="modal-manual-website-heading">Check the details</h2>
     </div>
-    <div class="form-group">
-        <label for="manual-website-title">Title:</label>
-        <input type="text" id="manual-website-title" name="title" class="form-control" required>
+    <div class="pm-sheet-body">
+        <form id="manual-website-form" class="pm-form" novalidate>
+            <div>
+                <label for="manual-website-pdfLink">URL</label>
+                <input class="pm-input" type="text" id="manual-website-pdfLink" />
+                <p class="pm-field-msg is-error" id="manual-website-pdfLink-msg" hidden></p>
+            </div>
+            <div>
+                <label for="manual-website-title">Title</label>
+                <input class="pm-input" type="text" id="manual-website-title" />
+                <p class="pm-field-msg is-error" id="manual-website-title-msg" hidden></p>
+            </div>
+            <div class="pm-form-two">
+                <div>
+                    <label for="manual-website-author"
+                        >Authors <small>comma-separated, first name first</small></label
+                    >
+                    <input class="pm-input" type="text" id="manual-website-author" />
+                </div>
+                <div>
+                    <label for="manual-website-year">Year</label>
+                    <input
+                        class="pm-input"
+                        type="text"
+                        id="manual-website-year"
+                        inputmode="numeric"
+                    />
+                </div>
+            </div>
+            <p class="pm-field-msg is-error" id="manual-website-author-msg" hidden></p>
+            <p class="pm-field-msg is-error" id="manual-website-year-msg" hidden></p>
+            <div>
+                <label for="manual-website-note">Note <small>optional</small></label>
+                <textarea class="pm-textarea" id="manual-website-note" rows="2"></textarea>
+            </div>
+            <div class="pm-field-msg is-error" id="manual-website-validation" hidden></div>
+        </form>
     </div>
-    <div class="form-group">
-        <label for="manual-website-author">Author:</label>
-        <input type="text" id="manual-website-author" name="author" class="form-control" required>
-        <p class="form-field-info">Author list, comma-separated, firstname first.</p>
+    <div class="pm-sheet-actions">
+        <button class="pm-btn pm-btn-ghost pm-sheet-close" type="button">Cancel</button>
+        <button class="pm-btn pm-btn-primary" type="submit" form="manual-website-form">
+            Save to Memory <span class="pm-kbd" data-mod-enter></span>
+        </button>
     </div>
-    <div class="form-group">
-        <label for="manual-website-year">Year:</label>
-        <input type="text" id="manual-website-year" name="year" class="form-control" required>
-        <p class="form-field-info">4 digits year of publication</p>
-    </div>
-    <div class="form-group">
-        <label for="manual-website-note">Note:</label>
-        <textarea type="text" id="manual-website-note" name="note" class="form-control"
-            rows="5"></textarea
-            >
-            <p class="form-field-info">Default, if any, is provided by the website.</p>
-        </div>
-        <div id="manual-website-validation"></div>
-        <button class="btn btn-primary">Save</button>
-    </form>
 </div>

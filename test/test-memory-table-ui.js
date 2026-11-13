@@ -115,10 +115,12 @@ describe("Test PaperMemory MemoryTable UI", function () {
             expect(papersCount).toBeGreaterThan(0);
             console.log(indent(2) + `✓ ${papersCount} papers loaded in state`);
 
-            // Verify memory switch close button is visible (since memory is open)
-            const memorySwitchClose = await page.$("#memory-switch-close");
-            expect(memorySwitchClose).toBeTruthy();
-            console.log(indent(2) + "✓ Memory switch close button is visible");
+            // Verify the Memory tab is the selected one (since memory is open)
+            const memoryTabSelected = await page.$eval("#tab-memory", (el) =>
+                el.getAttribute("aria-selected"),
+            );
+            expect(memoryTabSelected).toBe("true");
+            console.log(indent(2) + "✓ Memory tab is selected");
         });
 
         it("should close memory when clicking memory switch button", async function () {
@@ -126,8 +128,8 @@ describe("Test PaperMemory MemoryTable UI", function () {
             const initialState = await getPaperMemoryState(page);
             expect(initialState.memoryIsOpen).toBe(true);
 
-            // Click memory switch button to close the memory
-            await page.click("#memory-switch");
+            // Click the Paper tab to close the memory
+            await page.click("#tab-paper");
             await sleep(200, "Waiting for memory table to close");
 
             // Verify memory is now closed
@@ -140,7 +142,7 @@ describe("Test PaperMemory MemoryTable UI", function () {
             // First ensure memory is closed
             const initialState = await getPaperMemoryState(page);
             if (initialState.memoryIsOpen) {
-                await page.click("#memory-switch");
+                await page.click("#tab-paper");
                 await sleep(200);
             }
 
@@ -162,32 +164,32 @@ describe("Test PaperMemory MemoryTable UI", function () {
                 await sleep(200);
             }
 
-            // Verify memory switch close button is visible when memory is open
-            const memorySwitchCloseAfter = await page.$("#memory-switch-close");
-            const memorySwitchOpenAfter = await page.$("#memory-switch-open");
-
-            expect(memorySwitchCloseAfter).toBeTruthy();
-            expect(memorySwitchOpenAfter).toBeTruthy();
-            console.log(
-                indent(2) + "✓ Memory switch close and open buttons are visible",
+            // Both tabs are visible; the Memory tab is selected when memory is open
+            const tabs = await page.evaluate(() =>
+                ["tab-paper", "tab-memory"].map((id) => {
+                    const elem = document.getElementById(id);
+                    return {
+                        visible: !!elem && getComputedStyle(elem).display !== "none",
+                        selected: elem?.getAttribute("aria-selected"),
+                    };
+                }),
             );
 
-            // Check visibility of memory switch close and open buttons when open
-            const closeVisible = await page.evaluate(() => {
-                const elem = document.getElementById("memory-switch-close");
-                return elem && getComputedStyle(elem).display !== "none";
-            });
+            expect(tabs[0]).toEqual({ visible: true, selected: "false" });
+            expect(tabs[1]).toEqual({ visible: true, selected: "true" });
+            console.log(indent(2) + "✓ Memory tab is selected when open");
 
-            const openVisible = await page.evaluate(() => {
-                const elem = document.getElementById("memory-switch-open");
-                return elem && getComputedStyle(elem).display !== "none";
-            });
-
-            expect(closeVisible).toBe(true);
-            expect(openVisible).toBe(false);
-            console.log(
-                indent(2) + "✓ Memory switch close button is visible when open",
-            );
+            // the same key closes the memory again (when not typing in the search field)
+            await page.evaluate(() => document.activeElement.blur());
+            await page.keyboard.press("a");
+            await sleep(200);
+            expect((await getPaperMemoryState(page)).memoryIsOpen).toBe(false);
+            expect(
+                await page.$eval("#tab-paper", (el) => el.getAttribute("aria-selected")),
+            ).toBe("true");
+            await page.keyboard.press("a");
+            await sleep(200);
+            console.log(indent(2) + "✓ 'a' toggles the memory");
         });
 
         it("should display memory table content when memory is open", async function () {

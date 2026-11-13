@@ -33,14 +33,23 @@ export class WebsiteSource extends BasePaperSource {
                     m.getAttribute("content"),
                 ]),
         );
+        return WebsiteSource.fromMeta(url, og.title || tab.title, og);
+    }
 
+    /**
+     * A website paper from what is known without reading the page: the popup's "Fill in by
+     * hand" starts from this, and parse() from the page's og: metadata.
+     * @param {string} url
+     * @param {string} title
+     * @param {object} og The page's og: meta tags (site_name, description)
+     */
+    static fromMeta(url, title = "", og = {}) {
         const author =
             og.site_name || parseUrl(url).hostname.replace("www.", "").capitalize();
         const year = new Date().getFullYear() + "";
         const id = `Website_${urlToWebsiteId(url)}`;
         const note = og.description || "";
         const pdfLink = url;
-        const title = og.title || tab.title;
         const key = `${miniHash(author)}${year}${firstNonStopLowercase(title)}`;
         const venue = "";
         const accessDate = new Date().toISOString().split("T")[0];

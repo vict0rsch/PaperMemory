@@ -534,3 +534,47 @@ describe("unwrapUrl", () => {
         );
     });
 });
+
+describe("functions.js", () => {
+    describe("#normalizeCodeLink", () => {
+        const norm = (v) => PMUtils.functions.normalizeCodeLink(v);
+        const accepted = {
+            "": "",
+            "github.com/org/repo": "https://github.com/org/repo",
+            "  github.com/org/repo  ": "https://github.com/org/repo",
+            "http://github.com/org/repo": "http://github.com/org/repo",
+            "HTTPS://GitHub.com/Org/Repo": "https://github.com/Org/Repo",
+            "localhost:3000/demo": "https://localhost:3000/demo",
+            "localhost": "https://localhost/",
+            "192.168.1.10:8080/x": "https://192.168.1.10:8080/x",
+            "https://[::1]:8000/": "https://[::1]:8000/",
+            "bücher.example/repo": "https://xn--bcher-kva.example/repo",
+            "例え.テスト/x": "https://xn--r8jz45g.xn--zckzah/x",
+            "gitlab.com:8443/group/project": "https://gitlab.com:8443/group/project",
+            // markup is URL-encoded (and escaped wherever the link is shown)
+            "github.com/<img>": "https://github.com/%3Cimg%3E",
+        };
+        for (const [input, url] of Object.entries(accepted)) {
+            it(`accepts ${JSON.stringify(input)}`, () => {
+                expect(norm(input)).toEqual({ url });
+            });
+        }
+        for (const input of [
+            "mailto:foo@example.com",
+            "javascript:alert(1)",
+            "ftp://example.com/file",
+            "file:///etc/passwd",
+            "data:text/html,hi",
+            "tensor2tensor repo",
+            "https://user:pass@example.com/",
+            "https://",
+            "github.com/my repo",
+            "github.com/<img src=x>",
+        ]) {
+            it(`refuses ${JSON.stringify(input)}`, () => {
+                expect(norm(input).error).toBeTruthy();
+                expect(norm(input).url).toBeUndefined();
+            });
+        }
+    });
+});

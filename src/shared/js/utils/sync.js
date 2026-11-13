@@ -318,7 +318,8 @@ export const successSyncLoader = async () => {
     }, 2000);
 };
 /**
- * Hide the sync loader in the popup and display the error message.
+ * Hide the sync loader in the popup and display the error message. It stays until the
+ * next sync: in the popup it links to the sync settings.
  * @returns {Promise}
  */
 export const errorSyncLoader = async () => {
@@ -326,9 +327,6 @@ export const errorSyncLoader = async () => {
     hideId("sync-popup-syncing");
     hideId("sync-popup-synced");
     showId("sync-popup-error");
-    setTimeout(() => {
-        hideId("sync-popup-feedback");
-    }, 2000);
 };
 
 /**

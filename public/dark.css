@@ -20,56 +20,35 @@
 -----  Popup  -----
 -------------------
 */
-body,
-#delete-paper-modal {
+body:where(:not(.pm-ui *)),
+#delete-paper-modal:where(:not(.pm-ui *)) {
     color: var(--color);
     background: var(--background);
 }
-#popup-header {
-    color: var(--lighterColor);
-}
 
-#custom-title-textarea {
+#custom-title-textarea:where(:not(.pm-ui *)) {
     background: var(--lighterBackground);
     color: var(--color);
     border-color: var(--color);
 }
-#header-icon {
+#header-icon:where(:not(.pm-ui *)) {
     color: var(--lighterColor) !important;
     stroke: var(--lighterColor) !important;
 }
-#popup-feedback-copied {
-    color: var(--green);
-}
-.popup-display-id {
-    color: var(--dimColor);
-}
-a {
+a:where(:not(.pm-ui *)) {
     color: var(--aColor) !important;
 }
-code {
+code:where(:not(.pm-ui *)) {
     background: var(--codeBackground) !important;
 }
-*:not(.ts-control input):focus,
-.memory-search-wrapper:focus-within {
+*:not(.ts-control input):focus:where(:not(.pm-ui *)),
+.memory-search-wrapper:where(:not(.pm-ui *)):focus-within {
     outline: 2px solid var(--color) !important;
     box-shadow: none;
 }
 
-input[type="checkbox"].switch:not(:checked) {
+input[type="checkbox"].switch:where(:not(.pm-ui *)):not(:checked) {
     background: bottom;
-}
-.popup-modal-contents {
-    background-color: var(--lighterBackground);
-    color: var(--color);
-}
-#close-popup-modal:hover,
-#close-popup-modal:focus {
-    color: var(--color);
-}
-#memory-item-default-action {
-    background-color: var(--lightBackground);
-    color: var(--color);
 }
 
 /*
@@ -77,55 +56,54 @@ input[type="checkbox"].switch:not(:checked) {
 ----- Tom Select  -----
 -----------------------
 */
-
 /* Clear button */
-.ts-wrapper .clear-button {
+.ts-wrapper .clear-button:where(:not(.pm-ui *)) {
     color: var(--color);
 }
 
 /* Dropdown options — !important beats tom-select CSS injected after dark.css */
-.ts-dropdown .option {
+.ts-dropdown .option:where(:not(.pm-ui *)) {
     background: var(--lighterBackground) !important;
     color: var(--color) !important;
 }
 
 /* Dropdown: no results */
-.ts-dropdown .no-results {
+.ts-dropdown .no-results:where(:not(.pm-ui *)) {
     background: var(--lighterBackground) !important;
     color: var(--color) !important;
 }
 
 /* Dropdown: selected option */
-.ts-dropdown .option.selected {
+.ts-dropdown .option.selected:where(:not(.pm-ui *)) {
     background-color: rgb(128, 128, 128) !important;
 }
 
 /* Input area */
-.ts-wrapper .ts-control {
+.ts-wrapper .ts-control:where(:not(.pm-ui *)) {
     background-color: var(--lighterBackground) !important;
     color: var(--color) !important;
 }
 
 /* Selected tag items */
-.ts-wrapper.multi .ts-control > div {
+.ts-wrapper.multi .ts-control > div:where(:not(.pm-ui *)) {
     background: var(--lightestBackground) !important;
     border-color: var(--lightestBackground) !important;
     color: var(--lighterColor) !important;
 }
 
 /* Input text color */
-.ts-control input {
+.ts-control input:where(:not(.pm-ui *)) {
     color: var(--color) !important;
 }
 
 /* Dropdown option: hover */
-.ts-dropdown .option:hover,
-.ts-dropdown .option.active {
+.ts-dropdown .option:where(:not(.pm-ui *)):hover,
+.ts-dropdown .option.active:where(:not(.pm-ui *)) {
     background-color: rgb(49, 49, 49) !important;
     color: var(--color) !important;
 }
 
-.ts-dropdown {
+.ts-dropdown:where(:not(.pm-ui *)) {
     box-shadow: 1px 6px 4px 4px #202833 !important;
     margin: 0px !important;
 }
@@ -135,25 +113,24 @@ input[type="checkbox"].switch:not(:checked) {
 -----  Buttons  -----
 ---------------------
 */
-
-button,
-.file-upload-label {
+button:where(:not(.pm-ui *)),
+.file-upload-label:where(:not(.pm-ui *)) {
     border-color: #adbac7 !important;
     background-color: var(--buttonBackground) !important;
     color: #15191f;
 }
-button:disabled,
-.file-upload-label:disabled {
+button:where(:not(.pm-ui *)):disabled,
+.file-upload-label:where(:not(.pm-ui *)):disabled {
     color: #2e3742 !important;
     background-color: #5c6268 !important;
 }
-button:not(.ts-delete):hover,
-.file-upload-label:hover {
+button:where(:not(.pm-ui *)):not(.ts-delete):hover,
+.file-upload-label:where(:not(.pm-ui *)):hover {
     border-color: #d8e7f7 !important;
     background-color: #eeeeee !important;
     color: #000000;
 }
-#memory-sort-arrow {
+#memory-sort-arrow:where(:not(.pm-ui *)) {
     border: 1px solid var(--buttonBackground);
     background-color: var(--lighterBackground);
 }
@@ -162,13 +139,9 @@ button:not(.ts-delete):hover,
 -----  Inputs  -----
 --------------------
 */
-
-.form-note-textarea,
-.popup-form-note-textarea,
-.form-code-input,
-#auto-tags-container input,
-#manual-website-form input,
-#manual-website-form textarea {
+.form-note-textarea:where(:not(.pm-ui *)),
+.form-code-input:where(:not(.pm-ui *)),
+#auto-tags-container input:where(:not(.pm-ui *)) {
     color: var(--color);
     background: var(--lighterBackground);
 }
@@ -178,66 +151,62 @@ button:not(.ts-delete):hover,
 -----  Memory Item  -----
 -------------------------
 */
-#memory-container {
+#memory-container:where(:not(.pm-ui *)) {
     background: var(--background);
 }
-#menu-container {
-    background: var(--background);
-}
-.memory-search-wrapper {
+.memory-search-wrapper:where(:not(.pm-ui *)) {
     background: var(--codeBackground);
     color: white;
     border-color: var(--color);
 }
-#memory-search::placeholder {
+#memory-search:where(:not(.pm-ui *))::placeholder {
     color: var(--color);
 }
-#memory-select {
+#memory-select:where(:not(.pm-ui *)) {
     background: var(--lighterBackground);
 }
-#memory-select {
+#memory-select:where(:not(.pm-ui *)) {
     color: var(--color);
 }
-#memory-select {
+#memory-select:where(:not(.pm-ui *)) {
     border-color: var(--color);
 }
-.memory-title {
+.memory-title:where(:not(.pm-ui *)) {
     color: var(--color) !important;
 }
-.memory-tag {
+.memory-tag:where(:not(.pm-ui *)) {
     color: var(--color);
     background: var(--codeBackground);
 }
-.memory-note-div {
+.memory-note-div:where(:not(.pm-ui *)) {
     color: var(--noteColor);
 }
-.memory-authors,
-.memory-item-venue {
+.memory-authors:where(:not(.pm-ui *)),
+.memory-item-venue:where(:not(.pm-ui *)) {
     color: var(--dimColor);
 }
-.memory-display-id {
+.memory-display-id:where(:not(.pm-ui *)) {
     color: var(--dimColor);
 }
-.memory-code-link {
+.memory-code-link:where(:not(.pm-ui *)) {
     color: var(--aColor);
 }
-.memory-container {
+.memory-container:where(:not(.pm-ui *)) {
     border-color: var(--codeBackground);
 }
-.memory-delete {
+.memory-delete:where(:not(.pm-ui *)) {
     background: var(--background);
 }
-.memory-container svg {
+.memory-container svg:where(:not(.pm-ui *)) {
     stroke: var(--buttonBackground);
 }
-.alphaxiv-icon {
+.alphaxiv-icon:where(:not(.pm-ui *)) {
     fill: var(--buttonBackground) !important;
 }
-.memory-item-feedback {
+.memory-item-feedback:where(:not(.pm-ui *)) {
     color: var(--green);
 }
-#popup-title-tooltip,
-.title-tooltip {
+.title-tooltip:where(:not(.pm-ui *)) {
     box-shadow: 2px 2px 6px #252525;
     background: var(--lightBackground);
 }
@@ -247,12 +216,7 @@ button:not(.ts-delete):hover,
 -----  SVG icons  -----
 -----------------------
 */
-
-.menu-svg,
-#memory-switch-close,
-#menu-switch-svg,
-.popup-click-svg,
-.memory-sort-arrow-svg {
+.memory-sort-arrow-svg:where(:not(.pm-ui *)) {
     color: var(--color);
     stroke: var(--color);
     fill: var(--background);
@@ -263,32 +227,31 @@ button:not(.ts-delete):hover,
 -----  BibMatcher  -----
 ------------------------
 */
-
-#matching-feedback-container,
-#your-bib-container,
-#match-params-container {
+#matching-feedback-container:where(:not(.pm-ui *)),
+#your-bib-container:where(:not(.pm-ui *)),
+#match-params-container:where(:not(.pm-ui *)) {
     background: var(--lighterBackground);
     /* color: var(--color); */
     box-shadow: 6px 5px 9px 4px #1e2632;
 }
-.option-help {
+.option-help:where(:not(.pm-ui *)) {
     color: var(--dimColor);
 }
-#bib-text,
-#match-results {
+#bib-text:where(:not(.pm-ui *)),
+#match-results:where(:not(.pm-ui *)) {
     background: var(--codeBackground);
     color: var(--color);
 }
-#copy-results {
+#copy-results:where(:not(.pm-ui *)) {
     color: black;
 }
-#copy-results:hover {
+#copy-results:where(:not(.pm-ui *)):hover {
     color: black;
     background-color: rgb(86, 168, 86, 0.8);
 }
-#match-bib-stop {
+#match-bib-stop:where(:not(.pm-ui *)) {
     color: var(--red);
 }
-#bib-text::placeholder {
+#bib-text:where(:not(.pm-ui *))::placeholder {
     color: #aaa;
 }

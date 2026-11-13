@@ -14,8 +14,6 @@
         <link rel="stylesheet" type="text/css" href="/vars.css" wxt-ignore />
         <link rel="stylesheet" type="text/css" href="/popup.css" wxt-ignore />
         <link rel="stylesheet" type="text/css" href="/tom-select.css" wxt-ignore />
-        <link rel="stylesheet" type="text/css" href="/options.css" wxt-ignore />
-        <link rel="stylesheet" type="text/css" href="/loader.css" wxt-ignore />
         <!-- after every stylesheet: applies the theme before first paint -->
         <script src="/theme.js"></script>
 
@@ -23,153 +21,124 @@
     </head>
 
     <body id="pm-popup">
-        <div id="popup-header">
-            <h1 title="https://papermemory.org">
-                <a class="link-in-new-tab" href="https://papermemory.org">
-                    PaperMemory
-                </a>
-            </h1>
-            <!--=include svgs/header-icon.html -->
-        </div>
-
-        <div id="popup-container">
-            <div id="notArxiv" style="display: none; position: relative">
-                <p>
-                    <strong style="color: var(--lightRed)">PaperMemory</strong>
-                    automatically records and organizes the papers you read, without
-                    ever leaving your browser.
-                </p>
-
-                <p>
-                    When opening a paper (its web page or pdf), a reference to that
-                    paper will be stored in your Memory. Supports Arxiv, Open Review,
-                    PNAS, Science, Nature
-                    <a
-                        href="https://papermemory.org/features/#venues"
-                        class="link-in-new-tab"
-                    >
-                        and more</a
-                    >!
-                </p>
-
-                <p>
-                    <a
-                        class="link-in-new-tab"
-                        href="https://github.com/vict0rsch/PaperMemory/issues/13"
-                        >Request a new venue</a
-                    >.
-                </p>
-
-                <p class="d-flex-center-start">
-                    Click on the&nbsp;
-                    <!--=include svgs/memory-switch-open-small.html -->
-                    &nbsp;Memory button below
-                    <!--=include svgs/arrow-down-left.html -->
-
-                    <span>(or press <code>a</code></span>
-                    )!
-                </p>
-                <p style="text-align: center">
+        <!-- the restyled popup (.pm-ui). The Memory list (#memory-container, below) keeps its
+             own styles until it is restyled; it sits under the header, over the paper view. -->
+        <div id="pm-shell" class="pm-ui">
+            <header class="pm-hdr" id="popup-header">
+                <span class="pm-brand"><i data-i="mark"></i>PaperMemory</span>
+                <nav class="pm-tabs" role="tablist" aria-label="Views">
                     <button
-                        style="cursor: pointer"
-                        id="keyboardShortcuts"
-                        class="code-font"
+                        class="pm-tab"
+                        id="tab-paper"
+                        role="tab"
+                        aria-selected="true"
+                        title="This page"
                     >
-                        User Guide
+                        Paper
                     </button>
-                </p>
-
-                <div id="website-parsing-root" style="display: none; width: 100%"></div>
-
-                <div id="whats-new-container">
-                    <div class="d-relative">
-                        <!--=include svgs/whatsnew-marker.html -->
-                        <span id="whats-new-marker" style="display: none"></span>
+                    <button
+                        class="pm-tab"
+                        id="tab-memory"
+                        role="tab"
+                        aria-selected="false"
+                        title="Memory (a)"
+                    >
+                        Memory <span class="pm-count" id="memory-count"></span>
+                    </button>
+                </nav>
+                <span class="pm-spacer"></span>
+                <div id="sync-popup-feedback" style="display: none">
+                    <div id="sync-popup-syncing" style="display: none">
+                        <span class="pm-sync"
+                            ><span class="pm-spinner"></span>Syncing</span
+                        >
                     </div>
+                    <div id="sync-popup-synced" style="display: none">
+                        <span class="pm-sync pm-sync-ok"
+                            ><i data-i="check"></i>Synced</span
+                        >
+                    </div>
+                    <a
+                        href="#"
+                        id="sync-popup-error"
+                        style="display: none"
+                        title="Open the sync settings"
+                        ><span class="pm-sync pm-sync-err"
+                            ><i data-i="alert"></i>Sync failed</span
+                        ></a
+                    >
                 </div>
-            </div>
-
-            <div id="isArxiv" style="display: none">
-                <h3
-                    style="
-                        text-align: center;
-                        max-width: 95%;
-                        font-weight: 400;
-                        margin-bottom: 0px;
-                        margin-top: 0px;
-                        font-size: 1.1rem;
-                    "
-                    id="popup-paper-title"
-                ></h3>
-
-                <p id="popup-authors"></p>
-
-                <a style="display: none" class="mt-0" id="popup-code-link"></a>
-                <a style="display: none" class="mt-0" id="popup-website-url"></a>
-
-                <div
-                    style="width: 75%; margin-bottom: 28px; position: relative"
-                    id="popup-icons-container"
+                <button
+                    id="menu-switch"
+                    class="pm-iconbtn"
+                    title="Settings (p)"
+                    aria-label="Settings"
+                    aria-expanded="false"
                 >
-                    <div
-                        style="
-                            display: flex;
-                            justify-content: space-evenly;
-                            align-items: center;
-                        "
-                        id="popup-copy-icons"
-                    ></div>
-                    <div style="display: none" id="popup-feedback-copied"></div>
+                    <i data-i="gear"></i>
+                </button>
+            </header>
+
+            <main id="popup-body">
+                <div id="popup-notice-slot"></div>
+                <div id="popup-loading" class="pm-empty">
+                    <span class="pm-spinner pm-spinner-lg"></span>
+                    <p>Opening your Memory…</p>
                 </div>
+                <div id="notArxiv" style="display: none"></div>
+                <div id="isArxiv" style="display: none"></div>
+            </main>
 
-                <div
-                    id="popup-memory-edit"
-                    style="width: 100%; margin-bottom: 32px"
-                ></div>
+            <footer class="pm-hints" id="popup-hints">
+                <span class="pm-hint-nav"><span class="pm-kbd">a</span> Memory</span>
+                <span class="pm-hint-nav"><span class="pm-kbd">p</span> Settings</span>
+                <span class="pm-spacer"></span>
+                <span><span class="pm-kbd">?</span> All shortcuts</span>
+            </footer>
+
+            <!--=include menu.html -->
+
+            <div class="pm-sheet-layer" id="popup-modal-wrapper" style="display: none">
+                <div class="pm-scrim" id="popup-modal-scrim"></div>
+                <!--=include modals/*.html -->
             </div>
 
-            <div>
-                <div id="warning-button" style="display: none">
-                    ⚠️ Important Notice<br />Click here
+            <div class="pm-sheet-layer" id="delete-paper-modal" style="display: none">
+                <div class="pm-scrim" id="delete-paper-modal-scrim"></div>
+                <div
+                    class="pm-sheet"
+                    role="dialog"
+                    tabindex="-1"
+                    aria-labelledby="delete-modal-heading"
+                >
+                    <div class="pm-sheet-head">
+                        <h2 id="delete-modal-heading">Delete this paper?</h2>
+                    </div>
+                    <div class="pm-sheet-body">
+                        <div class="pm-quote" id="delete-modal-title"></div>
+                        <p>
+                            Its tags, note and code link are deleted with it. Opening the
+                            paper again adds it back, without them.
+                        </p>
+                    </div>
+                    <div class="pm-sheet-actions">
+                        <button class="pm-btn" id="delete-paper-modal-cancel-button">
+                            Cancel
+                        </button>
+                        <button
+                            class="pm-btn pm-btn-danger-solid"
+                            id="delete-paper-modal-confirm-button"
+                        >
+                            Delete <span class="pm-kbd">↵</span>
+                        </button>
+                    </div>
+                    <span id="delete-paper-modal-hidden-id" style="display: none"></span>
                 </div>
             </div>
-        </div>
 
-        <!--=include menu.html -->
-
-        <div id="memory-spinner" class="pm-container">
-            <div class="sk-folding-cube">
-                <div class="sk-cube1 sk-cube"></div>
-                <div class="sk-cube2 sk-cube"></div>
-                <div class="sk-cube4 sk-cube"></div>
-                <div class="sk-cube3 sk-cube"></div>
+            <div id="popup-feedback-copied" class="pm-ptoast" role="status" hidden>
+                <i data-i="check" class="pm-i-sm"></i><span></span>
             </div>
-        </div>
-        <div id="memory-switch" style="display: none">
-            <!--=include svgs/memory-switch-open.html -->
-            <!--=include svgs/memory-switch-close.html -->
-        </div>
-        <div id="sync-popup-feedback" style="display: none">
-            <div id="sync-popup-syncing" style="display: none; align-items: center">
-                Syncing
-                <div
-                    class="pm-loader"
-                    style="
-                        width: 12px;
-                        height: 12px;
-                        border-width: 2px;
-                        display: inline-block;
-                        margin: auto;
-                        margin-left: 8px;
-                    "
-                ></div>
-            </div>
-            <div id="sync-popup-synced" style="display: none">Synced ✅</div>
-            <div id="sync-popup-error" style="display: none">Sync failed ❌</div>
-        </div>
-
-        <div id="menu-switch" tabindex="0" title="Open settings" class="rounded">
-            <!--=include svgs/menu-switch.html -->
         </div>
 
         <div id="memory-container" style="display: none">
@@ -204,41 +173,6 @@
                 </span>
             </div>
             <div id="memory-table" width="100%"></div>
-        </div>
-
-        <div id="delete-paper-modal" style="display: none">
-            <div
-                style="
-                    width: 80%;
-                    padding: 32px 32px;
-                    text-align: center;
-                    font-size: 1.1rem;
-                "
-            >
-                Are you sure you want to delete:
-                <p id="delete-modal-title"></p>
-                ?
-            </div>
-            <div style="width: 100%; text-align: center; padding: 32px">
-                <button style="padding: 8px 16px" id="delete-paper-modal-cancel-button">
-                    Cancel
-                </button>
-                <span style="min-width: 32px"></span>
-                <button
-                    style="padding: 8px 16px"
-                    id="delete-paper-modal-confirm-button"
-                >
-                    Confirm
-                </button>
-            </div>
-            <span id="delete-paper-modal-hidden-id" style="display: none"></span>
-        </div>
-
-        <div class="popup-modal-wrapper" id="popup-modal-wrapper" style="display: none">
-            <div class="popup-modal-contents">
-                <span id="close-popup-modal">&times;</span>
-                <!--=include modals/*.html -->
-            </div>
         </div>
     </body>
 </html>

@@ -208,6 +208,30 @@ describe("Popup Menu Tests", function () {
             expect(visible).toBe(true);
         });
 
+        it("should close with 'p' again (toggle)", async function () {
+            await PMPage.keyboard.press("p");
+            await PMPage.waitForFunction(
+                () =>
+                    document.getElementById("menu-container").style.display === "none",
+                { timeout: 5000 },
+            );
+            expect(await isMenuVisible(PMPage)).toBe(false);
+            // the gear is back (it reads "Close" while the menu is open)
+            const label = await PMPage.$eval("#menu-switch", (el) =>
+                el.getAttribute("aria-label"),
+            );
+            expect(label).toBe("Settings");
+            await PMPage.keyboard.press("p");
+            await PMPage.waitForFunction(
+                () =>
+                    document.getElementById("menu-container").style.display !== "none",
+                { timeout: 5000 },
+            );
+            expect(
+                await PMPage.$eval("#menu-switch", (el) => el.innerText.trim()),
+            ).toBe("Close");
+        });
+
         it("should close with Escape key", async function () {
             await PMPage.keyboard.press("Escape");
             await PMPage.waitForFunction(
@@ -748,6 +772,65 @@ describe("Popup Menu Tests", function () {
                 () =>
                     document.getElementById("menu-container").style.display !== "none",
             );
+            // less-used settings are in collapsed groups ("More"): open them all
+            await PMPage.evaluate(() =>
+                document
+                    .querySelectorAll("#menu-container details")
+                    .forEach((d) => (d.open = true)),
+            );
+        });
+
+        it("should show checkNoAuto inverted as 'Record papers automatically'", async function () {
+            const read = () =>
+                PMPage.evaluate(
+                    () =>
+                        new Promise((resolve) =>
+                            chrome.storage.local.get("prefs", ({ prefs }) =>
+                                resolve({
+                                    stored: (prefs || {}).checkNoAuto,
+                                    checked: document.getElementById("checkNoAuto").checked,
+                                }),
+                            ),
+                        ),
+                );
+            const before = await read();
+            expect(before.checked).toBe(!before.stored);
+            await safeClick("#checkNoAuto", PMPage);
+            await PMPage.waitForFunction(
+                (stored) =>
+                    new Promise((resolve) =>
+                        chrome.storage.local.get("prefs", ({ prefs }) =>
+                            resolve((prefs || {}).checkNoAuto === !stored),
+                        ),
+                    ),
+                { timeout: 5000, polling: 100 },
+                !!before.stored,
+            );
+            const after = await read();
+            expect(after.checked).toBe(!after.stored);
+            if (after.stored) {
+                // switching automatic recording off explains the manual shortcut
+                await PMPage.waitForSelector("#modal-manualParsing-content", {
+                    visible: true,
+                    timeout: 2000,
+                });
+                await safeClick("#modal-manualParsing-content .pm-sheet-close", PMPage);
+            }
+            // restore
+            await safeClick("#checkNoAuto", PMPage);
+            await PMPage.waitForFunction(
+                (stored) =>
+                    new Promise((resolve) =>
+                        chrome.storage.local.get("prefs", ({ prefs }) =>
+                            resolve(!!(prefs || {}).checkNoAuto === stored),
+                        ),
+                    ),
+                { timeout: 5000, polling: 100 },
+                !!before.stored,
+            );
+            if (before.stored) {
+                await safeClick("#modal-manualParsing-content .pm-sheet-close", PMPage);
+            }
         });
 
         for (const checkboxId of checkboxes) {
@@ -787,12 +870,15 @@ describe("Popup Menu Tests", function () {
             });
         }
 
-        it("should change the theme select and update storage (checkDarkMode in sync)", async function () {
+        it("should change the theme segmented control and update storage (checkDarkMode in sync)", async function () {
             await verifySelectorExists("#theme-select", PMPage);
-            const initial = await PMPage.$eval("#theme-select", (el) => el.value);
+            const initial = await PMPage.$eval(
+                "#theme-select",
+                (el) => el.querySelector('[aria-pressed="true"]').dataset.value,
+            );
 
             for (const theme of ["dark", "light"]) {
-                await PMPage.select("#theme-select", theme);
+                await safeClick(`#theme-select [data-value="${theme}"]`, PMPage);
                 await PMPage.waitForFunction(
                     (theme) =>
                         new Promise((resolve) => {
@@ -808,8 +894,16 @@ describe("Popup Menu Tests", function () {
                 );
             }
 
+            // the pressed segment follows the choice
+            expect(
+                await PMPage.$eval(
+                    "#theme-select",
+                    (el) => el.querySelector('[aria-pressed="true"]').dataset.value,
+                ),
+            ).toBe("light");
+
             // Restore state
-            await PMPage.select("#theme-select", initial);
+            await safeClick(`#theme-select [data-value="${initial}"]`, PMPage);
         });
     });
 
@@ -819,11 +913,11 @@ describe("Popup Menu Tests", function () {
             await safeClick("#menu-switch", PMPage);
         });
 
-        it("should have a functioning User Guide button and display shortcuts", async function () {
-            // The user guide button opens a modal
-            await safeClick("#keyboardShortcutsMenu", PMPage);
-            // Verify modal is open
-            await PMPage.waitForSelector("#popup-modal-wrapper", { visible: true });
+        it("should open the shortcut sheet with '?' and close it with '?' again", async function () {
+            await safeClick("#menu-switch", PMPage); // close the menu: ? works anywhere
+            await PMPage.keyboard.press("?");
+            // Verify the sheet is open
+            await PMPage.waitForSelector("#modal-shortcuts-content", { visible: true });
             const modalVisible = await PMPage.evaluate(() => {
                 const modal = document.getElementById("popup-modal-wrapper");
                 return modal && modal.style.display !== "none";
@@ -831,23 +925,35 @@ describe("Popup Menu Tests", function () {
             expect(modalVisible).toBe(true);
 
             // Verify shortcuts list is populated
-            const shortcuts = await PMPage.$$eval(
-                "#user-guide-shortcuts-ul li",
-                (els) => els.map((e) => e.innerText),
+            const shortcuts = await PMPage.$$eval("#user-guide-shortcuts li", (els) =>
+                els.map((e) => e.innerText),
             );
             expect(shortcuts.length).toBeGreaterThan(0);
             // Check for a known shortcut description
-            expect(shortcuts.some((s) => s.includes("Open the paper"))).toBe(true);
+            expect(shortcuts.some((s) => s.includes("Open paper"))).toBe(true);
+            // browser-level shortcuts are read from chrome.commands
+            const openPopup = await PMPage.$eval(
+                '#user-guide-shortcuts [data-cmd="_execute_action"]',
+                (el) => el.innerText,
+            );
+            expect(openPopup.length).toBeGreaterThan(0);
 
-            // Close modal
-            await safeClick("#close-popup-modal", PMPage);
+            // Close it with the same key
+            await PMPage.keyboard.press("?");
+            await PMPage.waitForFunction(
+                () =>
+                    document.getElementById("popup-modal-wrapper").style.display ===
+                    "none",
+                { timeout: 2000 },
+            );
+            await safeClick("#menu-switch", PMPage); // back to the menu
         });
 
         it("should have links to external tools", async function () {
             const links = [
                 { id: "bib-matcher", text: "BibMatcher" },
-                { id: "full-memory", text: "full-page memory" },
-                { id: "advanced-configuration", text: "options page" },
+                { id: "full-memory", text: "Full Memory" },
+                { id: "advanced-configuration", text: "All options" },
             ];
 
             for (const link of links) {

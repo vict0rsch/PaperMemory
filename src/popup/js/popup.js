@@ -9,30 +9,23 @@ import TomSelect from "tom-select";
 import "tom-select/dist/css/tom-select.css";
 import {
     arxivIdFromPaperID,
-    cutAuthors,
     delay,
     firstNonStopLowercase,
-    info,
     isPdfUrl,
     log,
     miniHash,
+    normalizeCodeLink,
     shouldWarn,
-    tablerSvg,
-    textareaFocusEnd,
+    urlToWebsiteId,
 } from "@pmu/functions.js";
 import {
-    addEventToClass,
     addListener,
     dispatch,
     findEl,
     hideId,
     queryAll,
     setHTML,
-    setTextId,
     showId,
-    slideDown,
-    slideUp,
-    style,
     val,
 } from "@pmu/miniquery.js";
 import {
@@ -40,6 +33,7 @@ import {
     getPrefs,
     getStorage,
     onPrefsChange,
+    saveThemePref,
     themeFromPrefs,
     updatePrefs,
     setDefaultKeyboardAction,
@@ -48,6 +42,7 @@ import {
 } from "@pmu/data.js";
 import {
     addOrUpdatePaper,
+    initPaper,
     isPaper,
     makeMdLink,
     paperToAbs,
@@ -55,61 +50,206 @@ import {
 } from "@pmu/paper.js";
 import { bibtexToObject, bibtexToString } from "@pmu/bibtexParser.js";
 import { initSyncAndState, pushToRemote } from "@pmu/sync.js";
+import { getSource, knownPaperPages } from "@pmu/sources/index.js";
 import {
-    getPaperInfoTable,
-    getPopupEditFormHTML,
-    getPopupPaperIconsHTML,
+    authorList,
+    getNotPaperHTML,
+    getNoticeBannerHTML,
+    getPopupCodeLinkHTML,
+    getPopupNoteHTML,
+    getPopupPaperHTML,
 } from "@pm/popup/js/templates.js";
 import {
     closePopupModal,
-    getHandleTitleTooltip,
-    handleExpandAuthors,
     handleHideAllTitleTooltips,
-    handleMemorySwitchClick,
     handlePopupDeletePaper,
     handlePopupKeydown,
     handlePrefsCheckChange,
-    handleThemeChange,
-    hideTitleTooltip,
-    showTitleTooltip,
-    setFormChangeListener,
 } from "@pm/popup/js/handlers.js";
 import {
+    closeMemory,
     copyAndConfirmMemoryItem,
     focusExistingOrCreateNewURLTab,
     makeMemoryHTML,
+    openMemory,
+    saveCodeLink,
+    saveFavoriteItem,
+    saveNote,
+    updatePaperTags,
     updatePopupPaperNoMemory,
 } from "@pm/popup/js/memory.js";
+import { icon, paintIcons } from "@pm/popup/js/icons.js";
 import { downloadPaperPdf } from "@pmu/state.js";
 import { parseIdFromUrl, getCurrentUserTab } from "@pmu/urls.js";
 import { findLocalFile } from "@pmu/files.js";
 
-// Handler functions available globally from handlers.js:
-// handlePrefsCheckChange, handleMemorySwitchClick, handlePopupKeydown, handlePopupDeletePaper
+const isMac = /Mac/.test(navigator.userAgent);
+const DETAILS_KEY = "pm-paper-details"; // localStorage: last open/closed state of Details
+
+let currentTab = null; // the user's active tab when the popup opened
+let parseRun = 0; // incremented to ignore the result of a cancelled website parse
+let whatsNewUnseen = false;
+let manualWebsitePaper = null; // the parsed website shown in the "Check the details" sheet
+const shortcuts = {}; // browser-level command name -> display string
+
+// ----------------------------
+// -----  Header and tabs -----
+// ----------------------------
 
 /**
- * Close the menu's overlay: slide div up and update button svg
+ * Selects the Paper or Memory tab from state (none while the settings menu is open)
  */
-export const closeMenu = () => {
-    let classes = ["pm-tabler-icon", "menu-svg"];
-
-    slideUp("menu-container", 300);
-    setHTML("menu-switch", tablerSvg("settings", "menu-switch-svg", classes));
-    dispatch("menu-switch", "blur");
-    state.prefsIsOpen = false;
+export const setActiveTab = () => {
+    const paper = !state.prefsIsOpen && !state.memoryIsOpen;
+    const memory = !state.prefsIsOpen && state.memoryIsOpen;
+    findEl({ element: "tab-paper" })?.setAttribute("aria-selected", String(paper));
+    findEl({ element: "tab-memory" })?.setAttribute("aria-selected", String(memory));
 };
 
 /**
- * Open the menu's overlay: slide div down and update button svg
+ * Close the settings menu; the header button goes back to the gear
+ */
+export const closeMenu = () => {
+    hideId("menu-container");
+    const btn = findEl({ element: "menu-switch" });
+    if (btn) {
+        btn.className = "pm-iconbtn";
+        btn.innerHTML = icon("gear");
+        btn.title = "Settings (p)";
+        btn.setAttribute("aria-label", "Settings");
+        btn.setAttribute("aria-expanded", "false");
+    }
+    const wasOpen = state.prefsIsOpen;
+    state.prefsIsOpen = false;
+    setActiveTab();
+    // give the focus back to where it was before the menu opened
+    if (wasOpen && findEl({ element: "menu-container" })?.contains(document.activeElement))
+        state.menuReturnFocus?.isConnected &&
+            state.menuReturnFocus.focus({ preventScroll: true });
+    state.menuReturnFocus = null;
+};
+
+/**
+ * Open the settings menu (at the top); the header button becomes "× Close"
  */
 export const openMenu = () => {
-    let classes = ["pm-tabler-icon", "menu-svg"];
-    slideDown("menu-container", 300);
-    dispatch("menu-switch", "blur");
-    setHTML("menu-switch", tablerSvg("circle-x", "close-menu-btn", classes));
+    if (!state.prefsIsOpen) state.menuReturnFocus = document.activeElement;
+    showId("menu-container", "flex");
+    const body = findEl({ element: "menu-body" });
+    body.scrollTop = 0;
+    const btn = findEl({ element: "menu-switch" });
+    btn.className = "pm-btn pm-btn-ghost pm-btn-sm";
+    btn.innerHTML = `${icon("x", "pm-i-sm")}Close`;
+    btn.title = "Close settings (p)";
+    btn.setAttribute("aria-label", "Close settings");
+    btn.setAttribute("aria-expanded", "true");
     state.prefsIsOpen = true;
+    setActiveTab();
     setHTML("pm-version", chrome.runtime.getManifest().version);
-    findEl({ element: "menu-feedback-header" }).focus();
+    body.focus({ preventScroll: true });
+};
+
+// ---------------------
+// -----  Sheets  ------
+// ---------------------
+
+/**
+ * Opens a bottom sheet by its name (#modal-<name>-content) and focuses its first control
+ * @param {string} name
+ */
+export const showPopupModal = (name) => {
+    if (!state.modalIsOpen) state.modalReturnFocus = document.activeElement;
+    state.modalIsOpen = name;
+    queryAll(".popup-modal-content").forEach(hideId);
+    const sheet = findEl({ element: `modal-${name}-content` });
+    showId(sheet, "flex");
+    showId("popup-modal-wrapper", "flex");
+    sheet.querySelector(".pm-sheet-body, .pm-keys")?.scrollTo?.(0, 0);
+    // forms: the first field; otherwise the sheet itself (Tab then reaches its buttons)
+    (sheet.querySelector("input, textarea") ?? sheet).focus({ preventScroll: true });
+};
+
+/** Opens the browser's keyboard shortcut settings */
+const openShortcutSettings = () => {
+    if (globalThis.browser?.commands?.openShortcutSettings)
+        return browser.commands.openShortcutSettings();
+    if (navigator.userAgent.includes("Firefox"))
+        return chrome.tabs.create({
+            url: "https://support.mozilla.org/kb/manage-extension-shortcuts-firefox",
+        });
+    chrome.tabs.create({ url: "chrome://extensions/shortcuts" });
+};
+
+/**
+ * "⇧⌘E" (Chrome, macOS) or "Ctrl+Shift+E" -> display string for a key cap
+ * @param {string} shortcut From chrome.commands
+ */
+const formatShortcut = (shortcut) => {
+    if (!shortcut) return "Not set";
+    if (!isMac) return shortcut;
+    const names = { Command: "⌘", Ctrl: "⌘", MacCtrl: "⌃", Alt: "⌥", Shift: "⇧" };
+    const parts = shortcut.includes("+")
+        ? shortcut.split("+").map((p) => names[p] ?? p)
+        : [...shortcut];
+    const order = ["⌘", "⌥", "⇧", "⌃"];
+    const mods = parts.filter((p) => order.includes(p));
+    const keys = parts.filter((p) => !order.includes(p));
+    mods.sort((a, b) => order.indexOf(a) - order.indexOf(b));
+    return [...mods, ...keys].join(" ");
+};
+
+/**
+ * Reads the browser-level shortcuts (they can be changed by the user) and writes them in
+ * every [data-cmd] key cap; also the platform's modifier in [data-mod] caps.
+ */
+const loadShortcuts = async () => {
+    // callback (Chrome) or promise (Firefox); never block the popup on it
+    const commands = await new Promise((resolve) => {
+        setTimeout(() => resolve([]), 500);
+        try {
+            chrome.commands.getAll(resolve)?.then?.(resolve, () => resolve([]));
+        } catch (e) {
+            resolve([]);
+        }
+    });
+    for (const { name, shortcut } of commands ?? []) {
+        shortcuts[name] = formatShortcut(shortcut);
+    }
+    queryAll("[data-cmd]").forEach((el) => {
+        el.textContent = shortcuts[el.dataset.cmd] ?? "Not set";
+    });
+    queryAll("[data-mod]").forEach((el) => (el.textContent = isMac ? "⌘" : "Ctrl"));
+    queryAll("[data-mod-enter]").forEach(
+        (el) => (el.textContent = isMac ? "⌘↵" : "Ctrl ↵"),
+    );
+};
+
+/**
+ * Shows "Copied" feedback: a toast in the popup
+ * @param {string} text
+ */
+let toastTimer;
+export const showToast = (text) => {
+    const toast = findEl({ element: "popup-feedback-copied" });
+    if (!toast) return;
+    toast.querySelector("span").textContent = text;
+    toast.hidden = false;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => (toast.hidden = true), 1500);
+};
+
+// -------------------------
+// -----  Settings menu -----
+// -------------------------
+
+const setThemeButtons = (theme) =>
+    queryAll("#theme-select button").forEach((b) =>
+        b.setAttribute("aria-pressed", String(b.dataset.value === theme)),
+    );
+
+/** checkNoAuto is shown inverted ("Record papers automatically") */
+const setCheck = (el, value) => {
+    el.checked = el.hasAttribute("data-invert") ? !value : value;
 };
 
 /**
@@ -127,12 +267,10 @@ export const getAndTrackPopupMenuChecks = (prefs, prefsCheckNames) => {
               ? false
               : true;
         const el = findEl({ element: key });
-        if (el) {
-            el.checked = setValues[key];
-        }
+        if (el) setCheck(el, setValues[key]);
     }
     setValues.theme = prefs.theme;
-    findEl({ element: "theme-select" }).value = prefs.theme;
+    setThemeButtons(prefs.theme);
     // store the defaults of keys missing from storage, without overwriting the others
     updatePrefs((stored) =>
         Object.fromEntries(
@@ -143,193 +281,583 @@ export const getAndTrackPopupMenuChecks = (prefs, prefsCheckNames) => {
     for (const key of prefsCheckNames) {
         addListener(key, "change", handlePrefsCheckChange);
     }
-    addListener("theme-select", "change", handleThemeChange);
+    queryAll("#theme-select button").forEach((b) =>
+        addListener(b, "click", () => {
+            setThemeButtons(b.dataset.value);
+            saveThemePref(b.dataset.value);
+        }),
+    );
 
     // prefs changed elsewhere (options page, another popup): re-sync the menu controls
     onPrefsChange((stored) => {
         for (const key of prefsCheckNames) {
             const el = findEl({ element: key });
-            if (el && stored.hasOwnProperty(key)) el.checked = stored[key];
+            if (el && stored.hasOwnProperty(key)) setCheck(el, stored[key]);
         }
-        findEl({ element: "theme-select" }).value = themeFromPrefs(stored);
+        setThemeButtons(themeFromPrefs(stored));
     });
 };
 
 /**
- * Opens a modal by its name by making it visible and setting global state
- * @param {string} name - The name/id of the modal to show
+ * Settings menu: prefs, ↵ action, links that open pages in a new tab
  */
-export const showPopupModal = (name) => {
-    state.modalIsOpen = true;
-    queryAll(".popup-modal-content").forEach(hideId);
-    showId(`modal-${name}-content`, "contents");
-    style("popup-modal-wrapper", "display", "flex");
-    [...document.getElementsByTagName("a")].forEach((el) => {
-        addListener(el, "click", () => {
-            chrome.tabs.create({ url: el.getAttribute("href") });
-        });
+const setupMenu = async (prefs) => {
+    getAndTrackPopupMenuChecks(prefs, prefsCheckNames);
+    val("memory-item-default-action", await getDefaultKeyboardAction());
+    addListener("memory-item-default-action", "change", (e) => {
+        setDefaultKeyboardAction(e.target.value);
+    });
+    addListener("advanced-configuration", "click", () => {
+        chrome.runtime.openOptionsPage();
+    });
+    addListener("full-memory", "click", () => {
+        chrome.tabs.create({ url: chrome.runtime.getURL("fullMemory.html") });
+    });
+    addListener("bib-matcher", "click", () => {
+        chrome.tabs.create({ url: chrome.runtime.getURL("bibMatcher.html") });
     });
 };
 
-export const fillUserGuideShortcuts = () => {
-    const ul = findEl({ element: "user-guide-shortcuts-ul" });
-    const children = findEl({ element: "menu-keyboard-shortcuts" }).children;
-    for (const child of children) {
-        const key = child.querySelector("code")?.textContent;
-        if (key === "e" || key?.toLowerCase() === "backspace") {
-            continue;
-        }
-        if (child.nodeName === "P") {
-            child.style.fontSize = "0.9rem";
-            child.innerText =
-                'The following keys are available when enabled in the "User Interface" section of the Menu:';
-            child.style.marginBottom = "3px";
-            child.style.marginTop = "3px";
-            child.style.marginLeft = "-14px";
-        }
-        ul.innerHTML += child.outerHTML;
-    }
+// ------------------------------
+// -----  Clicks (one time) -----
+// ------------------------------
+
+const openWhatsNew = () => {
+    chrome.storage.local.get("whatsnew", ({ whatsnew }) => {
+        const version = chrome.runtime.getManifest().version;
+        chrome.storage.local.set({ whatsnew: { ...(whatsnew ?? {}), [version]: true } });
+        whatsNewUnseen = false;
+        findEl({ element: "whats-new-container" })?.classList.remove("pm-newdot");
+        showPopupModal("whatsnew");
+    });
 };
 
 /**
  * Creates click events on the popup
  */
 export const setStandardPopupClicks = () => {
-    queryAll(".link-in-new-tab").forEach((el) => {
-        addListener(el, "click", (e) => {
-            e.preventDefault();
-            chrome.tabs.create({ url: el.getAttribute("href") });
+    // every link marked .link-in-new-tab (also in sheets and rendered states)
+    addListener(document, "click", (e) => {
+        const a = e.target.closest?.("a.link-in-new-tab");
+        if (!a) return;
+        e.preventDefault();
+        chrome.tabs.create({ url: a.getAttribute("href") });
+    });
+
+    addListener("tab-paper", "click", () => {
+        state.prefsIsOpen && closeMenu();
+        state.memoryIsOpen && closeMemory();
+    });
+    addListener("tab-memory", "click", () => {
+        state.prefsIsOpen && closeMenu();
+        !state.memoryIsOpen && openMemory();
+    });
+    addListener("menu-switch", "click", () => {
+        state.prefsIsOpen ? closeMenu() : openMenu();
+    });
+    addListener("sync-popup-error", "click", (e) => {
+        e.preventDefault();
+        chrome.tabs.create({
+            url: chrome.runtime.getURL("options.html#online-synchronization"),
         });
     });
 
-    addListener("whats-new-container", "click", () => {
-        chrome.storage.local.get("whatsnew", ({ whatsnew }) => {
-            const version = chrome.runtime.getManifest().version;
-            if (typeof whatsnew === "undefined") {
-                whatsnew = {};
-            }
-            if (!whatsnew.hasOwnProperty(version)) {
-                hideId("whats-new-marker");
-            }
-            chrome.storage.local.set({
-                whatsnew: { ...whatsnew, [version]: true },
-            });
-            showPopupModal("whatsnew");
-        });
+    // sheets: Close buttons, scrim, shortcut links
+    queryAll(".pm-sheet-close").forEach((el) =>
+        addListener(el, "click", closePopupModal),
+    );
+    addListener("popup-modal-scrim", "click", closePopupModal);
+    queryAll(".pm-open-shortcuts").forEach((el) =>
+        addListener(el, "click", (e) => {
+            e.preventDefault();
+            openShortcutSettings();
+        }),
+    );
+    addListener("ar5iv-modal-cancel-button", "click", closePopupModal);
+    addListener("delete-paper-modal-scrim", "click", () =>
+        dispatch("delete-paper-modal-cancel-button", "click"),
+    );
+
+    // manual website form
+    addListener("manual-website-form", "submit", (e) => {
+        e.preventDefault();
+        saveManualWebsite();
     });
-    addListener("keyboardShortcuts", "click", () => {
-        // button on the home page when not on a known source
-        showPopupModal("keyboard");
+    addListener("manual-website-form", "keydown", (e) => {
+        if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+            e.preventDefault();
+            e.stopPropagation();
+            saveManualWebsite();
+        }
     });
-    addListener("keyboardShortcutsMenu", "click", () => {
-        // button in the menu
-        showPopupModal("keyboard");
-    });
+
     shouldWarn("pdf-title", (displayWarning) => {
         // keep as demo ; remove when another shouldWarn is added
         if (displayWarning) {
-            showId("warning-button");
+            setHTML("popup-notice-slot", getNoticeBannerHTML());
+            paintIcons(findEl({ element: "popup-notice-slot" }));
             addListener("warning-button", "click", async () => {
-                // button in the menu
                 showPopupModal("warning-pdf-title");
                 let warnings = (await getStorage("userWarnings")) ?? {};
                 warnings["pdf-title"] = true;
                 setStorage("userWarnings", warnings);
-                hideId("warning-button");
+                setHTML("popup-notice-slot", "");
             });
         }
     });
-    addListener("close-popup-modal", "click", closePopupModal);
-    addListener("ar5iv-modal-cancel-button", "click", closePopupModal);
+};
 
-    // When the user clicks anywhere outside of the modal, close it
-    addListener(window, "click", (event) => {
-        if (event.target === findEl({ element: "popup-modal-wrapper" }))
-            closePopupModal();
-    });
+// -----------------------------------
+// -----  Manual website parsing -----
+// -----------------------------------
 
-    addListener("menu-switch", "click", () => {
-        state.prefsIsOpen ? closeMenu() : openMenu();
-    });
+const MANUAL_FIELDS = ["pdfLink", "title", "author", "year", "note"];
 
-    addListener("memory-switch", "click", handleMemorySwitchClick);
+const setFieldError = (key, message) => {
+    const msg = findEl({ element: `manual-website-${key}-msg` });
+    const input = findEl({ element: `manual-website-${key}` });
+    input?.classList.toggle("is-invalid", !!message);
+    if (!msg) return;
+    msg.hidden = !message;
+    msg.innerHTML = message ? `${icon("info", "pm-i-sm")}${message}` : "";
 };
 
 /**
- * Displays the paper edit modal and setup validation
+ * Opens the "Check the details" sheet for a parsed (or blank) website paper
  * @param {Object} parsedPaper the parsed paper from addOrUpdatePaper
  * @param {string} url the url of the parsed paper
  */
 export const editManualWebsite = (parsedPaper, url) => {
-    // Open modal and form
+    manualWebsitePaper = { paper: parsedPaper, url };
+    const values = {
+        ...parsedPaper,
+        author: (parsedPaper.author ?? "").split(" and ").join(", "),
+    };
+    for (const key of MANUAL_FIELDS) {
+        val(`manual-website-${key}`, values[key] ?? "");
+        setFieldError(key, "");
+    }
     hideId("manual-website-validation");
     showPopupModal("manual-website");
-    showId("website-trigger-btn");
+};
 
-    // Set inputs to parsed values
-    const formKeys = ["author", "title", "year", "url", "note", "pdfLink"];
-    for (const key of formKeys) {
-        findEl({ element: `manual-website-${key}` }).value = parsedPaper[key] ?? "";
+/**
+ * Validates the "Check the details" form; stores the paper when every field is valid
+ */
+const saveManualWebsite = async () => {
+    if (!manualWebsitePaper) return;
+    const { paper: parsedPaper, url } = manualWebsitePaper;
+    const [pdfLink, title, authors, year, note] = MANUAL_FIELDS.map((k) =>
+        val(`manual-website-${k}`).trim(),
+    );
+    // "a, , b" -> ["a", "b"]: empty names are dropped before checking
+    const authorNames = authors
+        .split(",")
+        .map((a) => a.trim())
+        .filter(Boolean);
+    let validUrl = false;
+    try {
+        const { protocol, hostname } = new URL(pdfLink);
+        validUrl = ["http:", "https:"].includes(protocol) && !!hostname;
+    } catch (e) {}
+    const errors = {
+        pdfLink: validUrl ? "" : "Enter the page’s web address, starting with https://",
+        title: title ? "" : "Add a title.",
+        author: authorNames.length ? "" : "Add at least one author.",
+        year: /^\d{4}$/.test(year) ? "" : "Year needs four digits, for example 2021.",
+    };
+    for (const [key, message] of Object.entries(errors)) setFieldError(key, message);
+    const firstError = Object.keys(errors).find((k) => errors[k]);
+    if (firstError) {
+        findEl({ element: `manual-website-${firstError}` }).focus();
+        return;
     }
-    setHTML("manual-website-url", parsedPaper.codeLink);
 
-    // Set the form's submit event / user confirmation
-    addListener("manual-website-form", "submit", async (e) => {
+    const author = authorNames.join(" and ");
+    const citationKey = `${miniHash(
+        authorNames[0].split(" ").last(),
+    )}${year}${firstNonStopLowercase(title)}`;
+    // identity and derived fields follow the final URL and values
+    let updatedPaper = {
+        ...parsedPaper,
+        id: `Website_${urlToWebsiteId(pdfLink)}`,
+        key: citationKey,
+        md: `[${title}](${pdfLink})`,
+        title,
+        author,
+        year,
+        note,
+        pdfLink,
+    };
+    updatedPaper.bibtex = bibtexToString({
+        ...bibtexToObject(updatedPaper.bibtex),
+        author,
+        year,
+        title,
+        citationKey,
+        url: pdfLink,
+    });
+    const box = findEl({ element: "manual-website-validation" });
+    let checked;
+    try {
+        checked = validatePaper(updatedPaper);
+    } catch (error) {
+        checked = { warnings: { paper: [String(error.message ?? error)] } };
+    }
+    const messages = Object.values(checked.warnings).flat();
+    if (messages.length > 0) {
+        // don't store the paper yet
+        box.textContent = messages.join(" ");
+        showId(box, "flex");
+        return;
+    }
+    const paper = checked.paper;
+    state.papers[paper.id] = paper;
+    await setStorage("papers", state.papers);
+    await pushToRemote();
+    manualWebsitePaper = null;
+    closePopupModal();
+    // rebuild the sorted lists and tag index from storage, then the Memory list
+    await initSyncAndState({ forceInit: true });
+    makeMemoryHTML();
+    showPaperView(paper.id, url, {});
+};
+
+/**
+ * Not a paper: intro (Open Memory, Parse this page…), parsing, or parse error
+ * @param {"intro" | "parsing" | "error"} mode
+ */
+const renderNotPaper = (mode) => {
+    const canParse = !!(currentTab && state.prefs.checkWebsiteParsing);
+    const nSources = Object.keys(knownPaperPages).length - 4; // minus website + the 3 named
+    setHTML(
+        "notArxiv",
+        getNotPaperHTML(mode, { canParse, nSources, url: currentTab?.url ?? "" }),
+    );
+    showId("notArxiv", "flex");
+    if (whatsNewUnseen)
+        findEl({ element: "whats-new-container" })?.classList.add("pm-newdot");
+    addListener("notArxiv-open-memory", "click", openMemory);
+    addListener("whats-new-container", "click", (e) => {
         e.preventDefault();
-        hideId("manual-website-validation");
-
-        // Find input values
-        const title = val("manual-website-title");
-        let author = val("manual-website-author");
-        const year = val("manual-website-year");
-        const note = val("manual-website-note");
-        const pdfLink = val("manual-website-pdfLink");
-
-        if (author.includes(",")) {
-            author = author
-                .split(",")
-                .map((a) => a.trim())
-                .join(" and ");
-        }
-
-        // check values are valid
-        let updatedPaper = { ...parsedPaper, title, author, year, note, pdfLink };
-        const citationKey = `${miniHash(
-            author.split(" and ")[0].split(" ").last(),
-        )}${year}${firstNonStopLowercase(title)}`;
-        updatedPaper.bibtex = bibtexToString({
-            ...bibtexToObject(updatedPaper.bibtex),
-            author,
-            year,
-            title,
-            citationKey,
-            url: pdfLink,
+        openWhatsNew();
+    });
+    addListener("website-trigger-btn", "click", parseWebsite);
+    addListener("website-parse-retry", "click", parseWebsite);
+    addListener("website-parse-cancel", "click", () => {
+        parseRun++;
+        renderNotPaper("intro");
+    });
+    addListener("website-parse-manual", "click", async () => {
+        const src = getSource("website");
+        const title = currentTab.title || new URL(currentTab.url).hostname;
+        const paper = await initPaper({
+            ...src.fromMeta(currentTab.url, title),
+            source: src.name,
         });
-        const { warnings, paper } = validatePaper(updatedPaper);
+        editManualWebsite(paper, currentTab.url);
+    });
+};
 
-        // Display warnings if any
-        let validationHTML = "";
-        for (const key of Object.keys(warnings)) {
-            for (const warning of warnings[key]) {
-                validationHTML += `<li>${warning}</li>`;
-            }
-        }
-        if (validationHTML.length > 0) {
-            // Display warnings -> don't store paper yet
-            validationHTML = `<ul>${validationHTML}</ul>`;
-            setHTML("manual-website-validation", validationHTML);
-            showId("manual-website-validation");
-        } else {
-            // No warnings -> store paper
-            state.papers[paper.id] = paper;
-            await setStorage("papers", state.papers);
-            await pushToRemote();
-            popupMain(url, await isPaper(url), true, null);
-            hideId("website-trigger-btn");
-            hideId("notArxiv");
-            closePopupModal();
-        }
+/** "Parse this page": reads the current website, then asks the user to check the result */
+const parseWebsite = async () => {
+    const run = ++parseRun;
+    renderNotPaper("parsing");
+    let update;
+    try {
+        update = await addOrUpdatePaper({
+            tab: currentTab,
+            url: currentTab.url,
+            store: false,
+        });
+    } catch (error) {
+        console.log("error: ", error);
+    }
+    if (run !== parseRun) return; // cancelled
+    if (update?.paper) {
+        renderNotPaper("intro");
+        editManualWebsite(update.paper, currentTab.url);
+    } else {
+        renderNotPaper("error");
+    }
+};
+
+// ------------------------
+// -----  Paper view  -----
+// ------------------------
+
+const readDetailsOpen = () => {
+    try {
+        return localStorage.getItem(DETAILS_KEY) === "open";
+    } catch (e) {
         return false;
+    }
+};
+
+/** `d`: show / hide the Details block; the choice is remembered */
+export const toggleDetails = () => {
+    const toggle = findEl({ element: "popup-details-toggle" });
+    if (!toggle) return;
+    const open = toggle.getAttribute("aria-expanded") !== "true";
+    toggle.setAttribute("aria-expanded", String(open));
+    findEl({ element: "popup-details-body" }).hidden = !open;
+    try {
+        localStorage.setItem(DETAILS_KEY, open ? "open" : "closed");
+    } catch (e) {}
+};
+
+/** Code link: plain input; Enter or leaving the field saves when the value is valid */
+const editCodeLink = (focus = true) => {
+    const id = state.currentId;
+    if (findEl({ element: `popup-form-codeLink--${id}` })) {
+        focus && findEl({ element: `popup-form-codeLink--${id}` }).focus();
+        return;
+    }
+    setHTML(
+        "popup-code-val",
+        `<div class="pm-pv-codeedit">
+            <input class="pm-input" type="text" id="popup-form-codeLink--${id}" placeholder="github.com/org/repo" autocomplete="off" spellcheck="false" />
+            <p class="pm-field-msg" id="popup-code-msg" hidden></p>
+        </div>`,
+    );
+    const input = findEl({ element: `popup-form-codeLink--${id}` });
+    const msg = findEl({ element: "popup-code-msg" });
+    input.value = state.papers[id].codeLink ?? "";
+    const check = (showError) => {
+        const result = normalizeCodeLink(input.value);
+        input.classList.toggle("is-invalid", !!(showError && result.error));
+        msg.classList.toggle("is-error", !!(showError && result.error));
+        if (showError && result.error) {
+            msg.innerHTML = `${icon("info", "pm-i-sm")}${result.error}`;
+            msg.hidden = false;
+        } else if (result.url && result.url !== input.value.trim()) {
+            msg.textContent = `Will be saved as ${result.url}`;
+            msg.hidden = false;
+        } else {
+            msg.hidden = true;
+        }
+        return result;
+    };
+    const commit = () => {
+        const result = check(true);
+        if (result.error) return false;
+        saveCodeLink(id, result.url);
+        setHTML("popup-code-val", getPopupCodeLinkHTML({ codeLink: result.url }));
+        paintIcons(findEl({ element: "popup-code-val" }));
+        return true;
+    };
+    addListener(input, "input", () => check(false));
+    addListener(input, "keydown", (e) => {
+        if (e.key === "Enter") {
+            e.preventDefault();
+            e.stopPropagation();
+            commit() && findEl({ element: "popup-code-edit" })?.focus();
+        }
+    });
+    addListener(input, "blur", () => {
+        // the input is replaced on commit: blur fires once more on a detached node
+        input.isConnected && commit();
+    });
+    check(false);
+    focus && input.focus();
+};
+
+/** Grows a textarea with its text (up to 8 lines; then it scrolls) */
+const fitTextarea = (textarea) => {
+    textarea.style.height = "auto";
+    textarea.style.height = `${Math.min(textarea.scrollHeight + 2, 170)}px`;
+};
+
+/** Note: the text is shown with its line breaks; editing it uses a textarea (autosaved) */
+const editNote = (focus = true) => {
+    const id = state.currentId;
+    const textarea = findEl({ element: `popup-form-note-textarea--${id}` });
+    hideId("popup-note-val");
+    textarea.hidden = false;
+    fitTextarea(textarea);
+    if (focus) {
+        textarea.focus();
+        textarea.selectionStart = textarea.selectionEnd = textarea.value.length;
+    }
+};
+
+const endNoteEdit = () => {
+    const id = state.currentId;
+    const textarea = findEl({ element: `popup-form-note-textarea--${id}` });
+    if (!textarea || textarea.hidden) return;
+    if (state.papers[id].note !== textarea.value) saveNote(id, textarea.value);
+    textarea.hidden = true;
+    setHTML("popup-note-val", getPopupNoteHTML({ note: textarea.value }));
+    showId("popup-note-val", "inline");
+};
+
+/** `e`: edit tags, code link and note; the tag input gets the focus */
+export const startPaperEdit = () => {
+    if (!state.currentId || !findEl({ element: "popup-memory-edit" })) return;
+    editCodeLink(false);
+    editNote(false);
+    findEl({ element: `popup-item-tags--${state.currentId}` })?.tomselect?.focus();
+};
+
+/**
+ * Renders the paper view for a paper of the Memory
+ * @param {string} id
+ * @param {string} url The active tab's url
+ * @param {object} is isPaper(url)
+ */
+const showPaperView = (id, url, is) => {
+    state.currentId = id;
+    const paper = state.papers[id];
+    const prefs = state.prefs;
+    log("Popup paper:", paper);
+
+    hideId("notArxiv");
+    setHTML(
+        "isArxiv",
+        getPopupPaperHTML(paper, url, is, {
+            downloadKey: shortcuts.downloadPdf ?? "",
+            detailsOpen: readDetailsOpen(),
+        }),
+    );
+    showId("isArxiv", "flex");
+    paintIcons(findEl({ element: "isArxiv" }));
+
+    // ----- fields
+    const tags = new TomSelect(`#popup-item-tags--${id.replaceAll(".", "\\.")}`, {
+        ...tomSelectOptions,
+        placeholder: "Add tag…",
+    });
+    tags.on(
+        "change",
+        delay(() => updatePaperTags(id, `#popup-item-tags--${id}`), 300),
+    );
+    const note = findEl({ element: `popup-form-note-textarea--${id}` });
+    addListener(
+        note,
+        "input",
+        delay(() => !note.hidden && saveNote(id, note.value), 300),
+    );
+    addListener(note, "input", () => fitTextarea(note));
+    addListener(note, "blur", endNoteEdit);
+    addListener(note, "keydown", (e) => {
+        if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+            e.preventDefault();
+            e.stopPropagation();
+            note.blur();
+        }
+    });
+    // code link and note display are re-rendered after saves: delegate their clicks
+    addListener("popup-memory-edit", "click", async (e) => {
+        if (e.target.closest("#popup-code-edit")) return editCodeLink();
+        if (e.target.closest("#popup-note-display")) return editNote();
+        const codeLink = e.target.closest("#popup-code-link");
+        if (codeLink) {
+            e.preventDefault();
+            await focusExistingOrCreateNewURLTab(state.papers[id].codeLink);
+            window.close && window.close();
+        }
+    });
+    addListener(`checkFavorite--${id}`, "click", () =>
+        saveFavoriteItem(id, !state.papers[id].favorite),
+    );
+    addListener("popup-authors-more", "click", () => {
+        findEl({ element: "popup-authors" }).textContent = authorList(
+            paper.author,
+        ).join(", ");
+    });
+    addListener("popup-details-toggle", "click", toggleDetails);
+    addListener(`popup-memory-delete--${id}`, "click", handlePopupDeletePaper(id));
+
+    // ----- "Also on"
+    const arxivId = () => arxivIdFromPaperID(paper.id);
+    const goTo = (target) => {
+        chrome.tabs.update({ url: target });
+        window.close();
+    };
+    addListener(`popup-memory-item-scirate--${id}`, "click", () =>
+        goTo(`https://scirate.com/arxiv/${arxivId()}`),
+    );
+    addListener(`popup-memory-item-alphaxiv--${id}`, "click", () =>
+        goTo(`https://alphaxiv.org/abs/${arxivId()}`),
+    );
+    addListener(`popup-memory-item-huggingface--${id}`, "click", () =>
+        goTo(`https://huggingface.co/papers/${arxivId()}`),
+    );
+    addListener(`popup-memory-item-ar5iv--${id}`, "click", () => {
+        const aid = arxivId();
+        const ar5ivURL = `https://ar5iv.labs.arxiv.org/html/${aid}`;
+        const paperYear = 2000 + parseInt(aid.split(".")[0].slice(0, 2), 10);
+        const paperMonth = parseInt(aid.split(".")[0].slice(-2), 10);
+        const now = new Date();
+        if (paperYear === now.getFullYear() && paperMonth === now.getMonth() + 1) {
+            showPopupModal("ar5iv");
+            findEl({ element: "ar5iv-modal-ok-button" }).onclick = () => goTo(ar5ivURL);
+        } else {
+            goTo(ar5ivURL);
+        }
+    });
+
+    // ----- action strip
+    const linkName =
+        paper.source === "website" ? "URL" : prefs.checkPreferPdf ? "PDF" : "Abstract";
+    addListener(`popup-memory-item-link--${id}`, "click", () => {
+        chrome.tabs.update({ url: isPdfUrl(url) ? paperToAbs(paper) : paperToPDF(paper) });
+        window.close();
+    });
+    addListener(`popup-memory-website-url--${id}`, "click", async () => {
+        await focusExistingOrCreateNewURLTab(paper.pdfLink);
+        window.close && window.close();
+    });
+    addListener(`popup-memory-item-copy-link--${id}`, "click", async () => {
+        await copyAndConfirmMemoryItem({
+            id,
+            textToCopy: prefs.checkPreferPdf ? paperToPDF(paper) : paperToAbs(paper),
+            feedbackText: `${linkName} URL copied`,
+            context: "popup",
+        });
+    });
+    addListener(`popup-memory-item-copy-hyperlink--${id}`, "click", async () => {
+        await copyAndConfirmMemoryItem({
+            id,
+            textToCopy: prefs.checkPreferPdf ? paperToPDF(paper) : paperToAbs(paper),
+            feedbackText: "Rich link copied",
+            context: "popup",
+            hyperLinkTitle: paper.title,
+        });
+    });
+    addListener(`popup-memory-item-md--${id}`, "click", async () => {
+        await copyAndConfirmMemoryItem({
+            id,
+            textToCopy: makeMdLink(paper, prefs),
+            feedbackText: "Markdown link copied",
+            context: "popup",
+        });
+    });
+    addListener(`popup-memory-item-bibtex--${id}`, "click", async () => {
+        let bibobj = bibtexToObject(state.papers[id].bibtex);
+        if (!bibobj.hasOwnProperty("url")) {
+            bibobj.url = paperToAbs(state.papers[id]);
+        }
+        if (!bibobj.hasOwnProperty("pdf")) {
+            bibobj.pdf = paperToPDF(state.papers[id]);
+        }
+        await copyAndConfirmMemoryItem({
+            id,
+            textToCopy: bibtexToString(bibobj),
+            feedbackText: "BibTeX copied",
+            context: "popup",
+        });
+    });
+    addListener(`popup-memory-item-openLocal--${id}`, "click", async () => {
+        const file = (await findLocalFile(paper)) || state.files[paper.id];
+        if (file) {
+            chrome.downloads.open(file.id);
+        } else {
+            chrome.tabs.create({ url: paper.pdfLink });
+        }
+    });
+    addListener(`popup-memory-item-download--${id}`, "click", async () => {
+        downloadPaperPdf(paper);
     });
 };
 
@@ -340,79 +868,33 @@ export const editManualWebsite = (parsedPaper, url) => {
  * @param {str} url Currently focused and active tab's url.
  */
 export const popupMain = async (url, is, manualTrigger = false, tab = null) => {
-    console.log(navigator.userAgent);
-    if (navigator.userAgent === "PuppeteerAgent") {
-        info("Is puppet");
-        // style(document.body, "min-width", "500px");
-        // style(document.body, "max-width", "500px");
-        // style(document.body, "width", "500px");
-        // style("popup-modal-wrapper", "min-width", "500px");
-        // style("popup-modal-wrapper", "max-width", "500px");
-        // style("popup-modal-wrapper", "width", "500px");
-    }
-
-    addListener(document, "keydown", handlePopupKeydown);
-
-    chrome.storage.local.get("whatsnew", ({ whatsnew }) => {
-        const version = chrome.runtime.getManifest().version;
-        if (!whatsnew || !whatsnew.hasOwnProperty(version)) {
-            showId("whats-new-marker");
-        }
-    });
-
-    console.log("manualTrigger: ", manualTrigger);
     if (manualTrigger) {
         // manual trigger: do not re-create standard listeners
         // but update the current state and rebuild the Memory's HTML
-        hideId("memory-switch");
-        showId("memory-spinner");
+        hideId("isArxiv");
+        showId("popup-loading", "flex");
         await initSyncAndState({ forceInit: true });
-        hideId("memory-spinner");
-        showId("memory-switch");
         makeMemoryHTML();
     } else {
         // Set click events (regardless of paper)
+        currentTab = tab;
+        addListener(document, "keydown", handlePopupKeydown);
         setStandardPopupClicks();
+        await setupMenu(await getPrefs());
+        await loadShortcuts();
+        chrome.storage.local.get("whatsnew", ({ whatsnew }) => {
+            const version = chrome.runtime.getManifest().version;
+            whatsNewUnseen = !whatsnew || !whatsnew.hasOwnProperty(version);
+            whatsNewUnseen &&
+                findEl({ element: "whats-new-container" })?.classList.add("pm-newdot");
+        });
     }
     const prefs = await getPrefs();
-    // Set checkboxes
-    getAndTrackPopupMenuChecks(prefs, prefsCheckNames);
-    const defaultKeyboardAction = await getDefaultKeyboardAction();
-    findEl({ element: "memory-item-default-action" }).value = defaultKeyboardAction;
-
-    // Set options page link
-    addListener("advanced-configuration", "click", () => {
-        chrome.runtime.openOptionsPage();
-    });
-    // Set fullMemory page link
-    addListener("full-memory", "click", () => {
-        chrome.tabs.create({
-            url: chrome.runtime.getURL("fullMemory.html"),
-        });
-    });
-    // Set BibMatcher page link
-    addListener("bib-matcher", "click", () => {
-        chrome.tabs.create({
-            url: chrome.runtime.getURL("bibMatcher.html"),
-        });
-    });
-    // Set default keyboard action
-    addListener("memory-item-default-action", "change", (e) => {
-        setDefaultKeyboardAction(e.target.value);
-    });
-    fillUserGuideShortcuts();
-
-    // Set PDF title function
-    // setAndHandleCustomPDFFunction(menu);
+    hideId("popup-loading");
+    findEl({ element: "pm-shell" }).classList.remove("pm-is-loading");
 
     // Display popup metadata
     if (Object.values(is).some((i) => i)) {
-        setTimeout(() => {
-            document.body.style.height = "auto";
-            document.body.style.minHeight = "450px";
-        }, 0);
-        showId("isArxiv", "flex");
-
         const id = await parseIdFromUrl(url);
         state.currentId = id;
 
@@ -420,263 +902,17 @@ export const popupMain = async (url, is, manualTrigger = false, tab = null) => {
             log("Unknown id " + id);
             await updatePopupPaperNoMemory(url);
             if (prefs.checkDirectOpen && !prefs.checkNoAuto) {
-                dispatch("memory-switch", "click");
+                openMemory();
             }
             window.__pmPopupReady = true;
             return;
         }
-
-        const paper = state.papers[id];
-        const eid = paper.id.replaceAll(".", "\\.");
-
-        // -----------------------------
-        // -----  Fill Paper Data  -----
-        // -----------------------------
-        setHTML(
-            "popup-paper-title",
-            paper.title.replaceAll("\n", "") +
-                '<div id="popup-title-tooltip" style="display: none;">',
-        );
-        setHTML("popup-authors", cutAuthors(paper.author, 200).replace(/({|})/g, ""));
-        if (paper.codeLink) {
-            setTextId("popup-code-link", paper.codeLink.replace(/^https?:\/\//, ""));
-            showId("popup-code-link");
-        }
-        if (paper.source === "website") {
-            setTextId("popup-website-url", paper.pdfLink.replace(/^https?:\/\//, ""));
-            showId("popup-website-url");
-        }
-
-        // ----------------------------------
-        // -----  Customize Popup html  -----
-        // ----------------------------------
-        log("Popup paper:", paper);
-        setHTML("popup-memory-edit", getPopupEditFormHTML(paper));
-        setHTML("popup-copy-icons", getPopupPaperIconsHTML(paper, url, is));
-        setHTML("popup-title-tooltip", getPaperInfoTable(paper));
-        findEl({ element: `checkFavorite--${id}` }).checked = paper.favorite;
-        let extraDivWidth = 0;
-        for (const p of [
-            "checkScirate",
-            "checkAlphaxiv",
-            "checkAr5iv",
-            "checkHuggingface",
-        ]) {
-            if (prefs[p]) extraDivWidth += 5;
-        }
-        style("popup-icons-container", "width", `${75 + extraDivWidth}%`);
-
-        // --------------------------
-        // -----  Paper  edits  -----
-        // --------------------------
-        new TomSelect(`#popup-item-tags--${eid}`, tomSelectOptions);
-        addListener(`popup-form-note-textarea--${id}`, "focus", function () {
-            var that = this;
-            textareaFocusEnd(that);
-        });
-        setFormChangeListener(id, true);
-        addListener("popup-delete-paper", "click", handlePopupDeletePaper(id));
-        addEventToClass(
-            ".popup-display-id",
-            "click",
-            getHandleTitleTooltip(showTitleTooltip, 0, true),
-        );
-        addEventToClass(
-            ".popup-display-id",
-            "mouseleave",
-            getHandleTitleTooltip(hideTitleTooltip, 10000, true),
-        );
-        addEventToClass(".expand-paper-authors", "click", handleExpandAuthors);
-
-        // ------------------------
-        // -----  SVG clicks  -----
-        // ------------------------
-        addListener(`popup-memory-item-scirate--${id}`, "click", () => {
-            const arxivId = arxivIdFromPaperID(paper.id);
-            const scirateURL = `https://scirate.com/arxiv/${arxivId}`;
-            chrome.tabs.update({ url: scirateURL });
-            window.close();
-        });
-        addListener(`popup-memory-item-alphaxiv--${id}`, "click", () => {
-            const arxivId = arxivIdFromPaperID(paper.id);
-            const alphaxivURL = `https://alphaxiv.org/abs/${arxivId}`;
-            chrome.tabs.update({ url: alphaxivURL });
-            window.close();
-        });
-        addListener(`popup-memory-item-ar5iv--${id}`, "click", () => {
-            const arxivId = arxivIdFromPaperID(paper.id);
-            const paperYear = 2000 + parseInt(arxivId.split(".")[0].slice(0, 2), 10);
-            const paperMonth = parseInt(arxivId.split(".")[0].slice(-2), 10);
-            const currentYear = new Date().getFullYear();
-            const currentMonth = new Date().getMonth() + 1;
-            if (paperYear === currentYear && paperMonth === currentMonth) {
-                showPopupModal("ar5iv");
-                addListener("ar5iv-modal-ok-button", "click", () => {
-                    const ar5ivURL = `https://ar5iv.labs.arxiv.org/html/${arxivId}`;
-                    chrome.tabs.update({ url: ar5ivURL });
-                    window.close();
-                });
-            } else {
-                const ar5ivURL = `https://ar5iv.labs.arxiv.org/html/${arxivId}`;
-                chrome.tabs.update({ url: ar5ivURL });
-                window.close();
-            }
-        });
-        addListener(`popup-memory-item-huggingface--${id}`, "click", () => {
-            const arxivId = arxivIdFromPaperID(paper.id);
-            const huggingfaceURL = `https://huggingface.co/papers/${arxivId}`;
-            chrome.tabs.update({ url: huggingfaceURL });
-            window.close();
-        });
-        addListener(`popup-memory-item-link--${id}`, "click", () => {
-            const pdfURL = paperToPDF(paper);
-            const absURL = paperToAbs(paper);
-            chrome.tabs.update({ url: isPdfUrl(url) ? absURL : pdfURL });
-            window.close();
-        });
-        addListener(`popup-code-link`, "click", async () => {
-            const codeLink = findEl({ element: `popup-code-link` }).textContent;
-            if (codeLink) {
-                await focusExistingOrCreateNewURLTab(codeLink);
-                window.close && window.close();
-            }
-        });
-        addListener(`popup-website-url`, "click", async (e) => {
-            const url = findEl({ element: `popup-website-url` }).textContent;
-            if (url) {
-                await focusExistingOrCreateNewURLTab(url);
-                window.close && window.close();
-            }
-        });
-        addListener(`popup-memory-item-copy-link--${id}`, "click", async () => {
-            const link = prefs.checkPreferPdf ? paperToPDF(paper) : paperToAbs(paper);
-            const text =
-                paper.source === "website"
-                    ? "URL"
-                    : prefs.checkPreferPdf
-                      ? "PDF"
-                      : "Abstract";
-            await copyAndConfirmMemoryItem({
-                id,
-                textToCopy: link,
-                feedbackText: `${text} link copied!`,
-                context: "popup",
-            });
-        });
-        addListener(`popup-memory-item-copy-hyperlink--${id}`, "click", async () => {
-            const link = prefs.checkPreferPdf ? paperToPDF(paper) : paperToAbs(paper);
-            const text =
-                paper.source === "website"
-                    ? "URL"
-                    : prefs.checkPreferPdf
-                      ? "PDF"
-                      : "Abstract";
-            await copyAndConfirmMemoryItem({
-                id,
-                textToCopy: link,
-                feedbackText: `${text} hyperlink copied!`,
-                context: "popup",
-                hyperLinkTitle: paper.title,
-            });
-        });
-        addListener(`popup-memory-item-md--${id}`, "click", async () => {
-            const md = makeMdLink(paper, prefs);
-            const text =
-                paper.source === "website"
-                    ? "URL"
-                    : prefs.checkPreferPdf
-                      ? "PDF"
-                      : "Abstract";
-            await copyAndConfirmMemoryItem({
-                id,
-                textToCopy: md,
-                feedbackText: `Markdown ${text} copied!`,
-                context: "popup",
-            });
-        });
-        addListener(`popup-memory-item-bibtex--${id}`, "click", async () => {
-            let bibtex = state.papers[id].bibtex;
-            let bibobj = bibtexToObject(bibtex);
-            if (!bibobj.hasOwnProperty("url")) {
-                bibobj.url = paperToAbs(state.papers[id]);
-            }
-            if (!bibobj.hasOwnProperty("pdf")) {
-                bibobj.pdf = paperToPDF(state.papers[id]);
-            }
-            bibtex = bibtexToString(bibobj);
-            await copyAndConfirmMemoryItem({
-                id,
-                textToCopy: bibtex,
-                feedbackText: "Bibtex citation copied!",
-                context: "popup",
-            });
-        });
-        addListener(`popup-memory-item-openLocal--${id}`, "click", async () => {
-            const file = (await findLocalFile(paper)) || state.files[paper.id];
-            if (file) {
-                chrome.downloads.open(file.id);
-            } else {
-                chrome.tabs.create({ url: paper.pdfLink });
-            }
-        });
-        addListener(`popup-memory-item-download--${id}`, "click", async () => {
-            downloadPaperPdf(paper);
-        });
+        showPaperView(id, url, is);
     } else {
-        if (prefs.checkDirectOpen) {
-            dispatch("memory-switch", "click");
+        if (prefs.checkDirectOpen && !manualTrigger) {
+            openMemory();
         }
-        // ------------------------------------
-        // -----  Manual Website Parsing  -----
-        // ------------------------------------
-        const allowWebsiteParsing = tab && state.prefs.checkWebsiteParsing;
-        if (allowWebsiteParsing) {
-            // Add website parsing button, loader and error div
-            const websiteParsingHtml = /* html */ `
-                <div id="website-trigger-wrapper">
-                    <div id="website-trigger-btn">Parse current website</div>
-                    <div id="website-loader-container" class="pm-container" style='display: none;'>
-                        <div class="sk-folding-cube">
-                            <div class="sk-cube1 sk-cube"></div>
-                            <div class="sk-cube2 sk-cube"></div>
-                            <div class="sk-cube4 sk-cube"></div>
-                            <div class="sk-cube3 sk-cube"></div>
-                        </div>
-                    </div>
-                    <div id="website-parsing-error"></div>
-                </div>`;
-            setHTML("website-parsing-root", websiteParsingHtml);
-            showId("website-parsing-root");
-            addListener("website-trigger-btn", "click", async () => {
-                hideId("website-trigger-btn");
-                showId("website-loader-container");
-                hideId("website-parsing-error");
-                let update;
-                // auto parse Paper
-                try {
-                    update = await addOrUpdatePaper({
-                        tab,
-                        url: tab.url,
-                        store: false,
-                    });
-                } catch (error) {
-                    console.log("error: ", error);
-                    hideId("website-loader-container");
-                    showId("website-parsing-error");
-                    setHTML(
-                        "website-parsing-error",
-                        `<h3>Error</h3><div>${error}</div>`,
-                    );
-                    setTimeout(() => {
-                        hideId("website-loader-container");
-                        hideId("website-parsing-error");
-                        showId("website-trigger-btn");
-                    }, 3000);
-                }
-                // check with user before storing
-                update?.paper && editManualWebsite(update.paper, url);
-            });
-        }
+        renderNotPaper("intro");
     }
     window.__pmPopupReady = true;
 };
@@ -695,6 +931,9 @@ export const popupMain = async (url, is, manualTrigger = false, tab = null) => {
         // In DEV mode, this would be run twice by the additional injection of debug.bundle.js
         window.paperMemoryPopupInitialized = true;
         const tab = await getCurrentUserTab();
+        // after the first await: every module of the (circular) popup graph is evaluated
+        paintIcons();
+        findEl({ element: "pm-shell" }).classList.add("pm-is-loading");
         const url = tab.url;
         chrome.runtime.connect({ name: "PaperMemoryPopupSync" });
         document.addEventListener("click", handleHideAllTitleTooltips);
@@ -716,12 +955,7 @@ export const popupMain = async (url, is, manualTrigger = false, tab = null) => {
         await stateReadyPromise;
 
         const is = await isPaper(url);
-        const isKnown = Object.values(is).some((i) => i);
 
-        if (!isKnown) showId("notArxiv");
-
-        hideId("memory-spinner");
-        showId("memory-switch");
         makeMemoryHTML();
         popupMain(url, is, false, tab).catch((e) => {
             console.error("popupMain error:", e);
