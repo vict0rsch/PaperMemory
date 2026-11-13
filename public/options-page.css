@@ -9,7 +9,7 @@
 }
 body {
     margin: 0;
-    font-family: "Yantramanav";
+    font-family: var(--pm-font);
 }
 
 svg {
@@ -21,7 +21,7 @@ svg {
 }
 
 code {
-    font-family: "Fira Code", monospace !important;
+    font-family: var(--pm-font-mono) !important;
     color: inherit !important;
     padding: 1px 4px;
     vertical-align: text-top;
@@ -106,7 +106,7 @@ hr {
 textarea {
     border-radius: var(--round);
     border: 1px solid #aaaaaa;
-    font-family: "Yantramanav";
+    font-family: var(--pm-font);
     padding: 6px;
 }
 
@@ -267,7 +267,7 @@ input {
     padding: 1.5rem 2rem;
     font-size: 0.9rem;
     overflow: scroll;
-    font-family: "Fira Code", monospace;
+    font-family: var(--pm-font-mono);
 }
 
 #overwrite-buttons {

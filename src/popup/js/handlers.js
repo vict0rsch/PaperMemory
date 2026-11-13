@@ -43,6 +43,8 @@ import {
     getStorage,
     getDefaultKeyboardAction,
     deletePaperInStorage,
+    saveThemePref,
+    updatePrefs,
 } from "@pmu/data.js";
 import { bibtexToString, bibtexToObject } from "@pmu/bibtexParser.js";
 import { initSyncAndState } from "@pmu/sync.js";
@@ -882,21 +884,14 @@ export const handlePopupKeydown = async (e) => {
     }
 };
 
+export const handleThemeChange = (e) => saveThemePref(e.target.value);
+
 export const handlePrefsCheckChange = async (e) => {
     const key = e.target.id;
     const checked = findEl({ element: key }).checked;
-    if (state && state.prefs) {
-        state.prefs[key] = checked;
-        setStorage("prefs", state.prefs, function () {
-            log(`Settings saved for ${key} (${checked})`);
-        });
-    } else {
-        const prefs = (await getStorage("prefs")) ?? {};
-        prefs[key] = checked;
-        setStorage("prefs", prefs, function () {
-            log(`Settings saved for ${key} (${checked})`);
-        });
-    }
+    updatePrefs({ [key]: checked }).then(() =>
+        log(`Settings saved for ${key} (${checked})`),
+    );
     if (checked && key === "checkNoAuto") {
         chrome.commands.getAll((commands) => {
             const { shortcut } = commands.find(

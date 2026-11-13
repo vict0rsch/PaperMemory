@@ -131,6 +131,10 @@ export const prefsCheckNames = [
     "checkPreferPdf",
 ];
 /**
+ * Values of prefs.theme (public/theme.js applies it to every extension page)
+ */
+export const themeChoices = ["system", "light", "dark"];
+/**
  * Menu check names which should not default to true but to false
  */
 export const prefsCheckDefaultFalse = [
@@ -156,7 +160,7 @@ export const overrideDBLPVenues = {
 };
 
 export const consolHeaderStyle =
-    "@import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@300');font-family:'Fira Code' monospace;font-size:1rem;font-weight:300;display:inline-block;border:2px solid #A41716;border-radius: 4px;padding: 12px; margin: 12px;";
+    "font-family:ui-monospace,'SF Mono',Menlo,Consolas,monospace;font-size:1rem;font-weight:300;display:inline-block;border:2px solid #A41716;border-radius: 4px;padding: 12px; margin: 12px;";
 
 export const storeReadme = `
 /!\\ Warning: This folder has been created automatically by your PaperMemory browser extension.\n

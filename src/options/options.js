@@ -18,6 +18,9 @@ import {
     setStorage,
     validatePaper,
     prepareOverwriteData,
+    themeFromPrefs,
+    saveThemePref,
+    onPrefsChange,
 } from "@pmu/data.js";
 import { bibtexToString } from "@pmu/bibtexParser.js";
 import { tomSelectOptions, state } from "@pmu/config.js";
@@ -295,6 +298,21 @@ const handleParseImportJson = async (e) => {
 const setupImportPapers = async () => {
     addListener("import-json-papers-input", "change", handleSelectImportJson);
     addListener("import-json-papers-button", "click", handleParseImportJson);
+};
+
+// -------------------
+// -----  Theme  -----
+// -------------------
+
+const setupTheme = async () => {
+    findEl({ element: "theme-select" }).value = themeFromPrefs(
+        await getStorage("prefs"),
+    );
+    addListener("theme-select", "change", (e) => saveThemePref(e.target.value));
+    // theme changed elsewhere (popup, another options tab): keep the select in sync
+    onPrefsChange((prefs) => {
+        findEl({ element: "theme-select" }).value = themeFromPrefs(prefs);
+    });
 };
 
 // ------------------------------
@@ -1358,6 +1376,7 @@ const setupModals = () => {
     await initSyncAndState();
     makeTOC();
     setupCodeBlocks();
+    setupTheme();
     setupPWCPrefs();
     setupAutoTags();
     setupPreprintMatching();

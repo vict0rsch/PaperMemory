@@ -19,6 +19,7 @@ import {
     prefsCheckNames,
     prefsStorageKeys,
     prefsCheckDefaultFalse,
+    themeChoices,
 } from "@pmu/config.js";
 import { bibtexToString, bibtexToObject } from "@pmu/bibtexParser.js";
 import { getSource, knownPaperPages } from "@pmu/sources/index.js";
@@ -415,7 +416,117 @@ export const weeklyBackup = async () => {
 };
 
 /**
+ * The theme choice stored in `prefs.theme`; mirrored by public/theme.js, which applies it.
+ * Users from before the System / Light / Dark choice only have the `checkDarkMode` boolean.
+ * @param {object} prefs Stored preferences (possibly empty or legacy)
+ * @returns {"system" | "light" | "dark"} `prefs.theme` if valid, else `checkDarkMode` mapped
+ * to "dark" / "light", else (new user) "system"
+ */
+export const themeFromPrefs = (prefs) =>
+    themeChoices.includes(prefs?.theme)
+        ? prefs.theme
+        : prefs?.hasOwnProperty("checkDarkMode")
+          ? prefs.checkDarkMode
+              ? "dark"
+              : "light"
+          : "system";
+
+/**
+ * Value of the legacy `checkDarkMode` boolean for a theme choice, so code still reading it
+ * keeps working. "system" uses the OS setting where it can be read; elsewhere (background
+ * service worker) it keeps `fallback`, the stored value, instead of forcing false.
+ * @param {"system" | "light" | "dark"} theme
+ * @param {boolean} fallback Value for "system" when the OS setting is unavailable
+ * @returns {boolean}
+ */
+export const isDarkTheme = (theme, fallback = false) =>
+    theme === "system"
+        ? globalThis.matchMedia
+            ? globalThis.matchMedia("(prefers-color-scheme: dark)").matches
+            : Boolean(fallback)
+        : theme === "dark";
+
+let prefsWrites = Promise.resolve();
+/**
+ * The single way to write `prefs`: applies a patch to the CURRENTLY stored prefs
+ * (read-modify-write of the patched keys only), one write at a time in this context, so
+ * concurrent changes (theme + a checkbox, two pages) do not overwrite each other.
+ * Also applies the patch to the cached `state.prefs`.
+ * @param {object | function(object): object} patch Keys to set (`undefined` deletes the
+ * key), or a function of the stored prefs returning that patch (`{}`: nothing to write)
+ * @returns {Promise<object>} The stored prefs after the write
+ */
+export const updatePrefs = (patch) => {
+    const run = prefsWrites.then(async () => {
+        const prefs = (await getStorage("prefs")) ?? {};
+        const changes = typeof patch === "function" ? patch(prefs) : patch;
+        if (Object.keys(changes).length === 0) return prefs;
+        for (const target of [prefs, state.prefs].filter(Boolean)) {
+            for (const [key, value] of Object.entries(changes)) {
+                if (value === undefined) delete target[key];
+                else target[key] = value;
+            }
+        }
+        await setStorage("prefs", prefs);
+        return prefs;
+    });
+    prefsWrites = run.catch(() => {}); // a failed write must not block the next ones
+    return run;
+};
+
+/**
+ * Keeps the cached `state.prefs` up to date with writes made by any page or context
+ * (popup, options, other tabs) and calls `cb` with the new stored prefs.
+ * @param {function(object): void} cb E.g. to re-sync controls showing a pref
+ */
+export const onPrefsChange = (cb = () => {}) => {
+    chrome.storage.onChanged.addListener((changes, area) => {
+        if (area !== "local" || !changes.prefs) return;
+        const prefs = changes.prefs.newValue ?? {};
+        if (state.prefs) Object.assign(state.prefs, prefs);
+        cb(prefs);
+    });
+};
+
+/**
+ * Saves a System / Light / Dark choice (popup menu, options page) in prefs.theme, keeping the
+ * legacy checkDarkMode in sync. public/theme.js applies it on every open extension page.
+ * @param {"system" | "light" | "dark"} theme
+ */
+export const saveThemePref = async (theme) => {
+    await updatePrefs({ theme, checkDarkMode: isDarkTheme(theme) });
+    log(`Settings saved for theme (${theme})`);
+};
+
+let followingSystemTheme = false;
+/**
+ * On extension pages, persist checkDarkMode when the OS switches between light and dark
+ * while the theme is "system" (public/theme.js only restyles the pages). Registered once
+ * per page; the patch is a no-op when another page already wrote the same value.
+ */
+const followSystemTheme = () => {
+    if (
+        followingSystemTheme ||
+        !globalThis.matchMedia ||
+        globalThis.location?.origin + "/" !== chrome.runtime.getURL("")
+    )
+        return;
+    followingSystemTheme = true;
+    globalThis
+        .matchMedia("(prefers-color-scheme: dark)")
+        .addEventListener("change", (e) =>
+            updatePrefs((stored) =>
+                themeFromPrefs(stored) === "system" &&
+                stored.checkDarkMode !== e.matches
+                    ? { checkDarkMode: e.matches }
+                    : {},
+            ),
+        );
+};
+
+/**
  * Retrieve the boolean preferences as defined in config.js/prefsStorageKeys
+ * and the theme choice (`prefs.theme`, migrated from `checkDarkMode` if missing).
  * @returns {object} The user's preferences as per the popup's sliders in the menu.
  */
 export const getPrefs = async () => {
@@ -436,16 +547,40 @@ export const getPrefs = async () => {
               ? false
               : true;
     }
+    prefs.theme = themeFromPrefs(legacyPrefs ?? storedPrefs);
+    prefs.checkDarkMode = isDarkTheme(prefs.theme, prefs.checkDarkMode);
 
-    if (prefs.checkOfficialRepos) {
+    const officialRepos = prefs.checkOfficialRepos;
+    if (officialRepos) {
         setStorage("pwcPrefs", { official: true });
         delete prefs.checkOfficialRepos;
-        setStorage("prefs", prefs);
     }
 
-    if (isNew) {
-        setStorage("prefs", prefs);
-    }
+    // Patch, computed against the prefs stored at write time: a new user's defaults, the
+    // theme migrated from checkDarkMode, checkDarkMode re-synced with the theme (e.g. the OS
+    // changed while no page was open), the checkOfficialRepos migration above.
+    updatePrefs((stored) => {
+        const patch = {};
+        if (isNew) {
+            for (const [key, value] of Object.entries(prefs)) {
+                if (!stored.hasOwnProperty(key)) patch[key] = value;
+            }
+        }
+        if (!themeChoices.includes(stored.theme)) {
+            patch.theme = prefs.theme;
+            patch.checkDarkMode = prefs.checkDarkMode;
+        } else if (
+            stored.theme === prefs.theme &&
+            stored.checkDarkMode !== prefs.checkDarkMode
+        ) {
+            patch.checkDarkMode = prefs.checkDarkMode;
+        }
+        if (officialRepos && stored.hasOwnProperty("checkOfficialRepos")) {
+            patch.checkOfficialRepos = undefined;
+        }
+        return patch;
+    });
+    followSystemTheme();
 
     return prefs;
 };

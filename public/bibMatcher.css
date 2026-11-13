@@ -9,7 +9,7 @@
 }
 body {
     margin: 0;
-    font-family: "Yantramanav";
+    font-family: var(--pm-font);
     font-weight: 400;
 }
 
@@ -22,7 +22,7 @@ svg {
 }
 
 code {
-    font-family: "Fira Code", monospace !important;
+    font-family: var(--pm-font-mono) !important;
     color: inherit !important;
     padding: 1px 4px;
     vertical-align: text-top;
@@ -104,7 +104,7 @@ h6 {
 }
 #bib-text {
     font-size: 0.75rem;
-    font-family: "Fira Code", monospace;
+    font-family: var(--pm-font-mono);
     background: #f1f1f1;
     color: #333;
 }
@@ -118,7 +118,7 @@ hr {
 textarea {
     border-radius: var(--round);
     border: 1px solid #aaaaaa;
-    font-family: "Yantramanav";
+    font-family: var(--pm-font);
     padding: 6px;
 }
 
@@ -202,7 +202,7 @@ input {
 .match-source {
     color: #7c7f8b;
     padding-right: 0.5rem;
-    font-family: "Fira Code", monospace;
+    font-family: var(--pm-font-mono);
     font-size: 0.85rem;
     font-weight: 400;
 }

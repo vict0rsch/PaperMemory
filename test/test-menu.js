@@ -526,10 +526,10 @@ describe("Popup Menu Tests", function () {
             });
         });
 
-        // --- checkDarkMode ---
-        describe("checkDarkMode", function () {
+        // --- theme (System / Light / Dark; replaced the checkDarkMode switch) ---
+        describe("theme", function () {
             it("should enable dark mode css when enabled", async function () {
-                await setPreference(PMPage, "checkDarkMode", true);
+                await setPreference(PMPage, "theme", "dark");
                 const hasDarkMode = await PMPage.evaluate(() => {
                     const links = Array.from(document.querySelectorAll("link"));
                     return links.some((l) => l.href.includes("dark.css"));
@@ -538,7 +538,7 @@ describe("Popup Menu Tests", function () {
             });
 
             it("should disable dark mode css when disabled", async function () {
-                await setPreference(PMPage, "checkDarkMode", false);
+                await setPreference(PMPage, "theme", "light");
                 const hasDarkMode = await PMPage.evaluate(() => {
                     const links = Array.from(document.querySelectorAll("link"));
                     return links.some((l) => l.href.includes("dark.css"));
@@ -726,7 +726,6 @@ describe("Popup Menu Tests", function () {
             "checkMd",
             "checkBib",
             "checkFeedback",
-            "checkDarkMode",
             "checkDirectOpen",
             "checkPdfTitle",
             "checkScirate",
@@ -787,6 +786,31 @@ describe("Popup Menu Tests", function () {
                 await safeClick(selector, PMPage);
             });
         }
+
+        it("should change the theme select and update storage (checkDarkMode in sync)", async function () {
+            await verifySelectorExists("#theme-select", PMPage);
+            const initial = await PMPage.$eval("#theme-select", (el) => el.value);
+
+            for (const theme of ["dark", "light"]) {
+                await PMPage.select("#theme-select", theme);
+                await PMPage.waitForFunction(
+                    (theme) =>
+                        new Promise((resolve) => {
+                            chrome.storage.local.get("prefs", ({ prefs }) => {
+                                resolve(
+                                    prefs?.theme === theme &&
+                                        prefs?.checkDarkMode === (theme === "dark"),
+                                );
+                            });
+                        }),
+                    { timeout: 5000, polling: 100 },
+                    theme,
+                );
+            }
+
+            // Restore state
+            await PMPage.select("#theme-select", initial);
+        });
     });
 
     describe("Menu Links and Actions", function () {

@@ -39,6 +39,9 @@ import {
     getDefaultKeyboardAction,
     getPrefs,
     getStorage,
+    onPrefsChange,
+    themeFromPrefs,
+    updatePrefs,
     setDefaultKeyboardAction,
     setStorage,
     validatePaper,
@@ -66,6 +69,7 @@ import {
     handlePopupDeletePaper,
     handlePopupKeydown,
     handlePrefsCheckChange,
+    handleThemeChange,
     hideTitleTooltip,
     showTitleTooltip,
     setFormChangeListener,
@@ -111,7 +115,7 @@ export const openMenu = () => {
 /**
  * Parses prefs options from the storage and adds events listeners for their change.
  * Notably, if a key in `prefsCheckNames` is missing from `prefs` it is set to true
- * @param {object} prefs The user preferences retrieved from storage
+ * @param {object} prefs The user preferences, from getPrefs() (so prefs.theme is set)
  * @param {string []} prefsCheckNames The array of all expected prefs options
  */
 export const getAndTrackPopupMenuChecks = (prefs, prefsCheckNames) => {
@@ -127,11 +131,28 @@ export const getAndTrackPopupMenuChecks = (prefs, prefsCheckNames) => {
             el.checked = setValues[key];
         }
     }
-    setStorage("prefs", setValues);
+    setValues.theme = prefs.theme;
+    findEl({ element: "theme-select" }).value = prefs.theme;
+    // store the defaults of keys missing from storage, without overwriting the others
+    updatePrefs((stored) =>
+        Object.fromEntries(
+            Object.entries(setValues).filter(([key]) => !stored.hasOwnProperty(key)),
+        ),
+    );
 
     for (const key of prefsCheckNames) {
         addListener(key, "change", handlePrefsCheckChange);
     }
+    addListener("theme-select", "change", handleThemeChange);
+
+    // prefs changed elsewhere (options page, another popup): re-sync the menu controls
+    onPrefsChange((stored) => {
+        for (const key of prefsCheckNames) {
+            const el = findEl({ element: key });
+            if (el && stored.hasOwnProperty(key)) el.checked = stored[key];
+        }
+        findEl({ element: "theme-select" }).value = themeFromPrefs(stored);
+    });
 };
 
 /**

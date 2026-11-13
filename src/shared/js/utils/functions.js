@@ -1,6 +1,5 @@
 // ES Module imports
 import {
-    state,
     descendingSortKeys,
     svgActionsHoverTitles,
     consolHeaderStyle,
@@ -753,7 +752,7 @@ export const tablerSvg = (pathName, id, classNames) => {
         case "huggingface":
             return `<img
                 src="${chrome.runtime.getURL(
-                    state.prefs.checkDarkMode
+                    document.documentElement.dataset.theme === "dark"
                         ? "src/shared/hf-logo-transparent-darktheme.svg"
                         : "src/shared/hf-logo-transparent-lighttheme.svg",
                 )}"

@@ -1,0 +1,960 @@
+/* PaperMemory shared components (from design-review/v2/components.css and the memory row of
+   design-review/v2/popup.html). Namespaced so they cannot collide with the existing page CSS:
+   - every class is prefixed "pm-" (.pm-btn, .pm-chip, .pm-item…); state classes (.is-focus,
+     .is-hover, .is-active, .is-disabled, .is-invalid, .is-error, .is-open, .menu-open) only
+     appear compounded with a pm- class;
+   - the base/element rules (box-sizing, body font, headings, links, focus ring) only apply
+     inside an opt-in .pm-ui container (put it on <html> or <body> when a page is restyled).
+     :where() keeps their specificity identical to the reference design. */
+:where(.pm-ui),
+:where(.pm-ui) *,
+:where(.pm-ui) *::before,
+:where(.pm-ui) *::after {
+    box-sizing: border-box;
+}
+:where(.pm-ui) {
+    color-scheme: light;
+    margin: 0;
+    font-family: var(--pm-font);
+    font-size: var(--pm-fs-md);
+    line-height: var(--pm-lh);
+    color: var(--pm-text-2);
+    background: var(--pm-bg);
+    -webkit-font-smoothing: antialiased;
+    font-feature-settings: "cv11", "ss03", "calt";
+}
+[data-theme="dark"] :where(.pm-ui),
+:where([data-theme="dark"].pm-ui) {
+    color-scheme: dark;
+}
+:where(.pm-ui) :is(h1, h2, h3, h4, p) {
+    margin: 0;
+}
+:where(.pm-ui) a {
+    color: var(--pm-link);
+    text-decoration: none;
+}
+:where(.pm-ui) a:hover {
+    text-decoration: underline;
+}
+:where(.pm-ui) :is(button, input, select, textarea) {
+    font: inherit;
+    color: inherit;
+}
+
+/* focus: one ring everywhere, blue, never the accent */
+:where(.pm-ui) :focus-visible,
+:where(.pm-ui) .is-focus {
+    outline: none;
+    box-shadow: var(--pm-ring);
+}
+
+/* text inputs: border turns to the focus colour, with a soft halo instead of the full ring */
+.pm-input:focus-visible,
+.pm-select:focus-visible,
+.pm-textarea:focus-visible,
+.pm-field:focus-within,
+.pm-field.is-focus,
+.pm-input.is-focus {
+    border-color: var(--pm-focus);
+    box-shadow: var(--pm-ring-input);
+}
+
+/* icons */
+.pm-i {
+    width: 16px;
+    height: 16px;
+    flex: none;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 1.75;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+.pm-i-sm {
+    width: 14px;
+    height: 14px;
+}
+.pm-i-fill {
+    fill: currentColor;
+}
+
+/* key cap: UI font, not mono; deliberately faint so hints sit behind the labels */
+.pm-kbd {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 16px;
+    height: 16px;
+    padding: 0 4px;
+    border-radius: var(--pm-r-sm);
+    background: color-mix(in srgb, var(--pm-text) 6%, transparent);
+    color: var(--pm-text-3);
+    font-size: 10.5px;
+    font-weight: var(--pm-fw);
+    line-height: 1;
+    white-space: nowrap;
+}
+
+/* tooltip: full action name + key, shown on hover/focus. Opens below its trigger;
+   .tip-start / .tip-end pin it to the trigger's left / right edge so it never leaves the frame. */
+.pm-tip {
+    position: absolute;
+    z-index: 4;
+    top: calc(100% + 6px);
+    left: 50%;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 6px 5px 8px;
+    border-radius: var(--pm-r-md);
+    background: var(--pm-ink);
+    color: var(--pm-ink-on);
+    font-size: var(--pm-fs-xs);
+    font-weight: var(--pm-fw-medium);
+    white-space: nowrap;
+    transform: translateX(-50%);
+    box-shadow: var(--pm-shadow-md);
+    pointer-events: none;
+}
+.pm-tip-start {
+    left: 0;
+    transform: none;
+}
+.pm-tip-end {
+    right: 0;
+    left: auto;
+    transform: none;
+}
+.pm-tip .pm-kbd,
+.pm-btn-primary .pm-kbd {
+    background: color-mix(in srgb, var(--pm-ink-on) 16%, transparent);
+    color: var(--pm-ink-on);
+}
+
+/* header (popup and pages) */
+.pm-hdr {
+    display: flex;
+    align-items: center;
+    gap: var(--pm-s-4);
+    height: 48px;
+    padding: 0 var(--pm-s-4);
+    background: var(--pm-surface);
+    border-bottom: 1px solid var(--pm-border);
+}
+.pm-brand {
+    display: flex;
+    align-items: center;
+    gap: var(--pm-s-2);
+    color: var(--pm-text);
+    font-weight: var(--pm-fw-bold);
+    font-size: var(--pm-fs-md);
+    letter-spacing: -0.01em;
+}
+.pm-brand svg {
+    width: 22px;
+    height: 22px;
+}
+.pm-tabs {
+    display: flex;
+    align-self: stretch;
+    gap: var(--pm-s-1);
+}
+.pm-tab {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 0 10px;
+    border: 0;
+    background: none;
+    color: var(--pm-text-3);
+    font-weight: var(--pm-fw-medium);
+    cursor: pointer;
+    border-radius: var(--pm-r-md);
+}
+.pm-tab:hover {
+    color: var(--pm-text);
+}
+.pm-tab[aria-selected="true"],
+.pm-tab[aria-current="page"] {
+    color: var(--pm-text);
+}
+.pm-tab[aria-selected="true"]::after,
+.pm-tab[aria-current="page"]::after {
+    content: "";
+    position: absolute;
+    left: 10px;
+    right: 10px;
+    bottom: -1px;
+    height: 2px;
+    border-radius: 2px 2px 0 0;
+    background: var(--pm-accent);
+}
+.pm-count {
+    font-size: var(--pm-fs-xs);
+    font-weight: var(--pm-fw-medium);
+    color: var(--pm-text-3);
+    font-variant-numeric: tabular-nums;
+}
+.pm-spacer {
+    flex: 1;
+}
+
+/* buttons */
+.pm-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    height: var(--pm-h-md);
+    padding: 0 12px;
+    border: 1px solid var(--pm-border-strong);
+    border-radius: var(--pm-r-md);
+    background: var(--pm-surface);
+    color: var(--pm-text);
+    font-size: var(--pm-fs-base);
+    font-weight: var(--pm-fw-medium);
+    white-space: nowrap;
+    cursor: pointer;
+    transition:
+        background var(--pm-motion),
+        border-color var(--pm-motion);
+}
+.pm-btn:hover,
+.pm-btn.is-hover {
+    background: var(--pm-surface-2);
+}
+.pm-btn:active,
+.pm-btn.is-active {
+    background: var(--pm-surface-3);
+}
+.pm-btn-primary {
+    background: var(--pm-ink);
+    border-color: var(--pm-ink);
+    color: var(--pm-ink-on);
+}
+.pm-btn-primary:hover,
+.pm-btn-primary.is-hover {
+    background: var(--pm-ink-hover);
+    border-color: var(--pm-ink-hover);
+    color: var(--pm-ink-on);
+}
+.pm-btn-primary:active,
+.pm-btn-primary.is-active {
+    background: color-mix(in srgb, var(--pm-ink) 82%, var(--pm-surface));
+    border-color: transparent;
+    color: var(--pm-ink-on);
+}
+.pm-btn-ghost {
+    border-color: transparent;
+    background: none;
+    color: var(--pm-text-2);
+}
+.pm-btn-ghost:hover,
+.pm-btn-ghost.is-hover {
+    background: var(--pm-surface-2);
+    color: var(--pm-text);
+}
+.pm-btn-ghost:active,
+.pm-btn-ghost.is-active {
+    background: var(--pm-surface-3);
+    color: var(--pm-text);
+}
+.pm-btn-danger {
+    color: var(--pm-danger);
+    border-color: color-mix(in srgb, var(--pm-danger) 45%, var(--pm-surface));
+}
+.pm-btn-danger:hover,
+.pm-btn-danger.is-hover {
+    background: var(--pm-danger-soft);
+}
+.pm-btn-danger:active,
+.pm-btn-danger.is-active {
+    background: color-mix(in srgb, var(--pm-danger) 18%, var(--pm-surface));
+}
+/* destructive confirmation (Delete): the one filled red button */
+.pm-btn-danger-solid {
+    border-color: var(--pm-accent);
+    background: var(--pm-accent);
+    color: var(--pm-accent-on);
+}
+.pm-btn-danger-solid:hover,
+.pm-btn-danger-solid.is-hover {
+    border-color: var(--pm-accent-hover);
+    background: var(--pm-accent-hover);
+    color: var(--pm-accent-on);
+}
+.pm-btn-danger-solid:active,
+.pm-btn-danger-solid.is-active {
+    border-color: transparent;
+    background: color-mix(in srgb, var(--pm-accent) 82%, var(--pm-surface));
+    color: var(--pm-accent-on);
+}
+.pm-btn-danger-solid .pm-kbd {
+    background: color-mix(in srgb, var(--pm-accent-on) 18%, transparent);
+    color: var(--pm-accent-on);
+}
+/* disabled: every variant falls back to the same flat, low-contrast-on-purpose look */
+.pm-btn:disabled,
+.pm-btn.is-disabled {
+    border-color: var(--pm-border);
+    background: var(--pm-surface-2);
+    color: var(--pm-text-3);
+    cursor: not-allowed;
+}
+.pm-btn-ghost:disabled,
+.pm-btn-ghost.is-disabled {
+    border-color: transparent;
+    background: none;
+}
+.pm-btn:disabled .pm-kbd,
+.pm-btn.is-disabled .pm-kbd {
+    background: none;
+    color: inherit;
+}
+.pm-btn-sm {
+    height: var(--pm-h-sm);
+    padding: 0 8px;
+    font-size: var(--pm-fs-sm);
+}
+.pm-iconbtn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--pm-h-md);
+    height: var(--pm-h-md);
+    padding: 0;
+    border: 0;
+    border-radius: var(--pm-r-md);
+    background: none;
+    color: var(--pm-text-3);
+    cursor: pointer;
+}
+.pm-iconbtn:hover,
+.pm-iconbtn[aria-pressed="true"],
+.pm-iconbtn[aria-expanded="true"] {
+    background: var(--pm-surface-2);
+    color: var(--pm-text);
+}
+.pm-iconbtn.pm-bordered {
+    border: 1px solid var(--pm-border-strong);
+    background: var(--pm-surface);
+}
+
+/* segmented control (theme, formats) */
+.pm-seg {
+    display: inline-flex;
+    padding: 2px;
+    border-radius: var(--pm-r-md);
+    background: var(--pm-surface-3);
+}
+.pm-seg button {
+    height: 26px;
+    padding: 0 10px;
+    border: 0;
+    border-radius: 5px;
+    background: none;
+    color: var(--pm-text-2);
+    font-size: var(--pm-fs-sm);
+    font-weight: var(--pm-fw-medium);
+    cursor: pointer;
+}
+.pm-seg button[aria-pressed="true"] {
+    background: var(--pm-surface);
+    color: var(--pm-text);
+    box-shadow: var(--pm-shadow-sm);
+}
+[data-theme="dark"] .pm-seg button[aria-pressed="true"] {
+    background: var(--pm-border-strong);
+}
+
+/* toggle */
+.pm-toggle {
+    appearance: none;
+    position: relative;
+    flex: none;
+    width: 34px;
+    height: 20px;
+    margin: 0;
+    border-radius: var(--pm-r-pill);
+    background: var(--pm-border-strong);
+    cursor: pointer;
+    transition: background var(--pm-motion);
+}
+.pm-toggle::after {
+    content: "";
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    transition: transform var(--pm-motion);
+}
+.pm-toggle:checked {
+    background: var(--pm-ink);
+}
+.pm-toggle:checked::after {
+    transform: translateX(14px);
+    background: var(--pm-ink-on);
+}
+
+/* checkbox */
+.pm-check {
+    appearance: none;
+    flex: none;
+    width: 16px;
+    height: 16px;
+    margin: 0;
+    border: 1.5px solid var(--pm-border-strong);
+    border-radius: var(--pm-r-sm);
+    background: var(--pm-surface);
+    cursor: pointer;
+}
+.pm-check:checked {
+    border-color: var(--pm-ink);
+    background: var(--pm-ink)
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%23fff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m4 8.3 2.6 2.6L12 5.4'/%3E%3C/svg%3E")
+        center / 14px no-repeat;
+}
+[data-theme="dark"] .pm-check:checked {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%231f2630' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m4 8.3 2.6 2.6L12 5.4'/%3E%3C/svg%3E");
+}
+
+/* inputs */
+.pm-input,
+.pm-select {
+    height: var(--pm-h-md);
+    padding: 0 10px;
+    border: 1px solid var(--pm-border-strong);
+    border-radius: var(--pm-r-md);
+    background: var(--pm-surface);
+    color: var(--pm-text);
+    font-size: var(--pm-fs-base);
+}
+.pm-input::placeholder {
+    color: var(--pm-text-3);
+}
+.pm-select {
+    appearance: none;
+    padding-right: 28px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236f7886' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+    background-size: 14px;
+    cursor: pointer;
+}
+[data-theme="dark"] .pm-select {
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2393a0b0' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+}
+/* composite field: icon + chips + text, same border as .pm-input */
+.pm-field {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-height: var(--pm-h-md);
+    padding: 3px 8px;
+    border: 1px solid var(--pm-border-strong);
+    border-radius: var(--pm-r-md);
+    background: var(--pm-surface);
+    color: var(--pm-text);
+    font-size: var(--pm-fs-base);
+}
+.pm-field .pm-ph {
+    color: var(--pm-text-3);
+}
+/* multi-line text (notes): same box as .pm-input, height follows rows (v2: .edit .field.ta) */
+.pm-textarea {
+    display: block;
+    width: 100%;
+    min-height: 64px;
+    padding: 6px 8px;
+    border: 1px solid var(--pm-border-strong);
+    border-radius: var(--pm-r-md);
+    background: var(--pm-surface);
+    color: var(--pm-text);
+    font-size: var(--pm-fs-base);
+    line-height: 1.45;
+    resize: vertical;
+}
+.pm-textarea::placeholder {
+    color: var(--pm-text-3);
+}
+/* invalid value (v2 popup: code-link field) + the message under the field */
+.pm-field.is-invalid,
+.pm-input.is-invalid,
+.pm-textarea.is-invalid {
+    border-color: var(--pm-danger);
+}
+.pm-field-msg {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-top: 4px;
+    color: var(--pm-text-3);
+    font-size: var(--pm-fs-xs);
+}
+.pm-field-msg.is-error {
+    color: var(--pm-danger);
+}
+.pm-mono {
+    font-family: var(--pm-font-mono);
+    font-size: 0.92em;
+}
+
+/* chips: tags and search filters */
+.pm-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    height: 20px;
+    padding: 0 8px;
+    border-radius: var(--pm-r-pill);
+    background: var(--pm-surface-3);
+    color: var(--pm-text-2);
+    font-size: var(--pm-fs-xs);
+    font-weight: var(--pm-fw-medium);
+    white-space: nowrap;
+}
+.pm-chip .pm-i {
+    width: 11px;
+    height: 11px;
+    opacity: 0.7;
+}
+.pm-chip-filter {
+    background: var(--pm-selected);
+    color: var(--pm-link);
+}
+.pm-chip-filter b {
+    font-weight: var(--pm-fw-medium);
+    opacity: 0.7;
+}
+.pm-chip-outline {
+    background: none;
+    box-shadow: inset 0 0 0 1px var(--pm-border-strong);
+    color: var(--pm-text-3);
+}
+.pm-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    height: 20px;
+    padding: 0 8px;
+    border-radius: var(--pm-r-pill);
+    font-size: var(--pm-fs-xs);
+    font-weight: var(--pm-fw-medium);
+}
+.pm-badge-ok {
+    background: var(--pm-success-soft);
+    color: var(--pm-success);
+}
+.pm-badge-warn {
+    background: var(--pm-warning-soft);
+    color: var(--pm-warning);
+}
+.pm-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--pm-success);
+}
+
+/* setting row: label + one-line help, control on the right */
+.pm-row {
+    display: flex;
+    align-items: center;
+    gap: var(--pm-s-4);
+    padding: var(--pm-s-3) var(--pm-s-4);
+    border-top: 1px solid var(--pm-border);
+}
+.pm-row:first-child {
+    border-top: 0;
+}
+.pm-row-text {
+    flex: 1;
+    min-width: 0;
+}
+.pm-row-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--pm-text);
+    font-weight: var(--pm-fw-medium);
+}
+.pm-row-help {
+    margin-top: 1px;
+    color: var(--pm-text-3);
+    font-size: var(--pm-fs-sm);
+}
+
+/* text caret for drawn (non-live) inputs in the mockups */
+.pm-caret::after {
+    content: "";
+    display: inline-block;
+    width: 1px;
+    height: 14px;
+    margin-left: 1px;
+    background: var(--pm-text);
+    vertical-align: -2px;
+}
+
+/* suggestion list: tag autocomplete (search field, tag fields) and the tag list */
+.pm-sugg {
+    padding: 4px;
+    border: 1px solid var(--pm-border);
+    border-radius: var(--pm-r-lg);
+    background: var(--pm-surface);
+    box-shadow: var(--pm-shadow-lg);
+    font-size: var(--pm-fs-sm);
+}
+[data-theme="dark"] .pm-sugg {
+    border-color: var(--pm-border-strong);
+    background: var(--pm-surface-2);
+}
+.pm-sugg-row {
+    display: flex;
+    align-items: center;
+    gap: var(--pm-s-2);
+    min-height: 28px;
+    padding: 3px 8px;
+    border-radius: 5px;
+    color: var(--pm-text);
+    cursor: pointer;
+}
+.pm-sugg-row > span:first-child {
+    flex: 1;
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+.pm-sugg-row .pm-count {
+    flex: none;
+}
+.pm-sugg-row:hover,
+.pm-sugg-row.is-active {
+    background: var(--pm-surface-3);
+}
+.pm-sugg-row mark {
+    background: none;
+    color: inherit;
+    font-weight: var(--pm-fw-bold);
+}
+.pm-sugg-note {
+    padding: 6px 8px 4px;
+    color: var(--pm-text-3);
+    font-size: var(--pm-fs-xs);
+}
+.pm-sugg-foot {
+    display: flex;
+    align-items: center;
+    gap: var(--pm-s-3);
+    margin-top: 4px;
+    padding: 6px 8px 3px;
+    border-top: 1px solid var(--pm-border);
+    color: var(--pm-text-3);
+    font-size: var(--pm-fs-xs);
+}
+.pm-sugg-foot span {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+}
+
+/* section title: names a group of settings (popup menu, options page) */
+.pm-section-title {
+    color: var(--pm-text);
+    font-size: var(--pm-fs-base);
+    font-weight: var(--pm-fw-bold);
+    letter-spacing: -0.005em;
+}
+/* small icon tile in front of a group title */
+.pm-gicon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: none;
+    width: 22px;
+    height: 22px;
+    border-radius: 6px;
+    background: var(--pm-surface-3);
+    color: var(--pm-text-2);
+}
+.pm-gicon .pm-i {
+    width: 13px;
+    height: 13px;
+}
+
+/* key-hint footer */
+.pm-hints {
+    display: flex;
+    align-items: center;
+    gap: var(--pm-s-3);
+    height: 34px;
+    padding: 0 var(--pm-s-4);
+    border-top: 1px solid var(--pm-border);
+    background: var(--pm-surface-2);
+    color: var(--pm-text-3);
+    font-size: var(--pm-fs-sm);
+    white-space: nowrap;
+}
+.pm-hints span {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.pm-label-caps {
+    color: var(--pm-text-3);
+    font-size: var(--pm-fs-xs);
+    font-weight: var(--pm-fw-bold);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+/* memory row (from design-review/v2/popup.html) */
+/* A row is a rounded card at all times: its padding and outline exist at rest (transparent), so
+   focus and hover only change colours and the row never moves or resizes. Height follows content. */
+.pm-item {
+    position: relative;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 0 var(--pm-s-3);
+    padding: 14px var(--pm-s-3) 10px;
+    border-radius: var(--pm-r-lg);
+    cursor: default;
+}
+/* 8px between rows, so two adjacent highlighted cards (focused + hovered) read as separate */
+.pm-item + .pm-item {
+    margin-top: 10px;
+}
+/* inset hairline between rows instead of full-width borders */
+.pm-item + .pm-item::before {
+    content: "";
+    position: absolute;
+    top: -5px;
+    right: var(--pm-s-3);
+    left: var(--pm-s-3);
+    border-top: 1px solid var(--pm-border);
+}
+.pm-item:hover,
+.pm-item.is-hover {
+    background: var(--pm-surface-2);
+}
+/* focused row: the card is tinted; its left edge carries the focus colour and follows the radius */
+.pm-item.is-focus {
+    background: var(--pm-surface-2);
+    box-shadow:
+        inset 3px 0 0 var(--pm-focus),
+        inset 0 0 0 1px var(--pm-border);
+}
+.pm-item.is-focus::before,
+.pm-item.is-focus + .pm-item::before,
+.pm-item:hover::before,
+.pm-item:hover + .pm-item::before,
+.pm-item.is-hover::before,
+.pm-item.is-hover + .pm-item::before {
+    border-color: transparent;
+}
+.pm-item-title {
+    display: -webkit-box;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    color: var(--pm-text);
+    font-size: var(--pm-fs-md);
+    font-weight: var(--pm-fw-bold);
+    line-height: var(--pm-lh-tight);
+    letter-spacing: -0.005em;
+}
+.pm-item-meta {
+    margin-top: 4px;
+    overflow: hidden;
+    color: var(--pm-text-3);
+    font-size: var(--pm-fs-sm);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+/* tags: all of them, full text, wrapping onto as many lines as they need */
+.pm-item-tags {
+    grid-column: 1 / -1;
+    margin-top: 7px;
+    padding-left: 18px;
+    color: var(--pm-text-2);
+    font-size: var(--pm-fs-sm);
+    line-height: 1.55;
+    text-indent: -18px;
+}
+.pm-item-tags .pm-i {
+    width: 12px;
+    height: 12px;
+    margin-right: 6px;
+    opacity: 0.7;
+    vertical-align: -1.5px;
+}
+.pm-item-tags .pm-tg {
+    display: inline-block;
+    max-width: 100%;
+    margin-right: 5px;
+    text-indent: 0;
+    overflow-wrap: anywhere; /* only a tag longer than the row breaks inside itself */
+}
+.pm-item-tags .pm-tg:not(:last-child)::after {
+    content: " ·";
+    opacity: 0.6;
+}
+/* note: its own block inside the row, tied to the paper by a hairline on its left */
+.pm-item-note {
+    grid-column: 1 / -1;
+    margin-top: 8px;
+    padding: 1px 0 1px 10px;
+    border-left: 2px solid var(--pm-border-strong);
+    color: var(--pm-text-2);
+    font-size: var(--pm-fs-sm);
+    line-height: 1.5;
+}
+.pm-item-note p {
+    display: -webkit-box;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 3; /* counts rendered lines, blank ones included */
+    white-space: pre-line; /* keep the line breaks the user typed */
+}
+.pm-item-note.is-open p {
+    display: block;
+}
+.pm-note-more {
+    margin-top: 2px;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--pm-text-3);
+    font-size: var(--pm-fs-xs);
+    text-decoration: underline dotted;
+    text-underline-offset: 3px;
+    cursor: pointer;
+}
+.pm-note-more:hover {
+    color: var(--pm-text);
+}
+.pm-item-side {
+    display: flex;
+    align-items: center;
+    align-self: start;
+    gap: 5px;
+    padding-top: 2px;
+    color: var(--pm-text-3);
+    font-size: var(--pm-fs-xs);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+.pm-item-side .pm-i {
+    width: 12px;
+    height: 12px;
+    color: var(--pm-accent);
+    fill: currentColor;
+}
+/* actions: on every row, always in the same place; faint at rest, full contrast on the
+   focused or hovered row. Only the opacity changes. */
+.pm-item-actions {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    margin: 8px -5px 0;
+    opacity: 0.46;
+    transition: opacity var(--pm-motion);
+}
+.pm-item.is-focus .pm-item-actions,
+.pm-item.is-hover .pm-item-actions,
+.pm-item:hover .pm-item-actions,
+.pm-item:focus-within .pm-item-actions {
+    opacity: 1;
+}
+.pm-ia {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    height: 24px;
+    padding: 0 5px;
+    border: 0;
+    border-radius: var(--pm-r-md);
+    background: none;
+    color: var(--pm-text-2);
+    font-size: var(--pm-fs-sm);
+    cursor: pointer;
+}
+.pm-ia:hover,
+.pm-ia[aria-expanded="true"] {
+    background: color-mix(in srgb, var(--pm-text) 8%, transparent);
+    color: var(--pm-text);
+}
+.pm-ia .pm-kbd {
+    min-width: 0;
+    padding: 0;
+    background: none;
+}
+.pm-ia.pm-more {
+    margin-left: auto;
+}
+.pm-ia.pm-more,
+.pm-ia.pm-del {
+    width: 24px;
+    justify-content: center;
+    padding: 0;
+    color: var(--pm-text-3);
+}
+/* overflow menu: the four "open elsewhere" links (click … in the mockup) */
+.pm-pop {
+    position: absolute;
+    z-index: 3;
+    top: calc(100% - 6px);
+    right: 38px;
+    display: none;
+    width: 176px;
+    padding: 4px;
+    border: 1px solid var(--pm-border);
+    border-radius: var(--pm-r-lg);
+    background: var(--pm-surface);
+    box-shadow: var(--pm-shadow-lg);
+}
+.pm-item.menu-open .pm-pop {
+    display: block;
+}
+[data-theme="dark"] .pm-pop {
+    background: var(--pm-surface-2);
+    border-color: var(--pm-border-strong);
+}
+.pm-pop .pm-label-caps {
+    display: block;
+    padding: 5px 8px 3px;
+    font-size: 10px;
+}
+.pm-pop button {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    height: 28px;
+    padding: 0 8px;
+    border: 0;
+    border-radius: 5px;
+    background: none;
+    color: var(--pm-text);
+    font-size: var(--pm-fs-sm);
+    text-align: left;
+    cursor: pointer;
+}
+.pm-pop button:hover {
+    background: var(--pm-surface-3);
+}
+/* a tag in a row is a button: click adds it as a filter */
+.pm-item-tags .pm-tg {
+    cursor: pointer;
+}
+.pm-item-tags .pm-tg:hover {
+    color: var(--pm-link);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}

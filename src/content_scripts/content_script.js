@@ -247,7 +247,7 @@ const makePaperMemoryHTMLDiv = (paper) => {
         ? /*html*/ `
          <div 
             id="pm-container"
-            style="position: absolute; top: 10px; left: 50%; transform: translateX(-50%); font-family: 'Noto Sans','Noto Sans Fallback',sans-serif; font-size: 0.8rem;"
+            style="position: absolute; top: 10px; left: 50%; transform: translateX(-50%); font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; font-size: 0.8rem;"
         >
             <div 
                 style="display: flex; justify-content: center; align-items: center;" 

@@ -12,7 +12,7 @@ body {
     min-width: 450px;
     display: flex;
     flex-direction: column;
-    font-family: "Yantramanav";
+    font-family: var(--pm-font);
     position: relative;
 }
 
@@ -55,7 +55,7 @@ body {
 textarea {
     border-radius: var(--round);
     border: 1px solid #aaaaaa;
-    font-family: "Yantramanav";
+    font-family: var(--pm-font);
 }
 
 *:not(.ts-control input, .switch):focus,
@@ -145,7 +145,7 @@ button:hover,
 }
 
 code {
-    font-family: "Fira Code", monospace;
+    font-family: var(--pm-font-mono);
     padding: 1px 4px;
     /* vertical-align: middle; */
     border-radius: var(--round);
@@ -154,7 +154,7 @@ code {
     display: inline-block;
 }
 .code-font {
-    font-family: "Fira Code", monospace;
+    font-family: var(--pm-font-mono);
 }
 
 #header-icon {
@@ -519,7 +519,7 @@ code {
 }
 
 .label {
-    font-family: "Fira Code", monospace;
+    font-family: var(--pm-font-mono);
     margin-right: 16px;
     font-size: 0.8rem;
 }
@@ -569,7 +569,7 @@ code {
     cursor: pointer;
     margin-bottom: 4px;
     word-break: break-all;
-    font-family: "Fira Code", monospace;
+    font-family: var(--pm-font-mono);
     font-size: 0.7rem;
 }
 #popup-code-link,
@@ -715,7 +715,7 @@ code {
     cursor: pointer;
 }
 .paper-info-span {
-    font-family: "Fira Code", monospace;
+    font-family: var(--pm-font-mono);
     font-size: 0.7rem;
 }
 
@@ -769,7 +769,7 @@ button.changed {
 }
 
 #custom-title-textarea {
-    font-family: "Fira-code", monospace;
+    font-family: var(--pm-font-mono);
 }
 
 #popup-delete-paper {
@@ -944,7 +944,7 @@ button.changed {
 #manual-website-form label {
     width: 60px;
     /* font-size: 0.8rem; */
-    font-family: "Fira Code", monospace;
+    font-family: var(--pm-font-mono);
 }
 #manual-website-form input,
 #manual-website-form textarea {
@@ -958,7 +958,7 @@ button.changed {
 #manual-website-url {
     max-width: 95%;
     font-size: 0.7rem;
-    font-family: "Fira Code", monospace;
+    font-family: var(--pm-font-mono);
     margin-bottom: 24px;
     overflow-wrap: anywhere;
 }
@@ -978,10 +978,10 @@ button.changed {
     display: block;
     font-size: 0.56rem;
     font-style: italic;
-    font-family: "Fira Code";
+    font-family: var(--pm-font-mono);
 }
 #ascii-art-div {
-    font-family: "Fira Code", monospace;
+    font-family: var(--pm-font-mono);
     font-size: 0.6rem;
     white-space: pre;
     display: flex;
@@ -1009,7 +1009,7 @@ button.changed {
     position: fixed;
     bottom: 32px;
     left: 65px;
-    font-family: "Fira Code", monospace;
+    font-family: var(--pm-font-mono);
 }
 @keyframes rotation {
     from {

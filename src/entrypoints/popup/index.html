@@ -3,24 +3,21 @@
     <head>
         <meta charset="utf-8" />
 
-        <script src="/theme.js"></script>
-
-        <style>
-            @import url("https://fonts.googleapis.com/css2?family=Yantramanav:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;1,600&display=swap");
-            @import url("https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;500;600;700&display=swap");
-        </style>
-
         <link
             rel="stylesheet"
             type="text/css"
             href="/bootstrap-utilities.min.css"
             wxt-ignore
         />
+        <link rel="stylesheet" type="text/css" href="/tokens.css" wxt-ignore />
+        <link rel="stylesheet" type="text/css" href="/components.css" wxt-ignore />
         <link rel="stylesheet" type="text/css" href="/vars.css" wxt-ignore />
         <link rel="stylesheet" type="text/css" href="/popup.css" wxt-ignore />
         <link rel="stylesheet" type="text/css" href="/tom-select.css" wxt-ignore />
         <link rel="stylesheet" type="text/css" href="/options.css" wxt-ignore />
         <link rel="stylesheet" type="text/css" href="/loader.css" wxt-ignore />
+        <!-- after every stylesheet: applies the theme before first paint -->
+        <script src="/theme.js"></script>
 
         <script type="module" src="./main.js"></script>
     </head>
