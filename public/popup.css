@@ -175,13 +175,6 @@
 .pm-pv-act:focus-visible .pm-i {
     color: var(--pm-text);
 }
-.pm-pv-act .pm-tip {
-    display: none;
-}
-.pm-pv-act:hover .pm-tip,
-.pm-pv-act:focus-visible .pm-tip {
-    display: inline-flex;
-}
 
 /* grouped fields */
 .pm-pv-group {

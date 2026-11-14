@@ -96,8 +96,7 @@
     white-space: nowrap;
 }
 
-/* tooltip: full action name + key, shown on hover/focus. Opens below its trigger;
-   .tip-start / .tip-end pin it to the trigger's left / right edge so it never leaves the frame. */
+/* tooltip: full name + key (tooltip.js places it; one element per page) */
 .pm-tip {
     position: absolute;
     z-index: 4;
@@ -117,25 +116,23 @@
     box-shadow: var(--pm-shadow-md);
     pointer-events: none;
 }
-.pm-tip-start {
-    left: 0;
-    transform: none;
-}
-.pm-tip-end {
-    right: 0;
-    left: auto;
-    transform: none;
-}
-/* the floating tooltip of icon-only controls (tooltip.js): same look, placed by script */
+/* the floating tooltip: one line at its natural width, moved (never shrunk) to stay in the
+   frame; only a tip wider than the max width (.is-long, e.g. a URL) wraps */
 .pm-tip-float {
     position: fixed;
     z-index: 50;
     top: 0;
     left: 0;
-    max-width: min(320px, calc(100vw - 12px));
+    width: max-content;
     transform: none;
+    white-space: nowrap;
+}
+.pm-tip-float.is-long {
     white-space: normal;
     overflow-wrap: anywhere;
+}
+.pm-tip-float .pm-kbd {
+    flex: none;
 }
 .pm-tip-float[hidden] {
     display: none;

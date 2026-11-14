@@ -698,6 +698,38 @@ describe("Test PaperMemory Popup UI - Known Paper Page", function () {
             ).toBe(false);
         });
 
+        it("should show the action strip's tooltips with the shared mechanism (delay, one line, inside)", async function () {
+            await setupPopupWithMockedTab(PMPage, arxivPaperUrl, arxivPaperId);
+            const pdf = `#popup-memory-item-download--${arxivPaperIdEscaped}`;
+            // no tooltip span inside the button anymore: data-tip + aria-label
+            expect(await PMPage.$eval(pdf, (el) => !!el.querySelector(".pm-tip"))).toBe(false);
+            await PMPage.mouse.move(5, 590);
+            await sleep(500);
+            await PMPage.hover(pdf);
+            await sleep(100);
+            const hidden = () =>
+                PMPage.evaluate(() => document.querySelector(".pm-tip-float")?.hidden ?? true);
+            expect(await hidden()).toBe(true);
+            await sleep(400);
+            const t = await PMPage.evaluate(() => {
+                const tip = document.querySelector(".pm-tip-float");
+                const range = document.createRange();
+                range.selectNodeContents(tip.firstChild);
+                const r = tip.getBoundingClientRect();
+                return {
+                    hidden: tip.hidden,
+                    text: tip.textContent,
+                    lines: range.getClientRects().length,
+                    inside: r.left >= 0 && r.right <= 450,
+                };
+            });
+            expect(t.hidden).toBe(false);
+            expect(t.text).toMatch(/^Download PDF/);
+            expect(t.lines).toBe(1);
+            expect(t.inside).toBe(true);
+            await PMPage.mouse.move(5, 590);
+        });
+
         it("should close the paper view's edit state with Ctrl+↵ and Esc wherever the focus is", async function () {
             await setupPopupWithMockedTab(PMPage, arxivPaperUrl, arxivPaperId);
             const editing = () =>

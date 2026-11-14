@@ -331,7 +331,7 @@ export const getPopupPaperHTML = (paper, currentUrl, is, { downloadKey }) => {
     const venue = formatVenue(paper).short;
     const year = !venue && String(paper.year ?? "").trim();
 
-    // ----- six actions; tooltips open below, pinned to the edge on the first and last
+    // ----- six actions
     const onPdf = isPdfUrl(currentUrl);
     const hasLocal =
         prefs.checkStore &&
@@ -357,13 +357,12 @@ export const getPopupPaperHTML = (paper, currentUrl, is, { downloadKey }) => {
             ? ["memory-item-openLocal", "book", "PDF", "Open the downloaded PDF", ""]
             : ["memory-item-download", "pdf", "PDF", "Download PDF", downloadKey],
     ];
+    // the full name and key in our tooltip (tooltip.js), like every other control
     const strip = actions
-        .map(([cls, ic, label, tip, key, title], i) => {
-            const pin =
-                i === 0 ? "pm-tip-start" : i === actions.length - 1 ? "pm-tip-end" : "";
-            const kbd = key ? ` <span class="pm-kbd">${key}</span>` : "";
-            return /*html*/ `<button class="pm-pv-act" id="popup-${cls}--${id}" aria-label="${title ?? tip}${key ? ` (${key})` : ""}">
-                ${icon(ic)}${label}<span class="pm-tip ${pin}">${tip}${kbd}</span></button>`;
+        .map(([cls, ic, label, tip, key, title]) => {
+            const k = escapeHtml(key ?? "");
+            return /*html*/ `<button class="pm-pv-act" id="popup-${cls}--${id}" aria-label="${escapeHtml(title ?? tip)}${k ? ` (${k})` : ""}" data-tip="${escapeHtml(tip)}"${k ? ` data-tip-key="${k}"` : ""}>
+                ${icon(ic)}${label}</button>`;
         })
         .join("");
 

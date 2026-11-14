@@ -505,14 +505,24 @@ describe("Test PaperMemory MemoryTable UI", function () {
         it("should show our tooltip (name + key) on icon-only controls, inside the popup", async function () {
             await openWith();
             const hover = async (sel) => {
+                // scrolled first: a scroll hides the tip (and would race the hover)
+                await page.$eval(sel, (el) => el.scrollIntoView({ block: "nearest" }));
+                await sleep(100);
                 await page.hover(sel);
+                await page.waitForFunction(
+                    () => document.querySelector(".pm-tip-float")?.hidden === false,
+                    { timeout: 2000 },
+                );
                 return page.evaluate(() => {
                     const tip = document.querySelector(".pm-tip-float");
                     const r = tip?.getBoundingClientRect();
+                    const range = document.createRange();
+                    if (tip?.firstChild) range.selectNodeContents(tip.firstChild);
                     return {
                         shown: !!tip && !tip.hidden,
                         text: tip?.textContent,
                         inside: !!r && r.left >= 0 && r.top >= 0 && r.right <= 450 && r.bottom <= 600,
+                        oneLine: !!tip?.firstChild && range.getClientRects().length === 1,
                     };
                 });
             };
@@ -520,19 +530,29 @@ describe("Test PaperMemory MemoryTable UI", function () {
                 shown: true,
                 text: "Settings p",
                 inside: true,
+                oneLine: true,
             });
+            expect(await hover("#memory-sort-button")).toMatchObject({ inside: true, oneLine: true });
             expect(await hover("#memory-tags-button")).toMatchObject({
                 text: "Browse tags",
                 inside: true,
             });
             const last = "#memory-table .memory-container:last-child";
+            // at the right edge: moved inside, never narrowed onto two lines ("Delet / e")
             expect(await hover(`${last} .memory-delete`)).toMatchObject({
                 text: "Delete ⌫",
                 inside: true,
+                oneLine: true,
             });
             expect(await hover(`${last} .memory-item-info`)).toMatchObject({
                 text: "Info d",
                 inside: true,
+                oneLine: true,
+            });
+            const first = "#memory-table .memory-container:first-child";
+            expect(await hover(`${first} .memory-delete`)).toMatchObject({
+                text: "Delete ⌫",
+                oneLine: true,
             });
             // no native title next to our tooltip; the name stays in aria-label
             const titled = await page.$$eval("[data-tip]", (els) =>
@@ -545,6 +565,50 @@ describe("Test PaperMemory MemoryTable UI", function () {
             expect(titled).toBe(0);
             await page.mouse.move(5, 300);
             expect((await page.$eval(".pm-tip-float", (el) => el.hidden))).toBe(true);
+        });
+
+        it("should show a tooltip after a short delay, hand off at once to the next control, hide at once", async function () {
+            await openWith();
+            const tip = () => page.evaluate(() => {
+                    const tip = document.querySelector(".pm-tip-float");
+                    const r = tip?.getBoundingClientRect();
+                    const range = document.createRange();
+                    if (tip?.firstChild) range.selectNodeContents(tip.firstChild);
+                    return {
+                        shown: !!tip && !tip.hidden,
+                        text: tip?.textContent,
+                        inside: !!r && r.left >= 0 && r.top >= 0 && r.right <= 450 && r.bottom <= 600,
+                        oneLine: !!tip?.firstChild && range.getClientRects().length === 1,
+                    };
+                });
+            await page.mouse.move(5, 300);
+            await sleep(500); // no tip shown recently: the delay applies
+            await page.hover("#memory-tags-button");
+            await sleep(100);
+            expect((await tip()).shown).toBe(false);
+            await sleep(350);
+            expect(await tip()).toMatchObject({ shown: true, text: "Browse tags" });
+            // the next control: at once
+            await page.hover("#filter-favorites");
+            expect(await tip()).toMatchObject({ shown: true, text: "Favourites only" });
+            // leaving: hidden at once
+            await page.mouse.move(5, 300);
+            expect((await tip()).shown).toBe(false);
+            // a pointer that leaves before the delay: nothing shows
+            await sleep(500);
+            await page.hover("#memory-sort-button");
+            await sleep(100);
+            await page.mouse.move(5, 300);
+            await sleep(450);
+            expect((await tip()).shown).toBe(false);
+            // a click hides it and it stays hidden while the pointer stays on the control
+            await page.hover("#memory-tags-button");
+            await sleep(450);
+            expect((await tip()).shown).toBe(true);
+            await page.mouse.down();
+            await page.mouse.up();
+            await sleep(450);
+            expect((await tip()).shown).toBe(false);
         });
     });
 
@@ -704,6 +768,7 @@ describe("Test PaperMemory MemoryTable UI", function () {
             expect(time.label).toBe(time.tip);
             expect(time.title).toBe(false);
             await page.hover(`${rowSel(CG)} time`);
+            await page.waitForFunction(() => document.querySelector(".pm-tip-float")?.hidden === false);
             expect(await page.$eval(".pm-tip-float", (el) => el.textContent)).toBe(time.tip);
         });
     });
@@ -721,6 +786,24 @@ describe("Test PaperMemory MemoryTable UI", function () {
             await page.goto(pmURLs.fullMemoryURL, { waitUntil: "networkidle0" });
             await page.waitForSelector("#memory-table .memory-container");
         };
+
+        it("should keep the row delete tooltip on one line at the right edge", async function () {
+            await openFull();
+            await page.hover("#memory-table .memory-container .memory-delete");
+            await page.waitForFunction(() => document.querySelector(".pm-tip-float")?.hidden === false);
+            const t = await page.evaluate(() => {
+                const tip = document.querySelector(".pm-tip-float");
+                const range = document.createRange();
+                range.selectNodeContents(tip.firstChild);
+                const r = tip.getBoundingClientRect();
+                return {
+                    text: tip.textContent,
+                    lines: range.getClientRects().length,
+                    inside: r.right <= window.innerWidth && r.left >= 0,
+                };
+            });
+            expect(t).toEqual({ text: "Delete ⌫", lines: 1, inside: true });
+        });
 
         it("should toggle the focused row's Info panel with 'd'", async function () {
             await openFull();
