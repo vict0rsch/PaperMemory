@@ -36,7 +36,7 @@ import {
     setMemoryScrolled,
     setMemorySort,
     setMemorySortArrow,
-    addFilter,
+    showOnlyTag,
     toggleFavouritesFilter,
     toggleSortMenu,
     toggleTagPanel,
@@ -48,8 +48,13 @@ import {
     openMenu,
     showPopupModal,
     startPaperEdit,
-    toggleDetails,
+    togglePaperInfo,
 } from "@pm/popup/js/popup.js";
+import {
+    closeInfoPanel,
+    infoPanelIsOpen,
+    toggleInfoPanel,
+} from "@pm/popup/js/infopanel.js";
 
 /**
  * Closes the open bottom sheet and gives the focus back to where it was
@@ -364,14 +369,26 @@ export const handleConfirmDeleteModalClick = async (e) => {
     }
 };
 
-/** A tag in a row: adds it as a filter pill (fullMemory: searches for it) */
-export const handleTagClick = (e) => {
-    const tag = e.target.closest(".memory-tag").textContent;
-    if (findEl({ element: "memory-pills" }))
-        return addFilter({ type: "tag", value: tag });
-    const input = findEl({ element: "memory-search" });
-    input.value = `t:${tag}`;
-    applyMemorySearch();
+/** A tag in a row: the search becomes that tag alone (popup and fullMemory) */
+export const handleTagClick = (e) => showOnlyTag(e.target.closest(".memory-tag").textContent);
+
+/**
+ * fullMemory's keys (it has no popup keyboard handler): `d` opens / closes the Info panel of the
+ * focused row, Escape closes it
+ * @param {KeyboardEvent} e
+ */
+export const handleFullMemoryKeydown = (e) => {
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+    if (e.key === "Escape" && infoPanelIsOpen()) {
+        e.preventDefault();
+        return closeInfoPanel();
+    }
+    const focused = document.activeElement;
+    if (e.key !== "d" || ["INPUT", "TEXTAREA", "SELECT"].includes(focused?.tagName)) return;
+    const row = focused?.closest?.("#memory-table .memory-container");
+    if (!row || row.classList.contains("is-edit")) return;
+    e.preventDefault();
+    toggleInfoPanel(row, row.querySelector(".memory-item-info"), row.id.split("--")[1]);
 };
 
 /** Clears the search field and every filter */
@@ -499,6 +516,10 @@ export const handlePopupKeydown = async (e) => {
         // the focused row, or the row of the focused control
         paperItem = focused?.closest?.("#memory-table .memory-container");
         if (key === "Escape") {
+            if (infoPanelIsOpen()) {
+                closeInfoPanel();
+                return e.preventDefault();
+            }
             if (paperItem?.classList.contains("menu-open")) {
                 closeRowMenus();
                 return e.preventDefault();
@@ -511,6 +532,10 @@ export const handlePopupKeydown = async (e) => {
         if (!state.papers[id]) return;
     } else if (state.currentId) {
         // the paper view (not the "not in your Memory" state)
+        if (key === "Escape" && infoPanelIsOpen()) {
+            e.preventDefault();
+            return closeInfoPanel();
+        }
         if (!state.papers[state.currentId] || key === "Escape") return;
         id = state.currentId;
     } else {
@@ -522,12 +547,12 @@ export const handlePopupKeydown = async (e) => {
     }
 
     if (!paperItem) {
-        // paper view: edit fields in place, Details block
+        // paper view: edit fields in place, Info panel
         if (key === "e") {
             e.preventDefault();
             return startPaperEdit();
         }
-        if (key === "d") return toggleDetails();
+        if (key === "d") return togglePaperInfo("key");
     }
 
     // the control for an action: in the row, or the paper view's #popup-<class>--<id>
@@ -553,9 +578,8 @@ export const handlePopupKeydown = async (e) => {
         e.preventDefault();
         openMemoryItemEdit(id);
     } else if (key === "d") {
-        // the row's details: added, last opened, visits, ID, source
-        const details = paperItem.querySelector(".pm-item-details");
-        if (details) details.hidden = !details.hidden;
+        // the row's Info panel; the focus stays on the row
+        toggleInfoPanel(paperItem, paperItem.querySelector(".memory-item-info"), id);
     } else if (key === "t") {
         await copyAndConfirmMemoryItem({
             id,
@@ -626,6 +650,9 @@ const handleMemoryTableClick = (e) => {
         t.closest(".pm-note-more").textContent = open ? "less" : "more…";
         return;
     }
+    if (t.closest(".pm-info-pop")) return;
+    if (t.closest(".memory-item-info"))
+        return toggleInfoPanel(row, t.closest(".memory-item-info"), id);
     if (t.closest(".memory-tag")) return handleTagClick(e);
     if (t.closest(".memory-item-more")) {
         closeRowMenus(row);

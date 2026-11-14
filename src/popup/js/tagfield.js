@@ -82,6 +82,7 @@ export const createTagField = ({ root, tags = [], onChange = () => {}, inputId }
             x.className = "pm-chip-x";
             x.tabIndex = -1;
             x.setAttribute("aria-label", `Remove the tag ${tag}`);
+            x.dataset.tip = "Remove the tag";
             x.innerHTML = icon("x");
             x.addEventListener("click", (e) => {
                 e.stopPropagation();

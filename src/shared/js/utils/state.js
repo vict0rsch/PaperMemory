@@ -17,6 +17,7 @@ import {
     state,
     descendingSortKeys,
     journalAbbreviations,
+    journalShortNames,
     storeReadme,
 } from "@pmu/config.js";
 import {
@@ -259,6 +260,10 @@ export const readJournalAbbreviations = async () => {
     );
     for (const [key, value] of Object.entries(newAbbreviations)) {
         journalAbbreviations[key] = value;
+    }
+    for (const [abbreviation, full] of Object.entries(iso4)) {
+        const key = miniHash(full);
+        if (!(key in journalShortNames)) journalShortNames[key] = abbreviation;
     }
 };
 

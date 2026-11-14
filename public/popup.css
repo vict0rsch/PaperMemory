@@ -119,15 +119,20 @@
     text-decoration: underline dotted;
     text-underline-offset: 3px;
 }
+/* venue: its own line, only when the paper has one */
 .pm-pv-venue {
-    margin-top: 2px;
-    color: var(--pm-text-3);
-    font-size: var(--pm-fs-sm);
+    margin-top: 4px;
+    color: var(--pm-text-2);
+    font-size: var(--pm-fs-base);
+    font-weight: var(--pm-fw-medium);
     overflow-wrap: anywhere;
 }
-.pm-pv-venue b {
-    color: var(--pm-text-2);
-    font-weight: var(--pm-fw-medium);
+/* the status line holds the ⓘ and its panel */
+.pm-pv-status {
+    position: relative;
+}
+.pm-pv-status .pm-info-pop {
+    right: 0;
 }
 
 /* six actions: one quiet strip, icon + small label; full name and key in the tooltip below */
@@ -344,61 +349,38 @@
     color: var(--pm-text);
 }
 
-/* Details: collapsed by default (d); Remove on the same line; pinned above the footer */
-.pm-pv-details {
-    flex: none;
-    max-height: 45%;
-    margin: 0 var(--pm-s-5);
-    padding: 6px 0 var(--pm-s-2);
-    overflow: hidden auto;
-    border-top: 1px solid var(--pm-border);
-    font-size: var(--pm-fs-sm);
-}
-.pm-pv-details-bar {
+/* bottom line: Info (d) on the left, Remove on the right; pinned above the footer. The Info
+   panel opens upward from it, over the content. */
+.pm-pv-bar {
+    position: relative;
     display: flex;
+    flex: none;
     align-items: center;
     gap: 6px;
     min-height: 28px;
+    margin: 0 var(--pm-s-5);
+    padding: 6px 0 var(--pm-s-2);
+    border-top: 1px solid var(--pm-border);
+    font-size: var(--pm-fs-sm);
 }
-.pm-pv-details-toggle {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    height: 26px;
-    margin-left: -4px;
-    padding: 0 4px;
-    border: 0;
-    border-radius: var(--pm-r-md);
-    background: none;
-    color: var(--pm-text-2);
-    font-weight: var(--pm-fw-medium);
-    cursor: pointer;
+.pm-pv-info-open {
+    margin-left: -8px;
+}
+.pm-pv-info-open[aria-expanded="true"] {
+    background: var(--pm-surface-3);
+    color: var(--pm-text);
+}
+.pm-pv-bar .pm-info-pop {
+    right: auto;
+    left: -8px;
 }
 .pm-caret-i {
     color: var(--pm-text-3);
     transition: transform var(--pm-motion);
 }
-.pm-pv-details-toggle[aria-expanded="true"] .pm-caret-i,
 .pm-why[open] > summary .pm-caret-i {
     transform: rotate(90deg);
 }
-.pm-pv-details dl {
-    display: grid;
-    grid-template-columns: 84px 1fr;
-    gap: 3px 8px;
-    margin: 4px 0 6px 20px;
-}
-.pm-pv-details dt {
-    color: var(--pm-text-3);
-}
-.pm-pv-details dd {
-    margin: 0;
-    overflow: hidden;
-    color: var(--pm-text-2);
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
 /* ---------- settings menu ---------- */
 #menu-container {
     position: absolute;

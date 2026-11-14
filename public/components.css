@@ -126,6 +126,17 @@
     left: auto;
     transform: none;
 }
+/* the floating tooltip of icon-only controls (tooltip.js): same look, placed by script */
+.pm-tip-float {
+    position: fixed;
+    z-index: 50;
+    top: 0;
+    left: 0;
+    transform: none;
+}
+.pm-tip-float[hidden] {
+    display: none;
+}
 .pm-tip .pm-kbd,
 .pm-btn-primary .pm-kbd {
     background: color-mix(in srgb, var(--pm-ink-on) 16%, transparent);
@@ -1035,20 +1046,15 @@
 .pm-item-note.is-open p {
     -webkit-line-clamp: unset;
 }
-/* d: added, last opened, visits, ID, source */
-.pm-item-details {
-    grid-column: 1 / -1;
-    display: grid;
-    grid-template-columns: auto 1fr;
-    gap: 1px var(--pm-s-3);
-    margin: 8px 0 0;
-    color: var(--pm-text-3);
-    font-size: var(--pm-fs-xs);
-}
-.pm-item-details dd {
-    margin: 0;
+/* venue: its own line under the authors, only when the paper has one */
+.pm-item-venue {
+    margin-top: 2px;
+    overflow: hidden;
     color: var(--pm-text-2);
-    overflow-wrap: anywhere;
+    font-size: var(--pm-fs-sm);
+    font-weight: var(--pm-fw-medium);
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 /* delete sits at the far right, after "…" when there is one */
 .pm-item-actions .pm-del {
@@ -1071,7 +1077,7 @@
 /* row edit form: tags, code, note; the row's tags, note and actions are hidden meanwhile */
 .pm-item.is-edit .pm-item-tags,
 .pm-item.is-edit .pm-item-note,
-.pm-item.is-edit .pm-item-details,
+.pm-item.is-edit .pm-info-pop,
 .pm-item.is-edit .pm-item-actions,
 .pm-item.is-edit .pm-pop {
     display: none;
@@ -1211,4 +1217,82 @@
     width: 12px;
     height: 12px;
     vertical-align: -1px;
+}
+
+/* ---------- ⓘ Info panel (design-review/v2-addenda/venue-info.html) ---------- */
+/* quiet ⓘ next to the time (rows) / before the star (paper view) */
+.pm-info-btn {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    margin: -3px -4px -3px 0;
+    padding: 0;
+    border: 0;
+    border-radius: var(--pm-r-sm);
+    background: none;
+    color: var(--pm-text-3);
+    cursor: pointer;
+}
+.pm-info-btn .pm-i,
+.pm-item-side .pm-info-btn .pm-i {
+    width: 14px;
+    height: 14px;
+    color: inherit;
+    fill: none;
+}
+.pm-info-btn:hover,
+.pm-info-btn[aria-expanded="true"] {
+    background: var(--pm-surface-3);
+    color: var(--pm-text);
+}
+.pm-pv-status .pm-info-btn {
+    width: 24px;
+    height: 24px;
+    margin: 0 -2px 0 0;
+}
+.pm-pv-status .pm-info-btn .pm-i {
+    width: 15px;
+    height: 15px;
+}
+/* the panel floats over the content: absolute in its row / line, never changes its height */
+.pm-info-pop {
+    position: absolute;
+    z-index: 6;
+    top: 30px;
+    right: 8px;
+    width: 318px;
+    max-width: calc(100% - 16px);
+    padding: 10px 12px;
+    overflow-y: auto; /* capped to the room left in the popup (infopanel.js) */
+    overscroll-behavior: contain;
+    cursor: default;
+    text-align: left;
+}
+.pm-info-pop.is-up {
+    top: auto;
+    bottom: calc(100% - 12px);
+}
+.pm-pv-bar .pm-info-pop.is-up {
+    bottom: calc(100% + 4px);
+}
+.pm-info-pop dl {
+    display: grid;
+    grid-template-columns: 78px minmax(0, 1fr);
+    gap: 5px 10px;
+    margin: 0;
+    font-size: var(--pm-fs-sm);
+    line-height: 1.4;
+    white-space: normal;
+}
+.pm-info-pop dt {
+    color: var(--pm-text-3);
+    font-weight: normal;
+}
+.pm-info-pop dd {
+    margin: 0;
+    color: var(--pm-text);
+    overflow-wrap: anywhere;
 }

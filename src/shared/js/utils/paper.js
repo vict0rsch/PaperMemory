@@ -533,6 +533,9 @@ export const addOrUpdatePaper = async ({
                     if (value) {
                         log(`Updating preprint ${key} to`, value);
                         paper[key] = value;
+                        // an abbreviated venue keeps its full name (optional field)
+                        if (key === "venue" && value === preprintMatch.venue && preprintMatch.venueFull)
+                            paper.venueFull = preprintMatch.venueFull;
                     }
                 }
                 if (key === "bibtex" && preprintMatch[key]) {

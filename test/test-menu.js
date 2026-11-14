@@ -220,7 +220,7 @@ describe("Popup Menu Tests", function () {
             const label = await PMPage.$eval("#menu-switch", (el) =>
                 el.getAttribute("aria-label"),
             );
-            expect(label).toBe("Settings");
+            expect(label).toBe("Settings (p)");
             await PMPage.keyboard.press("p");
             await PMPage.waitForFunction(
                 () =>

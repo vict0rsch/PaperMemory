@@ -581,7 +581,7 @@ const startMatching = async (papersToMatch) => {
         setHTML("matching-status-title", escapeHtml(paper.title));
         changeProgress(parseInt((idx / papersToMatch.length) * 100));
 
-        var bibtex, venue, note, code, match;
+        var bibtex, venue, venueFull, note, code, match;
 
         setHTML("matching-status-provider", "paperswithcode.org ...");
         const pwcMatch = await tryPWCMatch(paper);
@@ -613,6 +613,7 @@ const startMatching = async (papersToMatch) => {
             match = await trySemanticScholar(paper);
             console.log("semanticScholarMatch: ", match);
             venue = match?.venue;
+            venueFull = match?.venueFull;
             note = !paper.note && match?.note;
         }
 
@@ -632,7 +633,7 @@ const startMatching = async (papersToMatch) => {
             note = !paper.note && match?.note;
         }
         if (venue || code) {
-            addPreprintUpdate({ bibtex, venue, note, codeLink: code, paper });
+            addPreprintUpdate({ bibtex, venue, venueFull, note, codeLink: code, paper });
         }
     }
     changeProgress(100);

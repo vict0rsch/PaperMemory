@@ -3,6 +3,7 @@ import { state } from "@pmu/config.js";
 import { knownPaperPages } from "@pmu/sources/index.js";
 import { getDisplayId, isPdfUrl, escapeHtml, arxivIdFromPaperID } from "@pmu/functions.js";
 import { bibtexToObject } from "@pmu/bibtexParser.js";
+import { formatVenue } from "@pmu/venues.js";
 import { icon } from "@pm/popup/js/icons.js";
 /** "2 h", "1 d", "3 wk", then "Mar 2025": how long ago a paper was last opened */
 export const timeAgo = (date) => {
@@ -16,18 +17,86 @@ export const timeAgo = (date) => {
     return d.toLocaleDateString("en-GB", { month: "short", year: "numeric" });
 };
 
-/** "NeurIPS 2017 · Vaswani, Shazeer, Parmar +5" (escaped) */
-const memoryItemMeta = (paper) => {
-    const where =
-        paper.source === "website"
-            ? (paper.pdfLink ?? "").replace(/^https?:\/\/(www\.)?/, "").split("/")[0]
-            : paper.venue || knownPaperPages[paper.source]?.name || "";
+/** "Vaswani, Shazeer, Parmar +5", and " · 2023" when the paper has no venue line (escaped) */
+const memoryItemMeta = (paper, hasVenue) => {
     const authors = authorList(paper.author);
     const names = authors.slice(0, 3).map((a) => a.split(" ").pop());
     const more = authors.length > 3 ? ` +${authors.length - 3}` : "";
-    const head = [where, paper.year].filter(Boolean).join(" ");
-    return escapeHtml([head, names.join(", ") + more].filter(Boolean).join(" · "));
+    const year = hasVenue ? "" : String(paper.year ?? "").trim();
+    return escapeHtml([names.join(", ") + more, year].filter(Boolean).join(" · "));
 };
+
+/** "Today, 09:12", "Yesterday, 17:40", else "3 Mar 2025" */
+const openedDate = (date) => {
+    const d = new Date(date);
+    if (isNaN(d)) return "";
+    const day = (x) => new Date(x).toDateString();
+    const time = d.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
+    if (day(d) === day(Date.now())) return `Today, ${time}`;
+    if (day(d) === day(Date.now() - 864e5)) return `Yesterday, ${time}`;
+    return shortDate(d);
+};
+
+/** "arXiv 1703.10593", "Nature s41467-018-0", a website's host */
+const sourceAndId = (paper) => {
+    if (paper.source === "website")
+        return (paper.pdfLink ?? "").replace(/^https?:\/\/(www\.)?/, "").split("/")[0];
+    if (paper.source === "arxiv") return `arXiv ${arxivIdFromPaperID(paper.id)}`;
+    const name = knownPaperPages[paper.source]?.name ?? paper.source ?? "";
+    let id = "";
+    try {
+        id = getDisplayId(paper);
+    } catch (e) {}
+    // ids often start with the source ("Nature-s41467…"): not repeated after its name
+    for (const prefix of [paper.source, name]) {
+        if (prefix && id.toLowerCase().startsWith(`${prefix}-`.toLowerCase()))
+            id = id.slice(prefix.length + 1);
+    }
+    return [name, id].filter(Boolean).join(" ");
+};
+
+/**
+ * The seven details of a paper (the ⓘ Info panel of rows and of the paper view): added, last opened,
+ * visits, source + ID, publication (only with a venue), citation key, PDF file (only with
+ * one). Escaped.
+ * @param {object} paper
+ * @returns {string} <dt>/<dd> pairs
+ */
+export const getPaperInfoHTML = (paper) => {
+    let citationKey = "";
+    try {
+        citationKey = bibtexToObject(paper.bibtex).citationKey ?? "";
+    } catch (e) {}
+    const file = state.files?.[paper.id];
+    return [
+        ["Added", shortDate(paper.addDate)],
+        ["Last opened", openedDate(paper.lastOpenDate)],
+        ["Visits", paper.count ?? ""],
+        ["Source", sourceAndId(paper)],
+        ["Publication", formatVenue(paper).full],
+        ["Citation key", citationKey, "pm-mono"],
+        ["PDF file", file?.filename ? file.filename.split(/[\\/]/).slice(-2).join("/") : ""],
+    ]
+        .filter(([, v]) => String(v).trim())
+        .map(
+            ([k, v, cls]) =>
+                `<dt>${k}</dt><dd${cls ? ` class="${cls}"` : ""}>${escapeHtml(String(v))}</dd>`,
+        )
+        .join("");
+};
+
+/**
+ * The ⓘ panel: floats over the content (rows and paper view), filled with getPaperInfoHTML
+ * @param {object} paper
+ * @param {string} panelId Id of the panel (aria-controls of its button)
+ * @returns {string} HTML
+ */
+export const getInfoPanelHTML = (paper, panelId) =>
+    `<div class="pm-sugg pm-info-pop" id="${escapeHtml(panelId)}" role="dialog" aria-label="Paper details"><dl>${getPaperInfoHTML(paper)}</dl></div>`;
+
+/** The quiet ⓘ button that opens the panel */
+const infoButton = (cls, label, attrs = "") =>
+    `<button type="button" class="pm-info-btn ${cls}" ${attrs} aria-label="${label}" data-tip="Info" data-tip-key="d" aria-haspopup="dialog" aria-expanded="false">${icon("info")}</button>`;
 
 /**
  * A paper in the Memory list (design-review/v2/popup.html frames 2 and 2b): title, favourite
@@ -46,8 +115,8 @@ export const getMemoryItemHTML = (paper) => {
     const target = prefs.checkPreferPdf ? "PDF" : "abstract page";
     const act = (cls, label, key, title) =>
         key
-            ? `<button type="button" class="pm-ia ${cls}" tabindex="-1" title="${title} (${key})">${label} <span class="pm-kbd">${key}</span></button>`
-            : `<button type="button" class="pm-ia ${cls}" tabindex="-1" title="${title}">${label}</button>`;
+            ? `<button type="button" class="pm-ia ${cls}" tabindex="-1" aria-label="${title} (${key})">${label} <span class="pm-kbd">${key}</span></button>`
+            : `<button type="button" class="pm-ia ${cls}" tabindex="-1" aria-label="${title}">${label}</button>`;
     const open =
         paper.source === "website"
             ? act("memory-website-url", "Open", "o", "Open the page in a new tab")
@@ -64,39 +133,32 @@ export const getMemoryItemHTML = (paper) => {
         .filter(([pref]) => isArxiv && prefs[pref])
         .map(
             ([, cls, name, key]) =>
-                `<button type="button" role="menuitem" class="memory-item-${cls}" tabindex="-1" title="Open on ${name} (${key})">${name} <span class="pm-kbd">${key}</span></button>`,
+                `<button type="button" role="menuitem" class="memory-item-${cls}" tabindex="-1" aria-label="Open on ${name} (${key})">${name} <span class="pm-kbd">${key}</span></button>`,
         )
         .join("");
     const tags = (paper.tags ?? [])
         .map(
             (t) =>
-                `<button type="button" class="pm-tg memory-tag" tabindex="-1" title="Show the papers tagged ${escapeHtml(t)}">${escapeHtml(t)}</button>`,
+                `<button type="button" class="pm-tg memory-tag" tabindex="-1" aria-label="Show only the papers tagged ${escapeHtml(t)}">${escapeHtml(t)}</button>`,
         )
         .join("");
     const lastOpen = timeAgo(paper.lastOpenDate);
-    const details = [
-        ["Added", shortDate(paper.addDate)],
-        ["Last opened", shortDate(paper.lastOpenDate)],
-        ["Visits", paper.count],
-        ["ID", getDisplayId(paper)],
-        ["Source", knownPaperPages[paper.source]?.name ?? paper.source],
-    ]
-        .map(([k, v]) => `<dt>${k}</dt><dd>${escapeHtml(v)}</dd>`)
-        .join("");
+    const venue = formatVenue(paper).short;
 
     return /*html*/ `
         <article class="pm-item memory-container${fav ? " favorite" : ""}" tabindex="0" id="memory-container--${id}" aria-label="${escapeHtml(paper.title)}">
             <div class="pm-item-head">
                 <h3 class="pm-item-title memory-title">${escapeHtml(paper.title.replace(/\s+/g, " "))}</h3>
-                <p class="pm-item-meta memory-authors">${memoryItemMeta(paper)}</p>
+                <p class="pm-item-meta memory-authors">${memoryItemMeta(paper, !!venue)}</p>
+                ${venue ? `<p class="pm-item-venue memory-venue">${escapeHtml(venue)}</p>` : ""}
             </div>
             <div class="pm-item-side">
-                <button type="button" class="pm-item-fav memory-item-favorite" tabindex="-1" aria-pressed="${fav}" title="${fav ? "Remove from favourites" : "Add to favourites"}">${icon("star")}</button>
-                <time title="Last opened ${escapeHtml(shortDate(paper.lastOpenDate))}">${escapeHtml(lastOpen)}</time>
+                <button type="button" class="pm-item-fav memory-item-favorite" tabindex="-1" aria-pressed="${fav}" aria-label="${fav ? "Remove from favourites" : "Add to favourites"}" data-tip="${fav ? "Remove from favourites" : "Add to favourites"}">${icon("star")}</button>
+                <time>${escapeHtml(lastOpen)}</time>
+                ${infoButton("memory-item-info", "Info (d)", 'tabindex="-1"')}
             </div>
             ${tags ? `<div class="pm-item-tags">${icon("tag")}${tags}</div>` : ""}
             ${paper.note ? `<div class="pm-item-note memory-note-div"><p>${escapeHtml(paper.note)}</p><button type="button" class="pm-note-more" tabindex="-1" hidden>more…</button></div>` : ""}
-            <dl class="pm-item-details memory-display-id" hidden>${details}</dl>
             <div class="pm-item-actions memory-item-actions">
                 ${open}
                 ${act("memory-item-copy-link", "URL", "c", `Copy the URL of the ${target}`)}
@@ -105,8 +167,8 @@ export const getMemoryItemHTML = (paper) => {
                 ${act("memory-item-bibtex", "BibTeX", "b", "Copy the BibTeX citation")}
                 ${act("memory-item-edit", "Edit", "e", "Edit tags, code link and note")}
                 ${local}
-                ${elsewhere ? `<button type="button" class="pm-ia pm-more memory-item-more" tabindex="-1" title="Open on ar5iv, alphaXiv, Hugging Face, SciRate" aria-label="Open elsewhere" aria-haspopup="menu" aria-expanded="false">${icon("more", "pm-i-sm")}</button>` : ""}
-                <button type="button" class="pm-ia pm-del memory-delete" tabindex="-1" title="Delete (⌫)" aria-label="Delete">${icon("trash", "pm-i-sm")}</button>
+                ${elsewhere ? `<button type="button" class="pm-ia pm-more memory-item-more" tabindex="-1" aria-label="Open on ar5iv, alphaXiv, Hugging Face, SciRate" data-tip="Open on ar5iv, alphaXiv, Hugging Face, SciRate" aria-haspopup="menu" aria-expanded="false">${icon("more", "pm-i-sm")}</button>` : ""}
+                <button type="button" class="pm-ia pm-del memory-delete" tabindex="-1" aria-label="Delete (⌫)" data-tip="Delete" data-tip-key="⌫">${icon("trash", "pm-i-sm")}</button>
                 <span class="pm-item-feedback memory-item-feedback" role="status" hidden></span>
             </div>
             ${elsewhere ? `<div class="pm-pop" role="menu"><span class="pm-label-caps">Open on</span>${elsewhere}</div>` : ""}
@@ -128,7 +190,7 @@ export const getMemoryEditHTML = (paper) => /*html*/ `
         <div>
             <div class="pm-field pm-codefield">
                 <input class="form-code-input" type="text" placeholder="github.com/org/repo" autocomplete="off" spellcheck="false" aria-label="Code link" value="${escapeHtml(paper.codeLink || "")}" />
-                <button type="button" class="pm-quiet pm-ic pm-code-open" tabindex="-1" title="Open this link in a new tab" aria-label="Open this link in a new tab">${icon("open")}</button>
+                <button type="button" class="pm-quiet pm-ic pm-code-open" tabindex="-1" aria-label="Open this link in a new tab" data-tip="Open this link in a new tab">${icon("open")}</button>
             </div>
             <p class="pm-field-msg pm-code-msg" hidden></p>
         </div>
@@ -202,7 +264,7 @@ export const getPopupCodeLinkHTML = (paper) => {
     if (!link) {
         return /*html*/ `
             <span class="pm-ph">No code link</span>
-            <button class="pm-quiet pm-pv-add" id="popup-code-edit" title="Add a code link (e)">
+            <button class="pm-quiet pm-pv-add" id="popup-code-edit" aria-label="Add a code link (e)">
                 ${icon("plus")}Add
             </button>
             <a id="popup-code-link" hidden></a>`;
@@ -210,9 +272,9 @@ export const getPopupCodeLinkHTML = (paper) => {
     const href = /^https?:\/\//i.test(link) ? link : `https://${link}`;
     return /*html*/ `
         <div class="pm-codelink">
-            <a id="popup-code-link" href="${escapeHtml(href)}" title="Open the repository in a new tab"
+            <a id="popup-code-link" href="${escapeHtml(href)}" title="${escapeHtml(link)}"
                 ><span>${escapeHtml(link.replace(/^https?:\/\//, ""))}</span>${icon("open")}</a
-            ><button class="pm-quiet" id="popup-code-edit" title="Edit the code link (e)" aria-label="Edit the code link">
+            ><button class="pm-quiet" id="popup-code-edit" aria-label="Edit the code link (e)" data-tip="Edit the code link" data-tip-key="e">
                 ${icon("edit")}
             </button>
         </div>`;
@@ -221,20 +283,20 @@ export const getPopupCodeLinkHTML = (paper) => {
 /** Note field content when not editing (line breaks kept by CSS) */
 export const getPopupNoteHTML = (paper) =>
     paper.note
-        ? `<button class="pm-pv-note" id="popup-note-display" title="Edit the note (e)">${escapeHtml(paper.note)}</button>`
-        : `<button class="pm-pv-note pm-ph" id="popup-note-display" title="Add a note (e)">Add a note…</button>`;
+        ? `<button class="pm-pv-note" id="popup-note-display" aria-keyshortcuts="e">${escapeHtml(paper.note)}</button>`
+        : `<button class="pm-pv-note pm-ph" id="popup-note-display" aria-label="Add a note (e)">Add a note…</button>`;
 
 /**
  * The paper view: status line, title, authors, venue, action strip, fields, "Also on",
- * Details. Ids keep the names the keyboard handler and tests look for
+ * bottom line (Info, Remove). Ids keep the names the keyboard handler and tests look for
  * (popup-memory-item-<action>--<id>, popup-memory-delete--<id>, …).
  * @param {object} paper
  * @param {string} currentUrl The active tab's url
  * @param {object} is isPaper(currentUrl)
- * @param {object} opts {downloadKey: shortcut label for the PDF action, detailsOpen: bool}
+ * @param {object} opts {downloadKey: shortcut label for the PDF action}
  * @returns {string} HTML
  */
-export const getPopupPaperHTML = (paper, currentUrl, is, { downloadKey, detailsOpen }) => {
+export const getPopupPaperHTML = (paper, currentUrl, is, { downloadKey }) => {
     const id = escapeHtml(paper.id); // only used in attributes
     const prefs = state.prefs;
     const isWebsite = paper.source === "website";
@@ -245,18 +307,12 @@ export const getPopupPaperHTML = (paper, currentUrl, is, { downloadKey, detailsO
     const shown = authors.slice(0, 3).map(escapeHtml).join(", ");
     const more =
         authors.length > 3
-            ? ` <button class="pm-pv-more" id="popup-authors-more" title="Show all authors">+${authors.length - 3} more</button>`
+            ? ` <button class="pm-pv-more" id="popup-authors-more" aria-label="Show all ${authors.length} authors">+${authors.length - 3} more</button>`
             : "";
 
-    // ----- venue line
-    const venue = paper.venue
-        ? `<b>${escapeHtml(paper.venue)} ${escapeHtml(paper.year)}</b>`
-        : escapeHtml(paper.year);
-    const where = isWebsite
-        ? escapeHtml(paper.pdfLink.replace(/^https?:\/\//, "").replace(/\/$/, ""))
-        : isArxiv
-          ? `arXiv ${escapeHtml(arxivIdFromPaperID(paper.id))}`
-          : escapeHtml(getDisplayId(paper));
+    // ----- venue line (only with a venue); otherwise the year follows the authors
+    const venue = formatVenue(paper).short;
+    const year = !venue && String(paper.year ?? "").trim();
 
     // ----- six actions; tooltips open below, pinned to the edge on the first and last
     const onPdf = isPdfUrl(currentUrl);
@@ -289,7 +345,7 @@ export const getPopupPaperHTML = (paper, currentUrl, is, { downloadKey, detailsO
             const pin =
                 i === 0 ? "pm-tip-start" : i === actions.length - 1 ? "pm-tip-end" : "";
             const kbd = key ? ` <span class="pm-kbd">${key}</span>` : "";
-            return /*html*/ `<button class="pm-pv-act" id="popup-${cls}--${id}" title="${title ?? tip}${key ? ` (${key})` : ""}">
+            return /*html*/ `<button class="pm-pv-act" id="popup-${cls}--${id}" aria-label="${title ?? tip}${key ? ` (${key})` : ""}">
                 ${icon(ic)}${label}<span class="pm-tip ${pin}">${tip}${kbd}</span></button>`;
         })
         .join("");
@@ -304,25 +360,8 @@ export const getPopupPaperHTML = (paper, currentUrl, is, { downloadKey, detailsO
         .filter(([pref, , , , host]) => prefs[pref] && isArxiv && !currentUrl.includes(host))
         .map(
             ([, cls, name, key]) =>
-                `<button class="pm-pv-also-btn" id="popup-memory-item-${cls}--${id}" title="Open on ${name} (${key})">${name}</button>`,
+                `<button class="pm-pv-also-btn" id="popup-memory-item-${cls}--${id}" aria-label="Open on ${name} (${key})">${name}</button>`,
         )
-        .join("");
-
-    // ----- Details
-    let citationKey = "";
-    try {
-        citationKey = bibtexToObject(paper.bibtex).citationKey ?? "";
-    } catch (e) {}
-    const file = state.files[paper.id];
-    const details = [
-        ["Published in", paper.venue ? `${escapeHtml(paper.venue)} ${escapeHtml(paper.year)}` : ""],
-        ["Citation key", citationKey ? `<span class="pm-mono">${escapeHtml(citationKey)}</span>` : ""],
-        ["PDF file", file?.filename ? escapeHtml(file.filename.split(/[\\/]/).slice(-2).join("/")) : ""],
-        ["Source", escapeHtml(knownPaperPages[paper.source]?.name ?? paper.source)],
-        ["Last opened", escapeHtml(shortDate(paper.lastOpenDate))],
-    ]
-        .filter(([, v]) => v)
-        .map(([k, v]) => `<dt>${k}</dt><dd title="${v.replace(/<[^>]+>/g, "")}">${v}</dd>`)
         .join("");
 
     const visits = `${escapeHtml(paper.count)} visit${paper.count === 1 ? "" : "s"}`;
@@ -334,13 +373,14 @@ export const getPopupPaperHTML = (paper, currentUrl, is, { downloadKey, detailsO
                 <span class="pm-badge pm-badge-ok">${icon("check", "pm-i-sm")}In your Memory</span>
                 <span>Added ${escapeHtml(shortDate(paper.addDate))} · ${visits}</span>
                 <span class="pm-spacer"></span>
-                <button class="pm-iconbtn pm-pv-fav" id="checkFavorite--${id}" aria-pressed="${!!paper.favorite}" title="Favourite" aria-label="Favourite">
+                ${infoButton("pm-pv-info", "Info (d)", 'id="popup-info-button" aria-controls="popup-info-panel"')}
+                <button class="pm-iconbtn pm-pv-fav" id="checkFavorite--${id}" aria-pressed="${!!paper.favorite}" aria-label="Favourite" data-tip="Favourite">
                     ${icon("star")}
                 </button>
             </div>
             <h1 class="pm-pv-title" id="popup-paper-title">${escapeHtml(paper.title.replaceAll("\n", " "))}</h1>
-            <p class="pm-pv-authors" id="popup-authors">${shown}${more}</p>
-            <p class="pm-pv-venue">${venue} · ${where}</p>
+            <p class="pm-pv-authors" id="popup-authors">${shown}${more}${year ? `<span class="pm-pv-year"> · ${escapeHtml(year)}</span>` : ""}</p>
+            ${venue ? `<p class="pm-pv-venue" id="popup-venue">${escapeHtml(venue)}</p>` : ""}
 
             <div class="pm-pv-actions" role="group" aria-label="Paper actions" id="popup-copy-icons">${strip}</div>
 
@@ -367,17 +407,14 @@ export const getPopupPaperHTML = (paper, currentUrl, is, { downloadKey, detailsO
 
             <!-- outside the scrolling part: always visible above the footer -->
 
-            <div class="pm-pv-details">
-                <div class="pm-pv-details-bar">
-                    <button class="pm-pv-details-toggle" id="popup-details-toggle" aria-expanded="${!!detailsOpen}" aria-controls="popup-details-body" title="Show or hide the details (d)">
-                        ${icon("right", "pm-i-sm pm-caret-i")}Details <span class="pm-kbd">d</span>
-                    </button>
-                    <span class="pm-spacer"></span>
-                    <button class="pm-btn pm-btn-ghost pm-btn-sm" id="popup-memory-delete--${id}" title="Remove this paper from your Memory (⌫)">
-                        ${icon("trash", "pm-i-sm")}Remove <span class="pm-kbd">⌫</span>
-                    </button>
-                </div>
-                <dl id="popup-details-body" ${detailsOpen ? "" : "hidden"}>${details}</dl>
+            <div class="pm-pv-bar" id="popup-paper-bar">
+                <button type="button" class="pm-btn pm-btn-ghost pm-btn-sm pm-pv-info-open" id="popup-info-open" aria-label="Info (d)" aria-haspopup="dialog" aria-expanded="false" aria-controls="popup-info-panel-bar">
+                    ${icon("info", "pm-i-sm")}Info <span class="pm-kbd">d</span>
+                </button>
+                <span class="pm-spacer"></span>
+                <button class="pm-btn pm-btn-ghost pm-btn-sm" id="popup-memory-delete--${id}" aria-label="Remove this paper from your Memory (⌫)">
+                    ${icon("trash", "pm-i-sm")}Remove <span class="pm-kbd">⌫</span>
+                </button>
             </div>
         </div>`;
 };

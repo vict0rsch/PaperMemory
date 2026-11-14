@@ -72,12 +72,18 @@ import {
 } from "@pm/popup/js/memory.js";
 import { icon, paintIcons } from "@pm/popup/js/icons.js";
 import { createTagField } from "@pm/popup/js/tagfield.js";
-import { downloadPaperPdf } from "@pmu/state.js";
+import { hideTooltip, setupTooltips } from "@pm/popup/js/tooltip.js";
+import {
+    closeInfoPanel,
+    infoPanelIsOpen,
+    setupInfoPanel,
+    toggleInfoPanel,
+} from "@pm/popup/js/infopanel.js";
+import { downloadPaperPdf, readJournalAbbreviations } from "@pmu/state.js";
 import { parseIdFromUrl, getCurrentUserTab } from "@pmu/urls.js";
 import { findLocalFile } from "@pmu/files.js";
 
 const isMac = /Mac/.test(navigator.userAgent);
-const DETAILS_KEY = "pm-paper-details"; // localStorage: last open/closed state of Details
 
 let currentTab = null; // the user's active tab when the popup opened
 let parseRun = 0; // incremented to ignore the result of a cancelled website parse
@@ -109,8 +115,9 @@ export const closeMenu = () => {
     if (btn) {
         btn.className = "pm-iconbtn";
         btn.innerHTML = icon("gear");
-        btn.title = "Settings (p)";
-        btn.setAttribute("aria-label", "Settings");
+        btn.setAttribute("aria-label", "Settings (p)");
+        btn.dataset.tip = "Settings"; // icon only: the tooltip names it
+        btn.dataset.tipKey = "p";
         btn.setAttribute("aria-expanded", "false");
     }
     const wasOpen = state.prefsIsOpen;
@@ -134,8 +141,10 @@ export const openMenu = () => {
     const btn = findEl({ element: "menu-switch" });
     btn.className = "pm-btn pm-btn-ghost pm-btn-sm";
     btn.innerHTML = `${icon("x", "pm-i-sm")}Close`;
-    btn.title = "Close settings (p)";
-    btn.setAttribute("aria-label", "Close settings");
+    btn.setAttribute("aria-label", "Close settings (p)");
+    delete btn.dataset.tip; // "× Close" has its text
+    delete btn.dataset.tipKey;
+    hideTooltip();
     btn.setAttribute("aria-expanded", "true");
     state.prefsIsOpen = true;
     setActiveTab();
@@ -580,24 +589,18 @@ const parseWebsite = async () => {
 // -----  Paper view  -----
 // ------------------------
 
-const readDetailsOpen = () => {
-    try {
-        return localStorage.getItem(DETAILS_KEY) === "open";
-    } catch (e) {
-        return false;
-    }
-};
-
-/** `d`: show / hide the Details block; the choice is remembered */
-export const toggleDetails = () => {
-    const toggle = findEl({ element: "popup-details-toggle" });
-    if (!toggle) return;
-    const open = toggle.getAttribute("aria-expanded") !== "true";
-    toggle.setAttribute("aria-expanded", String(open));
-    findEl({ element: "popup-details-body" }).hidden = !open;
-    try {
-        localStorage.setItem(DETAILS_KEY, open ? "open" : "closed");
-    } catch (e) {}
+/**
+ * The paper view's Info panel: from the status line's ⓘ ("status"), the bottom line's Info
+ * button ("bar"), or `d` ("key": opens it on the bottom line, closes any open one).
+ * @param {"status" | "bar" | "key"} from
+ */
+export const togglePaperInfo = (from = "bar") => {
+    if (from === "key" && infoPanelIsOpen()) return closeInfoPanel();
+    const bar = from !== "status";
+    const button = findEl({ element: bar ? "popup-info-open" : "popup-info-button" });
+    if (!button || !state.papers[state.currentId]) return;
+    const host = bar ? findEl({ element: "popup-paper-bar" }) : button.parentElement;
+    toggleInfoPanel(host, button, state.currentId);
 };
 
 /** Code link: plain input; Enter or leaving the field saves when the value is valid */
@@ -749,7 +752,6 @@ const showPaperView = (id, url, is) => {
         "isArxiv",
         getPopupPaperHTML(paper, url, is, {
             downloadKey: shortcuts.downloadPdf ?? "",
-            detailsOpen: readDetailsOpen(),
         }),
     );
     showId("isArxiv", "flex");
@@ -788,11 +790,14 @@ const showPaperView = (id, url, is) => {
         saveFavoriteItem(id, !state.papers[id].favorite),
     );
     addListener("popup-authors-more", "click", () => {
-        findEl({ element: "popup-authors" }).textContent = authorList(
-            paper.author,
-        ).join(", ");
+        // every author; a preprint keeps its " · year"
+        const authors = findEl({ element: "popup-authors" });
+        const year = authors.querySelector(".pm-pv-year");
+        authors.textContent = authorList(paper.author).join(", ");
+        year && authors.append(year);
     });
-    addListener("popup-details-toggle", "click", toggleDetails);
+    addListener("popup-info-button", "click", () => togglePaperInfo("status"));
+    addListener("popup-info-open", "click", () => togglePaperInfo("bar"));
     addListener(`popup-memory-delete--${id}`, "click", handlePopupDeletePaper(id));
 
     // ----- "Also on"
@@ -906,6 +911,8 @@ export const popupMain = async (url, is, manualTrigger = false, tab = null) => {
         // Set click events (regardless of paper)
         currentTab = tab;
         addListener(document, "keydown", handlePopupKeydown);
+        setupInfoPanel();
+        setupTooltips();
         setStandardPopupClicks();
         await setupMenu(await getPrefs());
         await loadShortcuts();
@@ -959,6 +966,11 @@ export const popupMain = async (url, is, manualTrigger = false, tab = null) => {
         window.paperMemoryPopupInitialized = true;
         const tab = await getCurrentUserTab();
         // after the first await: every module of the (circular) popup graph is evaluated
+        // (state.js included): journal abbreviations for the venue lines; until they are
+        // read, venues show their cleaned name
+        const journalsReady = readJournalAbbreviations().catch((e) =>
+            log("Could not read the journal abbreviations", e),
+        );
         paintIcons();
         findEl({ element: "pm-shell" }).classList.add("pm-is-loading");
         const url = tab.url;
@@ -981,6 +993,7 @@ export const popupMain = async (url, is, manualTrigger = false, tab = null) => {
         await stateReadyPromise;
 
         const is = await isPaper(url);
+        await journalsReady;
 
         makeMemoryHTML();
         popupMain(url, is, false, tab).catch((e) => {

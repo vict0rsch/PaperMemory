@@ -1,6 +1,7 @@
 import { BasePaperSource } from "./base.js";
 import { extractBibtexValue, bibtexToString } from "@pmu/bibtexParser.js";
 import { fetchDom } from "@pmu/parsers.js";
+import { pmlrConfOverrides } from "@pmu/venueTable.js";
 
 /**
  * Extract the author from a bibtex string, as an "and" separated list of names.
@@ -23,14 +24,7 @@ export class PMLRSource extends BasePaperSource {
     static patterns = ["proceedings.mlr.press/"];
 
     /** @type {Record<string, string>} long booktitle substring → short venue */
-    static confOverrides = {
-        "Conference on Learning Theory": "CoLT",
-        "International Conference on Machine Learning": "ICML",
-        "Conference on Uncertainty in Artificial Intelligence": "UAI",
-        "Conference on Robot Learning": "CoRL",
-        "International Conference on Artificial Intelligence and Statistics": "AISTATS",
-        "International Conference on Algorithmic Learning Theory": "ALT",
-    };
+    static confOverrides = pmlrConfOverrides();
 
     static async urlToId(url) {
         const key = url.split("/").last().split(".")[0];

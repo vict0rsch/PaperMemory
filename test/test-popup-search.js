@@ -473,6 +473,49 @@ describe("Test PaperMemory Popup Search Functionality", function () {
             expect(pills.join(" ")).toContain(tagText);
             await PMPage.evaluate(() => PMDebug.memory.clearMemorySearch());
         });
+
+        it("should replace the search with the clicked tag alone", async function () {
+            await setupPaperTags(PMPage, PAPER_IDS);
+            // pills (year, favourites) and free text before the click
+            await PMPage.evaluate((id) => {
+                PMDebug.config.state.papers[id].favorite = true;
+                PMDebug.memory.clearMemorySearch();
+                PMDebug.memory.addFilter({ type: "year", value: ">2000" });
+                PMDebug.memory.addFilter({ type: "fav", value: "" });
+                document.getElementById("memory-search").value = "unpaired";
+                PMDebug.memory.applyMemorySearch();
+            }, PAPER_IDS.CYCLE_GAN);
+            const clicked = await PMPage.evaluate(() => {
+                const tag = [...document.querySelectorAll(".memory-tag")].find(
+                    (t) => t.textContent === "gan",
+                );
+                tag?.click();
+                return !!tag;
+            });
+            expect(clicked).toBe(true);
+            const after = await PMPage.evaluate(() => ({
+                filters: PMDebug.config.state.memoryFilters,
+                text: document.getElementById("memory-search").value,
+                pills: [...document.querySelectorAll("#memory-pills .pm-chip")].map(
+                    (el) => el.textContent,
+                ),
+                fav: document
+                    .getElementById("filter-favorites")
+                    .getAttribute("aria-pressed"),
+                rows: [...document.querySelectorAll("#memory-table .memory-container")].map(
+                    (r) => r.id,
+                ),
+            }));
+            expect(after.filters).toEqual([{ type: "tag", value: "gan" }]);
+            expect(after.text).toBe("");
+            expect(after.pills).toEqual(["taggan"]);
+            expect(after.fav).toBe("false");
+            expect(after.rows).toEqual([`memory-container--${PAPER_IDS.CYCLE_GAN}`]);
+            await PMPage.evaluate((id) => {
+                PMDebug.config.state.papers[id].favorite = false;
+                PMDebug.memory.clearMemorySearch();
+            }, PAPER_IDS.CYCLE_GAN);
+        });
     });
 
     describe("Code Search Functionality", function () {

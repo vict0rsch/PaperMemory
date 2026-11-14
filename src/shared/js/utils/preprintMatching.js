@@ -13,6 +13,7 @@ import { getStorage } from "@pmu/data.js";
 import { bibtexToObject, bibtexToString } from "@pmu/bibtexParser.js";
 import { fetchJSON, fetchText } from "@pmu/parsers.js";
 import { readJournalAbbreviations } from "@pmu/state.js";
+import { semanticScholarVenue } from "@pmu/venues.js";
 
 export const decodeHtml = (html) => {
     // https://stackoverflow.com/questions/5796718/html-entity-decode
@@ -192,7 +193,7 @@ export const trySemanticScholar = async (paper, toBackground) => {
         const { data, status } = await fetchJSON(
             `https://api.semanticscholar.org/graph/v1/paper/search?query=${encodeURI(
                 paper.title,
-            )}&fields=title,venue,year,authors,externalIds,url&limit=5`,
+            )}&fields=title,venue,year,authors,externalIds,url,publicationVenue&limit=5`,
         );
         const matches = data;
 
@@ -206,11 +207,11 @@ export const trySemanticScholar = async (paper, toBackground) => {
                     !match.venue.toLowerCase().includes("biorxiv")
                 ) {
                     info("Found a Semantic Scholar match");
-                    let venue = match.venue
-                        .trim()
-                        .replace(/^\d{4}/, "")
-                        .trim();
-                    if (venue.indexOf(" ") < 0) venue = venue.toUpperCase();
+                    await readJournalAbbreviations().catch(() => {});
+                    const venue = semanticScholarVenue(match);
+                    // the full name, kept when the stored venue is an abbreviation (Info panel)
+                    const fullName = match.venue.trim().replace(/^\d{4}/, "").trim();
+                    const venueFull = fullName !== venue ? fullName : undefined;
                     const year = (match.year + "").trim();
                     const note = `Accepted @ ${venue} (${year}) -- [semanticscholar.org]`;
                     const authors = match.authors.map((a) => a.name).join(" and ");
@@ -231,7 +232,7 @@ export const trySemanticScholar = async (paper, toBackground) => {
                         doi,
                         bibSource: `Semantic Scholar ${match.url}`,
                     });
-                    return { venue, note, bibtex, status };
+                    return { venue, venueFull, note, bibtex, status };
                 }
             }
         }
@@ -274,7 +275,7 @@ export const tryUnpaywall = async (paper, toBackground) => {
 };
 
 export const tryPreprintMatch = async (paper, tryPwc = false) => {
-    let note, venue, bibtex, code, doi;
+    let note, venue, venueFull, bibtex, code, doi;
     let matches = {};
 
     let names = ["GoogleScholar", "SemanticScholar", "CrossRef", "DBLP", "Unpaywall"];
@@ -293,7 +294,7 @@ export const tryPreprintMatch = async (paper, tryPwc = false) => {
 
     for (const [n, name] of Object.entries(names)) {
         matches[name] = await matchPromises[n];
-        ({ note, venue, bibtex, doi } = matches[name] ?? {});
+        ({ note, venue, venueFull, bibtex, doi } = matches[name] ?? {});
         if (note) {
             break;
         } else {
@@ -311,5 +312,5 @@ export const tryPreprintMatch = async (paper, tryPwc = false) => {
         }
     }
 
-    return { note, venue, bibtex, code, doi };
+    return { note, venue, venueFull, bibtex, code, doi };
 };

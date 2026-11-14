@@ -307,5 +307,7 @@ export const englishStopWords = new Set([
 ]);
 
 export const journalAbbreviations = {};
+/** miniHash(full journal name) -> ISO4 abbreviation (reverse of the iso4 table), see venues.js */
+export const journalShortNames = {};
 
 export { knownPaperPages, preprintSources } from "./sources/index.js";

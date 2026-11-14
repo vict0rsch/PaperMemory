@@ -30,7 +30,7 @@
                         id="tab-paper"
                         role="tab"
                         aria-selected="true"
-                        title="This page"
+                        aria-label="Paper: this page"
                     >
                         Paper
                     </button>
@@ -39,7 +39,7 @@
                         id="tab-memory"
                         role="tab"
                         aria-selected="false"
-                        title="Memory (a)"
+                        aria-keyshortcuts="a"
                     >
                         Memory <span class="pm-count" id="memory-count"></span>
                     </button>
@@ -60,7 +60,7 @@
                         href="#"
                         id="sync-popup-error"
                         style="display: none"
-                        title="Open the sync settings"
+                        aria-label="Sync failed: open the sync settings"
                         ><span class="pm-sync pm-sync-err"
                             ><i data-i="alert"></i>Sync failed</span
                         ></a
@@ -69,8 +69,9 @@
                 <button
                     id="menu-switch"
                     class="pm-iconbtn"
-                    title="Settings (p)"
-                    aria-label="Settings"
+                    aria-label="Settings (p)"
+                    data-tip="Settings"
+                    data-tip-key="p"
                     aria-expanded="false"
                 >
                     <i data-i="gear"></i>
@@ -116,8 +117,8 @@
                             class="pm-quiet pm-ic"
                             id="memory-tags-button"
                             tabindex="-1"
-                            title="Browse tags"
                             aria-label="Browse tags"
+                            data-tip="Browse tags"
                             aria-expanded="false"
                         >
                             <i data-i="tag"></i>
@@ -127,8 +128,8 @@
                             class="pm-quiet pm-ic"
                             id="filter-favorites"
                             tabindex="-1"
-                            title="Favourites only"
                             aria-label="Favourites only"
+                            data-tip="Favourites only"
                             aria-pressed="false"
                         >
                             <i data-i="star"></i>
@@ -138,8 +139,8 @@
                             class="pm-quiet pm-ic"
                             id="memory-sort-button"
                             tabindex="-1"
-                            title="Sort: last opened, newest first"
                             aria-label="Sort: last opened, newest first"
+                            data-tip="Sort: last opened, newest first"
                             aria-haspopup="menu"
                             aria-expanded="false"
                         >

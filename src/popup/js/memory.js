@@ -419,8 +419,8 @@ export const setMemorySort = (key, reversed = false) => {
     const btn = findEl({ element: "memory-sort-button" });
     if (btn) {
         const label = `Sort: ${sortName().toLowerCase()}, ${sortDirections(key)[reversed ? 1 : 0].toLowerCase()}`;
-        btn.title = label;
         btn.setAttribute("aria-label", label);
+        btn.dataset.tip = label;
     }
     renderSortMenu();
 };
@@ -474,6 +474,7 @@ export const renderFilters = () => {
             x.className = "pm-chip-x";
             x.tabIndex = -1;
             x.setAttribute("aria-label", `Remove the filter: ${filterText(filter)}`);
+            x.dataset.tip = "Remove the filter";
             x.innerHTML = icon("x");
             x.addEventListener("click", () => {
                 removeFilter(i);
@@ -488,7 +489,10 @@ export const renderFilters = () => {
     if (chip) {
         chip.hidden = n === 0;
         chip.innerHTML = `${n} filter${n === 1 ? "" : "s"} ${icon("down")}`;
-        chip.title = `${state.memoryFilters.map(filterText).join(", ")}. Click to show the filters`;
+        chip.setAttribute(
+            "aria-label",
+            `${n} filter${n === 1 ? "" : "s"}: ${state.memoryFilters.map(filterText).join(", ")}. Click to show the filters`,
+        );
     }
     const fav = findEl({ element: "filter-favorites" });
     if (fav) {
@@ -540,6 +544,29 @@ export const toggleFavouritesFilter = () => {
     const i = state.memoryFilters.findIndex((f) => f.type === "fav");
     i >= 0 ? removeFilter(i) : addFilter({ type: "fav", value: "" });
     renderSortMenu();
+};
+
+/**
+ * Clicking a tag in a row: the search becomes that tag alone (no other pill, no favourites-only,
+ * no text). The popup shows it as a pill; fullMemory (no pills) as "t:tag" in its field.
+ * @param {string} tag
+ */
+export const showOnlyTag = (tag) => {
+    const pills = !!findEl({ element: "memory-pills" });
+    const input = findEl({ element: "memory-search" });
+    if (input) input.value = pills ? "" : `t:${tag}`;
+    state.memoryFilters = pills ? [{ type: "tag", value: tag }] : [];
+    if (state.sortKey === "favoriteDate") {
+        state.sortKey = "lastOpenDate";
+        state.sortReversed = false;
+        resortMemory();
+    }
+    hideSearchSuggestions();
+    renderFilters();
+    applyMemorySearch();
+    renderTagPanel();
+    renderSortMenu();
+    scrollListTop();
 };
 
 /** Empties the search field and removes every filter */
@@ -731,14 +758,14 @@ export const renderTagPanel = () => {
         <div class="pm-tagpanel-head">
             <span class="pm-section-title">Tags</span><span class="pm-count">${counts.size}</span>
             <span class="pm-spacer"></span>
-            <button type="button" class="pm-quiet" id="memory-tag-panel-sort" title="Sort the tags">${tagPanelSort === "name" ? "A to Z" : "Most used"} ${icon("down")}</button>
-            <button type="button" class="pm-quiet pm-ic" id="memory-tag-panel-close" title="Close" aria-label="Close the tag list">${icon("x")}</button>
+            <button type="button" class="pm-quiet" id="memory-tag-panel-sort" aria-label="Sort the tags: ${tagPanelSort === "name" ? "A to Z" : "Most used"}">${tagPanelSort === "name" ? "A to Z" : "Most used"} ${icon("down")}</button>
+            <button type="button" class="pm-quiet pm-ic" id="memory-tag-panel-close" aria-label="Close the tag list" data-tip="Close the tag list">${icon("x")}</button>
         </div>
         <div class="pm-tagpanel-list" role="listbox" aria-label="Tags">${rows || '<p class="pm-sugg-note">No tags yet. Add some with Edit (e).</p>'}</div>
         <div class="pm-sugg-foot">
             <span>Typing <span class="pm-kbd">t:</span> in the search field shows the same list</span>
             <span class="pm-spacer"></span>
-            <a href="#" id="memory-manage-tags" title="Open the tag manager in a new tab">Manage tags ${icon("open", "pm-ext")}</a>
+            <a href="#" id="memory-manage-tags" aria-label="Manage tags (opens in a new tab)">Manage tags ${icon("open", "pm-ext")}</a>
         </div>`;
     // sits over the list, right under the field / pills
     const box = findEl({ element: "memory-container" });

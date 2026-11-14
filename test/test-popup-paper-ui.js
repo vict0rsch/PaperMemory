@@ -346,10 +346,11 @@ describe("Test PaperMemory Popup UI - Known Paper Page", function () {
             const paperLinkBtn = await verifySelectorExists(paperLinkSelector, PMPage);
             await verifyElementClickable(paperLinkBtn, PMPage);
 
-            // Verify the button has the correct title
-            const title = await paperLinkBtn.evaluate((el) => el.getAttribute("title"));
-            expect(title).toContain("Open");
-            expect(title).toContain("tab");
+            // Verify the button's accessible name (no native title: it has its own tooltip)
+            const label = await paperLinkBtn.evaluate((el) => el.getAttribute("aria-label"));
+            expect(label).toContain("Open");
+            expect(label).toContain("tab");
+            expect(await paperLinkBtn.evaluate((el) => el.hasAttribute("title"))).toBe(false);
         });
 
         it("should have download PDF button that is clickable", async function () {
@@ -360,9 +361,10 @@ describe("Test PaperMemory Popup UI - Known Paper Page", function () {
             const downloadBtn = await verifySelectorExists(downloadSelector, PMPage);
             await verifyElementClickable(downloadBtn, PMPage);
 
-            // Verify the button has the correct title
-            const title = await downloadBtn.evaluate((el) => el.getAttribute("title"));
-            expect(title).toContain("Download PDF");
+            // Verify the button's accessible name (no native title: it has its own tooltip)
+            const label = await downloadBtn.evaluate((el) => el.getAttribute("aria-label"));
+            expect(label).toContain("Download PDF");
+            expect(await downloadBtn.evaluate((el) => el.hasAttribute("title"))).toBe(false);
         });
     });
 
@@ -558,33 +560,142 @@ describe("Test PaperMemory Popup UI - Known Paper Page", function () {
         });
     });
 
-    describe("Paper view: Details, keys, code link, delete", function () {
+    describe("Paper view: Info panel, keys, code link, delete", function () {
         beforeEach(async function () {
             await setStorage(PMPage, "papers", testData);
         });
 
-        it("should keep Details collapsed by default, toggle it with 'd' and remember it", async function () {
+        /** The open Info panel: its id, the fields it shows, where it is */
+        const infoPanel = () =>
+            PMPage.evaluate(() => {
+                const panel = document.querySelector("#isArxiv .pm-info-pop");
+                if (!panel) return null;
+                const r = panel.getBoundingClientRect();
+                return {
+                    id: panel.id,
+                    role: panel.getAttribute("role"),
+                    fields: Object.fromEntries(
+                        [...panel.querySelectorAll("dt")].map((dt) => [
+                            dt.textContent,
+                            dt.nextElementSibling.textContent,
+                        ]),
+                    ),
+                    inside:
+                        r.top >= 0 && r.left >= 0 && r.bottom <= 600 && r.right <= 450,
+                };
+            });
+        const expanded = (id) =>
+            PMPage.$eval(`#${id}`, (el) => el.getAttribute("aria-expanded"));
+
+        it("should show the venue on its own line, without the source or ID", async function () {
+            await setupPopupWithMockedTab(PMPage, arxivPaperUrl, arxivPaperId);
+            const view = await PMPage.evaluate(() => ({
+                venue: document.getElementById("popup-venue")?.textContent,
+                authors: document.getElementById("popup-authors").textContent,
+                text: document.getElementById("popup-paper-main").innerText,
+            }));
+            expect(view.venue).toBe("ICCV 2017");
+            expect(view.authors).not.toContain("2017");
+            expect(view.text).not.toContain("1703.10593");
+        });
+
+        it("should show the year after the authors when there is no venue", async function () {
+            const preprint = structuredClone(testData);
+            preprint[arxivPaperId].venue = "";
+            await setStorage(PMPage, "papers", preprint);
+            await setupPopupWithMockedTab(PMPage, arxivPaperUrl, arxivPaperId);
+            const view = await PMPage.evaluate(() => ({
+                venue: !!document.getElementById("popup-venue"),
+                authors: document.getElementById("popup-authors").textContent,
+            }));
+            expect(view.venue).toBe(false);
+            expect(view.authors.trim()).toMatch(/ · 2017$/);
+            // "+1 more" shows every author and keeps the year
+            await PMPage.click("#popup-authors-more");
+            const all = await PMPage.$eval("#popup-authors", (el) => el.textContent.trim());
+            expect(all).toMatch(/Alexei A\. Efros · 2017$/);
+        });
+
+        it("should open the Info panel from the status line's ⓘ and close it on a second click or outside", async function () {
+            await setupPopupWithMockedTab(PMPage, arxivPaperUrl, arxivPaperId);
+            expect(await infoPanel()).toBe(null);
+            await PMPage.click("#popup-info-button");
+            const panel = await infoPanel();
+            expect(panel.id).toBe("popup-info-panel");
+            expect(panel.role).toBe("dialog");
+            expect(panel.inside).toBe(true);
+            expect(await expanded("popup-info-button")).toBe("true");
+            expect(Object.keys(panel.fields)).toEqual([
+                "Added",
+                "Last opened",
+                "Visits",
+                "Source",
+                "Publication",
+                "Citation key",
+            ]); // no PDF file: none downloaded
+            expect(panel.fields.Source).toBe("arXiv 1703.10593");
+            expect(panel.fields.Publication).toBe(
+                "International Conference on Computer Vision (ICCV) 2017",
+            );
+            expect(panel.fields.Visits).toBe(String(testData[arxivPaperId].count));
+            // second click closes
+            await PMPage.click("#popup-info-button");
+            expect(await infoPanel()).toBe(null);
+            expect(await expanded("popup-info-button")).toBe("false");
+            // a click outside closes
+            await PMPage.click("#popup-info-button");
+            expect(await infoPanel()).not.toBe(null);
+            await PMPage.mouse.click(8, 250); // left margin, beside the panel
+            expect(await infoPanel()).toBe(null);
+        });
+
+        it("should toggle the Info panel above the bottom line with 'd' and its button", async function () {
             await PMPage.evaluate(() => localStorage.removeItem("pm-paper-details"));
             await setupPopupWithMockedTab(PMPage, arxivPaperUrl, arxivPaperId);
-            const isOpen = () =>
-                PMPage.evaluate(() => ({
-                    expanded: document
-                        .getElementById("popup-details-toggle")
-                        .getAttribute("aria-expanded"),
-                    hidden: document.getElementById("popup-details-body").hidden,
-                }));
-            expect(await isOpen()).toEqual({ expanded: "false", hidden: true });
-
+            expect(await PMPage.$("#popup-details-toggle")).toBe(null); // no Details fold
             await PMPage.keyboard.press("d");
-            expect(await isOpen()).toEqual({ expanded: "true", hidden: false });
-
-            // the last state is remembered
-            await setupPopupWithMockedTab(PMPage, arxivPaperUrl, arxivPaperId);
-            expect(await isOpen()).toEqual({ expanded: "true", hidden: false });
+            let panel = await infoPanel();
+            expect(panel.id).toBe("popup-info-panel-bar");
+            expect(panel.inside).toBe(true);
+            expect(await expanded("popup-info-open")).toBe("true");
+            const above = await PMPage.evaluate(
+                () =>
+                    document.querySelector("#isArxiv .pm-info-pop").getBoundingClientRect()
+                        .bottom <=
+                    document.getElementById("popup-info-open").getBoundingClientRect().top,
+            );
+            expect(above).toBe(true);
             await PMPage.keyboard.press("d");
-            expect(await isOpen()).toEqual({ expanded: "false", hidden: true });
+            expect(await infoPanel()).toBe(null);
+            await PMPage.click("#popup-info-open");
+            expect((await infoPanel()).id).toBe("popup-info-panel-bar");
+            await PMPage.click("#popup-info-open");
+            expect(await infoPanel()).toBe(null);
+            // the Details state is not stored anymore
+            expect(
+                await PMPage.evaluate(() => localStorage.getItem("pm-paper-details")),
+            ).toBe(null);
+        });
+
+        it("should omit Publication without a venue and show the PDF file when there is one", async function () {
+            const preprint = structuredClone(testData);
+            preprint[arxivPaperId].venue = "";
+            await setStorage(PMPage, "papers", preprint);
             await setupPopupWithMockedTab(PMPage, arxivPaperUrl, arxivPaperId);
-            expect(await isOpen()).toEqual({ expanded: "false", hidden: true });
+            await PMPage.evaluate((id) => {
+                PMDebug.config.state.files[id] = {
+                    id: 1,
+                    filename: "/Users/me/Downloads/PaperMemoryStore/<img src=x>cyclegan.pdf",
+                };
+            }, arxivPaperId);
+            await PMPage.keyboard.press("d");
+            const panel = await infoPanel();
+            expect(panel.fields.Publication).toBeUndefined();
+            expect(panel.fields["PDF file"]).toBe("PaperMemoryStore/<img src=x>cyclegan.pdf");
+            // escaped: shown as text, no element created
+            expect(
+                await PMPage.evaluate(() => !!document.querySelector(".pm-info-pop dd img")),
+            ).toBe(false);
         });
 
         it("should toggle the shortcut sheet with '?' and the Memory with 'a'", async function () {
@@ -665,7 +776,7 @@ describe("Test PaperMemory Popup UI - Known Paper Page", function () {
             expect(text).toBe("line one\n\nline three");
         });
 
-        it("should keep Details / Remove visible above the footer with a long note", async function () {
+        it("should keep Info / Remove visible above the footer with a long note", async function () {
             const long = structuredClone(testData);
             long[arxivPaperId].note = Array.from({ length: 30 }, (_, i) => `line ${i}`).join("\n");
             long[arxivPaperId].author = Array.from({ length: 40 }, (_, i) => `Author ${i}`).join(" and ");
@@ -675,7 +786,7 @@ describe("Test PaperMemory Popup UI - Known Paper Page", function () {
                 const r = (id) => document.getElementById(id).getBoundingClientRect();
                 const main = document.getElementById("popup-paper-main");
                 return {
-                    toggleBottom: r("popup-details-toggle").bottom,
+                    toggleBottom: r("popup-info-open").bottom,
                     removeBottom: r(
                         `popup-memory-delete--${PMDebug.config.state.currentId}`,
                     ).bottom,

@@ -2,8 +2,15 @@
 import { warn, info, delay } from "@pmu/functions.js";
 import { shouldSync, pushToRemote, initSyncAndState } from "@pmu/sync.js";
 import { makeMemoryHTML, setMemorySortArrow } from "@pm/popup/js/memory.js";
-import { handleClearSearch, displayOnScroll } from "@pm/popup/js/handlers.js";
+import {
+    handleClearSearch,
+    displayOnScroll,
+    handleFullMemoryKeydown,
+} from "@pm/popup/js/handlers.js";
 import { addListener, val } from "@pmu/miniquery.js";
+import { readJournalAbbreviations } from "@pmu/state.js";
+import { setupInfoPanel } from "@pm/popup/js/infopanel.js";
+import { setupTooltips } from "@pm/popup/js/tooltip.js";
 
 var REFRESH_INTERVAL_SECS = 5 * 60;
 // var REFRESH_INTERVAL_SECS = 20;
@@ -50,8 +57,16 @@ const syncOnBlur = async () => {
 };
 
 (async () => {
+    // journal abbreviations for the venue lines; until then venues show their cleaned name
+    const journalsReady = readJournalAbbreviations().catch((e) =>
+        warn("Could not read the journal abbreviations", e),
+    );
     await initSyncAndState();
+    await journalsReady;
     makeMemoryHTML();
+    setupInfoPanel();
+    setupTooltips();
+    addListener(document, "keydown", handleFullMemoryKeydown);
     addListener("memory-search-clear-icon", "click", handleClearSearch);
     addListener(document, "scroll", displayOnScroll(false));
     // set default sort to lastOpenDate

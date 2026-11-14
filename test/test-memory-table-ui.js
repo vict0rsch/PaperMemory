@@ -318,4 +318,276 @@ describe("Test PaperMemory MemoryTable UI", function () {
             console.log(indent(2) + "✓ Memory closed with Escape key");
         });
     });
+
+    describe("Memory rows: venue line and Info panel", function () {
+        let page;
+        const CG = "Arxiv-1703.10593";
+        const rowSel = (id) => `#memory-container--${id.replaceAll(".", "\\.")}`;
+
+        /** Opens the popup's Memory with the test papers (patched) */
+        const openWith = async (patch = (d) => d) => {
+            page = await browser.newPage();
+            await page.setViewport({ width: 450, height: 600 });
+            await page.goto(pmURLs.popupURL, { waitUntil: "networkidle0" });
+            await page.evaluate(
+                (data) => PMDebug.data.setStorage("papers", data),
+                patch(structuredClone(testData)),
+            );
+            await page.reload({ waitUntil: "networkidle0" });
+            await page.waitForFunction(() => window.__pmPopupReady === true, {
+                timeout: 10000,
+            });
+            if (!(await getPaperMemoryState(page)).memoryIsOpen) {
+                await page.keyboard.press("a");
+                await sleep(200);
+            }
+        };
+        /** A row's lines and its Info panel (null when closed) */
+        const rowInfo = (id) =>
+            page.evaluate((sel) => {
+                const row = document.querySelector(sel);
+                const panel = row.querySelector(".pm-info-pop");
+                const btn = row.querySelector(".memory-item-info");
+                const box = document.getElementById("memory-scroll").getBoundingClientRect();
+                const r = panel?.getBoundingClientRect();
+                return {
+                    meta: row.querySelector(".memory-authors").textContent,
+                    venue: row.querySelector(".memory-venue")?.textContent ?? null,
+                    height: row.getBoundingClientRect().height,
+                    expanded: btn.getAttribute("aria-expanded"),
+                    describedBy: row.getAttribute("aria-describedby"),
+                    panel: panel && {
+                        role: panel.getAttribute("role"),
+                        up: panel.classList.contains("is-up"),
+                        inside:
+                            r.top >= box.top &&
+                            r.bottom <= box.bottom &&
+                            r.left >= 0 &&
+                            r.right <= 450,
+                        fields: Object.fromEntries(
+                            [...panel.querySelectorAll("dt")].map((dt) => [
+                                dt.textContent,
+                                dt.nextElementSibling.textContent,
+                            ]),
+                        ),
+                    },
+                };
+            }, rowSel(id));
+
+        afterEach(async function () {
+            await page?.close();
+        });
+
+        it("should show the venue line only with a venue, and the year after the authors otherwise", async function () {
+            await openWith((d) => {
+                d["RSC-DigitalDiscovery_d2dd00066k"].venue = "";
+                return d;
+            });
+            const cg = await rowInfo(CG);
+            expect(cg.venue).toBe("ICCV 2017");
+            expect(cg.meta).toBe("Zhu, Park, Isola +1");
+            const jmlr = await rowInfo("JMLR-2012_bergstra12a");
+            expect(jmlr.venue).toBe("JMLR 2012");
+            const preprint = await rowInfo("RSC-DigitalDiscovery_d2dd00066k");
+            expect(preprint.venue).toBe(null);
+            expect(preprint.meta).toBe("Lu, Montz, Emrick +1 · 2022");
+            // the source / ID is in no row line
+            const text = await page.$eval("#memory-table", (el) => el.innerText);
+            expect(text).not.toContain("1703.10593");
+        });
+
+        it("should open the Info panel on ⓘ click without changing the row height", async function () {
+            await openWith();
+            const before = await rowInfo(CG);
+            expect(before.panel).toBe(null);
+            await page.click(`${rowSel(CG)} .memory-item-info`);
+            const open = await rowInfo(CG);
+            expect(open.panel.role).toBe("dialog");
+            expect(open.expanded).toBe("true");
+            expect(open.describedBy).toBeTruthy();
+            expect(open.height).toBe(before.height);
+            expect(open.panel.inside).toBe(true);
+            expect(Object.keys(open.panel.fields)).toEqual([
+                "Added",
+                "Last opened",
+                "Visits",
+                "Source",
+                "Publication",
+                "Citation key",
+            ]);
+            expect(open.panel.fields.Source).toBe("arXiv 1703.10593");
+            expect(open.panel.fields.Publication).toBe(
+                "International Conference on Computer Vision (ICCV) 2017",
+            );
+            // second click closes
+            await page.click(`${rowSel(CG)} .memory-item-info`);
+            const closed = await rowInfo(CG);
+            expect(closed.panel).toBe(null);
+            expect(closed.expanded).toBe("false");
+            expect(closed.describedBy).toBe(null);
+            // a click outside closes
+            await page.click(`${rowSel(CG)} .memory-item-info`);
+            await page.click("#memory-search");
+            expect((await rowInfo(CG)).panel).toBe(null);
+        });
+
+        it("should toggle the Info panel with 'd' on the focused row and close it when the focus moves", async function () {
+            await openWith((d) => {
+                d["RSC-DigitalDiscovery_d2dd00066k"].venue = "";
+                return d;
+            });
+            await page.focus(rowSel(CG));
+            await page.keyboard.press("d");
+            expect((await rowInfo(CG)).panel).not.toBe(null);
+            expect(await page.evaluate(() => document.activeElement.id)).toBe(
+                `memory-container--${CG}`,
+            );
+            await page.keyboard.press("d");
+            expect((await rowInfo(CG)).panel).toBe(null);
+            // Tab to another row closes it; that row's d opens its own
+            await page.keyboard.press("d");
+            const ids = await page.$$eval("#memory-table .memory-container", (els) =>
+                els.map((el) => el.id.split("--")[1]),
+            );
+            const next = ids[ids.indexOf(CG) + 1] ?? ids[ids.indexOf(CG) - 1];
+            await page.focus(rowSel(next));
+            expect((await rowInfo(CG)).panel).toBe(null);
+            expect(await page.$$eval(".pm-info-pop", (els) => els.length)).toBe(0);
+            // no venue: no Publication
+            await page.focus(rowSel("RSC-DigitalDiscovery_d2dd00066k"));
+            await page.keyboard.press("d");
+            const rsc = await rowInfo("RSC-DigitalDiscovery_d2dd00066k");
+            expect(rsc.panel.fields.Publication).toBeUndefined();
+            expect(rsc.panel.inside).toBe(true);
+        });
+
+        it("should open upward at the bottom edge and show the PDF file when there is one", async function () {
+            await openWith();
+            const last = await page.$eval("#memory-table .memory-container:last-child", (el) =>
+                el.id.split("--").slice(1).join("--"),
+            );
+            await page.evaluate((id) => {
+                PMDebug.config.state.files[id] = { id: 1, filename: "PaperMemoryStore/x.pdf" };
+            }, last);
+            await page.focus(rowSel(last));
+            await page.keyboard.press("d");
+            const info = await rowInfo(last);
+            expect(info.panel.up).toBe(true);
+            expect(info.panel.inside).toBe(true);
+            expect(info.panel.fields["PDF file"]).toBe("PaperMemoryStore/x.pdf");
+        });
+
+        it("should cap a panel taller than the room left and scroll inside it", async function () {
+            await openWith((d) => {
+                d[CG].venueFull = Array.from({ length: 40 }, (_, i) => `Word${i}`).join(" ");
+                return d;
+            });
+            await page.evaluate((id) => {
+                PMDebug.config.state.files[id] = {
+                    id: 1,
+                    filename: `PaperMemoryStore/${"very long file name ".repeat(30)}.pdf`,
+                };
+            }, CG);
+            await page.focus(rowSel(CG));
+            await page.keyboard.press("d");
+            const panel = await page.$eval(`${rowSel(CG)} .pm-info-pop`, (el) => {
+                const r = el.getBoundingClientRect();
+                const box = document.getElementById("memory-scroll").getBoundingClientRect();
+                return {
+                    inside: r.top >= box.top && r.bottom <= box.bottom,
+                    scrolls: el.scrollHeight > el.clientHeight,
+                    focusable: el.tabIndex === 0,
+                };
+            });
+            expect(panel).toEqual({ inside: true, scrolls: true, focusable: true });
+        });
+
+        it("should show our tooltip (name + key) on icon-only controls, inside the popup", async function () {
+            await openWith();
+            const hover = async (sel) => {
+                await page.hover(sel);
+                return page.evaluate(() => {
+                    const tip = document.querySelector(".pm-tip-float");
+                    const r = tip?.getBoundingClientRect();
+                    return {
+                        shown: !!tip && !tip.hidden,
+                        text: tip?.textContent,
+                        inside: !!r && r.left >= 0 && r.top >= 0 && r.right <= 450 && r.bottom <= 600,
+                    };
+                });
+            };
+            expect(await hover("#menu-switch")).toEqual({
+                shown: true,
+                text: "Settings p",
+                inside: true,
+            });
+            expect(await hover("#memory-tags-button")).toMatchObject({
+                text: "Browse tags",
+                inside: true,
+            });
+            const last = "#memory-table .memory-container:last-child";
+            expect(await hover(`${last} .memory-delete`)).toMatchObject({
+                text: "Delete ⌫",
+                inside: true,
+            });
+            expect(await hover(`${last} .memory-item-info`)).toMatchObject({
+                text: "Info d",
+                inside: true,
+            });
+            // no native title next to our tooltip; the name stays in aria-label
+            const titled = await page.$$eval("[data-tip]", (els) =>
+                els.filter((el) => el.hasAttribute("title") || !el.getAttribute("aria-label")).length,
+            );
+            expect(titled).toBe(0);
+            await page.mouse.move(5, 300);
+            expect((await page.$eval(".pm-tip-float", (el) => el.hidden))).toBe(true);
+        });
+    });
+
+    describe("fullMemory rows: Info panel and tag click", function () {
+        let page;
+        afterEach(async function () {
+            await page?.close();
+        });
+        const openFull = async () => {
+            page = await browser.newPage();
+            await page.setViewport({ width: 1280, height: 900 });
+            await page.goto(pmURLs.popupURL, { waitUntil: "networkidle0" });
+            await page.evaluate((data) => PMDebug.data.setStorage("papers", data), testData);
+            await page.goto(pmURLs.fullMemoryURL, { waitUntil: "networkidle0" });
+            await page.waitForSelector("#memory-table .memory-container");
+        };
+
+        it("should toggle the focused row's Info panel with 'd'", async function () {
+            await openFull();
+            await page.focus("#memory-table .memory-container");
+            await page.keyboard.press("d");
+            expect(await page.$$eval("#memory-table .pm-info-pop", (els) => els.length)).toBe(1);
+            await page.keyboard.press("d");
+            expect(await page.$$eval("#memory-table .pm-info-pop", (els) => els.length)).toBe(0);
+            await page.keyboard.press("d");
+            await page.keyboard.press("Escape");
+            expect(await page.$$eval("#memory-table .pm-info-pop", (els) => els.length)).toBe(0);
+        });
+
+        it("should replace the search with the clicked tag (favourites cleared)", async function () {
+            await openFull();
+            await page.evaluate(() => {
+                const p = PMDebug.config.state.papers["Arxiv-1703.10593"];
+                p.tags = ["gan"];
+                p.favorite = true;
+                PMDebug.memory.addFilter({ type: "fav", value: "" });
+                document.getElementById("memory-search").value = "unpaired";
+                PMDebug.memory.applyMemorySearch();
+            });
+            await page.evaluate(() => document.querySelector(".memory-tag").click());
+            const after = await page.evaluate(() => ({
+                filters: PMDebug.config.state.memoryFilters,
+                text: document.getElementById("memory-search").value,
+                fav: document.getElementById("filter-favorites").getAttribute("aria-pressed"),
+                rows: document.querySelectorAll("#memory-table .memory-container").length,
+            }));
+            expect(after).toEqual({ filters: [], text: "t:gan", fav: "false", rows: 1 });
+        });
+    });
 });

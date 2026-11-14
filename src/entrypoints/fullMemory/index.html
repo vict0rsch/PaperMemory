@@ -63,12 +63,19 @@
                 <!-- <input id="memory-search" type="search" placeholder="search" style="width: 45%;" /> -->
                 <div class="memory-search-wrapper">
                     <input id="memory-search" placeholder="Search" type="text" />
-                    <span id="memory-search-clear-icon">&times;</span>
+                    <span
+                        id="memory-search-clear-icon"
+                        aria-label="Clear the search"
+                        data-tip="Clear the search"
+                        >&times;</span
+                    >
                 </div>
                 <span
                     tabindex="0"
                     id="filter-favorites"
-                    title="Show favorites only"
+                    role="button"
+                    aria-label="Favourites only"
+                    data-tip="Favourites only"
                     class="rounded"
                 >
                     <svg
@@ -89,7 +96,13 @@
                     <option value="count"># Visits</option>
                     <option value="id">ID</option>
                 </select>
-                <span tabindex="0" id="memory-sort-arrow">
+                <span
+                    tabindex="0"
+                    id="memory-sort-arrow"
+                    role="button"
+                    aria-label="Reverse the sort order"
+                    data-tip="Reverse the sort order"
+                >
                     <svg
                         viewBox="0 0 24 24"
                         class="memory-sort-arrow-svg"
