@@ -26,7 +26,7 @@ function sockDir() {
     return path.join(os.homedir(), ".papermemory", "sock");
 }
 
-function opError(code, message) {
+export function opError(code, message) {
     return Object.assign(new Error(message), { code });
 }
 

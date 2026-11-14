@@ -226,7 +226,7 @@ export function uninstall(args) {
     console.log("Uninstalled PaperMemory agent access");
 }
 
-export function selfheal(args) {
+export function selfheal(args, { quiet = false } = {}) {
     assertMac();
     parseFlags(args, {});
     const { root, bin, stateFile } = homePaths();
@@ -242,5 +242,5 @@ export function selfheal(args) {
     const targets = state.manifests.map((m) => ({ dir: path.dirname(m.file), firefox: m.firefox }));
     writeManifests(targets, { wrapperPath: path.join(bin, "papermemory-host"), extensionIds: state.extensionIds }, state);
     saveState(stateFile, state);
-    console.log(`Rewrote wrappers and host manifests from ${root}`);
+    if (!quiet) console.log(`Rewrote wrappers and host manifests from ${root}`);
 }
