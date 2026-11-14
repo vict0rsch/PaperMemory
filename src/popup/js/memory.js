@@ -585,10 +585,17 @@ export const clearMemorySearch = () => {
     renderTagPanel();
 };
 
+/** The × in the search field: shown when there is text or a pill */
+export const updateSearchClear = () => {
+    const x = findEl({ element: "memory-search-x" });
+    if (x) x.hidden = !(state.memoryFilters.length > 0 || searchText().length > 0);
+};
+
 /** "214" or "12 of 214" in the field (fullMemory: its search placeholder) and the tab count */
 export const updateMemoryCount = () => {
     const total = Object.keys(cleanPapers(state.papers)).length;
     setHTML("memory-count", total);
+    updateSearchClear();
     const filtered = state.memoryFilters.length > 0 || searchText().length > 0;
     // fullMemory: its × clears the search, shown only when there is one
     const clear = findEl({ element: "memory-search-clear-icon" });
@@ -765,7 +772,7 @@ export const renderTagPanel = () => {
         <div class="pm-sugg-foot">
             <span>Typing <span class="pm-kbd">t:</span> in the search field shows the same list</span>
             <span class="pm-spacer"></span>
-            <a href="#" id="memory-manage-tags" aria-label="Manage tags (opens in a new tab)">Manage tags ${icon("open", "pm-ext")}</a>
+            <a href="#" id="memory-manage-tags" class="pm-out" data-tip="Open the tag manager in a new tab">Manage tags</a>
         </div>`;
     // sits over the list, right under the field / pills
     const box = findEl({ element: "memory-container" });
@@ -982,7 +989,10 @@ export const openMemoryItemEdit = (id) => {
         e.preventDefault();
         done();
     });
+    // Esc from outside the form (the row, a button…): handlers.js handleEditKeys
+    form.addEventListener("pm-edit-close", () => done(true));
     form.addEventListener("keydown", (e) => {
+        if (e.isComposing || e.keyCode === 229) return; // IME composing: not a shortcut
         if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
             e.preventDefault();
             e.stopPropagation();

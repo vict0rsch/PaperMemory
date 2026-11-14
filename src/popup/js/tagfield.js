@@ -188,6 +188,7 @@ export const createTagField = ({ root, tags = [], onChange = () => {}, inputId }
         renderSugg();
     });
     input.addEventListener("keydown", (e) => {
+        if (e.isComposing || e.keyCode === 229) return; // IME composing: Enter picks a candidate
         if (e.key === "ArrowDown" || e.key === "ArrowUp") {
             if (!entries.length) return;
             e.preventDefault();

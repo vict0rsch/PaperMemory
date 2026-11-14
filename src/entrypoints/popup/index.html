@@ -60,7 +60,9 @@
                         href="#"
                         id="sync-popup-error"
                         style="display: none"
+                        class="pm-out"
                         aria-label="Sync failed: open the sync settings"
+                        data-tip="Open the sync settings in a new tab"
                         ><span class="pm-sync pm-sync-err"
                             ><i data-i="alert"></i>Sync failed</span
                         ></a
@@ -110,6 +112,18 @@
                             spellcheck="false"
                             aria-label="Search your Memory"
                         />
+                        <!-- shown when there is text or a pill: clears both -->
+                        <button
+                            type="button"
+                            class="pm-quiet pm-ic pm-search-x"
+                            id="memory-search-x"
+                            tabindex="-1"
+                            aria-label="Clear search"
+                            data-tip="Clear search"
+                            hidden
+                        >
+                            <i data-i="x"></i>
+                        </button>
                         <span class="pm-count" id="memory-result-count"></span>
                         <span class="pm-mv-sep"></span>
                         <button

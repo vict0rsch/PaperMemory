@@ -536,11 +536,175 @@ describe("Test PaperMemory MemoryTable UI", function () {
             });
             // no native title next to our tooltip; the name stays in aria-label
             const titled = await page.$$eval("[data-tip]", (els) =>
-                els.filter((el) => el.hasAttribute("title") || !el.getAttribute("aria-label")).length,
+                els.filter(
+                    (el) =>
+                        el.hasAttribute("title") ||
+                        (el.tagName === "BUTTON" && !el.getAttribute("aria-label")),
+                ).length,
             );
             expect(titled).toBe(0);
             await page.mouse.move(5, 300);
             expect((await page.$eval(".pm-tip-float", (el) => el.hidden))).toBe(true);
+        });
+    });
+
+    describe("Memory rows: round 2 (clear ×, edit keys, +N, time tooltip)", function () {
+        let page;
+        const CG = "Arxiv-1703.10593";
+        const rowSel = (id) => `#memory-container--${id.replaceAll(".", "\\.")}`;
+        const open = async () => {
+            page = await browser.newPage();
+            await page.setViewport({ width: 450, height: 600 });
+            await page.goto(pmURLs.popupURL, { waitUntil: "networkidle0" });
+            await page.evaluate((data) => PMDebug.data.setStorage("papers", data), testData);
+            await page.reload({ waitUntil: "networkidle0" });
+            await page.waitForFunction(() => window.__pmPopupReady === true, { timeout: 10000 });
+            if (!(await getPaperMemoryState(page)).memoryIsOpen) {
+                await page.keyboard.press("a");
+                await sleep(200);
+            }
+        };
+        afterEach(async function () {
+            await page?.close();
+        });
+        const xHidden = () => page.$eval("#memory-search-x", (el) => el.hidden);
+
+        it("should show the × only with text or pills, and clear both", async function () {
+            await open();
+            expect(await xHidden()).toBe(true);
+            await page.focus("#memory-search");
+            await page.keyboard.type("unpaired");
+            expect(await xHidden()).toBe(false);
+            await page.click("#memory-search-x");
+            expect(await page.$eval("#memory-search", (el) => el.value)).toBe("");
+            expect(await xHidden()).toBe(true);
+            // pills only (year + favourites), no text
+            await page.evaluate(() => {
+                PMDebug.memory.addFilter({ type: "year", value: ">2000" });
+                PMDebug.memory.addFilter({ type: "fav", value: "" });
+            });
+            expect(await xHidden()).toBe(false);
+            await page.click("#memory-search-x");
+            const after = await page.evaluate(() => ({
+                filters: PMDebug.config.state.memoryFilters.length,
+                fav: document.getElementById("filter-favorites").getAttribute("aria-pressed"),
+                focused: document.activeElement.id,
+                tip: document.getElementById("memory-search-x").dataset.tip,
+            }));
+            expect(after).toEqual({
+                filters: 0,
+                fav: "false",
+                focused: "memory-search",
+                tip: "Clear search",
+            });
+            expect(await xHidden()).toBe(true);
+        });
+
+        it("should save and close the row edit form with Ctrl+↵ from the Done button and from the row, and close it with Esc", async function () {
+            await open();
+            const isEdit = () =>
+                page.$eval(rowSel(CG), (el) => el.classList.contains("is-edit"));
+            const ctrlEnter = async () => {
+                await page.keyboard.down("Control");
+                await page.keyboard.press("Enter");
+                await page.keyboard.up("Control");
+                await sleep(150);
+            };
+            await page.focus(rowSel(CG));
+            await page.keyboard.press("e");
+            expect(await isEdit()).toBe(true);
+            await page.focus(`${rowSel(CG)} .memory-edit-done`);
+            await ctrlEnter();
+            expect(await isEdit()).toBe(false);
+
+            await page.focus(rowSel(CG));
+            await page.keyboard.press("e");
+            await page.focus(rowSel(CG)); // the row itself, outside the form
+            await ctrlEnter();
+            expect(await isEdit()).toBe(false);
+
+            await page.focus(rowSel(CG));
+            await page.keyboard.press("e");
+            await page.evaluate(() => document.activeElement.blur()); // nothing focused
+            await page.keyboard.press("Escape");
+            await sleep(150);
+            expect(await isEdit()).toBe(false);
+            expect((await getPaperMemoryState(page)).memoryIsOpen).toBe(true);
+
+            // typing in a field still does not trigger row shortcuts
+            await page.focus(rowSel(CG));
+            await page.keyboard.press("e");
+            await page.keyboard.type("d");
+            expect(await page.$$eval(".pm-info-pop", (els) => els.length)).toBe(0);
+            expect(await isEdit()).toBe(true);
+        });
+
+        it("should ignore Ctrl+↵ while an IME composes, and let Esc close an open Info panel before the editor", async function () {
+            await open();
+            const isEdit = () =>
+                page.$eval(rowSel(CG), (el) => el.classList.contains("is-edit"));
+            await page.focus(rowSel(CG));
+            await page.keyboard.press("e");
+            await page.focus(rowSel(CG));
+            await page.evaluate(() =>
+                document.activeElement.dispatchEvent(
+                    new KeyboardEvent("keydown", {
+                        key: "Enter",
+                        ctrlKey: true,
+                        isComposing: true,
+                        bubbles: true,
+                    }),
+                ),
+            );
+            await sleep(150);
+            expect(await isEdit()).toBe(true);
+            // another row's Info panel open: the first Esc closes only the panel
+            const other = await page.$eval(
+                "#memory-table .memory-container:not(.is-edit)",
+                (el) => el.id,
+            );
+            await page.click(`#${other.replaceAll(".", "\\.")} .memory-item-info`);
+            expect(await page.$$eval(".pm-info-pop", (els) => els.length)).toBe(1);
+            await page.keyboard.press("Escape");
+            expect(await page.$$eval(".pm-info-pop", (els) => els.length)).toBe(0);
+            expect(await isEdit()).toBe(true);
+            await page.keyboard.press("Escape");
+            await sleep(150);
+            expect(await isEdit()).toBe(false);
+        });
+
+        it("should expand the authors on '+N' click and with '+', keeping the year", async function () {
+            await open();
+            const meta = (id) => page.$eval(`${rowSel(id)} .memory-authors`, (el) => el.textContent);
+            const before = await page.$eval(rowSel(CG), (el) => el.getBoundingClientRect().height);
+            await page.click(`${rowSel(CG)} .pm-item-authors-more`);
+            expect(await meta(CG)).toBe("Jun-Yan Zhu, Taesung Park, Phillip Isola, Alexei A. Efros");
+            const after = await page.$eval(rowSel(CG), (el) => el.getBoundingClientRect().height);
+            expect(after).toBeGreaterThanOrEqual(before);
+            // a preprint: the year stays after the full list
+            await page.evaluate(() => {
+                PMDebug.config.state.papers["RSC-DigitalDiscovery_d2dd00066k"].venue = "";
+                PMDebug.memory.applyMemorySearch();
+            });
+            await page.focus(rowSel("RSC-DigitalDiscovery_d2dd00066k"));
+            await page.keyboard.press("+");
+            expect(await meta("RSC-DigitalDiscovery_d2dd00066k")).toBe(
+                "Shizhao Lu, Brian Montz, Todd Emrick, Arthi Jayaraman · 2022",
+            );
+        });
+
+        it("should give the last-opened time our tooltip with the full date", async function () {
+            await open();
+            const time = await page.$eval(`${rowSel(CG)} time`, (el) => ({
+                tip: el.dataset.tip,
+                label: el.getAttribute("aria-label"),
+                title: el.hasAttribute("title"),
+            }));
+            expect(time.tip).toMatch(/^Last opened \d{1,2} \w{3} \d{4}, \d{2}:\d{2}$/);
+            expect(time.label).toBe(time.tip);
+            expect(time.title).toBe(false);
+            await page.hover(`${rowSel(CG)} time`);
+            expect(await page.$eval(".pm-tip-float", (el) => el.textContent)).toBe(time.tip);
         });
     });
 
@@ -588,6 +752,25 @@ describe("Test PaperMemory MemoryTable UI", function () {
                 rows: document.querySelectorAll("#memory-table .memory-container").length,
             }));
             expect(after).toEqual({ filters: [], text: "t:gan", fav: "false", rows: 1 });
+        });
+
+        it("should save and close a row editor with Ctrl+↵ and close it with Esc, wherever the focus is", async function () {
+            await openFull();
+            const row = "#memory-table .memory-container";
+            const isEdit = () => page.$eval(row, (el) => el.classList.contains("is-edit"));
+            await page.click(`${row} .memory-item-edit`);
+            expect(await isEdit()).toBe(true);
+            await page.focus(row); // the row, outside the form
+            await page.keyboard.down("Control");
+            await page.keyboard.press("Enter");
+            await page.keyboard.up("Control");
+            await sleep(150);
+            expect(await isEdit()).toBe(false);
+            await page.click(`${row} .memory-item-edit`);
+            await page.evaluate(() => document.activeElement.blur());
+            await page.keyboard.press("Escape");
+            await sleep(150);
+            expect(await isEdit()).toBe(false);
         });
     });
 });

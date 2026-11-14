@@ -90,6 +90,15 @@ let parseRun = 0; // incremented to ignore the result of a cancelled website par
 let whatsNewUnseen = false;
 let manualWebsitePaper = null; // the parsed website shown in the "Check the details" sheet
 let paperTagField = null; // the paper view's tag field (tagfield.js)
+let codeEdit = null; // the paper view's code link input and its commit (editCodeLink)
+let paperEditing = false; // the paper view's edit state: from `e` / a field opened to Done, ⌘↵, Esc
+
+/** Enters / leaves the paper view's edit state (and its "Done ⌘↵" hint) */
+const setPaperEditing = (on) => {
+    paperEditing = on;
+    const foot = findEl({ element: "popup-edit-foot" });
+    if (foot) foot.hidden = !on;
+};
 const shortcuts = {}; // browser-level command name -> display string
 
 // ----------------------------
@@ -652,9 +661,12 @@ const editCodeLink = (focus = true) => {
         paintIcons(findEl({ element: "popup-code-val" }));
         return true;
     };
+    codeEdit = { input, commit };
     addListener(input, "input", () => check(false));
     addListener(input, "keydown", (e) => {
-        if (e.key === "Enter") {
+        if (e.isComposing || e.keyCode === 229) return; // IME composing: not a commit
+        // ⌘↵ / Ctrl+↵ goes on to the page: it closes the whole edit state (finishPaperEdit)
+        if (e.key === "Enter" && !(e.metaKey || e.ctrlKey)) {
             e.preventDefault();
             e.stopPropagation();
             commit() && findEl({ element: "popup-code-edit" })?.focus();
@@ -697,9 +709,49 @@ const endNoteEdit = () => {
     showId("popup-note-val", "inline");
 };
 
+/**
+ * Whether the paper view is being edited, whatever has the focus: the edit state (`e`, a field
+ * opened), a field still open, or tag text typed and not added yet
+ */
+export const paperEditIsOpen = () => {
+    const id = state.currentId;
+    if (!id || !findEl({ element: "popup-memory-edit" })) return false;
+    return (
+        paperEditing ||
+        !!paperTagField?.input.value.trim() ||
+        !!findEl({ element: `popup-form-codeLink--${id}` }) ||
+        findEl({ element: `popup-form-note-textarea--${id}` })?.hidden === false ||
+        (!!paperTagField && document.activeElement === paperTagField.input)
+    );
+};
+
+/**
+ * Ends the paper view's edit state, wherever the focus is: ⌘↵ / Ctrl+↵ (silent = false) saves
+ * a typed tag and the code link (an invalid link keeps its field open), Esc (silent = true)
+ * closes without the typed tag and drops an invalid link. Everything else is already saved.
+ * @param {boolean} silent
+ */
+export const finishPaperEdit = (silent = false) => {
+    const id = state.currentId;
+    const input = findEl({ element: `popup-form-codeLink--${id}` });
+    if (input && codeEdit?.input === input && !codeEdit.commit()) {
+        if (!silent) return input.focus();
+        setHTML("popup-code-val", getPopupCodeLinkHTML(state.papers[id]));
+        paintIcons(findEl({ element: "popup-code-val" }));
+    }
+    endNoteEdit();
+    if (paperTagField) {
+        !silent && paperTagField.commitPending();
+        paperTagField.input.value = "";
+    }
+    setPaperEditing(false);
+    document.activeElement?.blur?.();
+};
+
 /** `e`: edit tags, code link and note; the tag input gets the focus */
 export const startPaperEdit = () => {
     if (!state.currentId || !findEl({ element: "popup-memory-edit" })) return;
+    setPaperEditing(true);
     editCodeLink(false);
     editNote(false);
     paperTagField?.focus();
@@ -743,6 +795,7 @@ const mountPaperTags = (id) => {
  */
 const showPaperView = (id, url, is) => {
     state.currentId = id;
+    paperEditing = false; // a fresh view is not being edited
     const paper = state.papers[id];
     const prefs = state.prefs;
     log("Popup paper:", paper);
@@ -768,17 +821,10 @@ const showPaperView = (id, url, is) => {
     );
     addListener(note, "input", () => fitTextarea(note));
     addListener(note, "blur", endNoteEdit);
-    addListener(note, "keydown", (e) => {
-        if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
-            e.preventDefault();
-            e.stopPropagation();
-            note.blur();
-        }
-    });
     // code link and note display are re-rendered after saves: delegate their clicks
     addListener("popup-memory-edit", "click", async (e) => {
-        if (e.target.closest("#popup-code-edit")) return editCodeLink();
-        if (e.target.closest("#popup-note-display")) return editNote();
+        if (e.target.closest("#popup-code-edit")) return setPaperEditing(true), editCodeLink();
+        if (e.target.closest("#popup-note-display")) return setPaperEditing(true), editNote();
         const codeLink = e.target.closest("#popup-code-link");
         if (codeLink) {
             e.preventDefault();
@@ -798,6 +844,9 @@ const showPaperView = (id, url, is) => {
     });
     addListener("popup-info-button", "click", () => togglePaperInfo("status"));
     addListener("popup-info-open", "click", () => togglePaperInfo("bar"));
+    addListener("popup-edit-done", "click", () => finishPaperEdit(false));
+    const modEnter = findEl({ element: "popup-edit-foot" })?.querySelector("[data-mod-enter]");
+    if (modEnter) modEnter.textContent = isMac ? "⌘↵" : "Ctrl ↵";
     addListener(`popup-memory-delete--${id}`, "click", handlePopupDeletePaper(id));
 
     // ----- "Also on"

@@ -698,6 +698,116 @@ describe("Test PaperMemory Popup UI - Known Paper Page", function () {
             ).toBe(false);
         });
 
+        it("should close the paper view's edit state with Ctrl+↵ and Esc wherever the focus is", async function () {
+            await setupPopupWithMockedTab(PMPage, arxivPaperUrl, arxivPaperId);
+            const editing = () =>
+                PMPage.evaluate(
+                    (id) => ({
+                        code: !!document.getElementById(`popup-form-codeLink--${id}`),
+                        note: !document.getElementById(`popup-form-note-textarea--${id}`)
+                            .hidden,
+                    }),
+                    arxivPaperId,
+                );
+            await PMPage.keyboard.press("e");
+            expect(await editing()).toEqual({ code: true, note: true });
+            await PMPage.type(`#popup-form-note-textarea--${arxivPaperIdEscaped}`, "kept");
+            await PMPage.evaluate(() => document.activeElement.blur()); // nothing focused
+            await PMPage.keyboard.down("Control");
+            await PMPage.keyboard.press("Enter");
+            await PMPage.keyboard.up("Control");
+            await sleep(400);
+            expect(await editing()).toEqual({ code: false, note: false });
+            expect((await getMemoryPapers(PMPage))[arxivPaperId].note).toMatch(/kept$/);
+            // Esc from the tag input closes too
+            await PMPage.keyboard.press("e");
+            expect((await editing()).note).toBe(true);
+            await PMPage.keyboard.press("Escape");
+            expect(await editing()).toEqual({ code: false, note: false });
+        });
+
+        it("should mark every link that leaves the popup with ↗ and our tooltip", async function () {
+            await setupPopupWithMockedTab(PMPage, "https://example.com/", "");
+            const links = await PMPage.evaluate(() =>
+                [...document.querySelectorAll("a.link-in-new-tab, a.pm-out")].map((a) => ({
+                    text: a.textContent.trim(),
+                    tip: a.dataset.tip ?? "",
+                    marker: getComputedStyle(a, "::after").content,
+                })),
+            );
+            const texts = links.map((l) => l.text);
+            for (const t of ["Supported sites", "Request a site", "User guide", "Guide", "Docs", "Feedback", "Change keys", "All releases on GitHub"])
+                expect(texts).toContain(t);
+            for (const link of links) {
+                expect(link.tip).not.toBe("");
+                expect(link.marker).toContain("↗");
+            }
+            const releases = await PMPage.$$eval(
+                '#modal-whatsnew-content a[href*="/releases/tag/"]',
+                (els) => [...new Set(els.map((a) => a.dataset.tip))],
+            );
+            expect(releases).toEqual(["Open GitHub release notes"]);
+            expect(
+                await PMPage.$eval('a[href="https://papermemory.org/features/#venues"]', (a) => a.dataset.tip),
+            ).toBe("Open the supported sites list on papermemory.org");
+            // navigation buttons: the paper view's "Also on" and a row's "…" menu
+            const buttons = await PMPage.evaluate((id) => {
+                const s = PMDebug.config.state;
+                const paper = s.papers[id];
+                const saved = { ...s.prefs };
+                Object.assign(s.prefs, {
+                    checkAr5iv: true,
+                    checkAlphaxiv: true,
+                    checkHuggingface: true,
+                    checkScirate: true,
+                });
+                const tpl = document.createElement("template");
+                tpl.innerHTML =
+                    PMDebug.templates.getPopupPaperHTML(paper, "https://example.com/x", {}, {}) +
+                    PMDebug.templates.getMemoryItemHTML(paper);
+                Object.assign(s.prefs, saved);
+                return [...tpl.content.querySelectorAll(".pm-pv-also-btn, .pm-pop [role=menuitem]")].map(
+                    (b) => ({ tip: b.dataset.tip, mark: !!b.querySelector(".pm-out-mark") }),
+                );
+            }, arxivPaperId);
+            expect(buttons.length).toBe(8);
+            for (const b of buttons) {
+                expect(b.tip).toMatch(/^Open on (ar5iv|alphaXiv|Hugging Face|SciRate)$/);
+                expect(b.mark).toBe(true);
+            }
+        });
+
+        it("should save a pending tag with Ctrl+↵ after clicking elsewhere, and show the Done hint while editing", async function () {
+            await setupPopupWithMockedTab(PMPage, arxivPaperUrl, arxivPaperId);
+            const foot = () => PMPage.$eval("#popup-edit-foot", (el) => el.hidden);
+            expect(await foot()).toBe(true);
+            await PMPage.keyboard.press("e");
+            expect(await foot()).toBe(false);
+            await PMPage.keyboard.press("Escape");
+            expect(await foot()).toBe(true);
+            // a tag typed, not added, then a click elsewhere: Ctrl+↵ still saves it
+            await PMPage.click("#popup-tags-input");
+            await PMPage.keyboard.type("pending-tag");
+            await PMPage.mouse.click(8, 250);
+            await sleep(250);
+            await PMPage.keyboard.down("Control");
+            await PMPage.keyboard.press("Enter");
+            await PMPage.keyboard.up("Control");
+            await sleep(400);
+            expect((await getMemoryPapers(PMPage))[arxivPaperId].tags).toContain("pending-tag");
+            // IME: Enter while composing adds nothing
+            await PMPage.click("#popup-tags-input");
+            await PMPage.keyboard.type("ime-tag");
+            await PMPage.evaluate(() =>
+                document.activeElement.dispatchEvent(
+                    new KeyboardEvent("keydown", { key: "Enter", isComposing: true, bubbles: true }),
+                ),
+            );
+            await sleep(300);
+            expect((await getMemoryPapers(PMPage))[arxivPaperId].tags).not.toContain("ime-tag");
+            expect(await PMPage.$eval("#popup-tags-input", (el) => el.value)).toBe("ime-tag");
+        });
+
         it("should toggle the shortcut sheet with '?' and the Memory with 'a'", async function () {
             await setupPopupWithMockedTab(PMPage, arxivPaperUrl, arxivPaperId);
             const sheetShown = () =>

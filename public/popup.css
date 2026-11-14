@@ -983,6 +983,19 @@ button.pm-banner {
     width: 15px;
     height: 15px;
 }
+/* × clearing the text and pills: between the text and the count, only when there is a search */
+.pm-mv-search .pm-search-x {
+    width: 22px;
+    height: 22px;
+    color: var(--pm-text-3);
+}
+.pm-mv-search .pm-search-x .pm-i {
+    width: 13px;
+    height: 13px;
+}
+.pm-mv-search .pm-search-x[hidden] {
+    display: none;
+}
 .pm-quiet[aria-expanded="true"] {
     background: var(--pm-surface-3);
     color: var(--pm-text);
@@ -1128,4 +1141,12 @@ button.pm-banner {
 /* no result / empty Memory */
 .pm-mv-empty {
     min-height: 420px;
+}
+
+/* paper view edit state: "Changes are saved as you type · Done ⌘↵" under the fields */
+.pm-pv-editfoot {
+    margin-top: var(--pm-s-2);
+}
+.pm-pv-editfoot[hidden] {
+    display: none;
 }

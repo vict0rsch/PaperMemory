@@ -17,13 +17,30 @@ export const timeAgo = (date) => {
     return d.toLocaleDateString("en-GB", { month: "short", year: "numeric" });
 };
 
-/** "Vaswani, Shazeer, Parmar +5", and " · 2023" when the paper has no venue line (escaped) */
+/**
+ * "Vaswani, Shazeer, Parmar +5", and " · 2023" when the paper has no venue line (escaped).
+ * "+5" is a button: click (or +) shows every author, in place (handlers.js expandRowAuthors).
+ */
 const memoryItemMeta = (paper, hasVenue) => {
     const authors = authorList(paper.author);
-    const names = authors.slice(0, 3).map((a) => a.split(" ").pop());
-    const more = authors.length > 3 ? ` +${authors.length - 3}` : "";
+    const names = escapeHtml(authors.slice(0, 3).map((a) => a.split(" ").pop()).join(", "));
+    const extra = authors.length - 3;
+    const more =
+        extra > 0
+            ? ` <button type="button" class="pm-item-authors-more" tabindex="-1" aria-expanded="false" aria-label="Show all ${authors.length} authors (+)" data-tip="Show all authors" data-tip-key="+">+${extra}</button>`
+            : "";
     const year = hasVenue ? "" : String(paper.year ?? "").trim();
-    return escapeHtml([names.join(", ") + more, year].filter(Boolean).join(" · "));
+    return `${names}${more}${year ? `<span class="pm-item-year"> · ${escapeHtml(year)}</span>` : ""}`;
+};
+
+/** ↗ after a control that leaves the popup (links use the CSS ::after of .pm-out instead) */
+const OUT_MARK = `<span class="pm-out-mark" aria-hidden="true">\u00a0\u2197</span>`;
+
+/** "14 Nov 2026, 09:12" */
+const dateAndTime = (date) => {
+    const d = new Date(date);
+    if (isNaN(d)) return "";
+    return `${shortDate(d)}, ${d.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}`;
 };
 
 /** "Today, 09:12", "Yesterday, 17:40", else "3 Mar 2025" */
@@ -133,7 +150,7 @@ export const getMemoryItemHTML = (paper) => {
         .filter(([pref]) => isArxiv && prefs[pref])
         .map(
             ([, cls, name, key]) =>
-                `<button type="button" role="menuitem" class="memory-item-${cls}" tabindex="-1" aria-label="Open on ${name} (${key})">${name} <span class="pm-kbd">${key}</span></button>`,
+                `<button type="button" role="menuitem" class="memory-item-${cls}" tabindex="-1" aria-label="Open on ${name} (${key})" data-tip="Open on ${name}" data-tip-key="${key}"><span>${name}${OUT_MARK}</span> <span class="pm-kbd">${key}</span></button>`,
         )
         .join("");
     const tags = (paper.tags ?? [])
@@ -154,7 +171,7 @@ export const getMemoryItemHTML = (paper) => {
             </div>
             <div class="pm-item-side">
                 <button type="button" class="pm-item-fav memory-item-favorite" tabindex="-1" aria-pressed="${fav}" aria-label="${fav ? "Remove from favourites" : "Add to favourites"}" data-tip="${fav ? "Remove from favourites" : "Add to favourites"}">${icon("star")}</button>
-                <time>${escapeHtml(lastOpen)}</time>
+                <time datetime="${escapeHtml(paper.lastOpenDate ?? "")}" data-tip="Last opened ${escapeHtml(dateAndTime(paper.lastOpenDate))}" aria-label="Last opened ${escapeHtml(dateAndTime(paper.lastOpenDate))}">${escapeHtml(lastOpen)}</time>
                 ${infoButton("memory-item-info", "Info (d)", 'tabindex="-1"')}
             </div>
             ${tags ? `<div class="pm-item-tags">${icon("tag")}${tags}</div>` : ""}
@@ -272,7 +289,7 @@ export const getPopupCodeLinkHTML = (paper) => {
     const href = /^https?:\/\//i.test(link) ? link : `https://${link}`;
     return /*html*/ `
         <div class="pm-codelink">
-            <a id="popup-code-link" href="${escapeHtml(href)}" title="${escapeHtml(link)}"
+            <a id="popup-code-link" href="${escapeHtml(href)}" data-tip="Open ${escapeHtml(href)} in a new tab"
                 ><span>${escapeHtml(link.replace(/^https?:\/\//, ""))}</span>${icon("open")}</a
             ><button class="pm-quiet" id="popup-code-edit" aria-label="Edit the code link (e)" data-tip="Edit the code link" data-tip-key="e">
                 ${icon("edit")}
@@ -360,7 +377,7 @@ export const getPopupPaperHTML = (paper, currentUrl, is, { downloadKey }) => {
         .filter(([pref, , , , host]) => prefs[pref] && isArxiv && !currentUrl.includes(host))
         .map(
             ([, cls, name, key]) =>
-                `<button class="pm-pv-also-btn" id="popup-memory-item-${cls}--${id}" aria-label="Open on ${name} (${key})">${name}</button>`,
+                `<button class="pm-pv-also-btn" id="popup-memory-item-${cls}--${id}" aria-label="Open on ${name} (${key})" data-tip="Open on ${name}" data-tip-key="${key}">${name}${OUT_MARK}</button>`,
         )
         .join("");
 
@@ -400,6 +417,12 @@ export const getPopupPaperHTML = (paper, currentUrl, is, { downloadKey }) => {
                         <textarea class="pm-textarea" id="popup-form-note-textarea--${id}" rows="3" placeholder="Anything to note?" hidden></textarea>
                     </div>
                 </div>
+            </div>
+            <!-- edit state (e, or a field opened): same quiet hint as the row edit form -->
+            <div class="pm-edit-foot pm-pv-editfoot" id="popup-edit-foot" hidden>
+                <span class="pm-edit-hint">Changes are saved as you type</span>
+                <span class="pm-spacer"></span>
+                <button type="button" class="pm-btn pm-btn-primary pm-btn-sm" id="popup-edit-done">Done <span class="pm-kbd" data-mod-enter>⌘↵</span></button>
             </div>
 
             ${also ? `<div class="pm-pv-also">Also on ${also}</div>` : ""}
@@ -447,7 +470,7 @@ export const getNotPaperHTML = (mode, { canParse = false, nSources = 30, url = "
                     <button class="pm-btn" id="website-parse-retry">Try again</button>
                     <button class="pm-btn pm-btn-primary" id="website-parse-manual">Fill in by hand</button>
                 </div>
-                <div class="pm-empty-links"><a class="link-in-new-tab" href="${REPORT_URL}">Report a problem</a></div>
+                <div class="pm-empty-links"><a class="link-in-new-tab" href="${REPORT_URL}" data-tip="Report a problem on GitHub">Report a problem</a></div>
             </div>`;
     }
     return /*html*/ `
@@ -460,9 +483,9 @@ export const getNotPaperHTML = (mode, { canParse = false, nSources = 30, url = "
                 ${canParse ? '<button class="pm-btn" id="website-trigger-btn">Parse this page</button>' : ""}
             </div>
             <div class="pm-empty-links">
-                <a class="link-in-new-tab" href="https://papermemory.org/features/#venues">Supported sites</a>
-                <a class="link-in-new-tab" href="https://github.com/vict0rsch/PaperMemory/issues/13">Request a site</a>
-                <a class="link-in-new-tab" href="https://papermemory.org/getting-started/">User guide</a>
+                <a class="link-in-new-tab" href="https://papermemory.org/features/#venues" data-tip="Open the supported sites list on papermemory.org">Supported sites</a>
+                <a class="link-in-new-tab" href="https://github.com/vict0rsch/PaperMemory/issues/13" data-tip="Request a site on GitHub">Request a site</a>
+                <a class="link-in-new-tab" href="https://papermemory.org/getting-started/" data-tip="Open the user guide on papermemory.org">User guide</a>
                 <a href="#" id="whats-new-container">What’s new</a>
             </div>
         </div>`;
@@ -489,7 +512,7 @@ export const getNoMemoryHTML = (url) => /*html*/ `
                 <li>This source is turned off in the options.</li>
                 <li>Firefox does not let extensions run on PDF pages. Open the abstract page instead.</li>
                 <li>You deleted it, here or on another synced computer. Reload the page to add it back.</li>
-                <li>The page could not be read. <a class="link-in-new-tab" href="${REPORT_URL}">Report a problem</a></li>
+                <li>The page could not be read. <a class="link-in-new-tab" href="${REPORT_URL}" data-tip="Report a problem on GitHub">Report a problem</a></li>
             </ul>
         </details>
     </div>`;

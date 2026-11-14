@@ -42,14 +42,18 @@ import {
     toggleTagPanel,
     updateMemoryCount,
     updatePopupPaperNoMemory,
+    updateSearchClear,
 } from "@pm/popup/js/memory.js";
 import {
     closeMenu,
     openMenu,
     showPopupModal,
+    finishPaperEdit,
+    paperEditIsOpen,
     startPaperEdit,
     togglePaperInfo,
 } from "@pm/popup/js/popup.js";
+import { authorList } from "@pm/popup/js/templates.js";
 import {
     closeInfoPanel,
     infoPanelIsOpen,
@@ -374,30 +378,94 @@ export const handleTagClick = (e) => showOnlyTag(e.target.closest(".memory-tag")
 
 /**
  * fullMemory's keys (it has no popup keyboard handler): `d` opens / closes the Info panel of the
- * focused row, Escape closes it
+ * focused row, `+` shows all its authors, Escape closes the panel
  * @param {KeyboardEvent} e
  */
 export const handleFullMemoryKeydown = (e) => {
+    if (isComposing(e) || handleEditKeys(e)) return;
     if (e.ctrlKey || e.metaKey || e.altKey) return;
     if (e.key === "Escape" && infoPanelIsOpen()) {
         e.preventDefault();
         return closeInfoPanel();
     }
     const focused = document.activeElement;
-    if (e.key !== "d" || ["INPUT", "TEXTAREA", "SELECT"].includes(focused?.tagName)) return;
+    const key = e.code === "NumpadAdd" ? "+" : e.key;
+    if (!["d", "+"].includes(key) || ["INPUT", "TEXTAREA", "SELECT"].includes(focused?.tagName))
+        return;
     const row = focused?.closest?.("#memory-table .memory-container");
     if (!row || row.classList.contains("is-edit")) return;
     e.preventDefault();
+    if (key === "+") return expandRowAuthors(row);
     toggleInfoPanel(row, row.querySelector(".memory-item-info"), row.id.split("--")[1]);
 };
 
 /** Clears the search field and every filter */
 export const handleClearSearch = () => clearMemorySearch();
 
+/**
+ * Edit forms (row edit form, paper view fields): ⌘↵ / Ctrl+↵ saves and closes, Esc closes,
+ * wherever the focus is while the form is shown (a field's own handler runs first and stops
+ * the event). Returns whether the key was used.
+ * @param {KeyboardEvent} e
+ */
+export const handleEditKeys = (e) => {
+    if (isComposing(e)) return false;
+    const submit = e.key === "Enter" && (e.ctrlKey || e.metaKey);
+    if (!submit && e.key !== "Escape") return false;
+    if (deleteModalIsOpen() || state.modalIsOpen || state.prefsIsOpen) return false;
+    // a row editor shown on screen (popup Memory tab or fullMemory), else the paper view's
+    const form = [
+        ...document.querySelectorAll("#memory-table .memory-container.is-edit .pm-edit"),
+    ].find((f) => f.offsetParent !== null);
+    const paperEdit = !state.memoryIsOpen && paperEditIsOpen();
+    if (!form && !paperEdit) return false;
+    e.preventDefault();
+    // Esc dismisses what floats over the editor first, and only that
+    if (!submit && dismissPopovers()) return true;
+    if (form) submit ? form.requestSubmit() : form.dispatchEvent(new CustomEvent("pm-edit-close"));
+    else finishPaperEdit(!submit);
+    return true;
+};
+
+/** A key typed while an input method composes text (IME) is never a shortcut */
+export const isComposing = (e) => e.isComposing || e.keyCode === 229;
+
+/**
+ * Esc: closes the Info panel, a row's "…" menu, the search's tag suggestions or a tag field's
+ * suggestions (with its near-duplicate hint). Returns whether something was closed.
+ */
+const dismissPopovers = () => {
+    if (infoPanelIsOpen()) return closeInfoPanel(), true;
+    if (document.querySelector("#memory-table .memory-container.menu-open"))
+        return closeRowMenus(), true;
+    const searchSugg = findEl({ element: "memory-tag-suggestions" });
+    if (searchSugg && !searchSugg.hidden) return hideSearchSuggestions(), true;
+    const tagSugg = [...document.querySelectorAll(".pm-tagsugg")].find((el) => !el.hidden);
+    if (tagSugg) return (tagSugg.hidden = true), true;
+    return false;
+};
+
+/** A row's "+N": every author, in place (the row grows only on this explicit action) */
+export const expandRowAuthors = (row) => {
+    const id = row?.id.split("--")[1];
+    const meta = row?.querySelector(".memory-authors");
+    const btn = meta?.querySelector(".pm-item-authors-more");
+    if (!btn || !state.papers[id]) return;
+    const year = meta.querySelector(".pm-item-year");
+    const hadFocus = btn.contains(document.activeElement);
+    meta.textContent = authorList(state.papers[id].author).join(", ");
+    year && meta.append(year);
+    meta.classList.add("is-open");
+    hadFocus && row.focus({ preventScroll: true });
+};
+
 export const handlePopupKeydown = async (e) => {
-    let key = e.key;
+    if (isComposing(e)) return;
+    // "+" whether the layout needs Shift for it or not, and the keypad's +
+    let key = e.code === "NumpadAdd" ? "+" : e.key;
     const isCtrlOrMeta = e.ctrlKey || e.metaKey;
     const isEnter = key === "Enter" && !isCtrlOrMeta;
+    if (handleEditKeys(e)) return;
     if (isCtrlOrMeta) return;
     if (
         [
@@ -418,6 +486,7 @@ export const handlePopupKeydown = async (e) => {
             "f",
             "x",
             "s",
+            "+",
             "?",
             "/",
         ].indexOf(key) < 0
@@ -553,6 +622,7 @@ export const handlePopupKeydown = async (e) => {
             return startPaperEdit();
         }
         if (key === "d") return togglePaperInfo("key");
+        if (key === "+") return findEl({ element: "popup-authors-more" })?.click();
     }
 
     // the control for an action: in the row, or the paper view's #popup-<class>--<id>
@@ -577,6 +647,8 @@ export const handlePopupKeydown = async (e) => {
     } else if (key === "e") {
         e.preventDefault();
         openMemoryItemEdit(id);
+    } else if (key === "+" && paperItem) {
+        expandRowAuthors(paperItem);
     } else if (key === "d") {
         // the row's Info panel; the focus stays on the row
         toggleInfoPanel(paperItem, paperItem.querySelector(".memory-item-info"), id);
@@ -651,6 +723,7 @@ const handleMemoryTableClick = (e) => {
         return;
     }
     if (t.closest(".pm-info-pop")) return;
+    if (t.closest(".pm-item-authors-more")) return expandRowAuthors(row);
     if (t.closest(".memory-item-info"))
         return toggleInfoPanel(row, t.closest(".memory-item-info"), id);
     if (t.closest(".memory-tag")) return handleTagClick(e);
@@ -704,6 +777,7 @@ export const addEventsToMemoryItems = () => {
 
 /** Keys in the search field: filters, tag suggestions, Backspace on an empty field */
 const handleSearchKeydown = (e) => {
+    if (isComposing(e)) return;
     const input = e.target;
     if (["ArrowDown", "ArrowUp", "Enter", "Tab"].includes(e.key)) flushSearchSuggestions();
     const suggOpen = !findEl({ element: "memory-tag-suggestions" })?.hidden;
@@ -784,6 +858,7 @@ export const addEventsToMemoryControls = () => {
 
     const search = findEl({ element: "memory-search" });
     addListener(search, "input", () => {
+        updateSearchClear();
         scheduleSearchSuggestions();
         scheduleMemorySearch();
     });
@@ -806,6 +881,11 @@ export const addEventsToMemoryControls = () => {
         handleConfirmDeleteModalClick,
     );
     addListener("filter-favorites", "click", toggleFavouritesFilter);
+    // the × in the field: text, pills and favourites-only go; the field keeps the focus
+    addListener("memory-search-x", "click", () => {
+        clearMemorySearch();
+        findEl({ element: "memory-search" })?.focus();
+    });
     addListener("memory-tags-button", "click", () => toggleTagPanel());
     addListener("memory-sort-button", "click", () => toggleSortMenu());
     addListener("memory-tag-panel", "click", handleTagPanelClick);

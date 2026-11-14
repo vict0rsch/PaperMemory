@@ -132,7 +132,10 @@
     z-index: 50;
     top: 0;
     left: 0;
+    max-width: min(320px, calc(100vw - 12px));
     transform: none;
+    white-space: normal;
+    overflow-wrap: anywhere;
 }
 .pm-tip-float[hidden] {
     display: none;
@@ -787,6 +790,24 @@
     text-overflow: ellipsis;
     white-space: nowrap;
 }
+/* "+N": a quiet button in the author line; after it, the full list wraps */
+.pm-item-meta.is-open {
+    white-space: normal;
+}
+.pm-item-authors-more {
+    padding: 0 2px;
+    border: 0;
+    border-radius: var(--pm-r-sm);
+    background: none;
+    color: inherit;
+    font: inherit;
+    cursor: pointer;
+    text-decoration: underline dotted;
+    text-underline-offset: 3px;
+}
+.pm-item-authors-more:hover {
+    color: var(--pm-text);
+}
 /* tags: all of them, full text, wrapping onto as many lines as they need */
 .pm-item-tags {
     grid-column: 1 / -1;
@@ -1295,4 +1316,15 @@
     margin: 0;
     color: var(--pm-text);
     overflow-wrap: anywhere;
+}
+
+/* links that leave the popup (a new tab): ↗ after their text, not read out */
+a.link-in-new-tab::after,
+.pm-out::after {
+    content: "\00a0\2197"; /* fallback: browsers without the "/ alt" syntax keep this one */
+    content: "\00a0\2197" / "";
+    opacity: 0.75;
+}
+.pm-out-mark {
+    opacity: 0.75;
 }
