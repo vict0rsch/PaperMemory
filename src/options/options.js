@@ -28,6 +28,7 @@ import { setupSources } from "@pm/shared/js/sourcePicker.js";
 import { setupTags, refreshTags, tagsAreBusy } from "@pm/options/tags.js";
 import { setupIO, refreshIO } from "@pm/options/io.js";
 import { setupSync } from "@pm/options/syncSettings.js";
+import { setupAgentAccess } from "@pm/options/agentAccessUI.js";
 
 const $ = (id) => document.getElementById(id);
 const plural = (n, word) => `${n} ${word}${n === 1 ? "" : "s"}`;
@@ -441,6 +442,8 @@ const followMemoryChanges = () => {
     setupTooltips();
     setupTopbar("options");
     setupNavAndSearch();
+    // before the Gist pull, which must not delay a pairing prompt
+    setupAgentAccess();
     await initSyncAndState();
     await setupPrefs();
     await setupSources((on, total) => setNavCount("capture", `${on}/${total}`));
