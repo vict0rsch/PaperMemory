@@ -45,12 +45,22 @@ const isHttpUrl = (url) => {
     }
 };
 
-const removeControlChars = (str) => str.replace(/\p{Cc}/gu, "");
+/**
+ * Remove control characters, as from a client name or a Project label.
+ * @param {string} str The string to clean
+ * @returns {string} The string without control characters
+ */
+export const removeControlChars = (str) => str.replace(/\p{Cc}/gu, "");
 
 // sort comparator on a string key, e.g. an ISO date
 const compareBy = (key) => (a, b) => (a[key] < b[key] ? -1 : a[key] > b[key] ? 1 : 0);
 
-const sha256Hex = async (str) => {
+/**
+ * Hash a string, as a secret, an Agent session id or a Project key.
+ * @param {string} str The string to hash
+ * @returns {Promise<string>} Its SHA-256, in hex
+ */
+export const sha256Hex = async (str) => {
     const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(str));
     return [...new Uint8Array(digest)]
         .map((byte) => byte.toString(16).padStart(2, "0"))

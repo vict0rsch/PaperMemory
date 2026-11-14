@@ -33,6 +33,7 @@ import {
     miniHash,
     getStoredFiles,
 } from "@pmu/functions.js";
+import { initAgentAccess } from "@pm/background/agentAccess.js";
 
 export function initBackground() {
     serveMemoryOps(); // this context runs the Memory's write queue for every page
@@ -444,7 +445,7 @@ export function initBackground() {
         return { id, ok: true };
     };
 
-    chrome.runtime.onMessage.addListener((payload, sender, sendResponse) => {
+    const handleBackgroundMessage = (payload, sender, sendResponse) => {
         if (sender.id !== chrome.runtime.id) {
             return;
         }
@@ -525,7 +526,9 @@ export function initBackground() {
                 });
         }
         return true;
-    });
+    };
+
+    chrome.runtime.onMessage.addListener(handleBackgroundMessage);
 
     chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
         if (changeInfo.status) {
@@ -617,4 +620,6 @@ export function initBackground() {
             });
         }
     });
+
+    initAgentAccess({ pushSyncPapers, handleBackgroundMessage });
 } // end initBackground
