@@ -88,7 +88,8 @@ export function BibtexParser() {
             this.pos++;
         }
         if (this.input[this.pos] == "%" && canCommentOut == true) {
-            while (this.input[this.pos] != "\n") {
+            // a comment on the last line has no "\n": stop at the end of the input
+            while (this.pos < this.input.length && this.input[this.pos] != "\n") {
                 this.pos++;
             }
             this.skipWhitespace(canCommentOut);
@@ -173,6 +174,8 @@ export function BibtexParser() {
             var k = this.key();
             if (k.match("^[0-9]+$")) return k;
             else if (this.months.indexOf(k.toLowerCase()) >= 0) return k.toLowerCase();
+            // a @string macro's name (journal = jmlr): kept as written
+            else if (/^[A-Za-z][\w.:+\/-]*$/.test(k)) return k;
             else
                 throw (
                     "Value expected: single_value" +
@@ -259,6 +262,11 @@ export function BibtexParser() {
         return "@" + this.key();
     };
 
+    // @string{name = value}: read and dropped (it was called but never defined)
+    this.string = function () {
+        this.key_equals_value();
+    };
+
     this.preamble = function () {
         this.currentEntry = {};
         this.currentEntry["entryType"] = "PREAMBLE";
@@ -312,7 +320,9 @@ export function BibtexParser() {
         while (this.matchAt()) {
             var d = this.directive();
             this.match("{");
-            this.cleanCitationKey();
+            // entries only: @string / @preamble / @comment have no citation key
+            if (!["@STRING", "@PREAMBLE", "@COMMENT"].includes(d.toUpperCase()))
+                this.cleanCitationKey();
             if (d.toUpperCase() == "@STRING") {
                 this.string();
             } else if (d.toUpperCase() == "@PREAMBLE") {

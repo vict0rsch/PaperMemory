@@ -298,9 +298,14 @@ abstract/PDF/ar5iv/HuggingFace, etc., shared with the popup's `handlers.js`).
   no periodic reload. Sync status comes from `sync.js` as a `pm-sync-status` DOM event.
 - **options** — preferences, custom PDF-title function, auto-tag rules, JSON/BibTeX
   import & export, sync configuration.
-- **bibMatcher** — a standalone tool: paste a `.bib` file, batch-match each entry
-  against DBLP/Semantic Scholar/CrossRef/Unpaywall/Google Scholar to fill in
-  published venues. Built directly on `preprintMatching.js`.
+- **bibMatcher** — a standalone tool: paste, choose or drop a `.bib` file; each preprint
+  entry (any field mentioning `rxiv`: arXiv, bioRxiv, medRxiv, ChemRxiv) is looked up on
+  DBLP → Semantic Scholar → Google Scholar → CrossRef → OpenAlex (`preprintMatching.js`,
+  whose `isPreprintRecord` refuses a preprint's own record as its published version). Each
+  proposed change is shown as a BibTeX diff to accept or reject; Copy / Download (Blob)
+  replace only the accepted entries in the text as given (everything else, comments and
+  `@string` included, byte for byte), after a warning dialog when some are not reviewed. It
+  never writes the Memory or the prefs.
 
 ### `sync.js` — GitHub Gist synchronisation
 

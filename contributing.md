@@ -108,8 +108,7 @@ The debug system is implemented in `src/debug/debug.js` and imported by each ent
 │   ├── theme.js          ➤ Dark mode detection (runs before modules, loaded via <script>)
 │   ├── data/             ➤ JSON data files (journals, abbreviations, art)
 │   ├── icons/            ➤ Extension icons
-│   ├── *.css             ➤ Stylesheets loaded at runtime via <link> or chrome.runtime.getURL
-│   └── highlight.min.js  ➤ Code highlighting library (options page)
+│   └── *.css             ➤ Stylesheets loaded at runtime via <link> or chrome.runtime.getURL
 │
 └── src/
     ├── entrypoints/              ➤ WXT entry points (only these are built into the extension)

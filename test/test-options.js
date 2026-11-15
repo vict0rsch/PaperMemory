@@ -758,67 +758,6 @@ describe("Options page", function () {
         });
     });
 
-    describe("BibMatcher", function () {
-        // every web request (the page's and the background's: Google Scholar) answers the
-        // recorded response, or 404
-        const recorded = readJSON(`${root}/test/data/preprint-matching.json`).responses;
-        let cdp;
-        before(async function () {
-            cdp = await browser.target().createCDPSession();
-            await cdp.send("Fetch.enable", { patterns: [{ urlPattern: "https://*" }] });
-            cdp.on("Fetch.requestPaused", (e) => {
-                const answer = recorded[e.request.url];
-                cdp.send("Fetch.fulfillRequest", {
-                    requestId: e.requestId,
-                    responseCode: answer?.status ?? 404,
-                    responseHeaders: [
-                        { name: "content-type", value: "application/json" },
-                        { name: "access-control-allow-origin", value: "*" },
-                    ],
-                    body: Buffer.from(
-                        answer ? JSON.stringify(answer.body) : "",
-                    ).toString("base64"),
-                }).catch(() => {});
-            });
-        });
-        after(async function () {
-            await cdp.send("Fetch.disable").catch(() => {});
-            await cdp.detach().catch(() => {});
-        });
-
-        it("uses the OpenAlex match's BibTeX (Cell 2019), with the entry's key kept", async function () {
-            await page.goto(optionsURL.replace("options.html", "bibMatcher.html"), {
-                waitUntil: "networkidle0",
-            });
-            await page.$eval("#api-timeout", (el) => (el.checked = false));
-            await page.$eval(
-                "#bib-text",
-                (el) =>
-                    (el.value =
-                        "@article{stuart2018, title={Comprehensive integration of single cell data}, author={Stuart, Tim}, journal={arXiv preprint}, year={2018}}"),
-            );
-            await page.click("#match-bib");
-            await page
-                .waitForFunction(
-                    () =>
-                        document
-                            .getElementById("match-results")
-                            .textContent.includes("Cell"),
-                    { timeout: 30000 },
-                )
-                .catch(async (e) => {
-                    console.log(await page.$eval("body", (b) => b.innerText));
-                    throw e;
-                });
-            const bib = await page.$eval("#match-results", (el) => el.textContent);
-            expect(bib).toMatch(/@article\{stuart2018,/);
-            expect(bib).toMatch(/journal\s*=\s*\{Cell\}/);
-            expect(bib).toMatch(/year\s*=\s*\{2019\}/);
-            expect(bib).toMatch(/doi\s*=\s*\{10\.1016\/j\.cell\.2019\.05\.031\}/);
-            expect(bib).not.toMatch(/arXiv/);
-        });
-    });
-
     describe("Restore from a backup", function () {
         it("downloads the current Memory first, asks, then replaces it", async function () {
             // record downloads (downloadTextFile clicks an <a download>) and when they happen

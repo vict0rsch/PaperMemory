@@ -11,12 +11,14 @@ import { getStorage, setStorage } from "@pmu/data.js";
 import { runMemoryOp, serveMemoryOps } from "@pmu/memoryQueue.js";
 import { isSourceURL, parseIdFromUrl } from "@pmu/urls.js";
 import { initState, downloadPaperPdf } from "@pmu/state.js";
-import { fetchText, fetchJSON } from "@pmu/parsers.js";
+import { fetchJSON } from "@pmu/parsers.js";
 import {
     trySemanticScholar,
     tryCrossRef,
     tryDBLP,
     tryOpenAlex,
+    isPreprintRecord,
+    MATCH_TIMEOUT,
 } from "@pmu/preprintMatching.js";
 import { bibtexToObject, bibtexToString } from "@pmu/bibtexParser.js";
 import {
@@ -146,47 +148,71 @@ export function initBackground() {
         return json;
     };
 
+    /**
+     * Google Scholar's published version of a paper: {venue, note, bibtex, status}, or
+     * {note: null, status}. status is the HTTP status of the first failing request (403,
+     * 429…: BibMatcher leaves Scholar out), else 200. Every request has a deadline; a preprint
+     * record (bioRxiv, medRxiv… venue or preprint DOI) is no match.
+     */
     const fetchGSData = async (paper) => {
+        let status = 200;
+        /** The text of a page, "" (and status kept) when it fails */
+        const get = async (url) => {
+            const response = await fetch(url, {
+                signal: AbortSignal.timeout(MATCH_TIMEOUT),
+            });
+            if (!response.ok) {
+                status = response.status;
+                return "";
+            }
+            return (await response.text()).trim();
+        };
         try {
-            let html = await fetchText(
+            let html = await get(
                 `https://scholar.google.com/scholar?q=${encodeURI(paper.title)}&hl=en`,
             );
             html = html.split("gs_res_ccl_mid")[1];
-            if (!html) return { note: null };
+            if (!html) return { note: null, status };
 
             const mhtml = miniHash(html, "_");
             const matchedLower = mhtml.match(
                 new RegExp(`_a_id__(\\w+)__href.+_${miniHash(paper.title, "_")}__a_`),
             );
 
-            if (!matchedLower || !matchedLower[1]) return { note: null };
+            if (!matchedLower || !matchedLower[1]) return { note: null, status };
 
             const dataIdLower = matchedLower[1];
             const startIndex = mhtml.indexOf(dataIdLower);
-            if (startIndex < 0) return { note: null };
+            if (startIndex < 0) return { note: null, status };
 
             const dataId = html.substring(startIndex, startIndex + dataIdLower.length);
 
             const citeURL = `https://scholar.google.com/scholar?q=info:${dataId}:scholar.google.com/&output=cite&scirp=0&hl=en`;
-            const citeHTML = await fetchText(citeURL);
+            const citeHTML = await get(citeURL);
             const bibtexURL = citeHTML
-                .match(/<a[^>]*href="([^>]+)"[^>]*>BibTex<\/a>/i)[1]
+                .match(/<a[^>]*href="([^>]+)"[^>]*>BibTex<\/a>/i)?.[1]
                 ?.replaceAll("&amp;", "&");
-            if (!bibtexURL) return { note: null };
+            if (!bibtexURL) return { note: null, status };
 
-            const bibtex = await fetchText(bibtexURL);
-            const venue = bibtexToObject(bibtex)?.journal;
+            const bibtex = await get(bibtexURL);
+            if (!bibtex) return { note: null, status };
+            const bib = bibtexToObject(bibtex);
+            const venue = bib?.journal;
             if (
                 venue &&
                 !venue.toLowerCase().endsWith("xiv") &&
-                !venue.toLowerCase().includes("preprint")
+                !venue.toLowerCase().includes("preprint") &&
+                !isPreprintRecord({ venue, doi: bib.doi }) &&
+                !isPreprintRecord({ venue: bib.publisher })
             ) {
                 const note = `Accepted @ ${venue} -- [scholar.google.com]`;
-                return { venue, note, bibtex: bibtexToString(bibtex) };
+                return { venue, note, bibtex: bibtexToString(bibtex), status };
             }
-            return { note: null };
+            return { note: null, status };
         } catch (error) {
             logError("[GoogleScholar]", error);
+            // a request that timed out or failed: no answer, no status to act on
+            return { note: null, status: status === 200 ? undefined : status };
         }
     };
 

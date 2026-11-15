@@ -1,0 +1,571 @@
+/* BibMatcher page (design-review/v2-addenda/step5-bibmatcher.html). Shared pieces come from
+   tokens.css + components.css (.pm-*) and options-page.css (top bar, o- cards, dialog); page
+   classes are prefixed "b-". body[data-state]: input | matching | stopped | done | none. */
+
+.b-page {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: var(--pm-s-8) var(--pm-s-6) 96px;
+}
+[hidden] {
+    display: none !important;
+}
+
+/* what each state shows */
+body:not(
+        [data-state="matching"],
+        [data-state="stopped"],
+        [data-state="done"],
+        [data-state="none"]
+    )
+    .b-when-run,
+body:not([data-state="matching"], [data-state="stopped"], [data-state="done"])
+    .b-when-results,
+body[data-state="matching"] #b-foot {
+    display: none;
+}
+
+/* ---------- pieces the popup ships (public/popup.css), repeated for this page ---------- */
+.pm-quiet {
+    display: inline-flex;
+    flex: none;
+    align-items: center;
+    gap: 4px;
+    height: var(--pm-h-sm);
+    padding: 0 6px;
+    border: 0;
+    border-radius: var(--pm-r-md);
+    background: none;
+    color: var(--pm-text-2);
+    font: inherit;
+    font-size: var(--pm-fs-sm);
+    font-weight: var(--pm-fw-medium);
+    cursor: pointer;
+}
+.pm-quiet:hover {
+    background: var(--pm-surface-2);
+    color: var(--pm-text);
+}
+.pm-quiet:focus-visible {
+    box-shadow: var(--pm-ring);
+    outline: none;
+}
+.pm-quiet .pm-i {
+    width: 14px;
+    height: 14px;
+    color: var(--pm-text-3);
+}
+.pm-badge-neutral {
+    background: var(--pm-surface-3);
+    color: var(--pm-text-2);
+}
+.pm-badge-outline {
+    box-shadow: inset 0 0 0 1px var(--pm-border-strong);
+    color: var(--pm-text-3);
+}
+.pm-badge .pm-i {
+    width: 11px;
+    height: 11px;
+    stroke-width: 2.2;
+}
+
+/* ---------- 1 · input ---------- */
+.b-input-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--pm-s-2) var(--pm-s-3);
+    margin-bottom: var(--pm-s-3);
+}
+.b-input-head .o-muted,
+.b-filechip {
+    margin-right: auto;
+}
+.b-filechip {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    color: var(--pm-text-2);
+    font-size: var(--pm-fs-base);
+}
+.b-filechip b {
+    overflow: hidden;
+    color: var(--pm-text);
+    font-weight: var(--pm-fw-medium);
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.b-filechip .pm-i {
+    flex: none;
+    width: 14px;
+    height: 14px;
+    color: var(--pm-text-3);
+}
+.b-clear {
+    width: 26px;
+    height: 26px;
+}
+.b-textwrap {
+    position: relative;
+}
+/* wraps long lines and grows with its content (bibMatcher.js sets the height) */
+.b-text {
+    min-height: 208px;
+    max-height: 360px;
+    font-family: var(--pm-font-mono);
+    font-size: 12px;
+    line-height: 1.55;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+.b-text:placeholder-shown {
+    border-style: dashed;
+}
+.b-textwrap.is-drop .b-text {
+    border-color: var(--pm-focus);
+    border-style: dashed;
+    background: var(--pm-surface-2);
+}
+.b-text.is-invalid {
+    border-color: var(--pm-danger);
+}
+.b-empty {
+    position: absolute;
+    inset: 0;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    color: var(--pm-text-3);
+    font-size: var(--pm-fs-base);
+    text-align: center;
+    pointer-events: none;
+}
+.b-text:placeholder-shown + .b-empty {
+    display: flex;
+}
+.b-empty code {
+    font-family: var(--pm-font-mono);
+    font-size: 12px;
+}
+.b-empty .pm-i {
+    width: 22px;
+    height: 22px;
+    stroke-width: 1.5;
+}
+.b-err {
+    align-items: flex-start;
+    margin-top: 6px;
+    font-size: var(--pm-fs-base);
+}
+.b-err .pm-i {
+    flex: none;
+    width: 14px;
+    height: 14px;
+    margin-top: 2px;
+}
+.b-go {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--pm-s-3);
+    padding: 14px var(--pm-s-5);
+    border-top: 1px solid var(--pm-border);
+}
+.b-go .o-muted {
+    flex: 1 1 240px;
+}
+#match-bib:not(.is-again) .pm-i {
+    display: none;
+}
+
+/* ---------- 2 · matching ---------- */
+.b-progress {
+    padding: var(--pm-s-4) var(--pm-s-5);
+}
+.b-progress-top {
+    display: flex;
+    align-items: center;
+    gap: var(--pm-s-4);
+}
+.b-progress-top .o-progress {
+    flex: 1;
+    height: 6px;
+}
+.b-progress-top .pm-count {
+    font-size: var(--pm-fs-base);
+}
+body[data-state="stopped"] #b-bar {
+    background: var(--pm-border-strong);
+}
+body[data-state="stopped"] .b-progress-top {
+    margin-bottom: var(--pm-s-3);
+}
+.b-now {
+    margin-top: var(--pm-s-3);
+    font-size: var(--pm-fs-base);
+}
+.b-now b {
+    display: block;
+    color: var(--pm-text);
+    font-weight: var(--pm-fw-medium);
+}
+.b-now > span {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: 2px;
+    color: var(--pm-text-3);
+}
+.b-spin {
+    flex: none;
+    width: 12px;
+    height: 12px;
+    border: 1.5px solid var(--pm-border-strong);
+    border-top-color: var(--pm-text-2);
+    border-radius: 50%;
+    animation: b-spin 0.9s linear infinite;
+}
+@keyframes b-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+@media (prefers-reduced-motion: reduce) {
+    .b-spin {
+        animation: none;
+    }
+}
+.b-warn {
+    background: var(--pm-warning-soft);
+    color: var(--pm-text-2);
+}
+.b-warn > .pm-i {
+    flex: none;
+    color: var(--pm-warning);
+}
+.b-done {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--pm-s-2) var(--pm-s-3);
+    font-size: var(--pm-fs-base);
+}
+.b-done b {
+    color: var(--pm-text);
+    font-weight: var(--pm-fw-medium);
+}
+
+/* ---------- 3 · results ---------- */
+.b-results {
+    overflow: hidden;
+}
+.b-reshead {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--pm-s-2) var(--pm-s-3);
+    padding: var(--pm-s-3) var(--pm-s-5);
+}
+.b-reshead .pm-seg {
+    margin-right: auto;
+}
+.pm-seg .pm-count {
+    margin-left: 4px;
+}
+.b-row {
+    display: grid;
+    grid-template-columns: 100px 184px minmax(0, 1fr) 168px 176px;
+    align-items: center;
+    gap: var(--pm-s-3);
+    min-height: 46px;
+    padding: 7px var(--pm-s-5);
+    border-top: 1px solid var(--pm-border);
+    font-size: var(--pm-fs-base);
+}
+.b-row.b-rowhead {
+    min-height: 32px;
+    background: var(--pm-surface-2);
+}
+.b-right {
+    text-align: right;
+}
+.b-item.is-open .b-row {
+    background: var(--pm-surface-2);
+}
+.b-key {
+    overflow: hidden;
+    color: var(--pm-text-2);
+    font-family: var(--pm-font-mono);
+    font-size: 12px;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+.b-title {
+    color: var(--pm-text);
+    font-weight: var(--pm-fw-medium);
+    line-height: var(--pm-lh-tight);
+    overflow-wrap: anywhere;
+}
+.b-why {
+    color: var(--pm-text-3);
+    font-size: var(--pm-fs-sm);
+}
+.b-venue {
+    color: var(--pm-text);
+    overflow-wrap: anywhere;
+}
+.b-meta-narrow {
+    display: none;
+    margin-top: 2px;
+    color: var(--pm-text-3);
+    font-size: var(--pm-fs-sm);
+}
+.b-dec {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 6px;
+}
+.b-dec .b-state {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    margin-right: auto;
+    color: var(--pm-text-2);
+    font-size: var(--pm-fs-sm);
+    font-weight: var(--pm-fw-medium);
+}
+.b-dec .b-state.is-ok {
+    color: var(--pm-success);
+}
+.b-dec .b-state .pm-i {
+    width: 13px;
+    height: 13px;
+}
+.b-chev {
+    width: var(--pm-h-sm);
+    height: var(--pm-h-sm);
+}
+.b-item.is-open .b-chev .pm-i {
+    transform: rotate(180deg);
+}
+.b-empty-filter {
+    padding: var(--pm-s-4) var(--pm-s-5);
+    border-top: 1px solid var(--pm-border);
+}
+
+/* the accept / reject step: the entry's BibTeX, before → after */
+.b-diffwrap {
+    padding: 0 var(--pm-s-5) var(--pm-s-4);
+    background: var(--pm-surface-2);
+}
+.b-diffcard {
+    border: 1px solid var(--pm-border);
+    border-radius: var(--pm-r-lg);
+    background: var(--pm-surface);
+    overflow: hidden;
+}
+.b-diffhead,
+.b-difffoot {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--pm-s-2) var(--pm-s-3);
+    padding: var(--pm-s-2) var(--pm-s-3);
+    font-size: var(--pm-fs-sm);
+}
+.b-diffhead {
+    border-bottom: 1px solid var(--pm-border);
+    color: var(--pm-text-3);
+}
+.b-diffhead b {
+    color: var(--pm-text);
+    font-weight: var(--pm-fw-medium);
+}
+.b-difffoot {
+    border-top: 1px solid var(--pm-border);
+    color: var(--pm-text-3);
+}
+.b-legend {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+.b-legend i {
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+}
+.b-legend .is-del {
+    background: color-mix(in srgb, var(--pm-danger) 30%, var(--pm-surface));
+}
+.b-legend .is-add {
+    background: color-mix(in srgb, var(--pm-success) 30%, var(--pm-surface));
+}
+.b-diff {
+    margin: 0;
+    padding: 6px 0;
+    overflow-x: auto;
+    font-family: var(--pm-font-mono);
+    font-size: 12px;
+    line-height: 1.6;
+}
+.b-diff div {
+    display: flex;
+    min-width: max-content;
+    padding-right: var(--pm-s-3);
+    color: var(--pm-text-2);
+    white-space: pre;
+}
+.b-diff div::before {
+    content: attr(data-s);
+    flex: none;
+    width: 28px;
+    color: var(--pm-text-3);
+    text-align: center;
+    user-select: none;
+}
+.b-diff .is-del {
+    background: var(--pm-danger-soft);
+    color: var(--pm-text);
+}
+.b-diff .is-del::before {
+    color: var(--pm-danger);
+}
+.b-diff .is-add {
+    background: var(--pm-success-soft);
+    color: var(--pm-text);
+}
+.b-diff .is-add::before {
+    color: var(--pm-success);
+}
+
+/* ---------- footer: what you get, Copy / Download ---------- */
+.b-foot {
+    margin-top: var(--pm-s-4);
+    border: 1px solid var(--pm-border-strong);
+    border-radius: var(--pm-r-xl);
+    background: var(--pm-surface);
+    box-shadow: var(--pm-shadow-md);
+}
+.b-foot-in {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--pm-s-3) var(--pm-s-4);
+    padding: var(--pm-s-3) var(--pm-s-5);
+}
+.b-foot .pm-row-text {
+    flex: 1 1 260px;
+}
+.b-foot .pm-row-help {
+    font-size: var(--pm-fs-base);
+}
+.b-preview {
+    padding: 0 var(--pm-s-5) var(--pm-s-3);
+    font-size: var(--pm-fs-base);
+}
+.b-preview summary {
+    width: max-content;
+    color: var(--pm-link);
+    cursor: pointer;
+}
+.b-result {
+    max-height: 480px;
+    margin: var(--pm-s-2) 0 0;
+    padding: var(--pm-s-3);
+    overflow: auto;
+    border-radius: var(--pm-r-md);
+    background: var(--pm-surface-2);
+    color: var(--pm-text);
+    font-family: var(--pm-font-mono);
+    font-size: 12px;
+    line-height: 1.55;
+    white-space: pre;
+}
+
+/* ---------- narrower windows ---------- */
+@media (max-width: 900px) {
+    .b-row {
+        grid-template-columns: 104px minmax(0, 1fr) 176px;
+    }
+    .b-row.b-rowhead {
+        display: none;
+    }
+    .b-row > .b-key {
+        grid-column: 2;
+        grid-row: 1;
+    }
+    .b-row > .b-main {
+        grid-column: 1 / -1;
+    }
+    .b-row > .b-venue {
+        display: none;
+    }
+    .b-row > .b-dec {
+        grid-column: 3;
+        grid-row: 1;
+    }
+    .b-meta-narrow {
+        display: block;
+    }
+}
+@media (max-width: 640px) {
+    .b-page {
+        padding: var(--pm-s-4) var(--pm-s-3) 64px;
+    }
+    .o-title {
+        font-size: 22px;
+    }
+    .b-row {
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 6px var(--pm-s-2);
+        padding: 10px var(--pm-s-4);
+    }
+    .b-row > .b-status {
+        grid-column: 1;
+        grid-row: 1;
+    }
+    .b-row > .b-key {
+        grid-column: 1 / -1;
+        grid-row: 2;
+    }
+    .b-row > .b-dec {
+        grid-column: 2;
+        grid-row: 1;
+    }
+    .b-row > .b-dec.is-pending {
+        grid-column: 1 / -1;
+        grid-row: 4;
+        justify-content: flex-start;
+    }
+    .b-row > .b-dec.is-pending .b-chev {
+        margin-left: auto;
+    }
+    .b-reshead,
+    .b-go,
+    .b-progress,
+    .b-foot-in,
+    .b-preview,
+    .b-empty-filter {
+        padding-left: var(--pm-s-4);
+        padding-right: var(--pm-s-4);
+    }
+    .b-diffwrap {
+        padding: 0 var(--pm-s-3) var(--pm-s-3);
+    }
+    .b-foot .pm-btn {
+        flex: 1;
+    }
+    .b-reshead .pm-seg {
+        max-width: 100%;
+        overflow-x: auto;
+    }
+}
+.b-spin-sm {
+    width: 9px;
+    height: 9px;
+}

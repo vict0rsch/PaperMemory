@@ -1501,7 +1501,7 @@
     ]
    }
   },
-  "https://api.crossref.org/works?rows=5&mailto=schmidtv%40mila.quebec&select=event%2Ctitle%2Cissued&query.title=BERT%3A%20Pre-training%20of%20Deep%20Bidirectional%20Transformers%20for%20Language%20Understanding": {
+  "https://api.crossref.org/works?rows=5&mailto=schmidtv%40mila.quebec&select=event%2Ctitle%2Cissued%2Ctype%2CDOI&query.title=BERT%3A%20Pre-training%20of%20Deep%20Bidirectional%20Transformers%20for%20Language%20Understanding": {
    "status": 200,
    "body": {
     "status": "ok",
@@ -1509,7 +1509,7 @@
     "message-version": "1.0.0",
     "message": {
      "facets": {},
-     "total-results": 2835647,
+     "total-results": 2835730,
      "items": [
       {
        "event": {
@@ -1541,7 +1541,9 @@
           2019
          ]
         ]
-       }
+       },
+       "type": "proceedings-article",
+       "DOI": "10.18653/v1/n19-1423"
       },
       {
        "title": [
@@ -1554,7 +1556,9 @@
           4
          ]
         ]
-       }
+       },
+       "type": "journal-article",
+       "DOI": "10.1016/j.compbiomed.2021.104258"
       },
       {
        "title": [
@@ -1566,7 +1570,9 @@
           null
          ]
         ]
-       }
+       },
+       "type": "component",
+       "DOI": "10.1109/tim.2024.3374300/mm1"
       },
       {
        "title": [
@@ -1579,7 +1585,9 @@
           5
          ]
         ]
-       }
+       },
+       "type": "journal-article",
+       "DOI": "10.1002/cav.2190"
       },
       {
        "event": {
@@ -1611,7 +1619,9 @@
           2022
          ]
         ]
-       }
+       },
+       "type": "proceedings-article",
+       "DOI": "10.18653/v1/2022.inlg-main.4"
       }
      ],
      "items-per-page": 5,
@@ -1622,7 +1632,7 @@
     }
    }
   },
-  "https://api.crossref.org/works?rows=5&mailto=schmidtv%40mila.quebec&select=event%2Ctitle%2Cissued&query.title=Attention%20Is%20All%20You%20Need": {
+  "https://api.crossref.org/works?rows=5&mailto=schmidtv%40mila.quebec&select=event%2Ctitle%2Cissued%2Ctype%2CDOI&query.title=Attention%20Is%20All%20You%20Need": {
    "status": 200,
    "body": {
     "status": "ok",
@@ -1630,7 +1640,7 @@
     "message-version": "1.0.0",
     "message": {
      "facets": {},
-     "total-results": 943220,
+     "total-results": 943239,
      "items": [
       {
        "title": [
@@ -1644,19 +1654,9 @@
           23
          ]
         ]
-       }
-      },
-      {
-       "title": [
-        "Is Attention All You Need?"
-       ],
-       "issued": {
-        "date-parts": [
-         [
-          2025
-         ]
-        ]
-       }
+       },
+       "type": "posted-content",
+       "DOI": "10.65215/ysbyhc05"
       },
       {
        "title": [
@@ -1670,7 +1670,23 @@
           23
          ]
         ]
-       }
+       },
+       "type": "posted-content",
+       "DOI": "10.65215/pc26a033"
+      },
+      {
+       "title": [
+        "Is Attention All You Need?"
+       ],
+       "issued": {
+        "date-parts": [
+         [
+          2025
+         ]
+        ]
+       },
+       "type": "book-chapter",
+       "DOI": "10.1007/978-3-031-84300-6_13"
       },
       {
        "title": [
@@ -1684,7 +1700,9 @@
           13
          ]
         ]
-       }
+       },
+       "type": "posted-content",
+       "DOI": "10.65215/r5bs2d54"
       },
       {
        "title": [
@@ -1698,7 +1716,9 @@
           31
          ]
         ]
-       }
+       },
+       "type": "book-chapter",
+       "DOI": "10.1201/9781003561460-19"
       }
      ],
      "items-per-page": 5,

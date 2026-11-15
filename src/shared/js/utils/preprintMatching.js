@@ -117,10 +117,30 @@ export const validDoi = (doi) => {
     return DOI_PATTERN.test(value) ? value : undefined;
 };
 
-/** validDoi, except the arXiv DOI (10.48550/…): the preprint's, not the publication's */
+/**
+ * DOIs of preprint servers: arXiv (10.48550), bioRxiv / medRxiv (10.1101 followed by digits
+ * and dots only: Cold Spring Harbor's journals, e.g. 10.1101/gr.…, are publications), ChemRxiv
+ * (10.26434)
+ */
+const PREPRINT_DOI = /^10\.(48550\/|1101\/[\d.]+$|26434\/)/i;
+
+/**
+ * Whether a record found while matching is a preprint (arXiv, bioRxiv, medRxiv, ChemRxiv…):
+ * its venue names a *rxiv server, its DOI is a preprint server's, or its type says so
+ * (CrossRef "posted-content", OpenAlex "preprint"). A preprint is never its own published
+ * version.
+ * @param {{venue?: unknown, doi?: unknown, type?: unknown}} record
+ * @returns {boolean}
+ */
+export const isPreprintRecord = ({ venue, doi, type } = {}) =>
+    /rxiv/i.test(String(venue ?? "")) ||
+    PREPRINT_DOI.test(validDoi(doi) ?? "") ||
+    /^(posted-content|preprint)$/i.test(String(type ?? "").trim());
+
+/** validDoi, except a preprint server's DOI: the preprint's, not the publication's */
 const publishedDoi = (doi) => {
     const value = validDoi(doi);
-    return value && !/^10\.48550\//.test(value) ? value : undefined;
+    return value && !PREPRINT_DOI.test(value) ? value : undefined;
 };
 
 /**
@@ -150,7 +170,9 @@ export const publishedBibtex = (paper, { venue, year, doi, proceedings, source }
                 /^(journal|booktitle|eprint|archiveprefix|primaryclass|note)$/i.test(
                     key,
                 ) ||
-                /\b(arxiv|biorxiv|medrxiv)\b/i.test(String(value))
+                /\b(arxiv|biorxiv|medrxiv|chemrxiv)\b/i.test(String(value)) ||
+                // the preprint's DOI (a bioRxiv entry's doi field)
+                PREPRINT_DOI.test(validDoi(value) ?? "")
             )
                 delete bib[key];
         }
@@ -204,7 +226,7 @@ export const tryCrossRef = async (paper, toBackground) => {
     }
     try {
         // the 5 best title matches: the published version is not always the first one
-        const api = `https://api.crossref.org/works?rows=5&mailto=schmidtv%40mila.quebec&select=event%2Ctitle%2Cissued&query.title=${encodeURIComponent(
+        const api = `https://api.crossref.org/works?rows=5&mailto=schmidtv%40mila.quebec&select=event%2Ctitle%2Cissued%2Ctype%2CDOI&query.title=${encodeURIComponent(
             paper.title,
         )}`;
         const response = await fetch(api, withDeadline());
@@ -222,7 +244,7 @@ export const tryCrossRef = async (paper, toBackground) => {
                     it.issued?.["date-parts"]?.[0]?.[0],
             );
         // an exact title match, with an event (a conference; journals have none), in the
-        // same years as the preprint
+        // same years as the preprint, and not a preprint (posted-content: bioRxiv…)
         const items = json.message?.items;
         const item = (Array.isArray(items) ? items : []).find(
             (it) =>
@@ -231,6 +253,11 @@ export const tryCrossRef = async (paper, toBackground) => {
                 sameTitle(it.title?.[0], paper.title) &&
                 typeof it.event?.name === "string" &&
                 it.event.name.trim() &&
+                !isPreprintRecord({
+                    venue: it.event.name,
+                    doi: it.DOI,
+                    type: it.type,
+                }) &&
                 closeYear(itemYear(it), paper),
         );
         if (!item) return { status };
@@ -324,12 +351,15 @@ export const tryDBLP = async (paper, toBackground) => {
                 year: yearOf(text(b.year)),
                 proceedings: /Inproceedings$/i.test(text(b.type)),
                 doi: publishedDoi(text(b.doi)) ?? "",
+                // the venue only: DBLP gives ICLR papers their arXiv DOI
+                preprint: isPreprintRecord({ venue: text(b.venue) }),
             }))
             // CoRR: the arXiv version itself
             .filter(
                 (h) =>
                     h.venue &&
                     h.venue !== "CoRR" &&
+                    !h.preprint &&
                     h.year &&
                     sameTitle(h.title, paper.title) &&
                     closeYear(h.year, paper),
@@ -396,8 +426,16 @@ export const trySemanticScholar = async (paper, toBackground) => {
                     Math.abs(match.year - paper.year) < 3 &&
                     typeof match.venue === "string" &&
                     match.venue.trim() &&
-                    !match.venue.toLowerCase().includes("arxiv") &&
-                    !match.venue.toLowerCase().includes("biorxiv")
+                    // arXiv, bioRxiv, medRxiv, ChemRxiv: the preprint itself
+                    !isPreprintRecord({ venue: match.venue }) &&
+                    !isPreprintRecord({ venue: match.publicationVenue?.name }) &&
+                    // a preprint server's DOI: a publication only when Semantic Scholar
+                    // knows its journal or conference (NeurIPS papers keep their arXiv DOI;
+                    // a bioRxiv record's venue is "Cold Spring Harbor Laboratory")
+                    (!isPreprintRecord({ doi: match.externalIds?.DOI }) ||
+                        ["journal", "conference"].includes(
+                            match.publicationVenue?.type,
+                        ))
                 ) {
                     info("Found a Semantic Scholar match");
                     await readJournalAbbreviations().catch(() => {});
@@ -492,9 +530,12 @@ export const tryOpenAlex = async (paper, toBackground) => {
             return (
                 typeof source?.display_name === "string" &&
                 sameTitle(work.display_name, paper.title) &&
-                work.type !== "preprint" &&
+                !isPreprintRecord({
+                    venue: source.display_name,
+                    doi: work.doi,
+                    type: work.type,
+                }) &&
                 OPENALEX_PUBLISHED.has(source?.type) &&
-                !/\b(bio|med|chem)?rxiv\b/i.test(source?.display_name ?? "") &&
                 closeYear(work.publication_year, paper)
             );
         });

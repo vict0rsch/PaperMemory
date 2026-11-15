@@ -19,6 +19,7 @@ const {
     publishedBibtex,
     validDoi,
     bibSourceText,
+    isPreprintRecord,
 } = PMUtils.preprintMatching;
 const { bibtexToObject } = PMUtils.bibtexParser;
 const recorded = readJSON(`${root}/test/data/preprint-matching.json`).responses;
@@ -373,6 +374,140 @@ describe("Preprint matching sources (recorded answers)", function () {
                 },
             }));
             expect((await tryOpenAlex(preprint(title, "2021"))).venue).toBe("Nature");
+        });
+    });
+
+    describe("A preprint is never its own published version", function () {
+        it("recognises preprint records: *rxiv venue, preprint DOI, preprint type", function () {
+            for (const record of [
+                { venue: "arXiv.org" },
+                { venue: "bioRxiv" },
+                { venue: "medRxiv (Cold Spring Harbor)" },
+                { venue: "ChemRxiv" },
+                { doi: "10.48550/arXiv.1706.03762" },
+                { doi: "https://doi.org/10.1101/2022.07.20.500902" },
+                { doi: "10.1101/460147" },
+                { doi: "10.26434/chemrxiv-2021-abcde" },
+                { type: "posted-content" },
+                { type: "preprint" },
+            ])
+                expect([record, isPreprintRecord(record)]).toEqual([record, true]);
+            for (const record of [
+                {
+                    venue: "Nature",
+                    doi: "10.1038/nature14539",
+                    type: "journal-article",
+                },
+                // Cold Spring Harbor's journals are publications
+                { venue: "Genome Research", doi: "10.1101/gr.275777.121" },
+                { venue: "NeurIPS", type: "proceedings-article" },
+                {},
+            ])
+                expect([record, isPreprintRecord(record)]).toEqual([record, false]);
+        });
+
+        const title = "Language models of protein sequences at the scale of evolution";
+        const doi = "10.1101/2022.07.20.500902";
+        /** The bioRxiv entry of a preprint (BibMatcher: a parsed BibTeX entry) */
+        const entry = {
+            entryType: "article",
+            citationKey: "lin2022language",
+            title,
+            journal: "bioRxiv",
+            year: "2022",
+            doi,
+        };
+
+        it("CrossRef: refuses posted-content and preprint DOIs, even with an event", async function () {
+            const item = (extra) => ({
+                title: [title],
+                event: { name: "Some Event", start: { "date-parts": [[2022]] } },
+                ...extra,
+            });
+            for (const extra of [{ type: "posted-content" }, { DOI: doi }]) {
+                stubFetch(() => ({
+                    status: 200,
+                    body: { status: "ok", message: { items: [item(extra)] } },
+                }));
+                expect(await tryCrossRef(entry)).toEqual({ status: 200 });
+            }
+            stubFetch(() => ({
+                status: 200,
+                body: {
+                    status: "ok",
+                    message: {
+                        items: [item({ type: "proceedings-article", DOI: "10.1/x.1" })],
+                    },
+                },
+            }));
+            expect((await tryCrossRef(entry)).venue).toBe("Some Event");
+        });
+
+        it("OpenAlex, Semantic Scholar, DBLP: refuse the preprint's own record", async function () {
+            stubFetch(() => ({
+                status: 200,
+                body: {
+                    results: [
+                        {
+                            ...openAlexWork({ title, year: 2022, source: "A Journal" }),
+                            doi: `https://doi.org/${doi}`,
+                        },
+                    ],
+                },
+            }));
+            expect(await tryOpenAlex(entry)).toEqual({ status: 200 });
+            stubFetch(() => ({
+                status: 200,
+                body: { data: [{ title, venue: "medRxiv", year: 2022, authors: [] }] },
+            }));
+            expect((await trySemanticScholar(entry)).venue).toBeUndefined();
+            stubFetch(() =>
+                sparql(dblpRecord({ title, venue: "ChemRxiv", year: "2022" })),
+            );
+            expect(await tryDBLP(entry)).toEqual({ status: 200 });
+        });
+
+        it("Semantic Scholar: a preprint DOI needs a known journal or conference", async function () {
+            const record = (extra) => ({
+                title,
+                year: 2022,
+                authors: [],
+                venue: "Cold Spring Harbor Laboratory",
+                externalIds: { DOI: doi },
+                ...extra,
+            });
+            stubFetch(() => ({ status: 200, body: { data: [record()] } }));
+            expect(await trySemanticScholar(entry)).toEqual({ status: 200 });
+            // a journal Semantic Scholar knows: the publication (its DOI not kept)
+            stubFetch(() => ({
+                status: 200,
+                body: {
+                    data: [
+                        record({
+                            venue: "Science",
+                            publicationVenue: { name: "Science", type: "journal" },
+                        }),
+                    ],
+                },
+            }));
+            const match = await trySemanticScholar(entry);
+            expect(match.venue).toMatch(/^science$/i);
+            expect(match.doi).toBeUndefined();
+        });
+
+        it("the published BibTeX drops the preprint's journal and DOI", function () {
+            const bib = bibtexToObject(
+                publishedBibtex(entry, {
+                    venue: "Science",
+                    year: 2023,
+                    doi: "10.1126/x.1",
+                }),
+            );
+            expect(bib.journal).toBe("Science");
+            expect(bib.doi).toBe("10.1126/x.1");
+            const noDoi = bibtexToObject(publishedBibtex(entry, { venue: "Science" }));
+            expect(noDoi.doi).toBeUndefined();
+            expect(noDoi.citationKey).toBe("lin2022language");
         });
     });
 
