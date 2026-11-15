@@ -543,6 +543,9 @@ label.o-row {
     color: var(--pm-text-2);
     font-size: var(--pm-fs-base);
 }
+.o-matching-status > .o-muted {
+    flex-basis: 100%;
+}
 .o-updates:empty {
     display: none;
 }
