@@ -15,7 +15,7 @@ import {
     tryDBLP,
     trySemanticScholar,
     tryCrossRef,
-    tryUnpaywall,
+    tryOpenAlex,
     tryGoogleScholar,
 } from "@pmu/preprintMatching.js";
 import { sleep } from "@pmu/sync.js";
@@ -127,7 +127,7 @@ const updateStatusInfo = () => {
         semanticscholar: "Semantic Scholar",
         googleScholar: "Google Scholar",
         crossref: "CrossRef",
-        unpaywall: "Unpaywall",
+        openalex: "OpenAlex",
     };
     let reasons = Object.entries(DISABLE_MATCH)
         .map(
@@ -252,7 +252,8 @@ const matchPaper = async (paper) => {
                     delete paper[key];
                 }
             }
-            bibtex = bibtexToString(paper);
+            // the entry as published (venue, year, DOI escaped), else the entry as it was
+            bibtex = match.bibtex ?? bibtexToString(paper);
             source = "CrossRef";
         }
         match?.venue && console.log("crossRefMatch: ", match);
@@ -261,9 +262,9 @@ const matchPaper = async (paper) => {
             updateStatusInfo();
         }
     }
-    if (!bibtex && !DISABLE_MATCH.unpaywall) {
-        setHTML("matching-status-provider", "unpaywall.org ...");
-        match = await tryUnpaywall(paper);
+    if (!bibtex && !DISABLE_MATCH.openalex) {
+        setHTML("matching-status-provider", "openalex.org ...");
+        match = await tryOpenAlex(paper);
         venue = match?.venue;
         if (venue) {
             paper.journal = venue;
@@ -272,12 +273,13 @@ const matchPaper = async (paper) => {
                     delete paper[key];
                 }
             }
-            bibtex = bibtexToString(paper);
-            source = "Unpaywall";
+            // the entry as published (venue, year, DOI escaped), else the entry as it was
+            bibtex = match.bibtex ?? bibtexToString(paper);
+            source = "OpenAlex";
         }
-        match?.venue && console.log("unpaywallMatch: ", match);
+        match?.venue && console.log("openAlexMatch: ", match);
         if (match.status && !("" + match.status).startsWith("2")) {
-            DISABLE_MATCH.unpaywall = match.status;
+            DISABLE_MATCH.openalex = match.status;
             updateStatusInfo();
         }
     }
@@ -321,11 +323,14 @@ const matchItems = async (papersToMatch) => {
 
         apiTimeout && idx > 0 && (await sleep(3000));
 
-        let { bibtex, source, venue } = await matchPaper(paper);
+        let { bibtex, source, venue, match } = await matchPaper(paper);
 
         if (bibtex) {
             if (keepKeys) {
                 bibtex = setKey(bibtex, paper.citationKey);
+            } else if (match?.citationKey) {
+                // the source's own key, as before (DBLP:conf/…, Semantic Scholar's)
+                bibtex = setKey(bibtex, match.citationKey);
             }
             sources.push(source);
             venues.push(venue);

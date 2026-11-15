@@ -17,7 +17,7 @@ jobs:
       matrix:
         include:
           - name: Utils Tests
-            files: test/test-utils.js test/test-prefs.js test/test-venues.js test/test-memory-queue.js
+            files: test/test-utils.js test/test-prefs.js test/test-venues.js test/test-memory-queue.js test/test-preprint-matching.js
           - name: Extension Loading
             files: test/test-extension-loading.js
           - name: Popup UI

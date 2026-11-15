@@ -29,7 +29,7 @@ let tagOps = Promise.resolve();
  * Saves a tag rename / merge / delete, one at a time: pending rule edits are saved first,
  * then the papers that have one of the tags are retagged as stored now (memoryOp: a
  * paper saved meanwhile elsewhere is kept), then the rules (so they stop adding the old
- * tag); then the gist is updated and the page refreshed.
+ * tag); then the page is refreshed and the gist updated (not awaited).
  * @param {Map<string, string | null>} mapping
  * @returns {Promise<number>} How many papers changed
  */
@@ -49,7 +49,7 @@ const applyTagMapping = (mapping) => {
             await writeRules();
             renderRules();
         }
-        await pushToRemote();
+        pushToRemote(); // the gist follows; the page does not wait for the upload
         onMemoryChange();
         return changed;
     });

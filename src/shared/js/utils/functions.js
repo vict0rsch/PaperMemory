@@ -382,15 +382,11 @@ export const downloadTextFile = (content, fileName, contentType) => {
     }
 
     var a = document.createElement("a");
-    if (contentType === "text/plain") {
-        content = content.replace(/\\n/g, "%0D%0A").replace(/"/g, "");
-        a.download = fileName;
-        a.href = "data:text/plain," + content;
-    } else {
-        var file = new Blob([content], { type: contentType });
-        a.href = URL.createObjectURL(file);
-        a.download = fileName;
-    }
+    // a Blob for every type: in a data: URL (text/plain before) the first "#" ended the
+    // file, "%xx" was decoded and quotes had to be removed ({\"o} became {\o})
+    var file = new Blob([content], { type: contentType });
+    a.href = URL.createObjectURL(file);
+    a.download = fileName;
     a.click();
 };
 

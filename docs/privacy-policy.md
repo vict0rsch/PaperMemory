@@ -24,7 +24,7 @@ PaperMemory does **not** include any analytics, telemetry, tracking pixels, or t
 
 ## Third-Party Services
 
-Besides the optional GitHub Gist sync described above, PaperMemory sends requests to academic and publication services (e.g., arXiv, CrossRef, DBLP, Semantic Scholar, Unpaywall) to fetch metadata and enrich paper information. These requests contain a paper's title or identifier (such as its DOI or arXiv id), sent as-is. Requests to CrossRef also include the PaperMemory developer's contact email (as CrossRef asks of API clients) and requests to Unpaywall include a generic placeholder email; neither is yours. Your notes, tags and the rest of your library are not included. As with any web request, these services can see your IP address.
+Besides the optional GitHub Gist sync described above, PaperMemory sends requests to academic and publication services (e.g., arXiv, CrossRef, DBLP, Semantic Scholar, OpenAlex) to fetch metadata and enrich paper information. These requests contain a paper's title or identifier (such as its DOI or arXiv id), sent as-is. Requests to CrossRef also include the PaperMemory developer's contact email (as CrossRef asks of API clients) (not yours). Your notes, tags and the rest of your library are not included. As with any web request, these services can see your IP address.
 
 ## Changes to This Policy
 

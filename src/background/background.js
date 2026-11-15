@@ -16,7 +16,7 @@ import {
     trySemanticScholar,
     tryCrossRef,
     tryDBLP,
-    tryUnpaywall,
+    tryOpenAlex,
 } from "@pmu/preprintMatching.js";
 import { bibtexToObject, bibtexToString } from "@pmu/bibtexParser.js";
 import {
@@ -84,7 +84,31 @@ export function initBackground() {
         return ok ? { ok: true } : { ok: false, error: String(error || payload) };
     };
 
-    initGist();
+    // One gist initialization at a time, shared by every caller (pull, push, restart): a
+    // message that wakes the service worker is handled while it still asks GitHub for the
+    // gist. restart: a new one even if the gist is known (a new token).
+    let gistInit = null;
+    const startGistInit = ({ restart = false } = {}) => {
+        if (gistInit && !restart) return gistInit;
+        const run = (restart && gistInit ? gistInit.catch(() => {}) : Promise.resolve())
+            .then(() => initGist())
+            .finally(() => {
+                if (gistInit === run) gistInit = null;
+            });
+        gistInit = run;
+        return run;
+    };
+    /** Resolves once the gist is known; rejects (pull / push abort) when it cannot be */
+    const ensureGist = async () => {
+        if (gistInit) {
+            const { ok, error } = await gistInit;
+            if (!ok) throw new Error(error ?? "Sync could not start.");
+        }
+        if (state.gistId && state.gistFile) return;
+        const { ok, error } = await startGistInit();
+        if (!ok) throw new Error(error ?? "Sync could not start.");
+    };
+    startGistInit();
 
     // Remove DOM-dependent setFaviconCode since it's not needed in service worker
 
@@ -262,6 +286,7 @@ export function initBackground() {
         if (!(await shouldSync()))
             return report ? { ok: false, error: "Sync is off." } : undefined;
         try {
+            await ensureGist();
             badgeWait("Pull...");
             const start = Date.now();
             const localSyncID = await getIdentifier();
@@ -269,7 +294,7 @@ export function initBackground() {
             log("Pulling from Github...");
             state.gistData = await getDataForGistFile({
                 file: state.gistFile,
-                gistid: state.gistId,
+                gistId: state.gistId,
             });
             const remoteSyncId = state.gistData["__syncId"];
             delete state.gistData["__syncId"];
@@ -316,9 +341,31 @@ export function initBackground() {
         }
     };
 
+    // Uploads run one at a time, each reading the Memory when it starts; the uploads asked
+    // for while one runs share a single next upload (it sends the latest Memory), so the
+    // gist never ends with an older Memory than the last one asked for.
+    let uploading = null;
+    let nextUpload = null;
     const pushSyncPapers = async ({ report = false } = {}) => {
         if (!(await shouldSync()))
             return report ? { ok: false, error: "Sync is off." } : undefined;
+        const start = () =>
+            (uploading = uploadMemory().finally(() => {
+                uploading = null;
+            }));
+        let run;
+        if (!uploading) run = start();
+        else
+            run = nextUpload ??= uploading.then(() => {
+                nextUpload = null;
+                return start();
+            });
+        const result = await run;
+        return report ? result : undefined;
+    };
+
+    /** One upload of the Memory as stored now: {ok, error?} */
+    const uploadMemory = async () => {
         try {
             const start = Date.now();
             consoleHeader(`Pushing ${String.fromCodePoint("0x23EB")}`);
@@ -327,6 +374,7 @@ export function initBackground() {
             chrome.action.setBadgeBackgroundColor({
                 color: "rgb(189, 127, 10)",
             });
+            await ensureGist();
             const papers = (await getStorage("papers")) ?? {};
             const syncId = await getIdentifier();
             log("Papers to write: ", papers);
@@ -341,13 +389,13 @@ export function initBackground() {
             badgeOk();
             badgeClear();
             console.groupEnd();
-            return report ? { ok: true } : undefined;
+            return { ok: true };
         } catch (e) {
             logError("[pushSyncPapers]", e);
             badgeError();
             badgeClear();
             console.groupEnd();
-            return report ? { ok: false, error: String(e?.message ?? e) } : undefined;
+            return { ok: false, error: String(e?.message ?? e) };
         }
     };
 
@@ -409,19 +457,30 @@ export function initBackground() {
         } else if (payload.type === "pullSync") {
             pullSyncPapers({ report: payload.report }).then(sendResponse);
         } else if (payload.type === "restartGist") {
-            initGist().then(sendResponse);
+            startGistInit({ restart: true }).then(sendResponse);
         } else if (payload.type === "OpenReviewNoteJSON") {
-            fetchOpenReviewNoteJSON(payload.url).then(sendResponse);
+            // a refused request (e.g. 403 with an HTML page) answers nothing, not never
+            fetchOpenReviewNoteJSON(payload.url)
+                .then(sendResponse)
+                .catch((e) => {
+                    logError("[OpenReviewNoteJSON]", e);
+                    sendResponse(undefined);
+                });
         } else if (payload.type === "OpenReviewForumJSON") {
-            fetchOpenReviewForumJSON(payload.url).then(sendResponse);
+            fetchOpenReviewForumJSON(payload.url)
+                .then(sendResponse)
+                .catch((e) => {
+                    logError("[OpenReviewForumJSON]", e);
+                    sendResponse(undefined);
+                });
         } else if (payload.type === "try-semantic-scholar") {
             trySemanticScholar(payload.paper, false).then(sendResponse);
         } else if (payload.type === "try-cross-ref") {
             tryCrossRef(payload.paper, false).then(sendResponse);
         } else if (payload.type === "try-dblp") {
             tryDBLP(payload.paper, false).then(sendResponse);
-        } else if (payload.type === "try-unpaywall") {
-            tryUnpaywall(payload.paper, false).then(sendResponse);
+        } else if (payload.type === "try-openalex") {
+            tryOpenAlex(payload.paper, false).then(sendResponse);
         } else if (payload.type === "fetch-arxiv-xml") {
             fetchArxivXML(payload.paperId)
                 .then(sendResponse)

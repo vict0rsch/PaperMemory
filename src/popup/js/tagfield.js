@@ -157,8 +157,10 @@ export const createTagField = ({ root, tags = [], onChange = () => {}, inputId }
             ...(near.length && !exists ? [{ kind: "create", tag: text }] : []),
         ];
         if (!entries.length) return close();
-        // a near-duplicate is preselected: ↵ uses the existing tag
-        active = near.length ? 0 : -1;
+        // a near-duplicate is preselected: ↵ uses the existing tag; but an existing tag
+        // typed exactly ("transformers" next to "transformer") is the one ↵ adds
+        const exact = entries.findIndex((e) => e.kind === "tag" && e.tag === text);
+        active = exact >= 0 ? exact : near.length ? 0 : -1;
         const row = (e, i) =>
             e.kind === "create"
                 ? `<div class="pm-sugg-row pm-sugg-create" role="option" data-i="${i}"><span>${icon("plus", "pm-i-sm")} Create “${escapeHtml(e.tag)}” anyway</span></div>`

@@ -18,6 +18,7 @@ import {
     logError,
     downloadTextFile,
     stringifyError,
+    cleanPapers,
 } from "@pmu/functions.js";
 import { tryPreprintMatch } from "@pmu/preprintMatching.js";
 import { makePaper, isPaper } from "@pmu/paper.js";
@@ -58,10 +59,10 @@ export const downloadMemory = async () => {
 };
 
 const downloadBibtexJson = async () => {
-    const papers = (await getStorage("papers")) ?? {};
-    delete papers.__dataVersion;
+    // papers only: not __dataVersion, nor __syncId (any Memory that was ever synced)
+    const papers = cleanPapers((await getStorage("papers")) ?? {});
     const bibtex = Object.keys(papers).reduce((obj, k) => {
-        obj[k] = bibtexToString(papers[k].bibtex);
+        obj[k] = papers[k].bibtex ? bibtexToString(papers[k].bibtex) : "";
         return obj;
     }, {});
     downloadTextFile(
@@ -72,10 +73,10 @@ const downloadBibtexJson = async () => {
 };
 
 const downloadBibtexPlain = async () => {
-    const papers = (await getStorage("papers")) ?? {};
-    delete papers.__dataVersion;
+    const papers = cleanPapers((await getStorage("papers")) ?? {});
     const bibtex = Object.values(papers)
-        .map((p) => bibtexToString(p.bibtex || ""))
+        .filter((p) => p.bibtex)
+        .map((p) => bibtexToString(p.bibtex))
         .join("\n");
     downloadTextFile(bibtex, `PaperMemory-bibtex-${stamp()}.bib`, "text/plain");
 };

@@ -4,7 +4,18 @@ import { launch } from "cloakbrowser/puppeteer";
 import { sleep, root, indent } from "./utilsForTests.js";
 import fs from "fs";
 
-export const makeBrowser = async (headless = false, windowSize = "1200,900") => {
+/**
+ * @param {boolean} headless
+ * @param {string} windowSize
+ * @param {{attachServiceWorker?: boolean}} opts attachServiceWorker false: puppeteer leaves
+ *   the background service worker alone, so Chrome stops it when idle (or when asked) and a
+ *   message starts it again, as for a user (an attached worker does not restart)
+ */
+export const makeBrowser = async (
+    headless = false,
+    windowSize = "1200,900",
+    { attachServiceWorker = true } = {},
+) => {
     const browser = await launch({
         headless,
         extensionPaths: [`${root}/dist/chrome-mv3`],
@@ -14,7 +25,12 @@ export const makeBrowser = async (headless = false, windowSize = "1200,900") => 
             "--disable-setuid-sandbox",
             "--disable-dev-shm-usage",
         ],
-        launchOptions: { acceptInsecureCerts: true },
+        launchOptions: {
+            acceptInsecureCerts: true,
+            ...(attachServiceWorker
+                ? {}
+                : { targetFilter: (t) => t.type !== "service_worker" }),
+        },
     });
     return browser;
 };

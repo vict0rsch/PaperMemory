@@ -14,12 +14,12 @@ import {
 import { state, prefsCheckDefaultFalse } from "@pmu/config.js";
 import { memoryOp } from "@pmu/memoryQueue.js";
 import { allSources } from "@pmu/sources/index.js";
-import { log, escapeHtml } from "@pmu/functions.js";
+import { log, logError, escapeHtml } from "@pmu/functions.js";
 import {
     tryDBLP,
     tryCrossRef,
     trySemanticScholar,
-    tryUnpaywall,
+    tryOpenAlex,
 } from "@pmu/preprintMatching.js";
 import { initSyncAndState, pushToRemote } from "@pmu/sync.js";
 import { paintIcons } from "@pm/popup/js/icons.js";
@@ -86,7 +86,13 @@ const sections = () => [...document.querySelectorAll(".o-section")];
 const markCurrentSection = () => {
     const visible = sections().filter((s) => !s.classList.contains("is-filtered"));
     let current = visible[0];
-    for (const s of visible) if (s.getBoundingClientRect().top < 120) current = s;
+    // a section the nav scrolled to stops at scroll-padding + scroll-margin from the top
+    const landing = (s) =>
+        (parseFloat(getComputedStyle(document.documentElement).scrollPaddingTop) || 0) +
+        (parseFloat(getComputedStyle(s).scrollMarginTop) || 0) +
+        8;
+    for (const s of visible)
+        if (s.getBoundingClientRect().top < landing(s)) current = s;
     // at the very bottom the last section is current even if it never reaches the top
     if (window.innerHeight + window.scrollY >= document.body.scrollHeight - 2)
         current = visible.at(-1) ?? current;
@@ -328,6 +334,8 @@ const findPreprints = () =>
         .sort((a, b) => a.sort - b.sort)
         .map(({ value }) => value);
 
+let matching = false; // a check is running: its button stays disabled
+
 const showPreprintCount = () => {
     preprints = findPreprints();
     const n = preprints.length;
@@ -335,7 +343,7 @@ const showPreprintCount = () => {
     $("preprints-help").textContent = n
         ? `${plural(n, "paper")} ${n === 1 ? "has" : "have"} no publication venue yet.`
         : "Every paper has a publication venue.";
-    $("start-matching").disabled = n === 0;
+    $("start-matching").disabled = n === 0 || matching;
 };
 
 /** Writes the accepted changes on the paper as stored now (not a stale copy) */
@@ -347,8 +355,17 @@ const registerUpdate = async (update) => {
     // a paper deleted meanwhile is not re-created (patch of an unknown id: no-op)
     const answer = await memoryOp({ op: "patch", id, fields });
     if (!answer.ok) return false;
-    await pushToRemote();
+    pushToRemote(); // the gist follows; the proposal is done once saved here
     return true;
+};
+
+const UPDATE_LABELS = {
+    venue: "Venue",
+    venueFull: "Full venue",
+    year: "Year",
+    note: "Note",
+    doi: "DOI",
+    codeLink: "Code",
 };
 
 const addPreprintUpdate = (update) => {
@@ -359,26 +376,28 @@ const addPreprintUpdate = (update) => {
     title.textContent = update.paper.title;
     const dl = document.createElement("dl");
     for (const [k, v] of Object.entries(update)) {
-        if (k === "paper" || k === "bibtex" || !v) continue;
+        if (k === "paper" || !v) continue;
         const dt = document.createElement("dt");
-        dt.textContent =
-            { venue: "Venue", venueFull: "Full venue", note: "Note", codeLink: "Code" }[
-                k
-            ] ?? k;
+        dt.textContent = UPDATE_LABELS[k] ?? (k === "bibtex" ? "BibTeX" : k);
         const dd = document.createElement("dd");
-        dd.textContent = v;
+        dd.textContent = k === "bibtex" ? "Updated with the publication" : v;
+        if (k === "bibtex") dd.title = v;
         dl.append(dt, dd);
     }
     const btns = document.createElement("div");
     btns.className = "o-btns";
     const ok = document.createElement("button");
+    ok.type = "button";
     ok.className = "pm-btn pm-btn-primary pm-btn-sm";
     ok.textContent = "Accept";
     ok.addEventListener("click", async () => {
+        ok.disabled = true;
         if (await registerUpdate(update)) return item.remove();
+        ok.disabled = false;
         ok.textContent = "Couldn’t save — try again"; // the proposal stays
     });
     const skip = document.createElement("button");
+    skip.type = "button";
     skip.className = "pm-btn pm-btn-ghost pm-btn-sm";
     skip.textContent = "Skip";
     skip.addEventListener("click", () => item.remove());
@@ -390,49 +409,70 @@ const addPreprintUpdate = (update) => {
     $("updates-to-confirm").append(item);
 };
 
+// in order; the first one that finds a publication wins
+const MATCHERS = [
+    ["dblp.org", tryDBLP],
+    ["crossref.org", tryCrossRef],
+    ["semanticscholar.org", trySemanticScholar],
+    ["openalex.org", tryOpenAlex],
+];
+
+let progressHTML = null; // the progress line, replaced by the result when done
+
 const startMatching = async () => {
     const papers = preprints;
+    matching = true;
+    // a second check: the progress line again (the first one ended with its result)
+    progressHTML ??= $("matching-status").innerHTML;
+    $("matching-status").innerHTML = progressHTML;
     $("start-matching").disabled = true;
+    $("updates-to-confirm").textContent = "";
     $("matching-progress-container").hidden = false;
     $("matching-status-total").textContent = papers.length;
     const bar = $("manual-parsing-progress-bar");
     const provider = (name) => ($("matching-status-provider").textContent = name);
-    for (const [idx, paper] of papers.entries()) {
-        $("matching-status-index").textContent = idx + 1;
-        $("matching-status-title").textContent = paper.title;
-        bar.style.width = `${(idx / papers.length) * 100}%`;
-        let bibtex, venue, venueFull, note, match;
-        provider("dblp.org");
-        match = await tryDBLP(paper);
-        bibtex = match?.bibtex;
-        venue = match?.venue;
-        note = !paper.note && match?.note;
-        if (!venue) {
-            provider("crossref.org");
-            match = await tryCrossRef(paper);
-            venue = match?.venue;
-            note = !paper.note && match?.note;
+    let failed = null;
+    try {
+        for (const [idx, paper] of papers.entries()) {
+            $("matching-status-index").textContent = idx + 1;
+            $("matching-status-title").textContent = paper.title;
+            bar.style.width = `${(idx / papers.length) * 100}%`;
+            for (const [name, tryMatch] of MATCHERS) {
+                provider(name);
+                const match = await tryMatch(paper);
+                if (!match?.venue) continue;
+                const { venue, venueFull, bibtex, doi } = match;
+                addPreprintUpdate({
+                    venue,
+                    venueFull,
+                    // the publication's year (saved with the rest, in one operation)
+                    year:
+                        match.year &&
+                        String(match.year) !== String(paper.year) &&
+                        String(match.year),
+                    note: !paper.note && match.note,
+                    bibtex,
+                    doi: !paper.doi && doi,
+                    paper,
+                });
+                break;
+            }
         }
-        if (!venue) {
-            provider("semanticscholar.org");
-            match = await trySemanticScholar(paper);
-            venue = match?.venue;
-            venueFull = match?.venueFull;
-            note = !paper.note && match?.note;
-        }
-        if (!venue) {
-            provider("unpaywall.org");
-            match = await tryUnpaywall(paper);
-            venue = match?.venue;
-            note = !paper.note && match?.note;
-        }
-        if (venue) addPreprintUpdate({ bibtex, venue, venueFull, note, paper });
+    } catch (error) {
+        failed = error;
+        logError("[preprints]", error);
+    } finally {
+        // whatever happened, the check is over: the button and the status follow
+        bar.style.width = "100%";
+        matching = false;
+        showPreprintCount();
+        const found = $("updates-to-confirm").children.length;
+        $("matching-status").textContent = failed
+            ? `Stopped: ${failed.message ?? failed}. ${plural(found, "paper")} to review below.`
+            : found
+              ? `Done. ${plural(found, "paper")} to review below.`
+              : "Done. No published version found.";
     }
-    bar.style.width = "100%";
-    const found = $("updates-to-confirm").children.length;
-    $("matching-status").textContent = found
-        ? `Done. ${plural(found, "paper")} to review below.`
-        : "Done. No published version found.";
 };
 
 // --------------------------

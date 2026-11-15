@@ -477,6 +477,54 @@ describe("Options page", function () {
             expect(await visible("#tags-similar")).toBe(false);
         });
 
+        it("merges tags ticked by hand into the tag picked in the list", async function () {
+            await page.click('.o-tagrow[data-tag="gan"] .pm-check');
+            await page.waitForSelector("#tags-mergebar:not([hidden])");
+            expect(await visible("#tags-merge")).toBe(false); // one tag: nothing to merge
+            await page.click('.o-tagrow[data-tag="chemistry"] .pm-check');
+            await page.waitForSelector("#tags-merge:not([hidden])");
+            await page.select("#tags-merge-target", "chemistry");
+            await page.click("#tags-merge");
+            await confirmDialog("ok");
+            await page.waitForFunction(() =>
+                document.getElementById("tags-status").textContent.startsWith("Merged"),
+            );
+            const tags = await tagsOf();
+            expect(tags["Arxiv-1703.10593"]).toEqual(["chemistry", "vision"]);
+            // untouched: it had no "gan"
+            expect(tags["RSC-DigitalDiscovery_d2dd00066k"]).toEqual([
+                "vision",
+                "chemistry",
+            ]);
+            expect(await page.$('.o-tagrow[data-tag="gan"]')).toBe(null);
+            expect(
+                await page.$eval(
+                    '.o-tagrow[data-tag="chemistry"] .o-num',
+                    (el) => el.textContent,
+                ),
+            ).toBe("2");
+        });
+
+        it("renaming a tag to an existing one merges them after a confirmation", async function () {
+            await page.click('.o-tagrow[data-tag="gan"] [data-act="rename"]');
+            await page.waitForSelector(".o-rename-input");
+            await page.$eval(".o-rename-input", (el) => el.select());
+            await page.type(".o-rename-input", "vision");
+            await page.keyboard.press("Enter");
+            await page.waitForSelector("#o-dialog[open]");
+            expect(await page.$eval("#o-dialog-title", (el) => el.textContent)).toBe(
+                "Merge “gan” into “vision”?",
+            );
+            await confirmDialog("ok");
+            await page.waitForFunction(() =>
+                document
+                    .getElementById("tags-status")
+                    .textContent.startsWith("Renamed"),
+            );
+            expect((await tagsOf())["Arxiv-1703.10593"]).toEqual(["vision"]);
+            expect(await page.$('.o-tagrow[data-tag="gan"]')).toBe(null);
+        });
+
         it("deletes a tag after a confirmation (Cancel keeps it)", async function () {
             await page.click('.o-tagrow[data-tag="gan"] [data-act="delete"]');
             await confirmDialog("");
@@ -492,6 +540,282 @@ describe("Options page", function () {
                     ),
             );
             expect((await tagsOf())["Arxiv-1703.10593"]).toEqual(["vision"]);
+        });
+    });
+
+    describe("Exports", function () {
+        /** Clicks a button and returns the files it downloaded: [{name, text}] */
+        const downloadsOf = async (selector) => {
+            await page.evaluate(() => {
+                window.__files = [];
+                HTMLAnchorElement.prototype.click = async function () {
+                    if (this.download)
+                        window.__files.push({
+                            name: this.download,
+                            text: await (await fetch(this.href)).text(),
+                        });
+                };
+            });
+            await page.click(selector);
+            await page.waitForFunction(() => window.__files.length > 0);
+            return page.evaluate(() => window.__files);
+        };
+
+        it("exports BibTeX (.bib and .json) of a Memory that was synced (__syncId), whole", async function () {
+            const synced = await storageGet("papers");
+            synced.__syncId = "Chrome-123"; // what a sync leaves in the Memory
+            // "#", "%" and quotes: a data: URL cut the file at "#" and lost the quotes
+            synced["Arxiv-1703.10593"].bibtex =
+                '@article{zhu2017,\n  title = {G{\\"o}del #1 at 50\\%},\n  author = {Jun-Yan Zhu},\n  year = {2017},\n  url = {https://example.com/a%20b#x}\n}';
+            await storageSet({ papers: synced });
+            await openOptions("#data");
+            const [bib] = await downloadsOf("#download-bibtex-plain");
+            expect(bib.name).toMatch(/^PaperMemory-bibtex-.*\.bib$/);
+            expect(bib.text.match(/^@/gm)).toHaveLength(3);
+            expect(bib.text).toContain('G{\\"o}del #1 at 50\\%');
+            expect(bib.text).toContain("https://example.com/a%20b#x");
+            const [json] = await downloadsOf("#download-bibtex-json");
+            expect(Object.keys(JSON.parse(json.text)).sort()).toEqual(
+                Object.keys(papers)
+                    .filter((k) => !k.startsWith("__"))
+                    .sort(),
+            );
+        });
+
+        it("export by tag: ↵ on a tag typed exactly adds it, not its near-duplicate", async function () {
+            await openOptions("#export-by-tag");
+            await page.click("#export-tags-field input");
+            await page.keyboard.type("optimization"); // "Optimizations" exists too
+            await page.keyboard.press("Enter");
+            const chips = await page.$$eval("#export-tags-field .pm-chip-t", (els) =>
+                els.map((e) => e.textContent),
+            );
+            expect(chips).toEqual(["optimization"]);
+            await page.select("#export-tags-format", "json-urls");
+            const [file] = await downloadsOf("#export-tags-confirm");
+            expect(JSON.parse(file.text)).toEqual([
+                papers["JMLR-2012_bergstra12a"].pdfLink,
+            ]);
+        });
+    });
+
+    describe("Preprint matching", function () {
+        // the APIs answer what they answered when recorded (test-preprint-matching.js)
+        const recorded = readJSON(`${root}/test/data/preprint-matching.json`).responses;
+        let requests, onRequest;
+        const preprintOf = (id, title, year) => {
+            const p = structuredClone(papers["Arxiv-1703.10593"]);
+            return {
+                ...p,
+                id,
+                title,
+                year,
+                venue: "",
+                note: "",
+                doi: "",
+                tags: [],
+                bibtex: `@article{${id.toLowerCase()},\n  title = {${title}},\n  author = {${p.author}},\n  year = {${year}},\n  journal = {arXiv preprint}\n}`,
+            };
+        };
+        const ATTENTION = "Arxiv-1706.03762";
+        const BIORXIV = "BioRxiv-460147";
+
+        beforeEach(async function () {
+            await storageSet({
+                papers: {
+                    ...papers,
+                    [ATTENTION]: preprintOf(
+                        ATTENTION,
+                        "Attention Is All You Need",
+                        "2017",
+                    ),
+                    [BIORXIV]: preprintOf(
+                        BIORXIV,
+                        "Comprehensive integration of single cell data",
+                        "2018",
+                    ),
+                },
+            });
+            requests = [];
+            await page.setRequestInterception(true);
+            onRequest = (r) => {
+                const url = r.url();
+                if (!/^https?:/.test(url)) return r.continue();
+                requests.push(url);
+                const answer = recorded[url];
+                r.respond({
+                    status: answer?.status ?? 404,
+                    contentType: "application/json",
+                    body: answer ? JSON.stringify(answer.body) : "",
+                });
+            };
+            page.on("request", onRequest);
+            await openOptions("#preprint-matching");
+        });
+        afterEach(async function () {
+            page.off("request", onRequest);
+            await page.setRequestInterception(false);
+        });
+
+        const runCheck = async () => {
+            await page.click("#start-matching");
+            await page.waitForFunction(
+                () =>
+                    document
+                        .getElementById("matching-status")
+                        .textContent.startsWith("Done"),
+                { timeout: 20000 },
+            );
+        };
+        /** The button of the proposal for this title */
+        const proposalButton = (title, label) =>
+            page.evaluateHandle(
+                (title, label) =>
+                    [...document.querySelectorAll("#updates-to-confirm .o-update")]
+                        .find(
+                            (u) =>
+                                u.querySelector(".pm-row-label").textContent === title,
+                        )
+                        ?.querySelectorAll("button")[label === "Accept" ? 0 : 1],
+                title,
+                label,
+            );
+
+        it("saves an accepted publication (venue, note, BibTeX, DOI), leaves a skipped one", async function () {
+            expect(await page.$eval("#start-matching", (b) => b.textContent)).toBe(
+                "Check 2 preprints",
+            );
+            await runCheck();
+            const titles = await page.$$eval(
+                "#updates-to-confirm .o-update .pm-row-label",
+                (els) => els.map((e) => e.textContent).sort(),
+            );
+            expect(titles).toEqual([
+                "Attention Is All You Need",
+                "Comprehensive integration of single cell data",
+            ]);
+            // Unpaywall's search is gone (410): never asked
+            expect(requests.some((u) => u.includes("unpaywall"))).toBe(false);
+
+            await (await proposalButton("Attention Is All You Need", "Accept")).click();
+            await (
+                await proposalButton(
+                    "Comprehensive integration of single cell data",
+                    "Skip",
+                )
+            ).click();
+            await waitForStorage(
+                (id) =>
+                    new Promise((r) =>
+                        chrome.storage.local.get("papers", ({ papers }) =>
+                            r(papers[id].venue === "NeurIPS"),
+                        ),
+                    ),
+                ATTENTION,
+            );
+            const stored = await storageGet("papers");
+            expect(stored[ATTENTION].note).toBe(
+                "Accepted @ NeurIPS 2017 -- [dblp.org]",
+            );
+            expect(stored[ATTENTION].bibtex).toMatch(
+                /^@inproceedings\{arxiv-1706\.03762,/,
+            );
+            expect(stored[ATTENTION].bibtex).toMatch(/booktitle\s*=\s*\{NeurIPS\}/);
+            expect(stored[ATTENTION].bibtex).not.toMatch(/arXiv preprint/);
+            expect(stored[BIORXIV].venue).toBe(""); // skipped
+            expect(await page.$$("#updates-to-confirm .o-update")).toHaveLength(0);
+            await page.waitForFunction(
+                () =>
+                    document.getElementById("start-matching").textContent ===
+                    "Check 1 preprint",
+            );
+
+            // a second check works too (its progress line is back), and saves a DOI
+            await runCheck();
+            await (
+                await proposalButton(
+                    "Comprehensive integration of single cell data",
+                    "Accept",
+                )
+            ).click();
+            await waitForStorage(
+                (id) =>
+                    new Promise((r) =>
+                        chrome.storage.local.get("papers", ({ papers }) =>
+                            r(papers[id].venue === "Cell"),
+                        ),
+                    ),
+                BIORXIV,
+            );
+            const after = (await storageGet("papers"))[BIORXIV];
+            expect(after.doi).toBe("10.1016/j.cell.2019.05.031");
+            // the publication's year, in the same save; the citation key is kept
+            expect(after.year).toBe("2019");
+            expect(after.bibtex).toMatch(/^@article\{biorxiv-460147,/);
+            expect(after.note).toBe("Accepted @ Cell (2019) -- [openalex.org]");
+            expect(after.bibtex).toMatch(/journal\s*=\s*\{Cell\}/);
+            await noInContextRuns(page);
+        });
+    });
+
+    describe("BibMatcher", function () {
+        // every web request (the page's and the background's: Google Scholar) answers the
+        // recorded response, or 404
+        const recorded = readJSON(`${root}/test/data/preprint-matching.json`).responses;
+        let cdp;
+        before(async function () {
+            cdp = await browser.target().createCDPSession();
+            await cdp.send("Fetch.enable", { patterns: [{ urlPattern: "https://*" }] });
+            cdp.on("Fetch.requestPaused", (e) => {
+                const answer = recorded[e.request.url];
+                cdp.send("Fetch.fulfillRequest", {
+                    requestId: e.requestId,
+                    responseCode: answer?.status ?? 404,
+                    responseHeaders: [
+                        { name: "content-type", value: "application/json" },
+                        { name: "access-control-allow-origin", value: "*" },
+                    ],
+                    body: Buffer.from(
+                        answer ? JSON.stringify(answer.body) : "",
+                    ).toString("base64"),
+                }).catch(() => {});
+            });
+        });
+        after(async function () {
+            await cdp.send("Fetch.disable").catch(() => {});
+            await cdp.detach().catch(() => {});
+        });
+
+        it("uses the OpenAlex match's BibTeX (Cell 2019), with the entry's key kept", async function () {
+            await page.goto(optionsURL.replace("options.html", "bibMatcher.html"), {
+                waitUntil: "networkidle0",
+            });
+            await page.$eval("#api-timeout", (el) => (el.checked = false));
+            await page.$eval(
+                "#bib-text",
+                (el) =>
+                    (el.value =
+                        "@article{stuart2018, title={Comprehensive integration of single cell data}, author={Stuart, Tim}, journal={arXiv preprint}, year={2018}}"),
+            );
+            await page.click("#match-bib");
+            await page
+                .waitForFunction(
+                    () =>
+                        document
+                            .getElementById("match-results")
+                            .textContent.includes("Cell"),
+                    { timeout: 30000 },
+                )
+                .catch(async (e) => {
+                    console.log(await page.$eval("body", (b) => b.innerText));
+                    throw e;
+                });
+            const bib = await page.$eval("#match-results", (el) => el.textContent);
+            expect(bib).toMatch(/@article\{stuart2018,/);
+            expect(bib).toMatch(/journal\s*=\s*\{Cell\}/);
+            expect(bib).toMatch(/year\s*=\s*\{2019\}/);
+            expect(bib).toMatch(/doi\s*=\s*\{10\.1016\/j\.cell\.2019\.05\.031\}/);
+            expect(bib).not.toMatch(/arXiv/);
         });
     });
 
@@ -1328,5 +1652,234 @@ describe("Options page", function () {
                 await page.$eval("#overwriteFeedback", (el) => el.textContent),
             ).toContain("Download the replaced Memory");
         });
+    });
+});
+
+// The owner's "tag merge / accepted preprint doesn't work": with sync on, a change made
+// right after the background service worker (re)started was never uploaded (the gist was
+// not known yet), so the next pull brought the gist's older Memory back. GitHub's API is
+// faked here (no real gist); the service worker is stopped like Chrome does when idle.
+describe("Options page: changes made after the background restarted are synced", function () {
+    let browser, page, base, cdp, papers;
+    let gistContent, patches, patchDelays;
+    const FILE = "DO_NO_EDIT__PaperMemorySyncV2.json";
+
+    this.timeout(90000);
+    this.slow(30000);
+
+    const gist = () => ({
+        id: "g1",
+        description: "Automated PaperMemory sync Gist. Do not edit manually.",
+        files: {
+            [FILE]: {
+                filename: FILE,
+                raw_url: "https://gist.githubusercontent.com/u/g1/raw/file.json",
+            },
+        },
+    });
+    const storageGet = (key) =>
+        page.evaluate(
+            (k) => new Promise((r) => chrome.storage.local.get(k, (d) => r(d[k]))),
+            key,
+        );
+    const openOptions = async (hash = "") => {
+        await page.goto("about:blank");
+        await page.goto(`${base}/options.html${hash}`, { waitUntil: "networkidle0" });
+        await page.waitForFunction(
+            () => document.documentElement.dataset.optionsReady === "true",
+            { timeout: 15000 },
+        );
+    };
+    const stopServiceWorker = async () => {
+        const session = await page.createCDPSession();
+        await session.send("ServiceWorker.enable");
+        await session.send("ServiceWorker.stopAllWorkers");
+        await session.send("ServiceWorker.disable");
+        await session.detach();
+        const running = async () =>
+            (await cdp.send("Target.getTargets")).targetInfos.filter(
+                (t) => t.type === "service_worker" && t.url.startsWith(base),
+            ).length;
+        for (let i = 0; i < 50 && (await running()); i++) await sleep(100);
+        expect(await running()).toBe(0);
+    };
+    const confirm = async () => {
+        await page.waitForSelector("#o-dialog[open]");
+        await page.click('#o-dialog-foot button[value="ok"]');
+    };
+    const waitForUpload = async (check) => {
+        for (let i = 0; i < 100; i++) {
+            if (gistContent && check(JSON.parse(gistContent))) return;
+            await sleep(100);
+        }
+        throw new Error("The change was not uploaded to the gist");
+    };
+
+    before(async function () {
+        browser = await makeBrowser(headless, "1200,900", {
+            attachServiceWorker: false,
+        });
+        cdp = await browser.target().createCDPSession();
+        // GitHub's gist API, faked for every page and the service worker
+        await cdp.send("Fetch.enable", {
+            patterns: [
+                { urlPattern: "https://api.github.com/*" },
+                { urlPattern: "https://gist.githubusercontent.com/*" },
+                // preprint matching: DBLP knows the paper; nothing else is asked
+                { urlPattern: "https://sparql.dblp.org/*" },
+            ],
+        });
+        cdp.on("Fetch.requestPaused", async (e) => {
+            const { url, method, postData } = e.request;
+            let body = JSON.stringify(gist());
+            if (
+                url.startsWith("https://api.github.com/gists/g1") &&
+                method === "PATCH"
+            ) {
+                // a slow upload is applied late (GitHub answers it later)
+                const content = JSON.parse(postData).files[FILE].content;
+                const wait = patchDelays.shift();
+                if (wait) await sleep(wait);
+                patches.push(content);
+                gistContent = content;
+            } else if (url.startsWith("https://api.github.com/gists/g1")) {
+                // the gist itself (body above)
+            } else if (url.startsWith("https://api.github.com/gists")) {
+                // the list of gists (how the background finds the gist when it starts)
+                // takes a while, as GitHub's API does
+                await sleep(1500);
+                body = JSON.stringify([gist()]);
+            } else if (url.startsWith("https://gist.githubusercontent.com"))
+                body = gistContent;
+            else if (url.startsWith("https://sparql.dblp.org"))
+                body = JSON.stringify({
+                    results: {
+                        bindings: [
+                            {
+                                p: {
+                                    value: "https://dblp.org/rec/journals/jmlr/BergstraB12",
+                                },
+                                title: {
+                                    value: "Random Search for Hyper-Parameter Optimization.",
+                                },
+                                venue: { value: "J. Mach. Learn. Res." },
+                                year: { value: "2012" },
+                                type: { value: "https://dblp.org/rdf/schema#Article" },
+                            },
+                        ],
+                    },
+                });
+            await cdp
+                .send("Fetch.fulfillRequest", {
+                    requestId: e.requestId,
+                    responseCode: method === "OPTIONS" ? 204 : 200,
+                    responseHeaders: [
+                        { name: "content-type", value: "application/json" },
+                        { name: "access-control-allow-origin", value: "*" },
+                        { name: "access-control-allow-headers", value: "*" },
+                        { name: "access-control-allow-methods", value: "GET,PATCH" },
+                    ],
+                    body: Buffer.from(method === "OPTIONS" ? "" : body).toString(
+                        "base64",
+                    ),
+                })
+                .catch(() => {});
+        });
+        page = (await browser.pages())[0];
+        const id = await findExtensionId(browser);
+        if (!id) throw new Error("Extension ID not found");
+        base = `chrome-extension://${id}`;
+        papers = readJSON(`${root}/test/data/3-papers-memory.json`);
+    });
+
+    beforeEach(async function () {
+        const seeded = structuredClone(papers);
+        seeded["Arxiv-1703.10593"].tags = ["gan", "GAN"];
+        seeded["JMLR-2012_bergstra12a"].venue = "";
+        // the gist holds this Memory, last uploaded by ANOTHER browser
+        gistContent = JSON.stringify({ ...seeded, __syncId: "Firefox-other" });
+        patches = [];
+        patchDelays = [];
+        await page.goto(`${base}/options.html`, { waitUntil: "networkidle0" });
+        await page.evaluate(
+            (papers) =>
+                new Promise((r) =>
+                    chrome.storage.local.set(
+                        {
+                            papers,
+                            autoTags: [],
+                            syncPAT: "ghp_fake",
+                            syncState: true,
+                            syncId: "Chrome-this",
+                        },
+                        r,
+                    ),
+                ),
+            seeded,
+        );
+    });
+
+    after(async function () {
+        await browser?.close();
+    });
+
+    it("a tag merge is uploaded, and is still there when the page opens again", async function () {
+        await openOptions("#tag-manager");
+        await stopServiceWorker();
+        await page.click(".o-similar-group"); // gan + GAN
+        await page.waitForSelector("#tags-merge:not([hidden])");
+        await page.select("#tags-merge-target", "gan");
+        await page.click("#tags-merge");
+        await confirm();
+        await waitForUpload(
+            (gistPapers) =>
+                JSON.stringify(gistPapers["Arxiv-1703.10593"].tags) === '["gan"]',
+        );
+        // opening the page pulls the gist: the merge stays
+        await openOptions("#tag-manager");
+        expect((await storageGet("papers"))["Arxiv-1703.10593"].tags).toEqual(["gan"]);
+        expect(await page.$('.o-tagrow[data-tag="GAN"]')).toBe(null);
+    });
+
+    it("an accepted preprint proposal is uploaded, and is still there when the page opens again", async function () {
+        await openOptions("#preprint-matching");
+        await stopServiceWorker();
+        await page.click("#start-matching");
+        await page.waitForFunction(
+            () =>
+                document
+                    .getElementById("matching-status")
+                    .textContent.startsWith("Done"),
+            { timeout: 20000 },
+        );
+        await page.click("#updates-to-confirm .o-update .pm-btn-primary");
+        await waitForUpload(
+            (gistPapers) => !!gistPapers["JMLR-2012_bergstra12a"].venue,
+        );
+        await openOptions("#preprint-matching");
+        expect((await storageGet("papers"))["JMLR-2012_bergstra12a"].venue).not.toBe(
+            "",
+        );
+    });
+
+    it("two quick changes: uploads run one at a time, the gist ends with the last Memory", async function () {
+        await openOptions("#tag-manager");
+        await stopServiceWorker();
+        patchDelays = [1500]; // the first upload is slow
+        for (const tag of ["gan", "GAN"]) {
+            await page.click(`.o-tagrow[data-tag="${tag}"] [data-act="delete"]`);
+            await confirm();
+            await page.waitForFunction(
+                (tag) =>
+                    document.getElementById("tags-status").textContent ===
+                    `Deleted “${tag}” from 1 paper.`,
+                {},
+                tag,
+            );
+        }
+        await waitForUpload(() => patches.length >= 2 && !patchDelays.length);
+        await sleep(500); // nothing else arrives
+        expect(JSON.parse(gistContent)["Arxiv-1703.10593"].tags).toEqual([]);
+        expect((await storageGet("papers"))["Arxiv-1703.10593"].tags).toEqual([]);
     });
 });
