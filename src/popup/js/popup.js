@@ -1,5 +1,6 @@
 // ES Module imports
 import { prefsCheckDefaultFalse, prefsCheckNames, state } from "@pmu/config.js";
+import { memoryOp } from "@pmu/memoryQueue.js";
 import {
     arxivIdFromPaperID,
     delay,
@@ -10,6 +11,7 @@ import {
     normalizeCodeLink,
     shouldWarn,
     urlToWebsiteId,
+    warn,
 } from "@pmu/functions.js";
 import {
     addListener,
@@ -61,6 +63,7 @@ import {
 import {
     closeMemory,
     copyAndConfirmMemoryItem,
+    followMemoryChanges,
     focusExistingOrCreateNewURLTab,
     makeMemoryHTML,
     openMemory,
@@ -68,11 +71,18 @@ import {
     saveFavoriteItem,
     saveNote,
     savePaperTags,
+    SAVE_ERROR,
     updatePopupPaperNoMemory,
 } from "@pm/popup/js/memory.js";
 import { icon, paintIcons } from "@pm/popup/js/icons.js";
 import { createTagField } from "@pm/popup/js/tagfield.js";
 import { hideTooltip, setupTooltips } from "@pm/popup/js/tooltip.js";
+import {
+    isMac,
+    loadShortcuts,
+    openShortcutSettings,
+    shortcuts,
+} from "@pm/popup/js/shortcuts.js";
 import {
     closeInfoPanel,
     infoPanelIsOpen,
@@ -82,8 +92,6 @@ import {
 import { downloadPaperPdf, readJournalAbbreviations } from "@pmu/state.js";
 import { parseIdFromUrl, getCurrentUserTab } from "@pmu/urls.js";
 import { findLocalFile } from "@pmu/files.js";
-
-const isMac = /Mac/.test(navigator.userAgent);
 
 let currentTab = null; // the user's active tab when the popup opened
 let parseRun = 0; // incremented to ignore the result of a cancelled website parse
@@ -99,7 +107,6 @@ const setPaperEditing = (on) => {
     const foot = findEl({ element: "popup-edit-foot" });
     if (foot) foot.hidden = !on;
 };
-const shortcuts = {}; // browser-level command name -> display string
 
 // ----------------------------
 // -----  Header and tabs -----
@@ -179,61 +186,6 @@ export const showPopupModal = (name) => {
     sheet.querySelector(".pm-sheet-body, .pm-keys")?.scrollTo?.(0, 0);
     // forms: the first field; otherwise the sheet itself (Tab then reaches its buttons)
     (sheet.querySelector("input, textarea") ?? sheet).focus({ preventScroll: true });
-};
-
-/** Opens the browser's keyboard shortcut settings */
-const openShortcutSettings = () => {
-    if (globalThis.browser?.commands?.openShortcutSettings)
-        return browser.commands.openShortcutSettings();
-    if (navigator.userAgent.includes("Firefox"))
-        return chrome.tabs.create({
-            url: "https://support.mozilla.org/kb/manage-extension-shortcuts-firefox",
-        });
-    chrome.tabs.create({ url: "chrome://extensions/shortcuts" });
-};
-
-/**
- * "⇧⌘E" (Chrome, macOS) or "Ctrl+Shift+E" -> display string for a key cap
- * @param {string} shortcut From chrome.commands
- */
-const formatShortcut = (shortcut) => {
-    if (!shortcut) return "Not set";
-    if (!isMac) return shortcut;
-    const names = { Command: "⌘", Ctrl: "⌘", MacCtrl: "⌃", Alt: "⌥", Shift: "⇧" };
-    const parts = shortcut.includes("+")
-        ? shortcut.split("+").map((p) => names[p] ?? p)
-        : [...shortcut];
-    const order = ["⌘", "⌥", "⇧", "⌃"];
-    const mods = parts.filter((p) => order.includes(p));
-    const keys = parts.filter((p) => !order.includes(p));
-    mods.sort((a, b) => order.indexOf(a) - order.indexOf(b));
-    return [...mods, ...keys].join(" ");
-};
-
-/**
- * Reads the browser-level shortcuts (they can be changed by the user) and writes them in
- * every [data-cmd] key cap; also the platform's modifier in [data-mod] caps.
- */
-const loadShortcuts = async () => {
-    // callback (Chrome) or promise (Firefox); never block the popup on it
-    const commands = await new Promise((resolve) => {
-        setTimeout(() => resolve([]), 500);
-        try {
-            chrome.commands.getAll(resolve)?.then?.(resolve, () => resolve([]));
-        } catch (e) {
-            resolve([]);
-        }
-    });
-    for (const { name, shortcut } of commands ?? []) {
-        shortcuts[name] = formatShortcut(shortcut);
-    }
-    queryAll("[data-cmd]").forEach((el) => {
-        el.textContent = shortcuts[el.dataset.cmd] ?? "Not set";
-    });
-    queryAll("[data-mod]").forEach((el) => (el.textContent = isMac ? "⌘" : "Ctrl"));
-    queryAll("[data-mod-enter]").forEach(
-        (el) => (el.textContent = isMac ? "⌘↵" : "Ctrl ↵"),
-    );
 };
 
 /**
@@ -524,8 +476,19 @@ const saveManualWebsite = async () => {
         return;
     }
     const paper = checked.paper;
-    state.papers[paper.id] = paper;
-    await setStorage("papers", state.papers);
+    // a page already in the Memory keeps its other fields (tags, visits…); the form's win
+    const answer = await memoryOp({
+        op: "merge",
+        paper,
+        overwrites: ["title", "author", "year", "note", "lastOpenDate"],
+    });
+    if (!answer.ok) {
+        // not saved: the sheet stays open with every field; nothing is uploaded
+        warn("Could not save the page:", answer.error);
+        box.textContent = SAVE_ERROR;
+        showId(box, "flex");
+        return;
+    }
     await pushToRemote();
     manualWebsitePaper = null;
     closePopupModal();
@@ -656,13 +619,25 @@ const editCodeLink = (focus = true) => {
     const commit = () => {
         const result = check(true);
         if (result.error) return false;
-        saveCodeLink(id, result.url);
+        saveCodeLink(id, result.url).then((ok) => {
+            if (ok) return;
+            // not saved (saveCodeLink showed why): the field opens again with the link
+            editCodeLink(false);
+            const again = findEl({ element: `popup-form-codeLink--${id}` });
+            if (again) {
+                again.value = result.url;
+                again.dataset.dirty = "1";
+            }
+        });
         setHTML("popup-code-val", getPopupCodeLinkHTML({ codeLink: result.url }));
         paintIcons(findEl({ element: "popup-code-val" }));
         return true;
     };
     codeEdit = { input, commit };
-    addListener(input, "input", () => check(false));
+    addListener(input, "input", () => {
+        input.dataset.dirty = "1";
+        check(false);
+    });
     addListener(input, "keydown", (e) => {
         if (e.isComposing || e.keyCode === 229) return; // IME composing: not a commit
         // ⌘↵ / Ctrl+↵ goes on to the page: it closes the whole edit state (finishPaperEdit)
@@ -703,10 +678,23 @@ const endNoteEdit = () => {
     const id = state.currentId;
     const textarea = findEl({ element: `popup-form-note-textarea--${id}` });
     if (!textarea || textarea.hidden) return;
-    if (state.papers[id].note !== textarea.value) saveNote(id, textarea.value);
-    textarea.hidden = true;
-    setHTML("popup-note-val", getPopupNoteHTML({ note: textarea.value }));
-    showId("popup-note-val", "inline");
+    const close = () => {
+        textarea.hidden = true;
+        setHTML("popup-note-val", getPopupNoteHTML({ note: textarea.value }));
+        showId("popup-note-val", "inline");
+    };
+    if (!textarea.dataset.dirty) return close();
+    // edited: the editor stays open (its text kept, refreshes ignore it) until the save is
+    // acknowledged; a failed save leaves it open with the text (saveNote shows the error)
+    const value = textarea.value;
+    if (textarea.dataset.saving === value) return; // this text is already being saved
+    textarea.dataset.saving = value;
+    saveNote(id, value).then((ok) => {
+        delete textarea.dataset.saving;
+        if (!ok || textarea.value !== value) return fitTextarea(textarea);
+        delete textarea.dataset.dirty;
+        if (document.activeElement !== textarea) close();
+    });
 };
 
 /**
@@ -765,15 +753,27 @@ export const startPaperEdit = () => {
 export const refreshPaperViewFields = (id) => {
     const paper = state.papers[id];
     if (state.currentId !== id || !paper || !findEl({ element: "popup-memory-edit" })) return;
-    if (paperTagField && document.activeElement !== paperTagField.input) mountPaperTags(id);
-    if (!findEl({ element: `popup-form-codeLink--${id}` })) {
+    // a field being typed in keeps its text; untouched ones (even open) take the stored value
+    if (
+        paperTagField &&
+        document.activeElement !== paperTagField.input &&
+        !paperTagField.input.value.trim()
+    )
+        paperTagField.setTags(paper.tags ?? []);
+    const codeInput = findEl({ element: `popup-form-codeLink--${id}` });
+    if (!codeInput) {
         setHTML("popup-code-val", getPopupCodeLinkHTML(paper));
         paintIcons(findEl({ element: "popup-code-val" }));
+    } else if (!codeInput.dataset.dirty && document.activeElement !== codeInput) {
+        codeInput.value = paper.codeLink ?? "";
     }
     const textarea = findEl({ element: `popup-form-note-textarea--${id}` });
-    if (textarea?.hidden) {
+    if (textarea?.hidden && !textarea.dataset.dirty) {
         textarea.value = paper.note || "";
         setHTML("popup-note-val", getPopupNoteHTML(paper));
+    } else if (textarea && !textarea.dataset.dirty && document.activeElement !== textarea) {
+        textarea.value = paper.note || "";
+        fitTextarea(textarea);
     }
 };
 
@@ -814,10 +814,17 @@ const showPaperView = (id, url, is) => {
     mountPaperTags(id);
     const note = findEl({ element: `popup-form-note-textarea--${id}` });
     note.value = paper.note || ""; // not in the markup: a leading line break would be lost
+    addListener(note, "input", () => (note.dataset.dirty = "1"));
     addListener(
         note,
         "input",
-        delay(() => !note.hidden && saveNote(id, note.value), 300),
+        delay(async () => {
+            if (note.hidden) return;
+            const value = note.value;
+            // saved: clean again (unless typed meanwhile); not saved: stays marked edited
+            if ((await saveNote(id, value)) && note.value === value)
+                delete note.dataset.dirty;
+        }, 300),
     );
     addListener(note, "input", () => fitTextarea(note));
     addListener(note, "blur", endNoteEdit);
@@ -963,6 +970,8 @@ export const popupMain = async (url, is, manualTrigger = false, tab = null) => {
         setupInfoPanel();
         setupTooltips();
         setStandardPopupClicks();
+        // refreshPaperViewFields leaves the fields being edited alone
+        followMemoryChanges();
         await setupMenu(await getPrefs());
         await loadShortcuts();
         chrome.storage.local.get("whatsnew", ({ whatsnew }) => {

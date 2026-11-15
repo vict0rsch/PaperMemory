@@ -23,7 +23,8 @@ import {
 } from "@pmu/config.js";
 import { bibtexToString, bibtexToObject } from "@pmu/bibtexParser.js";
 import { getSource, knownPaperPages } from "@pmu/sources/index.js";
-import { sortMemory } from "@pmu/state.js";
+import { sortMemory, makeTags } from "@pmu/state.js";
+import { memoryOp, replaceMemory } from "@pmu/memoryQueue.js";
 
 /**
  * Make sure the currently stored data is compatible with the potentially updated code.
@@ -37,8 +38,15 @@ import { sortMemory } from "@pmu/state.js";
  */
 export const migrateData = async (papers, manifestDataVersion, store = true) => {
     if (typeof papers === "undefined") {
-        chrome.storage.local.set({ papers: { __dataVersion: manifestDataVersion } });
-        return { papers: { __dataVersion: manifestDataVersion }, success: true };
+        const papers = { __dataVersion: manifestDataVersion };
+        if (store) {
+            const answer = await memoryOp({
+                op: "migrate",
+                version: manifestDataVersion,
+            });
+            if (!answer.ok) return { papers, success: false, error: answer.error };
+        }
+        return { papers, success: true };
     }
     const currentVersion = papers["__dataVersion"] || -1;
     var deleteIds = [];
@@ -52,7 +60,7 @@ export const migrateData = async (papers, manifestDataVersion, store = true) => 
             return { papers: papers, success: true };
         }
 
-        store && backupData({ ...papers });
+        // (the backup of the stored Memory is made by the queue's migrate operation)
 
         Object.keys(papers).forEach((key) => {
             if (key.startsWith("__")) {
@@ -251,11 +259,17 @@ export const migrateData = async (papers, manifestDataVersion, store = true) => 
         });
 
         if (store) {
-            chrome.storage.local.set({ papers: newPapers }, () => {
-                log("Migrated papers:");
-                log(newPapers);
-                log("Data version is now " + manifestDataVersion);
+            // the background re-checks the stored version and migrates in its queue; the
+            // stored Memory only counts as migrated once that write is acknowledged
+            const answer = await memoryOp({
+                op: "migrate",
+                version: manifestDataVersion,
             });
+            if (!answer.ok) {
+                logError("The migrated Memory could not be saved:", answer.error);
+                return { papers: newPapers, success: false, error: answer.error };
+            }
+            log("Data version is now " + manifestDataVersion);
         }
         return { papers: newPapers, success: true };
     } catch (err) {
@@ -316,33 +330,97 @@ export const setStorage = async (key, value, cb = () => {}) => {
     });
 };
 
+// ------------------------------
+// -----  Writing the Memory -----
+// ------------------------------
+// Every write goes through the background's queue (memoryQueue.js): memoryOp({op: …}).
+
 /**
- * Delete a paper from storage.
+ * Points the cached state at the stored Memory: state.papers and, on pages that sort it,
+ * the lists and the tag index (same order as before; new papers are sorted in).
+ * state.papersList (the search results shown) is recomputed by the page (memory.js).
+ * @param {object} papers The stored Memory
+ */
+export const refreshPapersState = (papers) => {
+    state.papers = papers;
+    if (!state.papersReady) return;
+    const current = cleanPapers(papers);
+    const known = new Set(state.sortedPapers.map((p) => p.id));
+    state.sortedPapers = state.sortedPapers
+        .filter((p) => current[p.id])
+        .map((p) => current[p.id]);
+    state.papersList = state.papersList
+        .filter((p) => current[p.id])
+        .map((p) => current[p.id]);
+    if (Object.keys(current).some((id) => !known.has(id))) {
+        sortMemory();
+        if (state.sortReversed) state.sortedPapers.reverse();
+    }
+    makeTags();
+};
+
+/**
+ * Replaces the whole Memory (sync pull, first sync), in the background's queue (written to
+ * a staging key first: see replaceMemory)
+ * @param {object} papers The new Memory
+ * @returns {Promise<{ok: boolean, error?: string}>} The queue's answer
+ */
+export const replacePapers = (papers) => replaceMemory(papers);
+
+/**
+ * Keeps the cached state up to date with Memory writes made by any page or context, and
+ * calls `cb` with the ids of the papers that changed (added, edited or deleted) and the
+ * names of the fields that changed ("+" added paper, "-" deleted paper).
+ * @param {function(string[], Set<string>): void} cb E.g. to re-render the rows of those papers
+ */
+export const onPapersChange = (cb = () => {}) => {
+    chrome.storage.onChanged.addListener((changes, area) => {
+        if (area !== "local" || !changes.papers) return;
+        const next = changes.papers.newValue ?? {};
+        const prev = changes.papers.oldValue ?? {};
+        const fields = new Set();
+        const ids = [];
+        for (const id of new Set([...Object.keys(next), ...Object.keys(prev)])) {
+            if (id.startsWith("__")) continue;
+            const a = prev[id];
+            const b = next[id];
+            if (!a || !b) {
+                fields.add(a ? "-" : "+");
+                ids.push(id);
+                continue;
+            }
+            let changed = false;
+            for (const key of new Set([...Object.keys(a), ...Object.keys(b)])) {
+                if (JSON.stringify(a[key]) !== JSON.stringify(b[key])) {
+                    fields.add(key);
+                    changed = true;
+                }
+            }
+            if (changed) ids.push(id);
+        }
+        if (!ids.length) return;
+        refreshPapersState(next);
+        cb(ids, fields);
+    });
+};
+
+/**
+ * Delete a paper from storage (no-op when it is not there)
  *
  * @param {string} id Paper id to delete. Must be exact.
+ * @returns {Promise<boolean>} false when the write failed
  */
-export const deletePaperInStorage = async (id, papers) => {
-    if (!papers) {
-        papers = (await getStorage("papers")) ?? {};
-    }
-    let deleted = false;
-    const existed = papers.hasOwnProperty(id);
-    if (existed) {
-        deleted = delete state.titleHashToIds[miniHash(papers[id].title)];
-        deleted = deleted && delete papers[id];
-        delete state.papers[id];
-        // write papers before the awaited url map update, which would otherwise
-        // widen the window for a stale whole-object write to clobber another tab
-        if (deleted) await setStorage("papers", papers);
+export const deletePaperInStorage = async (id) => {
+    const title = state.papers?.[id]?.title;
+    const answer = await memoryOp({ op: "delete", id });
+    if (answer.ok && !answer.result?.missing) {
+        if (title) delete state.titleHashToIds[miniHash(title)];
         await updateDuplicatedUrls(null, id, true);
-    }
-    if (deleted) {
-        state.papersList = Object.values(cleanPapers(state.papers));
-        sortMemory();
         log("Successfully deleted paper", id);
     } else {
-        log("Error: no deletion");
+        log("Error: no deletion", answer.error ?? "(not in the Memory)");
     }
+    return answer.ok;
 };
 
 /**

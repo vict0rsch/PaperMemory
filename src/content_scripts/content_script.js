@@ -573,7 +573,7 @@ const feedback = async ({
     paper &&
         addListener("notif-cancel", "click", async () => {
             clearTimeout(notif.timeout);
-            await deletePaperInStorage(paper.id, state.papers);
+            await deletePaperInStorage(paper.id);
             if (!state.deleted) {
                 state.deleted = {};
             }

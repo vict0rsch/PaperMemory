@@ -1,7 +1,11 @@
 // ES Module imports
 import { warn, info, delay } from "@pmu/functions.js";
 import { shouldSync, pushToRemote, initSyncAndState } from "@pmu/sync.js";
-import { makeMemoryHTML, setMemorySortArrow } from "@pm/popup/js/memory.js";
+import {
+    followMemoryChanges,
+    makeMemoryHTML,
+    setMemorySortArrow,
+} from "@pm/popup/js/memory.js";
 import {
     handleClearSearch,
     displayOnScroll,
@@ -64,6 +68,7 @@ const syncOnBlur = async () => {
     await initSyncAndState();
     await journalsReady;
     makeMemoryHTML();
+    followMemoryChanges();
     setupInfoPanel();
     setupTooltips();
     addListener(document, "keydown", handleFullMemoryKeydown);

@@ -96,19 +96,6 @@ export const svgActionsHoverTitles = {
 };
 
 /**
- * Shared TomSelect defaults for PaperMemory tag fields.
- * - `maxItems` and `delimiter` enforce compact comma-separated tag storage.
- * - Plugins assume caret navigation and per-tag removal affordances.
- */
-export const tomSelectOptions = {
-    placeholder: "Tag paper",
-    maxItems: 5,
-    create: true,
-    delimiter: ",",
-    plugins: ["caret_position", "remove_button"],
-};
-
-/**
  * The array of keys in the menu, i.e. options the user can dis/enable in the menu
  */
 export const prefsCheckNames = [

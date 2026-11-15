@@ -11,10 +11,8 @@
     const KEY = "pm-theme";
     const CHOICES = ["system", "light", "dark"];
     const media = matchMedia("(prefers-color-scheme: dark)");
-    // stylesheets of the pages that are not restyled yet
-    const legacy = ["dark.css"];
-    if (location.pathname.endsWith("options.html"))
-        legacy.push("github-dark-dimmed.css");
+    // stylesheets of the pages that are not restyled yet (the options page is)
+    const legacy = location.pathname.endsWith("options.html") ? [] : ["dark.css"];
 
     // same mapping as themeFromPrefs() in src/shared/js/utils/data.js
     const fromPrefs = (prefs) =>

@@ -13,24 +13,24 @@ function htmlIncludePlugin(basePath) {
         transformIndexHtml: {
             order: "pre",
             handler(html, ctx) {
-                return html.replace(
-                    /<!--=include\s+(.+?)\s+-->/g,
-                    (match, includePath) => {
+                // an included file may include others (paths stay relative to basePath)
+                const expand = (text, depth = 0) =>
+                    text.replace(/<!--=include\s+(.+?)\s+-->/g, (match, includePath) => {
                         const fullPath = path.resolve(basePath, includePath);
                         try {
-                            if (includePath.includes("*")) {
-                                return glob
-                                    .sync(fullPath)
-                                    .map((f) => fs.readFileSync(f, "utf-8"))
-                                    .join("\n");
-                            }
-                            return fs.readFileSync(fullPath, "utf-8");
+                            const content = includePath.includes("*")
+                                ? glob
+                                      .sync(fullPath)
+                                      .map((f) => fs.readFileSync(f, "utf-8"))
+                                      .join("\n")
+                                : fs.readFileSync(fullPath, "utf-8");
+                            return depth < 5 ? expand(content, depth + 1) : content;
                         } catch {
                             console.warn(`Could not include file: ${fullPath}`);
                             return match;
                         }
-                    },
-                );
+                    });
+                return expand(html);
             },
         },
     };
@@ -88,7 +88,7 @@ export default defineConfig({
         host_permissions: ["*://*/*"],
         web_accessible_resources: [
             {
-                resources: ["data/*.json", "dark.css", "github-dark-dimmed.css"],
+                resources: ["data/*.json", "dark.css"],
                 matches: ["<all_urls>"],
             },
         ],

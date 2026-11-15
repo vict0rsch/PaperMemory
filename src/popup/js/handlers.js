@@ -3,14 +3,14 @@ import { eventId, arxivIdFromPaperID, delay, info, isPdfUrl, log } from "@pmu/fu
 import { parseIdFromUrl } from "@pmu/urls.js";
 import { findEl, dispatch, addListener, hideId, showId } from "@pmu/miniquery.js";
 import { state } from "@pmu/config.js";
+import { memoryOp } from "@pmu/memoryQueue.js";
 import {
-    setStorage,
     getDefaultKeyboardAction,
     deletePaperInStorage,
     updatePrefs,
 } from "@pmu/data.js";
 import { bibtexToString, bibtexToObject } from "@pmu/bibtexParser.js";
-import { updatePaperVisits, paperToAbs, paperToPDF, makeMdLink } from "@pmu/paper.js";
+import { paperToAbs, paperToPDF, makeMdLink } from "@pmu/paper.js";
 import { sortMemory } from "@pmu/state.js";
 import {
     applyMemorySearch,
@@ -32,6 +32,7 @@ import {
     flushSearchSuggestions,
     scheduleSearchSuggestions,
     saveFavoriteItem,
+    saved,
     scheduleMemorySearch,
     setMemoryScrolled,
     setMemorySort,
@@ -63,6 +64,14 @@ import {
 /**
  * Closes the open bottom sheet and gives the focus back to where it was
  */
+
+/**
+ * Counts a visit (count, last opened), computed by the background on the paper as stored
+ * @param {string} id
+ * @returns {Promise}
+ */
+const recordVisit = (id) => memoryOp({ op: "visit", id });
+
 export const closePopupModal = () => {
     state.modalIsOpen = false;
     hideId("popup-modal-wrapper");
@@ -158,8 +167,7 @@ export const focusExistingOrCreateNewPaperTab = async (paper, fromMemoryItem) =>
             }
         }
 
-        state.papers[paper.id] = updatePaperVisits(state.papers[paper.id]);
-        chrome.storage.local.set({ papers: state.papers });
+        recordVisit(paper.id);
     });
 };
 
@@ -214,16 +222,14 @@ export const handleOpenItemScirate = (e) => {
     const arxivId = arxivIdFromPaperID(state.papers[id].id);
     const scirateURL = `https://scirate.com/arxiv/${arxivId}`;
     focusExistingOrCreateNewURLTab(scirateURL);
-    state.papers[id] = updatePaperVisits(state.papers[id]);
-    setStorage("papers", state.papers);
+    recordVisit(id);
 };
 export const handleOpenItemAlphaxiv = (e) => {
     const id = eventId(e);
     const arxivId = arxivIdFromPaperID(state.papers[id].id);
     const alphaxivURL = `https://alphaxiv.org/abs/${arxivId}`;
     focusExistingOrCreateNewURLTab(alphaxivURL);
-    state.papers[id] = updatePaperVisits(state.papers[id]);
-    setStorage("papers", state.papers);
+    recordVisit(id);
 };
 export const handleOpenItemAr5iv = (e) => {
     const id = eventId(e);
@@ -237,14 +243,12 @@ export const handleOpenItemAr5iv = (e) => {
         showPopupModal("ar5iv");
         addListener("ar5iv-modal-ok-button", "click", () => {
             focusExistingOrCreateNewURLTab(ar5ivURL);
-            state.papers[id] = updatePaperVisits(state.papers[id]);
-            setStorage("papers", state.papers);
+            recordVisit(id);
             closePopupModal();
         });
     } else {
         focusExistingOrCreateNewURLTab(ar5ivURL);
-        state.papers[id] = updatePaperVisits(state.papers[id]);
-        setStorage("papers", state.papers);
+        recordVisit(id);
     }
 };
 export const handleOpenItemHuggingface = (e) => {
@@ -252,15 +256,13 @@ export const handleOpenItemHuggingface = (e) => {
     const arxivId = arxivIdFromPaperID(state.papers[id].id);
     const huggingFaceURL = `https://huggingface.co/papers/${arxivId}`;
     focusExistingOrCreateNewURLTab(huggingFaceURL);
-    state.papers[id] = updatePaperVisits(state.papers[id]);
-    setStorage("papers", state.papers);
+    recordVisit(id);
 };
 
 export const handleOpenItemWebsiteURL = async (e) => {
     const id = eventId(e);
     const url = state.papers[id].pdfLink;
-    state.papers[id] = updatePaperVisits(state.papers[id]);
-    await setStorage("papers", state.papers);
+    await recordVisit(id);
     await focusExistingOrCreateNewURLTab(url);
 };
 
@@ -329,8 +331,7 @@ export const handleMemoryOpenLocal = (e) => {
     const id = eventId(e);
     const file = state.files[id];
     const paper = state.papers[id];
-    state.papers[id] = updatePaperVisits(paper);
-    setStorage("papers", state.papers);
+    recordVisit(id);
     if (file && (file.id || file.id === 0)) {
         chrome.downloads.open(file.id);
     }
@@ -351,7 +352,10 @@ export const handleConfirmDeleteModalClick = async (e) => {
     const rows = [...document.querySelectorAll("#memory-table .memory-container")];
     const index = rows.findIndex((r) => r.id === `memory-container--${id}`);
     const returnToRow = state.memoryIsOpen && !!rows[index]?.contains(state.deleteReturnFocus);
-    await deletePaperInStorage(id, state.papers);
+    if (!(await deletePaperInStorage(id))) {
+        hideId("delete-paper-modal");
+        return saved({ ok: false, error: "delete failed" }); // quiet error, paper kept
+    }
     sortMemory();
     if (state.sortReversed) state.sortedPapers.reverse();
     applyMemorySearch();

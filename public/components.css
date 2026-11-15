@@ -1131,6 +1131,9 @@
     color: var(--pm-text-3);
     font-size: var(--pm-fs-xs);
 }
+.pm-edit-hint.is-error {
+    color: var(--pm-danger);
+}
 .pm-codefield {
     padding-right: 3px;
 }

@@ -304,6 +304,8 @@ describe("paper.js", () => {
 
         before(() => {
             console.log = console.groupCollapsed = console.groupEnd = () => {};
+            // no background here: Memory operations run in this context (test-only flag)
+            globalThis.__PM_MEMORY_IN_CONTEXT__ = true;
             global.chrome = {
                 storage: {
                     local: {
@@ -343,6 +345,7 @@ describe("paper.js", () => {
             Object.assign(console, { log, groupCollapsed, groupEnd });
             acs.parse = parse;
             delete global.chrome;
+            delete globalThis.__PM_MEMORY_IN_CONTEXT__;
         });
 
         it("first capture from a url urlToId cannot resolve maps it to the stored id", async () => {

@@ -61,6 +61,8 @@ export const initState = async ({ papers, isContentScript, print = true } = {}) 
     times.unshift(Date.now());
     print && consoleHeader(`PaperMemory Init ${String.fromCodePoint("0x2705")}`);
 
+    // papers given (a sync pull): migrated here only, the caller stores them
+    const fromStorage = !papers;
     if (!papers) {
         papers = (await getStorage("papers")) ?? {};
         print && log("Time to retrieve stored papers (s): " + duration(times));
@@ -75,10 +77,17 @@ export const initState = async ({ papers, isContentScript, print = true } = {}) 
     print && log("Time to backup papers (weekly) (s): " + duration(times));
     times.unshift(Date.now());
 
-    const migration = await migrateData(papers, state.dataVersion);
+    const migration = await migrateData(papers, state.dataVersion, fromStorage);
     print && log("Time to migrate data (s): " + duration(times));
     times.unshift(Date.now());
 
+    // not saved: the stored Memory is still at its old version; this page shows the
+    // migrated copy and the next opening (or the background) tries again
+    state.migrationError = migration.success
+        ? null
+        : String(migration.error ?? "failed");
+    if (!migration.success)
+        warn("The Memory's migration was not saved:", state.migrationError);
     papers = migration.papers;
     state.papers = papers;
 

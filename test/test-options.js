@@ -1,0 +1,1332 @@
+// The options page (src/entrypoints/options, src/options/*): settings search, old anchors,
+// prefs, sources filter / turn all on-off, auto-tag live counts, tag manager (rename, merge,
+// delete: papers' tags actually change), restore (a backup is downloaded before confirming),
+// token field type, no remote stylesheet or script.
+import { expect } from "expect";
+import fs from "fs";
+import os from "os";
+import path from "path";
+import { findExtensionId, makeBrowser } from "./browser.js";
+import { loadConfig, root, readJSON, indent, sleep } from "./utilsForTests.js";
+
+const { headless } = loadConfig();
+
+describe("Options page", function () {
+    let browser, page, optionsURL, papers;
+
+    this.timeout(60000);
+    this.slow(20000);
+
+    const storageGet = (key) =>
+        page.evaluate(
+            (k) => new Promise((r) => chrome.storage.local.get(k, (d) => r(d[k]))),
+            key,
+        );
+    const storageSet = (obj) =>
+        page.evaluate((o) => new Promise((r) => chrome.storage.local.set(o, r)), obj);
+    /** Reloads the options page (optionally on a #hash) and waits until it is set up */
+    const openOptions = async (hash = "") => {
+        // a fresh load each time (going to options.html#x from options.html only scrolls)
+        await page.goto("about:blank");
+        await page.goto(`${optionsURL}${hash}`, { waitUntil: "networkidle0" });
+        await page.waitForFunction(
+            () => document.documentElement.dataset.optionsReady === "true",
+            {
+                timeout: 15000,
+            },
+        );
+    };
+    const visible = (sel) =>
+        page.$eval(
+            sel,
+            (el) => !!(el.offsetWidth || el.offsetHeight || el.getClientRects().length),
+        );
+    const waitForStorage = (fn, arg) =>
+        page.waitForFunction(fn, { timeout: 5000, polling: 100 }, arg);
+    const confirmDialog = async (value = "ok") => {
+        await page.waitForSelector("#o-dialog[open]");
+        await page.click(`#o-dialog-foot button[value="${value}"]`);
+        await page.waitForFunction(() => !document.getElementById("o-dialog").open);
+    };
+
+    /** A popup page; stale: its storage listener is suppressed (it never refreshes) */
+    const openPopup = async ({ stale = false } = {}) => {
+        const popup = await browser.newPage();
+        if (stale)
+            await popup.evaluateOnNewDocument(() => {
+                chrome.storage.onChanged.addListener = () => {};
+            });
+        await popup.goto(optionsURL.replace("options.html", "popup.html"), {
+            waitUntil: "networkidle0",
+        });
+        await popup.waitForFunction(() => window.__pmPopupReady === true, {
+            timeout: 15000,
+        });
+        return popup;
+    };
+    const op = (p, o) => p.evaluate((o) => PMDebug.memoryQueue.memoryOp(o), o);
+    /** No page ran a Memory operation outside the background (test-only mode never used) */
+    const noInContextRuns = async (...pages) => {
+        for (const p of pages)
+            expect(await p.evaluate(() => PMDebug.memoryQueue.getInContextRuns())).toBe(
+                0,
+            );
+    };
+
+    before(async function () {
+        console.log(indent(1) + "Creating browser with PaperMemory extension");
+        browser = await makeBrowser(headless);
+        page = (await browser.pages())[0];
+        const id = await findExtensionId(browser);
+        if (!id) throw new Error("Extension ID not found");
+        optionsURL = `chrome-extension://${id}/options.html`;
+        papers = readJSON(`${root}/test/data/3-papers-memory.json`);
+        await page.goto(optionsURL, { waitUntil: "networkidle0" });
+    });
+
+    beforeEach(async function () {
+        const seeded = structuredClone(papers);
+        seeded["Arxiv-1703.10593"].tags = ["gan", "vision"];
+        seeded["JMLR-2012_bergstra12a"].tags = ["optimization", "Optimizations"];
+        seeded["RSC-DigitalDiscovery_d2dd00066k"].tags = ["vision", "chemistry"];
+        await storageSet({
+            papers: seeded,
+            autoTags: [],
+            ignoreSources: {},
+            prefs: { checkNoAuto: false, checkKeepMemorySearch: false, theme: "light" },
+            syncPAT: "",
+            syncState: false,
+        });
+        await openOptions();
+    });
+
+    after(async function () {
+        await browser?.close();
+    });
+
+    describe("Page", function () {
+        it("has the six groups, a password token field and no remote stylesheet or script", async function () {
+            const groups = await page.$$eval(".o-nav a", (as) =>
+                as.map((a) => a.querySelector("span").textContent),
+            );
+            expect(groups).toEqual([
+                "General",
+                "Capture & sources",
+                "Tags & matching",
+                "Import & export",
+                "Sync",
+                "Keyboard shortcuts",
+            ]);
+            expect(await page.$eval("#pat-input", (el) => el.type)).toBe("password");
+            expect(await page.$eval("#pat-input", (el) => el.placeholder)).toBe(
+                "ghp_…",
+            );
+            const remote = await page.evaluate(() =>
+                [...document.querySelectorAll("link[href], script[src]")]
+                    .map((el) => el.href || el.src)
+                    .filter((u) => !u.startsWith(location.origin)),
+            );
+            expect(remote).toEqual([]);
+            // the popup's shortcut lists, with the browser-level keys filled in
+            expect(
+                await page.$$eval("#keyboard .pm-keys li", (lis) => lis.length),
+            ).toBeGreaterThan(10);
+            const cmd = await page.$eval(
+                '#keyboard [data-cmd="_execute_action"]',
+                (el) => el.textContent,
+            );
+            expect(cmd.length).toBeGreaterThan(0);
+        });
+    });
+
+    describe("Settings search", function () {
+        it("filters rows live, counts matches per group and shows an empty state", async function () {
+            await page.type("#settings-search", "pdf");
+            await sleep(100);
+            expect(await visible("#checkPdfOnly")).toBe(true);
+            expect(await visible("#checkPreferPdf")).toBe(true);
+            expect(await visible("#checkFeedback")).toBe(false);
+            expect(await visible("#tag-manager")).toBe(false);
+            expect(
+                await page.$eval("#sync", (s) => s.classList.contains("is-filtered")),
+            ).toBe(true);
+            const general = await page.$eval(
+                '[data-nav="general"] .pm-count',
+                (el) => el.textContent,
+            );
+            expect(Number(general)).toBeGreaterThan(0);
+            expect(await visible("#search-empty")).toBe(false);
+
+            await page.$eval("#settings-search", (el) => (el.value = ""));
+            await page.type("#settings-search", "zzqx nothing");
+            await sleep(100);
+            expect(await visible("#search-empty")).toBe(true);
+
+            await page.click("#search-clear");
+            await sleep(100);
+            expect(await visible("#checkFeedback")).toBe(true);
+            expect(await visible("#search-empty")).toBe(false);
+            const tagsCount = await page.$eval(
+                '[data-nav="tags"] .pm-count',
+                (el) => el.textContent,
+            );
+            expect(tagsCount).toBe("5"); // gan, vision, optimization, Optimizations, chemistry
+        });
+
+        it("focuses the search with /", async function () {
+            await page.keyboard.press("/");
+            expect(await page.evaluate(() => document.activeElement.id)).toBe(
+                "settings-search",
+            );
+        });
+    });
+
+    describe("Anchors", function () {
+        const cases = {
+            "#online-synchronization": "#sync",
+            "#paperswithcode-preferences": "#code-links",
+            "#data-management": "#data",
+            "#auto-tags": "#auto-tagging",
+            "#select-sources": "#select-sources",
+            "#preprint-matching": "#preprint-matching",
+            "#tag-manager": "#tag-manager",
+            "#auto-tagging": "#auto-tagging",
+            "#import-papers": "#import-papers",
+        };
+        for (const [from, to] of Object.entries(cases)) {
+            it(`${from} leads to ${to}`, async function () {
+                await openOptions(from);
+                expect(await page.evaluate(() => location.hash)).toBe(to);
+                const top = await page.$eval(
+                    to,
+                    (el) => el.getBoundingClientRect().top,
+                );
+                expect(top).toBeGreaterThanOrEqual(0);
+                expect(top).toBeLessThan(200);
+            });
+        }
+    });
+
+    describe("Preferences", function () {
+        it("writes prefs, with checkNoAuto inverted", async function () {
+            expect(await page.$eval("#checkNoAuto", (el) => el.checked)).toBe(true);
+            await page.click("#checkNoAuto");
+            await waitForStorage(
+                () =>
+                    new Promise((r) =>
+                        chrome.storage.local.get("prefs", ({ prefs }) =>
+                            r(prefs.checkNoAuto === true),
+                        ),
+                    ),
+            );
+            await page.click("#checkKeepMemorySearch");
+            await waitForStorage(
+                () =>
+                    new Promise((r) =>
+                        chrome.storage.local.get("prefs", ({ prefs }) =>
+                            r(prefs.checkKeepMemorySearch === true),
+                        ),
+                    ),
+            );
+            // the other keys are kept (updatePrefs patches)
+            expect((await storageGet("prefs")).checkNoAuto).toBe(true);
+        });
+    });
+
+    describe("Sources", function () {
+        it("filters, counts and turns all sources off and on", async function () {
+            const total = await page.$$eval(
+                "#select-sources-container .o-cell",
+                (c) => c.length,
+            );
+            expect(total).toBe(15); // collapsed
+            const count = await page.$eval("#sources-count", (el) => el.textContent);
+            const n = Number(count.match(/of (\d+)/)[1]);
+            expect(count).toBe(`${n} of ${n} on`);
+
+            await page.type("#sources-filter", "arxiv");
+            await sleep(150);
+            const names = await page.$$eval("#select-sources-container .o-cell", (c) =>
+                c.map((x) => x.textContent.trim()),
+            );
+            expect(names.some((t) => t.startsWith("ArXiv"))).toBe(true);
+            expect(names.every((t) => /arxiv/i.test(t))).toBe(true);
+            await page.$eval("#sources-filter", (el) => {
+                el.value = "";
+                el.dispatchEvent(new Event("input"));
+            });
+
+            await page.click("#sources-all-off");
+            await waitForStorage(
+                () =>
+                    new Promise((r) =>
+                        chrome.storage.local.get("ignoreSources", ({ ignoreSources }) =>
+                            r(Object.values(ignoreSources).every(Boolean)),
+                        ),
+                    ),
+            );
+            await sleep(150);
+            expect(await page.$eval("#sources-count", (el) => el.textContent)).toBe(
+                `0 of ${n} on`,
+            );
+            await page.click("#sources-all-on");
+            await waitForStorage(
+                () =>
+                    new Promise((r) =>
+                        chrome.storage.local.get("ignoreSources", ({ ignoreSources }) =>
+                            r(!Object.values(ignoreSources).some(Boolean)),
+                        ),
+                    ),
+            );
+
+            await page.click("#source-arxiv");
+            await waitForStorage(
+                () =>
+                    new Promise((r) =>
+                        chrome.storage.local.get("ignoreSources", ({ ignoreSources }) =>
+                            r(ignoreSources.arxiv === true),
+                        ),
+                    ),
+            );
+        });
+    });
+
+    describe("Auto-tagging", function () {
+        const matchText = (text) =>
+            page.waitForFunction(
+                (t) =>
+                    document.querySelector(".o-rule .o-match")?.textContent.trim() ===
+                    t,
+                { timeout: 5000 },
+                text,
+            );
+        it("shows a live match count and saves rules in the same format", async function () {
+            await page.click("#auto-tags-add");
+            await page.type(".o-rule .o-rule-title", "hyper-parameter|cycle");
+            await matchText("2 papers");
+            await page.type(".o-rule .o-rule-authors", "bengio");
+            await matchText("1 paper");
+            await page.type(".o-rule .pm-tagin", "hpo");
+            await page.keyboard.press("Enter");
+            await waitForStorage(
+                () =>
+                    new Promise((r) =>
+                        chrome.storage.local.get("autoTags", ({ autoTags }) =>
+                            r(
+                                autoTags?.[0]?.tags?.[0] === "hpo" &&
+                                    autoTags[0].authors === "bengio",
+                            ),
+                        ),
+                    ),
+            );
+            expect(await storageGet("autoTags")).toEqual([
+                {
+                    id: 0,
+                    title: "hyper-parameter|cycle",
+                    authors: "bengio",
+                    tags: ["hpo"],
+                },
+            ]);
+            // an invalid pattern is shown, not saved
+            await page.type(".o-rule .o-rule-title", "(");
+            await matchText("Invalid pattern");
+            await sleep(500);
+            expect((await storageGet("autoTags"))[0].title).toBe(
+                "hyper-parameter|cycle",
+            );
+        });
+
+        it("flags a pattern that could freeze the page, without saving it", async function () {
+            // a title that makes (a|aa)*c backtrack for seconds: the worker is stopped
+            const slow = structuredClone(await storageGet("papers"));
+            slow["Arxiv-1703.10593"].title = "a".repeat(40);
+            await storageSet({
+                papers: slow,
+                autoTags: [{ id: 3, title: "gan", authors: "", tags: ["g"] }],
+            });
+            await openOptions();
+            await page.$eval(".o-rule .o-rule-title", (el) => (el.value = ""));
+            await page.type(".o-rule .o-rule-title", "(a|aa)*c");
+            const start = Date.now();
+            await matchText("Pattern too slow");
+            expect(Date.now() - start).toBeLessThan(3000);
+            // the page stays responsive
+            expect(await page.evaluate(() => 1 + 1)).toBe(2);
+            // statically risky (nested quantifiers): flagged without running it
+            await page.$eval(".o-rule .o-rule-title", (el) => (el.value = ""));
+            await page.type(".o-rule .o-rule-title", "(a+)+$");
+            await matchText("Pattern too slow");
+            await sleep(500);
+            expect((await storageGet("autoTags"))[0].title).toBe("gan");
+            // a normal pattern works again afterwards (a new worker)
+            await page.$eval(".o-rule .o-rule-title", (el) => (el.value = ""));
+            await page.type(".o-rule .o-rule-title", "random search");
+            await matchText("1 paper");
+        });
+
+        it("moves rules saved with `author` to `authors`", async function () {
+            await storageSet({
+                autoTags: [{ id: 0, title: "", author: "bengio", tags: ["mila"] }],
+            });
+            await openOptions();
+            await matchText("1 paper");
+            expect(await page.$eval(".o-rule .o-rule-authors", (el) => el.value)).toBe(
+                "bengio",
+            );
+            expect(await storageGet("autoTags")).toEqual([
+                { id: 0, title: "", authors: "bengio", tags: ["mila"] },
+            ]);
+        });
+
+        it("keeps a rule edit typed just before a tag rename", async function () {
+            await page.click("#auto-tags-add");
+            await page.type(".o-rule .pm-tagin", "vision");
+            await page.keyboard.press("Enter");
+            await page.type(".o-rule .o-rule-title", "cycle");
+            // rename right away: the debounced rule save must not be lost
+            await page.click('.o-tagrow[data-tag="vision"] [data-act="rename"]');
+            await page.waitForSelector(".o-rename-input");
+            await page.$eval(".o-rename-input", (el) => (el.value = ""));
+            await page.type(".o-rename-input", "cv");
+            await page.keyboard.press("Enter");
+            await waitForStorage(
+                () =>
+                    new Promise((r) =>
+                        chrome.storage.local.get("autoTags", ({ autoTags }) =>
+                            r(autoTags?.[0]?.tags?.[0] === "cv"),
+                        ),
+                    ),
+            );
+            expect(await storageGet("autoTags")).toEqual([
+                { id: 0, title: "cycle", authors: "", tags: ["cv"] },
+            ]);
+        });
+    });
+
+    describe("Tag manager", function () {
+        const tagsOf = async () =>
+            Object.fromEntries(
+                Object.entries(await storageGet("papers"))
+                    .filter(([k]) => !k.startsWith("__"))
+                    .map(([k, p]) => [k, p.tags]),
+            );
+
+        it("lists tags with counts and flags near-duplicates", async function () {
+            const rows = await page.$$eval(".o-tagrow[data-tag]", (rs) =>
+                rs.map((r) => [r.dataset.tag, r.querySelector(".o-num").textContent]),
+            );
+            expect(rows[0]).toEqual(["vision", "2"]);
+            expect(rows.length).toBe(5);
+            expect(await visible("#tags-similar")).toBe(true);
+            const similar = await page.$$eval(".o-tagrow .pm-badge", (bs) =>
+                bs.map((b) => b.closest(".o-tagrow").dataset.tag),
+            );
+            expect(similar.sort()).toEqual(["Optimizations", "optimization"]);
+        });
+
+        it("renames a tag on every paper", async function () {
+            await page.click('.o-tagrow[data-tag="vision"] [data-act="rename"]');
+            await page.waitForSelector(".o-rename-input");
+            await page.$eval(".o-rename-input", (el) => (el.value = ""));
+            await page.type(".o-rename-input", "computer-vision");
+            await page.keyboard.press("Enter");
+            await waitForStorage(
+                () =>
+                    new Promise((r) =>
+                        chrome.storage.local.get("papers", ({ papers }) =>
+                            r(
+                                papers["Arxiv-1703.10593"].tags.includes(
+                                    "computer-vision",
+                                ),
+                            ),
+                        ),
+                    ),
+            );
+            const tags = await tagsOf();
+            expect(tags["Arxiv-1703.10593"]).toEqual(["computer-vision", "gan"]);
+            expect(tags["RSC-DigitalDiscovery_d2dd00066k"]).toEqual([
+                "chemistry",
+                "computer-vision",
+            ]);
+            await page.waitForSelector('.o-tagrow[data-tag="computer-vision"]');
+            expect(await page.$('.o-tagrow[data-tag="vision"]')).toBe(null);
+        });
+
+        it("merges selected tags into one, after a confirmation", async function () {
+            await page.click(".o-similar-group"); // selects optimization + Optimizations
+            await page.waitForSelector("#tags-mergebar:not([hidden])");
+            expect(await page.$eval("#tags-merge-label", (el) => el.textContent)).toBe(
+                "Merge 2 tags into",
+            );
+            await page.select("#tags-merge-target", "optimization");
+            await page.click("#tags-merge");
+            await confirmDialog("ok");
+            await waitForStorage(
+                () =>
+                    new Promise((r) =>
+                        chrome.storage.local.get("papers", ({ papers }) =>
+                            r(
+                                !papers["JMLR-2012_bergstra12a"].tags.includes(
+                                    "Optimizations",
+                                ),
+                            ),
+                        ),
+                    ),
+            );
+            expect((await tagsOf())["JMLR-2012_bergstra12a"]).toEqual(["optimization"]);
+            expect(await visible("#tags-similar")).toBe(false);
+        });
+
+        it("deletes a tag after a confirmation (Cancel keeps it)", async function () {
+            await page.click('.o-tagrow[data-tag="gan"] [data-act="delete"]');
+            await confirmDialog("");
+            expect((await tagsOf())["Arxiv-1703.10593"]).toContain("gan");
+            await page.click('.o-tagrow[data-tag="gan"] [data-act="delete"]');
+            await confirmDialog("ok");
+            await waitForStorage(
+                () =>
+                    new Promise((r) =>
+                        chrome.storage.local.get("papers", ({ papers }) =>
+                            r(!papers["Arxiv-1703.10593"].tags.includes("gan")),
+                        ),
+                    ),
+            );
+            expect((await tagsOf())["Arxiv-1703.10593"]).toEqual(["vision"]);
+        });
+    });
+
+    describe("Restore from a backup", function () {
+        it("downloads the current Memory first, asks, then replaces it", async function () {
+            // record downloads (downloadTextFile clicks an <a download>) and when they happen
+            await page.evaluate(() => {
+                window.__downloads = [];
+                HTMLAnchorElement.prototype.click = function () {
+                    if (this.download)
+                        window.__downloads.push({
+                            name: this.download,
+                            dialogOpen: document.getElementById("o-dialog").open,
+                        });
+                };
+            });
+            const backup = {
+                "Arxiv-1703.10593": structuredClone(papers["Arxiv-1703.10593"]),
+                __dataVersion: papers.__dataVersion,
+            };
+            backup["Arxiv-1703.10593"].note = "from the backup";
+            const dir = fs.mkdtempSync(path.join(os.tmpdir(), "pm-restore-"));
+            const file = path.join(dir, "backup.json");
+            fs.writeFileSync(file, JSON.stringify(backup));
+            try {
+                const [chooser] = await Promise.all([
+                    page.waitForFileChooser(),
+                    page.click("#overwrite-choose"),
+                ]);
+                await chooser.accept([file]);
+                await page.waitForSelector("#o-dialog[open]");
+                const downloads = await page.evaluate(() => window.__downloads);
+                expect(downloads.length).toBe(1);
+                expect(downloads[0].name).toMatch(/^PaperMemory-data-.*\.json$/);
+                expect(downloads[0].dialogOpen).toBe(false); // before the confirmation
+                // nothing replaced yet
+                expect(Object.keys(await storageGet("papers")).length).toBe(
+                    Object.keys(papers).length,
+                );
+                await confirmDialog("replace");
+                await waitForStorage(
+                    () =>
+                        new Promise((r) =>
+                            chrome.storage.local.get("papers", ({ papers }) =>
+                                r(Object.keys(papers).length === 2),
+                            ),
+                        ),
+                );
+                expect((await storageGet("papers"))["Arxiv-1703.10593"].note).toBe(
+                    "from the backup",
+                );
+            } finally {
+                fs.rmSync(dir, { recursive: true, force: true });
+            }
+        });
+
+        /** Chooses a file with this text as the backup; returns the downloads it caused */
+        const restoreWith = async (text) => {
+            await page.evaluate(() => {
+                window.__downloads = [];
+                HTMLAnchorElement.prototype.click = function () {
+                    if (this.download) window.__downloads.push(this.download);
+                };
+            });
+            const dir = fs.mkdtempSync(path.join(os.tmpdir(), "pm-restore-"));
+            const file = path.join(dir, "backup.json");
+            fs.writeFileSync(file, text);
+            try {
+                const [chooser] = await Promise.all([
+                    page.waitForFileChooser(),
+                    page.click("#overwrite-choose"),
+                ]);
+                await chooser.accept([file]);
+                await page.waitForFunction(
+                    () =>
+                        document
+                            .getElementById("overwriteFeedback")
+                            .classList.contains("is-error") ||
+                        document.getElementById("o-dialog").open,
+                    { timeout: 5000 },
+                );
+            } finally {
+                fs.rmSync(dir, { recursive: true, force: true });
+            }
+            return page.evaluate(() => window.__downloads);
+        };
+        const invalid = {
+            "a list": () => "[]",
+            "tags: 42": () => {
+                const b = structuredClone(papers);
+                b["Arxiv-1703.10593"].tags = 42;
+                return JSON.stringify(b);
+            },
+            "a __proto__ key": () => {
+                const b = JSON.stringify(papers);
+                return b.replace(
+                    '{"Arxiv-1703.10593":{',
+                    '{"Arxiv-1703.10593":{"__proto__":{"polluted":true},',
+                );
+            },
+        };
+        for (const [name, make] of Object.entries(invalid)) {
+            it(`refuses a backup with ${name}: no download, no question, no change`, async function () {
+                const before = await storageGet("papers");
+                const downloads = await restoreWith(make());
+                expect(downloads).toEqual([]);
+                expect(
+                    await page.evaluate(() => document.getElementById("o-dialog").open),
+                ).toBe(false);
+                const msg = await page.$eval(
+                    "#overwriteFeedback",
+                    (el) => el.textContent,
+                );
+                expect(msg).toContain("cannot be used as a backup");
+                expect(await storageGet("papers")).toEqual(before);
+                expect(await page.evaluate(() => ({}).polluted)).toBe(undefined);
+            });
+        }
+    });
+
+    describe("Sync", function () {
+        it("Sync now does not upload or report success when the download fails", async function () {
+            // GitHub answers with the sync gist; the background's pull fails
+            const stub = await page.evaluateOnNewDocument(() => {
+                window.__messages = [];
+                const gist = {
+                    id: "gist-test",
+                    description:
+                        "Automated PaperMemory sync Gist. Do not edit manually.",
+                    files: {
+                        TestsPaperMemorySync: {
+                            filename: "TestsPaperMemorySync",
+                            raw_url: "https://example.invalid/x",
+                        },
+                    },
+                };
+                const realFetch = window.fetch;
+                window.fetch = (url, opts) =>
+                    String(url).startsWith("https://api.github.com/gists")
+                        ? Promise.resolve(
+                              new Response(JSON.stringify([gist]), {
+                                  status: 200,
+                                  headers: { "content-type": "application/json" },
+                              }),
+                          )
+                        : realFetch(url, opts);
+                const send = chrome.runtime.sendMessage.bind(chrome.runtime);
+                chrome.runtime.sendMessage = (payload, cb) => {
+                    window.__messages.push(payload);
+                    if (payload?.type === "pullSync")
+                        return cb(
+                            payload.report
+                                ? { ok: false, error: "network down" }
+                                : undefined,
+                        );
+                    if (payload?.type === "writeSync")
+                        return cb(payload.report ? { ok: true } : undefined);
+                    return send(payload, cb);
+                };
+            });
+            await storageSet({ syncPAT: "ghp_test", syncState: true, syncTest: true });
+            await openOptions("#sync");
+            await page.waitForFunction(
+                () =>
+                    document.getElementById("sync-status-label").textContent ===
+                    "Sync is on",
+                { timeout: 5000 },
+            );
+            await page.evaluate(() => (window.__messages = []));
+            await page.click("#sync-now");
+            await page.waitForFunction(
+                () =>
+                    document.getElementById("sync-status-label").textContent ===
+                    "Sync failed",
+                { timeout: 5000 },
+            );
+            const help = await page.$eval("#sync-status-help", (el) => el.textContent);
+            expect(help).toContain("network down");
+            const types = await page.evaluate(() =>
+                window.__messages.map((m) => m.type),
+            );
+            expect(types).toContain("pullSync");
+            expect(types).not.toContain("writeSync");
+            expect(await page.$eval("#side-sync-text", (el) => el.textContent)).toBe(
+                "Sync failed",
+            );
+            await page.removeScriptToEvaluateOnNewDocument(stub.identifier);
+            await storageSet({ syncPAT: "", syncState: false, syncTest: false });
+        });
+    });
+
+    describe("Sync: local save failures", function () {
+        it("Sync now uploads nothing when the downloaded Memory cannot be saved here", async function () {
+            const stub = await page.evaluateOnNewDocument(() => {
+                window.__messages = [];
+                const gist = {
+                    id: "gist-test",
+                    description:
+                        "Automated PaperMemory sync Gist. Do not edit manually.",
+                    files: {
+                        TestsPaperMemorySync: {
+                            filename: "TestsPaperMemorySync",
+                            raw_url: "https://example.invalid/x",
+                        },
+                    },
+                };
+                const realFetch = window.fetch;
+                window.fetch = (url, opts) =>
+                    String(url).startsWith("https://api.github.com/gists")
+                        ? Promise.resolve(
+                              new Response(JSON.stringify([gist]), {
+                                  status: 200,
+                                  headers: { "content-type": "application/json" },
+                              }),
+                          )
+                        : realFetch(url, opts);
+                const send = chrome.runtime.sendMessage.bind(chrome.runtime);
+                chrome.runtime.sendMessage = (payload, cb) => {
+                    window.__messages.push(payload);
+                    if (payload?.type === "pullSync")
+                        return cb(
+                            payload.report
+                                ? { ok: true, papers: { __dataVersion: 10200 } }
+                                : undefined,
+                        );
+                    if (payload?.type === "writeSync")
+                        return cb(payload.report ? { ok: true } : undefined);
+                    // the local replace fails (e.g. the disk is full)
+                    if (payload?.type === "memory" && payload.op?.op === "replace")
+                        return cb({ ok: false, error: "disk full" });
+                    return send(payload, cb);
+                };
+            });
+            await storageSet({ syncPAT: "ghp_test", syncState: true, syncTest: true });
+            try {
+                await openOptions("#sync");
+                await page.waitForFunction(
+                    () =>
+                        document.getElementById("sync-status-label").textContent ===
+                        "Sync is on",
+                    { timeout: 5000 },
+                );
+                const before = await storageGet("papers");
+                await page.evaluate(() => (window.__messages = []));
+                await page.click("#sync-now");
+                await page.waitForFunction(
+                    () =>
+                        document.getElementById("sync-status-label").textContent ===
+                        "Sync failed",
+                    { timeout: 5000 },
+                );
+                expect(
+                    await page.$eval("#sync-status-help", (el) => el.textContent),
+                ).toContain("disk full");
+                const types = await page.evaluate(() =>
+                    window.__messages.map((m) => m.type),
+                );
+                expect(types).not.toContain("writeSync");
+                expect(await storageGet("papers")).toEqual(before);
+            } finally {
+                await page.removeScriptToEvaluateOnNewDocument(stub.identifier);
+                await storageSet({ syncPAT: "", syncState: false, syncTest: false });
+            }
+        });
+    });
+
+    describe("Memory written from two pages", function () {
+        it("a note saved in an open popup keeps a tag renamed in the options page", async function () {
+            const popup = await browser.newPage();
+            try {
+                await popup.goto(optionsURL.replace("options.html", "popup.html"), {
+                    waitUntil: "networkidle0",
+                });
+                await popup.waitForFunction(() => window.__pmPopupReady === true, {
+                    timeout: 15000,
+                });
+                // the popup holds its copy of the Memory; options renames "vision"
+                await page.bringToFront();
+                await page.click('.o-tagrow[data-tag="vision"] [data-act="rename"]');
+                await page.waitForSelector(".o-rename-input");
+                await page.$eval(".o-rename-input", (el) => (el.value = ""));
+                await page.type(".o-rename-input", "computer-vision");
+                await page.keyboard.press("Enter");
+                await waitForStorage(
+                    () =>
+                        new Promise((r) =>
+                            chrome.storage.local.get("papers", ({ papers }) =>
+                                r(
+                                    papers["Arxiv-1703.10593"].tags.includes(
+                                        "computer-vision",
+                                    ),
+                                ),
+                            ),
+                        ),
+                );
+                // the popup followed the change
+                await popup.waitForFunction(
+                    () =>
+                        PMDebug.config.state.papers["Arxiv-1703.10593"].tags.includes(
+                            "computer-vision",
+                        ),
+                    { timeout: 5000 },
+                );
+                // then a note is saved from the popup
+                await popup.evaluate(() =>
+                    PMDebug.memory.saveNote("Arxiv-1703.10593", "from the popup"),
+                );
+                const stored = await storageGet("papers");
+                expect(stored["Arxiv-1703.10593"].note).toBe("from the popup");
+                expect(stored["Arxiv-1703.10593"].tags).toEqual([
+                    "computer-vision",
+                    "gan",
+                ]);
+                expect(stored["RSC-DigitalDiscovery_d2dd00066k"].tags).toEqual([
+                    "chemistry",
+                    "computer-vision",
+                ]);
+                await noInContextRuns(popup, page);
+            } finally {
+                await popup.close();
+            }
+        });
+
+        it("a truly stale page writing one field cannot undo another page's change", async function () {
+            const popup = await openPopup({ stale: true });
+            try {
+                await page.bringToFront();
+                await page.click('.o-tagrow[data-tag="gan"] [data-act="delete"]');
+                await confirmDialog("ok");
+                await waitForStorage(
+                    () =>
+                        new Promise((r) =>
+                            chrome.storage.local.get("papers", ({ papers }) =>
+                                r(!papers["Arxiv-1703.10593"].tags.includes("gan")),
+                            ),
+                        ),
+                );
+                // the popup still believes "gan" is there
+                expect(
+                    await popup.evaluate(
+                        () => PMDebug.config.state.papers["Arxiv-1703.10593"].tags,
+                    ),
+                ).toContain("gan");
+                await popup.evaluate(() =>
+                    PMDebug.memory.saveFavoriteItem("Arxiv-1703.10593", true),
+                );
+                const stored = await storageGet("papers");
+                expect(stored["Arxiv-1703.10593"].tags).toEqual(["vision"]);
+                expect(stored["Arxiv-1703.10593"].favorite).toBe(true);
+                await noInContextRuns(popup, page);
+            } finally {
+                await popup.close();
+            }
+        });
+
+        it("two pages that read first and then write at the same moment both keep their changes", async function () {
+            const popup = await openPopup({ stale: true });
+            try {
+                const before = (await storageGet("papers"))["JMLR-2012_bergstra12a"]
+                    .count;
+                // barrier: both pages hold their copy, wait, then write together
+                await popup.evaluate(() => {
+                    window.__go = new Promise((r) => (window.__release = r));
+                    window.__done = window.__go.then(() => {
+                        const id = "JMLR-2012_bergstra12a";
+                        return Promise.all([
+                            PMDebug.memory.saveNote(id, "note from the popup"),
+                            ...Array.from({ length: 10 }, () =>
+                                PMDebug.memoryQueue.memoryOp({ op: "visit", id }),
+                            ),
+                        ]);
+                    });
+                });
+                await page.evaluate(() => {
+                    window.__go = new Promise((r) => (window.__release = r));
+                    window.__done = window.__go.then(() => {
+                        const id = "JMLR-2012_bergstra12a";
+                        return Promise.all([
+                            PMDebug.memoryQueue.memoryOp({
+                                op: "retag",
+                                mapping: [["optimization", "optim"]],
+                            }),
+                            ...Array.from({ length: 10 }, () =>
+                                PMDebug.memoryQueue.memoryOp({ op: "visit", id }),
+                            ),
+                        ]);
+                    });
+                });
+                await Promise.all([
+                    popup.evaluate(() => window.__release()),
+                    page.evaluate(() => window.__release()),
+                ]);
+                await Promise.all([
+                    popup.evaluate(() => window.__done.then(() => true)),
+                    page.evaluate(() => window.__done.then(() => true)),
+                ]);
+                const paper = (await storageGet("papers"))["JMLR-2012_bergstra12a"];
+                expect(paper.count).toBe(before + 20);
+                expect(paper.note).toBe("note from the popup");
+                expect(paper.tags).toEqual(["Optimizations", "optim"]);
+                await noInContextRuns(popup, page);
+            } finally {
+                await popup.close();
+            }
+        });
+
+        it("an autosave arriving after a delete does not re-create the paper", async function () {
+            const popup = await openPopup();
+            try {
+                await page.evaluate(() =>
+                    PMDebug.data.deletePaperInStorage("Arxiv-1703.10593"),
+                );
+                // the popup's pending note autosave lands afterwards
+                const answer = await op(popup, {
+                    op: "patch",
+                    id: "Arxiv-1703.10593",
+                    fields: { note: "late" },
+                });
+                expect(answer.result.missing).toBe(true);
+                await popup.evaluate(() =>
+                    PMDebug.memory.saveNote("Arxiv-1703.10593", "late"),
+                );
+                expect((await storageGet("papers"))["Arxiv-1703.10593"]).toBe(
+                    undefined,
+                );
+                await noInContextRuns(popup, page);
+            } finally {
+                await popup.close();
+            }
+        });
+
+        it("a visit counted while a row's note is being typed: both kept, untouched fields follow", async function () {
+            const id = "JMLR-2012_bergstra12a";
+            const popup = await openPopup();
+            try {
+                await popup.keyboard.press("a"); // Memory
+                await popup.waitForSelector(`#memory-container--${id}`);
+                await popup.evaluate((id) => PMDebug.memory.openMemoryItemEdit(id), id);
+                await popup.waitForSelector(
+                    `#memory-container--${id} .form-note-textarea`,
+                );
+                await popup.$eval(
+                    `#memory-container--${id} .form-note-textarea`,
+                    (el) => {
+                        el.value = "";
+                    },
+                );
+                await popup.type(
+                    `#memory-container--${id} .form-note-textarea`,
+                    "typing",
+                );
+                const before = (await storageGet("papers"))[id].count;
+                // elsewhere: a visit (content script) and a tag rename (options)
+                await op(page, { op: "visit", id });
+                await op(page, {
+                    op: "retag",
+                    mapping: [["Optimizations", "optimization"]],
+                });
+                // the form's tags (not edited) follow the rename
+                await popup.waitForFunction(
+                    (id) =>
+                        [
+                            ...document.querySelectorAll(
+                                `#memory-container--${id} .pm-chip-t`,
+                            ),
+                        ]
+                            .map((c) => c.textContent)
+                            .join() === "optimization",
+                    { timeout: 5000 },
+                    id,
+                );
+                await popup.waitForFunction(
+                    (id) =>
+                        new Promise((r) =>
+                            chrome.storage.local.get("papers", ({ papers }) =>
+                                r(papers[id].note === "typing"),
+                            ),
+                        ),
+                    { timeout: 5000 },
+                    id,
+                );
+                const paper = (await storageGet("papers"))[id];
+                expect(paper.count).toBe(before + 1);
+                expect(paper.note).toBe("typing");
+                expect(paper.tags).toEqual(["optimization"]);
+                await noInContextRuns(popup, page);
+            } finally {
+                await popup.close();
+            }
+        });
+
+        it("a migration and an add at the same time: both land", async function () {
+            // both pages are open (and initialised) before the legacy data appears
+            const popup = await openPopup();
+            try {
+                const legacy = readJSON(`${root}/test/data/memory.json`);
+                const arxiv = legacy["Arxiv-1703.10593"];
+                const old = {
+                    __dataVersion: 304,
+                    "Arxiv-1703.10593": { ...arxiv, codeLink: false, venue: "" },
+                };
+                await page.evaluate((p) => PMDebug.data.setStorage("papers", p), old);
+                const version = await page.evaluate(() =>
+                    PMDebug.data.getManifestDataVersion(),
+                );
+                const added = structuredClone(papers["JMLR-2012_bergstra12a"]);
+                const [migration, creation] = await Promise.all([
+                    op(popup, { op: "migrate", version }),
+                    op(page, { op: "create", paper: added }),
+                ]);
+                expect(migration.ok && creation.ok).toBe(true);
+                expect(migration.result.migrated).toBe(true); // it really ran in the race
+                const stored = await storageGet("papers");
+                expect(stored.__dataVersion).toBe(version);
+                expect(stored["JMLR-2012_bergstra12a"].title).toBe(added.title);
+                expect(stored["Arxiv-1703.10593"].codeLink).toBe(""); // migrated
+                // a migration asked again finds nothing to do
+                const again = await op(page, { op: "migrate", version });
+                expect(again.result.migrated).toBe(false);
+                await noInContextRuns(popup, page);
+            } finally {
+                await popup.close();
+            }
+        });
+
+        it("a code link typed while its previous save is pending stays marked as edited", async function () {
+            const id = "JMLR-2012_bergstra12a";
+            // the popup's code link saves reach the background 1 s late
+            const popup = await browser.newPage();
+            await popup.evaluateOnNewDocument(() => {
+                const send = chrome.runtime.sendMessage.bind(chrome.runtime);
+                chrome.runtime.sendMessage = (payload, cb) => {
+                    if (payload?.type === "memory" && payload.op?.fields?.codeLink)
+                        return setTimeout(() => send(payload, cb), 1000);
+                    return send(payload, cb);
+                };
+            });
+            await popup.goto(optionsURL.replace("options.html", "popup.html"), {
+                waitUntil: "networkidle0",
+            });
+            await popup.waitForFunction(() => window.__pmPopupReady === true, {
+                timeout: 15000,
+            });
+            try {
+                await popup.keyboard.press("a");
+                await popup.waitForSelector(`#memory-container--${id}`);
+                await popup.evaluate((id) => PMDebug.memory.openMemoryItemEdit(id), id);
+                const input = `#memory-container--${id} .form-code-input`;
+                await popup.waitForSelector(input);
+                await popup.type(input, "github.com/a");
+                await sleep(400); // its save is sent (and pending)
+                await popup.type(input, "b");
+                // the first save is acknowledged; the field moved on: still edited
+                await popup.waitForFunction(
+                    (id) =>
+                        new Promise((r) =>
+                            chrome.storage.local.get("papers", ({ papers }) =>
+                                r(papers[id].codeLink === "https://github.com/a"),
+                            ),
+                        ),
+                    { timeout: 5000 },
+                    id,
+                );
+                await popup.$eval(
+                    `#memory-container--${id} .form-note-textarea`,
+                    (el) => el.focus(),
+                );
+                // another page changes the code link: the edited field is not overwritten
+                await op(page, {
+                    op: "patch",
+                    id,
+                    fields: { codeLink: "https://example.org/other" },
+                });
+                await sleep(300);
+                expect(await popup.$eval(input, (el) => el.value)).toBe(
+                    "github.com/ab",
+                );
+                // and its own save lands last
+                await popup.waitForFunction(
+                    (id) =>
+                        new Promise((r) =>
+                            chrome.storage.local.get("papers", ({ papers }) =>
+                                r(papers[id].codeLink === "https://github.com/ab"),
+                            ),
+                        ),
+                    { timeout: 5000 },
+                    id,
+                );
+                await noInContextRuns(popup, page);
+            } finally {
+                await popup.close();
+            }
+        });
+    });
+
+    describe("Popup saves that fail", function () {
+        /** A popup (optionally on a paper's tab) whose Memory writes of `failing` fail */
+        const openFailingPopup = async (tabUrl) => {
+            const popup = await browser.newPage();
+            await popup.evaluateOnNewDocument((url) => {
+                if (url) chrome.tabs.query = (q, cb) => cb([{ url, id: 1 }]);
+                window.close = () => {};
+                window.__fail = null; // (op) => boolean
+                window.__messages = [];
+                const send = chrome.runtime.sendMessage.bind(chrome.runtime);
+                chrome.runtime.sendMessage = (payload, cb) => {
+                    window.__messages.push(payload?.type);
+                    if (payload?.type === "memory" && window.__fail?.(payload.op))
+                        return cb({ ok: false, error: "disk full" });
+                    return send(payload, cb);
+                };
+            }, tabUrl ?? null);
+            await popup.goto(optionsURL.replace("options.html", "popup.html"), {
+                waitUntil: "networkidle0",
+            });
+            await popup.waitForFunction(() => window.__pmPopupReady === true, {
+                timeout: 15000,
+            });
+            return popup;
+        };
+
+        it("a note whose save fails stays open with its text, also through a refresh", async function () {
+            const id = "Arxiv-1703.10593";
+            const popup = await openFailingPopup(papers[id].pdfLink);
+            const textarea = `#popup-form-note-textarea--${id.replace(".", "\\.")}`;
+            try {
+                await popup.waitForSelector(textarea);
+                await popup.evaluate(() => {
+                    window.__fail = (op) =>
+                        op.op === "patch" && "note" in (op.fields ?? {});
+                });
+                await popup.keyboard.press("e");
+                await popup.waitForSelector(`${textarea}:not([hidden])`);
+                await popup.$eval(textarea, (el) => {
+                    el.value = "";
+                    el.focus();
+                });
+                await popup.type(textarea, "my text");
+                await sleep(500); // the autosave fails
+                // leave the note: the editor must not close on a failed save
+                await popup.evaluate(() => document.activeElement.blur());
+                await sleep(500);
+                expect(
+                    await popup.$eval(textarea, (el) => [el.hidden, el.value]),
+                ).toEqual([false, "my text"]);
+                expect(
+                    await popup.$eval("#popup-feedback-copied", (el) => el.textContent),
+                ).toContain("Couldn’t save");
+                // another page changes the note: the unsaved text is kept
+                await op(page, { op: "patch", id, fields: { note: "external" } });
+                await sleep(500);
+                expect(await popup.$eval(textarea, (el) => el.value)).toBe("my text");
+                // the save works again: it is written, then the editor closes
+                await popup.evaluate(() => (window.__fail = null));
+                await popup.$eval(textarea, (el) => el.focus());
+                await popup.evaluate(() => document.activeElement.blur());
+                await popup.waitForFunction(
+                    (sel) => document.querySelector(sel).hidden,
+                    { timeout: 5000 },
+                    textarea,
+                );
+                expect((await storageGet("papers"))[id].note).toBe("my text");
+                await noInContextRuns(popup);
+            } finally {
+                await popup.close();
+            }
+        });
+
+        it("a website page whose save fails keeps its sheet open, uploads nothing", async function () {
+            const popup = await openFailingPopup();
+            const url = "https://example.org/a-post";
+            try {
+                await popup.evaluate(async (url) => {
+                    const src = PMDebug.sources.getSource("website");
+                    const paper = await PMDebug.paper.initPaper({
+                        ...src.fromMeta(url, "A post"),
+                        source: src.name,
+                    });
+                    PMDebug.popup.editManualWebsite(paper, url);
+                }, url);
+                await popup.waitForSelector("#manual-website-author");
+                await popup.$eval(
+                    "#manual-website-author",
+                    (el) => (el.value = "Jane Doe"),
+                );
+                await popup.$eval("#manual-website-year", (el) => (el.value = "2021"));
+                await popup.evaluate(() => {
+                    window.__fail = (op) => op.op === "merge";
+                    window.__messages = [];
+                });
+                await popup.click('button[form="manual-website-form"]');
+                await popup.waitForFunction(
+                    () =>
+                        document.getElementById("manual-website-validation")
+                            .textContent === "Couldn’t save — try again",
+                    { timeout: 5000 },
+                );
+                expect(
+                    await popup.$eval(
+                        "#modal-manual-website-content",
+                        (el) => el.style.display !== "none",
+                    ),
+                ).toBe(true);
+                expect(
+                    await popup.$eval("#manual-website-author", (el) => el.value),
+                ).toBe("Jane Doe");
+                expect(await popup.evaluate(() => window.__messages)).not.toContain(
+                    "writeSync",
+                );
+                const stored = await storageGet("papers");
+                expect(Object.keys(stored).some((k) => k.startsWith("Website_"))).toBe(
+                    false,
+                );
+                // it works again: same sheet, saved, closed
+                await popup.evaluate(() => (window.__fail = null));
+                await popup.click('button[form="manual-website-form"]');
+                await page.waitForFunction(
+                    () =>
+                        new Promise((r) =>
+                            chrome.storage.local.get("papers", ({ papers }) =>
+                                r(
+                                    Object.keys(papers).some((k) =>
+                                        k.startsWith("Website_"),
+                                    ),
+                                ),
+                            ),
+                        ),
+                    { timeout: 5000 },
+                );
+                await noInContextRuns(popup);
+            } finally {
+                await popup.close();
+            }
+        });
+    });
+
+    describe("Restore: legacy files and changes during the question", function () {
+        const chooseBackup = async (text) => {
+            await page.evaluate(() => {
+                HTMLAnchorElement.prototype.click = function () {};
+            });
+            const dir = fs.mkdtempSync(path.join(os.tmpdir(), "pm-restore-"));
+            const file = path.join(dir, "backup.json");
+            fs.writeFileSync(file, text);
+            try {
+                const [chooser] = await Promise.all([
+                    page.waitForFileChooser(),
+                    page.click("#overwrite-choose"),
+                ]);
+                await chooser.accept([file]);
+                await page.waitForFunction(
+                    () =>
+                        document
+                            .getElementById("overwriteFeedback")
+                            .classList.contains("is-error") ||
+                        document.getElementById("o-dialog").open,
+                    { timeout: 10000 },
+                );
+            } finally {
+                fs.rmSync(dir, { recursive: true, force: true });
+            }
+        };
+
+        it("accepts a v304 backup with codeLink: false (checked after migration)", async function () {
+            const legacy = readJSON(`${root}/test/data/memory.json`);
+            legacy["Arxiv-1703.10593"].codeLink = false;
+            legacy["Arxiv-1703.10593"].venue = "";
+            legacy["OR-ICLR-2022_EZNOb_uNpJk"].venue = "";
+            await chooseBackup(JSON.stringify(legacy));
+            expect(
+                await page.evaluate(() => document.getElementById("o-dialog").open),
+            ).toBe(true);
+            await confirmDialog("replace");
+            await waitForStorage(
+                () =>
+                    new Promise((r) =>
+                        chrome.storage.local.get("papers", ({ papers }) =>
+                            r(!!papers["OR-ICLR-2022_EZNOb_uNpJk"]),
+                        ),
+                    ),
+            );
+            expect((await storageGet("papers"))["Arxiv-1703.10593"].codeLink).toBe("");
+        });
+
+        it("asks again when the Memory changed during the question, and keeps what it replaced", async function () {
+            const backup = {
+                __dataVersion: papers.__dataVersion,
+                "Arxiv-1703.10593": structuredClone(papers["Arxiv-1703.10593"]),
+            };
+            await chooseBackup(JSON.stringify(backup));
+            // while the question is open, another page edits a note
+            const popup = await openPopup();
+            try {
+                await op(popup, {
+                    op: "patch",
+                    id: "JMLR-2012_bergstra12a",
+                    fields: { note: "edited during the question" },
+                });
+                await noInContextRuns(popup, page);
+            } finally {
+                await popup.close();
+            }
+            await page.bringToFront();
+            await page.click('#o-dialog-foot button[value="replace"]');
+            await page.waitForFunction(
+                () =>
+                    document.getElementById("o-dialog").open &&
+                    document.getElementById("o-dialog-title").textContent ===
+                        "Your Memory changed meanwhile",
+                { timeout: 5000 },
+            );
+            expect(
+                await page.$eval("#o-dialog-body", (el) => el.textContent),
+            ).toContain("1 edited");
+            // nothing replaced yet
+            expect(Object.keys(await storageGet("papers")).length).toBe(
+                Object.keys(papers).length,
+            );
+            await confirmDialog("replace");
+            await waitForStorage(
+                () =>
+                    new Promise((r) =>
+                        chrome.storage.local.get("papers", ({ papers }) =>
+                            r(Object.keys(papers).length === 2),
+                        ),
+                    ),
+            );
+            // the exact Memory replaced, edit included, is kept in storage
+            const recovery = await storageGet("memoryRecovery");
+            expect(recovery.papers["JMLR-2012_bergstra12a"].note).toBe(
+                "edited during the question",
+            );
+            expect(
+                await page.$eval("#overwriteFeedback", (el) => el.textContent),
+            ).toContain("Download the replaced Memory");
+        });
+    });
+});

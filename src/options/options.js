@@ -1,1390 +1,504 @@
-// ES Module imports
-import {
-    setHTML,
-    findEl,
-    querySelector,
-    style,
-    val,
-    showId,
-    hideId,
-    createElementFromHTML,
-    addListener,
-    queryAll,
-    dispatch,
-    addEventToClass,
-} from "@pmu/miniquery.js";
+// Options page (design-review/v2/options.html): one page, six groups, a sticky side nav with
+// a settings search. Every pref is written with updatePrefs (same keys as the popup menu);
+// sections live in tags.js, io.js and syncSettings.js.
 import {
     getStorage,
     setStorage,
-    validatePaper,
-    prepareOverwriteData,
-    themeFromPrefs,
-    saveThemePref,
+    getPrefs,
+    updatePrefs,
     onPrefsChange,
+    getDefaultKeyboardAction,
+    setDefaultKeyboardAction,
+    onPapersChange,
 } from "@pmu/data.js";
-import { bibtexToString } from "@pmu/bibtexParser.js";
-import { tomSelectOptions, state } from "@pmu/config.js";
-import TomSelect from "tom-select";
-import "tom-select/dist/css/tom-select.css";
-import { knownPaperPages } from "@pmu/sources/index.js";
+import { state, prefsCheckDefaultFalse } from "@pmu/config.js";
+import { memoryOp } from "@pmu/memoryQueue.js";
+import { allSources } from "@pmu/sources/index.js";
+import { log, escapeHtml } from "@pmu/functions.js";
 import {
-    log,
-    info,
-    warn,
-    logOk,
-    logError,
-    downloadTextFile,
-    stringifyError,
-    cleanPapers,
-    sendMessageToBackground,
-    parseTags,
-    escapeHtml,
-} from "@pmu/functions.js";
-import {
-    tryPreprintMatch,
-    tryPWCMatch,
     tryDBLP,
     tryCrossRef,
     trySemanticScholar,
     tryUnpaywall,
 } from "@pmu/preprintMatching.js";
-import { mergePapers, makePaper } from "@pmu/paper.js";
-import {
-    shouldSync,
-    pushToRemote,
-    getGist,
-    getDataForGistFile,
-    updateGistFile,
-    initSyncAndState,
-} from "@pmu/sync.js";
-import { isPaper } from "@pmu/paper.js";
-import { versionToSemantic } from "@pmu/data.js";
+import { initSyncAndState, pushToRemote } from "@pmu/sync.js";
+import { paintIcons } from "@pm/popup/js/icons.js";
+import { setupTooltips } from "@pm/popup/js/tooltip.js";
+import { loadShortcuts, openShortcutSettings } from "@pm/popup/js/shortcuts.js";
+import { setupTopbar } from "@pm/shared/js/topbar.js";
+import { setupTags, refreshTags, tagsAreBusy } from "@pm/options/tags.js";
+import { setupIO, refreshIO } from "@pm/options/io.js";
+import { setupSync } from "@pm/options/syncSettings.js";
 
-// Global functions are now available from the ES modules bundle
+const $ = (id) => document.getElementById(id);
+const plural = (n, word) => `${n} ${word}${n === 1 ? "" : "s"}`;
 
-// TODO: data management: 1/ import css 2/ import functions 3/ remove from popup
-// TODO: fix biorxiv bibtex \t
+// ------------------------------
+// -----  Anchors (old ids)  -----
+// ------------------------------
 
-// -------------------------
-// -----  Local Utils  -----
-// -------------------------
-
-const isValidHttpUrl = (string) => {
-    let url;
-
-    try {
-        url = new URL(string);
-    } catch (_) {
-        return false;
-    }
-
-    return url.protocol === "http:" || url.protocol === "https:";
+/**
+ * Anchors of the previous options page (links in the popup, bibMatcher, docs, bookmarks)
+ * -> where that content is now. Ids that still exist (auto-tagging, preprint-matching,
+ * select-sources, import-papers, tag-manager…) need no entry.
+ */
+export const ANCHOR_ALIASES = {
+    "paperswithcode-preferences": "code-links",
+    pwc: "code-links",
+    "pwc-about-title": "code-links",
+    "auto-tags": "auto-tagging",
+    preprints: "preprint-matching",
+    sources: "select-sources",
+    "data-management": "data",
+    "memory-exports-title": "export-everything",
+    "memory-export-tags-title": "export-by-tag",
+    "overwrite-container": "restore",
+    "online-synchronization": "sync",
+    "sync-how-it-works": "sync",
+    "sync-syncing-state-title": "sync",
+    shortcuts: "keyboard",
+    "keyboard-shortcuts": "keyboard",
 };
 
-// ----------------------
-// -----  Keyboard  -----
-// ----------------------
+/** Follows #hash (an old one is replaced by its new id) and briefly marks the target */
+const goToHash = () => {
+    const hash = decodeURIComponent(location.hash.slice(1));
+    if (!hash) return;
+    const id = ANCHOR_ALIASES[hash] ?? hash;
+    const target = $(id);
+    if (!target) return;
+    if (id !== hash) history.replaceState(null, "", `#${id}`);
+    target.scrollIntoView({ block: "start" });
+    const card = target.closest(".o-card") ?? target;
+    if (!target.classList.contains("o-section")) {
+        card.classList.add("is-target");
+        setTimeout(() => card.classList.remove("is-target"), 1600);
+    }
+};
 
-const setUpKeyboardListeners = () => {
-    addListener(document, "keypress", (e) => {
-        const enterToClickIds = [
-            "auto-tags-new-save",
-            "auto-tags-item-save",
-            "auto-tags-item-delete",
-        ];
-        if (e.key === "Enter") {
-            if (enterToClickIds.some((id) => e.target.id.includes(id))) {
-                dispatch(e.target.id, "click");
-            }
-        }
+// -----------------------------
+// -----  Nav and search  -----
+// -----------------------------
+
+const sections = () => [...document.querySelectorAll(".o-section")];
+
+/** aria-current on the nav item of the section at the top of the window */
+const markCurrentSection = () => {
+    const visible = sections().filter((s) => !s.classList.contains("is-filtered"));
+    let current = visible[0];
+    for (const s of visible) if (s.getBoundingClientRect().top < 120) current = s;
+    // at the very bottom the last section is current even if it never reaches the top
+    if (window.innerHeight + window.scrollY >= document.body.scrollHeight - 2)
+        current = visible.at(-1) ?? current;
+    document.querySelectorAll(".o-nav a").forEach((a) => {
+        if (a.dataset.nav === current?.id) a.setAttribute("aria-current", "true");
+        else a.removeAttribute("aria-current");
     });
 };
 
-// -------------------------------
-// -----  Table of contents  -----
-// -------------------------------
-
-const makeTOC = async () => {
-    const h1s = queryAll("h2");
-    let toc = [];
-    for (const h of h1s) {
-        const title = h.innerText;
-        const short = title.trim().toLowerCase().replace(/\s/g, "-");
-        toc.push(`<a class="toc-item" href="#${short}">${title}</a>`);
-        toc.push("&nbsp; &#149; &nbsp;");
-    }
-    setHTML("toc", toc.slice(0, -1).join(""));
+/** Base count of a nav item (sources on / total; tags), shown while not searching */
+const setNavCount = (id, text) => {
+    const link = document.querySelector(`[data-nav="${id}"]`);
+    link.dataset.count = text;
+    if (!$("settings-search").value.trim())
+        link.querySelector(".pm-count").textContent = text;
 };
 
-// ----------------------------------------
-// -----  Code Blocks & Highlighting  -----
-// ----------------------------------------
+const normalize = (s) => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
 
-const setupCodeBlocks = async () => {
-    let codes = queryAll("code.trim-code");
-
-    for (const code of codes) {
-        let lines = code.innerHTML.split("\n").filter((l) => l.trim() !== "");
-        const indent = Math.min(...lines.map((t) => t.match(/^\s*/)[0].length));
-        lines = lines.map((t) => t.slice(indent));
-        code.innerHTML = lines.join("\n");
-        hljs.highlightElement(code);
-    }
-};
-
-// --------------------------------
-// -----  Import Papers List  -----
-// --------------------------------
-const handleSelectImportJson = () => {
-    var file = document.getElementById("import-json-papers-input").files;
-    if (!file || file.length < 1) {
-        return;
-    }
-    file = file[0];
-    setHTML("import-json-label-filename", file.name);
-    if (!file.name.endsWith(".json")) return;
-    findEl({ element: "import-json-papers-button" }).disabled = false;
-};
-
-const validateImportPaper = (p, i) => {
-    if (typeof p === "string") {
-        if (!isValidHttpUrl(p)) {
-            alert(`${p} (entry ${i}) is not a valid URL`);
-            return;
+/**
+ * Filters the settings: a [data-s] item is shown when every word of the query is in its text
+ * (label, help, options) or its data-k keywords; cards and sections without a match hide.
+ * The nav shows how many settings match in each group.
+ * @param {string} query
+ */
+export const filterSettings = (query) => {
+    const words = normalize(query).split(/\s+/).filter(Boolean);
+    const searching = words.length > 0;
+    let total = 0;
+    for (const section of sections()) {
+        let inSection = 0;
+        for (const item of section.querySelectorAll("[data-s]")) {
+            const text = normalize(`${item.textContent} ${item.dataset.k ?? ""}`);
+            const match = !searching || words.every((w) => text.includes(w));
+            item.classList.toggle("is-filtered", !match);
+            if (match) inSection++;
         }
-    } else {
-        if (!p.url || typeof p.url !== "string") {
-            alert(
-                `Entry ${i} should have a "url" string field: \n\n`,
-                JSON.stringify(p),
+        for (const card of section.querySelectorAll(".o-card")) {
+            const own = card.matches("[data-s]");
+            const shown = own
+                ? !card.classList.contains("is-filtered")
+                : [...card.querySelectorAll("[data-s]")].some(
+                      (i) => !i.classList.contains("is-filtered"),
+                  );
+            card.classList.toggle("is-filtered", !shown);
+            // the first row left in a card has no top border
+            card.querySelectorAll(".o-row").forEach((r) =>
+                r.classList.remove("is-first"),
             );
-            return;
+            const first = [...card.querySelectorAll(":scope > .o-row")].find(
+                (r) => !r.classList.contains("is-filtered"),
+            );
+            if (
+                searching &&
+                first &&
+                !first.previousElementSibling?.matches(".o-card-head")
+            )
+                first.classList.add("is-first");
         }
-        if (!isValidHttpUrl(p.url)) {
-            alert(`${p.url} (entry ${i}) is not a valid URL`);
-            return;
-        }
-        if (p.codeLink && !isValidHttpUrl(p.codeLink)) {
-            alert(`${p.codeLink} (entry ${i}) is not a valid URL`);
-            return;
-        }
+        section.classList.toggle("is-filtered", searching && inSection === 0);
+        total += inSection;
+        const link = document.querySelector(`[data-nav="${section.id}"]`);
+        link.classList.toggle("is-empty", searching && inSection === 0);
+        link.querySelector(".pm-count").textContent = searching
+            ? inSection || ""
+            : (link.dataset.count ?? "");
     }
-    return true;
+    $("search-empty").hidden = !searching || total > 0;
+    $("search-empty-text").textContent = `No setting matches “${query.trim()}”.`;
+    markCurrentSection();
 };
 
-const storeImportedPaper = (paper) =>
-    new Promise(async (resolve) => {
-        const papers = (await getStorage("papers")) ?? {};
-        const exists = Boolean(papers[paper.id]);
-        if (!exists) {
-            logOk("New imported paper!", paper);
-            papers[paper.id] = paper;
-            await setStorage("papers", papers);
-        }
-        resolve(exists);
+const setupNavAndSearch = () => {
+    const search = $("settings-search");
+    search.addEventListener("input", () => {
+        filterSettings(search.value);
+        if (search.value.trim()) window.scrollTo({ top: 0 });
     });
-
-const parsePaper = async (url, is) => {
-    let match;
-    let paper = await makePaper(is, url);
-    if (paper) {
-        match = await tryPreprintMatch(paper, true);
-    }
-    if (match) {
-        for (const k in match) {
-            if (match[k] && !paper[k]) {
-                paper[k] = match[k];
-            }
-            if (k === "bibtex" && match[k]) {
-                paper[k] = match[k];
-            }
+    search.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && search.value) {
+            e.preventDefault();
+            search.value = "";
+            filterSettings("");
         }
-    }
-    return paper;
-};
-
-const handleParseImportJson = async (e) => {
-    var file = document.getElementById("import-json-papers-input").files;
-    if (!file || file.length < 1) {
-        return;
-    }
-    file = file[0];
-    var reader = new FileReader();
-    reader.onload = async function (e) {
-        let papersToParse;
-        try {
-            papersToParse = JSON.parse(e.target.result);
-            info("Entries loaded from user file: ", papersToParse);
-            if (!Array.isArray(papersToParse)) {
-                throw new Error("The JSON file must contain a *list* of papers");
-            }
-            for (const [i, p] of papersToParse.entries()) {
-                if (!validateImportPaper(p, i)) {
-                    return;
-                }
-            }
-        } catch (error) {
-            logError(error);
-            alert("Error while parsing the file\n" + error);
-            return;
-        }
-
-        const progressbar = querySelector("#import-json-progress-bar");
-
-        const changeProgress = (progress) => {
-            progressbar.style.width = `${progress}%`;
-        };
-
-        const feedback = findEl({ element: "json-import-feedback" });
-        feedback.innerHTML = "";
-
-        showId("import-json-status-container", "flex");
-
-        for (const [i, p] of papersToParse.entries()) {
-            const url = p.url ?? p;
-            info(`[${i + 1}] Processing ${url}`);
-            changeProgress(((i + 1) / papersToParse.length) * 100);
-            setHTML(
-                "import-json-status",
-                `Parsing paper ${i + 1} / ${papersToParse.length} ${url}`,
-            );
-
-            try {
-                const is = await isPaper(url);
-                if (!Object.values(is).some((i) => i)) {
-                    feedback.innerHTML += `<li>[${
-                        i + 1
-                    }]&nbsp; &times;&nbsp; Error: ${escapeHtml(url)} does not come from a known source</li>`;
-                    warn("Aborting.");
-                } else {
-                    let paper;
-
-                    paper = await parsePaper(url, is);
-                    if (p.codeLink) {
-                        paper.codeLink = p.codeLink;
-                    }
-                    if (p.tags && Array.isArray(p.tags) && p.tags.length > 0) {
-                        paper.tags = p.tags.filter(
-                            (t) => typeof t === "string" && t.length > 0,
-                        );
-                    }
-                    const exists = await storeImportedPaper(paper);
-                    if (exists) {
-                        feedback.innerHTML += `<li>[${
-                            i + 1
-                        }]&nbsp; &times;&nbsp; Warning: ${escapeHtml(url)} already exists and has been ignored</li>`;
-                        warn("Aborting.");
-                    } else {
-                        feedback.innerHTML += `<li>[${
-                            i + 1
-                        }]&nbsp; &#10004; ${escapeHtml(url)} has been successfully added to your Memory!</li>`;
-                    }
-                }
-            } catch (error) {
-                logError(`Entry ${i} (${url})`, error);
-                warn("Aborting.");
-                feedback.innerHTML += `<li>[${
-                    i + 1
-                }]&nbsp; &times;&nbsp; Error: ${escapeHtml(url)} (open the JavaScript Console for more info)</li>`;
-            }
-        }
-        await pushToRemote();
-        changeProgress(0);
-        setHTML("import-json-status", `<strong>Done!</strong>`);
-    };
-    reader.readAsText(file);
-};
-
-const setupImportPapers = async () => {
-    addListener("import-json-papers-input", "change", handleSelectImportJson);
-    addListener("import-json-papers-button", "click", handleParseImportJson);
+    });
+    $("search-clear").addEventListener("click", () => {
+        search.value = "";
+        filterSettings("");
+        search.focus();
+    });
+    // "/" focuses the search, unless typing somewhere
+    document.addEventListener("keydown", (e) => {
+        if (e.key !== "/" || e.metaKey || e.ctrlKey || e.altKey) return;
+        const t = e.target;
+        if (t.closest?.("input, textarea, select, [contenteditable], dialog")) return;
+        e.preventDefault();
+        search.focus();
+        search.select();
+    });
+    window.addEventListener("scroll", markCurrentSection, { passive: true });
+    window.addEventListener("hashchange", goToHash);
+    markCurrentSection();
 };
 
 // -------------------
-// -----  Theme  -----
+// -----  Prefs  -----
 // -------------------
 
-const setupTheme = async () => {
-    findEl({ element: "theme-select" }).value = themeFromPrefs(
-        await getStorage("prefs"),
-    );
-    addListener("theme-select", "change", (e) => saveThemePref(e.target.value));
-    // theme changed elsewhere (popup, another options tab): keep the select in sync
-    onPrefsChange((prefs) => {
-        findEl({ element: "theme-select" }).value = themeFromPrefs(prefs);
+/** checkNoAuto is shown inverted ("Record papers automatically") */
+const showPref = (el, value) => {
+    el.checked = el.hasAttribute("data-invert") ? !value : !!value;
+};
+
+const prefValue = (prefs, key) =>
+    prefs.hasOwnProperty(key) ? prefs[key] : !prefsCheckDefaultFalse.includes(key);
+
+const setupPrefs = async () => {
+    const prefs = await getPrefs(); // also stores the defaults of a new user
+    const inputs = [...document.querySelectorAll("input[data-pref]")];
+    for (const el of inputs) {
+        showPref(el, prefValue(prefs, el.id));
+        el.addEventListener("change", () => {
+            const value = el.hasAttribute("data-invert") ? !el.checked : el.checked;
+            updatePrefs({ [el.id]: value }).then(() =>
+                log(`Settings saved for ${el.id} (${value})`),
+            );
+        });
+    }
+    // changed elsewhere (popup menu, another options tab)
+    onPrefsChange((stored) => {
+        for (const el of inputs)
+            if (stored.hasOwnProperty(el.id)) showPref(el, stored[el.id]);
+    });
+
+    const action = $("memory-item-default-action");
+    action.value = await getDefaultKeyboardAction();
+    action.addEventListener("change", () => setDefaultKeyboardAction(action.value));
+    chrome.storage.onChanged.addListener((changes, area) => {
+        if (area === "local" && changes.defaultKeyboardAction?.newValue)
+            action.value = changes.defaultKeyboardAction.newValue;
     });
 };
 
-// ------------------------------
-// -----  PWC Preferences  -----
-// ------------------------------
+// ---------------------
+// -----  Sources  -----
+// ---------------------
 
-const setupPWCPrefs = async () => {
-    const pwcPrefs = (await getStorage("pwcPrefs")) ?? {};
+const COLLAPSED_SOURCES = 15;
+let sourcesExpanded = false;
 
-    const official = pwcPrefs.hasOwnProperty("official") ? pwcPrefs.official : false;
-    const framework = pwcPrefs.hasOwnProperty("framework")
-        ? pwcPrefs.framework
-        : "none";
+/** Sources the user can turn off: [{key, name, domain}], by name */
+const sourceList = () =>
+    allSources()
+        .filter((S) => S.name !== "website")
+        .map((S) => ({
+            key: S.name,
+            name: S.displayName.split("(")[0].trim(),
+            domain: S.patterns.find((p) => typeof p === "string")?.split("/")[0] ?? "",
+        }))
+        .sort((a, b) => a.name.localeCompare(b.name));
 
-    findEl({ element: "official-repo" }).checked = official;
-    findEl({ element: "framework-select" }).value = framework;
+const renderSources = async () => {
+    const ignore = (await getStorage("ignoreSources")) ?? {};
+    const all = sourceList();
+    const q = normalize($("sources-filter").value.trim());
+    const matching = q
+        ? all.filter((s) => normalize(`${s.name} ${s.domain} ${s.key}`).includes(q))
+        : all;
+    const shown =
+        q || sourcesExpanded ? matching : matching.slice(0, COLLAPSED_SOURCES);
+    const box = $("select-sources-container");
+    box.innerHTML = shown
+        .map(
+            (s) => /*html*/ `
+        <label class="o-cell${ignore[s.key] ? " is-off" : ""}">
+            <input type="checkbox" class="pm-check" id="source-${escapeHtml(s.key)}" data-source="${escapeHtml(s.key)}"${ignore[s.key] ? "" : " checked"} />${escapeHtml(s.name)}
+            <small>${escapeHtml(s.domain)}</small>
+        </label>`,
+        )
+        .join("");
+    $("sources-none").hidden = matching.length > 0;
+    const on = all.filter((s) => !ignore[s.key]).length;
+    $("sources-count").textContent = q
+        ? `${matching.length} of ${all.length} sources · ${on} on`
+        : `${on} of ${all.length} on`;
+    $("sources-filter").placeholder = `Filter ${all.length} sources`;
+    const more = $("sources-show-all");
+    more.hidden = !!q || all.length <= COLLAPSED_SOURCES;
+    more.setAttribute("aria-expanded", String(sourcesExpanded));
+    more.querySelector("span").textContent = sourcesExpanded
+        ? "Show fewer"
+        : `Show all ${all.length}`;
+    more.classList.toggle("is-open", sourcesExpanded);
+    setNavCount("capture", `${on}/${all.length}`);
+};
 
-    addListener("official-repo", "change", async (e) => {
-        const newValue = findEl({ element: "official-repo" }).checked;
-        const prefs = (await getStorage("pwcPrefs")) ?? {};
-        prefs.official = newValue;
-        setStorage("pwcPrefs", prefs);
+const setupSources = async () => {
+    // as before: every known source gets an explicit value in storage
+    const ignore = (await getStorage("ignoreSources")) ?? {};
+    for (const { key } of sourceList()) ignore[key] = ignore[key] ?? false;
+    await setStorage("ignoreSources", ignore);
+
+    $("select-sources-container").addEventListener("change", async (e) => {
+        const key = e.target.dataset.source;
+        if (!key) return;
+        const stored = (await getStorage("ignoreSources")) ?? {};
+        stored[key] = !e.target.checked;
+        log("Updating source", key, "to", stored[key]);
+        await setStorage("ignoreSources", stored);
+        e.target.closest(".o-cell").classList.toggle("is-off", !e.target.checked);
+        renderSources();
     });
-    addListener("framework-select", "change", async (e) => {
-        const newValue = findEl({ element: "framework-select" }).value;
-        let prefs = (await getStorage("pwcPrefs")) ?? {};
-        prefs.framework = newValue;
-        setStorage("pwcPrefs", prefs);
-    });
-};
-
-// --------------------------
-// -----  Auto Tagging  -----
-// --------------------------
-
-const autoTagsFeedback = (text, ok = true) => {
-    const html = /*html*/ `<span style="color: ${ok ? "green" : "red"}">${text}</span>`;
-    setHTML("auto-tags-feedback", html);
-    setTimeout(() => {
-        setHTML("auto-tags-feedback", "");
-    }, 2000);
-};
-
-const autoTagsMaxIndex = (autoTags) => {
-    return Math.max(...autoTags.map((t) => t.id));
-};
-
-const getAutoTagHTML = (at) => {
-    const title = at.title || "";
-    const authors = at.authors || "";
-    const tags = (at.tags ?? []).join(", ");
-    const id = at.id;
-
-    return /*html*/ `
-    <div class="row auto-tags-item" id="auto-tags-item--${id}">
-        <div class="col-3">
-            <input type="text" id="auto-tags-item-title--${id}" value="${escapeHtml(title)}" />
-        </div>
-        <div class="col-3">
-            <input type="text" id="auto-tags-item-authors--${id}" value="${escapeHtml(authors)}" />
-        </div>
-        <div class="col-3">
-            <input type="text" id="auto-tags-item-tags--${id}" value="${escapeHtml(tags)}" />
-        </div>
-        <div class="col-3">
-            <div class="row">
-                <div class="col-6 d-flex justify-content-evenly" title="Update regexs & tags">
-                    <svg style="stroke: #24f62a; width: 32px; height: 32px; cursor: pointer"
-                        id="auto-tags-item-save--${id}" viewBox="0 0 24 24">
-                        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                        <path d="M5 12l5 5l10 -10" />
-                    </svg>
-                </div>
-                <div class="col-6 d-flex justify-content-evenly" title="Delete regexs & tags">
-                    <svg tabindex="0" style="stroke:  var(--red); width: 32px; height: 32px; cursor: pointer; stroke-width: 1.5"
-                        id="auto-tags-item-delete--${id}" viewBox="0 0 24 24">
-                        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                        <line x1="4" y1="7" x2="20" y2="7" />
-                        <line x1="10" y1="11" x2="10" y2="17" />
-                        <line x1="14" y1="11" x2="14" y2="17" />
-                        <path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12" />
-                        <path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3" />
-                    </svg>
-                </div>
-            </div>
-        </div>
-    </div>
-    `;
-};
-
-const addAutoTagListeners = (autoTags) => {
-    for (const atid of autoTags.map((t) => t.id)) {
-        addListener(`auto-tags-item-save--${atid}`, "click", updateAutoTagHandler);
-        addListener(`auto-tags-item-delete--${atid}`, "click", deleteAutoTagHandler);
-    }
-    addListener("auto-tags-new-save", "click", saveNewAutoTagItem);
-};
-
-const updateAutoTagHandler = async (e) => {
-    const i = e.target.id.split("--").last();
-    let at = {};
-    at.title = val(`auto-tags-item-title--${i}`).trim();
-    at.authors = val(`auto-tags-item-authors--${i}`).trim();
-    at.tags = val(`auto-tags-item-tags--${i}`);
-    at.tags = at.tags ? at.tags.split(",").map((t) => t.trim()) : [];
-    at.id = parseInt(i);
-
-    let autoTags = (await getStorage("autoTags")) ?? [];
-    const idx = autoTags.findIndex((a) => a.id === at.id);
-    if (!Number.isInteger(idx)) {
-        autoTagsFeedback("Update error", false);
-        return;
-    }
-    autoTags[idx] = at;
-    setStorage("autoTags", autoTags, () => {
-        autoTagsFeedback("Change has been saved");
-    });
-};
-
-const deleteAutoTagHandler = async (e) => {
-    const i = e.target.id.split("--").last();
-    let newAT = (await getStorage("autoTags")) ?? [];
-    if (confirm("Confirm AutoTag item deletion?")) {
-        newAT = newAT.filter((t) => t.id !== parseInt(i));
-        setStorage("autoTags", newAT);
-        findEl({ element: `auto-tags-item--${i}` }).remove();
-    }
-};
-
-const saveNewAutoTagItem = async () => {
-    let autoTags = (await getStorage("autoTags")) ?? [];
-    const id = Math.max(autoTagsMaxIndex(autoTags) + 1, 0);
-    let at = {};
-    at.title = val("auto-tags-new-title").trim();
-    at.authors = val("auto-tags-new-authors").trim();
-    at.tags = val("auto-tags-new-tags");
-    at.id = id;
-    at.tags = at.tags ? at.tags.split(",").map((t) => t.trim()) : [];
-    at.tags = at.tags.filter((t) => t);
-
-    if (!at.title && !at.authors) {
-        autoTagsFeedback(
-            "You have to set at least one of: Title RegEx or Authors RegEx",
-            false,
-        );
-        return;
-    }
-    if (!at.tags.length) {
-        autoTagsFeedback(
-            "You have to set at least one tag (tags are coma-separated)",
-            false,
-        );
-        return;
-    }
-    if (!Number.isFinite(at.id)) {
-        autoTagsFeedback("Saving error, contact developer", false);
-        return;
-    }
-    log("Saving new autoTag item: ", at);
-    autoTags.push(at);
-    setStorage("autoTags", autoTags, () => {
-        const items = findEl({ element: "auto-tags-list" }).getElementsByClassName(
-            "auto-tags-item",
-        );
-        const last = [...items].last();
-        last.insertAdjacentHTML("afterend", getAutoTagHTML(at));
-        addListener(`auto-tags-item-save--${at.id}`, "click", updateAutoTagHandler);
-        addListener(`auto-tags-item-delete--${at.id}`, "click", deleteAutoTagHandler);
-        val(`auto-tags-new-title`, "");
-        val(`auto-tags-new-authors`, "");
-        val(`auto-tags-new-tags`, "");
-    });
-};
-
-const setupAutoTags = async () => {
-    let autoTags = (await getStorage("autoTags")) ?? [];
-    if (typeof autoTags === "undefined") {
-        autoTags = [
-            {
-                authors: "",
-                title: "gan",
-                tags: ["generative", "gan"],
-                id: 0,
-            },
-        ];
-    }
-    let htmls = [];
-    for (const at of autoTags) {
-        htmls.push(getAutoTagHTML(at));
-    }
-    setHTML("auto-tags-list", htmls.join(""));
-    addAutoTagListeners(autoTags);
-};
-
-// -------------------------------
-// -----  Preprint Matching  -----
-// -------------------------------
-
-const addPreprintUpdate = (update) => {
-    const { paper } = update;
-    let contents = [];
-    for (const [k, v] of Object.entries(update)) {
-        if (k !== "paper" && k !== "bibtex") {
-            if (v) {
-                contents.push(
-                    `<span>${escapeHtml(k)}:</span>&nbsp;<span>${escapeHtml(v)}</span>`,
-                );
-            }
-        }
-    }
-    contents = contents.join("<br>");
-    const html = /*html*/ `
-    <div class="paper-update-item" id="paper-update-item--${paper.id}">
-        <h4>${escapeHtml(paper.title)}</h4>
-        <div>
-            <div class="preprint-update-contents">
-                <div>Updates to approve:</div>
-                ${contents}
-            </div>
-            <div>
-                <button class="preprint-update-ok" id="puo--${paper.id}">Ok</button>
-                <button class="preprint-update-cancel" id="puc--${paper.id}">Cancel</button>
-            </div>
-        </div>
-    </div>
-    `;
-
-    findEl({ element: "updates-to-confirm" }).append(createElementFromHTML(html));
-
-    addListener(`puo--${paper.id}`, "click", async () => {
-        await registerUpdate(update);
-        findEl({ element: `paper-update-item--${paper.id}` }).remove();
-    });
-    addListener(`puc--${paper.id}`, "click", () => {
-        findEl({ element: `paper-update-item--${paper.id}` }).remove();
-    });
-};
-
-const registerUpdate = async (update) => {
-    const { paper } = update;
-    for (const [k, v] of Object.entries(update)) {
-        if (k !== "paper" && v) {
-            paper[k] = v;
-        }
-    }
-    let papers = (await getStorage("papers")) ?? {};
-    console.log("papers[paper.id]: ", papers[paper.id]);
-    console.log("paper: ", paper);
-    papers[paper.id] = paper;
-    await setStorage("papers", papers);
-};
-
-const startMatching = async (papersToMatch) => {
-    showId("matching-progress-container", "flex");
-    setHTML("matching-status-total", papersToMatch.length);
-
-    const progressbar = querySelector("#manual-parsing-progress-bar");
-
-    const changeProgress = (progress) => {
-        progressbar.style.width = `${progress}%`;
+    const setAll = async (on) => {
+        const stored = (await getStorage("ignoreSources")) ?? {};
+        for (const { key } of sourceList()) stored[key] = !on;
+        await setStorage("ignoreSources", stored);
+        renderSources();
     };
-
-    for (const [idx, paper] of papersToMatch.entries()) {
-        console.log("idx: ", idx);
-        setHTML("matching-status-index", idx + 1);
-        setHTML("matching-status-title", escapeHtml(paper.title));
-        changeProgress(parseInt((idx / papersToMatch.length) * 100));
-
-        var bibtex, venue, venueFull, note, code, match;
-
-        setHTML("matching-status-provider", "paperswithcode.org ...");
-        const pwcMatch = await tryPWCMatch(paper);
-        console.log("pwcMatch: ", pwcMatch);
-        code = !paper.codeLink && pwcMatch?.url;
-        note = !paper.note && pwcMatch?.note;
-        venue = pwcMatch?.venue;
-        bibtex = pwcMatch?.bibtex;
-
-        if (!venue) {
-            setHTML("matching-status-provider", "dblp.org ...");
-            match = await tryDBLP(paper);
-            console.log("dblpMatch: ", match);
-            bibtex = match?.bibtex;
-            venue = match?.venue;
-            note = !paper.note && match?.note;
-        }
-
-        if (!venue) {
-            setHTML("matching-status-provider", "crossref.org ...");
-            match = await tryCrossRef(paper);
-            console.log("crossRefMatch: ", match);
-            venue = match?.venue;
-            note = !paper.note && match?.note;
-        }
-
-        if (!venue) {
-            setHTML("matching-status-provider", "semanticscholar.org ...");
-            match = await trySemanticScholar(paper);
-            console.log("semanticScholarMatch: ", match);
-            venue = match?.venue;
-            venueFull = match?.venueFull;
-            note = !paper.note && match?.note;
-        }
-
-        if (!venue) {
-            setHTML("matching-status-provider", "unpaywall.org ...");
-            match = await tryUnpaywall(paper);
-            console.log("unpaywallMatch: ", match);
-            venue = match?.venue;
-            note = !paper.note && match?.note;
-        }
-
-        if (!venue) {
-            setHTML("matching-status-provider", "scholar.google.com ...");
-            match = await tryCrossRef(paper);
-            console.log("googleScholarMatch: ", match);
-            venue = match?.venue;
-            note = !paper.note && match?.note;
-        }
-        if (venue || code) {
-            addPreprintUpdate({ bibtex, venue, venueFull, note, codeLink: code, paper });
-        }
-    }
-    changeProgress(100);
-    setHTML("matching-status", "All done!");
+    $("sources-all-on").addEventListener("click", () => setAll(true));
+    $("sources-all-off").addEventListener("click", () => setAll(false));
+    $("sources-filter").addEventListener("input", renderSources);
+    $("sources-show-all").addEventListener("click", () => {
+        sourcesExpanded = !sourcesExpanded;
+        renderSources();
+    });
+    await renderSources();
 };
 
-const setupPreprintMatching = async () => {
-    const papers = (await getStorage("papers")) ?? {};
-    const papersToMatch = Object.values(cleanPapers(papers))
+// -------------------------------
+// -----  Preprint matching  -----
+// -------------------------------
+
+let preprints = [];
+
+const findPreprints = () =>
+    state.sortedPapers
         .filter((paper) => !paper.venue && paper.source !== "website")
         .map((value) => ({ value, sort: Math.random() })) // randomize
         .sort((a, b) => a.sort - b.sort)
         .map(({ value }) => value);
-    setHTML("preprints-number", papersToMatch.length);
-    addListener("start-matching", "click", () => {
-        startMatching(papersToMatch);
-    });
+
+const showPreprintCount = () => {
+    preprints = findPreprints();
+    const n = preprints.length;
+    $("start-matching").textContent = `Check ${plural(n, "preprint")}`;
+    $("preprints-help").textContent = n
+        ? `${plural(n, "paper")} ${n === 1 ? "has" : "have"} no publication venue yet.`
+        : "Every paper has a publication venue.";
+    $("start-matching").disabled = n === 0;
 };
 
-// -----------------------------
-// -----  Data Management  -----
-// -----------------------------
-
-const handleDownloadMemoryClick = () => {
-    const now = new Date();
-    const date = now.toLocaleDateString().replaceAll("/", ".");
-    const time = now.toLocaleTimeString().replaceAll(":", ".");
-    chrome.storage.local.get("papers", ({ papers }) => {
-        // const version = versionToSemantic(papers.__dataVersion);
-        downloadTextFile(
-            JSON.stringify(papers),
-            `PaperMemory-data-${date}-${time}.json`,
-            "text/json",
-        );
-    });
-};
-
-const handleDownloadBibtexJsonClick = () => {
-    const now = new Date();
-    const date = now.toLocaleDateString().replaceAll("/", ".");
-    const time = now.toLocaleTimeString().replaceAll(":", ".");
-    chrome.storage.local.get("papers", ({ papers }) => {
-        // const version = versionToSemantic(papers.__dataVersion);
-        delete papers.__dataVersion;
-        const bibtex = Object.keys(papers).reduce((obj, k) => {
-            obj[k] = bibtexToString(papers[k].bibtex);
-            return obj;
-        }, {});
-        downloadTextFile(
-            JSON.stringify(bibtex),
-            `PaperMemory-bibtex-${date}-${time}.json`,
-            "text/json",
-        );
-    });
-};
-
-const handleDownloadBibtexPlainClick = () => {
-    const now = new Date();
-    const date = now.toLocaleDateString().replaceAll("/", ".");
-    const time = now.toLocaleTimeString().replaceAll(":", ".");
-    chrome.storage.local.get("papers", ({ papers }) => {
-        // const version = versionToSemantic(papers.__dataVersion);
-        delete papers.__dataVersion;
-        const bibtex = Object.values(papers)
-            .map((v, k) => {
-                let b = v.bibtex;
-                if (!b) {
-                    b = "";
-                    log(v);
-                }
-                return bibtexToString(b);
-            })
-            .join("\n");
-        downloadTextFile(
-            bibtex,
-            `PaperMemory-bibtex-${date}-${time}.bib`,
-            "text/plain",
-        );
-    });
-};
-
-const handleConfirmOverwrite = (papersToWrite, warning) => (e) => {
-    setHTML(
-        "overwriteFeedback",
-        `<div class="pm-container"><div class="sk-folding-cube"><div class="sk-cube1 sk-cube"></div><div class="sk-cube2 sk-cube"></div><div class="sk-cube4 sk-cube"></div><div class="sk-cube3 sk-cube"></div></div></div>`,
+/** Writes the accepted changes on the paper as stored now (not a stale copy) */
+const registerUpdate = async (update) => {
+    const id = update.paper.id;
+    const fields = Object.fromEntries(
+        Object.entries(update).filter(([k, v]) => k !== "paper" && v),
     );
-    setTimeout(async () => {
-        if (warning) {
-            for (const id in papersToWrite) {
-                if (papersToWrite.hasOwnProperty(id) && !id.startsWith("__")) {
-                    const { paper, warnings } = validatePaper(papersToWrite[id], false);
-                    papersToWrite[id] = paper;
-                    log(warnings);
-                }
-            }
-        }
-        await setStorage("papers", papersToWrite);
-        const pushed = (await shouldSync())
-            ? " and pushed to your online Gist storage"
-            : "";
-        await pushToRemote();
-        setHTML(
-            "overwriteFeedback",
-            `<h4 style="margin: 1.5rem">Memory overwritten${pushed}.</h4>`,
-        );
-        val("overwrite-arxivmemory-input", "");
-    }, 700);
+    // a paper deleted meanwhile is not re-created (patch of an unknown id: no-op)
+    const answer = await memoryOp({ op: "patch", id, fields });
+    if (!answer.ok) return false;
+    await pushToRemote();
+    return true;
 };
 
-const handleCancelOverwrite = (e) => {
-    hideId("overwriteFeedback");
-    setHTML("overwriteFeedback", ``);
-    val("overwrite-arxivmemory-input", "");
-};
-
-const handleOverwriteMemory = () => {
-    var file = document.getElementById("overwrite-arxivmemory-input").files;
-    if (!file || file.length < 1) {
-        return;
+const addPreprintUpdate = (update) => {
+    const item = document.createElement("div");
+    item.className = "o-update";
+    const title = document.createElement("div");
+    title.className = "pm-row-label";
+    title.textContent = update.paper.title;
+    const dl = document.createElement("dl");
+    for (const [k, v] of Object.entries(update)) {
+        if (k === "paper" || k === "bibtex" || !v) continue;
+        const dt = document.createElement("dt");
+        dt.textContent =
+            { venue: "Venue", venueFull: "Full venue", note: "Note", codeLink: "Code" }[
+                k
+            ] ?? k;
+        const dd = document.createElement("dd");
+        dd.textContent = v;
+        dl.append(dt, dd);
     }
-    file = file[0];
-    var reader = new FileReader();
-    reader.onload = function (e) {
-        try {
-            const overwritingPapers = JSON.parse(e.target.result);
-            showId("overwriteFeedback");
-            setHTML(
-                "overwriteFeedback",
-                `<div class="pm-container"><div class="sk-folding-cube"><div class="sk-cube1 sk-cube"></div><div class="sk-cube2 sk-cube"></div><div class="sk-cube4 sk-cube"></div><div class="sk-cube3 sk-cube"></div></div></div>`,
-            );
-            const confirm = `<button id="confirm-overwrite">Confirm</button>`;
-            const cancel = `<button id="cancel-overwrite">Cancel</button>`;
-            const title = `<h4 class="w-100 code-font" style="font-size: 0.9rem;">Be careful, you will not be able to revert this operation. Make sure you have downloaded a backup of your memory before overwriting it.</h4>`;
-            const overwriteDiv = `<div id="overwrite-buttons" class="flex-center-evenly pt-3 px-4"> ${title} <div class="flex-center-evenly w-100">${cancel} ${confirm}</div></div>`;
-            setTimeout(async () => {
-                const { success, message, warning, papersToWrite } =
-                    await prepareOverwriteData(overwritingPapers);
-                if (success) {
-                    if (warning) {
-                        const nWarnings = (warning.match(/<br\/>/g) ?? []).length;
-                        setHTML(
-                            "overwriteFeedback",
-                            `<h5 class="errorTitle">Done with ${nWarnings} warnings. Confirm overwrite?</h5>${warning}${overwriteDiv}`,
-                        );
-                    } else {
-                        style("overwriteFeedback", "text-align", "center");
-                        setHTML(
-                            "overwriteFeedback",
-                            `<h5 class="mb-0 mt-2">Data seems valid. Confirm overwrite?</h5>${overwriteDiv}`,
-                        );
-                    }
-                    addListener(
-                        "confirm-overwrite",
-                        "click",
-                        handleConfirmOverwrite(papersToWrite, warning),
-                    );
-                    addListener("cancel-overwrite", "click", handleCancelOverwrite);
-                } else {
-                    setHTML("overwriteFeedback", message);
-                }
-            }, 1500);
-        } catch (error) {
-            setHTML(
-                "overwriteFeedback",
-                `<br/><strong>Error:</strong><br/>${stringifyError(error)}`,
-            );
-        }
-    };
-    reader.readAsText(file);
-};
-
-const handleSelectOverwriteFile = () => {
-    var file = document.getElementById("overwrite-arxivmemory-input").files;
-    if (!file || file.length < 1) {
-        return;
-    }
-    file = file[0];
-    setHTML("overwrite-file-name", file.name);
-    if (!file.name.endsWith(".json")) return;
-    findEl({ element: "overwrite-arxivmemory-button" }).disabled = false;
-};
-
-const handleExportTagsConfirm = () => {
-    const tags = parseTags(findEl({ element: "export-tags-select" }));
-    const operator = findEl({ element: "export-tags-operator" }).value;
-    const format = findEl({ element: "export-tags-format" }).value;
-
-    let papers = state.sortedPapers.filter((p) =>
-        operator === "AND"
-            ? p.tags && tags.every((t) => p.tags.includes(t))
-            : p.tags && tags.some((t) => p.tags.includes(t)),
-    );
-    if (format === "bib") {
-        papers = papers.map((p) => bibtexToString(p.bibtex)).join("\n");
-    } else if (format.includes("json")) {
-        papers = JSON.stringify(
-            papers.map((p) => {
-                if (format.includes("url")) return p.pdfLink;
-
-                let e = { url: p.pdfLink, title: p.title };
-                if (p.tags && p.tags.length > 0) {
-                    e.tags = p.tags;
-                }
-                if (p.codeLink) {
-                    e.codeLink = p.codeLink;
-                }
-                return e;
-            }),
-            null,
-            2,
-        );
-    }
-    const now = new Date();
-    const date = now.toLocaleDateString().replaceAll("/", ".");
-    const time = now.toLocaleTimeString().replaceAll(":", ".");
-    const fname = `PMExport-${date}-${time}-${tags.join("-")}${
-        format.includes("url") ? "-urls" : ""
-    }`;
-    if (format.includes("json")) {
-        downloadTextFile(papers, fname + ".json", "text/json");
-    } else {
-        downloadTextFile(papers, fname + ".bib", "text/plain");
-    }
-};
-
-const setupDataManagement = () => {
-    addListener("download-arxivmemory", "click", handleDownloadMemoryClick);
-    addListener("download-bibtex-json", "click", handleDownloadBibtexJsonClick);
-    addListener("download-bibtex-plain", "click", handleDownloadBibtexPlainClick);
-    addListener("overwrite-arxivmemory-button", "click", handleOverwriteMemory);
-    addListener("overwrite-arxivmemory-input", "change", handleSelectOverwriteFile);
-
-    const tagOptions = [...state.paperTags]
-        .sort()
-        .map((t, i) => {
-            const h = '<option value="' + t + '"'; // not string literal here for minification
-            return h + `>${t}</option>`;
-        })
-        .join("");
-    setHTML("export-tags-select", tagOptions);
-    new TomSelect(`#export-tags-select`, {
-        ...tomSelectOptions,
-        placeholder: "Tags to export",
-        create: false,
+    const btns = document.createElement("div");
+    btns.className = "o-btns";
+    const ok = document.createElement("button");
+    ok.className = "pm-btn pm-btn-primary pm-btn-sm";
+    ok.textContent = "Accept";
+    ok.addEventListener("click", async () => {
+        if (await registerUpdate(update)) return item.remove();
+        ok.textContent = "Couldn’t save — try again"; // the proposal stays
     });
-    addListener("export-tags-confirm", "click", handleExportTagsConfirm);
+    const skip = document.createElement("button");
+    skip.className = "pm-btn pm-btn-ghost pm-btn-sm";
+    skip.textContent = "Skip";
+    skip.addEventListener("click", () => item.remove());
+    btns.append(ok, skip);
+    const text = document.createElement("div");
+    text.className = "pm-row-text";
+    text.append(title, dl);
+    item.append(text, btns);
+    $("updates-to-confirm").append(item);
 };
 
-// ----------------------------
-// -----  Select Sources  -----
-// ----------------------------
-
-const makeSource = ([key, sourceDict], idx) => {
-    if (key === "website") return "";
-    const display = sourceDict.name.split("(")[0].trim();
-    return /*html*/ `
-    <div class="source-container">
-        <div class="source-wrapper">
-            <input class="switch source-switch" type="checkbox" id="source-${key}" name="${key}" value="${key}">
-            <label for="${key}">${display}</label><br><br>
-        </div>
-    </div>`;
+const startMatching = async () => {
+    const papers = preprints;
+    $("start-matching").disabled = true;
+    $("matching-progress-container").hidden = false;
+    $("matching-status-total").textContent = papers.length;
+    const bar = $("manual-parsing-progress-bar");
+    const provider = (name) => ($("matching-status-provider").textContent = name);
+    for (const [idx, paper] of papers.entries()) {
+        $("matching-status-index").textContent = idx + 1;
+        $("matching-status-title").textContent = paper.title;
+        bar.style.width = `${(idx / papers.length) * 100}%`;
+        let bibtex, venue, venueFull, note, match;
+        provider("dblp.org");
+        match = await tryDBLP(paper);
+        bibtex = match?.bibtex;
+        venue = match?.venue;
+        note = !paper.note && match?.note;
+        if (!venue) {
+            provider("crossref.org");
+            match = await tryCrossRef(paper);
+            venue = match?.venue;
+            note = !paper.note && match?.note;
+        }
+        if (!venue) {
+            provider("semanticscholar.org");
+            match = await trySemanticScholar(paper);
+            venue = match?.venue;
+            venueFull = match?.venueFull;
+            note = !paper.note && match?.note;
+        }
+        if (!venue) {
+            provider("unpaywall.org");
+            match = await tryUnpaywall(paper);
+            venue = match?.venue;
+            note = !paper.note && match?.note;
+        }
+        if (venue) addPreprintUpdate({ bibtex, venue, venueFull, note, paper });
+    }
+    bar.style.width = "100%";
+    const found = $("updates-to-confirm").children.length;
+    $("matching-status").textContent = found
+        ? `Done. ${plural(found, "paper")} to review below.`
+        : "Done. No published version found.";
 };
 
-const setupSourcesSelection = async () => {
-    const sorted = Object.entries(knownPaperPages).sort(([, a], [, b]) =>
-        a.name.localeCompare(b.name),
-    );
-    const table = sorted.map(makeSource).join("");
-    setHTML("select-sources-container", table);
+// --------------------------
+// -----  Memory changes -----
+// --------------------------
 
-    let ignoreSources = (await getStorage("ignoreSources")) ?? {};
-
-    for (const [key] of sorted) {
-        ignoreSources[key] = ignoreSources.hasOwnProperty(key)
-            ? ignoreSources[key]
-            : false;
-        const el = findEl({ element: `source-${key}` });
-        if (el) {
-            el.checked = !ignoreSources[key];
-        }
+/** Re-renders everything that shows the Memory (counts, tags, rules, exports) */
+/**
+ * Re-renders what shows the Memory. `fields`: the paper fields that changed ("+" / "-": a
+ * paper added / removed); null: everything. A visit (count, lastOpenDate) changes nothing
+ * shown here; tags and auto-tag counts are only rebuilt when tags, titles or authors change.
+ * @param {Set<string> | null} fields
+ */
+const refreshMemoryViews = (fields = null) => {
+    const any = (...keys) => !fields || keys.some((k) => fields.has(k));
+    if (any("+", "-")) {
+        const n = state.sortedPapers.length;
+        $("memory-size").textContent = `${plural(n, "paper")} in your Memory. `;
     }
-    setStorage("ignoreSources", ignoreSources);
-
-    for (const [key] of sorted) {
-        addListener(`source-${key}`, "change", async (e) => {
-            const k = e.target.id.replace("source-", "");
-            let ignoreSources = (await getStorage("ignoreSources")) ?? {};
-            const el = findEl({ element: e.target.id });
-            ignoreSources[k] = !el.checked;
-            console.log("Updating source", k, "to", ignoreSources[k]);
-            setStorage("ignoreSources", ignoreSources);
-        });
-    }
+    if (any("+", "-", "venue", "source")) showPreprintCount();
+    if (any("+", "-", "tags")) refreshIO();
+    const tags = any("+", "-", "tags");
+    const rules = any("+", "-", "title", "author");
+    if (!tags && !rules) return;
+    // a rename or a rule being typed: try again in a moment
+    if (tagsAreBusy()) return setTimeout(() => refreshMemoryViews(fields), 1000);
+    refreshTags({ tags, rules });
 };
 
-// ---------------------
-// -----  SYNCING  -----
-// ---------------------
-
-const setupSync = async () => {
-    showId("pat-loader");
-    const { ok, payload, error } = (await shouldSync())
-        ? await getGist({ patError: false })
-        : { ok: true, payload: { pat: (await getStorage("syncPAT")) ?? "" } };
-    hideId("pat-loader");
-
-    if (!ok) {
-        if (error) {
-            setHTML(
-                "pat-feedback",
-                "Invalid PAT" + "<br/><br/>" + escapeHtml(String(error)),
-            );
-        }
-        hideId("pat-loader");
-        await toggleSync({ hideAll: true });
-    } else {
-        const { pat } = payload;
-        val("pat-input", pat);
-        await toggleSync();
-    }
-
-    addListener("save-pat", "click", async () => {
-        console.log("Attempting to store Github PAT");
-        showId("pat-loader");
-        const pat = val("pat-input");
-        if (!pat) {
-            setHTML("pat-feedback", "Invalid PAT");
-            await setStorage("syncPAT", pat);
-            await setStorage("syncState", false);
-            hideId("pat-loader");
-            await toggleSync({ hideAll: true });
-            return;
-        }
-        const { ok, payload, error } = await getGist({ pat });
-        if (!ok) {
-            logError(error);
-            setHTML("pat-feedback", escapeHtml(String(error.response.data.message)));
-        } else {
-            const { file, pat, gistId } = payload;
-            log("Gist ID", gistId);
-            log("Data URL", file.raw_url);
-            log("Personal Access Token", "[REDACTED]");
-            setHTML("pat-feedback", "Ok! Token is valid.");
-            toggleSync();
-        }
-        hideId("pat-loader");
-    });
-
-    addListener("stop-gh-sync", "click", async () => {
-        const c = confirm("Are you sure you want to stop syncing to Github?");
-        if (!c) return;
-        const pat = "";
-        setStorage("syncPAT", pat);
-        setStorage("syncState", false);
-        val("pat-input", pat);
-        toggleSync();
-    });
-
-    addListener("start-gh-sync", "click", async () => {
-        showId("sync-loader");
-        if (!(await showSyncWarning())) {
-            hideId("sync-loader");
-            return;
-        }
-        const { ok, payload, error } = await getGist();
-        if (!ok) {
-            alert("Your Personal Access Token is invalid.\n\n" + (error ?? ""));
-            return;
-        }
-        const { file, pat, gistId } = payload;
-        const data = await getDataForGistFile({ file, gistId });
-        let userChoice = "no-remote";
-        if (data) {
-            console.log("Existing data file content:", data);
-            userChoice = await getSyncStrategy();
-            if (!userChoice) {
-                hideId("sync-loader");
-                return;
-            }
-        }
-        try {
-            if (userChoice === "remote-local" || userChoice === "no-remote") {
-                // writing to remote, keeping local untouched
-                if (userChoice === "remote-local") {
-                    // save pre-existing remote data
-                    const now = new Date();
-                    const date = now.toLocaleDateString().replaceAll("/", ".");
-                    const time = now.toLocaleTimeString().replaceAll(":", ".");
-                    downloadTextFile(
-                        JSON.stringify(data),
-                        `PaperMemory-remote-data-backup-${date}-${time}.json`,
-                        "text/json",
-                    );
-                }
-                await updateGistFile({ file, content: state.papers, gistId });
-                await setSyncOk();
-            } else if (userChoice === "local-remote") {
-                // overwrite local data with remote data
-                dispatch("download-arxivmemory", "click");
-                const remotePapers = data;
-                const { success, message, warning, papersToWrite } =
-                    await prepareOverwriteData(remotePapers);
-                if (success) {
-                    if (warning) {
-                        const nWarnings = (warning.match(/<br\/>/g) ?? []).length;
-                        setHTML(
-                            "overwriteRemoteFeedback",
-                            `<h5 class="errorTitle">Done with ${nWarnings} non-breaking warnings.</h5>${warning}<br/><br/>`,
-                        );
-                    } else {
-                        style("overwriteRemoteFeedback", "text-align", "center");
-                        setHTML(
-                            "overwriteRemoteFeedback",
-                            `<h5 class="mb-0 mt-2">Data is valid. Overwriting</h5>`,
-                        );
-                    }
-                    await setStorage("papers", papersToWrite);
-                    await setSyncOk();
-                } else {
-                    setHTML("overwriteRemoteFeedback", message);
-                }
-            } else if (userChoice === "merge") {
-                const now = new Date();
-                const date = now.toLocaleDateString().replaceAll("/", ".");
-                const time = now.toLocaleTimeString().replaceAll(":", ".");
-                downloadTextFile(
-                    JSON.stringify(data),
-                    `PaperMemory-merge--remote-data-backup-${date}-${time}.json`,
-                    "text/json",
-                );
-                downloadTextFile(
-                    JSON.stringify(await getStorage("papers")),
-                    `PaperMemory-merge--local-data-backup-${date}-${time}.json`,
-                    "text/json",
-                );
-                let mergedPapers = {};
-                const remotePapers = data;
-                const localPapers = await getStorage("papers");
-                const remoteVersion = remotePapers["__dataVersion"];
-                const localVersion = localPapers["__dataVersion"];
-                mergedPapers["__dataVersion"] = Math.min(remoteVersion, localVersion);
-                for (const key of Object.keys(localPapers)) {
-                    if (key === "__dataVersion") continue;
-                    if (remotePapers[key]) {
-                        mergedPapers[key] = mergePapers({
-                            newPaper: remotePapers[key],
-                            oldPaper: localPapers[key],
-                            overwrites: [],
-                            syncMerge: true,
-                        });
-                    } else {
-                        mergedPapers[key] = localPapers[key];
-                    }
-                }
-                for (const key of Object.keys(remotePapers)) {
-                    if (key === "__dataVersion") continue;
-                    if (!mergedPapers[key]) {
-                        mergedPapers[key] = remotePapers[key];
-                    }
-                }
-
-                const { success, message, warning, papersToWrite } =
-                    await prepareOverwriteData(mergedPapers);
-                if (success) {
-                    if (warning) {
-                        const nWarnings = (warning.match(/<br\/>/g) ?? []).length;
-                        setHTML(
-                            "overwriteRemoteFeedback",
-                            `<h5 class="errorTitle">Done with ${nWarnings} non-breaking warnings.</h5>${warning}<br/><br/>`,
-                        );
-                    } else {
-                        style("overwriteRemoteFeedback", "text-align", "center");
-                        setHTML(
-                            "overwriteRemoteFeedback",
-                            `<h5 class="mb-0 mt-2">Data is valid. Overwriting</h5>`,
-                        );
-                    }
-                    await setStorage("papers", papersToWrite);
-                    await updateGistFile({ file, content: papersToWrite, gistId });
-                    await setSyncOk();
-                } else {
-                    setHTML("overwriteRemoteFeedback", message);
-                }
-            }
-        } catch (e) {
-            setHTML("overwriteRemoteFeedback", escapeHtml(String(e)));
-        }
-        await sendMessageToBackground({ type: "restartGist" });
-        hideId("sync-loader");
+/** Papers changed in another page (popup, import running here): reload the state */
+const followMemoryChanges = () => {
+    let timer;
+    let fields = new Set();
+    // onPapersChange keeps state.papers and its lists on the stored Memory
+    onPapersChange((ids, changed) => {
+        for (const f of changed) fields.add(f);
+        clearTimeout(timer);
+        timer = setTimeout(() => {
+            const all = fields;
+            fields = new Set();
+            refreshMemoryViews(all);
+        }, 150);
     });
 };
 
-const getSyncStrategy = async () => {
-    showOptionsModal("sync-strategy");
-    return new Promise((resolve) => {
-        const done = (val) => {
-            closeModal();
-            resolve(val);
-        };
-        addEventToClass("modal-sync-strategy-choice", "click", (event) => {
-            const id = event.target.id ?? "";
-            const strategy = id.split("modal-sync-").last() ?? "";
-            done(strategy === "cancel" ? "" : strategy);
-        });
-        addListener("close-modal", "click", () => done(""));
-        addListener(window, "click", (event) => {
-            event.target === findEl({ element: "modal-wrapper" }) && done("");
-        });
-    });
-};
-
-const showSyncWarning = async () => {
-    showOptionsModal("sync-warning");
-    return new Promise((resolve) => {
-        const done = (val) => {
-            closeModal();
-            resolve(val);
-        };
-
-        addListener("modal-sync-warning-continue", "click", () => done(true));
-
-        addListener("modal-sync-warning-description", "click", () => done(false));
-        addListener("modal-sync-warning-cancel", "click", () => done(false));
-        addListener("close-modal", "click", () => done(false));
-        addListener(window, "click", (event) => {
-            event.target === findEl({ element: "modal-wrapper" }) && done(false);
-        });
-    });
-};
-
-const setSyncOk = async ({ push = false } = {}) => {
-    await setStorage("syncState", true);
-    push && (await pushToRemote());
-    await toggleSync();
-    alert("Synced!");
-};
-
-const toggleSync = async ({ hideAll = false } = {}) => {
-    const syncState = await getStorage("syncState");
-    if (hideAll) {
-        hideId("stop-sync");
-        hideId("start-sync");
-        return;
-    }
-    if (!syncState) {
-        showId("start-sync");
-        hideId("stop-sync");
-    } else {
-        showId("stop-sync");
-        hideId("start-sync");
-    }
-};
-
-// ---------------------
-// -----  Sidebar  -----
-// ---------------------
-
-const makeSideBar = () => {
-    const sections = queryAll(".section").filter(
-        (section) => !!section.querySelector("h2"),
-    );
-    const lis = sections.map((section) => {
-        const h2 = section.querySelector("h2");
-        const id = h2.id;
-        const title = h2.innerText;
-        let ul = "";
-        const titles = ["h3", "h4", "h5", "h6"];
-        let hs = [];
-        for (const t of titles) {
-            hs = section.querySelectorAll(t);
-            if (hs.length) break;
-        }
-        if (hs.length > 1) {
-            ul = `<ul>${[...hs]
-                .map((h) => `<li><a href="#${h.id}">${h.innerText}</a></li>`)
-                .join("")}</ul>`;
-        }
-
-        return `<li class="nav-item"><a class="nav-link" href="#${id}">${title}</a>${ul}</li>`;
-    });
-    setHTML(querySelector("nav ul"), lis.join(""));
-};
-
-const setupSidebar = async () => {
-    makeSideBar();
-    var toc = querySelector(".toc");
-    var tocPath = querySelector(".toc-marker path");
-    var tocItems;
-
-    // Factor of screen size that the element must cross
-    // before it's considered visible
-    var TOP_MARGIN = 0.05,
-        BOTTOM_MARGIN = 0.1;
-
-    var pathLength;
-
-    var lastPathStart, lastPathEnd;
-
-    window.addEventListener("resize", drawPath, false);
-    window.addEventListener("scroll", sync, false);
-
-    drawPath();
-
-    function drawPath() {
-        tocItems = [].slice.call(toc.querySelectorAll("li"));
-
-        // Cache element references and measurements
-        tocItems = tocItems.map(function (item) {
-            var anchor = item.querySelector("a");
-            var target = document.getElementById(anchor.getAttribute("href").slice(1));
-
-            return {
-                listItem: item,
-                anchor: anchor,
-                target: target,
-            };
-        });
-
-        // Remove missing targets
-        tocItems = tocItems.filter(function (item) {
-            return !!item.target;
-        });
-
-        var path = [];
-        var pathIndent;
-
-        tocItems.forEach(function (item, i) {
-            var x = item.anchor.offsetLeft - 5,
-                y = item.anchor.offsetTop,
-                height = item.anchor.offsetHeight;
-
-            if (i === 0) {
-                path.push("M", x, y, "L", x, y + height);
-                item.pathStart = 0;
-            } else {
-                // Draw an additional line when there's a change in
-                // indent levels
-                if (pathIndent !== x) path.push("L", pathIndent, y);
-
-                path.push("L", x, y);
-
-                // Set the current path so that we can measure it
-                tocPath.setAttribute("d", path.join(" "));
-                item.pathStart = tocPath.getTotalLength() || 0;
-
-                path.push("L", x, y + height);
-            }
-
-            pathIndent = x;
-
-            tocPath.setAttribute("d", path.join(" "));
-            item.pathEnd = tocPath.getTotalLength();
-        });
-
-        pathLength = tocPath.getTotalLength();
-
-        sync();
-    }
-
-    function sync() {
-        var windowHeight = window.innerHeight;
-
-        var pathStart = pathLength,
-            pathEnd = 0;
-
-        var visibleItems = 0;
-
-        tocItems.forEach(function (item) {
-            var targetBounds = item.target.getBoundingClientRect();
-
-            if (
-                targetBounds.bottom > windowHeight * TOP_MARGIN &&
-                targetBounds.top < windowHeight * (1 - BOTTOM_MARGIN)
-            ) {
-                pathStart = Math.min(item.pathStart, pathStart);
-                pathEnd = Math.max(item.pathEnd, pathEnd);
-
-                visibleItems += 1;
-
-                item.listItem.classList.add("visible");
-            } else {
-                item.listItem.classList.remove("visible");
-            }
-        });
-
-        // Specify the visible path or hide the path altogether
-        // if there are no visible items
-        if (visibleItems > 0 && pathStart < pathEnd) {
-            if (pathStart !== lastPathStart || pathEnd !== lastPathEnd) {
-                tocPath.setAttribute("stroke-dashoffset", "1");
-                tocPath.setAttribute(
-                    "stroke-dasharray",
-                    "1, " +
-                        pathStart +
-                        ", " +
-                        (pathEnd - pathStart) +
-                        ", " +
-                        pathLength,
-                );
-                tocPath.setAttribute("opacity", 1);
-            }
-        } else {
-            tocPath.setAttribute("opacity", 0);
-        }
-
-        lastPathStart = pathStart;
-        lastPathEnd = pathEnd;
-    }
-};
-
-// -------------------
-// -----  Modal  -----
-// -------------------
-
-const showOptionsModal = (name) => {
-    queryAll(".modal-content-div").forEach(hideId);
-    showId(`modal-${name}-content`, "contents");
-    style("modal-wrapper", "display", "flex");
-    document.body.style.overflow = "hidden";
-};
-
-const closeModal = () => {
-    style("modal-wrapper", "display", "none");
-    document.body.style.overflow = "auto";
-};
-
-const setupModals = () => {
-    addListener("close-modal", "click", closeModal);
-    addListener(window, "click", (event) => {
-        event.target === findEl({ element: "modal-wrapper" }) && closeModal();
-    });
-};
-
-// ----------------------------
-// -----  Document Ready  -----
-// ----------------------------
+// ------------------
+// -----  Start -----
+// ------------------
 
 (async () => {
-    setupSidebar();
+    paintIcons();
+    setupTooltips();
+    setupTopbar("options");
+    setupNavAndSearch();
     await initSyncAndState();
-    makeTOC();
-    setupCodeBlocks();
-    setupTheme();
-    setupPWCPrefs();
-    setupAutoTags();
-    setupPreprintMatching();
-    setupImportPapers();
-    setUpKeyboardListeners();
-    setupSourcesSelection();
-    setupDataManagement();
-    setupSync();
-    setupModals();
+    await setupPrefs();
+    await setupSources();
+    await setupTags(() => refreshMemoryViews());
+    setupIO();
+    refreshMemoryViews();
+    followMemoryChanges();
+    $("start-matching").addEventListener("click", startMatching);
+    $("open-browser-shortcuts").addEventListener("click", openShortcutSettings);
+    await loadShortcuts();
+    filterSettings($("settings-search").value);
+    goToHash();
+    document.documentElement.dataset.optionsReady = "true";
+    await setupSync(() => refreshMemoryViews());
 })();

@@ -8,6 +8,7 @@ import {
     updateGistFile,
 } from "@pmu/sync.js";
 import { getStorage, setStorage } from "@pmu/data.js";
+import { runMemoryOp, serveMemoryOps } from "@pmu/memoryQueue.js";
 import { isSourceURL, parseIdFromUrl } from "@pmu/urls.js";
 import { initState, downloadPaperPdf } from "@pmu/state.js";
 import { fetchText, fetchJSON } from "@pmu/parsers.js";
@@ -30,6 +31,7 @@ import {
 } from "@pmu/functions.js";
 
 export function initBackground() {
+    serveMemoryOps(); // this context runs the Memory's write queue for every page
     var tabStatuses = {};
     var paperTitles = {};
 
@@ -61,7 +63,7 @@ export function initBackground() {
     const initGist = async () => {
         if (!(await shouldSync())) {
             info("Sync disabled.");
-            return;
+            return { ok: false, error: "Sync is off." };
         }
         const start = Date.now();
         log("Initializing Sync...");
@@ -79,6 +81,7 @@ export function initBackground() {
             badgeError();
         }
         badgeClear();
+        return ok ? { ok: true } : { ok: false, error: String(error || payload) };
     };
 
     initGist();
@@ -253,8 +256,11 @@ export function initBackground() {
         return { ...codes[0], ...code };
     };
 
-    const pullSyncPapers = async () => {
-        if (!(await shouldSync())) return;
+    // report: answer {ok, papers | error} instead of the papers or undefined, so a page can
+    // tell a failed pull from an empty one (options page: Sync now)
+    const pullSyncPapers = async ({ report = false } = {}) => {
+        if (!(await shouldSync()))
+            return report ? { ok: false, error: "Sync is off." } : undefined;
         try {
             badgeWait("Pull...");
             const start = Date.now();
@@ -288,23 +294,31 @@ export function initBackground() {
                     throw e;
                 }
             }
+            if (
+                !remotePapers ||
+                typeof remotePapers !== "object" ||
+                Array.isArray(remotePapers)
+            )
+                throw new Error("The gist does not hold a Memory.");
             log("Pulled papers:", remotePapers);
             const duration = (Date.now() - start) / 1e3;
             info(`Pulling from Github... Done (${duration}s)!`);
             console.groupEnd();
             badgeOk();
             badgeClear();
-            return remotePapers;
+            return report ? { ok: true, papers: remotePapers } : remotePapers;
         } catch (e) {
             logError("[pullSyncPapers]", e);
             badgeError();
+            badgeClear();
+            console.groupEnd();
+            return report ? { ok: false, error: String(e?.message ?? e) } : undefined;
         }
-        badgeClear();
-        console.groupEnd();
     };
 
-    const pushSyncPapers = async () => {
-        if (!(await shouldSync())) return;
+    const pushSyncPapers = async ({ report = false } = {}) => {
+        if (!(await shouldSync()))
+            return report ? { ok: false, error: "Sync is off." } : undefined;
         try {
             const start = Date.now();
             consoleHeader(`Pushing ${String.fromCodePoint("0x23EB")}`);
@@ -325,12 +339,16 @@ export function initBackground() {
             const duration = (Date.now() - start) / 1e3;
             log(`Writing to Github... Done (${duration}s)!`);
             badgeOk();
+            badgeClear();
+            console.groupEnd();
+            return report ? { ok: true } : undefined;
         } catch (e) {
             logError("[pushSyncPapers]", e);
             badgeError();
+            badgeClear();
+            console.groupEnd();
+            return report ? { ok: false, error: String(e?.message ?? e) } : undefined;
         }
-        badgeClear();
-        console.groupEnd();
     };
 
     const fetchArxivXML = async (paperId) => {
@@ -381,12 +399,15 @@ export function initBackground() {
                 chrome.downloads.download({ url: payload.pdfUrl, filename });
                 sendResponse(true);
             });
+        } else if (payload.type === "memory") {
+            // the one queue that writes the Memory (memoryQueue.js)
+            runMemoryOp(payload.op).then(sendResponse);
         } else if (payload.type === "hello") {
             sendResponse("Connection to background script established.");
         } else if (payload.type === "writeSync") {
-            pushSyncPapers().then(sendResponse);
+            pushSyncPapers({ report: payload.report }).then(sendResponse);
         } else if (payload.type === "pullSync") {
-            pullSyncPapers(payload.gist).then(sendResponse);
+            pullSyncPapers({ report: payload.report }).then(sendResponse);
         } else if (payload.type === "restartGist") {
             initGist().then(sendResponse);
         } else if (payload.type === "OpenReviewNoteJSON") {

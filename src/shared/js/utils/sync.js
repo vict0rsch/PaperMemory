@@ -7,8 +7,9 @@ import {
     sendMessageToBackground,
     consoleHeader,
     log,
+    logError,
 } from "@pmu/functions.js";
-import { getStorage, setStorage } from "@pmu/data.js";
+import { getStorage, setStorage, replacePapers } from "@pmu/data.js";
 import { showId, hideId } from "@pmu/miniquery.js";
 import { state } from "@pmu/config.js";
 import { initState } from "@pmu/state.js";
@@ -213,6 +214,30 @@ export const pushToRemote = async () =>
     await sendMessageToBackground({ type: "writeSync" });
 
 /**
+ * Sync now (options page): pulls the gist, and only if that worked, writes it locally and
+ * uploads this browser's Memory. Errors are returned, not swallowed.
+ * @returns {Promise<{ok: boolean, error?: string}>}
+ */
+export const syncBothWays = async () => {
+    const noAnswer = {
+        ok: false,
+        error: "No answer from PaperMemory's background page.",
+    };
+    const pulled =
+        (await sendMessageToBackground({ type: "pullSync", report: true })) ?? noAnswer;
+    if (!pulled.ok) return { ok: false, error: `Download failed: ${pulled.error}` };
+    await initState({ papers: pulled.papers, print: false });
+    // the upload only happens once the gist's Memory is saved here
+    const saved = await replacePapers(state.papers);
+    if (!saved.ok) return { ok: false, error: `Saving here failed: ${saved.error}` };
+    const pushed =
+        (await sendMessageToBackground({ type: "writeSync", report: true })) ??
+        noAnswer;
+    if (!pushed.ok) return { ok: false, error: `Upload failed: ${pushed.error}` };
+    return { ok: true };
+};
+
+/**
  * Pulls the current `papers` from the default sync Gist file.
  * If remote papers are found, the local `papers` will be updated. and set to storage.
  * @param {object} papers - The current `papers` in the user memory
@@ -232,7 +257,12 @@ export const pullFromRemote = async (papers, isContentScript) => {
         });
         const time = (Date.now() - start) / 1e3;
         info(`Successfully pulled from Github (${time}s).`);
-        await setStorage("papers", state.papers);
+        const saved = await replacePapers(state.papers);
+        if (!saved.ok) {
+            logError("Could not save the pulled Memory:", saved.error);
+            console.groupEnd();
+            return undefined; // the caller shows the sync error
+        }
     }
     console.groupEnd();
     return remotePapers;

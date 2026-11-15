@@ -31,6 +31,39 @@ export const nearDuplicates = (text, tags) => {
     return tags.filter((t) => t !== text && [...variants(t)].some((x) => v.has(x)));
 };
 
+/**
+ * Groups of tags that are near-duplicates of each other (same rule as nearDuplicates)
+ * @param {string[]} tags
+ * @returns {string[][]} Groups of 2 tags or more, each in the order of `tags`
+ */
+export const similarTagGroups = (tags) => {
+    // tags sharing a normalized variant are near-duplicates (nearDuplicates' rule): bucket
+    // them by variant and join the buckets (union-find), linear in the number of tags
+    const parent = new Map(tags.map((t) => [t, t]));
+    const find = (t) => {
+        while (parent.get(t) !== t) {
+            parent.set(t, parent.get(parent.get(t)));
+            t = parent.get(t);
+        }
+        return t;
+    };
+    const firstWith = new Map(); // variant -> first tag having it
+    for (const tag of tags) {
+        for (const v of variants(tag)) {
+            const other = firstWith.get(v);
+            if (other === undefined) firstWith.set(v, tag);
+            else parent.set(find(tag), find(other));
+        }
+    }
+    const groups = new Map();
+    for (const tag of tags) {
+        const root = find(tag);
+        if (!groups.has(root)) groups.set(root, []);
+        groups.get(root).push(tag);
+    }
+    return [...groups.values()].filter((g) => g.length > 1);
+};
+
 /** Escaped tag with the matched part in <mark> */
 export const markMatch = (tag, query) => {
     const i = query ? tag.toLowerCase().indexOf(query.toLowerCase()) : -1;
@@ -226,6 +259,11 @@ export const createTagField = ({ root, tags = [], onChange = () => {}, inputId }
     renderChips();
     return {
         getTags: () => [...current],
+        /** Shows these tags (a change made elsewhere); does not call onChange */
+        setTags: (next) => {
+            current = [...next];
+            renderChips();
+        },
         focus: () => input.focus(),
         /** Adds the text still in the input (Done) */
         commitPending: () => input.value.trim() && addTyped(input.value),

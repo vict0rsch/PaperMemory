@@ -11,7 +11,9 @@ import {
     warn,
 } from "@pmu/functions.js";
 import { isPaper, addOrUpdatePaper } from "@pmu/paper.js";
-import { sortMemory, makeTags } from "@pmu/state.js";
+import { sortMemory } from "@pmu/state.js";
+import { onPapersChange } from "@pmu/data.js";
+import { memoryOp } from "@pmu/memoryQueue.js";
 import {
     findEl,
     setHTML,
@@ -161,11 +163,6 @@ export const focusExistingOrCreateNewURLTab = (targetURL) =>
 // -----  Saving paper edits -----
 // -------------------------------
 
-const writePapers = () =>
-    new Promise((resolve) =>
-        chrome.storage.local.set({ papers: state.papers }, resolve),
-    );
-
 /**
  * Re-renders what shows a paper after it changed: its Memory row (unless it is being edited)
  * and, when it is the current paper, the fields of the paper view
@@ -187,14 +184,74 @@ export const refreshPaperDisplays = (id, { paperView = true } = {}) => {
 };
 
 /**
+ * Follows Memory writes made anywhere (options page tag manager, another popup, a paper
+ * saved by the content script): state is refreshed by onPapersChange. Open edit forms take
+ * the new values of the fields they did not edit. When the search results change (a paper
+ * added, removed, or no longer matching), the list is rendered again at the same place,
+ * unless a form is open (then when it closes); otherwise only the changed rows are.
+ * @param {object} opts {paperView: () => boolean, whether the paper view may be refreshed}
+ */
+export const followMemoryChanges = ({ paperView = () => true } = {}) =>
+    onPapersChange((ids) => {
+        for (const id of ids) {
+            if (state.papers[id]) openEditors.get(id)?.(state.papers[id]);
+        }
+        const results = searchResults();
+        const same =
+            results.length === state.papersList.length &&
+            results.every((p, i) => p.id === state.papersList[i].id);
+        if (!same && openEditors.size === 0) {
+            state.papersList = results;
+            renderListInPlace();
+        } else {
+            for (const id of ids) {
+                if (state.papers[id]) refreshPaperDisplays(id, { paperView: paperView() });
+                else findEl({ element: `memory-container--${id}` })?.remove();
+            }
+        }
+        if (state.currentId && ids.includes(state.currentId) && !state.papers[state.currentId])
+            log("The paper shown was deleted elsewhere");
+        updateMemoryCount();
+    });
+
+/** displayMemoryTable, keeping as many rows, the scroll position and the focused row */
+const renderListInPlace = () => {
+    const table = findEl({ element: "memory-table" });
+    if (!table) return;
+    const shown = table.querySelectorAll(".memory-container").length;
+    const focused = document.activeElement?.closest?.(".memory-container")?.id;
+    const scroller = findEl({ element: "memory-scroll" });
+    const top = scroller ? scroller.scrollTop : window.scrollY;
+    displayMemoryTable();
+    while (table.querySelectorAll(".memory-container").length < shown && loadMoreMemoryItems());
+    if (scroller) scroller.scrollTop = top;
+    else window.scrollTo({ top });
+    if (focused) findEl({ element: focused })?.focus({ preventScroll: true });
+};
+
+export const SAVE_ERROR = "Couldn’t save — try again";
+/**
+ * Whether a Memory write worked; if not, a quiet message (the popup's toast) and the edit
+ * stays as it is so it can be tried again
+ * @param {{ok: boolean, error?: string}} answer From memoryOp
+ * @returns {boolean}
+ */
+export const saved = (answer) => {
+    if (answer.ok) return true;
+    warn("Could not save:", answer.error);
+    showToast(SAVE_ERROR);
+    return false;
+};
+
+/**
  * Saves a paper's note
  * @param {string} id The id of the paper whose note is being saved
  * @param {string} note The content of the note
  */
 export const saveNote = async (id, note) => {
-    state.papers[id].note = note;
-    await writePapers();
+    if (!saved(await memoryOp({ op: "patch", id, fields: { note } }))) return false;
     refreshPaperDisplays(id, { paperView: false });
+    return true;
 };
 
 /**
@@ -203,9 +260,10 @@ export const saveNote = async (id, note) => {
  * @param {string} codeLink The link to the paper's code
  */
 export const saveCodeLink = async (id, codeLink) => {
-    state.papers[id].codeLink = codeLink.trim();
-    await writePapers();
+    const answer = await memoryOp({ op: "patch", id, fields: { codeLink: codeLink.trim() } });
+    if (!saved(answer)) return false;
     refreshPaperDisplays(id, { paperView: false });
+    return true;
 };
 
 /**
@@ -215,18 +273,23 @@ export const saveCodeLink = async (id, codeLink) => {
  * @param {object} opts {paperView: refresh the paper view's fields too}
  */
 export const savePaperTags = async (id, tags, { paperView = false } = {}) => {
-    state.papers[id].tags = [
-        ...new Set(tags.map((t) => t.trim()).filter(Boolean)),
-    ].sort();
-    await writePapers();
-    makeTags();
+    const answer = await memoryOp({
+        op: "patch",
+        id,
+        fields: { tags: [...new Set(tags.map((t) => t.trim()).filter(Boolean))].sort() },
+    });
+    if (!saved(answer)) return false;
     refreshPaperDisplays(id, { paperView });
+    return true;
 };
 
 export const saveFavoriteItem = async (id, favorite) => {
-    state.papers[id].favorite = favorite;
-    state.papers[id].favoriteDate = new Date().toJSON();
-    await writePapers();
+    const answer = await memoryOp({
+        op: "patch",
+        id,
+        fields: { favorite, favoriteDate: new Date().toJSON() },
+    });
+    if (!saved(answer)) return false;
     refreshPaperDisplays(id, { paperView: false });
     // the popup's paper view star
     findEl({ element: `checkFavorite--${id}` })?.setAttribute(
@@ -234,6 +297,7 @@ export const saveFavoriteItem = async (id, favorite) => {
         String(favorite),
     );
     if (state.showFavorites || state.sortKey === "favoriteDate") applyMemorySearch();
+    return true;
 };
 
 // ---------------------------------
@@ -367,15 +431,20 @@ export const applyMemorySearch = () => {
     clearTimeout(searchTimer);
     searchTimer = null;
     state.showFavorites = state.memoryFilters.some((f) => f.type === "fav");
+    state.papersList = searchResults();
+    displayMemoryTable();
+    updateMemoryCount();
+};
+
+/** state.sortedPapers that pass every pill, favourites only and the search text */
+const searchResults = () => {
     const tests = [
         ...state.memoryFilters.map(filterTest),
         fieldTest(searchText()),
     ].filter(Boolean);
-    state.papersList = tests.length
+    return tests.length
         ? state.sortedPapers.filter((p) => tests.every((test) => test(p)))
         : [...state.sortedPapers];
-    displayMemoryTable();
-    updateMemoryCount();
 };
 
 /** sortMemory() + the Newest / Oldest direction */
@@ -919,6 +988,9 @@ export const makeMemoryHTML = async () => {
  * suggestions, code link (same checks as the paper view), note. Cancel / Save (⌘↵).
  * @param {string} id
  */
+/** paper id -> reconcile(storedPaper) of its open row edit form */
+export const openEditors = new Map();
+
 export const openMemoryItemEdit = (id) => {
     if (!state.papers[id]) return;
     if (findEl({ element: `memory-container--${id}` })?.classList.contains("is-edit")) {
@@ -962,27 +1034,75 @@ export const openMemoryItemEdit = (id) => {
         }
         return result;
     };
-    /** Saves the form as it is; an invalid code link is not saved. Returns false then. */
+    // fields edited here and not saved yet: only those are written, the others follow
+    // changes made elsewhere (reconcile)
+    const dirty = { tags: false, note: false, codeLink: false };
+    const hint = form.querySelector(".pm-edit-hint");
+    const hintText = hint?.textContent ?? "";
+    /** The form's hint says when the last save failed (quietly) */
+    const showFormError = (failed) => {
+        if (!hint) return;
+        hint.textContent = failed ? SAVE_ERROR : hintText;
+        hint.classList.toggle("is-error", failed);
+    };
+    /**
+     * Saves the edited fields. Returns "ok", "invalid" (a code link that is not a URL: not
+     * saved) or "failed" (the write failed: the edits stay, the form stays open).
+     */
     const persist = async (showError = false) => {
         const result = checkCode(showError);
-        paper.tags = [...new Set(tags.getTags())].sort();
-        if (!result.error) paper.codeLink = result.url;
-        paper.note = note.value;
-        await writePapers();
-        makeTags();
-        state.currentId === id && refreshPaperViewFields(id);
-        return !result.error;
+        const fields = {};
+        if (dirty.tags) fields.tags = [...new Set(tags.getTags())].sort();
+        if (dirty.note) fields.note = note.value;
+        if (dirty.codeLink && !result.error) fields.codeLink = result.url;
+        if (Object.keys(fields).length) {
+            const answer = await memoryOp({ op: "patch", id, fields });
+            showFormError(!answer.ok);
+            if (!answer.ok) {
+                warn("Could not save:", answer.error);
+                return "failed"; // the edits stay, marked as not saved
+            }
+            // what was written is clean again, unless edited meanwhile
+            if (
+                "tags" in fields &&
+                fields.tags.join() === [...new Set(tags.getTags())].sort().join()
+            )
+                dirty.tags = false;
+            if ("note" in fields && fields.note === note.value) dirty.note = false;
+            if ("codeLink" in fields && normalizeCodeLink(code.value).url === fields.codeLink)
+                dirty.codeLink = false;
+            state.currentId === id && refreshPaperViewFields(id);
+        }
+        return result.error ? "invalid" : "ok";
     };
+    /** A change made elsewhere to this paper: fields not edited here take its values */
+    const reconcile = (stored) => {
+        if (!dirty.tags) tags.setTags(stored.tags ?? []);
+        if (!dirty.note && document.activeElement !== note) {
+            note.value = stored.note ?? "";
+            fitTextarea(note);
+        }
+        if (!dirty.codeLink && document.activeElement !== code) {
+            code.value = stored.codeLink ?? "";
+            checkCode(false);
+        }
+    };
+    openEditors.set(id, reconcile);
     const persistSoon = delay(persist, 300);
     const tags = createTagField({
         root: form.querySelector(".pm-edit-tags"),
         tags: paper.tags,
-        onChange: () => persist(),
+        onChange: () => {
+            dirty.tags = true;
+            persist();
+        },
     });
     /** Done / ⌘↵: save and close (stays open on an invalid code link). Esc: close anyway. */
     const done = async (force = false) => {
         tags.commitPending();
-        if (!(await persist(true)) && !force) return code.focus();
+        const result = await persist(true);
+        if (result === "failed") return; // not saved: the form stays open with its edits
+        if (result === "invalid" && !force) return code.focus();
         closeMemoryItemEdit(id);
     };
     form.addEventListener("submit", (e) => {
@@ -1010,11 +1130,13 @@ export const openMemoryItemEdit = (id) => {
         result.url && focusExistingOrCreateNewURLTab(result.url);
     });
     code.addEventListener("input", () => {
+        dirty.codeLink = true;
         checkCode(false);
         persistSoon();
     });
     code.addEventListener("blur", () => checkCode(true));
     note.addEventListener("input", () => {
+        dirty.note = true;
         fitTextarea(note);
         persistSoon();
     });
@@ -1030,6 +1152,7 @@ export const openMemoryItemEdit = (id) => {
  * @param {object} opts {focus: give the focus back, reapply: re-apply the search}
  */
 export const closeMemoryItemEdit = (id, { focus = true, reapply = true } = {}) => {
+    openEditors.delete(id);
     const row = findEl({ element: `memory-container--${id}` });
     if (!row) return;
     row.classList.remove("is-edit");
