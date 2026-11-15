@@ -20,6 +20,7 @@ import {
     tryCrossRef,
     trySemanticScholar,
     tryOpenAlex,
+    validDoi,
 } from "@pmu/preprintMatching.js";
 import { initSyncAndState, pushToRemote } from "@pmu/sync.js";
 import { paintIcons } from "@pm/popup/js/icons.js";
@@ -452,7 +453,7 @@ const startMatching = async () => {
                         String(match.year),
                     note: !paper.note && match.note,
                     bibtex,
-                    doi: !paper.doi && doi,
+                    doi: !paper.doi && validDoi(doi),
                     paper,
                 });
                 break;

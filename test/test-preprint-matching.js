@@ -17,6 +17,8 @@ const {
     titleKey,
     dblpVenueName,
     publishedBibtex,
+    validDoi,
+    bibSourceText,
 } = PMUtils.preprintMatching;
 const { bibtexToObject } = PMUtils.bibtexParser;
 const recorded = readJSON(`${root}/test/data/preprint-matching.json`).responses;
@@ -408,6 +410,105 @@ describe("Preprint matching sources (recorded answers)", function () {
                 expect(bib.journal).toBe(expected);
                 expect(bib.title).toBe("T\\&C {GAN}");
             }
+        });
+
+        it("keeps only real DOIs and a bibSource without { } \\ or line breaks", function () {
+            expect(validDoi("10.1038/nature14539")).toBe("10.1038/nature14539");
+            expect(validDoi(" https://doi.org/10.1145/3292500.3330701 ")).toBe(
+                "10.1145/3292500.3330701",
+            );
+            for (const bad of [
+                "10.1/x}, note = {pwned",
+                "10.1234/a\nnote = {x}",
+                "10.1234/a\\b",
+                "10.12/short-registrant",
+                "doi:10.1234/x",
+                "",
+                42,
+                undefined,
+            ])
+                expect(validDoi(bad)).toBeUndefined();
+            expect(bibSourceText("DBLP https://dblp.org/rec/x}\n@misc{evil,")).toBe(
+                "DBLP https://dblp.org/rec/x @misc evil,",
+            );
+            const bibtex = publishedBibtex(preprint("A title", "2020"), {
+                venue: "ICML",
+                year: 2021,
+                doi: "10.1/x}, note = {pwned",
+                source: "OpenAlex W1},\n  note = {pwned\\",
+            });
+            const bib = bibtexToObject(bibtex);
+            expect(bib.doi).toBeUndefined();
+            expect(bib.note).toBeUndefined();
+            expect(bib.bibSource).toBe("OpenAlex W1 , note = pwned");
+        });
+
+        it("drops a malformed DOI from every source's answer and BibTeX", async function () {
+            const title = "Robust Things";
+            const evil = "10.5555/x}, note = {pwned";
+            // OpenAlex
+            stubFetch(() => ({
+                status: 200,
+                body: {
+                    results: [
+                        {
+                            ...openAlexWork({ title, year: 2021, source: "Nature" }),
+                            doi: `https://doi.org/${evil}`,
+                        },
+                    ],
+                },
+            }));
+            let match = await tryOpenAlex(preprint(title, "2021"));
+            expect(match.venue).toBe("Nature");
+            expect(match.doi).toBeUndefined();
+            expect(match.bibtex).not.toMatch(/pwned/);
+            // Semantic Scholar (also its URL in bibSource)
+            stubFetch(() => ({
+                status: 200,
+                body: {
+                    data: [
+                        {
+                            title,
+                            year: 2021,
+                            venue: "ICML",
+                            authors: [{ name: "A B" }],
+                            externalIds: { DOI: evil },
+                            url: "https://s2/x}\n@misc{y,",
+                        },
+                    ],
+                },
+            }));
+            match = await trySemanticScholar(preprint(title, "2021"));
+            expect(match.venue).toBe("ICML");
+            expect(match.doi).toBeUndefined();
+            expect(match.bibtex).not.toMatch(/pwned|@misc\{y/);
+            // DBLP (also its record URL, the source of a citation key)
+            stubFetch(() =>
+                sparql({
+                    ...dblpRecord({
+                        title,
+                        venue: "ICML",
+                        year: "2021",
+                        rec: "conf/icml/X21},evil",
+                    }),
+                    doi: { value: `https://doi.org/${evil}` },
+                }),
+            );
+            match = await tryDBLP(preprint(title, "2021"));
+            expect(match.venue).toBe("ICML");
+            expect(match.doi).toBeUndefined();
+            expect(match.citationKey).toBeUndefined();
+            expect(match.bibtex).not.toMatch(/pwned|\},evil/);
+            // a valid DOI is kept
+            stubFetch(() =>
+                sparql({
+                    ...dblpRecord({ title, venue: "ICML", year: "2021" }),
+                    doi: { value: "https://doi.org/10.5555/3045390.3045467" },
+                }),
+            );
+            match = await tryDBLP(preprint(title, "2021"));
+            expect(match.doi).toBe("10.5555/3045390.3045467");
+            expect(bibtexToObject(match.bibtex).doi).toBe("10.5555/3045390.3045467");
         });
     });
 

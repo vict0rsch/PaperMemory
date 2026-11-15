@@ -307,8 +307,9 @@ export const updatePaperVisits = (paper) => {
  * @param {string} url The url from which to parse a paper
  * @param {object} is The paper's source info
  * @param {object} checks The user's preferences
- * @returns {Promise<{paper: object, id: string}|undefined>} The paper and its id
- * (`paper.id`, not the id resolved from `url`), or undefined if parsing failed
+ * @returns {Promise<{paper: object, id: string, saving: Promise}|undefined>} The paper and
+ * its id (`paper.id`, not the id resolved from `url`), or undefined if parsing failed;
+ * `saving`: the background's answer to the write ({ok}), which lands after this returns
  */
 export const addOrUpdatePaper = async ({
     url,
@@ -605,7 +606,7 @@ export const addOrUpdatePaper = async ({
         contentScriptCallbacks["done"](paper);
     });
 
-    return { paper, id: paper.id };
+    return { paper, id: paper.id, saving };
 };
 
 /**

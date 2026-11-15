@@ -102,6 +102,39 @@ export const bibtexEscape = (text) =>
               }[m] ?? `\\${m}`),
     );
 
+/** What a DOI must look like to be stored or put in BibTeX */
+const DOI_PATTERN = /^10\.\d{4,9}\/[^\s{}\\]+$/;
+
+/**
+ * A DOI from a remote API, without its https://doi.org/ prefix; undefined when it is not a
+ * DOI (it would otherwise go unescaped into BibTeX and into the stored paper)
+ * @param {unknown} doi
+ * @returns {string | undefined}
+ */
+export const validDoi = (doi) => {
+    if (typeof doi !== "string") return undefined;
+    const value = doi.trim().replace(/^https?:\/\/(dx\.)?doi\.org\//i, "");
+    return DOI_PATTERN.test(value) ? value : undefined;
+};
+
+/** validDoi, except the arXiv DOI (10.48550/…): the preprint's, not the publication's */
+const publishedDoi = (doi) => {
+    const value = validDoi(doi);
+    return value && !/^10\.48550\//.test(value) ? value : undefined;
+};
+
+/**
+ * The bibSource field's text ("DBLP https://…"): no { } \ or line breaks, which would
+ * break out of the BibTeX value
+ * @param {unknown} source
+ * @returns {string}
+ */
+export const bibSourceText = (source) =>
+    String(source ?? "")
+        .replace(/[{}\\\r\n\u2028\u2029]/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+
 export const publishedBibtex = (paper, { venue, year, doi, proceedings, source }) => {
     try {
         const bib =
@@ -125,6 +158,8 @@ export const publishedBibtex = (paper, { venue, year, doi, proceedings, source }
         // the venue is plain text (an API's), the rest of the entry is BibTeX already
         bib[proceedings ? "booktitle" : "journal"] = bibtexEscape(venue);
         if (year) bib.year = String(year);
+        doi = validDoi(doi);
+        source = bibSourceText(source);
         if (doi) bib.doi = doi;
         if (source) bib.bibSource = source;
         return bibtexToString(bib);
@@ -288,10 +323,7 @@ export const tryDBLP = async (paper, toBackground) => {
                 venue: text(b.venue),
                 year: yearOf(text(b.year)),
                 proceedings: /Inproceedings$/i.test(text(b.type)),
-                doi: text(b.doi)
-                    .replace(/^https?:\/\/(dx\.)?doi\.org\//i, "")
-                    // the arXiv DOI is the preprint's, not the publication's
-                    .replace(/^10\.48550\/.*/i, ""),
+                doi: publishedDoi(text(b.doi)) ?? "",
             }))
             // CoRR: the arXiv version itself
             .filter(
@@ -322,7 +354,8 @@ export const tryDBLP = async (paper, toBackground) => {
             source: `DBLP ${hit.url}`,
         });
         // DBLP's own citation key (what its .bib used): BibMatcher's "new key" option
-        const citationKey = hit.url.match(/\/rec\/(.+)$/)?.[1];
+        // (a remote value: only characters a BibTeX key can hold)
+        const citationKey = hit.url.match(/\/rec\/([\w./:-]+)$/)?.[1];
         return {
             venue,
             note,
@@ -380,9 +413,7 @@ export const trySemanticScholar = async (paper, toBackground) => {
                     const authors = (match.authors ?? [])
                         .map((a) => a.name)
                         .join(" and ");
-                    let doi = match.externalIds?.DOI;
-                    // the arXiv DOI is the preprint's, not the publication's
-                    if (/^10\.48550\//.test(doi ?? "")) doi = undefined;
+                    const doi = publishedDoi(match.externalIds?.DOI);
                     // the key Semantic Scholar matches used to get: BibMatcher's "new key"
                     const citationKey =
                         miniHash(
@@ -408,7 +439,7 @@ export const trySemanticScholar = async (paper, toBackground) => {
                             journal: bibtexEscape(venue),
                             year,
                             doi,
-                            bibSource: `Semantic Scholar ${match.url}`,
+                            bibSource: bibSourceText(`Semantic Scholar ${match.url}`),
                         });
                     return {
                         venue,
@@ -478,7 +509,7 @@ export const tryOpenAlex = async (paper, toBackground) => {
         const venue = abbreviateVenue(fullName) || fullName;
         const venueFull = venue !== fullName ? fullName : undefined;
         const year = yearOf(match.publication_year);
-        const doi = (match.doi ?? "").replace(/^https?:\/\/(dx\.)?doi\.org\//i, "");
+        const doi = validDoi(match.doi) ?? "";
         const note = `Accepted @ ${venue}${year ? ` (${year})` : ""} -- [openalex.org]`;
         const bibtex = publishedBibtex(paper, {
             venue,

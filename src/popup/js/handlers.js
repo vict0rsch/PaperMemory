@@ -353,7 +353,7 @@ export const handleConfirmDeleteModalClick = async (e) => {
     const index = rows.findIndex((r) => r.id === `memory-container--${id}`);
     const returnToRow = state.memoryIsOpen && !!rows[index]?.contains(state.deleteReturnFocus);
     if (!(await deletePaperInStorage(id))) {
-        hideId("delete-paper-modal");
+        handleCancelModalClick(); // the focus goes back where it was
         return saved({ ok: false, error: "delete failed" }); // quiet error, paper kept
     }
     sortMemory();

@@ -42,7 +42,9 @@ import { createTagField, markMatch, tagCounts } from "@pm/popup/js/tagfield.js";
 import {
     addEventsToMemoryItems,
     addEventsToMemoryControls,
+    expandRowAuthors,
 } from "@pm/popup/js/handlers.js";
+import { infoPanelIsOpen, openInfoPanel } from "@pm/popup/js/infopanel.js";
 
 const isMac = typeof navigator !== "undefined" && /Mac/.test(navigator.userAgent);
 
@@ -66,6 +68,9 @@ export const updatePopupPaperNoMemory = async (url) => {
             const is = await isPaper(url);
             const update = await addOrUpdatePaper({ url, is });
             if (!update?.paper) throw new Error("No paper could be parsed");
+            // popupMain reads the Memory again: only once the background wrote the paper
+            const answer = await update.saving;
+            if (!answer.ok) throw new Error(answer.error);
             popupMain(url, is, true);
         } catch (error) {
             warn("Manual Parsing Error:", error);
@@ -169,16 +174,64 @@ export const focusExistingOrCreateNewURLTab = (targetURL) =>
  * @param {string} id
  * @param {object} opts {paperView: also refresh the paper view (default true)}
  */
+/**
+ * Where the focus is in a row, as a way to find the same control in the row rendered again
+ * (its content may have changed: tags added, a note…): the ⓘ panel, a tag by its name, or
+ * a control by its class. null when the focus is not in the row.
+ * @param {HTMLElement} row
+ * @param {Element} el The focused element
+ * @returns {null | ((next: HTMLElement) => HTMLElement | null)}
+ */
+const rowFocusTarget = (row, el) => {
+    if (!el || !row.contains(el)) return null;
+    if (el === row) return (next) => next;
+    if (el.closest(".pm-info-pop"))
+        return (next) => {
+            const panel = next.querySelector(".pm-info-pop");
+            return panel?.tabIndex >= 0 ? panel : next.querySelector(".memory-item-info");
+        };
+    if (el.classList.contains("memory-tag"))
+        return (next) =>
+            [...next.querySelectorAll(".memory-tag")].find(
+                (t) => t.textContent === el.textContent,
+            );
+    const cls = [...el.classList].find((c) =>
+        /^(memory-|pm-note-more$|pm-item-authors-more$)/.test(c),
+    );
+    return (next) => (cls ? next.querySelector(`.${cls}`) : null);
+};
+
 export const refreshPaperDisplays = (id, { paperView = true } = {}) => {
     const row = findEl({ element: `memory-container--${id}` });
     if (row && !row.classList.contains("is-edit") && state.papers[id]) {
-        const hadFocus = document.activeElement === row;
+        // what the user opened in the row stays open (a visit, here or elsewhere, re-renders
+        // it): note "more…", all authors, "…" menu, ⓘ panel; and the focus stays in it
+        const focusTarget = rowFocusTarget(row, document.activeElement);
+        const noteOpen = !!row.querySelector(".pm-item-note.is-open");
+        const authorsOpen = !!row.querySelector(".memory-authors.is-open");
+        const menuOpen = row.classList.contains("menu-open");
+        const infoOpen = infoPanelIsOpen() && !!row.querySelector(".pm-info-pop");
         const tpl = document.createElement("template");
         tpl.innerHTML = getMemoryItemHTML(state.papers[id]).trim();
         const next = tpl.content.firstElementChild;
         row.replaceWith(next);
+        if (noteOpen) {
+            const more = next.querySelector(".pm-note-more");
+            next.querySelector(".pm-item-note")?.classList.add("is-open");
+            if (more) {
+                more.hidden = false;
+                more.textContent = "less";
+            }
+        }
+        authorsOpen && expandRowAuthors(next);
+        if (menuOpen) {
+            next.classList.add("menu-open");
+            next.querySelector(".memory-item-more")?.setAttribute("aria-expanded", "true");
+        }
         markNotes(next);
-        hadFocus && next.focus({ preventScroll: true });
+        // the panel first: it may be what had the focus
+        infoOpen && openInfoPanel(next, next.querySelector(".memory-item-info"), id);
+        focusTarget && (focusTarget(next) ?? next).focus({ preventScroll: true });
     }
     paperView && state.currentId === id && refreshPaperViewFields(id);
 };
@@ -195,6 +248,7 @@ export const followMemoryChanges = ({ paperView = () => true } = {}) =>
     onPapersChange((ids) => {
         for (const id of ids) {
             if (state.papers[id]) openEditors.get(id)?.(state.papers[id]);
+            else openEditors.delete(id); // deleted elsewhere: its row and form go below
         }
         const results = searchResults();
         const same =

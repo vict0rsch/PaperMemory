@@ -1307,6 +1307,189 @@ describe("Options page", function () {
             }
         });
 
+        it("the paper of an open row form deleted elsewhere: papers added later still show", async function () {
+            const id = "JMLR-2012_bergstra12a";
+            const added = "Arxiv-9999.00001";
+            const popup = await openPopup();
+            try {
+                await popup.keyboard.press("a"); // Memory
+                await popup.waitForSelector(`#memory-container--${id}`);
+                await popup.evaluate((id) => PMDebug.memory.openMemoryItemEdit(id), id);
+                await popup.waitForSelector(`#memory-container--${id}.is-edit`);
+                await op(page, { op: "delete", id });
+                await popup.waitForFunction(
+                    (id) => !document.getElementById(`memory-container--${id}`),
+                    { timeout: 5000 },
+                    id,
+                );
+                await op(page, {
+                    op: "create",
+                    paper: {
+                        ...papers["Arxiv-1703.10593"],
+                        id: added,
+                        title: "Added after the delete",
+                        lastOpenDate: new Date().toJSON(),
+                    },
+                });
+                await popup.waitForSelector(
+                    `#memory-container--${added.replace(".", "\\.")}`,
+                    {
+                        timeout: 5000,
+                    },
+                );
+            } finally {
+                await popup.close();
+            }
+        });
+
+        it("a visit elsewhere keeps what is open in its row and the focus in it", async function () {
+            const id = "Arxiv-1703.10593";
+            const row = `#memory-container--${id.replace(".", "\\.")}`;
+            await op(page, {
+                op: "patch",
+                id,
+                fields: { note: "1\n2\n3\n4\n5", lastOpenDate: new Date().toJSON() },
+            });
+            await storageSet({ prefs: { checkAr5iv: true, theme: "light" } });
+            const popup = await openPopup();
+            try {
+                await popup.keyboard.press("a"); // Memory
+                await popup.waitForSelector(`${row} .pm-note-more:not([hidden])`);
+                await popup.click(`${row} .pm-note-more`);
+                /** A visit counted elsewhere, once the popup has it */
+                const visitElsewhere = async () => {
+                    const n = (await storageGet("papers"))[id].count + 1;
+                    await op(page, { op: "visit", id });
+                    await popup.waitForFunction(
+                        (id, n) => PMDebug.config.state.papers[id].count === n,
+                        { timeout: 5000 },
+                        id,
+                        n,
+                    );
+                    await sleep(100);
+                };
+                // the "…" menu, focused
+                await popup.click(`${row} .memory-item-more`);
+                await visitElsewhere();
+                expect(
+                    await popup.$eval(row, (r) => [
+                        r.querySelector(".pm-item-note").classList.contains("is-open"),
+                        r.querySelector(".pm-note-more").textContent,
+                        r.classList.contains("menu-open"),
+                        document.activeElement.classList.contains("memory-item-more"),
+                    ]),
+                ).toEqual([true, "less", true, true]);
+                // the ⓘ panel, focused
+                await popup.click(`${row} .memory-item-info`);
+                await visitElsewhere();
+                expect(
+                    await popup.$eval(row, (r) => [
+                        !!r.querySelector(".pm-info-pop"),
+                        r.contains(document.activeElement) &&
+                            document.activeElement.classList.contains(
+                                "memory-item-info",
+                            ),
+                    ]),
+                ).toEqual([true, true]);
+            } finally {
+                await popup.close();
+            }
+        });
+
+        it("a row changed elsewhere keeps the focus on the same control, not the same position", async function () {
+            const id = "Arxiv-1703.10593";
+            const row = `#memory-container--${id.replace(".", "\\.")}`;
+            await op(page, {
+                op: "patch",
+                id,
+                fields: { tags: ["gan"], lastOpenDate: new Date().toJSON() },
+            });
+            const popup = await openPopup();
+            try {
+                await popup.keyboard.press("a"); // Memory
+                await popup.waitForSelector(row);
+                await popup.focus(`${row} .memory-item-copy-link`);
+                // a tag added elsewhere: one more control before the action line
+                await op(page, {
+                    op: "patch",
+                    id,
+                    fields: { tags: ["gan", "new-tag"] },
+                });
+                await popup.waitForFunction(
+                    (sel) =>
+                        document.querySelectorAll(`${sel} .memory-tag`).length === 2,
+                    { timeout: 5000 },
+                    row,
+                );
+                expect(
+                    await popup.evaluate(() => [...document.activeElement.classList]),
+                ).toContain("memory-item-copy-link");
+                // focus on a tag: the same tag after the change
+                await popup.focus(`${row} .memory-tag:nth-child(3)`);
+                const tag = await popup.evaluate(
+                    () => document.activeElement.textContent,
+                );
+                await op(page, {
+                    op: "patch",
+                    id,
+                    fields: { tags: ["a-first", "gan", "new-tag"] },
+                });
+                await popup.waitForFunction(
+                    (sel) =>
+                        document.querySelectorAll(`${sel} .memory-tag`).length === 3,
+                    { timeout: 5000 },
+                    row,
+                );
+                expect(
+                    await popup.evaluate(() => document.activeElement.textContent),
+                ).toBe(tag);
+            } finally {
+                await popup.close();
+            }
+        });
+
+        it("a focused scrolling Info panel keeps the focus through a change elsewhere", async function () {
+            const id = "Arxiv-1703.10593";
+            const row = `#memory-container--${id.replace(".", "\\.")}`;
+            await op(page, {
+                op: "patch",
+                id,
+                fields: { lastOpenDate: new Date().toJSON() },
+            });
+            const popup = await openPopup();
+            try {
+                // a short popup: the panel scrolls, so it is focusable
+                await popup.setViewport({ width: 450, height: 260 });
+                await popup.keyboard.press("a"); // Memory
+                await popup.waitForSelector(row);
+                await popup.click(`${row} .memory-item-info`);
+                await popup.waitForSelector(`${row} .pm-info-pop`);
+                expect(
+                    await popup.$eval(`${row} .pm-info-pop`, (p) => p.tabIndex),
+                ).toBe(0);
+                await popup.focus(`${row} .pm-info-pop`);
+                const n = (await storageGet("papers"))[id].count + 1;
+                await op(page, { op: "visit", id });
+                await popup.waitForFunction(
+                    (id, n) => PMDebug.config.state.papers[id].count === n,
+                    { timeout: 5000 },
+                    id,
+                    n,
+                );
+                await sleep(100);
+                expect(
+                    await popup.evaluate(
+                        (sel) =>
+                            document.activeElement ===
+                            document.querySelector(`${sel} .pm-info-pop`),
+                        row,
+                    ),
+                ).toBe(true);
+            } finally {
+                await popup.close();
+            }
+        });
+
         it("a migration and an add at the same time: both land", async function () {
             // both pages are open (and initialised) before the legacy data appears
             const popup = await openPopup();
@@ -1484,6 +1667,33 @@ describe("Options page", function () {
             }
         });
 
+        it("a delete that fails keeps the paper and gives the focus back to its row", async function () {
+            const id = "Arxiv-1703.10593";
+            const row = `#memory-container--${id.replace(".", "\\.")}`;
+            const popup = await openFailingPopup();
+            try {
+                await popup.evaluate(() => {
+                    window.__fail = (op) => op.op === "delete";
+                });
+                await popup.keyboard.press("a"); // Memory
+                await popup.waitForSelector(row);
+                await popup.focus(row);
+                await popup.keyboard.press("Backspace");
+                await popup.waitForSelector("#delete-paper-modal", { visible: true });
+                await popup.keyboard.press("Enter");
+                await popup.waitForSelector("#delete-paper-modal", { hidden: true });
+                expect(
+                    await popup.$eval("#popup-feedback-copied", (el) => el.textContent),
+                ).toContain("Couldn’t save");
+                expect(await popup.evaluate(() => document.activeElement?.id)).toBe(
+                    `memory-container--${id}`,
+                );
+                expect((await storageGet("papers"))[id]).toBeTruthy();
+            } finally {
+                await popup.close();
+            }
+        });
+
         it("a website page whose save fails keeps its sheet open, uploads nothing", async function () {
             const popup = await openFailingPopup();
             const url = "https://example.org/a-post";
@@ -1532,7 +1742,9 @@ describe("Options page", function () {
                 // it works again: same sheet, saved, closed
                 await popup.evaluate(() => (window.__fail = null));
                 await popup.click('button[form="manual-website-form"]');
-                await page.waitForFunction(
+                // polled on a timer: `page` is a background tab now (the popup is in
+                // front), where the default requestAnimationFrame polling never runs again
+                await waitForStorage(
                     () =>
                         new Promise((r) =>
                             chrome.storage.local.get("papers", ({ papers }) =>
@@ -1543,7 +1755,6 @@ describe("Options page", function () {
                                 ),
                             ),
                         ),
-                    { timeout: 5000 },
                 );
                 await noInContextRuns(popup);
             } finally {
