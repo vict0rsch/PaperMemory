@@ -2,7 +2,7 @@
 import { findEl, showId, hideId, addListener, queryAll } from "@pmu/miniquery.js";
 import { getStorage, setStorage } from "@pmu/data.js";
 import { sendMessageToBackground } from "@pmu/functions.js";
-import { PROTOCOL_MIN } from "@pm/background/agentAccess.js";
+import { PROTOCOL_MIN, PROTOCOL_MAX } from "@pm/background/agentAccess.js";
 
 // Agent access in the options page (see CONTEXT.md § Agent access and ADR 0002): the
 // toggle, the Native host status, the Paired clients and the pairing prompt. The
@@ -44,7 +44,13 @@ const refreshStatus = async () => {
     const status = await sendMessageToBackground({ type: "agent-status" });
     if (!toggle.checked) return; // turned off meanwhile
     if (status?.connected) {
-        showStatus(status.protocolMax < PROTOCOL_MIN ? "outdated" : "connected");
+        showStatus(
+            status.protocolMax < PROTOCOL_MIN
+                ? "outdated"
+                : status.protocolMin > PROTOCOL_MAX
+                  ? "outdated-extension"
+                  : "connected",
+        );
     } else {
         // no message until the first connection attempt has failed
         showStatus(status?.error ? "not-installed" : null);

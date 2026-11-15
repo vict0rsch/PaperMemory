@@ -76,7 +76,7 @@ let library = null; // {libraryId, label, browser}
 // the Native host's version and protocol range, for the options page
 let status = { connected: false };
 let pendingPairing = null; // the one pairing request waiting for the user
-const deniedAt = new Map(); // client name => time the user denied it
+let deniedAt = -Infinity; // when the user last denied a pairing request
 const revokedClients = new Set(); // client ids revoked since the worker started
 const rateWindows = new Map(); // client id => times of its recent changes
 const queue = []; // changes waiting to run
@@ -211,8 +211,10 @@ const cleanAuth = (auth) => {
 };
 
 // the Project's agentProjects entry, created (with its fixed Project tag) only if
-// `create`; a change with auth.projectLabel updates its label
-const syncProject = async ({ auth, projectHash }, create) => {
+// `create`, which the job then records; a change with auth.projectLabel updates its
+// label
+const syncProject = async (job, create) => {
+    const { auth, projectHash } = job;
     const projects = (await getStorage("agentProjects")) ?? {};
     let project = projects.hasOwnProperty(projectHash) ? projects[projectHash] : null;
     if (project) {
@@ -229,6 +231,7 @@ const syncProject = async ({ auth, projectHash }, create) => {
             createdAt: new Date().toISOString(),
         };
         projects[projectHash] = project;
+        job.projectCreated = true;
     } else {
         return null;
     }
@@ -497,7 +500,19 @@ const runMutation = async (job) => {
     if (job.projectHash) {
         job.project = await syncProject(job, PROJECT_CREATING_OPS.includes(job.op));
     }
-    return MUTATIONS[job.op](job);
+    const outcome = await MUTATIONS[job.op](job);
+    // a first add or attach that put no paper in the Project does not fix it: the next
+    // one creates its entry, label and tag again. Not past the deadline, when later
+    // changes may already use the entry
+    if (job.projectCreated && !job.expired) {
+        const papers = (await getStorage("papers")) ?? {};
+        if (!countPapers(papers, job.projectHash)) {
+            const projects = (await getStorage("agentProjects")) ?? {};
+            delete projects[job.projectHash];
+            await setStorage("agentProjects", projects);
+        }
+    }
+    return outcome;
 };
 
 // one change, raced against its deadline: a throw or a pipeline that never finishes
@@ -580,10 +595,10 @@ const pair = async (request, clientName) => {
             "Another pairing request is waiting for the user: try again later",
         );
     }
-    if (Date.now() - (deniedAt.get(clientName) ?? -Infinity) < DENY_COOLDOWN_MS) {
+    if (Date.now() - deniedAt < DENY_COOLDOWN_MS) {
         return failure(
             "rate-limited",
-            "The user denied this client less than a minute ago",
+            "The user denied a pairing request less than a minute ago",
         );
     }
     if (import.meta.env.WXT_PM_AGENT_TEST === "1") {
@@ -596,6 +611,7 @@ const pair = async (request, clientName) => {
     const pending = {
         port: request.port,
         id: request.id,
+        conn: request.conn,
         requestId,
         clientName,
         optionsUrl,
@@ -616,6 +632,16 @@ const pair = async (request, clientName) => {
             { url: `${optionsUrl}#agent-pairing=${requestId}` },
             (tab) => {
                 pending.tabId = tab?.id;
+                // no prompt for the user to answer: end the request now
+                if (!Number.isInteger(pending.tabId)) {
+                    cancelPairing(
+                        (p) => p === pending,
+                        failure(
+                            "internal",
+                            "PaperMemory could not open its pairing prompt",
+                        ),
+                    );
+                }
                 resolve();
             },
         ),
@@ -633,6 +659,10 @@ const answerPairingPage = async (message, sender) => {
     if (pending !== pendingPairing || !isValidPairSender(sender, pending)) return false;
     if (message.type === "agent-pair-info") return { clientName: pending.clientName };
     cancelPairing((p) => p === pending, null);
+    if (message.allow !== true) deniedAt = Date.now();
+    // the MCP server that asked has closed its connection: the request has expired,
+    // and no client is created that nobody would receive
+    if (pending.closed) return false;
     if (message.allow === true) {
         try {
             post(pending, { result: await addClient(pending.clientName) });
@@ -641,7 +671,6 @@ const answerPairingPage = async (message, sender) => {
             post(pending, INTERNAL);
         }
     } else {
-        deniedAt.set(pending.clientName, Date.now());
         post(pending, failure("denied", "The user denied this client access"));
     }
     return true;
@@ -761,7 +790,11 @@ const ensureConnected = () => {
 
 const onHostMessage = (hostPort, message) => {
     if (hostPort !== port || !message || typeof message !== "object") return;
-    if (message.type === "host-ready") {
+    // the Native host forwards a socket client's message only with a string id, and
+    // sends its own without one: a client cannot pass for the host
+    if (typeof message.id === "string") {
+        handleRequest(hostPort, message);
+    } else if (message.id === undefined && message.type === "host-ready") {
         status = {
             connected: true,
             hostVersion: message.version,
@@ -769,13 +802,15 @@ const onHostMessage = (hostPort, message) => {
             protocolMax: message.protocolMax,
         };
         reconnectDelay = 1000;
-    } else if (message.type === "client-closed") {
+    } else if (message.id === undefined && message.type === "client-closed") {
         // that connection's queued changes: nobody waits for them. Its pairing request
-        // stays until decided or timed out: one at a time, so that prompts are throttled
+        // stays until decided or timed out: one at a time, so that prompts are
+        // throttled; its decision is then answered as expired
         const conn = String(message.conn);
         failQueued((job) => job.port === hostPort && job.conn === conn, null);
-    } else if (typeof message.id === "string") {
-        handleRequest(hostPort, message);
+        if (pendingPairing?.port === hostPort && pendingPairing.conn === conn) {
+            pendingPairing.closed = true;
+        }
     }
 };
 

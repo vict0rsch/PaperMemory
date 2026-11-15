@@ -2,6 +2,7 @@ import { resolve as pathResolve } from "path";
 import { fileURLToPath, pathToFileURL } from "url";
 
 const baseURL = pathToFileURL(process.cwd() + "/").href;
+const srcURL = new URL("src/", baseURL).href;
 
 export async function resolve(specifier, context, defaultResolve) {
     // Handle @pmu/* imports
@@ -37,5 +38,12 @@ export async function load(url, context, defaultLoad) {
         };
     }
 
-    return defaultLoad(url, context);
+    const loaded = await defaultLoad(url, context);
+    if (!url.startsWith(srcURL) || !loaded.source) return loaded;
+    // WXT defines import.meta.env at build time, Node does not: the extension's modules
+    // that read it get an empty one (not Firefox, not an Agent access test build), on
+    // their first line so that line numbers do not change
+    const source = Buffer.from(loaded.source).toString();
+    if (!source.includes("import.meta.env")) return loaded;
+    return { ...loaded, source: `import.meta.env ??= {}; ${source}` };
 }

@@ -22,9 +22,9 @@
         "submit": "npm run submit:chrome && npm run submit:firefox",
         "test:file": "node --import ./register.mjs ./node_modules/.bin/mocha --exit",
         "test": "node --import ./register.mjs ./node_modules/.bin/mocha test/test-*.js --exclude test/test-sync.js --exit",
-        "zip:chrome": "wxt zip",
-        "zip:firefox": "wxt zip --browser firefox",
-        "zip": "wxt zip && wxt zip --browser firefox"
+        "zip:chrome": "node scripts/refuse-agent-test-build.js && wxt zip",
+        "zip:firefox": "node scripts/refuse-agent-test-build.js && wxt zip --browser firefox",
+        "zip": "node scripts/refuse-agent-test-build.js && wxt zip && wxt zip --browser firefox"
     },
     "repository": {
         "type": "git",

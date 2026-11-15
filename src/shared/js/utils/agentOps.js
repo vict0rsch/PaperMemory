@@ -77,8 +77,11 @@ export const normalizeTags = (tags) => tags.map((t) => t.trim()).filter((t) => t
 // each argument's bound, and the rule reported when it is not met
 const ARG_BOUNDS = {
     clientName: {
-        check: (v) => typeof v === "string" && isString(removeControlChars(v), 1, 64),
-        rule: "a string of 1 to 64 characters, control characters excluded",
+        check: (v) =>
+            typeof v === "string" &&
+            isString(removeControlChars(v), 1, 64) &&
+            v.replace(/[\p{C}\s]/gu, "") !== "",
+        rule: "a non-blank string of 1 to 64 characters, control characters excluded",
     },
     query: {
         check: (v) => isString(v, 0, 256),
@@ -100,12 +103,20 @@ const ARG_BOUNDS = {
                 return false;
             }
             const tags = normalizeTags(v);
+            // no markup characters, comma (the tag inputs' delimiter) or \p{C}
+            // (control, format, private-use, unassigned) characters, and no proj-
+            // anywhere, in any case: the Project tags' prefix
             return (
                 tags.length <= 20 &&
-                tags.every((t) => t.length <= 64 && !t.startsWith("proj-"))
+                tags.every(
+                    (t) =>
+                        t.length <= 64 &&
+                        !/[<>"'`&,\p{C}]/u.test(t) &&
+                        !/proj-/i.test(t),
+                )
             );
         },
-        rule: "at most 20 tags of at most 64 characters, none starting with proj- (reserved for Project tags)",
+        rule: "at most 20 tags of at most 64 characters, without < > \" ' ` & , or control or format characters, and without proj- (reserved for Project tags)",
     },
     reason: {
         check: (v) => isString(v, 1, 500),

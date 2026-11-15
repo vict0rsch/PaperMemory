@@ -19,6 +19,7 @@ const HIDDEN_KEYS = [
     "sync",
     "weeklyBackups",
     "papersBackup",
+    "uploadBackup",
 ];
 // the only storage keys the offscreen document writes
 const WRITABLE_KEYS = ["papers", "urlHashToId"];
