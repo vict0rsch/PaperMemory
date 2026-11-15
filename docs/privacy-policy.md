@@ -1,6 +1,6 @@
 # Privacy Policy
 
-*Last updated: November 12, 2026*
+*Last updated: November 15, 2026*
 
 ## Overview
 
@@ -17,6 +17,10 @@ If you choose to set up the optional GitHub Gist sync feature, your Memory is st
 PaperMemory does not operate any server, proxy, or intermediary in this process. The extension communicates directly with GitHub's API on your behalf. Your GitHub token is stored locally in your browser's extension storage and is sent to GitHub's API to authenticate sync requests. It is never shared with the developer or any other third party.
 
 The developer of PaperMemory has no access to your GitHub data, your token, or your synced content.
+
+## Agent Access
+
+If you turn on the optional Agent access feature, PaperMemory lets AI agents running on your computer that you have explicitly allowed (one by one, revocable at any time) read your paper library and add papers to it. Your library data is then sent to those local programs, which may send it to their AI provider. This is off by default, uses a local connection that only your user account can open, and PaperMemory operates no server for it. See [Agent access](agents.md).
 
 ## Analytics and Tracking
 

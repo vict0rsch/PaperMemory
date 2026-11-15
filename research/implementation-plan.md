@@ -123,10 +123,10 @@ http/https only, ≤ 2,048. `query` ≤ 256. `reason` 1–500. `note`/`text` ≤
 note total ≤ 20,000. `clientName`, `projectLabel` 1–64 after removing control characters.
 `id` ≤ 256; it must not start with `__` and must be an own property of the cleaned papers
 (`cleanPapers`, then `hasOwnProperty`), else `not-found`. Tags trimmed, empty dropped, ≤ 20
-per call, ≤ 64 chars; an agent tag starting with `proj-` (reserved for Project tags) →
-`bad-args`. `export_bibtex` result > 900,000 bytes → `too-large`. Rates: ≤ 30
+per call, ≤ 64 chars, without `< > " ' ` & ,` or control or format characters; `proj-`
+anywhere in a tag, in any case (reserved for Project tags) → `bad-args`. `export_bibtex` result > 900,000 bytes → `too-large`. Rates: ≤ 30
 mutating ops per client per minute (`rate-limited`); queue depth ≤ 50 (`busy`); one pending
-pairing per Library (`busy`); same `clientName` refused 60 s after **Deny** (`rate-limited`).
+pairing per Library (`busy`); any pairing refused for 60 s after a **Deny** (`rate-limited`, global cooldown).
 
 **Projects.** The MCP server resolves the **Project folder** once per process, as one promise
 that every tool call awaits: after `notifications/initialized`, if the client declared the
@@ -199,13 +199,14 @@ that connection's queued jobs are dropped; on revoke or toggle-off the client's 
 
 **Sync.** Gist stays last-writer-wins. After each completed mutation the extension calls the
 injected `pushSyncPapers()` once, un-awaited with `.catch(() => {})`; its failure never changes
-the op result. `add_paper` also runs the pipeline's own `pushToRemote()`
+the op result. Pushes are coalesced: one push 2 s after the last request (2 s trailing
+debounce), one at a time. `add_paper` also runs the pipeline's own `pushToRemote()`
 (`writeSync`): from the offscreen document on Chrome, through the local handler on Firefox
-(Step 10). Up to three whole-file pushes per add on both browsers; harmless.
+(Step 10); the debounce merges these into one push.
 
 ## Steps
 
-**Step 0 — Rebase.** Run `git fetch origin && git rebase origin/master`.
+**Step 0 — Rebase (done).** Run `git fetch origin && git rebase origin/master`.
 Verify: `git merge-base --is-ancestor origin/master HEAD` exits 0; root `npm test` passes.
 
 ### Phase A — `agent/` package
@@ -495,11 +496,13 @@ from `cloakbrowser/puppeteer` directly (`makeBrowser` takes no user data dir or 
 `{extensionPaths:[dist/chrome-mv3], userDataDir:<temp>, env}`; read the extension id from
 the service-worker target URL (`chrome-extension://<id>/background.js`); inspect storage with
 `worker.evaluate`; then `install --yes --extension-id <id> --user-data-dir <dir>`. Firefox:
-`WXT_PM_AGENT_TEST=1 npm run zip:firefox`, copy the `dist/*-firefox.zip` to
+`WXT_PM_AGENT_TEST=1 npx wxt zip --browser firefox` (the npm `zip` and `submit` scripts refuse
+when that variable is set), copy the `dist/*-firefox.zip` to
 `<temp profile>/extensions/<gecko id from wxt.config.js>.xpi` in a Firefox Developer Edition
 profile whose `user.js` sets `xpinstall.signatures.required=false`,
 `extensions.autoDisableScopes=0` and `extensions.webextOptionalPermissionPrompts=false`;
-Firefox assertions use only what MCP tools return (no storage inspection). Drive MCP servers as in Step 13 (processes
+Firefox assertions use only what MCP tools return (no storage inspection); the Firefox script turns
+Agent access on by writing `agentAccess` to storage, since it cannot click the real permission prompt. Drive MCP servers as in Step 13 (processes
 with a chosen `clientInfo.name` and a cwd under `agent/test/.tmp/<random>/`, never under the
 system temp folder, which counts as no Project). Assert through socket → host → extension, on
 both browsers (except where noted): `add_paper` of an arXiv URL and of an OpenReview URL → `stored` with full

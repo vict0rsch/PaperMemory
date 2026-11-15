@@ -79,6 +79,13 @@ and Firefox, all lifecycle checks passed, including 65 min and 8 h idles).
   expose settings, the Gist PAT, backups or arbitrary storage keys; writes are limited to adding
   papers (forced **Review tag**, **Provenance**), attaching papers to a Project, adding tags,
   appending notes, applying a **Deletion flag**, and deleting **Own additions**.
+- **Hardening decisions.** Agent tags may not contain `<`, `>`, `"`, `'`, a backtick, `&`, `,`
+  or control or format characters, and `proj-` is reserved anywhere in a tag, in any case.
+  Everything an agent supplies or a paper carries is escaped where the UI renders it (output
+  escaping in UI sinks). **Deny** starts a global 60 s cooldown for pairing requests, not one
+  per client name, and a pairing whose requester disconnected expires. The zip and submit npm
+  scripts refuse to run when `WXT_PM_AGENT_TEST` is set, so a test build (which has
+  `nativeMessaging` as a required permission) cannot be published.
 - **Ownership is a capability, not a claim.** **Provenance** is written inside the pipeline
   from its own "new paper" outcome, so a duplicate (including a fuzzy match whose id changes)
   gains tags and Project membership but never Provenance. With a **Project**, an **Own
@@ -119,7 +126,9 @@ and Firefox, all lifecycle checks passed, including 65 min and 8 h idles).
 - **Parsing needs a DOM.** 16 of 34 sources parse HTML with `DOMParser`, which Chrome's service
   worker lacks. On Chrome, agent-requested adds run the existing `addOrUpdatePaper` in an
   offscreen document (reason `DOM_PARSER`, warning-free `offscreen` permission), initialized
-  like a content script (no downloads access, which offscreen documents lack). Offscreen
+  like a content script (no downloads access, which offscreen documents lack). They also have no
+  `chrome.runtime.getManifest`, so the offscreen page reads the packaged `manifest.json` and shims
+  `getManifest` with it before `initState`, which needs the data version. Offscreen
   documents only get `chrome.runtime`, so the background proxies their storage calls, only
   while the document exists (from just before it is created, since its initialization reads
   storage), only from that document, never returning sync credentials, backups or Agent access
@@ -162,3 +171,8 @@ and Firefox, all lifecycle checks passed, including 65 min and 8 h idles).
   browsers where policy blocks native messaging (managed machines), ChromeOS, and Windows/Linux
   until their installer paths are implemented and tested. Release Firefox requires the signed
   build (no unsigned testing path).
+- **Test-environment notes.** OpenReview's API currently answers `403 ChallengeRequired` from the
+  maintainer's network, so adding an OpenReview paper may fail there until that changes. Firefox
+  reads native host manifests from the folder macOS derives from `CFFIXED_USER_HOME` (not
+  `HOME`), so the end-to-end tests set it to their temporary home and Firefox registers the
+  test host there, never in the real one.

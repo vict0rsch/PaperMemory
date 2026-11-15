@@ -61,6 +61,12 @@ graph TB
         end
     end
 
+    subgraph Local["Local machine (Agent access, optional)"]
+        Agent["AI agent<br/>Claude Code, Codex, ..."]
+        MCP["papermemory-mcp serve<br/>MCP server (stdio)"]
+        Host["Native host<br/>hub, per-Library Unix socket"]
+    end
+
     subgraph Shared["src/shared/js/utils — shared core (imported by every context)"]
         Paper["paper.js<br/>addOrUpdatePaper orchestrator"]
         State["state.js + config.js<br/>in-memory state, prefs"]
@@ -78,6 +84,11 @@ graph TB
         Match[(CrossRef / DBLP /<br/>Semantic Scholar /<br/>OpenAlex)]
     end
 
+    Agent -->|MCP stdio| MCP
+    MCP -->|NDJSON on socket| Host
+    Host <-->|native messaging port| AgentBG["agentAccess.js<br/>(in the background)"]
+    AgentBG -->|add_paper job| Ingest["agent ingest<br/>offscreen doc (Chrome) /<br/>background page (Firefox)"]
+    Ingest -->|addOrUpdatePaper + agent| Paper
     CScript -->|addOrUpdatePaper| Paper
     Popup --> Paper
     BibM --> Preprint
@@ -118,6 +129,71 @@ graph TB
   [`memoryQueue.js`](src/shared/js/utils/memoryQueue.js)), which it applies one at a time
   to the Memory as stored now. `ignoreSources` follows the same pattern
   (`{ type: "ignoreSources" }`, `ignoreSources.js`). See _Concurrency_ below.
+
+### Agent access (optional, off by default)
+
+Lets local AI agents search the Library and add papers. Terms (Library, Project,
+Provenance, Own addition...) are defined in [`CONTEXT.md`](CONTEXT.md); the decision
+and its trade-offs in [ADR 0002](docs/adr/0002-native-messaging-hub-for-agent-access.md).
+User docs: [`docs/agents.md`](docs/agents.md). The extension side is the only part
+that can be woken by the browser, so the chain is:
+
+Agent → **MCP server** (`papermemory-mcp serve`, stdio, one process per Agent session)
+→ per-Library **Unix socket** (`~/.papermemory/sock/<libraryId>.sock`, NDJSON) →
+**Native host** (launched by the browser, forwards only) → `runtime.connectNative`
+port → `agentAccess.js` in the background → operation handlers.
+
+- **`agent/` package** (`papermemory-mcp`, published to npm; excluded from the
+  extension zip): `cli.mjs` (`install`, `uninstall`, `selfheal`, `libraries`,
+  `serve`), `host/host.mjs` (native host hub), `src/serve.mjs` (MCP server, resolves
+  the Project folder and derives the Project key), `src/libraries.mjs` (socket
+  discovery, version negotiation, requests), `src/install.mjs` + `browsers.mjs` +
+  `agents.mjs` (the installer: local copy in `~/.papermemory/bin` with wrappers, native
+  host manifests, agent registration, skill copy), `skill/SKILL.md`. macOS only.
+- **`src/background/agentAccess.js`** (initialised from `background.js` with the
+  injected `pushSyncPapers` and the message handler): connects the native port,
+  authorizes every op (per-client secret hash, rate limit, bounded queue), runs one
+  serialized mutation queue with per-job deadlines, handles pairing and the storage
+  proxy, and re-connects from a 1-minute `alarms` alarm.
+- **`src/shared/js/utils/agentOps.js`**: pure operations (argument validation and
+  bounds, tag rules, search, Project papers, BibTeX export, Provenance, ownership,
+  rate check), no `chrome.*`, unit-tested in `test/test-agent-ops.js`.
+- **Ingest** (`src/background/agentIngest.js`): an agent-added paper runs the normal
+  `addOrUpdatePaper` pipeline with its new `agent` parameter. Chrome's service worker
+  has no `DOMParser`, so it runs in the **offscreen document**
+  (`src/entrypoints/agentIngest/`, reason `DOM_PARSER`), which has only
+  `chrome.runtime`: its `chrome.storage` is a **storage proxy** to the background
+  (hidden keys, only `papers` and `urlHashToId` writable, only while the document
+  exists), and since it lacks `getManifest` it reads the packaged `manifest.json`
+  before `initState`. On Firefox (MV2 background page with a DOM) it runs directly
+  in the background.
+- **Options page** ([`src/options/agentAccessUI.js`](src/options/agentAccessUI.js)):
+  the Agent access toggle (requests the optional `nativeMessaging` permission in the
+  click's gesture), connection status, the pairing prompt (Allow / Deny, accepted only
+  from the options tab the background opened for it) and the **Paired clients** list
+  with Revoke.
+
+```mermaid
+sequenceDiagram
+    participant A as Agent
+    participant M as MCP server
+    participant H as Native host
+    participant B as Background (agentAccess.js)
+    participant I as Ingest (offscreen / background)
+    A->>M: tool call add_paper(url, reason)
+    M->>H: NDJSON request + auth (clientId, secret, session, project key)
+    H->>B: native message (id remapped per connection)
+    B->>B: authorize, validate, enqueue
+    B->>I: ingest job (url, tags, provenance, project hash)
+    I->>I: addOrUpdatePaper with agent fields
+    I-->>B: stored / already-present / failed
+    B-->>H: result
+    H-->>M: reply
+    M-->>A: tool result
+```
+
+Agent writes are ordinary writes followed by a coalesced Gist push, so sync stays
+last-writer-wins.
 
 ### Why the background worker brokers fetches
 
@@ -219,12 +295,17 @@ The single domain entity. It is a plain object validated (and defaulted) by
 | `favorite`, `favoriteDate`         | bool/string   | Starring                                              |
 | `count`, `addDate`, `lastOpenDate` | number/string | Visit tracking + sort keys                            |
 | `extras`                           | object        | Optional per-source overflow                          |
+| `provenance`                       | object        | Optional, Agent access: which client added the paper, why, when (hashes only, never the keys) |
+| `projectHashes`                    | string[]      | Optional, Agent access: hashes of the Projects the paper belongs to |
 
 ### Storage layout (`chrome.storage.local`)
 
 The `papers` key holds an `{ id → paper }` map plus a `__dataVersion` sentinel.
 Other top-level keys: `prefs`/menu checks, `autoTags`, `ignoreSources`,
-`urlHashToId`, sync state, and periodic backups. `unlimitedStorage` is requested so
+`urlHashToId`, sync state, and periodic backups. Agent access adds `agentAccess`
+(`{enabled}`), `agentLibrary` (`{libraryId}`), `agentClients` (paired clients: name,
+secret hash, timestamps), `agentProjects` (`{[projectHash]: {label, tag, createdAt}}`)
+and `agentReopenOptions`; the pure operations live in `agentOps.js`. `unlimitedStorage` is requested so
 the library can grow without quota errors.
 
 ### Migration
@@ -253,7 +334,9 @@ funnel through which papers enter the Memory. Its pipeline: resolve id
 (`parseIdFromUrl`) → update-visit-or-`makePaper` → fuzzy-dedup merge
 (`mergePapers`) → save through the
 background queue (`memoryOp`: `visit` / `merge`) → `pushToRemote` → asynchronous preprint
-matching (`tryPreprintMatch`) to backfill venue/bibtex → second save (`patch`). Caller-supplied `contentScriptCallbacks`
+matching (`tryPreprintMatch`) to backfill venue/bibtex → second save (`patch`). An optional `agent` parameter (`{tags, provenance, projectHash}`, Agent access) applies the
+agent's tags, Project membership and, on a new paper only, Provenance before each write and
+reports `isNew` and completion. Caller-supplied `contentScriptCallbacks`
 (`update`/`preprints`/`done`/`feedback`) let the content script render progressive
 feedback. `makePaper` dispatches to `src.parse()` and stamps `paper.source`.
 
@@ -277,7 +360,7 @@ preprint-matching APIs), the toolbar badge state machine
 `ignoreSources.js`, patches from the sources pickers). On popup disconnect it pushes
 sync. `runtime.onInstalled` (`openWelcomeOnInstall`, `src/background/welcome.js`) opens the
 welcome page in a tab when `reason === "install"` only (never on an update of the extension or
-the browser).
+the browser). It also hosts `initAgentAccess` (see _Agent access_).
 
 ### `content_script.js` — page integration
 
@@ -395,6 +478,9 @@ the `downloads` API), `functions.js` (49 misc helpers incl. `miniHash`,
   snapshot, never the source of truth at write time. `ignoreSources` is written the same
   way (`applyIgnoreSources`). `updateDuplicatedUrls` (not queued) re-reads
   `urlHashToId` before applying its change and writing the map back.
+- **Agent writes** go through one serialized queue in `agentAccess.js`; before each job it
+  re-checks that Agent access is on and the client still authorized, and non-add mutations
+  re-read `papers` (adds rely on the pipeline's own read-before-write).
 - **Pattern mutual exclusion** across sources is a hard invariant (test-enforced).
 - **No top-level use of `functions.js` exports inside source modules** (TDZ — see
   the `base.js` constraint above).
@@ -415,7 +501,9 @@ the `downloads` API), `functions.js` (49 misc helpers incl. `miniHash`,
 - **External APIs (no project backend):** arXiv, OpenReview, GitHub Gist, CrossRef,
   DBLP, Semantic Scholar, OpenAlex, Google Scholar.
 - **Permissions:** `activeTab`, `storage`, `unlimitedStorage`, `downloads`(+`.open`),
-  `scripting`, and `host_permissions: *://*/*`.
+  `scripting`, `alarms`, `offscreen` (Chrome build only), optional `nativeMessaging`
+  (requested when Agent access is turned on; granted at install only in
+  `WXT_PM_AGENT_TEST=1` test builds), and `host_permissions: *://*/*`.
 - **Docs site:** MkDocs Material (`mkdocs.yml`, `docs/`) published to papermemory.org. Site and Readme screenshots and web videos (walkthrough + feature loops) are generated from the real build with `node scripts/store-assets/build.mjs docs` (writes `docs/assets/`).
 
 ## Key Design Decisions
@@ -438,6 +526,11 @@ the `downloads` API), `functions.js` (49 misc helpers incl. `miniHash`,
   memory across realms.
 - **Gist-based sync with device `__syncId` tagging** — zero project infrastructure,
   user owns their data and credentials.
+- **Native messaging hub for local agents** instead of a listening port: the browser
+  launches the native host, which holds one user-only Unix socket per Library, because
+  nothing outside the browser can wake a sleeping service worker. Authorization,
+  bounds and ownership are enforced at the extension's operation boundary, never in
+  the host. See [ADR 0002](docs/adr/0002-native-messaging-hub-for-agent-access.md).
 - **Two-phase enrichment** (fast parse + store, then async venue backfill) so
   the user gets immediate feedback while slow third-party lookups complete in the
   background.
