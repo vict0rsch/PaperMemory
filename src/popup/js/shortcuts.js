@@ -60,7 +60,9 @@ export const loadShortcuts = async () => {
         }
     });
     for (const { name, shortcut } of commands ?? []) {
-        shortcuts[name] = formatShortcut(shortcut);
+        // the popup's command is _execute_browser_action in the Firefox (MV2) build
+        const key = name === "_execute_browser_action" ? "_execute_action" : name;
+        shortcuts[key] = formatShortcut(shortcut);
     }
     queryAll("[data-cmd]").forEach((el) => {
         el.textContent = shortcuts[el.dataset.cmd] ?? "Not set";

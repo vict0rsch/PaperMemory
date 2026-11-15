@@ -27,24 +27,32 @@ describe("Welcome page", function () {
         page.waitForFunction(fn, { timeout: 5000, polling: 100 }, arg);
     /**
      * A fresh load of the welcome page (on a page of its own); shortcut: what the browser
-     * reports as the popup's shortcut ("" = none), or a function of isMac giving it
+     * reports as the popup's shortcut ("" = none), or [elsewhere, macOS]; name: the popup
+     * command's name (_execute_browser_action in the Firefox MV2 build)
      */
-    const openWelcome = async (p = page, { shortcut } = {}) => {
+    const openWelcome = async (
+        p = page,
+        { shortcut, name = "_execute_action" } = {},
+    ) => {
         await p.goto("about:blank");
         if (shortcut !== undefined)
-            await p.evaluateOnNewDocument((shortcut) => {
-                const mac = /Mac/.test(navigator.userAgent);
-                chrome.commands.getAll = (cb) =>
-                    cb([
-                        {
-                            name: "_execute_action",
-                            shortcut:
-                                typeof shortcut === "string"
-                                    ? shortcut
-                                    : shortcut[+mac],
-                        },
-                    ]);
-            }, shortcut);
+            await p.evaluateOnNewDocument(
+                (shortcut, name) => {
+                    const mac = /Mac/.test(navigator.userAgent);
+                    chrome.commands.getAll = (cb) =>
+                        cb([
+                            {
+                                name,
+                                shortcut:
+                                    typeof shortcut === "string"
+                                        ? shortcut
+                                        : shortcut[+mac],
+                            },
+                        ]);
+                },
+                shortcut,
+                name,
+            );
         await p.goto(`${base}/welcome.html`, { waitUntil: "networkidle0" });
         await p.waitForFunction(
             () => document.documentElement.dataset.welcomeReady === "true",
@@ -304,6 +312,26 @@ describe("Welcome page", function () {
                     ),
                 ).toBe(true);
                 expect(await p.$eval(".w-when-set", (el) => el.offsetHeight)).toBe(0);
+            } finally {
+                await p.close();
+            }
+        });
+
+        it("shows the keys of Firefox's _execute_browser_action (MV2 build)", async function () {
+            const p = await browser.newPage();
+            try {
+                await openWelcome(p, {
+                    shortcut: "Ctrl+Shift+E", // as Firefox reports it
+                    name: "_execute_browser_action",
+                });
+                expect(await keyState(p)).toBe("waiting");
+                const caps = await p.$$eval("#w-caps .w-cap", (c) =>
+                    c.map((x) => x.textContent),
+                );
+                expect([
+                    ["Ctrl", "Shift", "E"],
+                    ["⌘", "⇧", "E"],
+                ]).toContainEqual(caps);
             } finally {
                 await p.close();
             }
