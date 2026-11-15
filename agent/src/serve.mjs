@@ -213,7 +213,9 @@ export async function serve() {
     const id = z.string().describe("Paper id, as returned by search_papers or list_project_papers.");
     const tags = z
         .array(z.string())
-        .describe("Tags (at most 20, each at most 64 characters). Tags starting with `proj-` are reserved for Project tags.");
+        .describe(
+            "Tags (at most 20, each at most 64 characters), without < > \" ' ` & , or control or format characters, and without `proj-` anywhere, in any case: it is reserved for Project tags.",
+        );
     const page = {
         limit: z.number().int().optional().describe("Number of papers, 1–50 (default 20)."),
         offset: z.number().int().optional().describe("Number of papers to skip (≥ 0)."),
