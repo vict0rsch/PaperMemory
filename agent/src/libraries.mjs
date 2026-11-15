@@ -84,8 +84,9 @@ export function request(libraryId, op, args, auth, opts = {}) {
     return requestOnSocket(sockPath, op, args, auth, { protocol: opts.protocol, timeoutMs });
 }
 
-/** Live Libraries, probed with `hello` (never polled); stale sockets are unlinked. */
-export async function listLibraries() {
+/** Live Libraries, probed with `hello` (never polled); stale sockets are unlinked (only if still the probed file).
+ * `hooks.beforeUnlink(sockPath)` is a test seam between the probe and the unlink. */
+export async function listLibraries(hooks = {}) {
     let names;
     try {
         names = fs.readdirSync(sockDir()).filter((n) => n.endsWith(".sock"));
@@ -94,6 +95,12 @@ export async function listLibraries() {
     }
     const probes = names.map(async (name) => {
         const sockPath = path.join(sockDir(), name);
+        let probed = null;
+        try {
+            probed = fs.lstatSync(sockPath);
+        } catch {
+            return null; // gone
+        }
         try {
             const h = await requestOnSocket(sockPath, "hello", {}, null, {
                 timeoutMs: PROBE_TIMEOUT_MS,
@@ -109,7 +116,11 @@ export async function listLibraries() {
         } catch (err) {
             if (err.code === "ECONNREFUSED" || err.code === "ENOENT") {
                 try {
-                    fs.unlinkSync(sockPath);
+                    await hooks.beforeUnlink?.(sockPath);
+                    const now = fs.lstatSync(sockPath);
+                    if (now.isSocket() && now.dev === probed.dev && now.ino === probed.ino) {
+                        fs.unlinkSync(sockPath);
+                    }
                 } catch {
                     // already gone
                 }

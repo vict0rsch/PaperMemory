@@ -135,17 +135,30 @@ export async function serve() {
         return auth;
     }
 
+    const pairing = new Map(); // libraryId -> pending pairing, so concurrent first calls pair once
+
+    async function credentialFor(lib, protocol, file, pair) {
+        const cred = readCredential(file);
+        if (cred) return cred;
+        if (!pair) throw new Error("not paired with this library");
+        let pending = pairing.get(lib.libraryId);
+        if (!pending) {
+            pending = (async () => {
+                const r = await request(lib.libraryId, "pair", { clientName: clientName() }, null, { protocol });
+                const created = { clientName: clientName(), clientId: r.clientId, secret: r.secret };
+                saveCredential(file, created);
+                return created;
+            })().finally(() => pairing.delete(lib.libraryId));
+            pairing.set(lib.libraryId, pending);
+        }
+        return pending;
+    }
+
     // Authenticated op: load the credential file, else pair (unless `pair` is false) and save it.
     async function callLibrary(lib, op, args, p, { pair = true } = {}) {
         const protocol = negotiate(lib);
         const file = credentialFile(lib.libraryId, clientName());
-        let cred = readCredential(file);
-        if (!cred) {
-            if (!pair) throw new Error("not paired with this library");
-            const r = await request(lib.libraryId, "pair", { clientName: clientName() }, null, { protocol });
-            cred = { clientName: clientName(), clientId: r.clientId, secret: r.secret };
-            saveCredential(file, cred);
-        }
+        const cred = await credentialFor(lib, protocol, file, pair);
         const auth = { clientId: cred.clientId, secret: cred.secret, sessionId, ...projectAuth(p) };
         try {
             return await request(lib.libraryId, op, args, auth, { protocol });

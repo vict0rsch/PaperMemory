@@ -345,3 +345,24 @@ test("pairs on first use, saves the credential, sends auth; unauthorized deletes
     assert.equal(seen.at(-1).auth.sessionId, search.auth.sessionId);
     await s.close();
 });
+
+test("concurrent first calls pair once and all succeed", async () => {
+    const home = tempHome();
+    fs.mkdirSync(path.join(home, ".papermemory"), { recursive: true });
+    fs.writeFileSync(path.join(home, ".papermemory", "salt"), crypto.randomBytes(32));
+    const ok = (result) => ({ ok: true, result });
+    const seen = await fakeLibrary(home, {
+        pair: () => ok({ clientId: "client-1", secret: "test-secret-1" }),
+        search_papers: (req) =>
+            req.auth.secret === "test-secret-1"
+                ? ok({ total: 0, papers: [] })
+                : { ok: false, error: { code: "unauthorized", message: "unknown client" } },
+    });
+    const [demo] = projectDirs("demo-project");
+    const s = await startServe({ home, cwd: demo });
+    const results = await Promise.all([1, 2, 3].map((n) => s.call("search_papers", { query: `q${n}` })));
+    results.forEach((r) => json(r));
+    assert.equal(seen.filter((r) => r.op === "pair").length, 1);
+    assert.equal(seen.filter((r) => r.op === "search_papers").length, 3);
+    await s.close();
+});

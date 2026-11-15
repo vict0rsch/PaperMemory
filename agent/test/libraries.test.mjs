@@ -88,6 +88,29 @@ test("a stale socket is unlinked when listing", async () => {
     assert.ok(!fs.existsSync(sockPath));
 });
 
+test("a socket replaced between probe and unlink survives", async () => {
+    const home = tempHome();
+    const sockPath = socketPathFor(home, ID_A);
+    const child = spawn(process.execPath, [
+        "-e",
+        `require("net").createServer().listen(${JSON.stringify(sockPath)}, () => console.log("up"))`,
+    ], { stdio: ["ignore", "pipe", "ignore"] });
+    await new Promise((resolve) => child.stdout.once("data", resolve));
+    child.kill("SIGKILL");
+    await new Promise((resolve) => child.on("exit", resolve));
+    // A new host takes over the path after the probe was refused.
+    const libs = await listLibraries({
+        beforeUnlink: async () => {
+            fs.renameSync(sockPath, sockPath + ".old"); // keeps the old inode alive, so the new one differs
+            const replacement = net.createServer();
+            servers.push(replacement);
+            await new Promise((resolve) => replacement.listen(sockPath, resolve));
+        },
+    });
+    assert.deepEqual(libs, []);
+    assert.ok(fs.lstatSync(sockPath).isSocket(), "the new socket must not be unlinked");
+});
+
 test("negotiation picks the common version or names the side to update", () => {
     assert.equal(negotiate({ protocolMin: 1, protocolMax: 1 }), 1);
     assert.equal(negotiate({ protocolMin: 1, protocolMax: 3 }), 1);
