@@ -1,0 +1,206 @@
+/* Welcome page (design-review/v2-addenda/step5-welcome.html). Shared pieces come from
+   tokens.css + components.css (.pm-*) and options-page.css (top bar, o- cards, sources
+   picker); page classes are prefixed "w-". */
+
+.w-page {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: var(--pm-s-8) var(--pm-s-6) 96px;
+}
+[hidden] {
+    display: none !important;
+}
+
+.w-hero {
+    display: flex;
+    align-items: center;
+    gap: var(--pm-s-4);
+}
+.w-hero svg {
+    flex: none;
+    width: 44px;
+    height: 44px;
+}
+.w-hero .o-sub {
+    margin-top: 2px;
+}
+.w-step {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex: none;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--pm-surface-3);
+    color: var(--pm-text-2);
+    font-size: var(--pm-fs-sm);
+    font-weight: var(--pm-fw-bold);
+}
+
+/* ---------- 1 · what gets recorded ---------- */
+.w-list {
+    display: grid;
+    gap: var(--pm-s-3);
+    margin: 0;
+    padding: var(--pm-s-4) var(--pm-s-5);
+    list-style: none;
+}
+.w-list li {
+    display: grid;
+    grid-template-columns: 28px minmax(0, 1fr);
+    gap: var(--pm-s-3);
+    align-items: start;
+}
+.w-list .pm-gicon {
+    width: 28px;
+    height: 28px;
+    border-radius: 8px;
+}
+.w-list .pm-gicon .pm-i {
+    width: 15px;
+    height: 15px;
+}
+.w-list b {
+    display: block;
+    color: var(--pm-text);
+    font-weight: var(--pm-fw-medium);
+}
+.w-list span {
+    color: var(--pm-text-3);
+    font-size: var(--pm-fs-base);
+}
+
+/* ---------- 2 · shortcut test ---------- */
+#w-shortcut:not([data-key="waiting"]) .w-when-waiting,
+#w-shortcut:not([data-key="ok"]) .w-when-ok,
+#w-shortcut:not([data-key="none"]) .w-when-none,
+#w-shortcut[data-key="none"] .w-when-set {
+    display: none;
+}
+.w-keys {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--pm-s-4) var(--pm-s-6);
+    padding: var(--pm-s-5);
+}
+.w-caps {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--pm-text-3);
+}
+.w-cap {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 44px;
+    height: 44px;
+    padding: 0 12px;
+    border: 1px solid var(--pm-border-strong);
+    border-bottom-width: 3px;
+    border-radius: 9px;
+    background: var(--pm-surface);
+    color: var(--pm-text);
+    font-size: var(--pm-fs-lg);
+    font-weight: var(--pm-fw-medium);
+}
+.w-cap.is-word {
+    font-size: var(--pm-fs-md);
+}
+.is-pressed .w-cap {
+    border-bottom-width: 1px;
+    margin-top: 2px;
+    background: var(--pm-surface-2);
+}
+.w-caps.is-none .w-cap {
+    border-style: dashed;
+    border-bottom-width: 1px;
+    color: var(--pm-text-3);
+    font-size: var(--pm-fs-base);
+    font-weight: var(--pm-fw);
+}
+.w-keystate {
+    flex: 1 1 260px;
+    min-width: 0;
+}
+.w-keystate b {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--pm-text);
+    font-weight: var(--pm-fw-medium);
+}
+.w-keystate.is-ok b {
+    color: var(--pm-success);
+}
+.w-keystate.is-warn b {
+    color: var(--pm-warning);
+}
+.w-keystate p {
+    margin-top: 2px;
+    color: var(--pm-text-3);
+    font-size: var(--pm-fs-base);
+}
+.w-pulse {
+    flex: none;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--pm-focus);
+    box-shadow: 0 0 0 4px color-mix(in srgb, var(--pm-focus) 22%, transparent);
+}
+
+/* ---------- end ---------- */
+.w-end {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: var(--pm-s-3);
+    margin-top: var(--pm-s-8);
+    padding: var(--pm-s-5);
+    border: 1px solid var(--pm-border);
+    border-radius: var(--pm-r-xl);
+    background: var(--pm-surface);
+    box-shadow: var(--pm-shadow-sm);
+}
+.w-end .pm-row-text {
+    flex: 1 1 240px;
+}
+.w-end .pm-row-label {
+    font-size: var(--pm-fs-lg);
+    font-weight: var(--pm-fw-bold);
+}
+.w-end .pm-row-help {
+    font-size: var(--pm-fs-base);
+}
+.w-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--pm-s-2) var(--pm-s-5);
+    margin-top: var(--pm-s-4);
+    padding: 0 2px;
+    font-size: var(--pm-fs-base);
+}
+
+@media (max-width: 640px) {
+    .w-page {
+        padding: var(--pm-s-4) var(--pm-s-3) 64px;
+    }
+    .o-title {
+        font-size: 22px;
+    }
+    .w-list,
+    .w-keys {
+        padding-left: var(--pm-s-4);
+        padding-right: var(--pm-s-4);
+    }
+    .w-end .pm-btn {
+        flex: 1 1 100%;
+    }
+    .w-cap {
+        min-width: 40px;
+        height: 40px;
+    }
+}

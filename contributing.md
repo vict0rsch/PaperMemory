@@ -75,7 +75,7 @@ When using `npm run dev`:
 
 ### Debugging utilities (`PMDebug`)
 
-A global `PMDebug` object is available in all HTML pages (popup, options, fullMemory, bibMatcher) for inspecting internal state from the browser console:
+A global `PMDebug` object is available in all HTML pages (popup, options, fullMemory, bibMatcher, welcome) for inspecting internal state from the browser console:
 
 ```javascript
 PMDebug.config.state; // Global state (papers, prefs, etc.)
@@ -123,7 +123,10 @@ The debug system is implemented in `src/debug/debug.js` and imported by each ent
     │   ├── fullMemory/           ➤ Full-page paper memory view
     │   │   ├── index.html
     │   │   └── main.js
-    │   └── bibMatcher/           ➤ BibTeX matching tool
+    │   ├── bibMatcher/           ➤ BibTeX matching tool
+    │   │   ├── index.html
+    │   │   └── main.js
+    │   └── welcome/              ➤ First-run welcome page (opened on install)
     │       ├── index.html
     │       └── main.js
     │
@@ -148,6 +151,7 @@ The debug system is implemented in `src/debug/debug.js` and imported by each ent
     ├── options/                  ➤ Options page logic
     ├── fullMemory/               ➤ Full memory page logic
     ├── bibMatcher/               ➤ BibTeX matcher logic
+    ├── welcome/                  ➤ Welcome page logic
     │
     └── shared/                   ➤ Shared utilities and resources
         ├── js/

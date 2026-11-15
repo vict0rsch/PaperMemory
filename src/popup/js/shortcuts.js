@@ -19,20 +19,31 @@ export const openShortcutSettings = () => {
 /**
  * "⇧⌘E" (Chrome, macOS) or "Ctrl+Shift+E" -> display string for a key cap
  * @param {string} shortcut From chrome.commands
+ * @param {boolean} mac Format for macOS (for tests)
  */
-export const formatShortcut = (shortcut) => {
+export const formatShortcut = (shortcut, mac = isMac) => {
     if (!shortcut) return "Not set";
-    if (!isMac) return shortcut;
+    if (!mac) return shortcut;
     const names = { Command: "⌘", Ctrl: "⌘", MacCtrl: "⌃", Alt: "⌥", Shift: "⇧" };
+    const order = ["⌘", "⌥", "⇧", "⌃"];
+    // symbol form ("⇧⌘Space"): one part per modifier glyph, the key name stays whole
+    const [, glyphs, key] = shortcut.match(/^([⌘⌥⇧⌃]*)(.*)$/su);
     const parts = shortcut.includes("+")
         ? shortcut.split("+").map((p) => names[p] ?? p)
-        : [...shortcut];
-    const order = ["⌘", "⌥", "⇧", "⌃"];
+        : [...glyphs, key].filter(Boolean);
     const mods = parts.filter((p) => order.includes(p));
     const keys = parts.filter((p) => !order.includes(p));
     mods.sort((a, b) => order.indexOf(a) - order.indexOf(b));
     return [...mods, ...keys].join(" ");
 };
+
+/**
+ * One key cap per key of a formatShortcut() string: ["⌘", "⇧", "Space"], ["Ctrl", "Shift", "E"]
+ * @param {string} formatted From formatShortcut
+ * @param {boolean} mac As formatted for macOS
+ */
+export const shortcutKeys = (formatted, mac = isMac) =>
+    mac ? formatted.split(" ") : formatted.split("+");
 
 /**
  * Reads the browser-level shortcuts (they can be changed by the user) and writes them in

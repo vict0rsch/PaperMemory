@@ -1033,6 +1033,12 @@ export const popupMain = async (url, is, manualTrigger = false, tab = null) => {
         findEl({ element: "pm-shell" }).classList.add("pm-is-loading");
         const url = tab.url;
         chrome.runtime.connect({ name: "PaperMemoryPopupSync" });
+        // for the welcome page's shortcut test; usually no page listens (lastError read,
+        // nothing awaited)
+        chrome.runtime.sendMessage(
+            { type: "popupOpened" },
+            () => void chrome.runtime.lastError,
+        );
 
         let stateReadyPromise, remoteIsReadyPromise;
         remoteIsReadyPromise = new Promise((remoteReadyResolve) => {

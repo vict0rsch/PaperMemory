@@ -37,7 +37,7 @@ surface without breaking the (deliberately load-order-sensitive) module graph.
 PaperMemory is built with **[WXT](https://wxt.dev/)** (`wxt.config.js`), which
 compiles the `src/` tree into a Manifest V3 extension. WXT's role is purely
 build-time: it wires `src/entrypoints/*` into manifest-declared contexts (background
-worker, content script, and four HTML pages), applies the `@pm` / `@pmu` path
+worker, content script, and five HTML pages), applies the `@pm` / `@pmu` path
 aliases, and produces per-browser bundles. There is no runtime framework — the code
 is plain ES modules plus jQuery and Tom Select for DOM work.
 
@@ -52,6 +52,7 @@ graph TB
             FullMem["fullMemory<br/>full-tab library view"]
             Options["options<br/>preferences + import/export"]
             BibM["bibMatcher<br/>batch BibTeX enrichment"]
+            Welcome["welcome<br/>first-run page"]
         end
         subgraph BG["Background Service Worker"]
             BGScript["background.js<br/>message router,<br/>privileged-API broker"]
@@ -85,6 +86,8 @@ graph TB
     Paper -->|pushToRemote| Sync
     CScript -.->|chrome.runtime message| BGScript
     Popup -.->|chrome.runtime message| BGScript
+    Popup -.->|popupOpened message| Welcome
+    BGScript -->|onInstalled install: opens tab| Welcome
     BGScript -->|brokered fetch| Arxiv
     BGScript -->|brokered fetch| OR
     BGScript --> Match
@@ -102,7 +105,9 @@ graph TB
 - **Message passing (`chrome.runtime`).** Used for two things: (1) the content
   script and popup ask the background worker to perform privileged or
   cross-origin operations they cannot do themselves; (2) the worker pushes
-  commands (keyboard shortcuts, tab-URL changes) into content scripts. The router is
+  commands (keyboard shortcuts, tab-URL changes) into content scripts; (3) the popup
+  announces itself (`{ type: "popupOpened" }`, fire-and-forget, `lastError` read so no
+  listener is fine) for the welcome page's shortcut test — the background ignores it. The router is
   the single `chrome.runtime.onMessage` listener in `background.js` (a `type`-keyed
   `if/else` chain). It rejects messages whose `sender.id !== chrome.runtime.id`.
 - **Storage as the integration bus.** All contexts read/write the same
@@ -264,7 +269,9 @@ preprint-matching APIs), the toolbar badge state machine
 (`badgeOk/Wait/Error/Clear`), keyboard-command handlers (`manualParsing`,
 `downloadPdf`, `defaultAction`), the PDF-title rewriter (`chrome.tabs.onUpdated` +
 `chrome.scripting.executeScript`), and Gist push/pull. On popup disconnect it pushes
-sync.
+sync. `runtime.onInstalled` (`openWelcomeOnInstall`, `src/background/welcome.js`) opens the
+welcome page in a tab when `reason === "install"` only (never on an update of the extension or
+the browser).
 
 ### `content_script.js` — page integration
 
@@ -275,9 +282,9 @@ pings the worker (`hello`), then calls `isPaper(url)`; on a hit it invokes
 worker-pushed commands and provides in-page actions (copy BibTeX/MD link, open
 abstract/PDF/ar5iv/HuggingFace, etc., shared with the popup's `handlers.js`).
 
-### UI surfaces — `popup`, `fullMemory`, `options`, `bibMatcher`
+### UI surfaces — `popup`, `fullMemory`, `options`, `bibMatcher`, `welcome`
 
-**Location:** `src/popup/`, `src/fullMemory/`, `src/options/`, `src/bibMatcher/`
+**Location:** `src/popup/`, `src/fullMemory/`, `src/options/`, `src/bibMatcher/`, `src/welcome/`
 (thin `src/entrypoints/*/main.js` wrappers import the real logic + `debug.js`).
 
 - **popup** ([`popup/js/popup.js`](src/popup/js/popup.js), `memory.js`, `handlers.js`,
@@ -297,7 +304,15 @@ abstract/PDF/ar5iv/HuggingFace, etc., shared with the popup's `handlers.js`).
   (`onPapersChange`), held while an edit form, a dialog or a bulk action is in progress;
   no periodic reload. Sync status comes from `sync.js` as a `pm-sync-status` DOM event.
 - **options** — preferences, custom PDF-title function, auto-tag rules, JSON/BibTeX
-  import & export, sync configuration.
+  import & export, sync configuration. The sources picker (`ignoreSources`) is shared with the
+  welcome page: `src/shared/js/sourcePicker.js` + `src/shared/html/source-picker.html`.
+- **welcome** ([`welcome/welcome.js`](src/welcome/welcome.js)) — first-run page, opened by the
+  background on install and from Settings > General > Welcome page: what gets recorded
+  (static), a shortcut test (key caps from `chrome.commands.getAll()` `_execute_action`;
+  waiting → "It works" on the popup's `popupOpened` message; "No shortcut set" when empty; Open
+  browser shortcuts via `shortcuts.js` `openShortcutSettings`), the shared sources picker, and
+  the theme switch (`[data-set-theme]`, wired by the top bar, writes `prefs.theme`). It
+  writes nothing else.
 - **bibMatcher** — a standalone tool: paste, choose or drop a `.bib` file; each preprint
   entry (any field mentioning `rxiv`: arXiv, bioRxiv, medRxiv, ChemRxiv) is looked up on
   DBLP → Semantic Scholar → Google Scholar → CrossRef → OpenAlex (`preprintMatching.js`,

@@ -7,6 +7,9 @@ html {
 }
 body.pm-ui {
     min-height: 100vh;
+    /* Chrome injects body { font-size: 75% } into extension pages, which beats :where(.pm-ui)
+       (components.css): the pages' 14px body, as in Firefox. Not loaded by the popup. */
+    font-size: var(--pm-fs-md);
 }
 .o-sr {
     position: absolute;
@@ -258,6 +261,10 @@ label.o-row {
 }
 .o-link-sm {
     font-size: var(--pm-fs-base);
+}
+/* a link drawn as a button (Settings "Welcome page · Open", the welcome page's end bar) */
+a.pm-btn:hover {
+    text-decoration: none;
 }
 /* a text button that reads as a link ("any", similar-tag groups) */
 .o-linkbtn {

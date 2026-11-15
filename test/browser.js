@@ -7,14 +7,16 @@ import fs from "fs";
 /**
  * @param {boolean} headless
  * @param {string} windowSize
- * @param {{attachServiceWorker?: boolean}} opts attachServiceWorker false: puppeteer leaves
- *   the background service worker alone, so Chrome stops it when idle (or when asked) and a
- *   message starts it again, as for a user (an attached worker does not restart)
+ * @param {{attachServiceWorker?: boolean, keepWelcomeTab?: boolean}} opts attachServiceWorker
+ *   false: puppeteer leaves the background service worker alone, so Chrome stops it when idle
+ *   (or when asked) and a message starts it again, as for a user (an attached worker does not
+ *   restart). keepWelcomeTab: leave open the welcome tab the extension opens on install
+ *   (closed by default)
  */
 export const makeBrowser = async (
     headless = false,
     windowSize = "1200,900",
-    { attachServiceWorker = true } = {},
+    { attachServiceWorker = true, keepWelcomeTab = false } = {},
 ) => {
     const browser = await launch({
         headless,
@@ -32,6 +34,18 @@ export const makeBrowser = async (
                 : { targetFilter: (t) => t.type !== "service_worker" }),
         },
     });
+    if (!keepWelcomeTab) {
+        // a fresh profile each run, so the extension opens its welcome tab: wait for it
+        // (bounded) and close it before returning, so tests start from the same tabs as
+        // before (pages a test opens start on about:blank and are left alone)
+        const welcome = await browser
+            .waitForTarget(
+                (t) => t.type() === "page" && t.url().endsWith("/welcome.html"),
+                { timeout: 10000 },
+            )
+            .catch(() => null);
+        await (await welcome?.page())?.close();
+    }
     return browser;
 };
 

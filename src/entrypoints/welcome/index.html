@@ -1,0 +1,263 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>Welcome to PaperMemory</title>
+        <link rel="stylesheet" type="text/css" href="/tokens.css" wxt-ignore />
+        <link rel="stylesheet" type="text/css" href="/components.css" wxt-ignore />
+        <link rel="stylesheet" type="text/css" href="/options-page.css" wxt-ignore />
+        <link rel="stylesheet" type="text/css" href="/welcome-page.css" wxt-ignore />
+        <!-- after every stylesheet: applies the theme before first paint -->
+        <script src="/theme.js"></script>
+    </head>
+
+    <!-- design-review/v2-addenda/step5-welcome.html, without the recording toggle and with the
+         Settings theme switch; src/welcome/welcome.js -->
+    <body class="pm-ui" id="pm-welcome">
+        <!--=include ../../shared/html/topbar.html -->
+
+        <main class="w-page">
+            <div class="w-hero">
+                <i data-i="mark"></i>
+                <div>
+                    <h1 class="o-title">Welcome to PaperMemory</h1>
+                    <p class="o-sub">
+                        It is installed and already working. Four things to know; all of
+                        them can be changed later in Settings.
+                    </p>
+                </div>
+            </div>
+
+            <!-- ============ 1 · what gets recorded ============ -->
+            <section class="o-section" aria-labelledby="w-recorded-title">
+                <h2 class="o-section-title" id="w-recorded-title">
+                    <span class="w-step">1</span>What gets recorded
+                </h2>
+                <div class="o-card">
+                    <ul class="w-list">
+                        <li>
+                            <span class="pm-gicon"><i data-i="doc"></i></span>
+                            <div>
+                                <b>The papers you open</b>
+                                <span
+                                    >On the sites listed below, PaperMemory saves the
+                                    paper's title, authors, venue, year, links and
+                                    BibTeX, when you opened it and how many times. Add
+                                    your own tags, notes and code link. Other pages are
+                                    ignored.</span
+                                >
+                            </div>
+                        </li>
+                        <li>
+                            <span class="pm-gicon"><i data-i="book"></i></span>
+                            <div>
+                                <b>Stored in this browser</b>
+                                <span
+                                    >Your Memory lives in this browser's extension
+                                    storage. There is no PaperMemory account and no
+                                    PaperMemory server.</span
+                                >
+                            </div>
+                        </li>
+                        <li>
+                            <span class="pm-gicon"><i data-i="cloud"></i></span>
+                            <div>
+                                <b>Sync is optional, and goes to your own GitHub</b>
+                                <span
+                                    >Off by default. If you turn it on with your GitHub
+                                    token, your Memory is copied to a private gist in
+                                    your GitHub account, and nowhere else.</span
+                                >
+                            </div>
+                        </li>
+                        <li>
+                            <span class="pm-gicon"><i data-i="globe"></i></span>
+                            <div>
+                                <b>What leaves your browser</b>
+                                <span
+                                    >To fill in a paper's details or find where it was
+                                    published, PaperMemory asks public services (arXiv,
+                                    DBLP, Semantic Scholar, Google Scholar, CrossRef and
+                                    OpenAlex) about that paper.
+                                    <a
+                                        class="pm-out"
+                                        href="https://papermemory.org/privacy-policy/"
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        data-tip="Open the privacy policy on papermemory.org"
+                                        >Privacy policy</a
+                                    ></span
+                                >
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- ============ 2 · shortcut test ============ -->
+            <!-- data-key: waiting | ok (the popup said it opened) | none (no shortcut set) -->
+            <section
+                class="o-section"
+                id="w-shortcut"
+                data-key="waiting"
+                aria-labelledby="w-shortcut-title"
+            >
+                <h2 class="o-section-title" id="w-shortcut-title">
+                    <span class="w-step">2</span>Open it from the keyboard
+                </h2>
+                <div class="o-card">
+                    <div class="w-keys">
+                        <div class="w-caps" id="w-caps"></div>
+                        <div class="w-keystate w-when-waiting" role="status">
+                            <b
+                                ><span class="w-pulse"></span
+                                ><span
+                                    >&nbsp;Try it now: press the
+                                    <span id="w-keycount">three keys</span></span
+                                ></b
+                            >
+                            <p>
+                                The PaperMemory popup should open at the top right of
+                                this window.
+                            </p>
+                        </div>
+                        <div class="w-keystate is-ok w-when-ok" role="status">
+                            <b><i data-i="check"></i>It works: the popup opened</b>
+                            <p>
+                                In the popup, <span class="pm-kbd">a</span> opens your
+                                Memory and <span class="pm-kbd">?</span> lists every
+                                key.
+                            </p>
+                        </div>
+                        <div class="w-keystate is-warn w-when-none" role="status">
+                            <b
+                                ><i data-i="alert"></i>Your browser did not give
+                                PaperMemory a shortcut</b
+                            >
+                            <p>
+                                Another extension may already use the default keys.
+                                Choose your own in the browser's shortcut settings.
+                            </p>
+                        </div>
+                        <button
+                            type="button"
+                            class="pm-btn pm-btn-primary w-when-none"
+                            data-open-shortcuts
+                            aria-label="Open browser shortcuts (opens in a new tab)"
+                            data-tip="Open the browser’s shortcut settings"
+                        >
+                            Open browser shortcuts <i data-i="open" class="pm-i-sm"></i>
+                        </button>
+                    </div>
+                    <div class="pm-row o-row w-when-set">
+                        <div class="pm-row-text">
+                            <div class="pm-row-label">
+                                Nothing happens, or you want other keys?
+                            </div>
+                            <div class="pm-row-help">
+                                Another extension may already use them. Shortcuts are
+                                set in your browser, not in PaperMemory.
+                            </div>
+                        </div>
+                        <button
+                            type="button"
+                            class="pm-btn"
+                            data-open-shortcuts
+                            aria-label="Open browser shortcuts (opens in a new tab)"
+                            data-tip="Open the browser’s shortcut settings"
+                        >
+                            Open browser shortcuts <i data-i="open" class="pm-i-sm"></i>
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ============ 3 · sources ============ -->
+            <section class="o-section" aria-labelledby="w-sources-title">
+                <h2 class="o-section-title" id="w-sources-title">
+                    <span class="w-step">3</span>Where to record from
+                </h2>
+                <div class="o-card" id="select-sources">
+                    <div class="o-card-head">
+                        <p>
+                            PaperMemory records papers from these sites. Turning one off
+                            stops new recordings from it.
+                        </p>
+                    </div>
+                    <div class="o-card-body">
+                        <!--=include ../../shared/html/source-picker.html -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- ============ 4 · theme ============ -->
+            <section class="o-section" aria-labelledby="w-theme-title">
+                <h2 class="o-section-title" id="w-theme-title">
+                    <span class="w-step">4</span>Theme
+                </h2>
+                <div class="o-card">
+                    <div class="pm-row o-row">
+                        <div class="pm-row-text">
+                            <div class="pm-row-label">Theme</div>
+                            <div class="pm-row-help">
+                                System follows your computer's light or dark setting.
+                            </div>
+                        </div>
+                        <div class="pm-seg" role="group" aria-label="Theme">
+                            <button type="button" data-set-theme="system">
+                                System
+                            </button>
+                            <button type="button" data-set-theme="light">Light</button>
+                            <button type="button" data-set-theme="dark">Dark</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ============ done ============ -->
+            <div class="w-end">
+                <div class="pm-row-text">
+                    <div class="pm-row-label">You're set</div>
+                    <div class="pm-row-help">
+                        Open any paper and it lands in your Memory.
+                    </div>
+                </div>
+                <a class="pm-btn" href="/fullMemory.html" id="w-open-memory"
+                    >Open my Memory</a
+                >
+                <a
+                    class="pm-btn pm-btn-primary"
+                    id="w-try-arxiv"
+                    href="https://arxiv.org/abs/2305.05577v1"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label="Try it on an arXiv paper (opens in a new tab)"
+                    data-tip="Open an arXiv paper in a new tab"
+                    >Try it on an arXiv paper <i data-i="open" class="pm-i-sm"></i
+                ></a>
+            </div>
+            <div class="w-links">
+                <a href="/options.html">All settings</a>
+                <a
+                    class="pm-out"
+                    href="https://papermemory.org/getting-started/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    data-tip="Open the user guide on papermemory.org"
+                    >User guide</a
+                >
+                <a
+                    class="pm-out"
+                    href="https://github.com/vict0rsch/PaperMemory/issues"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    data-tip="Report a problem or suggest an idea on GitHub"
+                    >Report a problem</a
+                >
+            </div>
+        </main>
+
+        <script type="module" src="./main.js"></script>
+    </body>
+</html>

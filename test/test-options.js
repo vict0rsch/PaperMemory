@@ -1940,6 +1940,9 @@ describe("Options page: changes made after the background restarted are synced",
         if (!id) throw new Error("Extension ID not found");
         base = `chrome-extension://${id}`;
         papers = readJSON(`${root}/test/data/3-papers-memory.json`);
+        // the faked API only reaches extension processes started after Fetch.enable: stop
+        // the worker the install started (it opened the welcome tab), so its process goes
+        await stopServiceWorker();
     });
 
     beforeEach(async function () {

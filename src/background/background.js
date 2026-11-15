@@ -9,6 +9,7 @@ import {
 } from "@pmu/sync.js";
 import { getStorage, setStorage } from "@pmu/data.js";
 import { runMemoryOp, serveMemoryOps } from "@pmu/memoryQueue.js";
+import { openWelcomeOnInstall } from "@pm/background/welcome.js";
 import { isSourceURL, parseIdFromUrl } from "@pmu/urls.js";
 import { initState, downloadPaperPdf } from "@pmu/state.js";
 import { fetchJSON } from "@pmu/parsers.js";
@@ -34,6 +35,7 @@ import {
 
 export function initBackground() {
     serveMemoryOps(); // this context runs the Memory's write queue for every page
+    chrome.runtime.onInstalled.addListener(openWelcomeOnInstall);
     var tabStatuses = {};
     var paperTitles = {};
 
@@ -441,6 +443,8 @@ export function initBackground() {
         if (sender.id !== chrome.runtime.id) {
             return;
         }
+        // for the welcome page (the popup announces itself); no answer from here
+        if (payload.type === "popupOpened") return;
         if (payload.type === "update-title") {
             const { title, url } = payload.options;
             paperTitles[url] = title.replaceAll('"', "'");
