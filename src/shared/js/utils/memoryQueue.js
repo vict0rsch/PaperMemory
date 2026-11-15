@@ -260,6 +260,17 @@ const apply = async (memory, op, ctx) => {
             }
             return changed ? done({ changed }) : keep({ changed });
         }
+        case "addTags": {
+            // tags added to a paper's own (fullMemory's bulk "Add tag"): read here, never
+            // from a page's copy
+            if (!isPaperId(op.id) || !papers[op.id]) return keep({ missing: true });
+            const paper = papers[op.id];
+            const tags = [...new Set([...(paper.tags ?? []), ...op.tags])].sort();
+            if (tags.join("\n") === (paper.tags ?? []).join("\n"))
+                return keep({ paper });
+            paper.tags = tags;
+            return done({ paper });
+        }
         case "replace": {
             // the new Memory: written by the page under memoryStaging (fromStaging: its
             // id); inline (op.memory) only inside the background or in tests

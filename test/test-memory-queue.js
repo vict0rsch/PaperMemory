@@ -210,6 +210,28 @@ describe("Memory queue (memoryQueue.js)", function () {
         expect(Object.keys(chrome.store.papers)).toEqual(["a"]);
     });
 
+    it("addTags adds to the tags stored now, in one batch write (fullMemory's bulk Add tag)", async () => {
+        chrome.store.papers = {
+            a: paper("a", { tags: ["vision"] }),
+            b: paper("b", { tags: ["nlp", "to-read"] }),
+        };
+        chrome.store.papersRevision = 3;
+        const answer = await q.runMemoryOp({
+            op: "batch",
+            ops: ["a", "b", "gone"].map((id) => ({
+                op: "addTags",
+                id,
+                tags: ["to-read"],
+            })),
+        });
+        expect(answer.ok).toBe(true);
+        expect(chrome.store.papers.a.tags).toEqual(["to-read", "vision"]);
+        expect(chrome.store.papers.b.tags).toEqual(["nlp", "to-read"]);
+        expect(chrome.store.papers.gone).toBeUndefined(); // never re-created
+        expect(answer.result.results[2]).toEqual({ missing: true });
+        expect(chrome.store.papersRevision).toBe(4);
+    });
+
     it("two interleaved replaces each commit their own staging copy, then remove it", async () => {
         chrome.store.papers = { a: paper("a") };
         chrome.store.papersRevision = 7;

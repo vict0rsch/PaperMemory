@@ -1,149 +1,325 @@
 <!doctype html>
-<html>
+<html lang="en">
     <head>
         <meta charset="utf-8" />
-        <title>PaperMemory Page</title>
-        <link
-            href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css"
-            rel="stylesheet"
-            integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC"
-            crossorigin="anonymous"
-        />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>PaperMemory Memory</title>
         <link rel="stylesheet" type="text/css" href="/tokens.css" wxt-ignore />
         <link rel="stylesheet" type="text/css" href="/components.css" wxt-ignore />
-        <link rel="stylesheet" type="text/css" href="/vars.css" wxt-ignore />
-        <link rel="stylesheet" type="text/css" href="/loader.css" wxt-ignore />
         <link rel="stylesheet" type="text/css" href="/popup.css" wxt-ignore />
-        <link rel="stylesheet" type="text/css" href="/options.css" wxt-ignore />
-        <link rel="stylesheet" type="text/css" href="/fullMemory.css" wxt-ignore />
+        <link rel="stylesheet" type="text/css" href="/options-page.css" wxt-ignore />
+        <link rel="stylesheet" type="text/css" href="/fullMemory-page.css" wxt-ignore />
         <!-- after every stylesheet: applies the theme before first paint -->
         <script src="/theme.js"></script>
 
         <script type="module" src="./main.js"></script>
     </head>
 
-    <body>
-        <div id="memory-container" style="display: block">
-            <div id="memory-filters">
-                <div id="sync-popup-feedback" style="display: none">
-                    <div
-                        id="sync-popup-syncing"
-                        style="
-                            display: none;
-                            align-items: center;
-                            justify-content: center;
-                        "
+    <!-- design-review/v2-addenda/step5-fullmemory.html. 1200px and wider: tag sidebar, table,
+         detail pane; 900 to 1200px: the pane is a drawer; below 900px: the popup's rows
+         (#memory-table). The search field, pills, sort menu and tag list are the popup's
+         (same ids: popup/js/memory.js drives them). -->
+    <body class="pm-ui" id="pm-fullmemory" data-pane="closed">
+        <!--=include ../../shared/html/topbar.html -->
+
+        <div class="m-app">
+            <!-- ============ tag sidebar (900px and wider) ============ -->
+            <aside class="m-side" aria-label="Library and tags">
+                <nav class="o-nav" aria-label="Library">
+                    <a href="#" id="m-all"
+                        ><i data-i="list"></i><span>All papers</span
+                        ><span class="pm-count" id="memory-count"></span
+                    ></a>
+                    <a href="#" id="m-favs"
+                        ><i data-i="star" class="m-fav"></i><span>Favourites</span
+                        ><span class="pm-count" id="m-fav-count"></span
+                    ></a>
+                </nav>
+
+                <div class="pm-label-caps">
+                    Tags <span class="pm-count" id="m-tag-count"></span>
+                </div>
+                <label class="pm-field m-tagfilter">
+                    <i data-i="search"></i>
+                    <input
+                        type="text"
+                        id="m-tag-filter"
+                        placeholder="Filter tags"
+                        aria-label="Filter tags"
+                        autocomplete="off"
+                        spellcheck="false"
+                    />
+                </label>
+                <div id="m-taglist" role="group" aria-label="Tags"></div>
+
+                <div class="m-side-foot">
+                    <a class="o-linkbtn" href="/options.html#tag-manager"
+                        >Rename or merge tags in Settings</a
                     >
-                        <div style="display: inline-block; margin-right: 8px">
-                            Syncing
+                    <div class="o-side-status m-sync" id="m-sync" role="status" hidden>
+                        <span class="pm-dot"></span><span class="m-sync-text"></span
+                        ><a href="/options.html#sync" class="m-sync-link" hidden
+                            >Sync settings</a
+                        >
+                    </div>
+                </div>
+            </aside>
+
+            <!-- ============ list ============ -->
+            <main class="m-main" id="memory-container">
+                <div class="m-searchwrap" id="memory-filters">
+                    <div class="m-searchfield">
+                        <div class="pm-field pm-mv-search" id="memory-search-field">
+                            <i data-i="search"></i>
+                            <input
+                                id="memory-search"
+                                type="text"
+                                placeholder="Search, or t: c: y: filters"
+                                autocomplete="off"
+                                spellcheck="false"
+                                aria-label="Search your Memory"
+                            />
+                            <!-- shown when there is text or a pill: clears both -->
+                            <button
+                                type="button"
+                                class="pm-quiet pm-ic pm-search-x"
+                                id="memory-search-x"
+                                tabindex="-1"
+                                aria-label="Clear search"
+                                data-tip="Clear search"
+                                hidden
+                            >
+                                <i data-i="x"></i>
+                            </button>
+                            <span class="pm-count" id="memory-result-count"></span>
+                            <span class="pm-mv-sep"></span>
+                            <!-- below 900px only: the sidebar has the tags and favourites -->
+                            <button
+                                type="button"
+                                class="pm-quiet pm-ic m-only-narrow"
+                                id="memory-tags-button"
+                                tabindex="-1"
+                                aria-label="Browse tags"
+                                data-tip="Browse tags"
+                                aria-expanded="false"
+                            >
+                                <i data-i="tag"></i>
+                            </button>
+                            <button
+                                type="button"
+                                class="pm-quiet pm-ic m-only-narrow"
+                                id="filter-favorites"
+                                tabindex="-1"
+                                aria-label="Favourites only"
+                                data-tip="Favourites only"
+                                aria-pressed="false"
+                            >
+                                <i data-i="star"></i>
+                            </button>
+                            <button
+                                type="button"
+                                class="pm-quiet pm-ic"
+                                id="memory-sort-button"
+                                tabindex="-1"
+                                aria-label="Sort: last opened, newest first"
+                                data-tip="Sort: last opened, newest first"
+                                aria-haspopup="menu"
+                                aria-expanded="false"
+                            >
+                                <i data-i="swap"></i>
+                            </button>
                         </div>
                         <div
-                            class="pm-loader"
-                            style="
-                                width: 24px;
-                                height: 24px;
-                                border-width: 2px;
-                                display: inline-block;
-                            "
+                            class="pm-sugg pm-mv-sugg"
+                            id="memory-tag-suggestions"
+                            role="listbox"
+                            hidden
+                        ></div>
+                        <div
+                            class="pm-sugg pm-sortmenu"
+                            id="memory-sort-menu"
+                            role="menu"
+                            hidden
                         ></div>
                     </div>
-                    <div
-                        id="sync-popup-synced"
-                        style="display: none; text-align: center"
-                    >
-                        <div>Synced &#9989;</div>
+                    <div class="m-pillline">
+                        <div class="pm-pillrow" id="memory-pills" hidden></div>
+                        <span
+                            class="m-sync-narrow"
+                            id="m-sync-narrow"
+                            role="status"
+                            hidden
+                            ><span class="pm-dot"></span
+                            ><span class="m-sync-text"></span
+                        ></span>
                     </div>
-                    <div
-                        id="sync-popup-error"
-                        style="display: none; text-align: center"
-                    >
-                        <div>Sync failed &#10060;</div>
+                    <div class="pm-sugg pm-tagpanel" id="memory-tag-panel" hidden></div>
+                </div>
+
+                <!-- 900px and wider: the sortable table -->
+                <div class="o-card m-tablecard" id="m-tablecard">
+                    <table class="m-table" aria-label="Your Memory">
+                        <thead>
+                            <tr>
+                                <th class="c-check">
+                                    <input
+                                        type="checkbox"
+                                        class="pm-check"
+                                        id="m-select-all"
+                                        tabindex="-1"
+                                        aria-label="Select all papers"
+                                        data-tip="Select all papers"
+                                    />
+                                </th>
+                                <th class="c-fav"></th>
+                                <th class="c-paper">
+                                    <button
+                                        type="button"
+                                        class="m-sort"
+                                        data-sort="title"
+                                    >
+                                        Paper <i data-i="down"></i>
+                                    </button>
+                                </th>
+                                <th class="c-venue">
+                                    <span class="pm-label-caps">Venue</span>
+                                </th>
+                                <th class="c-year">
+                                    <button
+                                        type="button"
+                                        class="m-sort"
+                                        data-sort="year"
+                                    >
+                                        Year <i data-i="down"></i>
+                                    </button>
+                                </th>
+                                <th class="c-tags">
+                                    <span class="pm-label-caps">Tags</span>
+                                </th>
+                                <th class="c-open c-num">
+                                    <button
+                                        type="button"
+                                        class="m-sort"
+                                        data-sort="lastOpenDate"
+                                    >
+                                        Opened <i data-i="down"></i>
+                                    </button>
+                                </th>
+                                <th class="c-visits c-num">
+                                    <button
+                                        type="button"
+                                        class="m-sort"
+                                        data-sort="count"
+                                    >
+                                        Visits <i data-i="down"></i>
+                                    </button>
+                                </th>
+                                <th class="c-info"></th>
+                            </tr>
+                        </thead>
+                        <tbody id="m-tbody"></tbody>
+                    </table>
+                    <div id="m-empty" hidden></div>
+                </div>
+                <!-- 900px and wider: sticky footer, the bulk actions (only while papers are
+                     selected) over the key hints -->
+                <div class="m-foot" id="m-foot">
+                    <div class="m-bulk" id="m-bulk" role="toolbar" hidden>
+                        <b id="m-bulk-count"></b>
+                        <button
+                            type="button"
+                            class="pm-btn pm-btn-ghost pm-btn-sm"
+                            data-bulk="tag"
+                        >
+                            <i data-i="tag"></i>Add tag…
+                        </button>
+                        <button
+                            type="button"
+                            class="pm-btn pm-btn-ghost pm-btn-sm"
+                            data-bulk="fav"
+                        >
+                            <i data-i="star"></i>Favourite
+                        </button>
+                        <button
+                            type="button"
+                            class="pm-btn pm-btn-ghost pm-btn-sm"
+                            data-bulk="copy"
+                        >
+                            <i data-i="bib"></i>Copy BibTeX
+                        </button>
+                        <button
+                            type="button"
+                            class="pm-btn pm-btn-ghost pm-btn-sm"
+                            data-bulk="export"
+                        >
+                            <i data-i="download"></i>Export .bib
+                        </button>
+                        <span class="pm-mv-sep"></span>
+                        <button
+                            type="button"
+                            class="pm-btn pm-btn-ghost pm-btn-sm m-danger"
+                            data-bulk="delete"
+                        >
+                            <i data-i="trash"></i>Delete…
+                        </button>
+                        <span class="pm-mv-sep"></span>
+                        <button
+                            type="button"
+                            class="pm-iconbtn m-bulk-x"
+                            data-bulk="clear"
+                            aria-label="Clear the selection"
+                            data-tip="Clear the selection"
+                        >
+                            <i data-i="x" class="pm-i-sm"></i>
+                        </button>
+                    </div>
+                    <div class="m-tablefoot" id="m-tablefoot">
+                        <span><span class="pm-kbd">tab</span> next paper</span>
+                        <span class="m-hint-d"
+                            ><span class="pm-kbd">d</span> details</span
+                        >
+                        <span><span class="pm-kbd">+</span> all authors</span>
+                        <span><span class="pm-kbd">space</span> select</span>
+                        <i class="m-break"></i>
+                        <span><span class="pm-kbd">/</span> search</span>
+                        <span><span class="pm-kbd">↵</span> open</span>
+                        <span
+                            ><span class="pm-kbd">o</span><span class="pm-kbd">c</span
+                            ><span class="pm-kbd">h</span><span class="pm-kbd">m</span
+                            ><span class="pm-kbd">b</span> open and copy</span
+                        >
+                        <span
+                            ><span class="pm-kbd">5</span><span class="pm-kbd">x</span
+                            ><span class="pm-kbd">f</span
+                            ><span class="pm-kbd">s</span> open elsewhere</span
+                        >
+                        <span><span class="pm-kbd">e</span> edit</span>
+                        <span><span class="pm-kbd">⌫</span> delete</span>
                     </div>
                 </div>
-                <!-- <input id="memory-search" type="search" placeholder="search" style="width: 45%;" /> -->
-                <div class="memory-search-wrapper">
-                    <input id="memory-search" placeholder="Search" type="text" />
-                    <span
-                        id="memory-search-clear-icon"
-                        aria-label="Clear the search"
-                        data-tip="Clear the search"
-                        >&times;</span
-                    >
+
+                <!-- below 900px: the popup's rows -->
+                <div class="o-card m-rows-wrap">
+                    <div id="memory-table"></div>
                 </div>
-                <span
-                    tabindex="0"
-                    id="filter-favorites"
-                    role="button"
-                    aria-label="Favourites only"
-                    data-tip="Favourites only"
-                    class="rounded"
-                >
-                    <svg
-                        viewBox="0 0 24 24"
-                        style="vertical-align: bottom; height: 22px; width: 32px"
-                    >
-                        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                        <path
-                            d="M12 17.75l-6.172 3.245l1.179 -6.873l-5 -4.867l6.9 -1l3.086 -6.253l3.086 6.253l6.9 1l-5 4.867l1.179 6.873z"
-                        />
-                    </svg>
-                </span>
-                <select style="width: 30%" id="memory-select">
-                    <option value="lastOpenDate">Last Open</option>
-                    <option value="addDate">Last Added</option>
-                    <option value="year">Year</option>
-                    <option value="title">Title</option>
-                    <option value="count"># Visits</option>
-                    <option value="id">ID</option>
-                </select>
-                <span
-                    tabindex="0"
-                    id="memory-sort-arrow"
-                    role="button"
-                    aria-label="Reverse the sort order"
-                    data-tip="Reverse the sort order"
-                >
-                    <svg
-                        viewBox="0 0 24 24"
-                        class="memory-sort-arrow-svg"
-                        id="memory-sort-arrow-down"
-                    >
-                        <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                        <line x1="12" y1="5" x2="12" y2="19" />
-                        <line x1="16" y1="15" x2="12" y2="19" />
-                        <line x1="8" y1="15" x2="12" y2="19" />
-                    </svg>
-                </span>
-            </div>
-            <div id="memory-table" class="pm-ui" width="100%"></div>
+            </main>
+
+            <!-- ============ detail pane: the current paper (a drawer from 900 to 1200px) ============ -->
+            <aside class="m-detail" id="m-detail" aria-label="Paper details"></aside>
         </div>
 
-        <div id="delete-paper-modal" style="display: none">
-            <div
-                style="
-                    width: 80%;
-                    padding: 32px 32px;
-                    text-align: center;
-                    font-size: 1.1rem;
-                "
-            >
-                Are you sure you want to delete:
-                <p id="delete-modal-title"></p>
-                ?
-            </div>
-            <div style="width: 100%; text-align: center; padding: 32px">
-                <button style="padding: 8px 16px" id="delete-paper-modal-cancel-button">
-                    Cancel
-                </button>
-                <span style="min-width: 32px"></span>
-                <button
-                    style="padding: 8px 16px"
-                    id="delete-paper-modal-confirm-button"
-                >
-                    Confirm
-                </button>
-            </div>
-            <span id="delete-paper-modal-hidden-id" style="display: none"></span>
+        <!-- confirmations (src/options/dialog.js) -->
+        <dialog class="o-dialog" id="o-dialog" aria-labelledby="o-dialog-title">
+            <form method="dialog">
+                <h2 id="o-dialog-title"></h2>
+                <div class="o-dialog-body" id="o-dialog-body"></div>
+                <div class="o-dialog-foot" id="o-dialog-foot"></div>
+            </form>
+        </dialog>
+
+        <!-- copy feedback (popup.js showToast) -->
+        <div id="popup-feedback-copied" class="pm-ptoast" role="status" hidden>
+            <i data-i="check" class="pm-i-sm"></i><span></span>
         </div>
     </body>
 </html>

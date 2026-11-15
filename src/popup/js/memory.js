@@ -19,7 +19,6 @@ import {
     setHTML,
     showId,
     hideId,
-    setPlaceholder,
     fadeIn,
     fadeOut,
 } from "@pmu/miniquery.js";
@@ -245,28 +244,36 @@ export const refreshPaperDisplays = (id, { paperView = true } = {}) => {
  * @param {object} opts {paperView: () => boolean, whether the paper view may be refreshed}
  */
 export const followMemoryChanges = ({ paperView = () => true } = {}) =>
-    onPapersChange((ids) => {
+    onPapersChange((ids) => applyMemoryChanges(ids, { paperView }));
+
+/**
+ * What followMemoryChanges does for the papers `ids` (fullMemory calls it itself, to hold
+ * it while a dialog is open)
+ * @param {string[]} ids
+ * @param {object} opts {paperView: () => boolean, whether the paper view may be refreshed}
+ */
+export const applyMemoryChanges = (ids, { paperView = () => true } = {}) => {
+    for (const id of ids) {
+        if (state.papers[id]) openEditors.get(id)?.(state.papers[id]);
+        else openEditors.delete(id); // deleted elsewhere: its row and form go below
+    }
+    const results = searchResults();
+    const same =
+        results.length === state.papersList.length &&
+        results.every((p, i) => p.id === state.papersList[i].id);
+    if (!same && openEditors.size === 0) {
+        state.papersList = results;
+        renderListInPlace();
+    } else {
         for (const id of ids) {
-            if (state.papers[id]) openEditors.get(id)?.(state.papers[id]);
-            else openEditors.delete(id); // deleted elsewhere: its row and form go below
+            if (state.papers[id]) refreshPaperDisplays(id, { paperView: paperView() });
+            else findEl({ element: `memory-container--${id}` })?.remove();
         }
-        const results = searchResults();
-        const same =
-            results.length === state.papersList.length &&
-            results.every((p, i) => p.id === state.papersList[i].id);
-        if (!same && openEditors.size === 0) {
-            state.papersList = results;
-            renderListInPlace();
-        } else {
-            for (const id of ids) {
-                if (state.papers[id]) refreshPaperDisplays(id, { paperView: paperView() });
-                else findEl({ element: `memory-container--${id}` })?.remove();
-            }
-        }
-        if (state.currentId && ids.includes(state.currentId) && !state.papers[state.currentId])
-            log("The paper shown was deleted elsewhere");
-        updateMemoryCount();
-    });
+    }
+    if (state.currentId && ids.includes(state.currentId) && !state.papers[state.currentId])
+        log("The paper shown was deleted elsewhere");
+    updateMemoryCount();
+};
 
 /** displayMemoryTable, keeping as many rows, the scroll position and the focused row */
 const renderListInPlace = () => {
@@ -548,24 +555,6 @@ export const setMemorySort = (key, reversed = false) => {
     renderSortMenu();
 };
 
-/**
- * fullMemory's sort arrow (#memory-sort-arrow) up or down
- * @param {string} direction up/down
- */
-export const setMemorySortArrow = (direction) => {
-    const arrow = findEl({ element: "memory-sort-arrow" });
-    if (!arrow) return;
-    arrow.innerHTML = /*html*/ `<svg viewBox="0 0 24 24" class="memory-sort-arrow-svg" id="memory-sort-arrow-${direction}">
-            <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-            <line x1="12" y1="5" x2="12" y2="19" />
-            ${
-                direction === "up"
-                    ? '<line x1="16" y1="9" x2="12" y2="5" /><line x1="8" y1="9" x2="12" y2="5" />'
-                    : '<line x1="16" y1="15" x2="12" y2="19" /><line x1="8" y1="15" x2="12" y2="19" />'
-            }
-        </svg>`;
-};
-
 // ----- pills
 
 const FILTER_NAMES = { tag: "tag", code: "code", year: "year" };
@@ -621,7 +610,6 @@ export const renderFilters = () => {
     if (fav) {
         const on = state.memoryFilters.some((f) => f.type === "fav");
         fav.setAttribute("aria-pressed", String(on));
-        fav.querySelector("svg")?.classList.toggle("favorite", on); // fullMemory's star
     }
 };
 
@@ -670,15 +658,14 @@ export const toggleFavouritesFilter = () => {
 };
 
 /**
- * Clicking a tag in a row: the search becomes that tag alone (no other pill, no favourites-only,
- * no text). The popup shows it as a pill; fullMemory (no pills) as "t:tag" in its field.
+ * Clicking a tag in a row: the search becomes that tag alone, as a pill (no other pill, no
+ * favourites-only, no text)
  * @param {string} tag
  */
 export const showOnlyTag = (tag) => {
-    const pills = !!findEl({ element: "memory-pills" });
     const input = findEl({ element: "memory-search" });
-    if (input) input.value = pills ? "" : `t:${tag}`;
-    state.memoryFilters = pills ? [{ type: "tag", value: tag }] : [];
+    if (input) input.value = "";
+    state.memoryFilters = [{ type: "tag", value: tag }];
     if (state.sortKey === "favoriteDate") {
         state.sortKey = "lastOpenDate";
         state.sortReversed = false;
@@ -714,19 +701,14 @@ export const updateSearchClear = () => {
     if (x) x.hidden = !(state.memoryFilters.length > 0 || searchText().length > 0);
 };
 
-/** "214" or "12 of 214" in the field (fullMemory: its search placeholder) and the tab count */
+/** "214" or "12 of 214" in the field and the tab count */
 export const updateMemoryCount = () => {
     const total = Object.keys(cleanPapers(state.papers)).length;
     setHTML("memory-count", total);
     updateSearchClear();
     const filtered = state.memoryFilters.length > 0 || searchText().length > 0;
-    // fullMemory: its × clears the search, shown only when there is one
-    const clear = findEl({ element: "memory-search-clear-icon" });
-    if (clear) clear.style.visibility = filtered ? "visible" : "hidden";
     const el = findEl({ element: "memory-result-count" });
-    if (!el)
-        return setPlaceholder("memory-search", `Search ${state.papersList.length} entries ...`);
-    el.textContent = filtered ? `${state.papersList.length} of ${total}` : `${total}`;
+    if (el) el.textContent = filtered ? `${state.papersList.length} of ${total}` : `${total}`;
 };
 
 // ----- tag suggestions under the search field (typing t:)
@@ -833,7 +815,6 @@ export const pickSearchSuggestion = (index = searchSugg.active) => {
 
 /** A complete t: / c: / y: query in the field becomes a pill */
 export const commitSearchFilter = () => {
-    if (!findEl({ element: "memory-pills" })) return false; // fullMemory: no pills
     if (searchSugg.tags.length && pickSearchSuggestion()) return true;
     const input = findEl({ element: "memory-search" });
     const filter = parseFilter(input.value);
@@ -986,9 +967,10 @@ export const markNotes = (root) =>
  */
 export const displayMemoryTable = (pagination = 0) => {
     const start = Date.now();
+    if (pagination === 0) state.currentMemoryPagination = 0;
+    if (listRenderer?.(pagination)) return; // fullMemory's table
     const memoryTable = findEl({ element: "memory-table" });
     if (!memoryTable) return;
-    if (pagination === 0) state.currentMemoryPagination = 0;
 
     const n = state.memoryItemsPerPage;
     const rows = [];
@@ -1014,6 +996,14 @@ export const displayMemoryTable = (pagination = 0) => {
     addEventsToMemoryItems();
     info("Display duration (s): " + (Date.now() - start) / 1e3);
 };
+
+let listRenderer = null;
+/**
+ * Another way to show state.papersList (fullMemory's table): called with the page to render
+ * instead of the rows; returns false to let the rows be rendered
+ * @param {(pagination: number) => boolean} fn
+ */
+export const setListRenderer = (fn) => (listRenderer = fn);
 
 /** Renders the next page of rows, if any */
 export const loadMoreMemoryItems = () => {
@@ -1058,13 +1048,26 @@ export const openMemoryItemEdit = (id) => {
             closeMemoryItemEdit(other.id.split("--")[1], { focus: false, reapply: false }),
         );
     const row = findEl({ element: `memory-container--${id}` });
-    const paper = state.papers[id];
     if (!row) return;
 
     row.classList.add("is-edit");
     row.classList.remove("menu-open");
-    row.insertAdjacentHTML("beforeend", getMemoryEditHTML(paper));
-    const form = row.querySelector(".pm-edit");
+    mountMemoryEditForm(row, id, { onClose: () => closeMemoryItemEdit(id) });
+};
+
+/**
+ * The edit form of a paper, appended to `host` (a Memory row, fullMemory's detail pane):
+ * tags with suggestions, code link (same checks as the paper view), note; saved as you type.
+ * Done / ⌘↵ saves and calls onClose (not on an invalid code link, unless forced by Esc).
+ * @param {HTMLElement} host
+ * @param {string} id
+ * @param {object} opts {onClose: called once the form is saved and should go}
+ * @returns {HTMLFormElement}
+ */
+export const mountMemoryEditForm = (host, id, { onClose }) => {
+    const paper = state.papers[id];
+    host.insertAdjacentHTML("beforeend", getMemoryEditHTML(paper));
+    const form = host.querySelector(".pm-edit");
     const key = form.querySelector("[data-mod-enter]");
     if (key) key.textContent = isMac ? "⌘↵" : "Ctrl ↵";
     const code = form.querySelector(".form-code-input");
@@ -1151,14 +1154,20 @@ export const openMemoryItemEdit = (id) => {
             persist();
         },
     });
-    /** Done / ⌘↵: save and close (stays open on an invalid code link). Esc: close anyway. */
+    /**
+     * Done / ⌘↵: save and close (stays open on an invalid code link). Esc: close anyway.
+     * Resolves with whether the form closed.
+     */
     const done = async (force = false) => {
         tags.commitPending();
         const result = await persist(true);
-        if (result === "failed") return; // not saved: the form stays open with its edits
-        if (result === "invalid" && !force) return code.focus();
-        closeMemoryItemEdit(id);
+        if (result === "failed") return false; // not saved: the form stays open with its edits
+        if (result === "invalid" && !force) return code.focus(), false;
+        onClose();
+        return true;
     };
+    // fullMemory awaits it (layout change, drawer close): true once saved and closed
+    form.finish = done;
     form.addEventListener("submit", (e) => {
         e.preventDefault();
         done();
@@ -1196,6 +1205,7 @@ export const openMemoryItemEdit = (id) => {
     });
     fitTextarea(note);
     tags.focus();
+    return form;
 };
 
 /**
@@ -1207,6 +1217,8 @@ export const openMemoryItemEdit = (id) => {
  */
 export const closeMemoryItemEdit = (id, { focus = true, reapply = true } = {}) => {
     openEditors.delete(id);
+    // fullMemory applies the Memory changes it held while the form was open
+    document.dispatchEvent(new CustomEvent("pm-memory-edit-closed"));
     const row = findEl({ element: `memory-container--${id}` });
     if (!row) return;
     row.classList.remove("is-edit");

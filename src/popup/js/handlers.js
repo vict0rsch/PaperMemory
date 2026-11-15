@@ -35,8 +35,6 @@ import {
     saved,
     scheduleMemorySearch,
     setMemoryScrolled,
-    setMemorySort,
-    setMemorySortArrow,
     showOnlyTag,
     toggleFavouritesFilter,
     toggleSortMenu,
@@ -278,19 +276,27 @@ export const handleCopyMarkdownLink = async (e) => {
     });
 };
 
+/**
+ * A paper's BibTeX, with its url (and pdf) fields when it has none
+ * @param {object} paper
+ * @returns {string}
+ */
+export const paperBibtex = (paper) => {
+    let bibobj = bibtexToObject(paper.bibtex);
+    if (!bibobj.hasOwnProperty("url")) {
+        bibobj.url = paperToAbs(paper);
+    }
+    if (!bibobj.hasOwnProperty("pdf") && paper.source !== "website") {
+        bibobj.pdf = paperToPDF(paper);
+    }
+    return bibtexToString(bibobj);
+};
+
 export const handleCopyBibtex = async (e) => {
     const id = eventId(e);
-    const bibtex = state.papers[id].bibtex;
-    let bibobj = bibtexToObject(bibtex);
-    if (!bibobj.hasOwnProperty("url")) {
-        bibobj.url = paperToAbs(state.papers[id]);
-    }
-    if (!bibobj.hasOwnProperty("pdf") && state.papers[id].source !== "website") {
-        bibobj.pdf = paperToPDF(state.papers[id]);
-    }
     await copyAndConfirmMemoryItem({
         id,
-        textToCopy: bibtexToString(bibobj),
+        textToCopy: paperBibtex(state.papers[id]),
         feedbackText: "BibTeX copied",
     });
 };
@@ -377,34 +383,8 @@ export const handleConfirmDeleteModalClick = async (e) => {
     }
 };
 
-/** A tag in a row: the search becomes that tag alone (popup and fullMemory) */
+/** A tag in a row: the search becomes that tag alone (popup and fullMemory's rows) */
 export const handleTagClick = (e) => showOnlyTag(e.target.closest(".memory-tag").textContent);
-
-/**
- * fullMemory's keys (it has no popup keyboard handler): `d` opens / closes the Info panel of the
- * focused row, `+` shows all its authors, Escape closes the panel
- * @param {KeyboardEvent} e
- */
-export const handleFullMemoryKeydown = (e) => {
-    if (isComposing(e) || handleEditKeys(e)) return;
-    if (e.ctrlKey || e.metaKey || e.altKey) return;
-    if (e.key === "Escape" && infoPanelIsOpen()) {
-        e.preventDefault();
-        return closeInfoPanel();
-    }
-    const focused = document.activeElement;
-    const key = e.code === "NumpadAdd" ? "+" : e.key;
-    if (!["d", "+"].includes(key) || ["INPUT", "TEXTAREA", "SELECT"].includes(focused?.tagName))
-        return;
-    const row = focused?.closest?.("#memory-table .memory-container");
-    if (!row || row.classList.contains("is-edit")) return;
-    e.preventDefault();
-    if (key === "+") return expandRowAuthors(row);
-    toggleInfoPanel(row, row.querySelector(".memory-item-info"), row.id.split("--")[1]);
-};
-
-/** Clears the search field and every filter */
-export const handleClearSearch = () => clearMemorySearch();
 
 /**
  * Edit forms (row edit form, paper view fields): ⌘↵ / Ctrl+↵ saves and closes, Esc closes,
@@ -853,8 +833,8 @@ const setupMemoryScroll = () => {
 
 let memoryControlsReady = false;
 /**
- * Search field, filter controls, tag list, sort menu, delete sheet (popup); search,
- * favourites and the legacy sort controls (fullMemory). Set once.
+ * Search field, filter controls, tag list, sort menu, delete sheet (popup and fullMemory).
+ * Set once.
  */
 export const addEventsToMemoryControls = () => {
     if (memoryControlsReady) return;
@@ -904,14 +884,4 @@ export const addEventsToMemoryControls = () => {
         if (!t.closest?.(".memory-item-more, .pm-pop")) closeRowMenus();
     });
     setupMemoryScroll();
-
-    // fullMemory: sort select + direction arrow
-    addListener("memory-select", "change", (e) => {
-        setMemorySort(e.target.value, false);
-        setMemorySortArrow("down");
-    });
-    addListener("memory-sort-arrow", "click", () => {
-        setMemorySort(state.sortKey, !state.sortReversed);
-        setMemorySortArrow(state.sortReversed ? "up" : "down");
-    });
 };

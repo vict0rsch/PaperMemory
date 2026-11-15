@@ -37,7 +37,7 @@ const memoryItemMeta = (paper, hasVenue) => {
 const OUT_MARK = `<span class="pm-out-mark" aria-hidden="true">\u00a0\u2197</span>`;
 
 /** "14 Nov 2026, 09:12" */
-const dateAndTime = (date) => {
+export const dateAndTime = (date) => {
     const d = new Date(date);
     if (isNaN(d)) return "";
     return `${shortDate(d)}, ${d.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })}`;

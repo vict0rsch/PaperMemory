@@ -225,7 +225,7 @@ export const findExtensionId = async (browser) => {
 
 export const baseExtensionPopupURL = "chrome-extension://{EXTENSION_ID}/popup.html";
 export const baseFullMemoryURL =
-    "chrome-extension://{EXTENSION_ID}/fullMemory.html?noRefresh=true";
+    "chrome-extension://{EXTENSION_ID}/fullMemory.html";
 export const baseChromeExtensionsURL = "chrome://extensions/?id={EXTENSION_ID}";
 
 /**

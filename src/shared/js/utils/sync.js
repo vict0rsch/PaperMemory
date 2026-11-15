@@ -323,11 +323,17 @@ export const initSyncAndState = async ({
     remoteIsReady();
 };
 
+/** Tells the page where a sync is ("syncing" | "synced" | "error"): fullMemory shows it */
+const announceSync = (status) =>
+    typeof document !== "undefined" &&
+    document.dispatchEvent(new CustomEvent("pm-sync-status", { detail: status }));
+
 /**
  * Show the sync loader in the popup.
  * @returns {Promise}
  */
 export const startSyncLoader = async () => {
+    announceSync("syncing");
     showId("sync-popup-feedback");
     hideId("sync-popup-error");
     hideId("sync-popup-synced");
@@ -338,6 +344,7 @@ export const startSyncLoader = async () => {
  * @returns {Promise}
  */
 export const successSyncLoader = async () => {
+    announceSync("synced");
     showId("sync-popup-feedback");
     hideId("sync-popup-syncing");
     hideId("sync-popup-error");
@@ -352,6 +359,7 @@ export const successSyncLoader = async () => {
  * @returns {Promise}
  */
 export const errorSyncLoader = async () => {
+    announceSync("error");
     showId("sync-popup-feedback");
     hideId("sync-popup-syncing");
     hideId("sync-popup-synced");

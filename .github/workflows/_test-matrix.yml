@@ -23,7 +23,7 @@ jobs:
           - name: Popup UI
             files: test/test-popup-search.js test/test-popup-paper-ui.js
           - name: Memory UI
-            files: test/test-memory-item-actions.js test/test-memory-table-ui.js
+            files: test/test-memory-item-actions.js test/test-memory-table-ui.js test/test-full-memory.js
           - name: Menu
             files: test/test-menu.js
           - name: Options page

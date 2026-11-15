@@ -773,14 +773,15 @@ describe("Test PaperMemory MemoryTable UI", function () {
         });
     });
 
-    describe("fullMemory rows: Info panel and tag click", function () {
+    // below 900px, fullMemory shows the popup's rows (its table: test-full-memory.js)
+    describe("fullMemory rows (narrow window): Info panel and tag click", function () {
         let page;
         afterEach(async function () {
             await page?.close();
         });
         const openFull = async () => {
             page = await browser.newPage();
-            await page.setViewport({ width: 1280, height: 900 });
+            await page.setViewport({ width: 800, height: 900 });
             await page.goto(pmURLs.popupURL, { waitUntil: "networkidle0" });
             await page.evaluate((data) => PMDebug.data.setStorage("papers", data), testData);
             await page.goto(pmURLs.fullMemoryURL, { waitUntil: "networkidle0" });
@@ -817,7 +818,7 @@ describe("Test PaperMemory MemoryTable UI", function () {
             expect(await page.$$eval("#memory-table .pm-info-pop", (els) => els.length)).toBe(0);
         });
 
-        it("should replace the search with the clicked tag (favourites cleared)", async function () {
+        it("should replace the search with the clicked tag as a pill (favourites cleared)", async function () {
             await openFull();
             await page.evaluate(() => {
                 const p = PMDebug.config.state.papers["Arxiv-1703.10593"];
@@ -834,21 +835,49 @@ describe("Test PaperMemory MemoryTable UI", function () {
                 fav: document.getElementById("filter-favorites").getAttribute("aria-pressed"),
                 rows: document.querySelectorAll("#memory-table .memory-container").length,
             }));
-            expect(after).toEqual({ filters: [], text: "t:gan", fav: "false", rows: 1 });
+            expect(after).toEqual({
+                filters: [{ type: "tag", value: "gan" }],
+                text: "",
+                fav: "false",
+                rows: 1,
+            });
         });
 
         it("should save and close a row editor with Ctrl+↵ and close it with Esc, wherever the focus is", async function () {
             await openFull();
             const row = "#memory-table .memory-container";
             const isEdit = () => page.$eval(row, (el) => el.classList.contains("is-edit"));
+            const id = await page.$eval(row, (el) => el.id.split("--")[1]);
             await page.click(`${row} .memory-item-edit`);
             expect(await isEdit()).toBe(true);
+            // typed, then saved before the autosave (300 ms) runs
+            await page.$eval(`${row} .form-note-textarea`, (el) => (el.value = ""));
+            await page.type(`${row} .form-note-textarea`, "Saved by Ctrl+Enter");
             await page.focus(row); // the row, outside the form
             await page.keyboard.down("Control");
             await page.keyboard.press("Enter");
             await page.keyboard.up("Control");
-            await sleep(150);
-            expect(await isEdit()).toBe(false);
+            await page.waitForFunction(
+                (sel) => !document.querySelector(sel).classList.contains("is-edit"),
+                { timeout: 3000 },
+                row,
+            );
+            const note = await page.evaluate(
+                (id) =>
+                    new Promise((resolve) =>
+                        chrome.storage.local.get("papers", ({ papers }) =>
+                            resolve(papers[id].note),
+                        ),
+                    ),
+                id,
+            );
+            expect(note).toBe("Saved by Ctrl+Enter");
+            expect(
+                await page.$eval(
+                    `#memory-container--${id.replace(".", "\\.")} .pm-item-note p`,
+                    (el) => el.textContent,
+                ),
+            ).toBe("Saved by Ctrl+Enter");
             await page.click(`${row} .memory-item-edit`);
             await page.evaluate(() => document.activeElement.blur());
             await page.keyboard.press("Escape");

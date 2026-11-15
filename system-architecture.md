@@ -288,7 +288,14 @@ abstract/PDF/ar5iv/HuggingFace, etc., shared with the popup's `handlers.js`).
   near-duplicate hint). HTML is
   assembled from `popup/html/**` fragments via a custom `<!--=include -->` Vite
   plugin (`htmlIncludePlugin` in `wxt.config.js`).
-- **fullMemory** — the popup's memory view in a full browser tab.
+- **fullMemory** ([`fullMemory/fullMemory.js`](src/fullMemory/fullMemory.js)) — the Memory
+  in a tab: tag sidebar, sortable table, detail pane (a drawer from 900 to 1200px), bulk
+  select; below 900px the popup's rows. It reuses the popup's search, rows, edit form and
+  handlers (`memory.js` renders its table through `setListRenderer`). Writes go through the
+  background queue (bulk actions as one `batch`; bulk "Add tag" uses the `addTags`
+  operation, which reads the stored tags). Views follow `chrome.storage` changes
+  (`onPapersChange`), held while an edit form, a dialog or a bulk action is in progress;
+  no periodic reload. Sync status comes from `sync.js` as a `pm-sync-status` DOM event.
 - **options** — preferences, custom PDF-title function, auto-tag rules, JSON/BibTeX
   import & export, sync configuration.
 - **bibMatcher** — a standalone tool: paste a `.bib` file, batch-match each entry
