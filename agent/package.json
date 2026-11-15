@@ -17,7 +17,7 @@
     "scripts": {
         "build": "esbuild src/cli.mjs host/host.mjs --bundle --platform=node --main-fields=module,main --format=esm --entry-names=[name] --outdir=dist --out-extension:.js=.mjs",
         "prepublishOnly": "npm run build",
-        "test": "node --test test/*.test.mjs"
+        "test": "npm run build && node --test test/*.test.mjs"
     },
     "devDependencies": {
         "@modelcontextprotocol/sdk": "^1.32.2",

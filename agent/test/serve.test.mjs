@@ -141,7 +141,7 @@ async function fakeLibrary(home, replies) {
     const seen = [];
     const server = net.createServer((socket) => {
         let buf = "";
-        socket.on("data", (d) => {
+        socket.on("data", async (d) => {
             buf += d;
             const nl = buf.indexOf("\n");
             if (nl < 0) return;
@@ -156,7 +156,7 @@ async function fakeLibrary(home, replies) {
                               label: "Chrome · aaaaaa", browser: "Chrome", paperCount: 0,
                           },
                       }
-                    : replies[req.op](req);
+                    : await replies[req.op](req);
             socket.write(JSON.stringify({ id: req.id, ...reply }) + "\n");
         });
     });
@@ -351,8 +351,13 @@ test("concurrent first calls pair once and all succeed", async () => {
     fs.mkdirSync(path.join(home, ".papermemory"), { recursive: true });
     fs.writeFileSync(path.join(home, ".papermemory", "salt"), crypto.randomBytes(32));
     const ok = (result) => ({ ok: true, result });
+    // Hold the pair reply until all three calls have probed the Library, so they overlap for sure.
+    const hellos = () => seen.filter((r) => r.op === "hello").length;
     const seen = await fakeLibrary(home, {
-        pair: () => ok({ clientId: "client-1", secret: "test-secret-1" }),
+        pair: async () => {
+            for (let i = 0; i < 500 && hellos() < 3; i++) await new Promise((r) => setTimeout(r, 10));
+            return ok({ clientId: "client-1", secret: "test-secret-1" });
+        },
         search_papers: (req) =>
             req.auth.secret === "test-secret-1"
                 ? ok({ total: 0, papers: [] })
@@ -362,6 +367,7 @@ test("concurrent first calls pair once and all succeed", async () => {
     const s = await startServe({ home, cwd: demo });
     const results = await Promise.all([1, 2, 3].map((n) => s.call("search_papers", { query: `q${n}` })));
     results.forEach((r) => json(r));
+    assert.ok(hellos() >= 3);
     assert.equal(seen.filter((r) => r.op === "pair").length, 1);
     assert.equal(seen.filter((r) => r.op === "search_papers").length, 3);
     await s.close();

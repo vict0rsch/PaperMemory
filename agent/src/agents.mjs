@@ -20,6 +20,20 @@ function run(cmd, args, { ignoreFailure = false } = {}) {
     }
 }
 
+// `<cmd> mcp remove` on uninstall: a missing CLI or a failed removal throws, except when the CLI
+// says the server is not registered (already gone).
+const NOT_REGISTERED_RE = /no mcp server|not found|not registered|does not exist|no such server/i;
+function removeMcp(cmd, args) {
+    if (!which(cmd)) throw new Error(`\`${cmd}\` is not on PATH, so its PaperMemory registration was not removed`);
+    try {
+        execFileSync(cmd, args, { stdio: "pipe" });
+    } catch (err) {
+        const out = `${err.stdout ?? ""}${err.stderr ?? ""}`;
+        if (NOT_REGISTERED_RE.test(out)) return;
+        throw new Error(`\`${cmd} ${args.join(" ")}\` failed: ${err.message}`);
+    }
+}
+
 /** Atomic edit of a JSON config file, preserving its mode when it exists. */
 function writeConfig(file, text) {
     const mode = exists(file) ? fs.statSync(file).mode & 0o777 : 0o600;
@@ -84,9 +98,7 @@ export function agentDefs(home) {
                 return true;
             },
             unregister() {
-                if (which("claude")) {
-                    run("claude", ["mcp", "remove", "--scope", "user", "papermemory"], { ignoreFailure: true });
-                }
+                removeMcp("claude", ["mcp", "remove", "--scope", "user", "papermemory"]);
             },
         },
         {
@@ -99,7 +111,7 @@ export function agentDefs(home) {
                 return true;
             },
             unregister() {
-                if (which("codex")) run("codex", ["mcp", "remove", "papermemory"], { ignoreFailure: true });
+                removeMcp("codex", ["mcp", "remove", "papermemory"]);
             },
         },
         {
@@ -157,9 +169,26 @@ export function skillDirs(home) {
 
 export function copySkill({ home, skillSource, state }) {
     for (const dir of skillDirs(home)) {
-        mkdirRecorded(dir, state);
         const dest = path.join(dir, "SKILL.md");
+        const dirLink = lstat(dir)?.isSymbolicLink();
+        // state.files holds only what an earlier install recorded as ours (the new copy is added below).
+        if (dirLink || (lstat(dest) && !state.files.includes(dest))) {
+            console.log(
+                `Left ${dirLink ? dir : dest} alone: ${dirLink ? "it is a symlink" : "a file we did not create is already there"}. ` +
+                    `The PaperMemory skill would go in ${dest}; copy ${skillSource} there yourself if you want it.`,
+            );
+            continue;
+        }
+        mkdirRecorded(dir, state);
         writeFileAtomic(dest, fs.readFileSync(skillSource), 0o644);
         addUnique(state.files, dest);
+    }
+}
+
+function lstat(p) {
+    try {
+        return fs.lstatSync(p);
+    } catch {
+        return null;
     }
 }

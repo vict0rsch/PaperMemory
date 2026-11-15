@@ -208,22 +208,47 @@ export function uninstall(args) {
     parseFlags(args, {});
     const { home, root, stateFile } = homePaths();
     const state = loadState(stateFile);
-    if (state) {
-        for (const agent of agentDefs(home)) {
-            if (!state.agents[agent.key]) continue;
-            try {
-                agent.unregister(state.agents[agent.key]);
-            } catch (err) {
-                console.error(`Could not unregister ${agent.name}: ${err.message}`);
-            }
-        }
-        for (const f of state.files) fs.rmSync(f, { force: true });
-        rmdirsIfEmpty(state.dirs);
-    } else {
+    if (!state) {
         console.log("No install record found; removing only ~/.papermemory");
+        fs.rmSync(root, { recursive: true, force: true });
+        console.log("Uninstalled PaperMemory agent access");
+        return;
     }
-    fs.rmSync(root, { recursive: true, force: true });
-    console.log("Uninstalled PaperMemory agent access");
+    const left = [];
+    const agents = {};
+    for (const agent of agentDefs(home)) {
+        if (!state.agents[agent.key]) continue;
+        try {
+            agent.unregister(state.agents[agent.key]);
+        } catch (err) {
+            console.error(`Could not unregister ${agent.name}: ${err.message}`);
+            agents[agent.key] = state.agents[agent.key];
+            left.push(`${agent.name} registration`);
+        }
+    }
+    const files = [];
+    for (const f of state.files) {
+        try {
+            fs.rmSync(f, { force: true });
+        } catch (err) {
+            console.error(`Could not remove ${f}: ${err.message}`);
+            files.push(f);
+            left.push(f);
+        }
+    }
+    rmdirsIfEmpty(state.dirs);
+    if (left.length === 0) {
+        fs.rmSync(root, { recursive: true, force: true });
+        console.log("Uninstalled PaperMemory agent access");
+        return;
+    }
+    // Keep only what remains, so a rerun finishes the cleanup; everything else under root goes.
+    saveState(stateFile, { ...state, agents, files, dirs: state.dirs.filter((d) => fs.existsSync(d)) });
+    for (const name of fs.readdirSync(root)) {
+        if (name !== "install.json") fs.rmSync(path.join(root, name), { recursive: true, force: true });
+    }
+    console.error(`Not removed: ${left.join(", ")}. Fix the problem and run uninstall again.`);
+    process.exitCode = 1;
 }
 
 export function selfheal(args, { quiet = false } = {}) {

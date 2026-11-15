@@ -25,14 +25,15 @@ function tempDir(prefix) {
 }
 
 // Every run uses a temp HOME and a PATH that holds only fakes plus /usr/bin:/bin.
-function runCli(home, args, { fakes = [], input = "" } = {}) {
+function runCli(home, args, { fakes = [], input = "", failing = [] } = {}) {
     assert.ok(home.startsWith(tmpRoot));
     const fakeBin = tempDir("pmi-fakebin-");
     const log = path.join(tempDir("pmi-log-"), "calls.log");
     for (const name of fakes) {
+        const fail = failing.includes(name) ? `[ "$2" = remove ] && { echo boom >&2; exit 1; }\n` : "";
         fs.writeFileSync(
             path.join(fakeBin, name),
-            `#!/bin/sh\n{ echo ${name}; for a in "$@"; do echo "$a"; done; echo --; } >> "${log}"\n`,
+            `#!/bin/sh\n{ echo ${name}; for a in "$@"; do echo "$a"; done; echo --; } >> "${log}"\n${fail}`,
             { mode: 0o755 },
         );
     }
@@ -237,4 +238,84 @@ test("created config files are removed on uninstall", () => {
     assert.ok(fs.existsSync(path.join(home, ".config", "opencode", "opencode.jsonc")));
     assert.equal(runCli(home, ["uninstall"]).status, 0);
     assert.deepEqual(walk(home), before);
+});
+
+test("a pre-existing skill file is left alone, not recorded, and survives uninstall", () => {
+    const home = tempDir("pmi-home-");
+    const mine = path.join(home, ".agents", "skills", "papermemory", "SKILL.md");
+    fs.mkdirSync(path.dirname(mine), { recursive: true });
+    fs.writeFileSync(mine, "user skill\n");
+    const res = runCli(home, ["install"]);
+    assert.equal(res.status, 0, res.stderr);
+    assert.match(res.stdout, /Left .*\.agents.*SKILL\.md alone/);
+    assert.equal(fs.readFileSync(mine, "utf8"), "user skill\n");
+    const state = read(path.join(home, ".papermemory", "install.json"));
+    assert.ok(!state.files.includes(mine));
+    const other = path.join(home, ".claude", "skills", "papermemory", "SKILL.md");
+    assert.ok(state.files.includes(other));
+    assert.ok(fs.readFileSync(other).equals(fs.readFileSync(SKILL)));
+
+    // A reinstall still leaves it alone; our own recorded copy is updated normally.
+    fs.writeFileSync(other, "stale\n");
+    assert.equal(runCli(home, ["install"]).status, 0);
+    assert.equal(fs.readFileSync(mine, "utf8"), "user skill\n");
+    assert.ok(fs.readFileSync(other).equals(fs.readFileSync(SKILL)));
+
+    assert.equal(runCli(home, ["uninstall"]).status, 0);
+    assert.equal(fs.readFileSync(mine, "utf8"), "user skill\n");
+    assert.ok(!fs.existsSync(other));
+});
+
+test("a symlinked skill dir is not written through", () => {
+    const home = tempDir("pmi-home-");
+    const target = tempDir("pmi-target-");
+    fs.mkdirSync(path.join(home, ".agents", "skills"), { recursive: true });
+    const link = path.join(home, ".agents", "skills", "papermemory");
+    fs.symlinkSync(target, link);
+    const res = runCli(home, ["install"]);
+    assert.equal(res.status, 0, res.stderr);
+    assert.match(res.stdout, /Left .*papermemory alone: it is a symlink/);
+    assert.deepEqual(fs.readdirSync(target), []);
+    assert.ok(!read(path.join(home, ".papermemory", "install.json")).files.some((f) => f.startsWith(link)));
+    assert.equal(runCli(home, ["uninstall"]).status, 0);
+    assert.ok(fs.lstatSync(link).isSymbolicLink());
+    assert.deepEqual(fs.readdirSync(target), []);
+});
+
+test("uninstall keeps failed registrations in the record, exits 1, and a rerun finishes", () => {
+    const home = tempDir("pmi-home-");
+    const before = walk(home);
+    assert.equal(runCli(home, ["install", "--yes"], { fakes: ["claude", "codex"] }).status, 0);
+    const stateFile = path.join(home, ".papermemory", "install.json");
+    assert.deepEqual(Object.keys(read(stateFile).agents).sort(), ["claude", "codex"]);
+
+    // claude's `mcp remove` fails, codex is not on PATH: both stay recorded.
+    const bad = runCli(home, ["uninstall"], { fakes: ["claude"], failing: ["claude"] });
+    assert.equal(bad.status, 1);
+    assert.match(bad.stderr, /Not removed: .*Claude Code registration.*Codex registration/);
+    const state = read(stateFile);
+    assert.deepEqual(Object.keys(state.agents).sort(), ["claude", "codex"]);
+    assert.deepEqual(state.files, []);
+    assert.deepEqual(fs.readdirSync(path.join(home, ".papermemory")), ["install.json"]);
+    assert.ok(!fs.existsSync(path.join(home, ".agents", "skills", "papermemory", "SKILL.md")));
+
+    // Only codex is fixed: claude stays recorded.
+    const half = runCli(home, ["uninstall"], { fakes: ["claude", "codex"], failing: ["claude"] });
+    assert.equal(half.status, 1);
+    assert.deepEqual(Object.keys(read(stateFile).agents), ["claude"]);
+
+    const good = runCli(home, ["uninstall"], { fakes: ["claude"] });
+    assert.equal(good.status, 0, good.stderr);
+    assert.ok(!fs.existsSync(path.join(home, ".papermemory")));
+    assert.deepEqual(walk(home), before);
+});
+
+test("uninstall treats a 'not registered' answer from the CLI as success", () => {
+    const home = tempDir("pmi-home-");
+    assert.equal(runCli(home, ["install", "--yes"], { fakes: ["codex"] }).status, 0);
+    const fakeBin = tempDir("pmi-fakebin-");
+    fs.writeFileSync(path.join(fakeBin, "codex"), `#!/bin/sh\necho "No MCP server named 'papermemory' found." >&2\nexit 1\n`, { mode: 0o755 });
+    const res = spawnSync(process.execPath, [CLI, "uninstall"], { env: { HOME: home, PATH: `${fakeBin}:/usr/bin:/bin` }, encoding: "utf8" });
+    assert.equal(res.status, 0, res.stderr);
+    assert.ok(!fs.existsSync(path.join(home, ".papermemory")));
 });
