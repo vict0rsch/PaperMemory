@@ -10,6 +10,7 @@ import {
 import { getStorage, setStorage } from "@pmu/data.js";
 import { runMemoryOp, serveMemoryOps } from "@pmu/memoryQueue.js";
 import { openWelcomeOnInstall } from "@pm/background/welcome.js";
+import { applyIgnoreSources } from "@pmu/ignoreSources.js";
 import { isSourceURL, parseIdFromUrl } from "@pmu/urls.js";
 import { initState, downloadPaperPdf } from "@pmu/state.js";
 import { fetchJSON } from "@pmu/parsers.js";
@@ -480,6 +481,12 @@ export function initBackground() {
         } else if (payload.type === "memory") {
             // the one queue that writes the Memory (memoryQueue.js)
             runMemoryOp(payload.op).then(sendResponse);
+        } else if (payload.type === "ignoreSources") {
+            // the one queue that writes ignoreSources (ignoreSources.js)
+            applyIgnoreSources(payload.change).then(
+                (ignoreSources) => sendResponse({ ok: true, ignoreSources }),
+                () => sendResponse({ ok: false }),
+            );
         } else if (payload.type === "hello") {
             sendResponse("Connection to background script established.");
         } else if (payload.type === "writeSync") {

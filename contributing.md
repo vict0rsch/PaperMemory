@@ -4,7 +4,7 @@
 
 PaperMemory is pure JS+HTML with minimal dependencies: no framework, (almost) no external dependencies so it's easy to help :)
 
-The only external deps are [`tom-select`](https://tom-select.js.org/) (tag inputs) and [`jQuery`](https://jquery.com/) (content-script page UI only) — both installed via npm.
+The only runtime deps are [`jQuery`](https://jquery.com/) (content-script page UI only) and [`@octokit/request`](https://github.com/octokit/request.js) (Gist sync) — both installed via npm.
 
 The project uses modern ES modules and [WXT](https://wxt.dev/) for bundling, dev server, manifest generation, and cross-browser packaging.
 
@@ -208,11 +208,11 @@ Two aliases are configured in `wxt.config.js` (for Vite/WXT) and `jsconfig.json`
 
 The popup HTML uses `<!--=include path -->` directives to inline partial HTML files (menu, modals, SVGs). A custom Vite plugin in `wxt.config.js` processes these at build time.
 
-### jQuery / Tom Select
+### jQuery
 
 jQuery is installed via npm and exposed globally by `src/shared/js/jquery-setup.js`, imported only by the content-script entry point (`src/entrypoints/content.js`) for injected page UI.
 
-Tag inputs use [Tom Select](https://tom-select.js.org/), imported directly in `src/popup/js/popup.js`, `src/popup/js/handlers.js`, and `src/options/options.js`.
+Tag inputs are plain JS (`src/popup/js/tagfield.js`); there is no tag-input library.
 
 ### Static assets (`public/`)
 

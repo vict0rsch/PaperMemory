@@ -1,7 +1,9 @@
 // Sources picker of the options page and the welcome page (src/shared/html/source-picker.html):
 // filter, "N of M on", Turn all on / off, a cell per source, Show all. What is off is stored in
-// ignoreSources (source name -> true when off), as before.
-import { getStorage, setStorage } from "@pmu/data.js";
+// ignoreSources (source name -> true when off), as before, written by the background
+// (ignoreSources.js); every open picker follows the stored map.
+import { getStorage } from "@pmu/data.js";
+import { updateIgnoreSources } from "@pmu/ignoreSources.js";
 import { allSources } from "@pmu/sources/index.js";
 import { log, escapeHtml } from "@pmu/functions.js";
 
@@ -64,24 +66,24 @@ const renderSources = async () => {
 export const setupSources = async (render = onRender) => {
     onRender = render;
     // as before: every known source gets an explicit value in storage
-    const ignore = (await getStorage("ignoreSources")) ?? {};
-    for (const { key } of sourceList()) ignore[key] = ignore[key] ?? false;
-    await setStorage("ignoreSources", ignore);
+    const defaults = Object.fromEntries(sourceList().map(({ key }) => [key, false]));
+    await updateIgnoreSources({ defaults });
+    // changed here or in another page
+    chrome.storage.onChanged.addListener((changes, area) => {
+        if (area === "local" && changes.ignoreSources) renderSources();
+    });
 
     $("select-sources-container").addEventListener("change", async (e) => {
         const key = e.target.dataset.source;
         if (!key) return;
-        const stored = (await getStorage("ignoreSources")) ?? {};
-        stored[key] = !e.target.checked;
-        log("Updating source", key, "to", stored[key]);
-        await setStorage("ignoreSources", stored);
+        log("Updating source", key, "to", !e.target.checked);
         e.target.closest(".o-cell").classList.toggle("is-off", !e.target.checked);
+        await updateIgnoreSources({ patch: { [key]: !e.target.checked } });
         renderSources();
     });
     const setAll = async (on) => {
-        const stored = (await getStorage("ignoreSources")) ?? {};
-        for (const { key } of sourceList()) stored[key] = !on;
-        await setStorage("ignoreSources", stored);
+        const patch = Object.fromEntries(sourceList().map(({ key }) => [key, !on]));
+        await updateIgnoreSources({ patch });
         renderSources();
     };
     $("sources-all-on").addEventListener("click", () => setAll(true));

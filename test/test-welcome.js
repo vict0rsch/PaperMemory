@@ -217,6 +217,74 @@ describe("Welcome page", function () {
                 await options.close();
             }
         });
+
+        it("two pages turning different sources off at once both keep their change, and follow each other", async function () {
+            const options = await browser.newPage();
+            const count = (p) => p.$eval("#sources-count", (el) => el.textContent);
+            try {
+                await options.goto(`${base}/options.html`, {
+                    waitUntil: "networkidle0",
+                });
+                await options.waitForFunction(
+                    () => document.documentElement.dataset.optionsReady === "true",
+                    { timeout: 15000 },
+                );
+                const [a, b] = await page.$$eval("[data-source]", (els) =>
+                    els.slice(0, 2).map((el) => el.dataset.source),
+                );
+                const n = Number((await count(page)).match(/of (\d+)/)[1]);
+                const click = (p, key) =>
+                    p.evaluate(
+                        (key) =>
+                            document.querySelector(`[data-source="${key}"]`).click(),
+                        key,
+                    );
+                await Promise.all([click(page, a), click(options, b)]);
+                await waitForStorage(
+                    ([a, b]) =>
+                        new Promise((r) =>
+                            chrome.storage.local.get(
+                                "ignoreSources",
+                                ({ ignoreSources }) =>
+                                    r(
+                                        ignoreSources[a] === true &&
+                                            ignoreSources[b] === true,
+                                    ),
+                            ),
+                        ),
+                    [a, b],
+                );
+                await sleep(300);
+                expect(await storageGet("ignoreSources")).toMatchObject({
+                    [a]: true,
+                    [b]: true,
+                });
+                // each page shows the other's change without a reload
+                for (const p of [page, options]) {
+                    expect(await count(p)).toBe(`${n - 2} of ${n} on`);
+                    for (const key of [a, b])
+                        expect(
+                            await p.$eval(`[data-source="${key}"]`, (el) => el.checked),
+                        ).toBe(false);
+                }
+                // Turn all on (Settings) reaches the welcome page too
+                await options.bringToFront();
+                await options.click("#sources-all-on");
+                await page.waitForFunction(
+                    (n) =>
+                        document.getElementById("sources-count").textContent ===
+                        `${n} of ${n} on`,
+                    { timeout: 5000 },
+                    n,
+                );
+                expect(
+                    Object.values(await storageGet("ignoreSources")).some(Boolean),
+                ).toBe(false);
+            } finally {
+                await options.close();
+                await page.bringToFront();
+            }
+        });
     });
 
     describe("Theme", function () {
