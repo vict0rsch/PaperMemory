@@ -1190,7 +1190,7 @@ describe("Options page", function () {
             const id = "JMLR-2012_bergstra12a";
             const popup = await openPopup();
             try {
-                await popup.keyboard.press("a"); // Memory
+                await popup.waitForFunction(() => PMDebug.config.state.memoryIsOpen); // Memory (open on start: checkDirectOpen)
                 await popup.waitForSelector(`#memory-container--${id}`);
                 await popup.evaluate((id) => PMDebug.memory.openMemoryItemEdit(id), id);
                 await popup.waitForSelector(
@@ -1251,7 +1251,7 @@ describe("Options page", function () {
             const added = "Arxiv-9999.00001";
             const popup = await openPopup();
             try {
-                await popup.keyboard.press("a"); // Memory
+                await popup.waitForFunction(() => PMDebug.config.state.memoryIsOpen); // Memory (open on start: checkDirectOpen)
                 await popup.waitForSelector(`#memory-container--${id}`);
                 await popup.evaluate((id) => PMDebug.memory.openMemoryItemEdit(id), id);
                 await popup.waitForSelector(`#memory-container--${id}.is-edit`);
@@ -1292,7 +1292,7 @@ describe("Options page", function () {
             await storageSet({ prefs: { checkAr5iv: true, theme: "light" } });
             const popup = await openPopup();
             try {
-                await popup.keyboard.press("a"); // Memory
+                await popup.waitForFunction(() => PMDebug.config.state.memoryIsOpen); // Memory (open on start: checkDirectOpen)
                 await popup.waitForSelector(`${row} .pm-note-more:not([hidden])`);
                 await popup.click(`${row} .pm-note-more`);
                 /** A visit counted elsewhere, once the popup has it */
@@ -1345,7 +1345,7 @@ describe("Options page", function () {
             });
             const popup = await openPopup();
             try {
-                await popup.keyboard.press("a"); // Memory
+                await popup.waitForFunction(() => PMDebug.config.state.memoryIsOpen); // Memory (open on start: checkDirectOpen)
                 await popup.waitForSelector(row);
                 await popup.focus(`${row} .memory-item-copy-link`);
                 // a tag added elsewhere: one more control before the action line
@@ -1399,7 +1399,7 @@ describe("Options page", function () {
             try {
                 // a short popup: the panel scrolls, so it is focusable
                 await popup.setViewport({ width: 450, height: 260 });
-                await popup.keyboard.press("a"); // Memory
+                await popup.waitForFunction(() => PMDebug.config.state.memoryIsOpen); // Memory (open on start: checkDirectOpen)
                 await popup.waitForSelector(row);
                 await popup.click(`${row} .memory-item-info`);
                 await popup.waitForSelector(`${row} .pm-info-pop`);
@@ -1482,7 +1482,7 @@ describe("Options page", function () {
                 timeout: 15000,
             });
             try {
-                await popup.keyboard.press("a");
+                await popup.waitForFunction(() => PMDebug.config.state.memoryIsOpen); // Memory (open on start: checkDirectOpen)
                 await popup.waitForSelector(`#memory-container--${id}`);
                 await popup.evaluate((id) => PMDebug.memory.openMemoryItemEdit(id), id);
                 const input = `#memory-container--${id} .form-code-input`;
@@ -1614,7 +1614,7 @@ describe("Options page", function () {
                 await popup.evaluate(() => {
                     window.__fail = (op) => op.op === "delete";
                 });
-                await popup.keyboard.press("a"); // Memory
+                await popup.waitForFunction(() => PMDebug.config.state.memoryIsOpen); // Memory (open on start: checkDirectOpen)
                 await popup.waitForSelector(row);
                 await popup.focus(row);
                 await popup.keyboard.press("Backspace");
