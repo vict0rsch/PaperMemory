@@ -36,7 +36,7 @@ export const getInContextRuns = () => inContextRuns;
 const lastError = () => globalThis.chrome?.runtime?.lastError;
 
 /** One key's value; rejects when the browser reports an error (never "absent") */
-const storageGetOne = (key) =>
+export const storageGetOne = (key) =>
     new Promise((resolve, reject) => {
         try {
             chrome.storage.local.get(key, (data) => {
@@ -57,7 +57,7 @@ const storageGet = async (keys) => {
     return out;
 };
 /** Rejects when the write fails */
-const storageSet = (obj) =>
+export const storageSet = (obj) =>
     new Promise((resolve, reject) => {
         try {
             chrome.storage.local.set(obj, () => {

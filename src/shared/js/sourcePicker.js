@@ -79,7 +79,7 @@ export const setupSources = async (render = onRender) => {
         log("Updating source", key, "to", !e.target.checked);
         e.target.closest(".o-cell").classList.toggle("is-off", !e.target.checked);
         await updateIgnoreSources({ patch: { [key]: !e.target.checked } });
-        renderSources();
+        renderSources(); // also when it failed: the cells show what is stored
     });
     const setAll = async (on) => {
         const patch = Object.fromEntries(sourceList().map(({ key }) => [key, !on]));

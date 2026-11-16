@@ -7,6 +7,10 @@ import { findExtensionId, makeBrowser } from "./browser.js";
 import { loadConfig, indent, sleep } from "./utilsForTests.js";
 import { openWelcomeOnInstall } from "../src/background/welcome.js";
 import { formatShortcut, shortcutKeys } from "../src/popup/js/shortcuts.js";
+import {
+    applyIgnoreSources,
+    updateIgnoreSources,
+} from "../src/shared/js/utils/ignoreSources.js";
 
 const { headless } = loadConfig();
 
@@ -284,6 +288,121 @@ describe("Welcome page", function () {
                 await options.close();
                 await page.bringToFront();
             }
+        });
+    });
+
+    describe("Sources queue (unit, stubbed chrome)", function () {
+        let saved;
+        beforeEach(() => (saved = globalThis.chrome));
+        afterEach(() => (globalThis.chrome = saved));
+
+        /** chrome.storage.local over `store`; get/set fail as told (once each) */
+        const fakeStorage = (store, fail = {}) => {
+            const runtime = { lastError: undefined };
+            const answer = (cb, error, ...args) => {
+                runtime.lastError = error ? { message: error } : undefined;
+                cb(...args);
+                runtime.lastError = undefined;
+            };
+            globalThis.chrome = {
+                runtime,
+                storage: {
+                    local: {
+                        get: (key, cb) => {
+                            const f = fail.get;
+                            fail.get = undefined;
+                            if (f === "undefined")
+                                return answer(cb, undefined, undefined);
+                            if (f) return answer(cb, f, {});
+                            answer(cb, undefined, {
+                                [key]: structuredClone(store[key]),
+                            });
+                        },
+                        set: (obj, cb) => {
+                            const f = fail.set;
+                            fail.set = undefined;
+                            if (f) return answer(cb, f);
+                            Object.assign(store, structuredClone(obj));
+                            answer(cb);
+                        },
+                    },
+                },
+            };
+        };
+
+        it("a failed read or write rejects, and the queue goes on with the next change", async function () {
+            const store = { ignoreSources: { arxiv: false } };
+            const fail = { get: "IO error" };
+            fakeStorage(store, fail);
+            await expect(
+                applyIgnoreSources({ patch: { arxiv: true } }),
+            ).rejects.toThrow(/IO error/);
+            fail.get = "undefined"; // a read that answers nothing
+            await expect(
+                applyIgnoreSources({ patch: { arxiv: true } }),
+            ).rejects.toThrow(/no answer/);
+            fail.set = "QUOTA_BYTES quota exceeded";
+            await expect(
+                applyIgnoreSources({ patch: { arxiv: true } }),
+            ).rejects.toThrow(/quota/);
+            expect(store.ignoreSources).toEqual({ arxiv: false }); // nothing written
+            expect(await applyIgnoreSources({ patch: { nature: true } })).toEqual({
+                arxiv: false,
+                nature: true,
+            });
+            expect(store.ignoreSources).toEqual({ arxiv: false, nature: true });
+        });
+
+        /** chrome.runtime.sendMessage answering from `replies` (one per call) */
+        const fakeMessages = (replies) => {
+            const sent = [];
+            globalThis.chrome = {
+                runtime: {
+                    lastError: undefined,
+                    sendMessage: (msg, cb) => {
+                        sent.push(msg);
+                        const { error, response } = replies.shift();
+                        globalThis.chrome.runtime.lastError = error
+                            ? { message: error }
+                            : undefined;
+                        cb(response);
+                        globalThis.chrome.runtime.lastError = undefined;
+                    },
+                },
+            };
+            return sent;
+        };
+
+        it("sends a change again only when no background received it", async function () {
+            const map = { arxiv: true };
+            let sent = fakeMessages([
+                {
+                    error: "Could not establish connection. Receiving end does not exist.",
+                },
+                { response: { ok: true, ignoreSources: map } },
+            ]);
+            expect(await updateIgnoreSources({ patch: { arxiv: true } })).toEqual(map);
+            expect(sent.length).toBe(2);
+            // delivered, answer lost (the worker stopped): never sent again
+            for (const error of [
+                "The message port closed before a response was received.",
+                "A listener indicated an asynchronous response by returning true, but the message channel closed before a response was received",
+            ]) {
+                sent = fakeMessages([{ error }, { response: { ok: true } }]);
+                expect(await updateIgnoreSources({ patch: { arxiv: true } })).toBe(
+                    undefined,
+                );
+                expect(sent.length).toBe(1);
+            }
+            // the background failed to apply it: reported, not sent again
+            sent = fakeMessages([
+                { response: { ok: false } },
+                { response: { ok: true } },
+            ]);
+            expect(await updateIgnoreSources({ patch: { arxiv: true } })).toBe(
+                undefined,
+            );
+            expect(sent.length).toBe(1);
         });
     });
 
