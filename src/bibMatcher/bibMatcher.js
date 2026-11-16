@@ -50,8 +50,6 @@ const HTTP_STATUS_URL = "https://developer.mozilla.org/en-US/docs/Web/HTTP/Statu
 const PREPRINT = /rxiv/i;
 const STOPPED = Symbol("stopped");
 const MAX_FILE = 5 * 1024 * 1024; // bytes
-/** Blocks that are not entries: kept in the output as they are, never matched */
-const SPECIAL = ["string", "preamble", "comment"];
 
 const run = {
     id: 0, // a new run, or Clear, makes the previous run's loop leave quietly
@@ -60,6 +58,7 @@ const run = {
     cancel: null, // resolves (STOPPED) on Stop or Clear: a pending request is not waited for
     onCancel: () => {},
     fileName: "", // the chosen / dropped file, "" for pasted text
+    source: null, // the file's text as read (CRLF kept); null once the field is edited
     running: false,
     stop: false,
     disabled: {}, // source id -> {status, after: the preprint it was left out on (1-based)}
@@ -110,11 +109,17 @@ const scanBib = (text) => {
         }
         const close = head[2] === "{" ? "}" : ")";
         let depth = 0;
+        let quoted = false; // in a "…" value (between fields only: in braces " is literal)
         let j = i + head[0].length;
         for (; j < text.length; j++) {
             const c = text[j];
             if (c === "\\") j++;
-            else if (c === "{") depth++;
+            else if (depth === 0 && c === '"') quoted = !quoted;
+            else if (depth === 0 && !quoted && c === "%") {
+                // a comment between fields (as the parser reads it): its braces do not count
+                const nl = text.indexOf("\n", j);
+                j = nl < 0 ? text.length : nl;
+            } else if (c === "{") depth++;
             else if (c === "}" && depth > 0) depth--;
             else if (c === close && depth === 0) break;
         }
@@ -126,9 +131,10 @@ const scanBib = (text) => {
     return blocks;
 };
 
-/** One entry's fields ({...fields, entryType, citationKey}) */
-const parseEntry = (raw) => {
+/** One entry's fields ({...fields, entryType, citationKey}), @string macros expanded */
+const parseEntry = (raw, strings) => {
     const parser = new BibtexParser();
+    parser.strings = strings;
     parser.setInput(raw);
     parser.bibtex();
     const e = parser.getEntries().find((x) => x.entryTags);
@@ -138,19 +144,28 @@ const parseEntry = (raw) => {
 
 /**
  * The entries of a .bib text with their place in it ({start, end, raw, fields}); @string,
- * @preamble and @comment are left out (and stay in the output as they are)
+ * @preamble and @comment are left out (and stay in the output as they are). @string
+ * definitions are read in order and expanded in the entries after them (author = team)
  */
-const parseBib = (text) =>
-    scanBib(text)
-        .filter((b) => !SPECIAL.includes(b.type))
-        .map((b) => {
-            const raw = text.slice(b.start, b.end);
-            try {
-                return { ...b, raw, fields: parseEntry(raw) };
-            } catch (error) {
-                throw new Error(`${parseMessage(error)} in ${preview(text, b.start)}`);
-            }
-        });
+const parseBib = (text) => {
+    const strings = {};
+    const entries = [];
+    for (const b of scanBib(text)) {
+        if (b.type === "preamble" || b.type === "comment") continue;
+        const raw = text.slice(b.start, b.end);
+        try {
+            if (b.type === "string") {
+                const parser = new BibtexParser();
+                parser.strings = strings; // filled by the parser
+                parser.setInput(raw);
+                parser.bibtex();
+            } else entries.push({ ...b, raw, fields: parseEntry(raw, strings) });
+        } catch (error) {
+            throw new Error(`${parseMessage(error)} in ${preview(text, b.start)}`);
+        }
+    }
+    return entries;
+};
 
 /** A field's value, whatever the case of its name (DOI, doi) */
 const field = (fields, name) =>
@@ -306,7 +321,8 @@ const matchEntry = async (entry, n, keepKeys, id) => {
 const startRun = async () => {
     if (run.running) return;
     loadGen++; // a file still being read does not replace this text
-    const text = $("bib-text").value;
+    // the file as read, byte for byte (the field turns CRLF into LF), else the field
+    const text = run.source ?? $("bib-text").value;
     let parsed;
     try {
         parsed = parseBib(text);
@@ -777,7 +793,7 @@ const countLater = () => {
     clearTimeout(countTimer);
     countTimer = setTimeout(() => {
         try {
-            const entries = parseBib($("bib-text").value);
+            const entries = parseBib(run.source ?? $("bib-text").value);
             showFileLine(
                 entries.length,
                 entries.filter((e) => isPreprintEntry(e.fields)).length,
@@ -834,6 +850,7 @@ const loadFile = async (file) => {
     resetResults();
     showError("");
     run.fileName = file.name;
+    run.source = text;
     $("bib-text").value = text;
     grow();
     updateInputUI();
@@ -845,6 +862,7 @@ const clearAll = () => {
     resetResults();
     showError("");
     run.fileName = "";
+    run.source = null;
     $("bib-text").value = "";
     grow();
     updateInputUI();
@@ -894,6 +912,7 @@ const downloadName = () =>
 const setListeners = () => {
     const text = $("bib-text");
     text.addEventListener("input", () => {
+        run.source = null; // edited: the field is the text now
         grow();
         updateInputUI();
         countLater();

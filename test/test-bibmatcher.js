@@ -817,5 +817,89 @@ describe("BibMatcher", function () {
             await act("r2", "reject");
             expect(await focused()).toEqual({ act: null, key: null, filter: "review" });
         });
+
+        it("@string macros: expanded for matching and kept in an accepted entry", async function () {
+            handler = (u) =>
+                u.includes("api.openalex.org")
+                    ? { status: 200, body: journalWork(openAlexTitle(u)) }
+                    : null;
+            const strings = "@string{team = {Jane Doe and John Doe}}\n";
+            await open(
+                strings +
+                    "@article{t2019, title={Team results}, author=team, journal={arXiv preprint}, year={2019}}\n",
+            );
+            await page.click("#match-bib");
+            await waitState("done");
+            await act("t2019", "accept");
+            const out = await output();
+            expect(out.startsWith(strings)).toBe(true);
+            expect(out).toMatch(/author\s*=\s*\{Jane Doe and John Doe\}/);
+            expect(out).not.toMatch(/\{team\}/);
+        });
+
+        it("braces in % comments between fields do not count", async function () {
+            handler = (u) =>
+                u.includes("api.openalex.org")
+                    ? { status: 200, body: journalWork(openAlexTitle(u)) }
+                    : null;
+            const other =
+                "@article{d2019,\n  title={Other}, % { comment\n  journal={Nature}\n}\n";
+            await open(
+                "@article{c2019,\n  title={Comment results}, % } comment\n  journal={arXiv preprint},\n  year={2019}\n}\n" +
+                    other,
+            );
+            await page.click("#match-bib");
+            await waitState("done");
+            expect((await rows()).map((r) => [r.key, r.status])).toEqual([
+                ["c2019", "Matched"],
+                ["d2019", "Unchanged"],
+            ]);
+            await act("c2019", "accept");
+            const out = await output();
+            expect(out).toMatch(
+                /^@article\{c2019,[^@]*Journal of Tests[^@]*\}\n@article\{d2019/,
+            );
+            expect(out.endsWith(other)).toBe(true);
+        });
+
+        it("a CRLF file comes out byte for byte (Download), until the field is edited", async function () {
+            const crlf =
+                "@article{crlf2019,\r\n  title = {CRLF results},\r\n  journal = {arXiv preprint},\r\n  year = {2019}\r\n}\r\n\r\n% note\r\n";
+            await open();
+            await page.evaluate((text) => {
+                window.__downloads = [];
+                HTMLAnchorElement.prototype.click = function () {
+                    if (this.download) window.__downloads.push(this.href);
+                };
+                const dt = new DataTransfer();
+                dt.items.add(new File([text], "crlf.bib"));
+                document.body.dispatchEvent(
+                    new DragEvent("drop", {
+                        dataTransfer: dt,
+                        bubbles: true,
+                        cancelable: true,
+                    }),
+                );
+            }, crlf);
+            await page.waitForFunction(
+                () => document.getElementById("b-filecount").textContent !== "",
+            );
+            await page.click("#match-bib");
+            await waitState("done");
+            await page.click("#download-results");
+            await page.waitForFunction(() => window.__downloads.length === 1);
+            const downloaded = await page.evaluate(
+                async () => await (await fetch(window.__downloads[0])).text(),
+            );
+            expect(downloaded).toBe(crlf);
+            // edited: the field's text is matched now
+            await page.$eval("#bib-text", (el) => {
+                el.value += " ";
+                el.dispatchEvent(new Event("input", { bubbles: true }));
+            });
+            await page.click("#match-bib");
+            await waitState("done");
+            expect(await output()).not.toMatch(/\r/);
+        });
     });
 });

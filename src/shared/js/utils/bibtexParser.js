@@ -25,6 +25,9 @@ export function BibtexParser() {
         "dec",
     ];
     this.notKey = [",", "{", "}", " ", "="];
+    // @string definitions (lowercase name -> value): read from @string blocks, and can be
+    // given before parsing (one entry of a file whose @string blocks were read already)
+    this.strings = {};
     this.pos = 0;
     this.input = "";
     this.entries = new Array();
@@ -174,8 +177,9 @@ export function BibtexParser() {
             var k = this.key();
             if (k.match("^[0-9]+$")) return k;
             else if (this.months.indexOf(k.toLowerCase()) >= 0) return k.toLowerCase();
-            // a @string macro's name (journal = jmlr): kept as written
-            else if (/^[A-Za-z][\w.:+\/-]*$/.test(k)) return k;
+            // a @string macro's name (journal = jmlr): its value, else the name as written
+            else if (/^[A-Za-z][\w.:+\/-]*$/.test(k))
+                return this.strings[k.toLowerCase()] ?? k;
             else
                 throw (
                     "Value expected: single_value" +
@@ -262,9 +266,10 @@ export function BibtexParser() {
         return "@" + this.key();
     };
 
-    // @string{name = value}: read and dropped (it was called but never defined)
+    // @string{name = value}: kept for the values that use it (it was called but never defined)
     this.string = function () {
-        this.key_equals_value();
+        var kv = this.key_equals_value();
+        this.strings[kv[0].toLowerCase()] = kv[1];
     };
 
     this.preamble = function () {
