@@ -12,4 +12,4 @@ node scripts/store-assets/build.mjs [stills|videos]   # default: both
 - Dev-only prerequisite: ffmpeg (`/opt/homebrew/bin/ffmpeg`, or set `$FFMPEG`). No npm dependency beyond the dev ones.
 - Needs the network (arxiv.org). Headless Chromium, fresh profile, Memory seeded from `seed.json` (real papers); BibMatcher sources are mocked (`data.mjs`); nothing is downloaded, no sync token is used.
 
-Files: `build.mjs` (entry), `stills.mjs` (captures + store images), `videos.mjs` (storyboards, recording, ffmpeg), `lib.mjs` (browser, screencast), `frame.html` (drawn browser, caption band, cards).
+Files: `build.mjs` (entry), `stills.mjs` (captures + store images), `videos.mjs` (storyboards, recording, ffmpeg), `cues.mjs` (cursor, highlight ring, 1.4× camera), `lib.mjs` (browser, screencast), `frame.html` (drawn browser, caption band, cards).

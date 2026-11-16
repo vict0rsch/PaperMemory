@@ -21,14 +21,14 @@ const FALSE = ["checkDarkMode", "checkStore", "checkScirate", "checkAlphaxiv", "
 const defaultPrefs = Object.fromEntries(NAMES.map((n) => [n, !FALSE.includes(n)]));
 
 /** The real build (dist/chrome-mv3) in a headless browser, a fresh profile, the Memory seeded */
-export const start = async () => {
-    // as test/browser.js's makeBrowser, plus a 1.5 screen scale: the screencast then sends
-    // 1920 x 900 frames for a 1280 x 600 viewport (it ignores the emulated device scale)
+export const start = async ({ scale = 2 } = {}) => {
+    // as test/browser.js's makeBrowser, plus a screen scale (2): the screencast then sends
+    // 2560 x 1200 frames for a 1280 x 600 viewport (it ignores the emulated device scale)
     const { launch } = await import("cloakbrowser/puppeteer");
     const browser = await launch({
         headless: true,
         extensionPaths: [`${ROOT}dist/chrome-mv3`],
-        args: ["--window-size=1500,1000", "--force-device-scale-factor=1.5", "--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"],
+        args: ["--window-size=1500,1000", `--force-device-scale-factor=${scale}`, "--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"],
         launchOptions: { acceptInsecureCerts: true },
     });
     const welcome = await browser.waitForTarget((t) => t.type() === "page" && t.url().endsWith("/welcome.html"), { timeout: 10000 }).catch(() => null);
@@ -117,15 +117,15 @@ export const render = async (env, spec, path, [w, h, dsf]) => {
  * Record a page with the CDP screencast while `run(mark)` drives it. `mark()` sets the start of
  * the clip (default: the first frame). Frames are kept with their timestamps.
  */
-export const record = async (page, run, size) => {
+export const record = async (page, run, size, format = "png") => {
     await page.bringToFront();
     const cdp = await page.createCDPSession();
     const frames = [];
     cdp.on("Page.screencastFrame", ({ data, metadata, sessionId }) => {
-        frames.push({ t: metadata.timestamp, data });
+        frames.push({ t: metadata.timestamp, data, ext: format === "jpeg" ? "jpg" : "png" });
         cdp.send("Page.screencastFrameAck", { sessionId }).catch(() => {});
     });
-    await cdp.send("Page.startScreencast", { format: "png", maxWidth: size[0], maxHeight: size[1], everyNthFrame: 1 });
+    await cdp.send("Page.startScreencast", { format, quality: 92, maxWidth: size[0], maxHeight: size[1], everyNthFrame: 1 });
     let start = null;
     await run(() => (start = Date.now() / 1000));
     const end = Date.now() / 1000;
@@ -151,7 +151,7 @@ export const clipFrames = (rec, dur, dir) => {
         const from = Math.max(frames[i].t, start);
         const to = Math.min(frames[i + 1]?.t ?? end, end);
         if (to - from < 1e-4) continue;
-        last = `${dir}/${String(i).padStart(5, "0")}.png`;
+        last = `${dir}/${String(i).padStart(5, "0")}.${frames[i].ext}`;
         fs.writeFileSync(last, Buffer.from(frames[i].data, "base64"));
         lines.push(`file '${last}'`, `duration ${(to - from).toFixed(4)}`);
     }
