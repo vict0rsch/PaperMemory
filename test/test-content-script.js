@@ -175,6 +175,11 @@ describe("Content script on arXiv", function () {
         ])
             expect(text).toContain(label);
         expect(text).not.toContain("Add to Memory");
+        // the header has the name only; the status is the first row
+        expect(await shadowText("papermemory-block", ".pmx-head")).toBe("PaperMemory");
+        expect(await shadowText("papermemory-block", ".pmx-row")).toBe(
+            "In your Memory",
+        );
         // arXiv's columns keep their own widths, the block sits in the right column
         const layout = await page.evaluate(() => ({
             left: document.querySelector(".leftcolumn")?.getAttribute("style"),
@@ -263,6 +268,18 @@ describe("Content script on arXiv", function () {
         await visit();
         await waitBlock("Not saved");
         expect((await storageGet("papers"))?.[ID]).toBeUndefined();
+        // one status row: "Not saved" with its Add to Memory button
+        expect(
+            await page.evaluate(() => {
+                const row = document
+                    .querySelector("papermemory-block")
+                    .shadowRoot.querySelector(".pmx-row");
+                return [
+                    row.querySelector(".pmx-label").textContent,
+                    !!row.querySelector('[data-act="add"]'),
+                ];
+            }),
+        ).toEqual(["Not saved", true]);
         await clickAct("add");
         await waitStored(true);
         await waitBlock("In your Memory");

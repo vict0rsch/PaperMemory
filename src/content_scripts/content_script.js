@@ -833,27 +833,33 @@ const renderArxivBlock = () => {
     const paper = stored ?? block.paper;
     const focused = block.root.activeElement?.dataset?.act;
 
-    const status = block.pending
-        ? null
-        : stored
-          ? h("small", {}, svgIcon("check", "pm-i-sm"), "In your Memory")
-          : h("small", { text: "Not saved" });
     const rows = [
         h(
             "div",
             { class: "pmx-head" },
             svgIcon("mark"),
             h("span", { text: "PaperMemory" }),
-            status,
         ),
     ];
-    // not saved: automatic recording off, the source ignored, a failed save, or Undo
-    if (!block.pending && !stored)
+    // status row (none while a save may be running); not saved: automatic recording off,
+    // the source ignored, a failed save, or Undo
+    if (!block.pending)
         rows.push(
-            blockRow(
-                "This paper",
-                blockButton("add", "plus", "Add to Memory", savePaper),
-            ),
+            stored
+                ? h(
+                      "div",
+                      { class: "pmx-row" },
+                      h(
+                          "span",
+                          { class: "pmx-label pmx-status" },
+                          svgIcon("check", "pm-i-sm"),
+                          "In your Memory",
+                      ),
+                  )
+                : blockRow(
+                      "Not saved",
+                      blockButton("add", "plus", "Add to Memory", savePaper),
+                  ),
         );
     if (prefs.checkDownload)
         rows.push(

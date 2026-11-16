@@ -71,7 +71,7 @@
     align-items: center;
 }
 .pmx-head {
-    gap: 2px 7px;
+    gap: 7px;
     padding: 8px 10px;
     font-weight: 600;
     white-space: nowrap;
@@ -81,14 +81,13 @@
     height: 16px;
     flex: none;
 }
-.pmx-head small {
+.pmx-status {
     display: inline-flex;
     align-items: center;
-    gap: 4px;
-    margin-left: auto;
+    gap: 5px;
+}
+.pmx-status .pm-i {
     color: var(--pmx-muted);
-    font-size: 11.5px;
-    font-weight: 400;
 }
 .pmx-row {
     gap: 8px;
