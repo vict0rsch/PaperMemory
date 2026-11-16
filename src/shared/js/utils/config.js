@@ -161,6 +161,16 @@ export const storeReadme = `
 /!\\ Unfortunately, PaperMemory cannot detect papers that have not been *downloaded there* so putting papers in this folder will not make them discoverable by the \`browser.downloads\` API PaperMemory uses.
 `;
 /**
+ * A URL to download storeReadme from: a blob URL where the context has one (pages, the
+ * Firefox background page), else a data: URL (URL.createObjectURL does not exist in the
+ * Chrome MV3 service worker)
+ * @returns {string}
+ */
+export const storeReadmeUrl = () =>
+    typeof URL.createObjectURL === "function"
+        ? URL.createObjectURL(new Blob([storeReadme], { type: "text/plain" }))
+        : `data:text/plain;charset=utf-8,${encodeURIComponent(storeReadme)}`;
+/**
  * English words to ignore when creating an arxiv paper's BibTex key.
  */
 export const englishStopWords = new Set([

@@ -284,9 +284,29 @@ the browser).
 **Location:** [`src/content_scripts/content_script.js`](src/content_scripts/content_script.js)
 Injected at `document_start` on `<all_urls>`. On load it runs `initSyncAndState`,
 pings the worker (`hello`), then calls `isPaper(url)`; on a hit it invokes
-`addOrUpdatePaper` and renders the floating feedback notification. Also listens for
+`addOrUpdatePaper` and shows notices (bottom right: "Reading this paper…", "Saved to your
+Memory" + Undo, copied, "Couldn’t save this paper" + Try again). Also listens for
 worker-pushed commands and provides in-page actions (copy BibTeX/MD link, open
 abstract/PDF/ar5iv/HuggingFace, etc., shared with the popup's `handlers.js`).
+On arXiv abstract pages it adds one block at the end of arXiv's right column (status,
+Add to Memory, PDF, Markdown link, BibTeX, venue, Code), never resizing arXiv's columns.
+The block and the notices/tooltips each live in a **shadow root** styled by
+`content_ui.css` (+ `public/tokens.css` scoped to the notices' root, which carries
+`data-theme`), so page CSS and ours never mix; the block takes its colours from the page's
+text colour, the notices follow `prefs.theme`. Bundled Inter is loaded from the extension
+(`fonts/*.woff2`, web-accessible) as "PaperMemory Inter". Its writes (save, Undo, Add to
+Memory, Try again) are Memory operations sent to the background (`memoryOp`); one run at a
+time drives the block (callbacks of an older run are ignored). Whether the paper's PDF is
+downloaded, and showing it in its folder, is asked of the background (`{type: "stored-pdf",
+id, show?}` → `{found}`), which owns the `downloads` API. Its Download asks the background
+too (`download-pdf-to-store`, `store` = PaperMemoryStore/ or the downloads folder), which
+starts it and answers `{id, ok}` at once, remembers download id → tab id
+(`storage.session` `pdfDownloadTabs`, in memory where there is no session storage), and on
+`complete` / `interrupted` / erased (one top-level `downloads.onChanged` / `onErased`
+listener) sends the tab `{message: "pdfDownloadDone", id, ok}` and forgets it; the row then
+reads "Show in folder".
+The manifest-injected `content_script.css` only styles the venue badge of ar5iv /
+HuggingFace pages.
 
 ### UI surfaces — `popup`, `fullMemory`, `options`, `bibMatcher`, `welcome`
 
@@ -361,8 +381,9 @@ the `downloads` API), `functions.js` (49 misc helpers incl. `miniHash`,
 7. PapersWithCode code discovery → the background saves it (`memoryOp`) → `pushToRemote`.
 8. Async `tryPreprintMatch` queries CrossRef/DBLP/S2/OpenAlex to backfill the
    published venue/bibtex; a second save (`patch` operation) persists it.
-9. Content-script callbacks render "Saved ✓ (+ repo …)" feedback; the worker may
-   rewrite the PDF tab title.
+9. Content-script callbacks show the "Saved to your Memory" notice (Undo = a `delete`
+   operation) or, when parsing or the write failed, "Couldn’t save this paper" with Try
+   again; the worker may rewrite the PDF tab title.
 
 ## Concurrency & Invariants
 
@@ -383,7 +404,7 @@ the `downloads` API), `functions.js` (49 misc helpers incl. `miniHash`,
 ## Technical Stack
 
 - **Build:** WXT 0.21 (Vite under the hood), Manifest V3 for Chrome and Manifest V2 for Firefox; a `build:manifestGenerated` hook renames `_execute_action` to `_execute_browser_action` for MV2.
-- **Runtime libs:** jQuery 4 (content-script page UI), `@octokit/request` (Gist).
+- **Runtime libs:** jQuery 4 (content script: arXiv API title lookup for downloads), `@octokit/request` (Gist).
 - **Language:** plain ES modules (`"type": "module"`), JSDoc-typed, no TypeScript;
   `jsconfig.json` + `@pm`/`@pmu` path aliases.
 - **Tooling:** Prettier; Mocha + jsdom + [cloakbrowser](https://github.com/CloakHQ/cloakbrowser)

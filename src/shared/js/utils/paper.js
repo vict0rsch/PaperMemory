@@ -506,9 +506,7 @@ export const addOrUpdatePaper = async ({
             logError("Could not save the paper:", answer.error);
             // shown even when save notices are off: the user expects the paper saved
             contentScriptCallbacks.feedback &&
-                contentScriptCallbacks.feedback({
-                    text: "Couldn’t save this paper — try again",
-                });
+                contentScriptCallbacks.feedback({ error: "write" });
             console.groupEnd();
             contentScriptCallbacks["done"](paper);
             return;

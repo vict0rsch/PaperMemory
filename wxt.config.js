@@ -88,7 +88,7 @@ export default defineConfig({
         host_permissions: ["*://*/*"],
         web_accessible_resources: [
             {
-                resources: ["data/*.json", "dark.css"],
+                resources: ["data/*.json", "dark.css", "fonts/*.woff2"],
                 matches: ["<all_urls>"],
             },
         ],

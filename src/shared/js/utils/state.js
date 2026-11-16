@@ -18,7 +18,7 @@ import {
     descendingSortKeys,
     journalAbbreviations,
     journalShortNames,
-    storeReadme,
+    storeReadmeUrl,
 } from "@pmu/config.js";
 import {
     getStorage,
@@ -291,7 +291,7 @@ export const downloadPaperPdf = async (paper) => {
         const storedFiles = await getStoredFiles();
         if (storedFiles.length === 0) {
             chrome.downloads.download({
-                url: URL.createObjectURL(new Blob([storeReadme])),
+                url: storeReadmeUrl(),
                 filename: "PaperMemoryStore/IMPORTANT_README.txt",
                 saveAs: false,
             });

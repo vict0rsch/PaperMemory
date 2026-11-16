@@ -32,6 +32,8 @@ jobs:
             files: test/test-bibmatcher.js
           - name: Welcome page
             files: test/test-welcome.js
+          - name: Content script on arXiv
+            files: test/test-content-script.js
           - name: All test scripts are listed in a workflow
             files: test/test-meta.js
 

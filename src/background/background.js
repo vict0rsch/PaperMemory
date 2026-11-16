@@ -1,5 +1,5 @@
 // ES Module imports - Service Worker Safe
-import { state, storeReadme } from "@pmu/config.js";
+import { state, storeReadmeUrl } from "@pmu/config.js";
 import {
     shouldSync,
     getIdentifier,
@@ -13,6 +13,7 @@ import { openWelcomeOnInstall } from "@pm/background/welcome.js";
 import { applyIgnoreSources } from "@pmu/ignoreSources.js";
 import { isSourceURL, parseIdFromUrl } from "@pmu/urls.js";
 import { initState, downloadPaperPdf } from "@pmu/state.js";
+import { matchPapersToFiles } from "@pmu/files.js";
 import { fetchJSON } from "@pmu/parsers.js";
 import {
     trySemanticScholar,
@@ -440,6 +441,100 @@ export function initBackground() {
         return response.text();
     };
 
+    /** The paper's PDF in the downloads (PaperMemoryStore), or null */
+    const findStoredPdf = async (id) => {
+        const paper = ((await getStorage("papers")) ?? {})[id];
+        if (!paper) return null;
+        const matches = await matchPapersToFiles(
+            { [id]: paper },
+            await getStoredFiles(),
+        );
+        return matches[id] ?? null;
+    };
+    // PDF downloads started for a content script: download id → tab id, so the tab hears
+    // when its download ends. Kept in storage.session (survives the MV3 worker stopping),
+    // in memory where there is none. Changes run one at a time.
+    const DOWNLOAD_TABS = "pdfDownloadTabs";
+    const session = chrome.storage.session;
+    let downloadTabs = {};
+    let downloadTabsQueue = Promise.resolve();
+    const changeDownloadTabs = (change) =>
+        (downloadTabsQueue = downloadTabsQueue.then(async () => {
+            const tabs = session
+                ? ((await new Promise((r) => session.get(DOWNLOAD_TABS, r)))?.[
+                      DOWNLOAD_TABS
+                  ] ?? {})
+                : downloadTabs;
+            const before = JSON.stringify(tabs);
+            const result = change(tabs);
+            if (session && JSON.stringify(tabs) !== before)
+                await new Promise((r) => session.set({ [DOWNLOAD_TABS]: tabs }, r));
+            return result;
+        }));
+    /** A download ended (or was erased): tell its tab once, forget it */
+    const downloadEnded = async (id, ok) => {
+        const tabId = await changeDownloadTabs((tabs) => {
+            const tab = tabs[id];
+            delete tabs[id];
+            return tab;
+        });
+        if (tabId === undefined) return;
+        // the tab may be gone: reading lastError keeps that quiet
+        chrome.tabs.sendMessage(
+            tabId,
+            { message: "pdfDownloadDone", id, ok },
+            () => void chrome.runtime.lastError,
+        );
+    };
+    // top level, registered at start: the event wakes the MV3 worker
+    chrome.downloads.onChanged.addListener((delta) => {
+        const state = delta.state?.current;
+        if (state && state !== "in_progress")
+            downloadEnded(delta.id, state === "complete");
+    });
+    chrome.downloads.onErased.addListener((id) => downloadEnded(id, false));
+
+    /**
+     * Starts a paper's PDF download into PaperMemoryStore/ (store) or the downloads folder;
+     * its tab gets {message: "pdfDownloadDone", id, ok} when it ends
+     * @returns {Promise<{id?: number, ok: boolean}>} at once
+     */
+    const downloadPdfFile = async ({ pdfUrl, title, store = true }, tabId) => {
+        if (!/^https?:\/\//.test(pdfUrl)) return { ok: false };
+        if (store && (await getStoredFiles()).length === 0) {
+            chrome.downloads.download({
+                url: storeReadmeUrl(),
+                filename: "PaperMemoryStore/IMPORTANT_README.txt",
+                saveAs: false,
+            });
+        }
+        // the name without .pdf is cut, so the extension is always kept
+        const base = String(title)
+            .replace(/\.pdf$/i, "")
+            .replace(/[<>:"/\\|?*\x00-\x1f]/g, "_")
+            .replace(/\.{2,}/g, ".")
+            .replace(/^\.+|\.+$/g, "")
+            .slice(0, 196)
+            .replace(/\.+$/, "");
+        const filename = `${store ? "PaperMemoryStore/" : ""}${base || "paper"}.pdf`;
+        const id = await new Promise((resolve) =>
+            chrome.downloads.download({ url: pdfUrl, filename }, (downloadId) =>
+                resolve(chrome.runtime.lastError ? null : downloadId),
+            ),
+        );
+        if (id === null || id === undefined) return { ok: false };
+        await changeDownloadTabs((tabs) => {
+            tabs[id] = tabId;
+        });
+        // it may have ended before it was recorded
+        chrome.downloads.search({ id }, ([item] = []) => {
+            if (!item) downloadEnded(id, false);
+            else if (item.state !== "in_progress")
+                downloadEnded(id, item.state === "complete");
+        });
+        return { id, ok: true };
+    };
+
     chrome.runtime.onMessage.addListener((payload, sender, sendResponse) => {
         if (sender.id !== chrome.runtime.id) {
             return;
@@ -457,27 +552,23 @@ export function initBackground() {
         } else if (payload.type === "google-scholar") {
             fetchGSData(payload.paper).then(sendResponse);
         } else if (payload.type === "download-pdf-to-store") {
-            getStoredFiles().then((storedFiles) => {
-                if (storedFiles.length === 0) {
-                    chrome.downloads.download({
-                        url: URL.createObjectURL(new Blob([storeReadme])),
-                        filename: "PaperMemoryStore/IMPORTANT_README.txt",
-                        saveAs: false,
-                    });
-                }
-                const safeTitle = payload.title
-                    .replace(/[<>:"/\\|?*\x00-\x1f]/g, "_")
-                    .replace(/\.{2,}/g, ".")
-                    .replace(/^\.+|\.+$/g, "")
-                    .slice(0, 200);
-                const filename = "PaperMemoryStore/" + safeTitle;
-                if (!/^https?:\/\//.test(payload.pdfUrl)) {
-                    sendResponse(false);
-                    return;
-                }
-                chrome.downloads.download({ url: payload.pdfUrl, filename });
-                sendResponse(true);
+            // the content script's Download (store: false = the downloads folder);
+            // answers {id} at once, then "pdfDownloadDone" to the tab when it ends
+            downloadPdfFile(payload, sender.tab?.id).then(sendResponse, (e) => {
+                logError("[download-pdf-to-store]", e);
+                sendResponse({ ok: false });
             });
+        } else if (payload.type === "stored-pdf") {
+            // the content script's PDF row: is it downloaded, show it in its folder
+            findStoredPdf(payload.id)
+                .then((file) => {
+                    if (file && payload.show) chrome.downloads.show(file.id);
+                    sendResponse({ found: !!file });
+                })
+                .catch((e) => {
+                    logError("[stored-pdf]", e);
+                    sendResponse({ found: false });
+                });
         } else if (payload.type === "memory") {
             // the one queue that writes the Memory (memoryQueue.js)
             runMemoryOp(payload.op).then(sendResponse);
