@@ -41,14 +41,14 @@ describe("Test PaperMemory fullMemory page", function () {
     });
 
     /** fullMemory at this width, with the test Memory */
-    const open = async (width) => {
+    const open = async (width, data = testData) => {
         page = await browser.newPage();
         await page.setViewport({ width, height: 900 });
         await page.goto(pmURLs.popupURL, { waitUntil: "networkidle0" });
         await page.evaluate(async (data) => {
             await PMDebug.data.setStorage("papers", data);
             await PMDebug.data.setStorage("papersRevision", 0);
-        }, testData);
+        }, data);
         await page.goto(pmURLs.fullMemoryURL, { waitUntil: "networkidle0" });
         await page.waitForFunction(() => window.__pmFullMemoryReady === true);
         console.log(indent(2) + `fullMemory open at ${width}px`);
@@ -426,5 +426,81 @@ describe("Test PaperMemory fullMemory page", function () {
         expect(
             await page.$eval("#popup-feedback-copied span", (el) => el.textContent),
         ).toBe("BibTeX of 1 paper copied · 1 paper left out (no readable BibTeX)");
+    });
+
+    it("should save a row's edit form before a search draws the rows again (below 900px)", async function () {
+        await open(800);
+        const cg = `#memory-container--${CG.replace(".", "\\.")}`;
+        await page.focus(cg);
+        await page.keyboard.press("e");
+        await page.waitForSelector(`${cg}.is-edit`);
+        await page.$eval(`${cg} .form-note-textarea`, (el) => (el.value = ""));
+        await page.type(`${cg} .form-note-textarea`, "Kept through the search");
+        await page.type("#memory-search", "random");
+        await page.waitForFunction(
+            () =>
+                document.querySelectorAll("#memory-table .memory-container").length ===
+                    1 && !document.querySelector("#memory-table .pm-edit"),
+            { timeout: 3000 },
+        );
+        expect(await page.evaluate(() => PMDebug.memory.openEditors.size)).toBe(0);
+        expect(
+            await page.evaluate(() => [
+                document.activeElement.id,
+                document.getElementById("memory-search").value,
+            ]),
+        ).toEqual(["memory-search", "random"]);
+        expect((await stored()).papers[CG].note).toBe("Kept through the search");
+        // a change made elsewhere is not held forever
+        await writeElsewhere(JMLR, { title: "Random: applied after the search" });
+        await page.waitForFunction(
+            (id) =>
+                document.querySelector(`#memory-container--${id} .pm-item-title`)
+                    ?.textContent === "Random: applied after the search",
+            { timeout: 3000 },
+            JMLR,
+        );
+    });
+
+    it("should keep the loaded rows, the scroll and the focused row after a sync (below 900px)", async function () {
+        const data = structuredClone(testData);
+        for (let i = 0; i < 60; i++)
+            data[`JMLR-test-${i}`] = {
+                ...data[JMLR],
+                id: `JMLR-test-${i}`,
+                title: `Copy ${i} of a paper`,
+                lastOpenDate: new Date(Date.UTC(2020, 0, 1, 0, i)).toJSON(),
+            };
+        await open(800, data);
+        const count = () =>
+            page.$$eval("#memory-table .memory-container", (els) => els.length);
+        expect(await count()).toBe(50);
+        await page.evaluate(() => PMDebug.memory.loadMoreMemoryItems());
+        expect(await count()).toBe(63);
+        const target = await page.evaluate(() => {
+            const rows = document.querySelectorAll("#memory-table .memory-container");
+            const row = rows[55];
+            row.scrollIntoView({ block: "center" });
+            row.focus({ preventScroll: true });
+            return row.id;
+        });
+        const say = (detail) =>
+            page.evaluate(
+                (detail) =>
+                    document.dispatchEvent(
+                        new CustomEvent("pm-sync-status", { detail }),
+                    ),
+                detail,
+            );
+        // the status line ("Syncing…") is above the rows from the start of a sync
+        await say("syncing");
+        await sleep(100);
+        const top = await page.evaluate(() => window.scrollY);
+        expect(top).toBeGreaterThan(0);
+        await say("synced");
+        await sleep(300);
+        expect(await count()).toBe(63);
+        expect(await page.evaluate(() => document.activeElement.id)).toBe(target);
+        expect(await page.evaluate(() => window.scrollY)).toBe(top);
     });
 });

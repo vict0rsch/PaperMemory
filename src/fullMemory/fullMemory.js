@@ -183,6 +183,33 @@ const markTruncated = (root) =>
         }),
     );
 
+const closingForms = new Set();
+/**
+ * Below 900px a search or sort draws the popup's rows again, which would drop an open row
+ * edit form (its paper still registered in openEditors). The form is saved and closed
+ * first; closeMemoryItemEdit then draws the list again with the new search. Not saved: the
+ * rows stay as they are, the form with them, until it is closed.
+ * @returns {boolean} Whether the rows are kept for now (the popup's renderer must not run)
+ */
+const holdRowsForEditors = () => {
+    const forms = [
+        ...document.querySelectorAll(
+            "#memory-table .memory-container.is-edit .pm-edit",
+        ),
+    ];
+    if (!forms.length) return false;
+    const back = document.activeElement; // the search field, while typing
+    for (const form of forms) {
+        if (closingForms.has(form)) continue;
+        closingForms.add(form);
+        form.finish(true).then((closed) => {
+            closingForms.delete(form);
+            if (closed && back?.isConnected && back.matches("input")) back.focus();
+        });
+    }
+    return true;
+};
+
 /**
  * memory.js's list renderer (setListRenderer): a page of state.papersList as table rows,
  * when the window is wide enough; page 0 replaces the table
@@ -190,7 +217,7 @@ const markTruncated = (root) =>
  * @returns {boolean} Whether the table was rendered (otherwise: the popup's rows)
  */
 const renderTable = (pagination) => {
-    if (!isTable()) return false;
+    if (!isTable()) return pagination === 0 && holdRowsForEditors();
     const n = state.memoryItemsPerPage;
     const rows = [];
     for (const paper of state.papersList.slice(pagination * n, (pagination + 1) * n)) {
@@ -742,23 +769,36 @@ const dialogIsOpen = () => !!$("o-dialog")?.open;
 const isBusy = () => ui.busy > 0 || dialogIsOpen() || openEditors.size > 0;
 
 /** Where the focus is in the list, to find it again once the list is drawn again */
+/** The list's rows: the table's, or the popup's below 900px */
+const listRows = () => [
+    ...(isTable()
+        ? $("m-tbody").rows
+        : document.querySelectorAll("#memory-table .memory-container")),
+];
+const listRowOf = (id) => (isTable() ? rowOf(id) : $(`memory-container--${id}`));
+
 const focusMemo = () => {
-    const row = document.activeElement?.closest?.("tr.m-row");
+    const row = document.activeElement?.closest?.(
+        "tr.m-row, #memory-table .memory-container",
+    );
     if (!row) return null;
-    return { id: row.dataset.id, index: [...$("m-tbody").rows].indexOf(row) };
+    return {
+        id: row.dataset.id ?? row.id.split("--")[1],
+        index: listRows().indexOf(row),
+    };
 };
 
-/** The table drawn again where it is: as many rows, same scroll, same focused row */
-const redrawTable = () => {
-    const shown = $("m-tbody").rows.length;
+/** The list drawn again where it is: as many rows, same scroll, same focused row */
+const redrawList = () => {
+    const shown = listRows().length;
     const memo = focusMemo();
     const top = window.scrollY;
     applyMemorySearch();
-    while ($("m-tbody").rows.length < shown && loadMoreMemoryItems());
+    while (listRows().length < shown && loadMoreMemoryItems());
     window.scrollTo({ top });
     if (!memo) return;
-    const rows = $("m-tbody").rows;
-    (rowOf(memo.id) ?? rows[Math.min(memo.index, rows.length - 1)])?.focus({
+    const rows = listRows();
+    (listRowOf(memo.id) ?? rows[Math.min(memo.index, rows.length - 1)])?.focus({
         preventScroll: true,
     });
 };
@@ -794,8 +834,7 @@ const flushChanges = () => {
     // a change (title, visits, last opened…) can move a paper: sorted again first
     sortMemory();
     if (state.sortReversed) state.sortedPapers.reverse();
-    if (isTable()) redrawTable();
-    else if (all) applyMemorySearch();
+    if (isTable() || all) redrawList();
     else applyMemoryChanges(ids, { paperView: () => false });
     renderSidebar();
 };
