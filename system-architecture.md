@@ -213,7 +213,7 @@ The single domain entity. It is a plain object validated (and defaulted) by
 | `title`, `author`, `year`, `venue` | string        | Core metadata (`author` is `and`-separated)           |
 | `bibtex`, `key`, `doi`             | string        | Citation data; `key` is the BibTeX key                |
 | `pdfLink`, `md`                    | string        | PDF URL and a pre-rendered Markdown link              |
-| `codeLink`, `code`                 | string/object | Repo URL + raw PapersWithCode payload                 |
+| `codeLink`, `code`                 | string/object | Repo URL + legacy PapersWithCode payload (old papers) |
 | `note`                             | string        | Free-text + auto-generated "Accepted @ …" venue notes |
 | `tags`                             | string[]      | User + auto-tags (`autoTagPaper`)                     |
 | `favorite`, `favoriteDate`         | bool/string   | Starring                                              |
@@ -251,7 +251,7 @@ the worker, popup, content script, and full-memory page.
 The heart of the system. `addOrUpdatePaper({url, is, prefs, tab, ...})` is the single
 funnel through which papers enter the Memory. Its pipeline: resolve id
 (`parseIdFromUrl`) → update-visit-or-`makePaper` → fuzzy-dedup merge
-(`mergePapers`) → PapersWithCode code discovery (`tryPWCMatch`) → save through the
+(`mergePapers`) → save through the
 background queue (`memoryOp`: `visit` / `merge`) → `pushToRemote` → asynchronous preprint
 matching (`tryPreprintMatch`) to backfill venue/bibtex → second save (`patch`). Caller-supplied `contentScriptCallbacks`
 (`update`/`preprints`/`done`/`feedback`) let the content script render progressive
@@ -378,7 +378,7 @@ the `downloads` API), `functions.js` (49 misc helpers incl. `miniHash`,
    `export.arxiv.org/api/query` (`fetch-arxiv-xml`), parses the Atom XML into a
    `paper`, builds a BibTeX entry.
 6. `initPaper` defaults fields, runs `autoTagPaper`, `validatePaper`.
-7. PapersWithCode code discovery → the background saves it (`memoryOp`) → `pushToRemote`.
+7. The background saves it (`memoryOp`) → `pushToRemote`.
 8. Async `tryPreprintMatch` queries CrossRef/DBLP/S2/OpenAlex to backfill the
    published venue/bibtex; a second save (`patch` operation) persists it.
 9. Content-script callbacks show the "Saved to your Memory" notice (Undo = a `delete`
@@ -413,8 +413,7 @@ the `downloads` API), `functions.js` (49 misc helpers incl. `miniHash`,
   (`pretest`) then runs Mocha. The cloakbrowser binary (~200MB) auto-downloads
   to `~/.cloakbrowser` on first use; CI caches it via `actions/cache`.
 - **External APIs (no project backend):** arXiv, OpenReview, GitHub Gist, CrossRef,
-  DBLP, Semantic Scholar, OpenAlex, Google Scholar, (historically PapersWithCode —
-  its API is currently stubbed out in `background.js`).
+  DBLP, Semantic Scholar, OpenAlex, Google Scholar.
 - **Permissions:** `activeTab`, `storage`, `unlimitedStorage`, `downloads`(+`.open`),
   `scripting`, and `host_permissions: *://*/*`.
 - **Docs site:** MkDocs Material (`mkdocs.yml`, `docs/`) published to papermemory.org.
@@ -439,6 +438,6 @@ the `downloads` API), `functions.js` (49 misc helpers incl. `miniHash`,
   memory across realms.
 - **Gist-based sync with device `__syncId` tagging** — zero project infrastructure,
   user owns their data and credentials.
-- **Two-phase enrichment** (fast parse + store, then async venue/code backfill) so
+- **Two-phase enrichment** (fast parse + store, then async venue backfill) so
   the user gets immediate feedback while slow third-party lookups complete in the
   background.

@@ -164,7 +164,7 @@ const storeImportedPaper = async (paper) => {
 const parsePaper = async (url, is) => {
     let match;
     let paper = await makePaper(is, url);
-    if (paper) match = await tryPreprintMatch(paper, true);
+    if (paper) match = await tryPreprintMatch(paper);
     if (match) {
         for (const k in match) {
             if (match[k] && !paper[k]) paper[k] = match[k];

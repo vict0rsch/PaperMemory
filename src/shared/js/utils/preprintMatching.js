@@ -9,7 +9,6 @@ import {
     silentPromiseTimeout,
 } from "@pmu/functions.js";
 import { journalAbbreviations } from "@pmu/config.js";
-import { getStorage } from "@pmu/data.js";
 import { bibtexToObject, bibtexToString } from "@pmu/bibtexParser.js";
 import { fetchJSON } from "@pmu/parsers.js";
 import { readJournalAbbreviations } from "@pmu/state.js";
@@ -18,41 +17,6 @@ import { semanticScholarVenue, abbreviateVenue } from "@pmu/venues.js";
 // -------------------------------
 // -----  PREPRINT MATCHING  -----
 // -------------------------------
-
-export const tryPWCMatch = async (paper) => {
-    const pwcPrefs = (await getStorage("pwcPrefs")) ?? {};
-    let bibtex;
-    const payload = {
-        type: "papersWithCode",
-        pwcPrefs,
-        paper: paper,
-    };
-    const { url, note, venue, pubYear } =
-        (await sendMessageToBackground(payload)) ?? {};
-    if (url && !paper.codeLink) {
-        log("[PapersWithCode] Discovered a code repository:", url);
-    } else {
-        log("[PapersWithCode] No code repository found");
-    }
-    if (venue && !paper.venue) {
-        log("[PapersWithCode] Found a publication venue:", venue);
-        const paperBib = bibtexToObject(paper.bibtex);
-        bibtex = bibtexToString({
-            ...paperBib,
-            year: pubYear,
-            journal: venue,
-        });
-    } else if (!paper.venue) {
-        log("[PapersWithCode] No publication found");
-    }
-
-    return {
-        codeLink: url,
-        note,
-        venue,
-        bibtex,
-    };
-};
 
 /**
  * A title compared loosely: lowercase letters (any script, accents dropped by NFKD) and
@@ -574,8 +538,8 @@ export const tryOpenAlex = async (paper, toBackground) => {
     }
 };
 
-export const tryPreprintMatch = async (paper, tryPwc = false) => {
-    let note, venue, venueFull, bibtex, code, doi;
+export const tryPreprintMatch = async (paper) => {
+    let note, venue, venueFull, bibtex, doi;
     let matches = {};
 
     let names = ["GoogleScholar", "SemanticScholar", "CrossRef", "DBLP", "OpenAlex"];
@@ -587,11 +551,6 @@ export const tryPreprintMatch = async (paper, tryPwc = false) => {
         silentPromiseTimeout(tryOpenAlex(paper)),
     ];
 
-    if (tryPwc) {
-        matchPromises.push(silentPromiseTimeout(tryPWCMatch(paper)));
-        names.push("PapersWithCode");
-    }
-
     for (const [n, name] of Object.entries(names)) {
         matches[name] = await matchPromises[n];
         ({ note, venue, venueFull, bibtex, doi } = matches[name] ?? {});
@@ -602,16 +561,5 @@ export const tryPreprintMatch = async (paper, tryPwc = false) => {
         }
     }
 
-    if (tryPwc) {
-        const name = "PapersWithCode";
-        if (!matches.hasOwnProperty(name)) {
-            // the loop stopped at an earlier source's note: PapersWithCode's own answer
-            matches[name] = await matchPromises[names.indexOf(name)];
-        }
-        if (matches[name]?.codeLink && !paper.codeLink) {
-            code = matches[name].codeLink;
-        }
-    }
-
-    return { note, venue, venueFull, bibtex, code, doi };
+    return { note, venue, venueFull, bibtex, doi };
 };

@@ -43,12 +43,18 @@ export default defineConfig({
         disabled: disableBrowserStartup,
     },
     manifest: {
-        name: "Paper Memory",
+        name: "PaperMemory",
         version: pkg.version,
         description:
-            "Automatically record papers and their codes from Arxiv, OpenReview & more! Organize your library with tags, links and quick notes.",
+            "Saves the research papers you open on arXiv, OpenReview and more. Search, tag, annotate and cite them from your browser.",
         homepage_url: "https://papermemory.org",
-        icons: { 192: "icons/favicon-192x192.png" },
+        icons: {
+            16: "icons/icon-16.png",
+            32: "icons/icon-32.png",
+            48: "icons/icon-48.png",
+            128: "icons/icon-128.png",
+            192: "icons/icon-192.png",
+        },
         commands: {
             _execute_action: {
                 suggested_key: {
@@ -74,7 +80,11 @@ export default defineConfig({
             },
         },
         action: {
-            default_icon: "icons/favicon-192x192.png",
+            default_icon: {
+                16: "icons/icon-16.png",
+                32: "icons/icon-32.png",
+                48: "icons/icon-48.png",
+            },
             default_title: "PaperMemory",
         },
         permissions: [
@@ -105,6 +115,9 @@ export default defineConfig({
         // Firefox MV2 only opens the popup with `_execute_browser_action`
         "build:manifestGenerated": (wxt, manifest) => {
             if (manifest.manifest_version !== 2) return;
+            // the popup entrypoint already created `browser_action`, so WXT never
+            // converts `action`: carry its icon and title over
+            manifest.browser_action = { ...manifest.action, ...manifest.browser_action };
             manifest.commands = Object.fromEntries(
                 Object.entries(manifest.commands).map(([name, command]) => [
                     name === "_execute_action" ? "_execute_browser_action" : name,

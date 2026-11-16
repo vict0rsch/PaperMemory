@@ -13,7 +13,6 @@ import {
     urlToWebsiteId,
     consoleHeader,
     logOk,
-    silentPromiseTimeout,
     cleanPapers,
     isPdfUrl,
 } from "@pmu/functions.js";
@@ -34,7 +33,7 @@ import {
     sanitizeBibtexObject,
 } from "@pmu/bibtexParser.js";
 import { pushToRemote } from "@pmu/sync.js";
-import { tryPWCMatch, tryPreprintMatch } from "@pmu/preprintMatching.js";
+import { tryPreprintMatch } from "@pmu/preprintMatching.js";
 import {
     getSource,
     knownPaperPages,
@@ -328,7 +327,6 @@ export const addOrUpdatePaper = async ({
     const aouStart = Date.now();
 
     let paper, isNew;
-    let pwc = {};
     // what gets written: an operation for the background's queue, applied there to the paper
     // as stored at that moment (memoryQueue.js), never this function's earlier snapshot
     let saveOp;
@@ -455,42 +453,12 @@ export const addOrUpdatePaper = async ({
         };
     }
 
-    if (!paper.codeLink || !paper.venue) {
-        try {
-            const pwcMatch = await silentPromiseTimeout(tryPWCMatch(paper));
-
-            const pwcCodeLink = !paper.codeLink && pwcMatch?.codeLink;
-            const pwcNote = pwcMatch?.note;
-            const pwcBibtex = pwcMatch?.bibtex;
-            const pwcVenue = !paper.venue && pwcMatch?.venue;
-
-            pwc = {
-                codeLink: pwcCodeLink,
-                note: pwcNote,
-                venue: pwcVenue,
-                bibtex: pwcBibtex,
-            };
-
-            if (pwc.codeLink) {
-                paper.codeLink = pwc.codeLink;
-                if (pwcMatch.hasOwnProperty("note")) delete pwcMatch.note;
-                paper.code = pwcMatch;
-            }
-        } catch (error) {
-            log("Error trying to discover a code repository:");
-            log(error);
-        }
-    }
-
     // Map the visited url to the paper if it does not resolve to it yet (e.g. its
     // source reads no id from this url), ahead of the papers write so it is stored
     // by the time the paper is.
     if (store && !state.deleted[paper.id] && paper.id !== id) {
         await updateDuplicatedUrls(url, paper.id);
     }
-
-    // a code repository found above: filled in only where the stored paper has none
-    if (pwc.codeLink) saveOp.fill = { codeLink: paper.codeLink, code: paper.code };
 
     // Store may be false if the user has disabled:
     //   * paper storage from Abstract URLs
@@ -520,40 +488,25 @@ export const addOrUpdatePaper = async ({
         pushToRemote();
 
         let notifText;
-        if (isNew || pwc.codeLink) {
-            if (isNew) {
-                // new paper
-                if (store) {
-                    logOk("Added '" + paper.title + "' to your Memory!");
-                } else {
-                    warn(
-                        "Discovered '" +
-                            paper.title +
-                            "' but did not store it (`store` is false).",
-                    );
-                }
-                log("paper: ", paper);
-
-                notifText = "Saved ✓";
-                if (pwc.codeLink) {
-                    notifText +=
-                        "<br/><div id='feedback-pwc'>(+ repo from PapersWithCode) </div>";
-                }
-
-                prefs &&
-                    prefs.checkFeedback &&
-                    store &&
-                    contentScriptCallbacks.feedback &&
-                    contentScriptCallbacks.feedback({ text: notifText, paper });
+        if (isNew) {
+            // new paper
+            if (store) {
+                logOk("Added '" + paper.title + "' to your Memory!");
             } else {
-                // existing paper but new code repo
-                notifText = "Found a code repository on PapersWithCode!";
-                prefs &&
-                    prefs.checkFeedback &&
-                    store &&
-                    contentScriptCallbacks.feedback &&
-                    contentScriptCallbacks.feedback({ text: notifText });
+                warn(
+                    "Discovered '" +
+                        paper.title +
+                        "' but did not store it (`store` is false).",
+                );
             }
+            log("paper: ", paper);
+
+            notifText = "Saved ✓";
+            prefs &&
+                prefs.checkFeedback &&
+                store &&
+                contentScriptCallbacks.feedback &&
+                contentScriptCallbacks.feedback({ text: notifText, paper });
         } else {
             store && logOk("Updated '" + paper.title + "' in your Memory");
         }
@@ -563,7 +516,7 @@ export const addOrUpdatePaper = async ({
             const preprintMatch = await tryPreprintMatch(paper);
             for (const key of ["note", "venue", "bibtex", "doi"]) {
                 if (!paper[key] || key === "bibtex") {
-                    const value = preprintMatch[key] ?? pwc[key];
+                    const value = preprintMatch[key];
                     if (value) {
                         log(`Updating preprint ${key} to`, value);
                         paper[key] = value;

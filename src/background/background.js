@@ -14,7 +14,6 @@ import { applyIgnoreSources } from "@pmu/ignoreSources.js";
 import { isSourceURL, parseIdFromUrl } from "@pmu/urls.js";
 import { initState, downloadPaperPdf } from "@pmu/state.js";
 import { matchPapersToFiles } from "@pmu/files.js";
-import { fetchJSON } from "@pmu/parsers.js";
 import {
     trySemanticScholar,
     tryCrossRef,
@@ -218,96 +217,6 @@ export function initBackground() {
             // a request that timed out or failed: no answer, no status to act on
             return { note: null, status: status === 200 ? undefined : status };
         }
-    };
-
-    const fetchPWCData = async (arxivId, title) => {
-        // PWC API discontinued, to fix later
-        return;
-    };
-
-    const findCodesForPaper = async (request) => {
-        let arxivId, title, code;
-        if (request.paper.source === "arxiv") {
-            arxivId = request.paper.id.split("-").last().replace("_", "/");
-        } else {
-            title = request.paper.title;
-        }
-        const pwcData = await fetchPWCData(arxivId, title);
-        if (!pwcData) return code;
-        const { id, proceeding, published, conference } = pwcData;
-        info("Found a PWC proceeding paper:", pwcData);
-        let venue, year;
-
-        if (conference) {
-            const confData = await fetchJSON(
-                `https://paperswithcode.com/api/v1/conferences/${conference}`,
-            );
-            venue = confData?.name;
-        }
-        if (published) {
-            year = published.split("-")[0];
-        }
-
-        if (proceeding && (!year || !venue)) {
-            year = proceeding.match(/(\d{4})/)[0];
-            venue = proceeding
-                .split(year)[0]
-                .split("-")
-                .filter((p) => p)
-                .map((p) => p[0].toUpperCase() + p.slice(1))
-                .join(" ")
-                .trim();
-        }
-        if (year && venue) {
-            code = {
-                note: `Accepted @ ${venue} (${year}) -- [paperswithcode.com]`,
-                venue,
-                pubYear: year,
-            };
-        }
-
-        if (!id) return code;
-
-        const json = await fetchJSON(
-            `https://paperswithcode.com/api/v1/papers/${id}/repositories/`,
-        );
-
-        if (json.data["count"] < 1) {
-            log("No code found for paper.");
-            return code;
-        }
-
-        let codes = json.data["results"];
-
-        const { pwcPrefs } = request;
-        const official = pwcPrefs.hasOwnProperty("official")
-            ? pwcPrefs.official
-            : false;
-        const framework = pwcPrefs.hasOwnProperty("framework")
-            ? pwcPrefs.framework
-            : "none";
-
-        const officials = codes.filter((c) => c["is_official"]);
-        log("All codes for paper:", codes);
-        if (officials.length > 0) {
-            codes = officials;
-            log("Selecting official codes only:", codes);
-        } else {
-            if (official) {
-                log("No official code found for paper.");
-                return code;
-            }
-        }
-        if (framework !== "none") {
-            const implems = codes.filter((c) => c["framework"] === framework);
-            if (implems.length > 0) {
-                log(`Selecting framework '${framework}':`, implems);
-                codes = implems;
-            }
-        }
-        codes.sort((a, b) => b.stars - a.stars);
-        info(`Found PWC repository: ${codes[0]["url"]} (${codes[0]["stars"]} stars)`);
-        return { ...codes[0], ...code };
     };
 
     // report: answer {ok, papers | error} instead of the papers or undefined, so a page can
@@ -547,8 +456,6 @@ export function initBackground() {
             sendResponse(true);
         } else if (payload.type === "tabID") {
             sendResponse(sender.tab.id);
-        } else if (payload.type === "papersWithCode") {
-            findCodesForPaper(payload).then(sendResponse);
         } else if (payload.type === "google-scholar") {
             fetchGSData(payload.paper).then(sendResponse);
         } else if (payload.type === "download-pdf-to-store") {

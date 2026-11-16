@@ -201,7 +201,7 @@ export const findExtensionId = async (browser) => {
 
         // The extensions list populates asynchronously (chrome.developerPrivate
         // callback, not a network request), so networkidle0 does not settle it.
-        // Poll the shadow DOM until the Paper Memory item renders.
+        // Poll the shadow DOM until the PaperMemory item renders.
         const handle = await page.waitForFunction(
             () => {
                 const extensionManager = document.querySelector("extensions-manager");
@@ -219,7 +219,7 @@ export const findExtensionId = async (browser) => {
                     const nameElement = item.shadowRoot.querySelector("#name");
                     if (
                         nameElement &&
-                        nameElement.textContent.includes("Paper Memory")
+                        nameElement.textContent.includes("PaperMemory")
                     ) {
                         return item.id;
                     }
