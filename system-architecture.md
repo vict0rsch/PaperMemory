@@ -342,7 +342,7 @@ the `downloads` API), `functions.js` (49 misc helpers incl. `miniHash`,
 
 ## Technical Stack
 
-- **Build:** WXT 0.20 (Vite under the hood), Manifest V3, dual Chrome/Firefox output.
+- **Build:** WXT 0.21 (Vite under the hood), Manifest V3 for Chrome and Manifest V2 for Firefox; a `build:manifestGenerated` hook renames `_execute_action` to `_execute_browser_action` for MV2.
 - **Runtime libs:** jQuery 4, Tom Select 2 (tag inputs), `@octokit/request` (Gist).
 - **Language:** plain ES modules (`"type": "module"`), JSDoc-typed, no TypeScript;
   `jsconfig.json` + `@pm`/`@pmu` path aliases.

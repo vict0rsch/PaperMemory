@@ -101,6 +101,18 @@ export default defineConfig({
             },
         },
     },
+    hooks: {
+        // Firefox MV2 only opens the popup with `_execute_browser_action`
+        "build:manifestGenerated": (wxt, manifest) => {
+            if (manifest.manifest_version !== 2) return;
+            manifest.commands = Object.fromEntries(
+                Object.entries(manifest.commands).map(([name, command]) => [
+                    name === "_execute_action" ? "_execute_browser_action" : name,
+                    command,
+                ]),
+            );
+        },
+    },
     zip: {
         excludeSources: [
             "extra/**",
