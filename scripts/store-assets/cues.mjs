@@ -23,10 +23,16 @@ const install = (page) =>
  * Cues for `page`. offset: where the page sits in the recorded page area, in CSS px (the popup,
  * recorded as a tab, sits at 818, 1), so camera targets can be given in the page's own px.
  */
-export const cues = (page, offset = [0, 0]) => {
+export const cues = (page, offset = [0, 0], size = [1280, 740]) => {
     let pos = null;
     let t0 = 0;
-    const keys = []; // camera: { t, d, z, cx, cy }
+    const keys = []; // camera: { t, d, z, cx, cy, box }
+    keys.rings = []; // ringed boxes, checked against the camera too
+    const fitted = ([x, y, w, h], zmax, m = 24) => {
+        const z = Math.max(1, Math.min(zmax, size[0] / (w + 2 * m), size[1] / (h + 2 * m)));
+        const box = [x + offset[0], y + offset[1], w, h];
+        return { z, cx: box[0], cy: box[1], box };
+    };
     const c = {
         /** The clip's time origin (call with the recording's mark) */
         start: () => (t0 = Date.now() / 1000),
@@ -82,6 +88,7 @@ export const cues = (page, offset = [0, 0]) => {
         hide: () => page.evaluate(() => document.getElementById("pm-cue-cur")?.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 250, fill: "forwards" })),
         /** A soft ring around [cx, cy, w, h] and the rest dimmed, for `ms` (not awaited) */
         highlight: async ([cx, cy, w, h], ms = 1000) => {
+            keys.rings.push({ t: c.now(), box: [cx + offset[0], cy + offset[1], w, h] });
             await install(page);
             await page.evaluate(
                 ([cx, cy, w, h, ms]) => {
@@ -116,6 +123,12 @@ export const cues = (page, offset = [0, 0]) => {
         },
         /** Camera: from now, ease over d seconds to zoom z centred on cx, cy (CSS px) */
         camera: (z, cx, cy, d = 0.6) => keys.push({ t: c.now(), d, z, cx: cx + offset[0], cy: cy + offset[1] }),
+        /**
+         * Camera onto a target box [cx, cy, w, h] (page px): the zoom is at most zmax and small
+         * enough that the whole box (and a margin) stays in the view
+         */
+        fit: (box, zmax, d = 0.6) => keys.push({ t: c.now(), d, ...fitted(box, zmax) }),
+        fitInitial: (box, zmax) => (keys.initial = fitted(box, zmax)),
         /** Camera: back to no zoom, from where it is */
         out: (d = 0.6) => {
             const k = keys.at(-1) || keys.initial || { cx: 0, cy: 0 };
@@ -126,6 +139,22 @@ export const cues = (page, offset = [0, 0]) => {
         keys,
     };
     return c;
+};
+
+/**
+ * Targets (camera boxes, ringed boxes) not wholly in the view the camera shows once it has
+ * settled at their time: [] when none
+ */
+export const cropped = (keys, [w, h]) => {
+    const state = (t) => [keys.initial || { z: 1, cx: w / 2, cy: h / 2 }, ...keys].filter((k) => !k.t || k.t <= t + 1e-3).at(-1);
+    const out = (box, { z, cx, cy }) => {
+        const [bx, by, bw, bh] = box, vw = w / z, vh = h / z;
+        const x0 = Math.max(0, Math.min(w - vw, cx - vw / 2)), y0 = Math.max(0, Math.min(h - vh, cy - vh / 2));
+        return bx - bw / 2 < x0 - 1 || bx + bw / 2 > x0 + vw + 1 || by - bh / 2 < y0 - 1 || by + bh / 2 > y0 + vh + 1;
+    };
+    const targets = [keys.initial, ...keys].filter((k) => k?.box).map((k) => ({ t: k.t ?? 0, box: k.box, k }));
+    targets.push(...keys.rings.map((r) => ({ t: r.t, box: r.box, k: state(r.t) })));
+    return targets.filter(({ box, k }) => out(box, k)).map(({ t, box, k }) => `t=${t.toFixed(2)} z=${k.z.toFixed(2)} box=${box.map(Math.round)}`);
 };
 
 /**

@@ -7,7 +7,7 @@
 // Loops have no caption band (page 1920 x 990), no zoom, and end on their first frame.
 import fs from "node:fs";
 import * as L from "./lib.mjs";
-import { cues, cameraFilter } from "./cues.mjs";
+import { cues, cameraFilter, cropped } from "./cues.mjs";
 import { CAP, ARX, CYC, EXT } from "./stills.mjs";
 
 // framing A (slate): a 1280 x 800 browser (60 px drawn chrome + a 1280 x 740 page) drawn at 1.25
@@ -58,13 +58,17 @@ const click = (pick, arg, ms = 700) => async (p, c) => {
 };
 const clickQ = (sel, ms) => click(Q, sel, ms);
 // (no zoom on BibMatcher's results: the table and its diffs are wider than a 1.4x view)
-const focus = (pick, arg, dy = 0) => async (p, c) => {
-    const [x, y] = await c.center(pick, arg);
-    c.camera(Z, x, y + dy);
-};
-const focusAt = (pick, arg, dy = 0) => async (p, c) => {
-    const [x, y] = await c.center(pick, arg);
-    c.initial(Z, x, y + dy);
+const focus = (pick, arg) => async (p, c) => c.fit(await c.center(pick, arg), Z);
+const focusAt = (pick, arg) => async (p, c) => c.fitInitial(await c.center(pick, arg), Z);
+/** Start on the arXiv block as it is with its BibTeX open (opened, measured, closed again) */
+const onBlockOpen = async (p, c) => {
+    await L.blockAct(p, "bib-show");
+    await L.sleep(300);
+    const box = await c.center(BLOCK);
+    await L.blockAct(p, "bib-show");
+    await L.sleep(300);
+    await p.evaluate(() => document.activeElement?.blur());
+    c.fitInitial(box, Z);
 };
 const ring = (pick, arg, ms = 1000) => async (p, c) => c.highlight(await c.center(pick, arg), ms);
 /** Loops: the cursor starts and ends at the same place (dx, dy from an element) */
@@ -94,25 +98,26 @@ const arxivFirst = {
         await env.seed([ATT]);
         return env.page(1280, h, K);
     },
-    // from the page's response, zoomed on the paper's title, then one move onto the block
+    // from the page's response
     run: async (page, c, mark, dur) => {
         const nav = page.goto(ARX_URL, { waitUntil: "domcontentloaded", timeout: 40000 });
         await page.waitForResponse((r) => r.url() === ARX_URL && r.request().isNavigationRequest(), { timeout: 40000 });
         mark();
         c.start();
-        c.initial(Z, 400, 231); // the title: arXiv's sidebar links (Google Scholar…) stay out of the view
         const wait = at(Date.now());
         await nav;
         await c.install();
         await page.waitForFunction(() => !!document.querySelector("papermemory-notices")?.shadowRoot?.querySelector(".pm-toast"), { polling: 50, timeout: 20000 });
-        // the notice sits right next to arXiv's sidebar links (Google Scholar…) at this window size:
-        // ring the result in the block ("In your Memory"); the notice stays out of the zoomed view
-        await page.waitForFunction(() => document.querySelector("papermemory-block")?.getBoundingClientRect().height > 40, { polling: 50, timeout: 20000 });
-        await wait(1.2);
-        const b = await c.center(BLOCK);
-        c.camera(Z, b[0], b[1]);
+        // the whole page, then the "Saved" notice and the block, each zoomed onto and ringed
+        await page.waitForFunction(() => !!document.querySelector("papermemory-notices")?.shadowRoot?.querySelector(".pm-toast"), { polling: 50, timeout: 20000 });
+        await wait(1.0);
+        c.fit(await c.center(TOAST), Z);
         await L.sleep(600);
-        await c.highlight(await c.center(BLOCK), 1400);
+        await c.highlight(await c.center(TOAST), 1100);
+        await L.sleep(1200);
+        c.fit(await c.center(BLOCK), Z);
+        await L.sleep(600);
+        await c.highlight(await c.center(BLOCK), 1100);
         await wait(dur + 0.1);
     },
 };
@@ -229,20 +234,27 @@ const DIFF = () => {
     Object.assign(box.style, { position: "fixed", pointerEvents: "none", left: `${r[0].left}px`, top: `${r[0].top}px`, width: `${r[0].width}px`, height: `${r.at(-1).bottom - r[0].top}px` });
     return box;
 };
+// BibMatcher's input: from "Your bibliography" to the text area (the sources line stays out)
+const INPUT = () => {
+    const h = document.getElementById("b-input-title").getBoundingClientRect(), d = document.getElementById("b-drop").getBoundingClientRect();
+    const box = document.getElementById("pm-cue-box") || document.body.appendChild(Object.assign(document.createElement("div"), { id: "pm-cue-box" }));
+    Object.assign(box.style, { position: "fixed", pointerEvents: "none", left: `${d.left}px`, top: `${h.top}px`, width: `${d.width}px`, height: `${d.bottom - h.top}px` });
+    return box;
+};
 const memoryWith = (q) => async (p) => {
     await memoryTab(p);
     await p.keyboard.type(q);
     await p.keyboard.press("Tab");
     await L.sleep(300);
 };
-// a popup shot starts zoomed on the popup, the view centred at popup height cy (231: its top)
-const onPopup = (cy = 231) => async (p, c) => c.initial(Z, 225, cy);
+// a popup shot starts zoomed on the whole popup
+const onPopup = () => async (p, c) => c.fitInitial([225, 300, 450, 600], Z);
 const resultsTop = (p) => p.evaluate(() => window.scrollTo(0, 0));
 
 // one shot per idea; the cursor only for clicks; one ring, on the result
-const SAVE = [arxivFirst, 4.5];
+const SAVE = [arxivFirst, 5];
 const FIND = [popup(ARX_URL, ARX, "abs-saved", memoryTab), 6, [[0.3, clickQ("#memory-search", 500)], [1.0, type("t:transf", 110)], [2.6, key("Tab")], [3.2, ring(Q, "#memory-scroll", 1300)]], onPopup()];
-const CITE = (dur, md) => [arxivSaved("1706.03762", ARX), dur, [[0.3, click(BLOCK, "bib-show")], [1.7, click(BLOCK, "bib-copy", 600)], [2.5, ring(PRE, undefined, 1200)], ...(md ? [[3.9, click(BLOCK, "md", 600)]] : [])], focusAt(BLOCK)];
+const CITE = (dur, md) => [arxivSaved("1706.03762", ARX), dur, [[0.3, click(BLOCK, "bib-show")], [1.7, click(BLOCK, "bib-copy", 600)], [2.5, ring(PRE, undefined, 1200)], ...(md ? [[3.9, click(BLOCK, "md", 600)]] : [])], onBlockOpen];
 const EXPORT = (dur) => [fullMemory(), dur, [[0.3, clickQ('.m-tag[data-tag="transformers"]', 700)], [1.2, clickQ("#m-select-all", 600)], [2.0, clickQ('[data-bulk="export"]', 600)],
     [2.7, async (p, c) => {
         await p.waitForFunction(() => !!window.__pmExport, { timeout: 5000 });
@@ -254,10 +266,9 @@ const EXPORT = (dur) => [fullMemory(), dur, [[0.3, clickQ('.m-tag[data-tag="tran
     }]]];
 const DIFFZOOM = [bib(), 6, [[0.4, click(BIBROW, ["devlin2018bert", "toggle"])], [1.3, async (p, c) => {
     await c.hide();
-    const [x, y, w] = await c.center(DIFF);
-    c.camera(ZB, x - w / 2 + 1280 / ZB / 2 - 10, y); // aligned left: the lines start in view
+    c.fit(await c.center(DIFF), ZB);
 }], [2.2, ring(DIFF, undefined, 1500)]]];
-const TAGS = (dur) => [popup(CYC_URL, CYC, "abs-cyclegan"), dur, [[0.3, clickQ(TAGIN, 600)], [1.0, type("unpaired", 80)], [1.8, key("Enter")], [2.2, ring(Q, '[id^="popup-item-tags--"]', 1200)]], onPopup(330)];
+const TAGS = (dur) => [popup(CYC_URL, CYC, "abs-cyclegan"), dur, [[0.3, clickQ(TAGIN, 600)], [1.0, type("unpaired", 80)], [1.8, key("Enter")], [2.2, ring(Q, '[id^="popup-item-tags--"]', 1200)]], onPopup()];
 const FULL = (dur, rows) => [fullMemory(), dur, [...rows.map((id, i) => [0.3 + i * 1.4, clickQ(ROW(id), 700)]), [0.3 + rows.length * 1.4 - 0.3, ring(Q, "#m-detail", 1300)]]];
 
 // [scene, seconds, band, steps, pre]
@@ -288,18 +299,18 @@ const WALK = [
     W([popup(ARX_URL, ARX, "abs-saved", memoryWith("t:transf")), 4, [[0.4, type("image", 130)], [1.8, ring(Q, "#memory-scroll", 1300)]], onPopup()], 2, "filters combine with text"),
     [chapter(3, 6), 1.5],
     W(CITE(5, true), 3),
-    W([popup(ARX_URL, ARX, "abs-saved"), 4, [[1.0, key("b")], [1.4, ring(Q, "#popup-feedback-copied", 1300)]], onPopup(440)], 3, "or one key in the popup", "B"),
+    W([popup(ARX_URL, ARX, "abs-saved"), 4, [[1.0, key("b")], [1.4, ring(Q, "#popup-feedback-copied", 1300)]], onPopup()], 3, "or one key in the popup", "B"),
     W(EXPORT(5), 3, "or a whole .bib for your thesis"),
     [chapter(4, 6), 1.5],
-    W([bib({ drop: false, results: false }), 4, [[0.6, (p) => L.bibDrop(p)], [1.2, ring(Q, "#b-filechip", 1300)]], async (p, c) => c.initial(Z, 640, 250)], 4, "load your .bib"),
+    W([bib({ drop: false, results: false }), 4, [[0.6, (p) => L.bibDrop(p)], [1.2, ring(Q, "#b-filechip", 1300)]], async (p, c) => c.fitInitial(await c.center(INPUT), Z)], 4, "load your .bib"),
     W(DIFFZOOM, 4),
     W([bib(), 4, [[0.5, click(BIBROW, ["devlin2018bert", "accept"])], [1.5, ring(BIBROW, ["devlin2018bert"], 1300)]]], 4, "accept each published version"),
     [chapter(5, 6), 1.5],
-    W([popup(CYC_URL, CYC, "abs-cyclegan"), 6, [[0.5, key("e")], [0.8, clickQ(TAGIN, 600)], [1.5, type("unpaired", 60)], [2.1, key("Enter")], [2.3, clickQ("textarea.pm-textarea:not([hidden])", 500)], [2.9, (p) => p.evaluate(() => document.querySelector("textarea.pm-textarea:not([hidden])").setSelectionRange(1e4, 1e4))], [3.0, type("\nCompare with pix2pix.", 40)], [4.1, clickQ("#popup-edit-done", 450)], [4.7, ring(Q, "#popup-memory-edit", 1200)]], onPopup(330)], 5),
+    W([popup(CYC_URL, CYC, "abs-cyclegan"), 6, [[0.5, key("e")], [0.8, clickQ(TAGIN, 600)], [1.5, type("unpaired", 60)], [2.1, key("Enter")], [2.3, clickQ("textarea.pm-textarea:not([hidden])", 500)], [2.9, (p) => p.evaluate(() => document.querySelector("textarea.pm-textarea:not([hidden])").setSelectionRange(1e4, 1e4))], [3.0, type("\nCompare with pix2pix.", 40)], [4.1, clickQ("#popup-edit-done", 450)], [4.7, ring(Q, "#popup-memory-edit", 1200)]], onPopup()], 5),
     W(FULL(5, ["Arxiv-1703.10593", "Arxiv-2010.11929"]), 5, "your whole Memory in a full page"),
     W([fullMemory(), 5, [[0.3, clickQ(ROW("Arxiv-1706.03762", ".m-select"), 600)], [1.0, clickQ(ROW("Arxiv-1703.10593", ".m-select"), 400)], [1.6, clickQ(ROW("Arxiv-2010.11929", ".m-select"), 400)], [2.3, clickQ('[data-bulk="tag"]', 600)],
         // the "Add tags" dialog, the bulk bar (and its Delete) below the view
-        [3.0, async (p, c) => { await c.hide(); const [x, y] = await c.center(Q, "#o-dialog"); c.camera(Z, x, y - 30); }], [3.7, ring(Q, "#o-dialog", 1100)]]], 5, "tag several papers at once"),
+        [3.0, async (p, c) => { await c.hide(); c.fit(await c.center(Q, "#o-dialog"), Z); }], [3.7, ring(Q, "#o-dialog", 1100)]]], 5, "tag several papers at once"),
     [chapter(6, 6), 2.5],
     [END, 4],
 ];
@@ -309,9 +320,9 @@ const both = (...fs) => async (p, c) => {
     for (const f of fs) await f(p, c);
 };
 const LOOPS = {
-    "arxiv-block": [arxivSaved("1706.03762", ARX), 5, [[0.5, click(BLOCK, "bib-show")], [3.5, click(BLOCK, "bib-show", 450)], [4.1, unpark(600)]], both(focusAt(BLOCK, "bib-show", -40), parkAt(BLOCK, "bib-show", -110, 80))],
-    "popup-search": [popup(ARX_URL, ARX, "abs-saved", memoryTab), 7, [[0.5, type("t:transf", 220)], [3.0, key("Tab")], [5.3, clickQ("#memory-search-x", 600)], [6.1, unpark(600)]], both(onPopup(236), parkAt(Q, "#memory-search-field", 60, 90))],
-    "one-key-copy": [popup(ARX_URL, ARX, "abs-saved"), 5, [[1.0, key("b")]], onPopup(400)],
+    "arxiv-block": [arxivSaved("1706.03762", ARX), 5, [[0.5, click(BLOCK, "bib-show")], [3.5, click(BLOCK, "bib-show", 450)], [4.1, unpark(600)]], both(onBlockOpen, parkAt(BLOCK, "bib-show", -110, 80))],
+    "popup-search": [popup(ARX_URL, ARX, "abs-saved", memoryTab), 7, [[0.5, type("t:transf", 220)], [3.0, key("Tab")], [5.3, clickQ("#memory-search-x", 600)], [6.1, unpark(600)]], both(onPopup(), parkAt(Q, "#memory-search-field", 60, 90))],
+    "one-key-copy": [popup(ARX_URL, ARX, "abs-saved"), 5, [[1.0, key("b")]], onPopup()],
     bibmatcher: [bib({ closed: true }), 7, [[0.4, click(BIBROW, ["devlin2018bert", "toggle"], 600)], [1.3, unpark(500)], [5.0, click(BIBROW, ["devlin2018bert", "toggle"], 600)], [6.0, unpark(600)]], parkAt(BIBROW, ["devlin2018bert", "toggle"], -160, 70)],
 };
 
@@ -327,10 +338,12 @@ const shotOnce = async (env, name, [scene, , line, steps = [], pre], dur) => {
     const out = `${CLIPS}/${name}.mp4`;
     if (scene.card) return L.ffmpeg(["-loop", "1", "-framerate", "30", "-t", String(dur), "-i", base, ...X264, out]), out;
     const page = await scene.open(env, PH);
-    const c = cues(page, scene.offset);
+    const c = cues(page, scene.offset, [1280, PH]);
     const size = scene.popup ? [450 * K, 600 * K] : [1280 * K, PH * K];
     const rec = await L.record(page, (mark) => (scene.run || timeline(steps, pre))(page, c, mark, dur), size, "jpeg");
     await (page.done ? page.done() : page.close());
+    const crops = cropped(c.keys, [1280, PH]);
+    if (crops.length) throw new Error(`${name}: the camera crops its target: ${crops.join("; ")}`);
     const list = L.clipFrames(rec, dur, `${CLIPS}/${name}-frames`);
     // the page area (2560 x 1480): camera -> 1600 x 925, rounded bottom corners, into the window
     const cam = cameraFilter(c.keys, [1280, PH], K, [WIN[2], WIN[3]]);
@@ -391,10 +404,7 @@ const loop = async (env, name, [scene, dur, steps, pre]) => {
     L.ffmpeg(["-i", clip, "-vf", "fps=15,scale=960:-1:flags=lanczos,split[a][b];[a]palettegen=max_colors=128:stats_mode=diff[p];[b][p]paletteuse=dither=none:diff_mode=rectangle", "-loop", "0", `${L.OUT}/loop-${name}.gif`]);
 };
 
-/**
- * The arXiv pages behind the popup, at the window's 1280 x 740 (2x): scrolled just enough that
- * arXiv's own sidebar links (Google Scholar…) sit under the popup
- */
+/** The arXiv pages behind the popup, at the window's 1280 x 740 (2x), unscrolled */
 const captureBackgrounds = async (env) => {
     await env.prefs("light");
     await env.seed();
@@ -402,11 +412,6 @@ const captureBackgrounds = async (env) => {
         const page = await env.arxiv(id, 1280, PH, K);
         await L.sleep(5000);
         await L.hideNotices(page);
-        await page.evaluate(() => {
-            const a = [...document.querySelectorAll("a")].find((e) => /Google Scholar/.test(e.textContent));
-            const bottom = a?.getBoundingClientRect().bottom ?? 0;
-            if (bottom > 595) window.scrollBy(0, bottom - 590);
-        });
         await page.screenshot({ path: `${CAP}/${name}-740.png` });
         await page.close();
     }
