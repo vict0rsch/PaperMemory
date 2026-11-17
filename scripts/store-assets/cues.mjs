@@ -34,7 +34,7 @@ export const cues = (page, offset = [0, 0], size = [1280, 740]) => {
     };
     const c = {
         /** The clip's time origin (call with the recording's mark) */
-        start: () => (t0 = Date.now() / 1000),
+        start: (dt = 0) => (t0 = Date.now() / 1000 + dt),
         now: () => Date.now() / 1000 - t0,
         install: () => install(page),
         /** Centre of an element in CSS px; `pick` runs in the page and returns it */
@@ -101,7 +101,7 @@ export const cues = (page, offset = [0, 0], size = [1280, 740]) => {
                     head.style.cssText = "padding:10px 14px;background:#f3f4f6;border-bottom:1px solid #dde1e7;font-weight:600";
                     head.textContent = name;
                     const pre = document.createElement("pre");
-                    pre.style.cssText = "margin:0;padding:12px 14px;overflow:hidden;font:11.5px/1.45 ui-monospace,Menlo,monospace;white-space:pre-wrap";
+                    pre.style.cssText = "flex:1;min-height:0;margin:0;padding:12px 14px;overflow:hidden;font:11.5px/1.45 ui-monospace,Menlo,monospace;white-space:pre-wrap";
                     pre.textContent = text;
                     f.append(head, pre);
                     document.getElementById("pm-cues").appendChild(f);
@@ -111,6 +111,13 @@ export const cues = (page, offset = [0, 0], size = [1280, 740]) => {
                 text,
             );
         },
+        /** Fade the file panel out and remove it */
+        fileOut: () =>
+            page.evaluate(async () => {
+                const f = document.getElementById("pm-cue-file");
+                await f?.animate([{ opacity: 1 }, { opacity: 0, transform: "translateY(8px)" }], { duration: 300, fill: "forwards" }).finished;
+                f?.remove();
+            }),
         /** Camera: from now, ease over d seconds to zoom z centred on cx, cy (CSS px) */
         camera: (z, cx, cy, d = 0.6) => keys.push({ t: c.now(), d, z, cx: cx + offset[0], cy: cy + offset[1] }),
         /**

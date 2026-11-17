@@ -116,7 +116,7 @@ export const render = async (env, spec, path, [w, h, dsf]) => {
 };
 
 /**
- * Record a page with the CDP screencast while `run(mark)` drives it. `mark()` sets the start of
+ * Record a page with the CDP screencast while `run(mark)` drives it. `mark(dt)` sets the start of
  * the clip (default: the first frame). Frames are kept with their timestamps.
  */
 export const record = async (page, run, size, format = "png") => {
@@ -129,7 +129,7 @@ export const record = async (page, run, size, format = "png") => {
     });
     await cdp.send("Page.startScreencast", { format, quality: 92, maxWidth: size[0], maxHeight: size[1], everyNthFrame: 1 });
     let start = null;
-    await run(() => (start = Date.now() / 1000));
+    await run((dt = 0) => (start = Date.now() / 1000 + dt));
     const end = Date.now() / 1000;
     await cdp.send("Page.stopScreencast");
     await cdp.detach();
@@ -166,20 +166,20 @@ export const clipFrames = (rec, dur, dir) => {
  * BibMatcher (with the sample .bib dropped in, unless drop is false) and the source
  * answers mocked while it is open; returns { page, done } (done() closes it and stops the mocks).
  */
-export const bibmatcher = async (env, w, h, dsf, { drop = true } = {}) => {
+export const bibmatcher = async (env, w, h, dsf, { drop = true, delay = 0, rateLimit = true, bib } = {}) => {
     const { intercept, resetMocks } = await import("./data.mjs");
     // the service worker stops when idle: the popup wakes it, then its current target is used
     await env.boot.reload({ waitUntil: "networkidle0" });
     const worker = await env.browser.waitForTarget((t) => t.type() === "service_worker" && t.url().startsWith(env.ext("")), { timeout: 10000 });
     const sessions = [await env.browser.target().createCDPSession(), await worker.createCDPSession()];
-    for (const s of sessions) await intercept(s);
+    for (const s of sessions) await intercept(s, { delay, rateLimit });
     resetMocks();
     await env.prefs("light");
     const page = await env.page(w, h, dsf);
     await page.goto(env.ext("bibMatcher.html"), { waitUntil: "networkidle0" });
     await page.waitForFunction(() => document.documentElement.dataset.bibmatcherReady === "true");
     await page.$eval("#api-timeout", (el) => (el.checked = false));
-    if (drop) await bibDrop(page);
+    if (drop) await bibDrop(page, bib);
     const done = async () => {
         await page.close();
         for (const s of sessions) await s.send("Fetch.disable").catch(() => {});
@@ -188,13 +188,14 @@ export const bibmatcher = async (env, w, h, dsf, { drop = true } = {}) => {
     return { page, done };
 };
 /** Drop the sample .bib on the page, as if thesis-refs.bib was chosen */
-export const bibDrop = async (page) => {
+export const bibDrop = async (page, text) => {
     const { BIB } = await import("./data.mjs");
+    text ??= BIB;
     await page.evaluate((text) => {
         const dt = new DataTransfer();
         dt.items.add(new File([text], "thesis-refs.bib"));
         document.body.dispatchEvent(new DragEvent("drop", { dataTransfer: dt, bubbles: true, cancelable: true }));
-    }, BIB);
+    }, text);
     await page.waitForFunction(() => document.getElementById("b-filecount").textContent !== "");
 };
 /** A result row's control: accept, reject, toggle (its diff) */

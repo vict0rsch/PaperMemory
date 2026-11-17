@@ -175,7 +175,8 @@ const html = {
     wmask: () => `<div class="wmask"><div></div></div>`,
     pagearea: () => `<div class="pa" style="background-image:url('${f.bg}')"><div class="pop"></div></div>`,
     // f: { tab, url, popup, line: { n, of, t, s, key } }
-    slate: () => `<div class="frame slate"><div class="win">${browser(f, 740)}</div>${f.line ? `<div class="line"><span class="n">${f.line.n}</span><span class="t">${esc(f.line.t)}</span><span class="s">${f.line.s ? esc(f.line.s) : ""}${f.line.key ? `<span class="key">${esc(f.line.key)}</span>` : ""}</span>${ticks(f.line.n, f.line.of)}</div>` : ""}</div>`,
+    slate: () => `<div class="frame slate"><div class="win">${browser(f, 740)}</div>${f.line?.label ? `<div class="line"><span class="t">${esc(f.line.label)}</span></div>` : f.line ? `<div class="line"><span class="n">${f.line.n}</span><span class="t">${esc(f.line.t)}</span><span class="s">${f.line.s ? esc(f.line.s) : ""}${f.line.key ? `<span class="key">${esc(f.line.key)}</span>` : ""}</span>${ticks(f.line.n, f.line.of)}</div>` : ""}</div>`,
+    slatebg: () => `<div class="frame slate"></div>`,
     slatechap: () => `<div class="frame slate"><div class="brand">${ICON}PaperMemory</div><div class="chap2"><div class="k">${f.n} / ${f.of}</div><h1>${esc(f.h)}</h1><p>${esc(f.p)}</p>${ticks(f.n, f.of)}</div></div>`,
     slateopen: () => `<div class="frame slate"><div class="brand">${ICON}PaperMemory</div><div class="chap2"><h1>${esc(f.h)}</h1><p>${esc(f.p)}</p></div></div>`,
     slateend: () => `<div class="frame slate"><div class="fin">${ICON}<div class="nm">PaperMemory</div><p>Free and open source.</p><div class="url">papermemory.org</div><div class="sm">Chrome · Firefox · Edge · Brave</div></div></div>`,
