@@ -11,6 +11,16 @@ export const CYC = { tab: "[1703.10593] Unpaired Image-to-Image Translation usin
 export const EXT = (p) => ({ tab: `PaperMemory · ${p}`, url: `PaperMemory · ${p}` });
 const cap = (n) => `${CAP}/${n}.png`;
 
+/**
+ * The pages shown behind the popup (600 px tall, over a 660 px page area): scroll just enough
+ * that arXiv's own sidebar links (Google Scholar…) sit under the popup, not in the strip below it
+ */
+const underPopup = (page) =>
+    page.evaluate(() => {
+        const a = [...document.querySelectorAll("a")].find((e) => /Google Scholar/.test(e.textContent));
+        const bottom = a?.getBoundingClientRect().bottom ?? 0;
+        if (bottom > 595) window.scrollBy(0, bottom - 590);
+    });
 /** arXiv abstract pages at 1280 x 660 (2x): first visit with its notice, saved, a second paper */
 export const captureArxiv = async (env) => {
     await env.prefs("light");
@@ -24,12 +34,14 @@ export const captureArxiv = async (env) => {
     page = await env.arxiv("1706.03762", 1280, 660, 2);
     await L.sleep(5000); // the published venue line
     await L.hideNotices(page);
+    await underPopup(page);
     await page.screenshot({ path: cap("abs-saved") });
     await (await page.$("papermemory-block")).screenshot({ path: cap("crop-block") });
     await page.close();
     page = await env.arxiv("1703.10593", 1280, 660, 2);
     await L.sleep(5000);
     await L.hideNotices(page);
+    await underPopup(page);
     await page.screenshot({ path: cap("abs-cyclegan") });
     await page.close();
 };

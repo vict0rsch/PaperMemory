@@ -31,6 +31,8 @@ export const start = async ({ scale = 2 } = {}) => {
         args: ["--window-size=1500,1000", `--force-device-scale-factor=${scale}`, "--no-sandbox", "--disable-setuid-sandbox", "--disable-dev-shm-usage"],
         launchOptions: { acceptInsecureCerts: true },
     });
+    // nothing is ever downloaded (the .bib export is intercepted in the page, see videos.mjs)
+    await (await browser.target().createCDPSession()).send("Browser.setDownloadBehavior", { behavior: "deny" });
     const welcome = await browser.waitForTarget((t) => t.type() === "page" && t.url().endsWith("/welcome.html"), { timeout: 10000 }).catch(() => null);
     await (await welcome?.page())?.close();
     const worker = await browser.waitForTarget((t) => t.type() === "service_worker" && t.url().startsWith("chrome-extension://"));

@@ -92,6 +92,28 @@ export const cues = (page, offset = [0, 0]) => {
                 [cx, cy, w, h, ms],
             );
         },
+        /** A file's text in a viewer panel over the page (e.g. an exported .bib) */
+        file: async (name, text) => {
+            await install(page);
+            await page.evaluate(
+                (name, text) => {
+                    const f = document.createElement("div");
+                    f.id = "pm-cue-file";
+                    f.style.cssText = "position:fixed;right:28px;top:24px;bottom:24px;width:600px;display:flex;flex-direction:column;background:#fff;color:#1b2028;border-radius:10px;overflow:hidden;box-shadow:0 0 0 1px rgba(27,32,40,.14),0 18px 50px rgba(27,32,40,.3);font:13px/1.4 Inter,system-ui,sans-serif";
+                    const head = document.createElement("div");
+                    head.style.cssText = "padding:10px 14px;background:#f3f4f6;border-bottom:1px solid #dde1e7;font-weight:600";
+                    head.textContent = name;
+                    const pre = document.createElement("pre");
+                    pre.style.cssText = "margin:0;padding:12px 14px;overflow:hidden;font:11.5px/1.45 ui-monospace,Menlo,monospace;white-space:pre-wrap";
+                    pre.textContent = text;
+                    f.append(head, pre);
+                    document.getElementById("pm-cues").appendChild(f);
+                    f.animate([{ opacity: 0, transform: "translateY(8px)" }, { opacity: 1, transform: "none" }], { duration: 300, easing: "ease-out" });
+                },
+                name,
+                text,
+            );
+        },
         /** Camera: from now, ease over d seconds to zoom z centred on cx, cy (CSS px) */
         camera: (z, cx, cy, d = 0.6) => keys.push({ t: c.now(), d, z, cx: cx + offset[0], cy: cy + offset[1] }),
         /** Camera: back to no zoom, from where it is */
