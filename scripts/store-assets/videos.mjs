@@ -1,10 +1,10 @@
 // Videos: each shot drives the real extension and records it with the CDP screencast, with visual
-// cues (cues.mjs: a cursor that clicks, rings on what appears, a 1.4x camera), then ffmpeg
-// composites it into the drawn browser of frame.html (toolbar 90 px, page 1920 x 900, caption band
-// 90 px at 1080p; the popup, recorded as a tab, under the toolbar icon) and joins the shots with
-// short cross-fades. Storyboards, captions and timings: the approved step-7 mockups.
-// Pages are recorded at 2x (2560 px wide) so the zoom stays sharp, then scaled to 1920.
-// Loops have no caption band (page 1920 x 990), no zoom, and end on their first frame.
+// cues (cues.mjs: a cursor that clicks, a camera that zooms without cropping its target), then
+// ffmpeg composites it into the drawn window of frame.html (framing A: a 1600 x 1000 window on a
+// slate backdrop, the chapter line under it) and joins the shots with short cross-fades.
+// Chapters start and end on the full window. Plan: design-review/v2-addenda/step7-video-direction.md.
+// Pages are recorded at 2x (2560 px wide) so the zoom stays sharp.
+// Loops have no chapter line and end on their first frame.
 import fs from "node:fs";
 import * as L from "./lib.mjs";
 import { cues, cameraFilter, cropped } from "./cues.mjs";
@@ -17,6 +17,7 @@ const WIN = [160, 99, 1600, 925]; // the page area in the frame (px)
 const K = 2; // recording scale (the browser's screen scale, see lib.start)
 const Z = 1.6; // camera zoom
 const ZB = 1.4; // BibMatcher's diff
+const HOLD = 0.8; // a chapter opens on the full window for this long; it ends on it too
 const POP = [818, 1]; // the popup in the page area (CSS px): under the toolbar icon
 const ATT = "Arxiv-1706.03762";
 const ARX_URL = "https://arxiv.org/abs/1706.03762";
@@ -25,18 +26,33 @@ const at = (t0) => async (s) => {
     const ms = t0 + s * 1000 - Date.now();
     if (ms > 0) await L.sleep(ms);
 };
-/** `pre` (before the clip), then `steps` ([[seconds, fn(page, cues)]…]) after mark(), held to `dur` */
-const timeline = (steps, pre) => async (page, c, mark, dur) => {
+/**
+ * `pre` (before the clip), then `steps` ([[seconds, fn(page, cues)]…]) after mark(), held to
+ * `dur`. A chapter's first shot opens on the full window: a hold, then the zoom `pre` set (if
+ * any); the steps move later by what that adds. Returns the seconds added.
+ */
+const timeline = (steps, pre) => async (page, c, mark, dur, { first } = {}) => {
     await c.install();
     if (pre) await pre(page, c);
+    const zoom = first && c.keys.initial;
+    if (first) delete c.keys.initial;
     mark();
     c.start();
     const wait = at(Date.now());
+    let lead = 0;
+    if (first) {
+        lead = HOLD;
+        await wait(HOLD);
+        if (zoom) c.keys.push({ t: c.now(), d: 0.6, ...zoom }), (lead += 0.6);
+    }
+    const shift = Math.max(0, lead - (steps[0]?.[0] ?? dur));
+    c.shift = shift;
     for (const [s, fn] of steps) {
-        await wait(s);
+        await wait(s + shift);
         await fn(page, c);
     }
-    await wait(dur + 0.1);
+    await wait(dur + shift + 0.1);
+    return shift;
 };
 const key = (k) => (p) => p.keyboard.press(k);
 const type = (text, delay = 90) => (p) => p.keyboard.type(text, { delay });
@@ -210,9 +226,9 @@ const END = { card: { t: "slateend" } };
 const CHAPTERS = [
     ["Saves the papers you read.", "", "Open a paper. It is saved."],
     ["Find it again.", "Search titles, authors, tags, years and your notes.", "Find it again"],
+    ["Make it yours.", "Tags, notes and code links on every paper.", "Make it yours"],
     ["Cite it in one click.", "BibTeX from any paper page, or a whole .bib for your thesis.", "Cite it in one click"],
     ["From preprint to published.", "BibMatcher updates the arXiv entries of your .bib file.", "From preprint to published"],
-    ["Make it yours.", "Tags, notes and code links on every paper.", "Make it yours"],
     ["Sync your Memory.", "Through a private Gist in your own GitHub.", "Sync your Memory"],
 ];
 const chapter = (n, of) => ({ card: { t: "slatechap", n, of, h: CHAPTERS[n - 1][0], p: CHAPTERS[n - 1][1] }, title: CHAPTERS[n - 1][0] });
@@ -234,13 +250,6 @@ const DIFF = () => {
     Object.assign(box.style, { position: "fixed", pointerEvents: "none", left: `${r[0].left}px`, top: `${r[0].top}px`, width: `${r[0].width}px`, height: `${r.at(-1).bottom - r[0].top}px` });
     return box;
 };
-// BibMatcher's input: from "Your bibliography" to the text area (the sources line stays out)
-const INPUT = () => {
-    const h = document.getElementById("b-input-title").getBoundingClientRect(), d = document.getElementById("b-drop").getBoundingClientRect();
-    const box = document.getElementById("pm-cue-box") || document.body.appendChild(Object.assign(document.createElement("div"), { id: "pm-cue-box" }));
-    Object.assign(box.style, { position: "fixed", pointerEvents: "none", left: `${d.left}px`, top: `${h.top}px`, width: `${d.width}px`, height: `${d.bottom - h.top}px` });
-    return box;
-};
 const memoryWith = (q) => async (p) => {
     await memoryTab(p);
     await p.keyboard.type(q);
@@ -253,7 +262,7 @@ const resultsTop = (p) => p.evaluate(() => window.scrollTo(0, 0));
 
 // one shot per idea; the cursor only for clicks; one ring, on the result
 const SAVE = [arxivFirst, 5];
-const FIND = [popup(ARX_URL, ARX, "abs-saved", memoryTab), 6, [[0.3, clickQ("#memory-search", 500)], [1.0, type("t:transf", 110)], [2.6, key("Tab")], [3.2, ring(Q, "#memory-scroll", 1300)]], onPopup()];
+const FIND = [popup(ARX_URL, ARX, "abs-saved", memoryTab), 5, [[0.3, clickQ("#memory-search", 500)], [1.0, type("t:transf", 110)], [2.6, key("Tab")], [3.2, ring(Q, "#memory-scroll", 1300)]], onPopup()];
 const CITE = (dur, md) => [arxivSaved("1706.03762", ARX), dur, [[0.3, click(BLOCK, "bib-show")], [1.7, click(BLOCK, "bib-copy", 600)], [2.5, ring(PRE, undefined, 1200)], ...(md ? [[3.9, click(BLOCK, "md", 600)]] : [])], onBlockOpen];
 const EXPORT = (dur) => [fullMemory(), dur, [[0.3, clickQ('.m-tag[data-tag="transformers"]', 700)], [1.2, clickQ("#m-select-all", 600)], [2.0, clickQ('[data-bulk="export"]', 600)],
     [2.7, async (p, c) => {
@@ -274,18 +283,18 @@ const FULL = (dur, rows) => [fullMemory(), dur, [...rows.map((id, i) => [0.3 + i
 // [scene, seconds, band, steps, pre]
 const P = (s, n, ...st) => [s[0], s[1], band(n, 5, ...st), s[2], s[3]];
 const PROMO = [
-    [OPEN, 2.5],
+    [OPEN, 2],
     P(SAVE, 1),
     [chapter(2, 5), 1.5],
     P(FIND, 2),
     [chapter(3, 5), 1.5],
-    P(CITE(4.5), 3),
-    P(EXPORT(4.5), 3),
+    P(TAGS(3.5), 3),
+    P(FULL(3, ["Arxiv-1703.10593"]), 3),
     [chapter(4, 5), 1.5],
-    P(DIFFZOOM, 4),
+    P(CITE(4), 4),
+    P(EXPORT(4), 4),
     [chapter(5, 5), 1.5],
-    P(TAGS(4), 5),
-    P(FULL(3, ["Arxiv-1703.10593"]), 5),
+    P(DIFFZOOM, 5),
     [END, 4],
 ];
 const W = (s, n, st, k) => [s[0], s[1], band(n, 6, st, k), s[2], s[3]];
@@ -298,19 +307,19 @@ const WALK = [
     W(FIND, 2, "t: for a tag, y: for a year, c: for code"),
     W([popup(ARX_URL, ARX, "abs-saved", memoryWith("t:transf")), 4, [[0.4, type("image", 130)], [1.8, ring(Q, "#memory-scroll", 1300)]], onPopup()], 2, "filters combine with text"),
     [chapter(3, 6), 1.5],
-    W(CITE(5, true), 3),
-    W([popup(ARX_URL, ARX, "abs-saved"), 4, [[1.0, key("b")], [1.4, ring(Q, "#popup-feedback-copied", 1300)]], onPopup()], 3, "or one key in the popup", "B"),
-    W(EXPORT(5), 3, "or a whole .bib for your thesis"),
-    [chapter(4, 6), 1.5],
-    W([bib({ drop: false, results: false }), 4, [[0.6, (p) => L.bibDrop(p)], [1.2, ring(Q, "#b-filechip", 1300)]], async (p, c) => c.fitInitial(await c.center(INPUT), Z)], 4, "load your .bib"),
-    W(DIFFZOOM, 4),
-    W([bib(), 4, [[0.5, click(BIBROW, ["devlin2018bert", "accept"])], [1.5, ring(BIBROW, ["devlin2018bert"], 1300)]]], 4, "accept each published version"),
-    [chapter(5, 6), 1.5],
-    W([popup(CYC_URL, CYC, "abs-cyclegan"), 6, [[0.5, key("e")], [0.8, clickQ(TAGIN, 600)], [1.5, type("unpaired", 60)], [2.1, key("Enter")], [2.3, clickQ("textarea.pm-textarea:not([hidden])", 500)], [2.9, (p) => p.evaluate(() => document.querySelector("textarea.pm-textarea:not([hidden])").setSelectionRange(1e4, 1e4))], [3.0, type("\nCompare with pix2pix.", 40)], [4.1, clickQ("#popup-edit-done", 450)], [4.7, ring(Q, "#popup-memory-edit", 1200)]], onPopup()], 5),
-    W(FULL(5, ["Arxiv-1703.10593", "Arxiv-2010.11929"]), 5, "your whole Memory in a full page"),
+    W([popup(CYC_URL, CYC, "abs-cyclegan"), 6, [[0.5, key("e")], [0.8, clickQ(TAGIN, 600)], [1.5, type("unpaired", 60)], [2.1, key("Enter")], [2.3, clickQ("textarea.pm-textarea:not([hidden])", 500)], [2.9, (p) => p.evaluate(() => document.querySelector("textarea.pm-textarea:not([hidden])").setSelectionRange(1e4, 1e4))], [3.0, type("\nCompare with pix2pix.", 40)], [4.1, clickQ("#popup-edit-done", 450)], [4.7, ring(Q, "#popup-memory-edit", 1200)]], onPopup()], 3),
+    W(FULL(5, ["Arxiv-1703.10593", "Arxiv-2010.11929"]), 3, "your whole Memory in a full page"),
     W([fullMemory(), 5, [[0.3, clickQ(ROW("Arxiv-1706.03762", ".m-select"), 600)], [1.0, clickQ(ROW("Arxiv-1703.10593", ".m-select"), 400)], [1.6, clickQ(ROW("Arxiv-2010.11929", ".m-select"), 400)], [2.3, clickQ('[data-bulk="tag"]', 600)],
         // the "Add tags" dialog, the bulk bar (and its Delete) below the view
-        [3.0, async (p, c) => { await c.hide(); c.fit(await c.center(Q, "#o-dialog"), Z); }], [3.7, ring(Q, "#o-dialog", 1100)]]], 5, "tag several papers at once"),
+        [3.0, async (p, c) => { await c.hide(); c.fit(await c.center(Q, "#o-dialog"), Z); }], [3.7, ring(Q, "#o-dialog", 1100)]]], 3, "tag several papers at once"),
+    [chapter(4, 6), 1.5],
+    W(CITE(5, true), 4),
+    W([popup(ARX_URL, ARX, "abs-saved"), 4, [[1.0, key("b")], [1.4, ring(Q, "#popup-feedback-copied", 1300)]], onPopup()], 4, "or one key in the popup", "B"),
+    W(EXPORT(5), 4, "or a whole .bib for your thesis"),
+    [chapter(5, 6), 1.5],
+    // (no "load your .bib" shot: a full-window BibMatcher input page shows its sources line)
+    W(DIFFZOOM, 5),
+    W([bib(), 4, [[0.5, click(BIBROW, ["devlin2018bert", "accept"])], [1.5, ring(BIBROW, ["devlin2018bert"], 1300)]]], 5, "accept each published version"),
     [chapter(6, 6), 2.5],
     [END, 4],
 ];
@@ -331,16 +340,47 @@ const CLIPS = `${L.WORK}/clips`;
 const X264 = ["-c:v", "libx264", "-preset", "medium", "-crf", "12", "-pix_fmt", "yuv444p", "-r", "30"];
 
 /** One shot -> CLIPS/<name>.mp4, 1920 x 1080, exactly `dur` seconds; retried once (a live site) */
-const shot = (env, name, s, dur) =>
-    shotOnce(env, name, s, dur).catch((e) => (console.log(`retrying ${name}: ${e.message}`), shotOnce(env, name, s, dur)));
-const shotOnce = async (env, name, [scene, , line, steps = [], pre], dur) => {
+/**
+ * One shot -> { out, extra }: its clip and the seconds it runs over `dur`. pos: { first, last }
+ * in its chapter (the chapter starts and ends on the full window)
+ */
+const shot = (env, name, s, dur, pos) =>
+    shotOnce(env, name, s, dur, pos).catch((e) => (console.log(`retrying ${name}: ${e.message}`), shotOnce(env, name, s, dur, pos)));
+const shotOnce = async (env, name, [scene, , line, steps = [], pre], dur, pos = {}) => {
     const base = await L.render(env, scene.card || { t: "slate", ...scene.chrome, bg: undefined, popup: !!scene.popup, line }, `${CLIPS}/${name}-base.png`, [1920, 1080, 1]);
     const out = `${CLIPS}/${name}.mp4`;
-    if (scene.card) return L.ffmpeg(["-loop", "1", "-framerate", "30", "-t", String(dur), "-i", base, ...X264, out]), out;
+    if (scene.card) return L.ffmpeg(["-loop", "1", "-framerate", "30", "-t", String(dur), "-i", base, ...X264, out]), { out, extra: 0 };
     const page = await scene.open(env, PH);
     const c = cues(page, scene.offset, [1280, PH]);
     const size = scene.popup ? [450 * K, 600 * K] : [1280 * K, PH * K];
-    const rec = await L.record(page, (mark) => (scene.run || timeline(steps, pre))(page, c, mark, dur), size, "jpeg");
+    // a chapter's last shot ends on the full window: zoom out 0.2 s before its end (before the
+    // cross-fade), and run 0.7 s longer so the full window holds briefly
+    const TAIL = 0.7;
+    let extra = 0;
+    let tail = false;
+    const rec = await L.record(
+        page,
+        async (mark) => {
+            let timer;
+            const marked = () => {
+                mark();
+                c.start(); // (the run starts it again at once)
+                if (!pos.last) return;
+                timer = setInterval(() => {
+                    if (c.now() < dur - (pos.fade || 0) - 0.2 + (c.shift || 0)) return;
+                    clearInterval(timer);
+                    const k = c.keys.at(-1) || c.keys.initial;
+                    if (k && k.z !== 1) c.out(), (tail = true);
+                }, 20);
+            };
+            extra = (await (scene.run || timeline(steps, pre))(page, c, marked, dur, pos)) || 0;
+            clearInterval(timer);
+            if (tail) await L.sleep(TAIL * 1000), (extra += TAIL);
+        },
+        size,
+        "jpeg",
+    );
+    dur += extra;
     await (page.done ? page.done() : page.close());
     const crops = cropped(c.keys, [1280, PH]);
     if (crops.length) throw new Error(`${name}: the camera crops its target: ${crops.join("; ")}`);
@@ -362,7 +402,7 @@ const shotOnce = async (env, name, [scene, , line, steps = [], pre], dur) => {
         filter = `[1:v]format=rgb24,fps=30,${cam},format=rgba[pg];[2:v]copy[wm];${into}`;
     }
     L.ffmpeg([...inputs, "-filter_complex", filter, "-t", String(dur), ...X264, out]);
-    return out;
+    return { out, extra };
 };
 
 /**
@@ -372,9 +412,13 @@ const shotOnce = async (env, name, [scene, , line, steps = [], pre], dur) => {
 const film = async (env, name, shots) => {
     const fade = (i) => (i >= shots.length - 1 ? 0 : shots[i][0].card || shots[i + 1][0].card ? 0.25 : 0.2);
     const clips = [];
+    const extras = [];
+    const card = (i) => !shots[i] || shots[i][0].card;
     for (const [i, s] of shots.entries()) {
         console.log(`${name} ${i + 1}/${shots.length} ${s[0].title || s[0].card?.t || s[2]?.s || s[2]?.t}`);
-        clips.push(await shot(env, `${name}-${String(i + 1).padStart(2, "0")}`, s, s[1] + fade(i)));
+        const r = await shot(env, `${name}-${String(i + 1).padStart(2, "0")}`, s, s[1] + fade(i), { first: card(i - 1), last: card(i + 1), fade: fade(i) });
+        clips.push(r.out);
+        extras.push(r.extra);
     }
     let chain = "",
         prev = "[0:v]",
@@ -384,7 +428,7 @@ const film = async (env, name, shots) => {
         if (i === 0) chapters.push([0, CHAPTERS[0][0]]);
         else if (shots[i][0].title) chapters.push([t, shots[i][0].title]);
         if (i === clips.length - 1) break;
-        t += shots[i][1];
+        t += shots[i][1] + extras[i];
         const next = i === clips.length - 2 ? "[v]" : `[x${i}]`;
         chain += `${prev}[${i + 1}:v]xfade=transition=fade:duration=${fade(i)}:offset=${t.toFixed(3)}${next};`;
         prev = next;
@@ -399,7 +443,7 @@ const film = async (env, name, shots) => {
 /** A loop: one shot, 1280 x 720 WebM and a 960 x 540 GIF (15 fps) */
 const loop = async (env, name, [scene, dur, steps, pre]) => {
     console.log(`loop ${name}`);
-    const clip = await shot(env, `loop-${name}`, [scene, dur, null, steps, pre], dur);
+    const { out: clip } = await shot(env, `loop-${name}`, [scene, dur, null, steps, pre], dur);
     L.ffmpeg(["-i", clip, "-an", "-vf", "scale=1280:720:flags=lanczos", "-c:v", "libvpx-vp9", "-crf", "30", "-b:v", "0", "-row-mt", "1", "-pix_fmt", "yuv420p", `${L.OUT}/loop-${name}.webm`]);
     L.ffmpeg(["-i", clip, "-vf", "fps=15,scale=960:-1:flags=lanczos,split[a][b];[a]palettegen=max_colors=128:stats_mode=diff[p];[b][p]paletteuse=dither=none:diff_mode=rectangle", "-loop", "0", `${L.OUT}/loop-${name}.gif`]);
 };
