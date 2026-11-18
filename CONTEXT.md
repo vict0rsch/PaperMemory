@@ -40,6 +40,32 @@ _Avoid_: direction, mode
 The `meta[name='pm-complete-secret-html']` element the content script injects once paper processing has finished (the `done` callback of `addOrUpdatePaper`), used by the test harness to detect success. It fires even when nothing is stored (`store: false`, e.g. arXiv with `checkNoAuto` or `checkPdfOnly`); in the storage test's default configuration, finished processing means the paper was stored.
 _Avoid_: done flag, marker
 
+### Extension surfaces
+
+**Memory**:
+The set of papers a user has stored in PaperMemory; always capitalized.
+_Avoid_: library, collection
+
+**popup Settings**:
+The Settings panel inside the popup (opened with `p`), holding the quick toggles.
+_Avoid_: Popup Menu, menu, gear menu
+
+**options page**:
+The extension's full settings page in its own tab (`options.html`).
+_Avoid_: Advanced Options, Settings page
+
+**full-page Memory**:
+The **Memory** shown in its own tab as a table with a detail pane and bulk actions.
+_Avoid_: fullMemory, Memory page
+
+**PaperMemory block**:
+The compact block PaperMemory adds to arXiv paper pages, showing the paper's **Memory** status and actions.
+_Avoid_: arXiv enhancements, display
+
+**welcome tab**:
+The tab opened on first install to introduce PaperMemory and pick **Sources**.
+_Avoid_: welcome page, onboarding
+
 ## Relationships
 
 - A **Source** owns the logic to **Detect**, **Parse**, and convert between an **Abstract URL** and a **PDF URL** (`toAbs` / `toPDF`).
@@ -54,4 +80,5 @@ _Avoid_: done flag, marker
 
 ## Flagged ambiguities
 
+- "save" vs **Store** — resolved: user-facing copy (UI, store listing, papermemory.org) says a paper is "saved to your **Memory**"; **Store** is the developer term for the pipeline stage (code, tests, contributing docs).
 - "parse or detect" was used as if interchangeable — resolved: **Detect**, **Parse**, and **Store** are distinct pipeline stages, and a storage-test timeout does not pinpoint which one failed.
