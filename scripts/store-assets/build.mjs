@@ -2,7 +2,7 @@
 //   npm run build:chrome            (dist/chrome-mv3, the build that is recorded)
 //   node scripts/store-assets/build.mjs [stills|videos|docs]   (default: stills + videos; docs is never in the default)
 // Writes extra/store/*.png (screenshots, tile, marquee) and design-review/step7/out/*.{mp4,webm,gif}
-// (promo, walkthrough, loops; not committed). `docs` writes unframed light PNGs + the 5 loop GIFs to docs/assets/. Needs the network (arxiv.org) and ffmpeg
+// (promo, walkthrough, loops; not committed). `docs` writes unframed light PNGs, loop-saved.gif, walkthrough.mp4 + poster and the 5 loops (.webm + .mp4) to docs/assets/. Needs the network (arxiv.org) and ffmpeg
 // (dev-only prerequisite; /opt/homebrew/bin/ffmpeg or $FFMPEG). Headless, a fresh profile, seeded
 // with the real papers of seed.json; the BibMatcher sources are mocked; nothing is downloaded.
 import fs from "node:fs";
@@ -12,11 +12,11 @@ import { videos } from "./videos.mjs";
 
 const what = process.argv[2] || "all";
 if (what === "docs") {
-    const missing = ["saved", "find", "cite", "export", "bibmatcher"]
-        .map((n) => `${L.OUT}/loop-${n}.gif`)
+    const missing = ["walkthrough-1080p.mp4", ...["saved", "find", "cite", "export", "bibmatcher"].map((n) => `loop-${n}.webm`), "loop-saved.gif"]
+        .map((f) => `${L.OUT}/${f}`)
         .filter((f) => !fs.existsSync(f));
     if (missing.length) {
-        console.error(`docs needs these loop GIFs first:\n  ${missing.join("\n  ")}\nMake them with: node scripts/store-assets/build.mjs videos loop`);
+        console.error(`docs needs these videos first:\n  ${missing.join("\n  ")}\nMake them with: node scripts/store-assets/build.mjs videos walkthrough && node scripts/store-assets/build.mjs videos loop`);
         process.exit(1);
     }
 }

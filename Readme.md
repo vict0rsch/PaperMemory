@@ -29,6 +29,10 @@ PaperMemory keeps a record of the research papers you read. Open a paper on a su
     <img width="800" src="https://raw.githubusercontent.com/vict0rsch/PaperMemory/master/docs/assets/loop-saved.gif" alt="A paper opened on arXiv is saved to the Memory"/>
 </p>
 
+<p align="center">
+    <a href="https://papermemory.org/">Watch the walkthrough →</a>
+</p>
+
 ## Papers are saved as you read
 
 - Papers are saved when you open them on arXiv, OpenReview, NeurIPS, PMLR, ACL Anthology, CVF, Nature, Science, IEEE, ACM, Springer, bioRxiv, PubMed Central and 18 other publishers and archives. Abstract pages and PDFs both work.

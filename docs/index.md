@@ -17,6 +17,13 @@ description: PaperMemory saves the research papers you open on arXiv, OpenReview
 <img src="assets/popup-paper.png" alt="The PaperMemory popup on an arXiv paper"/>
 </div>
 
+<div class="pm-walkthrough">
+<video controls preload="metadata" playsinline poster="assets/walkthrough-poster.jpg">
+    <source src="assets/walkthrough.mp4" type="video/mp4">
+    <a href="assets/walkthrough.mp4">Watch the walkthrough</a>
+</video>
+</div>
+
 <br/>
 Open a paper on a supported site and it is added to your Memory with its title, authors, venue, year, links and BibTeX. You can then search it, tag it, add a note and copy a citation, from the popup or from the full-page Memory.
 
@@ -30,7 +37,10 @@ Open a paper on a supported site and it is added to your Memory with its title, 
 [Saving papers](features.md#saving-papers) · [Preprint matching](features.md#preprint-matching)
 
 <figure markdown>
-![A paper saved as it is opened](assets/loop-saved.gif)
+<video autoplay muted loop playsinline preload="metadata" aria-label="A paper saved as it is opened">
+    <source src="assets/loop-saved.webm" type="video/webm">
+    <source src="assets/loop-saved.mp4" type="video/mp4">
+</video>
 <figcaption>Saved as you read.</figcaption>
 </figure>
 
@@ -45,7 +55,10 @@ Open a paper on a supported site and it is added to your Memory with its title, 
 [Searching](features.md#searching) · [Full-page Memory](getting-started.md#full-page-memory)
 
 <figure markdown>
-![Filtering the Memory by tag and year](assets/loop-find.gif)
+<video class="pm-loop-tall" autoplay muted loop playsinline preload="metadata" aria-label="Filtering the Memory by tag and year">
+    <source src="assets/loop-find.webm" type="video/webm">
+    <source src="assets/loop-find.mp4" type="video/mp4">
+</video>
 <figcaption>Filter by tag and year, then search the rest.</figcaption>
 </figure>
 
@@ -58,17 +71,26 @@ Open a paper on a supported site and it is added to your Memory with its title, 
 [BibTeX export](features.md#bibtex-export) · [BibMatcher](getting-started.md#bibmatcher)
 
 <figure markdown>
-![Copying BibTeX and a Markdown link with one key](assets/loop-cite.gif)
+<video autoplay muted loop playsinline preload="metadata" aria-label="Copying BibTeX and a Markdown link with one key">
+    <source src="assets/loop-cite.webm" type="video/webm">
+    <source src="assets/loop-cite.mp4" type="video/mp4">
+</video>
 <figcaption>One key for BibTeX, one for a Markdown link.</figcaption>
 </figure>
 
 <figure markdown>
-![Exporting the papers with a tag as a .bib file](assets/loop-export.gif)
+<video autoplay muted loop playsinline preload="metadata" aria-label="Exporting the papers with a tag as a .bib file">
+    <source src="assets/loop-export.webm" type="video/webm">
+    <source src="assets/loop-export.mp4" type="video/mp4">
+</video>
 <figcaption>A tag, as a .bib file.</figcaption>
 </figure>
 
 <figure markdown>
-![BibMatcher proposing the published version of a preprint](assets/loop-bibmatcher.gif)
+<video autoplay muted loop playsinline preload="metadata" aria-label="BibMatcher proposing the published version of a preprint">
+    <source src="assets/loop-bibmatcher.webm" type="video/webm">
+    <source src="assets/loop-bibmatcher.mp4" type="video/mp4">
+</video>
 <figcaption>From preprint to published.</figcaption>
 </figure>
 

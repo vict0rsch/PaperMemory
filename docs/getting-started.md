@@ -7,12 +7,7 @@ icon: octicons/rocket-16
 
 ## Installation
 
-![A paper opened on arXiv is saved to the Memory](assets/loop-saved.gif){ align=right .demo-gif }
-
 ### Browser Stores
-
-<br>
-<br>
 
 <p align="center" markdown>
 [:fontawesome-brands-chrome: Chrome / :simple-brave: Brave / :fontawesome-brands-edge: Edge](https://chromewebstore.google.com/detail/paper-memory/hmebhknlgddhfbbdhgplnillngljgmdi){ .md-button .md-button--primary }
@@ -21,9 +16,6 @@ icon: octicons/rocket-16
 <p align="center" markdown>
   [:fontawesome-brands-firefox-browser: Firefox](https://addons.mozilla.org/en-US/firefox/addon/paper-memory/){ .md-button .md-button--primary }
 </p>
-<br>
-
-<p style="clear: both;" />
 
 ### From source
 

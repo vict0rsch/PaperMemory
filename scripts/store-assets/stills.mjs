@@ -2,6 +2,7 @@
 // extra/store: screenshot-1..5.png (+ -dark variants) at 1280x800, the 440x280 promo tile and the
 // 1400x560 marquee. The captures are reused as still backgrounds by videos.mjs.
 import fs from "node:fs";
+import { execFileSync } from "node:child_process";
 import * as L from "./lib.mjs";
 
 export const CAP = `${L.WORK}/captures`;
@@ -130,6 +131,7 @@ export const compose = async (env) => {
 };
 
 const DOCS = `${L.ROOT}docs/assets`;
+const POSTER_AT = "20"; // seconds: "Find it again" chapter, extension UI on screen
 const LOOPS = ["saved", "find", "cite", "export", "bibmatcher"];
 
 /** The views only the docs show: popup Settings panel, "?" sheet, a non-paper page, options groups, welcome tab */
@@ -179,5 +181,23 @@ export const docsAssets = async (env) => {
     ])
         fs.copyFileSync(cap(from), `${DOCS}/${to}.png`);
     await captureDocsViews(env);
-    for (const n of LOOPS) fs.copyFileSync(`${L.OUT}/loop-${n}.gif`, `${DOCS}/loop-${n}.gif`);
+    fs.copyFileSync(`${L.OUT}/loop-saved.gif`, `${DOCS}/loop-saved.gif`);
+    docsVideos();
+};
+
+/** Web videos of docs/assets: 720p walkthrough (+ poster frame), the loop WebMs and their H.264 twins */
+const docsVideos = () => {
+    const walk = `${L.OUT}/walkthrough-1080p.mp4`;
+    const hasAudio = execFileSync(L.FFMPEG.replace(/ffmpeg$/, "ffprobe"), ["-v", "error", "-select_streams", "a", "-show_entries", "stream=index", "-of", "csv=p=0", walk]).toString().trim();
+    for (let crf = 26; crf <= 30; crf += 2) {
+        L.ffmpeg(["-i", walk, "-vf", "scale=1280:720:flags=lanczos", "-c:v", "libx264", "-crf", String(crf), "-preset", "slow", "-pix_fmt", "yuv420p", ...(hasAudio ? ["-c:a", "aac"] : ["-an"]), "-movflags", "+faststart", `${DOCS}/walkthrough.mp4`]);
+        const mb = fs.statSync(`${DOCS}/walkthrough.mp4`).size / 1e6;
+        console.log(`walkthrough.mp4 crf ${crf}: ${mb.toFixed(2)} MB`);
+        if (mb <= 6) break;
+    }
+    L.ffmpeg(["-ss", POSTER_AT, "-i", walk, "-frames:v", "1", "-vf", "scale=1280:720:flags=lanczos", "-q:v", "3", `${DOCS}/walkthrough-poster.jpg`]);
+    for (const n of LOOPS) {
+        fs.copyFileSync(`${L.OUT}/loop-${n}.webm`, `${DOCS}/loop-${n}.webm`);
+        L.ffmpeg(["-i", `${L.OUT}/loop-${n}.webm`, "-an", "-vf", "scale=trunc(iw/2)*2:trunc(ih/2)*2:out_range=tv", "-c:v", "libx264", "-crf", "24", "-pix_fmt", "yuv420p", "-color_range", "tv", "-movflags", "+faststart", `${DOCS}/loop-${n}.mp4`]);
+    }
 };

@@ -108,10 +108,22 @@
     fill: none !important;
 }
 
-.demo-gif {
-    max-width: 650px !important;
-    margin: 0 2rem;
+.pm-walkthrough video {
+    display: block;
     width: 100%;
+    max-width: 100%;
+    height: auto;
+    margin: 1.5rem auto;
+    border: 1px solid var(--pm-border);
+    border-radius: 10px;
+}
+.md-typeset figure video {
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+}
+.md-typeset figure video.pm-loop-tall {
+    max-width: min(100%, 420px);
 }
 .advanced-screenshot {
     max-width: 600px !important;
