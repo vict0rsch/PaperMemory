@@ -239,15 +239,17 @@ export function initBackground() {
             const remoteSyncId = state.gistData["__syncId"];
             delete state.gistData["__syncId"];
 
-            let remotePapers;
             if (remoteSyncId === localSyncID) {
-                remotePapers = (await getStorage("papers")) ?? {};
-            } else {
-                remotePapers = state.gistData;
-            }
-            if (remoteSyncId === localSyncID) {
+                // this browser's own last upload: nothing to apply. A copy of the Memory
+                // written back by the page would undo what changed here since it was
+                // read (e.g. a paper an agent added meanwhile)
                 warn("Pulled sync data from same device, ignoring.");
+                console.groupEnd();
+                badgeOk();
+                badgeClear();
+                return report ? { ok: true, sameDevice: true } : { sameDevice: true };
             }
+            let remotePapers = state.gistData;
 
             if (typeof remotePapers === "string") {
                 try {

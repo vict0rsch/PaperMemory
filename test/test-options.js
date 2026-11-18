@@ -2036,4 +2036,27 @@ describe("Options page: changes made after the background restarted are synced",
         expect(JSON.parse(gistContent)["Arxiv-1703.10593"].tags).toEqual([]);
         expect((await storageGet("papers"))["Arxiv-1703.10593"].tags).toEqual([]);
     });
+
+    it("a pull of this browser's own upload writes nothing back; Sync now only uploads", async function () {
+        // the gist holds this browser's last upload, older than its Memory now (a copy
+        // written back would undo what changed since, e.g. a paper an agent added)
+        const local = await storageGet("papers");
+        const older = structuredClone(local);
+        delete older["JMLR-2012_bergstra12a"];
+        gistContent = JSON.stringify({ ...older, __syncId: "Chrome-this" });
+        const revision = await storageGet("papersRevision");
+        await openOptions("#sync"); // pulls the gist
+        expect(await storageGet("papersRevision")).toBe(revision);
+        expect(await storageGet("papers")).toEqual(local);
+        const answer = await page.evaluate(
+            () =>
+                new Promise((r) =>
+                    chrome.runtime.sendMessage({ type: "pullSync", report: true }, r),
+                ),
+        );
+        expect(answer).toEqual({ ok: true, sameDevice: true });
+        await page.click("#sync-now");
+        await waitForUpload((gistPapers) => !!gistPapers["JMLR-2012_bergstra12a"]);
+        expect(await storageGet("papersRevision")).toBe(revision);
+    });
 });
