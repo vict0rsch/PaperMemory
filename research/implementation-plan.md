@@ -154,11 +154,10 @@ present on a mutating op (never on a read); the tag never changes. Papers carry 
 Project membership is per machine (the salt is local); Gist sync carries the tags, not usable
 membership.
 
-**Tag rename hint.** PaperMemory has no bulk tag rename or merge. `get_project`, `SKILL.md`
-and `docs/agents.md` give this exact guidance: "The Project tag is fixed. To rename it on
-existing papers, filter the Memory with `t: <tag>` and edit each paper's tags (press `e` on a
-focused paper), or export the Memory as JSON (Options → Data Management), replace the tag,
-and import it back. Agents keep applying the original tag to new papers."
+**Tag rename hint.** The options page can rename and merge tags (Tags & matching → Tags).
+`get_project`, `SKILL.md` and `docs/agents.md` give this exact guidance: "The Project tag is
+fixed. You can rename or merge it in the options page, under Tags & matching → Tags. Agents
+keep applying the Project's original tag to new papers."
 
 **Tags, notes, membership.** `add_paper` merges `review`, the agent's tags and (with a
 Project) the Project tag plus membership into new **and** already-present papers.
@@ -193,16 +192,18 @@ the queue. An `add_paper` past its deadline answers `timeout-may-complete`: its 
 be aborted and may still store the paper later, with the **Review tag** and **Provenance**, so
 the paper stays visible and remains that client's **Own addition**; the tool message tells the
 agent to check with `search_papers`. Right before acting: re-check `agentAccess.enabled` and the client's
-authorization; non-add mutations also re-read `papers` with `getStorage`. On `client-closed`
+authorization. Each change to papers is one `agent` operation of the Memory queue
+(background only), which checks arguments, note length and, for a deletion, ownership on the
+papers as stored, in the same step that changes them. On `client-closed`
 that connection's queued jobs are dropped; on revoke or toggle-off the client's queued jobs get
 `unauthorized`; a running job finishes.
 
 **Sync.** Gist stays last-writer-wins. After each completed mutation the extension calls the
 injected `pushSyncPapers()` once, un-awaited with `.catch(() => {})`; its failure never changes
-the op result. Pushes are coalesced: one push 2 s after the last request (2 s trailing
-debounce), one at a time. `add_paper` also runs the pipeline's own `pushToRemote()`
-(`writeSync`): from the offscreen document on Chrome, through the local handler on Firefox
-(Step 10); the debounce merges these into one push.
+the op result. Uploads are coalesced: they run one at a time, each reading the Memory when
+it starts, and those asked for meanwhile share the next one. `add_paper` also runs the
+pipeline's own `pushToRemote()` (`writeSync`): from the offscreen document on Chrome, through
+the local handler on Firefox (Step 10); coalescing merges these into one upload.
 
 ## Steps
 
@@ -381,9 +382,10 @@ Also export the pure `filterStorageRequest(op, keysOrItems)` used below.
   only while Agent access is on. It accepts only `sender.url ===
   chrome.runtime.getURL("agentIngest.html")` with no `sender.tab`. `get` reports `syncPAT`,
   `syncId`, `syncState`, `syncTest`, `sync`, `weeklyBackups`, `papersBackup` and every key
-  starting with `agent` as absent. `set` writes only `papers` and `urlHashToId`; other keys
-  are dropped and the callback still runs, so `initState`'s backup and prefs writes complete
-  as no-ops (other PaperMemory contexts, popup and content scripts, perform them).
+  starting with `agent` as absent. `set` writes only `urlHashToId`; other keys are dropped
+  and the callback still runs, so `initState`'s backup and prefs writes complete as no-ops
+  (other PaperMemory contexts, popup and content scripts, perform them). The document's
+  Memory writes are queue operations sent to the background, never `papers` writes.
 - The background creates the document with `chrome.offscreen.createDocument({url:
   "agentIngest.html", reasons:["DOM_PARSER"], justification:"Parse paper pages that paired
   local agents ask PaperMemory to add"})` when `chrome.runtime.getContexts({contextTypes:
@@ -554,9 +556,9 @@ rows), and contains no `FAIL`.
 
 ## Open items (maintainer)
 
-1. **Bulk tag rename / Project tag edit (not in v1).** PaperMemory has no bulk tag rename or
-   merge, and agents keep applying a Project's original tag. A later feature could let the
-   user edit a Project's tag and rename it on its papers.
+1. **Project tag follows a rename (not in v1).** Users can rename or merge a Project tag in
+   the options page, but agents keep applying the Project's original tag (fixed in
+   `agentProjects`). A later feature could update the Project's tag when it is renamed.
 2. **Clients that report neither roots nor a project working directory** (possibly Cursor for
    global MCP servers) get no Project; `get_project` tells the agent why. Step 16 records each
    client's behaviour.

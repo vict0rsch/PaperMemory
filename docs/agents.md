@@ -1,5 +1,5 @@
 ---
-description: Let local AI agents search and add papers in your PaperMemory library.
+description: Let local AI agents search and add papers in your Memory.
 icon: octicons/hubot-16
 ---
 
@@ -54,7 +54,7 @@ A new session in the same folder with the same agent continues the same project 
 
 !!! info "Renaming a project tag"
 
-    The Project tag is fixed. To rename it on existing papers, filter the Memory with `t: <tag>` and edit each paper's tags (press `e` on a focused paper), or export the Memory as JSON (Options → Data Management), replace the tag, and import it back. Agents keep applying the original tag to new papers.
+    The Project tag is fixed. You can rename or merge it in the options page, under Tags & matching → Tags. Agents keep applying the Project's original tag to new papers.
 
 ## Supported browsers and agents
 
@@ -72,4 +72,4 @@ If you use [Gist sync](./configuration.md), it stays last-writer-wins: a paper a
 
 ## Privacy
 
-With Agent access on, your library data is sent to the programs you paired, which run on your computer. Those programs may send what they read to their AI provider. PaperMemory itself sends nothing else: there is no server, and the connection is a local socket that only your user can open. Turn Agent access off, or revoke a client, to stop it.
+With Agent access on, your Memory is sent to the programs you paired, which run on your computer. Those programs may send what they read to their AI provider. PaperMemory itself sends nothing else: there is no server, and the connection is a local socket that only your user can open. Turn Agent access off, or revoke a client, to stop it.

@@ -44,7 +44,7 @@ _Avoid_: done flag, marker
 
 **Memory**:
 The set of papers a user has stored in PaperMemory; always capitalized.
-_Avoid_: library, collection
+_Avoid_: library, collection (except **Library**, the agent-facing term below)
 
 **popup Settings**:
 The Settings panel inside the popup (opened with `p`), holding the quick toggles.
@@ -156,7 +156,7 @@ _Avoid_: delete request, trash
 
 - "save" vs **Store** — resolved: user-facing copy (UI, store listing, papermemory.org) says a paper is "saved to your **Memory**"; **Store** is the developer term for the pipeline stage (code, tests, contributing docs).
 - "parse or detect" was used as if interchangeable — resolved: **Detect**, **Parse**, and **Store** are distinct pipeline stages, and a storage-test timeout does not pinpoint which one failed.
-- "library" and "Memory" were both used for the stored papers — resolved: the Memory is the user-facing name; a **Library** is one profile's Memory as addressed by agents.
+- "library" and "Memory" were both used for the stored papers — resolved: use **Memory** in the UI, user docs and everywhere a person is addressed; use **Library** only for the agent-facing endpoint, one browser profile's Memory addressed through its `libraryId` (`list_libraries`, the MCP server, the Native host, agent docs and code).
 - "session" was used both for an agent conversation and for an **MCP server** process — resolved: an **Agent session** is one **MCP server** process; continuity across sessions comes from the **Project**, not from session names.
 - "delete its own additions" — resolved: papers the same **Paired client** added in the same **Project** (any session), or in the same **Agent session** when there is no Project; anything else gets a **Deletion flag**.
 - "project" was used both for the folder identity and for its display name — resolved: the **Project key** identifies it and only the **MCP server** knows it; the **Project label** is the editable display name.

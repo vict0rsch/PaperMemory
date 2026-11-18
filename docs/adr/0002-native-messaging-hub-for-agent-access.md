@@ -106,8 +106,8 @@ and Firefox, all lifecycle checks passed, including 65 min and 8 h idles).
   in PaperMemory today; agents can list a Project's papers, attach existing papers to it (tag
   and membership only, no ownership), and export its BibTeX in the same format as the options
   page's tag export (papers without BibTeX are skipped and reported). A relabel changes only
-  the display label. PaperMemory has no bulk tag rename, so users are told how to rename the
-  tag by hand or through a JSON export/import, and that agents keep applying the original tag.
+  the display label. Users can rename or merge the tag in the options page (Tags & matching → Tags);
+  they are told so, and that agents keep applying the Project's original tag.
   Membership is keyed by a salted hash, so it is per machine; the tags travel with Gist sync.
 - **The Native host only forwards.** It parses each line only to rewrite request ids per
   connection, passes requests (including credentials) through unchanged, never inspects them,

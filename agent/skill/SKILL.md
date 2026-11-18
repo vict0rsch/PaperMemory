@@ -20,4 +20,4 @@ PaperMemory is the user's research paper library (their **Library**). These tool
 
 ## Tag rename hint
 
-The Project tag is fixed. To rename it on existing papers, filter the Memory with `t: <tag>` and edit each paper's tags (press `e` on a focused paper), or export the Memory as JSON (Options → Data Management), replace the tag, and import it back. Agents keep applying the original tag to new papers.
+The Project tag is fixed. You can rename or merge it in the options page, under Tags & matching → Tags. Agents keep applying the Project's original tag to new papers.

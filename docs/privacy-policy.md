@@ -20,7 +20,7 @@ The developer of PaperMemory has no access to your GitHub data, your token, or y
 
 ## Agent Access
 
-If you turn on the optional Agent access feature, PaperMemory lets AI agents running on your computer that you have explicitly allowed (one by one, revocable at any time) read your paper library and add papers to it. Your library data is then sent to those local programs, which may send it to their AI provider. This is off by default, uses a local connection that only your user account can open, and PaperMemory operates no server for it. See [Agent access](agents.md).
+If you turn on the optional Agent access feature, PaperMemory lets AI agents running on your computer that you have explicitly allowed (one by one, revocable at any time) read your Memory and add papers to it. Your Memory is then sent to those local programs, which may send it to their AI provider. This is off by default, uses a local connection that only your user account can open, and PaperMemory operates no server for it. See [Agent access](agents.md).
 
 ## Analytics and Tracking
 
