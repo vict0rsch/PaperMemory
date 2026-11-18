@@ -6,7 +6,7 @@ import readline from "node:readline";
 import { parseArgs } from "node:util";
 import { fileURLToPath } from "node:url";
 
-import { agentDefs, copySkill } from "./agents.mjs";
+import { SKILLS, agentDefs, copySkill } from "./agents.mjs";
 import { manifestTargets, writeManifests } from "./browsers.mjs";
 import { rmdirsIfEmpty, writeFileAtomic } from "./fsutil.mjs";
 
@@ -145,8 +145,8 @@ export async function install(args) {
     const pkgRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
     const srcCli = path.join(pkgRoot, "dist", "cli.mjs");
     const srcHost = path.join(pkgRoot, "dist", "host.mjs");
-    const skillSource = path.join(pkgRoot, "skill", "SKILL.md");
-    for (const f of [srcCli, srcHost, skillSource]) {
+    const skillSource = (name) => path.join(pkgRoot, "skills", name, "SKILL.md");
+    for (const f of [srcCli, srcHost, ...SKILLS.map(skillSource)]) {
         if (!fs.existsSync(f)) throw new Error(`Missing ${f}; run \`npx -y papermemory-mcp install\``);
     }
     const version = JSON.parse(fs.readFileSync(path.join(pkgRoot, "package.json"), "utf8")).version;
@@ -158,7 +158,7 @@ export async function install(args) {
         console.log(`Would copy the host and CLI to ${bin}`);
         for (const t of targets) console.log(`Would write a host manifest in ${t.dir}`);
         for (const a of detected) console.log(`Would offer to register PaperMemory with ${a.name}`);
-        console.log("Would copy the PaperMemory skill to ~/.agents/skills and ~/.claude/skills");
+        console.log(`Would copy the ${SKILLS.join(" and ")} skills to ~/.agents/skills and ~/.claude/skills`);
         return;
     }
 
@@ -199,7 +199,7 @@ export async function install(args) {
         prompter?.close();
     }
 
-    copySkill({ home, skillSource, state });
+    for (const name of SKILLS) copySkill({ home, name, skillSource: skillSource(name), state });
     saveState(stateFile, state);
 }
 

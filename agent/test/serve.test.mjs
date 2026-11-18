@@ -12,7 +12,7 @@ import { safeName, socketPathFor } from "../host/host.mjs";
 
 const PKG = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
 const CLI = path.join(PKG, "dist", "cli.mjs");
-const SKILL = fs.readFileSync(path.join(PKG, "skill", "SKILL.md"), "utf8");
+const SKILL = fs.readFileSync(path.join(PKG, "skills", "papermemory", "SKILL.md"), "utf8");
 const LIB_ID = "aaaaaaaa-0000-4000-8000-000000000001";
 const CLIENT = "serve-test";
 const TOOLS = [

@@ -8,7 +8,7 @@
     },
     "files": [
         "dist",
-        "skill",
+        "skills",
         "README.md"
     ],
     "engines": {

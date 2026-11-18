@@ -136,7 +136,11 @@ export async function resolveLibrary(arg = "auto") {
     const libs = await listLibraries();
     const labels = libs.map((l) => `${l.label} (${l.libraryId})`).join(", ");
     if (arg === "auto") {
-        if (libs.length === 0) throw new Error("no PaperMemory library is connected");
+        if (libs.length === 0) {
+            throw new Error(
+                "no PaperMemory library is connected: PaperMemory needs a browser open with Agent access on in its options page (see https://papermemory.org/agents/#troubleshooting)",
+            );
+        }
         if (libs.length > 1) {
             throw new Error(`several PaperMemory libraries are connected, name one: ${labels}`);
         }

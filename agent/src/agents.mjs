@@ -160,22 +160,25 @@ export function agentDefs(home) {
 }
 
 
-export function skillDirs(home) {
+/** The skills install copies, each from skills/<name>/SKILL.md in the package. */
+export const SKILLS = ["papermemory", "papermemory-setup"];
+
+export function skillDirs(home, name) {
     return [
-        path.join(home, ".agents", "skills", "papermemory"),
-        path.join(home, ".claude", "skills", "papermemory"),
+        path.join(home, ".agents", "skills", name),
+        path.join(home, ".claude", "skills", name),
     ];
 }
 
-export function copySkill({ home, skillSource, state }) {
-    for (const dir of skillDirs(home)) {
+export function copySkill({ home, name, skillSource, state }) {
+    for (const dir of skillDirs(home, name)) {
         const dest = path.join(dir, "SKILL.md");
         const dirLink = lstat(dir)?.isSymbolicLink();
         // state.files holds only what an earlier install recorded as ours (the new copy is added below).
         if (dirLink || (lstat(dest) && !state.files.includes(dest))) {
             console.log(
                 `Left ${dirLink ? dir : dest} alone: ${dirLink ? "it is a symlink" : "a file we did not create is already there"}. ` +
-                    `The PaperMemory skill would go in ${dest}; copy ${skillSource} there yourself if you want it.`,
+                    `The ${name} skill would go in ${dest}; copy ${skillSource} there yourself if you want it.`,
             );
             continue;
         }

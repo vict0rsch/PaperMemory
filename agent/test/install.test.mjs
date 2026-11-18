@@ -10,7 +10,8 @@ import { parse } from "jsonc-parser";
 
 const PKG = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
 const CLI = path.join(PKG, "dist", "cli.mjs");
-const SKILL = path.join(PKG, "skill", "SKILL.md");
+const SKILLS = ["papermemory", "papermemory-setup"];
+const skillSource = (name) => fs.readFileSync(path.join(PKG, "skills", name, "SKILL.md"));
 const CHROME_ID = "hmebhknlgddhfbbdhgplnillngljgmdi";
 const FIREFOX_ID = "{ff9cbac9-82ff-4e2b-96ae-ae0845aa85f5}";
 const tmpRoot = fs.realpathSync(os.tmpdir());
@@ -100,10 +101,13 @@ test("manifests, wrappers, salt, reinstall and uninstall in a temp HOME", () => 
     assert.deepEqual(fs.readdirSync(path.join(home, ".papermemory")).filter((n) => n.startsWith("bin.")), []);
     assert.equal(read(path.join(home, ".papermemory", "install.json")).extensionIds[0], extra);
     for (const d of [".agents", ".claude"]) {
-        const f = path.join(home, d, "skills", "papermemory", "SKILL.md");
-        assert.ok(fs.readFileSync(f).equals(fs.readFileSync(SKILL)));
+        for (const name of SKILLS) {
+            const f = path.join(home, d, "skills", name, "SKILL.md");
+            assert.ok(fs.readFileSync(f).equals(skillSource(name)), f);
+        }
     }
 
+    // Removes both skills, like everything else install created.
     assert.equal(runCli(home, ["uninstall"]).status, 0);
     assert.deepEqual(walk(home), before);
 });
@@ -113,6 +117,7 @@ test("--user-data-dir writes <dir>/NativeMessagingHosts and --dry-run writes not
     const udd = path.join(tempDir("pmi-udd-"), "profile");
     const dry = runCli(home, ["install", "--dry-run", "--user-data-dir", udd]);
     assert.equal(dry.status, 0, dry.stderr);
+    assert.match(dry.stdout, /Would copy the papermemory and papermemory-setup skills/);
     assert.deepEqual(walk(home), []);
     assert.ok(!fs.existsSync(udd));
 
@@ -240,46 +245,60 @@ test("created config files are removed on uninstall", () => {
     assert.deepEqual(walk(home), before);
 });
 
-test("a pre-existing skill file is left alone, not recorded, and survives uninstall", () => {
+test("pre-existing skill files are left alone, not recorded, and survive uninstall", () => {
     const home = tempDir("pmi-home-");
-    const mine = path.join(home, ".agents", "skills", "papermemory", "SKILL.md");
-    fs.mkdirSync(path.dirname(mine), { recursive: true });
-    fs.writeFileSync(mine, "user skill\n");
+    const mine = SKILLS.map((name) => path.join(home, ".agents", "skills", name, "SKILL.md"));
+    const ours = SKILLS.map((name) => path.join(home, ".claude", "skills", name, "SKILL.md"));
+    for (const f of mine) {
+        fs.mkdirSync(path.dirname(f), { recursive: true });
+        fs.writeFileSync(f, "user skill\n");
+    }
     const res = runCli(home, ["install"]);
     assert.equal(res.status, 0, res.stderr);
-    assert.match(res.stdout, /Left .*\.agents.*SKILL\.md alone/);
-    assert.equal(fs.readFileSync(mine, "utf8"), "user skill\n");
     const state = read(path.join(home, ".papermemory", "install.json"));
-    assert.ok(!state.files.includes(mine));
-    const other = path.join(home, ".claude", "skills", "papermemory", "SKILL.md");
-    assert.ok(state.files.includes(other));
-    assert.ok(fs.readFileSync(other).equals(fs.readFileSync(SKILL)));
+    SKILLS.forEach((name, i) => {
+        assert.match(res.stdout, new RegExp(`Left .*\\.agents/skills/${name}/SKILL\\.md alone`));
+        assert.equal(fs.readFileSync(mine[i], "utf8"), "user skill\n");
+        assert.ok(!state.files.includes(mine[i]));
+        assert.ok(state.files.includes(ours[i]));
+        assert.ok(fs.readFileSync(ours[i]).equals(skillSource(name)));
+    });
 
-    // A reinstall still leaves it alone; our own recorded copy is updated normally.
-    fs.writeFileSync(other, "stale\n");
+    // A reinstall still leaves them alone; our own recorded copies are updated normally.
+    for (const f of ours) fs.writeFileSync(f, "stale\n");
     assert.equal(runCli(home, ["install"]).status, 0);
-    assert.equal(fs.readFileSync(mine, "utf8"), "user skill\n");
-    assert.ok(fs.readFileSync(other).equals(fs.readFileSync(SKILL)));
+    SKILLS.forEach((name, i) => {
+        assert.equal(fs.readFileSync(mine[i], "utf8"), "user skill\n");
+        assert.ok(fs.readFileSync(ours[i]).equals(skillSource(name)));
+    });
 
     assert.equal(runCli(home, ["uninstall"]).status, 0);
-    assert.equal(fs.readFileSync(mine, "utf8"), "user skill\n");
-    assert.ok(!fs.existsSync(other));
+    for (const f of mine) assert.equal(fs.readFileSync(f, "utf8"), "user skill\n");
+    for (const f of ours) assert.ok(!fs.existsSync(f));
 });
 
-test("a symlinked skill dir is not written through", () => {
+test("symlinked skill dirs are not written through", () => {
     const home = tempDir("pmi-home-");
-    const target = tempDir("pmi-target-");
     fs.mkdirSync(path.join(home, ".agents", "skills"), { recursive: true });
-    const link = path.join(home, ".agents", "skills", "papermemory");
-    fs.symlinkSync(target, link);
+    const links = SKILLS.map((name) => {
+        const target = tempDir("pmi-target-");
+        const link = path.join(home, ".agents", "skills", name);
+        fs.symlinkSync(target, link);
+        return { name, target, link };
+    });
     const res = runCli(home, ["install"]);
     assert.equal(res.status, 0, res.stderr);
-    assert.match(res.stdout, /Left .*papermemory alone: it is a symlink/);
-    assert.deepEqual(fs.readdirSync(target), []);
-    assert.ok(!read(path.join(home, ".papermemory", "install.json")).files.some((f) => f.startsWith(link)));
+    const files = read(path.join(home, ".papermemory", "install.json")).files;
+    for (const { name, target, link } of links) {
+        assert.match(res.stdout, new RegExp(`Left .*/${name} alone: it is a symlink`));
+        assert.deepEqual(fs.readdirSync(target), []);
+        assert.ok(!files.some((f) => f.startsWith(link + path.sep)));
+    }
     assert.equal(runCli(home, ["uninstall"]).status, 0);
-    assert.ok(fs.lstatSync(link).isSymbolicLink());
-    assert.deepEqual(fs.readdirSync(target), []);
+    for (const { target, link } of links) {
+        assert.ok(fs.lstatSync(link).isSymbolicLink());
+        assert.deepEqual(fs.readdirSync(target), []);
+    }
 });
 
 test("uninstall keeps failed registrations in the record, exits 1, and a rerun finishes", () => {
@@ -297,7 +316,7 @@ test("uninstall keeps failed registrations in the record, exits 1, and a rerun f
     assert.deepEqual(Object.keys(state.agents).sort(), ["claude", "codex"]);
     assert.deepEqual(state.files, []);
     assert.deepEqual(fs.readdirSync(path.join(home, ".papermemory")), ["install.json"]);
-    assert.ok(!fs.existsSync(path.join(home, ".agents", "skills", "papermemory", "SKILL.md")));
+    for (const name of SKILLS) assert.ok(!fs.existsSync(path.join(home, ".agents", "skills", name, "SKILL.md")));
 
     // Only codex is fixed: claude stays recorded.
     const half = runCli(home, ["uninstall"], { fakes: ["claude", "codex"], failing: ["claude"] });

@@ -149,7 +149,10 @@ port → `agentAccess.js` in the background → operation handlers.
   the Project folder and derives the Project key), `src/libraries.mjs` (socket
   discovery, version negotiation, requests), `src/install.mjs` + `browsers.mjs` +
   `agents.mjs` (the installer: local copy in `~/.papermemory/bin` with wrappers, native
-  host manifests, agent registration, skill copy), `skill/SKILL.md`. macOS only.
+  host manifests, agent registration, skill copy), `skills/<name>/SKILL.md` (the
+  `papermemory` skill for everyday use and the `papermemory-setup` skill for setup and
+  troubleshooting, both copied to `~/.agents/skills/` and `~/.claude/skills/`). macOS
+  only.
 - **`src/background/agentAccess.js`** (initialised from `background.js` with the
   injected `pushSyncPapers` and the message handler): connects the native port,
   authorizes every op (per-client secret hash, rate limit, bounded queue), runs one
