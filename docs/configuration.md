@@ -196,6 +196,10 @@ See [Gist sync](features.md#gist-sync).
 
 <p style="clear: both;" />
 
+### Agent access
+
+Off by default. Lets AI agents running on your computer, such as Claude Code or Codex, search your Memory and add papers to it. Turn it on once the agent tools are installed; the agents you allow are listed under **Paired clients**, each with a _Revoke_ button. See [Agent access](agents.md).
+
 ### Keyboard
 
 On the options page this group is named _Keyboard shortcuts_. It lists every key, as in [Keyboard shortcuts](#keyboard-shortcuts) above, and has an _Open browser shortcuts_ button to change the keys that work from any tab.

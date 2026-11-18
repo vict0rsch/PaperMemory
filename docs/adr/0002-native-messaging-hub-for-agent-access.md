@@ -72,8 +72,11 @@ and Firefox, all lifecycle checks passed, including 65 min and 8 h idles).
   fixed bounds (http/https URLs only, unknown arguments rejected, length caps, tag limits,
   per-client write rate limits, bounded queue, one pending pairing at a time). All writes go
   through one serialized queue with per-job deadlines; right before each job it re-checks
-  that Agent access is on and the client is still authorized, and tag/note/delete mutations
-  re-read the papers (`add_paper` relies on the pipeline's own reads). Agent tags may not use
+  that Agent access is on and the client is still authorized. A tag, note, attach or delete
+  change is one operation of PaperMemory's single-writer Memory queue, which checks it
+  (arguments, note length, and ownership for a deletion) on the papers as stored, in the
+  same step that makes it, so no other write comes between the check and the change
+  (`add_paper` writes through the pipeline's own queue operations). Agent tags may not use
   the `proj-` prefix, which is reserved for **Project tags**. Revoking a client or turning Agent access off cancels its queued jobs, and
   a closed agent connection drops its own (a job already running finishes). Operations never
   expose settings, the Gist PAT, backups or arbitrary storage keys; writes are limited to adding
@@ -86,9 +89,10 @@ and Firefox, all lifecycle checks passed, including 65 min and 8 h idles).
   per client name, and a pairing whose requester disconnected expires. The zip and submit npm
   scripts refuse to run when `WXT_PM_AGENT_TEST` is set, so a test build (which has
   `nativeMessaging` as a required permission) cannot be published.
-- **Ownership is a capability, not a claim.** **Provenance** is written inside the pipeline
-  from its own "new paper" outcome, so a duplicate (including a fuzzy match whose id changes)
-  gains tags and Project membership but never Provenance. With a **Project**, an **Own
+- **Ownership is a capability, not a claim.** **Provenance** is written by the Memory queue
+  only when the pipeline's first write creates the paper, so a duplicate (including a fuzzy
+  match whose id changes, or a paper another page stored meanwhile) gains tags and Project
+  membership but never Provenance. With a **Project**, an **Own
   addition** is a paper this **Paired client** added in the same Project, in any session; the
   **Project key** is an HMAC of the **Project folder** path under a per-install secret salt,
   held by the MCP server and never given to the model. Without a Project (home directory,
@@ -132,17 +136,20 @@ and Firefox, all lifecycle checks passed, including 65 min and 8 h idles).
   documents only get `chrome.runtime`, so the background proxies their storage calls, only
   while the document exists (from just before it is created, since its initialization reads
   storage), only from that document, never returning sync credentials, backups or Agent access
-  keys, and writing only the paper keys (other writes, such as backups, are dropped because
-  other PaperMemory contexts, popup and content scripts, perform them). On Firefox the
+  keys, and writing only `urlHashToId` (its Memory writes are queue operations sent to the
+  background like a page's; other writes, such as backups, are dropped because other
+  PaperMemory contexts, popup and content scripts, perform them). On Firefox the
   background is an MV2 page with a DOM, so the same ingest code runs there directly, after
   initializing state like a content script before each job, and no proxy exists; because a
   context never receives its own runtime messages, Agent access makes the Firefox background
   call its own message handler directly, so Sources that fetch through the background still
   work. A failure inside ingest reaches the agent only as a generic `failed`. The pipeline
-  gains one optional hook that applies the agent's tags, Project membership and Provenance
-  before each of its writes and reports whether the paper was new and when processing has
-  finished, so later enrichment writes cannot drop them and the agent is answered only after
-  the final write. On Firefox a job that misses its deadline cannot be aborted and may still
+  gains one optional parameter: its first write's operation carries the agent's tags, Project
+  membership and Provenance, which the Memory queue applies to the paper as stored
+  (Provenance only when that operation creates it); its later enrichment write changes
+  publication fields only, so it cannot drop them. The pipeline reports whether the paper
+  was new and when processing has finished, so the agent is answered only after the final
+  write. On Firefox a job that misses its deadline cannot be aborted and may still
   complete later; the agent gets `timeout-may-complete`, and a late paper still carries the
   **Review tag** and **Provenance**, so it stays visible and deletable by its client.
 - **Install durability and updates.** `install` copies a single-file bundled MCP server and
@@ -160,7 +167,8 @@ and Firefox, all lifecycle checks passed, including 65 min and 8 h idles).
   polls) and requires an explicit `libraryId` when more than one is connected.
 - **Gist sync stays last-writer-wins.** Agent writes are ordinary writes followed by a push;
   an agent addition can be lost if another device pushes first, exactly like a user edit today.
-  Accepted for v1 and documented for users.
+  Accepted for v1 and documented for users. A pull that finds this browser's own last upload
+  applies nothing, so it cannot undo an agent's write made since.
 - **Store policies.** Chrome Web Store listing and `docs/privacy-policy.md` must disclose that,
   when Agent access is on, library data is sent to local agent programs the user pairs (which
   may forward it to an AI provider). For Firefox, the feature is opt-in with explicit consent

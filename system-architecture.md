@@ -154,7 +154,8 @@ port → `agentAccess.js` in the background → operation handlers.
   injected `pushSyncPapers` and the message handler): connects the native port,
   authorizes every op (per-client secret hash, rate limit, bounded queue), runs one
   serialized mutation queue with per-job deadlines, handles pairing and the storage
-  proxy, and re-connects from a 1-minute `alarms` alarm.
+  proxy, and re-connects from a 1-minute `alarms` alarm. Its changes to papers are
+  `agent` operations of the Memory's queue (`memoryQueue.js`, see _Concurrency_).
 - **`src/shared/js/utils/agentOps.js`**: pure operations (argument validation and
   bounds, tag rules, search, Project papers, BibTeX export, Provenance, ownership,
   rate check), no `chrome.*`, unit-tested in `test/test-agent-ops.js`.
@@ -162,16 +163,18 @@ port → `agentAccess.js` in the background → operation handlers.
   `addOrUpdatePaper` pipeline with its new `agent` parameter. Chrome's service worker
   has no `DOMParser`, so it runs in the **offscreen document**
   (`src/entrypoints/agentIngest/`, reason `DOM_PARSER`), which has only
-  `chrome.runtime`: its `chrome.storage` is a **storage proxy** to the background
-  (hidden keys, only `papers` and `urlHashToId` writable, only while the document
-  exists), and since it lacks `getManifest` it reads the packaged `manifest.json`
+  `chrome.runtime`: its Memory writes are queue operations sent to the background like
+  a page's (`memoryOp`, `{ type: "memory" }`), and its `chrome.storage` is a **storage
+  proxy** to the background (hidden keys, only `urlHashToId` writable, only while the
+  document exists); since it lacks `getManifest` it reads the packaged `manifest.json`
   before `initState`. On Firefox (MV2 background page with a DOM) it runs directly
   in the background.
 - **Options page** ([`src/options/agentAccessUI.js`](src/options/agentAccessUI.js)):
-  the Agent access toggle (requests the optional `nativeMessaging` permission in the
-  click's gesture), connection status, the pairing prompt (Allow / Deny, accepted only
-  from the options tab the background opened for it) and the **Paired clients** list
-  with Revoke.
+  its "Agent access" section (between Sync and Keyboard shortcuts) holds the Agent
+  access toggle (requests the optional `nativeMessaging` permission in the click's
+  gesture), connection status and the **Paired clients** list with Revoke; the pairing
+  prompt (Allow / Deny, accepted only from the options tab the background opened for
+  it) is a card above the settings.
 
 ```mermaid
 sequenceDiagram
@@ -180,19 +183,22 @@ sequenceDiagram
     participant H as Native host
     participant B as Background (agentAccess.js)
     participant I as Ingest (offscreen / background)
+    participant Q as Memory queue (background)
     A->>M: tool call add_paper(url, reason)
     M->>H: NDJSON request + auth (clientId, secret, session, project key)
     H->>B: native message (id remapped per connection)
     B->>B: authorize, validate, enqueue
     B->>I: ingest job (url, tags, provenance, project hash)
-    I->>I: addOrUpdatePaper with agent fields
+    I->>Q: addOrUpdatePaper: merge / visit carrying the agent fields, then patch
     I-->>B: stored / already-present / failed
+    B->>Q: agent op: the note, checked on the paper as stored
     B-->>H: result
     H-->>M: reply
     M-->>A: tool result
 ```
 
-Agent writes are ordinary writes followed by a coalesced Gist push, so sync stays
+Agent writes are Memory operations followed by a Gist push (`pushSyncPapers`: uploads
+run one at a time, those asked for meanwhile share the next one), so sync stays
 last-writer-wins.
 
 ### Why the background worker brokers fetches
@@ -334,9 +340,11 @@ funnel through which papers enter the Memory. Its pipeline: resolve id
 (`parseIdFromUrl`) → update-visit-or-`makePaper` → fuzzy-dedup merge
 (`mergePapers`) → save through the
 background queue (`memoryOp`: `visit` / `merge`) → `pushToRemote` → asynchronous preprint
-matching (`tryPreprintMatch`) to backfill venue/bibtex → second save (`patch`). An optional `agent` parameter (`{tags, provenance, projectHash}`, Agent access) applies the
-agent's tags, Project membership and, on a new paper only, Provenance before each write and
-reports `isNew` and completion. Caller-supplied `contentScriptCallbacks`
+matching (`tryPreprintMatch`) to backfill venue/bibtex → second save (`patch`). An optional `agent` parameter (`{tags, provenance, projectHash}`, Agent access) goes with the
+first save's operation: the queue adds the agent's tags and Project membership to the paper
+as stored, and Provenance only when that `merge` creates it; the `patch` writes publication
+fields only. It also returns `isNew` (the save's answer) and `done` (after the last write).
+Caller-supplied `contentScriptCallbacks`
 (`update`/`preprints`/`done`/`feedback`) let the content script render progressive
 feedback. `makePaper` dispatches to `src.parse()` and stamps `paper.source`.
 
@@ -438,7 +446,9 @@ HuggingFace pages.
 **Location:** [`src/shared/js/utils/sync.js`](src/shared/js/utils/sync.js)
 Optional cross-device sync via a private GitHub Gist using a user-supplied Personal
 Access Token (`@octokit/request`). `getIdentifier` stamps writes with a per-device
-`__syncId` so a device ignores its own echoes on pull. `pushToRemote` is fired
+`__syncId` so a device ignores its own echoes on pull: the background answers
+`{ sameDevice: true }` and the page applies nothing (writing its Memory back would undo
+what changed since it was read). `pushToRemote` is fired
 after every storage write; pull/merge happens on init and popup connect.
 
 ### Supporting utilities
@@ -478,9 +488,12 @@ the `downloads` API), `functions.js` (49 misc helpers incl. `miniHash`,
   snapshot, never the source of truth at write time. `ignoreSources` is written the same
   way (`applyIgnoreSources`). `updateDuplicatedUrls` (not queued) re-reads
   `urlHashToId` before applying its change and writing the map back.
-- **Agent writes** go through one serialized queue in `agentAccess.js`; before each job it
-  re-checks that Agent access is on and the client still authorized, and non-add mutations
-  re-read `papers` (adds rely on the pipeline's own read-before-write).
+- **Agent writes** run one job at a time in `agentAccess.js`; before each job it re-checks
+  that Agent access is on and the client still authorized. Each change to papers is one
+  `agent` operation of the Memory's queue (background only: it carries a function), which
+  checks the arguments, the note length and, for a deletion, ownership on the papers as
+  stored, in the same step that changes them. An add's writes are the pipeline's `merge` /
+  `visit` (carrying the agent fields) and `patch`.
 - **Pattern mutual exclusion** across sources is a hard invariant (test-enforced).
 - **No top-level use of `functions.js` exports inside source modules** (TDZ — see
   the `base.js` constraint above).
