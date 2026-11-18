@@ -2,6 +2,7 @@
 import { cleanPapers } from "@pmu/functions.js";
 import { paperToAbs } from "@pmu/paper.js";
 import { bibtexToString } from "@pmu/bibtexParser.js";
+import { urlToDoi } from "@pmu/urls.js";
 
 // Pure operations behind Agent access (see CONTEXT.md § Agent access): argument
 // bounds, Summaries, searches, Project tags, tag and note edits, Provenance and
@@ -119,8 +120,8 @@ const ARG_BOUNDS = {
         rule: "a string of at most 256 characters",
     },
     url: {
-        check: (v) => isString(v, 0, 2048) && isHttpUrl(v),
-        rule: "an http or https URL of at most 2048 characters",
+        check: (v) => isString(v, 0, 2048) && (isHttpUrl(v) || Boolean(urlToDoi(v))),
+        rule: "an http or https URL, or a DOI (doi:10.… or 10.…), of at most 2048 characters",
     },
     tags: {
         check: (v) => {

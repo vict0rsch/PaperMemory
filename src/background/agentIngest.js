@@ -2,6 +2,7 @@
 import { logError } from "@pmu/functions.js";
 import { isPaper, addOrUpdatePaper } from "@pmu/paper.js";
 import { knownPaperPages } from "@pmu/sources/index.js";
+import { urlToDoi, resolveDoi } from "@pmu/urls.js";
 
 // Agent access ingest (see CONTEXT.md § Agent access): a paper a Paired client adds
 // goes through the same Detect → Parse → Store pipeline as a visited page. On Chrome
@@ -32,23 +33,37 @@ const WRITABLE_KEYS = ["urlHashToId"];
  * agent's tags, Project membership and Provenance, which the Memory's queue adds to the
  * paper as stored (Provenance only to a paper that write creates; a paper already stored
  * is only attached).
- * @param {object} job {url, tags, provenance, projectHash}
- * @returns {Promise<object>} {status, id?}: `stored` (new paper) or
+ * @param {object} job {url, tags, provenance, projectHash}: `url` may be a DOI (urlToDoi),
+ * whose registered page is added as if it were `url`
+ * @returns {Promise<object>} {status, id?, resolvedUrl?, message?}: `stored` (new paper) or
  * `already-present`, with the paper's id; `unsupported-url` if no Source detects the
- * URL; `failed` if parsing failed or threw, the write failed, or the stored paper it
- * found was deleted meanwhile
+ * URL (for a DOI, `resolvedUrl`: the page it resolved to), or with `message` if the DOI
+ * could not be resolved; `failed` if parsing failed or threw, the write failed, or the
+ * stored paper it found was deleted meanwhile
  */
 export const ingest = async ({ url, tags, provenance, projectHash }) => {
     try {
+        const doi = urlToDoi(url);
+        if (doi) {
+            url = await resolveDoi(doi);
+            if (!url)
+                return {
+                    status: "unsupported-url",
+                    message: "DOI could not be resolved",
+                };
+        }
         const is = await isPaper(url, true);
         if (!Object.keys(knownPaperPages).some((source) => is[source] === true)) {
-            return { status: "unsupported-url" };
+            return doi
+                ? { status: "unsupported-url", resolvedUrl: url }
+                : { status: "unsupported-url" };
         }
         const r = await addOrUpdatePaper({
             url,
             is,
             store: true,
             agent: { tags, provenance, projectHash },
+            doi,
         });
         if (!r) return { status: "failed" };
         await r.done;

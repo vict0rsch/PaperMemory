@@ -85,6 +85,34 @@ describe("Bibtex parser", function () {
     });
 });
 
+/**
+ * Replace fetch with the DOI Handle API's answer, without network: `answer` is the URL the
+ * DOI is registered to, null for a DOI that is not registered (404), an Error to throw (e.g.
+ * offline), or a Response. Returns the calls ({url, options}) and a function restoring fetch.
+ */
+const stubHandleApi = (answer) => {
+    const { fetch } = global;
+    const calls = [];
+    global.fetch = async (url, options) => {
+        calls.push({ url: String(url), options });
+        if (answer instanceof Error) throw answer;
+        if (answer instanceof Response) return answer;
+        if (answer === null) {
+            const notFound = { responseCode: 100, handle: "10.1000/x" };
+            return new Response(JSON.stringify(notFound), { status: 404 });
+        }
+        const registered = {
+            responseCode: 1,
+            handle: "10.1000/x",
+            values: [
+                { index: 1, type: "URL", data: { format: "string", value: answer } },
+            ],
+        };
+        return new Response(JSON.stringify(registered), { status: 200 });
+    };
+    return { calls, restore: () => (global.fetch = fetch) };
+};
+
 describe("paper.js", () => {
     var allUrls = readJSON("./test/data/urls.json");
 
@@ -688,6 +716,125 @@ describe("paper.js", () => {
             expect(ended).toBe("done");
             expect(storage.papers[id]).toBeDefined();
         });
+
+        describe("an agent's add of a DOI: the page it is registered to", () => {
+            const doi = "10.1021/acs.jpca.9b00311";
+            const page = `https://pubs.acs.org/doi/${doi}`;
+
+            it("is parsed and stored, with the DOI its page does not give", async () => {
+                const api = stubHandleApi(page);
+                try {
+                    const outcome = await ingest({
+                        url: `https://doi.org/${doi}`,
+                        ...agentFields,
+                    });
+                    expect(outcome).toEqual({ status: "stored", id });
+                    // one request: the DOI Handle API
+                    expect(api.calls.map((c) => c.url)).toEqual([
+                        `https://doi.org/api/handles/${encodeURIComponent(doi)}?type=URL`,
+                    ]);
+                    expect(storage.papers[id]).toMatchObject({
+                        doi,
+                        title: "CO2 reduction",
+                        tags: ["review", "proj-demo"],
+                        provenance: agentFields.provenance,
+                    });
+                } finally {
+                    api.restore();
+                }
+            });
+
+            it("keeps the DOI its page gives", async () => {
+                const parseWithoutDoi = acs.parse;
+                acs.parse = async () => ({ ...(await parseWithoutDoi()), doi });
+                const api = stubHandleApi(page);
+                try {
+                    // a DOI in another case (DOIs ignore case): the page's is kept
+                    const outcome = await ingest({
+                        url: `doi:${doi.toUpperCase()}`,
+                        ...agentFields,
+                    });
+                    expect(outcome).toEqual({ status: "stored", id });
+                    expect(storage.papers[id].doi).toBe(doi);
+                } finally {
+                    acs.parse = parseWithoutDoi;
+                    api.restore();
+                }
+            });
+
+            it("is only attached when it is stored: its DOI is unchanged", async () => {
+                storage.papers = { [id]: stored };
+                const api = stubHandleApi(page);
+                try {
+                    const outcome = await ingest({
+                        url: `http://dx.doi.org/${doi}`,
+                        ...agentFields,
+                    });
+                    expect(outcome).toEqual({ status: "already-present", id });
+                    const paper = storage.papers[id];
+                    expect(paper.tags).toEqual(["mytag", "review", "proj-demo"]);
+                    expect(paper).not.toHaveProperty("doi");
+                    expect(paper).not.toHaveProperty("provenance");
+                } finally {
+                    api.restore();
+                }
+            });
+
+            it("answers unsupported-url with that page when no Source supports it", async () => {
+                const other =
+                    "https://www.tandfonline.com/doi/full/10.1080/00000000.2020.1234567";
+                const api = stubHandleApi(other);
+                try {
+                    const outcome = await ingest({
+                        url: "10.1080/00000000.2020.1234567",
+                        ...agentFields,
+                    });
+                    expect(outcome).toStrictEqual({
+                        status: "unsupported-url",
+                        resolvedUrl: other,
+                    });
+                    expect(storage.papers).toBeUndefined();
+                } finally {
+                    api.restore();
+                }
+            });
+
+            for (const [why, answer] of [
+                ["it is not registered", null],
+                ["doi.org cannot be reached", new Error("offline")],
+            ]) {
+                it(`answers unsupported-url with a message when ${why}`, async () => {
+                    const api = stubHandleApi(answer);
+                    try {
+                        const outcome = await ingest({
+                            url: `doi:${doi}`,
+                            ...agentFields,
+                        });
+                        expect(outcome).toStrictEqual({
+                            status: "unsupported-url",
+                            message: "DOI could not be resolved",
+                        });
+                        expect(storage.papers).toBeUndefined();
+                    } finally {
+                        api.restore();
+                    }
+                });
+            }
+
+            it("is not looked up for a URL that is not a DOI", async () => {
+                const api = stubHandleApi(page);
+                try {
+                    const outcome = await ingest({
+                        url: "https://example.com/paper.pdf",
+                        ...agentFields,
+                    });
+                    expect(outcome).toStrictEqual({ status: "unsupported-url" });
+                    expect(api.calls).toEqual([]);
+                } finally {
+                    api.restore();
+                }
+            });
+        });
     });
 });
 
@@ -802,6 +949,111 @@ describe("unwrapUrl", () => {
             "ACS_101021acsjctc2c00001",
         );
     });
+});
+
+describe("urlToDoi", () => {
+    const doi = "10.1109/TMTT.2018.2840982";
+    const sici = "10.1002/(SICI)1097-4636(199706)35:4<487::AID-JBM8>3.0.CO;2-L";
+
+    for (const [given, expected] of [
+        [`https://doi.org/${doi}`, doi],
+        [`http://doi.org/${doi}`, doi],
+        [`http://dx.doi.org/${doi}`, doi],
+        [`https://dx.doi.org/${doi}`, doi],
+        [`https://www.doi.org/${doi}`, doi],
+        [`HTTPS://DOI.ORG/${doi}`, doi],
+        // its query is not part of the DOI
+        [`https://doi.org/${doi}?locatt=mode:legacy`, doi],
+        [`doi:${doi}`, doi],
+        [`DOI:${doi}`, doi],
+        [doi, doi],
+        [`  ${doi}\n`, doi],
+        // URLs and doi: URIs are percent-decoded, a bare DOI is taken as is
+        ["https://doi.org/10.1109%2FTMTT.2018.2840982", doi],
+        [`https://doi.org/${encodeURIComponent(sici)}`, sici],
+        [`https://doi.org/${sici}`, sici],
+        ["doi:10.1000/a%3Fb", "10.1000/a?b"],
+        ["10.1000/100%25", "10.1000/100%25"],
+    ]) {
+        it(`reads ${JSON.stringify(given)}`, () => {
+            expect(PMUtils.urls.urlToDoi(given)).toEqual(expected);
+        });
+    }
+
+    for (const given of [
+        "https://arxiv.org/abs/1706.03762",
+        `https://example.com/${doi}`,
+        `https://doi.org.example.com/${doi}`,
+        `ftp://doi.org/${doi}`,
+        "https://doi.org/",
+        `https://doi.org/api/handles/${doi}`,
+        "javascript:alert(1)",
+        "doi:javascript:alert(1)",
+        "file:///etc/hosts",
+        `doi.org/${doi}`,
+        "doi:",
+        "10.1109",
+        "10.12/abc",
+        "11.1109/TMTT.2018.2840982",
+        "10.1109/with space",
+        "doi:10.1109/{brace}",
+        // decoded, a line break is not part of a DOI
+        "https://doi.org/10.1109/a%0Ab",
+        // a malformed percent-encoding
+        "doi:10.1000/a%zz",
+        "",
+        undefined,
+        null,
+        42,
+    ]) {
+        it(`rejects ${JSON.stringify(given)}`, () => {
+            expect(PMUtils.urls.urlToDoi(given)).toBeUndefined();
+        });
+    }
+});
+
+describe("resolveDoi", () => {
+    const doi = "10.1109/TMTT.2018.2840982";
+    const page = "https://ieeexplore.ieee.org/document/8384009/";
+    // fetchJSON logs its failures (e.g. offline)
+    const { log } = console;
+    before(() => (console.log = () => {}));
+    after(() => (console.log = log));
+
+    it("answers the URL the DOI Handle API has for the DOI, within a deadline", async () => {
+        const api = stubHandleApi(page);
+        try {
+            expect(await PMUtils.urls.resolveDoi(doi)).toBe(page);
+            expect(api.calls.map((c) => c.url)).toEqual([
+                "https://doi.org/api/handles/10.1109%2FTMTT.2018.2840982?type=URL",
+            ]);
+            expect(api.calls[0].options.signal).toBeInstanceOf(AbortSignal);
+        } finally {
+            api.restore();
+        }
+    });
+
+    const json = (body, status = 200) => new Response(JSON.stringify(body), { status });
+    for (const [why, answer] of [
+        ["the DOI is not registered", null],
+        ["doi.org cannot be reached", new Error("offline")],
+        ["the request timed out", new DOMException("timed out", "TimeoutError")],
+        ["it has no URL for the DOI", json({ responseCode: 200, values: [] })],
+        ["its answer is not JSON", new Response("<html></html>", { status: 200 })],
+        ["it answers an error code", json({ responseCode: 2, values: [] }, 500)],
+        ["the URL is not http or https", "ftp://example.org/paper.pdf"],
+        ["the URL is javascript:", "javascript:alert(1)"],
+        ["the URL is not a URL", "not a url"],
+    ]) {
+        it(`answers undefined when ${why}`, async () => {
+            const api = stubHandleApi(answer);
+            try {
+                expect(await PMUtils.urls.resolveDoi(doi)).toBeUndefined();
+            } finally {
+                api.restore();
+            }
+        });
+    }
 });
 
 describe("functions.js", () => {

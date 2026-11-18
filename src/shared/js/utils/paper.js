@@ -312,6 +312,8 @@ export const updatePaperVisits = (paper) => {
  * A paper already stored (its id, a url resolving to it, or a fuzzy match) is only
  * attached: a visit carrying these fields, without merge, promotion, url remapping or
  * publication lookup
+ * @param {string} doi The DOI `url` was resolved from (an add without a tab), the parsed
+ * paper's DOI when its page gives none
  * @returns {Promise<{paper: object, id: string, saving: Promise, isNew: boolean, done:
  * Promise}|undefined>} The paper and its id (`paper.id`, not the id resolved from `url`;
  * once `saving` has answered, the id written), or undefined if parsing failed; `saving`:
@@ -333,6 +335,7 @@ export const addOrUpdatePaper = async ({
         feedback: null,
     },
     agent = null,
+    doi = null,
 }) => {
     // start time
     const aouStart = Date.now();
@@ -373,6 +376,7 @@ export const addOrUpdatePaper = async ({
         if (!newPaper) {
             return;
         }
+        if (doi && !newPaper.doi) newPaper.doi = doi;
         state.titleHashToIds = makeTitleHashToIdList(state.papers);
         const existingId = findFuzzyPaperMatch(state.titleHashToIds, newPaper);
         // an agent's add of a stored paper (the parsed id, else a fuzzy match) only

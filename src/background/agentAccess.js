@@ -418,11 +418,13 @@ const addPaper = async (job) => {
         projectLabel: project?.label,
         reason: args.reason,
     });
-    const { status, id } =
+    const { status, id, resolvedUrl, message } =
         (await runIngest({ url: args.url, tags, provenance, projectHash })) ?? {};
     // past its deadline, the job was answered timeout-may-complete
     if (job.expired) return;
-    if (status === "unsupported-url") return { result: { status } };
+    // for a DOI: the page it resolved to, or why it could not be resolved
+    if (status === "unsupported-url")
+        return { result: { status, resolvedUrl, message } };
     if (status !== "stored" && status !== "already-present") {
         return { result: { status: "failed", message: FAILED_MESSAGE } };
     }

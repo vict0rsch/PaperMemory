@@ -335,7 +335,11 @@ export async function serve() {
         "add_paper",
         `Add a paper to the user's library from its URL (a paper page PaperMemory supports, such as arXiv or OpenReview). PaperMemory tags it \`review\`, plus your tags and, with a project, the Project tag, and records which agent added it and why. Search before adding (search_papers), so you do not add a paper the user already has. Always give a concrete \`reason\`. ${PROJECT_RULE} ${DATA_RULE}`,
         {
-            url: z.string().describe("Paper URL, http or https (at most 2,048 characters)."),
+            url: z
+                .string()
+                .describe(
+                    "Paper URL, http or https, or a DOI (a doi.org URL, doi:10.… or a bare 10.…), which PaperMemory resolves to the publisher's page (at most 2,048 characters).",
+                ),
             tags,
             reason: z.string().describe("Why you add this paper, concretely (1–500 characters)."),
             note: z.string().optional().describe("Note to store with the paper (at most 2,000 characters)."),

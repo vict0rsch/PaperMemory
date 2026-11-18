@@ -2,6 +2,13 @@ import { cleanPapers, urlToWebsiteId, miniHash } from "@pmu/functions.js";
 import { isPaper } from "@pmu/paper.js";
 import { state } from "@pmu/config.js";
 import { getSource, SOURCE_DISPATCH_ORDER, unwrapUrl } from "@pmu/sources/index.js";
+import { fetchJSON } from "@pmu/parsers.js";
+import { validDoi } from "@pmu/preprintMatching.js";
+
+// doi.org's hosts
+const DOI_HOSTS = ["doi.org", "dx.doi.org", "www.doi.org"];
+// how long the DOI Handle API may take before the request is aborted (ms)
+const DOI_TIMEOUT = 5000;
 
 /**
  * Find the first paper from a source whose #id matches a certain string.
@@ -92,6 +99,60 @@ export const parseIdFromUrl = async (url, tab = null) => {
 };
 
 export const isArxivAbstractUrl = (url) => url.startsWith("https://arxiv.org/abs/");
+
+/**
+ * The DOI given in place of a paper URL, for an add without a tab (an agent's add_paper,
+ * the options page's import): a doi.org URL (`https://doi.org/…`, `http://dx.doi.org/…`,
+ * `https://www.doi.org/…`) or a `doi:…` URI, both percent-decoded, or a bare DOI (`10.…`)
+ * @param {string} url
+ * @returns {string|undefined} The DOI (as validDoi accepts it), else undefined
+ */
+export const urlToDoi = (url) => {
+    if (typeof url !== "string") return undefined;
+    const value = url.trim();
+    if (/^10\./.test(value)) return validDoi(value);
+    let encoded;
+    if (/^doi:/i.test(value)) {
+        encoded = value.slice(4);
+    } else {
+        let parsed;
+        try {
+            parsed = new URL(value);
+        } catch (e) {
+            return undefined;
+        }
+        const { protocol, hostname, pathname } = parsed;
+        if (!/^https?:$/.test(protocol) || !DOI_HOSTS.includes(hostname))
+            return undefined;
+        encoded = pathname.slice(1);
+    }
+    try {
+        return validDoi(decodeURIComponent(encoded));
+    } catch (e) {
+        return undefined; // a malformed percent-encoding
+    }
+};
+
+/**
+ * The URL a DOI is registered to, from the DOI Handle API (doi.org)
+ * @param {string} doi A DOI (see urlToDoi)
+ * @returns {Promise<string|undefined>} Its http or https URL; undefined if the DOI is not
+ * registered, or if the API failed or did not answer within DOI_TIMEOUT
+ */
+export const resolveDoi = async (doi) => {
+    const { data } = await fetchJSON(
+        `https://doi.org/api/handles/${encodeURIComponent(doi)}?type=URL`,
+        { signal: AbortSignal.timeout(DOI_TIMEOUT) },
+    );
+    try {
+        const url = data.values.find((v) => v.type === "URL").data.value;
+        if (data.responseCode === 1 && /^https?:$/.test(new URL(url).protocol))
+            return url;
+    } catch (e) {
+        // not registered (no answer data), no URL value, or an unexpected answer
+    }
+    return undefined;
+};
 
 export const getCurrentUserTab = () =>
     new Promise((resolve) => {

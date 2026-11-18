@@ -652,6 +652,27 @@ describe("Agent access background", () => {
             }
         });
 
+        it("adds a DOI: unsupported-url answers the page it resolved to, or why it was not resolved", async () => {
+            const doi = "10.1080/00000000.2020.1234567";
+            const resolvedUrl = `https://www.tandfonline.com/doi/full/${doi}`;
+            ingest = async () => ({ status: "unsupported-url", resolvedUrl });
+            const args = { url: doi, tags: [], reason: "Why" };
+            const unsupported = await request(18, "add_paper", args, auth);
+            // the pipeline gets the DOI as given: it resolves it
+            expect(ingested.at(-1).url).toBe(doi);
+            expect(unsupported.result).toEqual({
+                status: "unsupported-url",
+                resolvedUrl,
+            });
+
+            const message = "DOI could not be resolved";
+            ingest = async () => ({ status: "unsupported-url", message });
+            const doiArgs = { ...args, url: `doi:${doi}` };
+            const unresolved = await request(18, "add_paper", doiArgs, auth);
+            expect(ingested.at(-1).url).toBe(`doi:${doi}`);
+            expect(unresolved.result).toEqual({ status: "unsupported-url", message });
+        });
+
         // a change that passed the checks before it runs, held in the Memory's queue behind
         // a slow operation (e.g. a large replace) until `release`
         const holdMemoryQueue = () => {

@@ -174,7 +174,13 @@ port → `agentAccess.js` in the background → operation handlers.
   proxy** to the background (hidden keys, only `urlHashToId` writable, only while the
   document exists); since it lacks `getManifest` it reads the packaged `manifest.json`
   before `initState`. On Firefox (MV2 background page with a DOM) it runs directly
-  in the background.
+  in the background. A `url` that is a DOI (a doi.org URL, `doi:…` or a bare `10.…`:
+  `urlToDoi` in `urls.js`) is first resolved to the page it is registered to
+  (`resolveDoi`: the DOI Handle API, `doi.org/api/handles/<doi>?type=URL`, 5 s, http(s)
+  only), which is then added as if the agent had given it; the paper keeps the DOI when
+  its page gives none (`addOrUpdatePaper`'s `doi`). A DOI that cannot be resolved answers
+  `unsupported-url` with a `message`; one registered to a page no Source supports,
+  `unsupported-url` with that `resolvedUrl`.
 - **Options page** ([`src/options/agentAccessUI.js`](src/options/agentAccessUI.js)):
   its "Agent access" section (between Sync and Keyboard shortcuts) holds the Agent
   access toggle (requests the optional `nativeMessaging` and `notifications` permissions
@@ -431,7 +437,8 @@ HuggingFace pages.
   (`onPapersChange`), held while an edit form, a dialog or a bulk action is in progress;
   no periodic reload. Sync status comes from `sync.js` as a `pm-sync-status` DOM event.
 - **options** — preferences, custom PDF-title function, auto-tag rules, JSON/BibTeX
-  import & export, sync configuration. The sources picker (`ignoreSources`) is shared with the
+  import & export (the import from URLs also takes DOIs, resolved to their pages as for an
+  agent's add), sync configuration. The sources picker (`ignoreSources`) is shared with the
   welcome page: `src/shared/js/sourcePicker.js` + `src/shared/html/source-picker.html`. Its
   changes are `{source: bool}` patches applied by the background, and every open picker
   re-renders on `ignoreSources` storage changes.
@@ -463,7 +470,8 @@ after every storage write; pull/merge happens on init and popup connect.
 
 ### Supporting utilities
 
-`data.js` (storage/migration/validation/prefs), `urls.js` (id resolution),
+`data.js` (storage/migration/validation/prefs), `urls.js` (id resolution, and a DOI's
+registered URL for adds without a tab),
 `parsers.js` (DOM/JSON/BibTeX fetch helpers + DC meta-tag extraction),
 `bibtexParser.js`, `files.js` (matching downloaded PDFs in `PaperMemoryStore/` via
 the `downloads` API), `functions.js` (49 misc helpers incl. `miniHash`,
@@ -527,7 +535,7 @@ the `downloads` API), `functions.js` (49 misc helpers incl. `miniHash`,
   (`pretest`) then runs Mocha. The cloakbrowser binary (~200MB) auto-downloads
   to `~/.cloakbrowser` on first use; CI caches it via `actions/cache`.
 - **External APIs (no project backend):** arXiv, OpenReview, GitHub Gist, CrossRef,
-  DBLP, Semantic Scholar, OpenAlex, Google Scholar.
+  DBLP, Semantic Scholar, OpenAlex, Google Scholar, the DOI Handle API (doi.org).
 - **Permissions:** `activeTab`, `storage`, `unlimitedStorage`, `downloads`(+`.open`),
   `scripting`, `alarms`, `offscreen` (Chrome build only), optional `nativeMessaging` and
   `notifications` (requested together when Agent access is turned on; granted at install only in

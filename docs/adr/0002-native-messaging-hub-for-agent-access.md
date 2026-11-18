@@ -82,7 +82,7 @@ and Firefox, all lifecycle checks passed, including 65 min and 8 h idles).
   opened for it, so content scripts (which share the extension id) and replays are ignored.
   PaperMemory stores only a SHA-256 hash and lists **Paired clients** with a **Revoke** button.
   Every operation is authorized at PaperMemory's operation boundary, not by the host, against
-  fixed bounds (http/https URLs only, unknown arguments rejected, length caps, tag limits,
+  fixed bounds (http/https URLs or DOIs only, unknown arguments rejected, length caps, tag limits,
   per-client write rate limits, bounded queue, one pending pairing at a time). All writes go
   through one serialized queue with per-job deadlines; right before each job it re-checks
   that Agent access is on and the client is still authorized, and the Memory step that makes
@@ -183,6 +183,15 @@ and Firefox, all lifecycle checks passed, including 65 min and 8 h idles).
   only after the final write. On Firefox a job that misses its deadline cannot be aborted and may still
   complete later; the agent gets `timeout-may-complete`, and a late paper still carries the
   **Review tag** and **Provenance**, so it stays visible and deletable by its client.
+- **A DOI is added as the publisher's page.** `add_paper` also takes a DOI as its `url` (a
+  doi.org URL, `doi:…` or a bare `10.…`). Ingest asks the DOI Handle API
+  (`https://doi.org/api/handles/<doi>?type=URL`, 5 s timeout) for the URL the DOI is
+  registered to, accepts only http(s), and adds that page through the same pipeline as if
+  the agent had given its URL; the paper keeps the DOI when its page gives none. There is
+  still no generic fallback: a DOI that cannot be resolved (not registered, doi.org
+  unreachable) answers `unsupported-url` with a `message`, and one registered to a page no
+  **Source** supports answers `unsupported-url` with that `resolvedUrl`. Normal browsing
+  is unchanged.
 - **Install durability and updates.** `install` copies a single-file bundled MCP server and
   the host (no runtime dependencies) into `~/.papermemory/bin/` with node-discovering shell
   wrappers (recorded path, Homebrew, `/usr/local`, nvm, Volta, fnm, `PATH`), because

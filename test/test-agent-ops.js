@@ -159,6 +159,38 @@ describe("agentOps.js", () => {
                 add({ url: longUrl(2049) }),
                 "bad-args",
             ],
+            // a DOI instead of a url
+            [
+                "a doi.org url",
+                "add_paper",
+                add({ url: "https://doi.org/10.1109/TMTT.2018.2840982" }),
+                null,
+            ],
+            [
+                "a doi: DOI",
+                "add_paper",
+                add({ url: "doi:10.1109/TMTT.2018.2840982" }),
+                null,
+            ],
+            [
+                "a bare DOI",
+                "add_paper",
+                add({ url: "10.1109/TMTT.2018.2840982" }),
+                null,
+            ],
+            [
+                "a doi: that is not a DOI",
+                "add_paper",
+                add({ url: "doi:javascript:alert(1)" }),
+                "bad-args",
+            ],
+            ["a bare DOI prefix", "add_paper", add({ url: "10.1109" }), "bad-args"],
+            [
+                "a DOI longer than 2048 characters",
+                "add_paper",
+                add({ url: `10.1109/${"x".repeat(2041)}` }),
+                "bad-args",
+            ],
             // query, limit, offset
             [
                 "a 256-character query",

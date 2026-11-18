@@ -174,7 +174,7 @@ Code links are added by hand on a paper, in its Code field. See [Code links](fea
 
 - **Export everything**: _Memory_ (the full backup, `.json`), _BibTeX_ (`.bib`) or _BibTeX as JSON_.
 - **Export by tag**: the papers that have any (or all) of the chosen tags, as `.bib`, `.json` or `.json` (URLs only).
-- **Import papers from URLs**: a `.json` list of paper URLs, optionally with tags and a code link. Papers are fetched one at a time. The expected format is shown on the page.
+- **Import papers from URLs**: a `.json` list of paper URLs or DOIs (read from the publisher's page they lead to), optionally with tags and a code link. Papers are fetched one at a time. The expected format is shown on the page.
 - **Replace your Memory from a backup**: overwrites all your papers with a `.json` backup. A copy of the current Memory is downloaded first.
 
 See [BibTeX export](features.md#bibtex-export).

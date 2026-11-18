@@ -102,7 +102,7 @@ arguments. `projectKey` and `projectFolderName` are absent when the server has n
 | `search_papers` | `{query, limit 1–50 (20), offset ≥ 0}` | `{total, papers:[Summary]}` |
 | `get_paper` | `{id}` | `Summary` + `bibtex`, `note` |
 | `list_tags` | — | `{tags:[{tag, count}]}` |
-| `add_paper` | `{url, tags[], reason, note?}` | `{status, id?, paper?}`; `status` ∈ `stored`, `already-present`, `unsupported-url`, `failed`, `timeout-may-complete` |
+| `add_paper` | `{url, tags[], reason, note?}`; `url` may be a DOI (a doi.org URL, `doi:…` or a bare `10.…`), resolved to the page it is registered to (DOI Handle API) and added as that page | `{status, id?, paper?, resolvedUrl?, message?}`; `status` ∈ `stored`, `already-present`, `unsupported-url`, `failed`, `timeout-may-complete`; for a DOI, `unsupported-url` carries `resolvedUrl` (no Source supports that page) or `message` (the DOI could not be resolved); `failed` carries `message` |
 | `get_project_info` | — | `{label, tag, paperCount}`, or `{label:null}` before the Project's first add/attach (needs a Project; strictly read-only, never updates the label) |
 | `attach_paper` | `{id}` | `Summary` (needs a Project) |
 | `list_project_papers` | `{limit 1–50 (20), offset ≥ 0}` | `{total, papers:[Summary]}` (needs a Project) |
@@ -119,7 +119,7 @@ Provenance. Errors `{code, message}`, `code` ∈ `unauthorized`, `denied`, `time
 `rate-limited`, `busy`, `unknown-op`, `protocol-mismatch`, `internal`.
 
 **Bounds (checked before any work → `bad-args`).** Unknown arg keys rejected. `url`
-http/https only, ≤ 2,048. `query` ≤ 256. `reason` 1–500. `note`/`text` ≤ 2,000 per call,
+http/https, or a DOI (`doi:…` or a bare `10.…`), ≤ 2,048. `query` ≤ 256. `reason` 1–500. `note`/`text` ≤ 2,000 per call,
 note total ≤ 20,000. `clientName`, `projectLabel` 1–64 after removing control characters.
 `id` ≤ 256; it must not start with `__` and must be an own property of the cleaned papers
 (`cleanPapers`, then `hasOwnProperty`), else `not-found`. Tags trimmed, empty dropped, ≤ 20

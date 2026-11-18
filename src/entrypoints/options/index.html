@@ -862,19 +862,23 @@
                             <div
                                 id="import-papers"
                                 data-s
-                                data-k="import urls json list add papers file"
+                                data-k="import urls doi json list add papers file"
                             >
                                 <h4>Import papers from URLs</h4>
                                 <p>
-                                    A .json list of paper URLs, optionally with tags and
-                                    a code link. Papers are fetched one at a time.
+                                    A .json list of paper URLs or DOIs, optionally with
+                                    tags and a code link. Papers are fetched one at a
+                                    time.
                                 </p>
                                 <details class="o-format">
                                     <summary>See the format</summary>
                                     <p>
                                         A list where each entry is a paper URL (PDF or
-                                        abstract page, from a supported source) or an
-                                        object with a <code>url</code> and, optionally,
+                                        abstract page, from a supported source), a DOI
+                                        (<code>10.…</code>, <code>doi:10.…</code> or a
+                                        doi.org URL, read from the publisher's page it
+                                        leads to), or an object with a
+                                        <code>url</code> and, optionally,
                                         <code>codeLink</code> and <code>tags</code>.
                                         With Sync on, the gist is updated once every
                                         paper is imported.

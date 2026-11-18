@@ -22,6 +22,7 @@ import {
 } from "@pmu/functions.js";
 import { tryPreprintMatch } from "@pmu/preprintMatching.js";
 import { makePaper, isPaper } from "@pmu/paper.js";
+import { urlToDoi, resolveDoi } from "@pmu/urls.js";
 import { shouldSync, pushToRemote } from "@pmu/sync.js";
 import { createTagField } from "@pm/popup/js/tagfield.js";
 import { askDialog } from "@pm/options/dialog.js";
@@ -140,13 +141,17 @@ const isValidHttpUrl = (string) => {
     }
 };
 
+/** A paper's http(s) URL, or its DOI (urlToDoi) */
+const isPaperUrl = (string) => isValidHttpUrl(string) || Boolean(urlToDoi(string));
+
 /** @returns {string} An error message, or "" when the entry is valid */
 const importEntryError = (p, i) => {
     if (typeof p === "string")
-        return isValidHttpUrl(p) ? "" : `Entry ${i + 1}: ${p} is not a valid URL.`;
+        return isPaperUrl(p) ? "" : `Entry ${i + 1}: ${p} is not a valid URL or DOI.`;
     if (!p || typeof p.url !== "string")
         return `Entry ${i + 1} needs a "url" text field.`;
-    if (!isValidHttpUrl(p.url)) return `Entry ${i + 1}: ${p.url} is not a valid URL.`;
+    if (!isPaperUrl(p.url))
+        return `Entry ${i + 1}: ${p.url} is not a valid URL or DOI.`;
     if (p.codeLink && !isValidHttpUrl(p.codeLink))
         return `Entry ${i + 1}: ${p.codeLink} is not a valid URL.`;
     return "";
@@ -161,9 +166,11 @@ const storeImportedPaper = async (paper) => {
     return exists;
 };
 
-const parsePaper = async (url, is) => {
+/** `doi`: the DOI `url` was resolved from, the paper's DOI when its page gives none */
+const parsePaper = async (url, is, doi) => {
     let match;
     let paper = await makePaper(is, url);
+    if (paper && doi && !paper.doi) paper.doi = doi;
     if (paper) match = await tryPreprintMatch(paper);
     if (match) {
         for (const k in match) {
@@ -207,12 +214,22 @@ const importFromFile = async (file) => {
         bar.style.width = `${((i + 1) / entries.length) * 100}%`;
         status.textContent = `Fetching paper ${i + 1} of ${entries.length}: ${url}`;
         try {
-            const is = await isPaper(url);
-            if (!Object.values(is).some((x) => x)) {
-                line(`${url} is not from a supported source.`, false);
+            // a DOI: the page it is registered to, imported as if it were the entry
+            const doi = urlToDoi(url);
+            const pageUrl = doi ? await resolveDoi(doi) : url;
+            if (!pageUrl) {
+                line(`${url}: the DOI could not be resolved.`, false);
                 continue;
             }
-            const paper = await parsePaper(url, is);
+            const is = await isPaper(pageUrl);
+            if (!Object.values(is).some((x) => x)) {
+                line(
+                    `${doi ? `${url} (${pageUrl})` : url} is not from a supported source.`,
+                    false,
+                );
+                continue;
+            }
+            const paper = await parsePaper(pageUrl, is, doi);
             if (p.codeLink) paper.codeLink = p.codeLink;
             if (Array.isArray(p.tags) && p.tags.length > 0)
                 paper.tags = p.tags.filter(
