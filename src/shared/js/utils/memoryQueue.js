@@ -138,6 +138,16 @@ const addAgentFields = (paper, { tags, projectHash, provenance }, created) => {
     return paper;
 };
 
+/**
+ * The user opened or edited the paper (a page's visit, merge, patch or added tags): it is
+ * theirs now, no agent's Own addition, which its agent could delete (it can still flag it).
+ * Not for an agent's own writes, nor for the pipeline's publication fields (`enrichment`).
+ */
+const dropProvenance = (paper) => {
+    delete paper.provenance;
+    return paper;
+};
+
 const isPaperId = (id) => typeof id === "string" && id && !id.startsWith("__");
 const earliest = (a, b) => (!a ? b : !b ? a : a < b ? a : b);
 const latest = (a, b) => (!a ? b : !b ? a : a > b ? a : b);
@@ -183,8 +193,7 @@ export const reconcileRecords = (published, other) => {
         ...new Set([...(published.projectHashes ?? []), ...(other.projectHashes ?? [])]),
     ];
     if (projectHashes.length) out.projectHashes = projectHashes;
-    delete out.provenance;
-    return out;
+    return dropProvenance(out);
 };
 
 /**
@@ -214,12 +223,15 @@ const apply = async (memory, op, ctx) => {
                 return keep({ missing: true });
             }
             setFields(papers[op.id], op.fields, op.ifEmpty);
+            // the user's edit, unless the pipeline's own publication fields (paper.js)
+            if (!op.enrichment) dropProvenance(papers[op.id]);
             return done({ paper: papers[op.id] });
         }
         case "visit": {
             if (!isPaperId(op.id) || !papers[op.id]) return keep({ missing: true });
             setFields(visit(papers[op.id]), op.fill, Object.keys(op.fill ?? {}));
             if (op.agent) addAgentFields(papers[op.id], op.agent, false);
+            else dropProvenance(papers[op.id]); // the user's visit
             return done({ paper: papers[op.id] });
         }
         case "create": {
@@ -265,9 +277,8 @@ const apply = async (memory, op, ctx) => {
                     incrementCount: !!op.incrementCount,
                 });
                 if (op.visit) visit(paper);
-                // a page's merge or promotion (e.g. the user's visit): the paper is the
-                // user's now, no agent's Own addition (an agent can still flag it)
-                delete paper.provenance;
+                // a page's merge or promotion (e.g. the user's visit)
+                dropProvenance(paper);
             }
             // e.g. a code repository found while parsing: only where there is none
             setFields(paper, op.fill, Object.keys(op.fill ?? {}));
@@ -302,6 +313,7 @@ const apply = async (memory, op, ctx) => {
             if (tags.join("\n") === (paper.tags ?? []).join("\n"))
                 return keep({ paper });
             paper.tags = tags;
+            dropProvenance(paper); // the user's edit
             return done({ paper });
         }
         case "agent": {

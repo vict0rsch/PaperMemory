@@ -74,15 +74,29 @@ export const sha256Hex = async (str) => {
  */
 export const normalizeTags = (tags) => tags.map((t) => t.trim()).filter((t) => t);
 
-// a tag that could pass for a Project tag: proj- anywhere, in any case, also with another
-// dash, a minus, _ or a space, and in compatibility forms (e.g. fullwidth, read through
-// NFKC); or Latin letters mixed with Cyrillic or Greek ones (e.g. a Cyrillic ј in proј-)
+// letters that pass for those of proj (lowercase: a tag is lowercased first)
+const PROJ_LOOK_ALIKES = {
+    "\u0440": "p", // Cyrillic er
+    "\u03c1": "p", // Greek rho
+    "\u1d18": "p", // small capital P
+    "\u0280": "r", // small capital R
+    "\u043e": "o", // Cyrillic o
+    "\u03bf": "o", // Greek omicron
+    "\u1d0f": "o", // small capital O
+    "\u0458": "j", // Cyrillic je
+    "\u03f3": "j", // Greek yot
+    "\u0237": "j", // dotless j
+    "\u1d0a": "j", // small capital J
+};
+
+// a tag that could pass for a Project tag: proj then a dash, a minus, _ or a space,
+// anywhere, in any case, also in compatibility forms (e.g. fullwidth, read through NFKC)
+// and with look-alike letters
 const looksLikeProjectTag = (tag) => {
-    const t = tag.normalize("NFKC");
-    return (
-        /proj[\p{Pd}\u2212_\s]/iu.test(t) ||
-        (/\p{Script=Latin}/u.test(t) && /[\p{Script=Cyrillic}\p{Script=Greek}]/u.test(t))
-    );
+    const skeleton = [...tag.normalize("NFKC").toLowerCase()]
+        .map((c) => PROJ_LOOK_ALIKES[c] ?? c)
+        .join("");
+    return /proj[\p{Pd}\u2212_\s]/u.test(skeleton);
 };
 
 // each argument's bound, and the rule reported when it is not met
@@ -127,7 +141,7 @@ const ARG_BOUNDS = {
                 )
             );
         },
-        rule: "at most 20 tags of at most 64 characters, without < > \" ' ` & , or control or format characters, without proj- or a look-alike (reserved for Project tags), and without mixing Latin with Cyrillic or Greek letters",
+        rule: "at most 20 tags of at most 64 characters, without < > \" ' ` & , or control or format characters, and without proj- or a look-alike, in any case (reserved for Project tags)",
     },
     reason: {
         check: (v) => isString(v, 1, 500),

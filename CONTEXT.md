@@ -121,7 +121,7 @@ The record stored on a paper an agent added: which **Paired client**, hashes of 
 _Avoid_: origin, source (a **Source** is a publisher), audit log
 
 **Own addition**:
-A paper the current **Paired client** added in the current **Project**, in any **Agent session** (or, without a Project, in the current **Agent session**); the only papers an agent may delete. It stops being one when a visit of the user merges or promotes it (e.g. its published version replaces the preprint), which removes its **Provenance**.
+A paper the current **Paired client** added in the current **Project**, in any **Agent session** (or, without a Project, in the current **Agent session**); the only papers an agent may delete. It stops being one once the user opens or edits it (a visit, a merge or promotion such as its published version replacing the preprint, an edit of its note, tags or fields), which removes its **Provenance**.
 _Avoid_: agent paper, my paper
 
 **Review tag**:
@@ -158,6 +158,6 @@ _Avoid_: delete request, trash
 - "parse or detect" was used as if interchangeable — resolved: **Detect**, **Parse**, and **Store** are distinct pipeline stages, and a storage-test timeout does not pinpoint which one failed.
 - "library" and "Memory" were both used for the stored papers — resolved: use **Memory** in the UI, user docs and everywhere a person is addressed; use **Library** only for the agent-facing endpoint, one browser profile's Memory addressed through its `libraryId` (`list_libraries`, the MCP server, the Native host, agent docs and code).
 - "session" was used both for an agent conversation and for an **MCP server** process — resolved: an **Agent session** is one **MCP server** process; continuity across sessions comes from the **Project**, not from session names.
-- "delete its own additions" — resolved: papers the same **Paired client** added in the same **Project** (any session), or in the same **Agent session** when there is no Project; anything else gets a **Deletion flag**.
+- "delete its own additions" — resolved: papers the same **Paired client** added in the same **Project** (any session), or in the same **Agent session** when there is no Project, and that the user has not opened or edited since; anything else gets a **Deletion flag**.
 - "project" was used both for the folder identity and for its display name — resolved: the **Project key** identifies it and only the **MCP server** knows it; the **Project label** is the editable display name.
 - "workspace", "repo" and "project root" were used for where an agent works — resolved: that is the **Project folder**; "repository" keeps its plain git meaning.

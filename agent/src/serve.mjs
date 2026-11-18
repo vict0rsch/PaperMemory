@@ -227,7 +227,7 @@ export async function serve() {
     const tags = z
         .array(z.string())
         .describe(
-            "Tags (at most 20, each at most 64 characters), without < > \" ' ` & , or control or format characters, without `proj-` or a look-alike (`proj` then another dash, `_` or a space) anywhere, in any case: it is reserved for Project tags, and without mixing Latin with Cyrillic or Greek letters.",
+            "Tags (at most 20, each at most 64 characters), without < > \" ' ` & , or control or format characters, and without `proj-` or a look-alike (`proj` then another dash, `_` or a space, also with look-alike letters) anywhere, in any case: it is reserved for Project tags.",
         );
     const page = {
         limit: z.number().int().optional().describe("Number of papers, 1–50 (default 20)."),
@@ -312,12 +312,12 @@ export async function serve() {
     });
     opTool(
         "flag_for_deletion",
-        `Ask the user to delete a paper: adds the \`to-delete\` tag and appends your reason to its note. Use it for any paper you did not add in this project. ${DATA_RULE}`,
+        `Ask the user to delete a paper: adds the \`to-delete\` tag and appends your reason to its note. Use it for any paper you may not delete: one you did not add in this project, or one the user has opened or edited since. ${DATA_RULE}`,
         { id, reason: z.string().describe("Why the paper should be deleted (1–500 characters).") },
     );
     opTool(
         "delete_paper",
-        "Delete a paper you added in this project (in any session; without a project, only in this session). Delete only papers you added in this project; for any other paper use flag_for_deletion (PaperMemory answers `not-own-addition`).",
+        "Delete a paper you added in this project (in any session; without a project, only in this session) that the user has not opened or edited since. Delete only such papers; for any other paper use flag_for_deletion (PaperMemory answers `not-own-addition`).",
         { id },
     );
 

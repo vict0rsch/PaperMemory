@@ -529,6 +529,32 @@ describe("Agent access background", () => {
             expect(storage.papers).toHaveProperty([publishedId]);
         });
 
+        it("an agent's paper the user opened or edited is the user's: delete_paper → not-own-addition", async () => {
+            const opened = "Arxiv-2101.00007";
+            const edited = "Arxiv-2101.00008";
+            for (const id of [opened, edited]) {
+                // what the pipeline stores for a new paper: the agent's fields and Provenance
+                ingest = async ({ tags, provenance }) => {
+                    const paper = { ...makePaper(id), tags, provenance };
+                    storage.papers = { ...storage.papers, [id]: paper };
+                    return { status: "stored", id };
+                };
+                const addArgs = { url, tags: [], reason: "Why" };
+                const added = await request(17, "add_paper", addArgs, auth);
+                expect(added.result.status).toBe("stored");
+            }
+            // the user opens one (a plain visit) and edits the other's note, from their pages
+            const visit = await runMemoryOpFromMessage({ op: "visit", id: opened });
+            expect(visit.ok).toBe(true);
+            const note = { op: "patch", id: edited, fields: { note: "My note" } };
+            expect((await runMemoryOpFromMessage(note)).ok).toBe(true);
+            for (const id of [opened, edited]) {
+                const refused = await request(17, "delete_paper", { id }, auth);
+                expect(refused.error.code).toBe("not-own-addition");
+                expect(storage.papers).toHaveProperty([id]);
+            }
+        });
+
         // a change that passed the checks before it runs, held in the Memory's queue behind
         // a slow operation (e.g. a large replace) until `release`
         const holdMemoryQueue = () => {

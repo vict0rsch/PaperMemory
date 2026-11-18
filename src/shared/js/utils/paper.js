@@ -586,6 +586,8 @@ export const addOrUpdatePaper = async ({
                     id: paper.id,
                     fields,
                     ifEmpty: ["note", "venue", "venueFull", "doi"],
+                    // not the user's edit: an agent's paper keeps its Provenance
+                    enrichment: true,
                 });
                 if (answer.ok && answer.result?.paper) paper = answer.result.paper;
             }

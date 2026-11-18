@@ -301,7 +301,7 @@ The single domain entity. It is a plain object validated (and defaulted) by
 | `favorite`, `favoriteDate`         | bool/string   | Starring                                              |
 | `count`, `addDate`, `lastOpenDate` | number/string | Visit tracking + sort keys                            |
 | `extras`                           | object        | Optional per-source overflow                          |
-| `provenance`                       | object        | Optional, Agent access: which client added the paper, why, when (hashes only, never the keys); removed when a page's merge or promotion (e.g. the user's visit of its published version) makes the paper the user's |
+| `provenance`                       | object        | Optional, Agent access: which client added the paper, why, when (hashes only, never the keys); removed once the user opens or edits the paper (a page's `visit`, `merge`, `patch` or `addTags`; not the pipeline's enrichment `patch`, an agent's own writes or a `retag`) |
 | `projectHashes`                    | string[]      | Optional, Agent access: hashes of the Projects the paper belongs to |
 
 ### Storage layout (`chrome.storage.local`)
@@ -343,7 +343,7 @@ background queue (`memoryOp`: `visit` / `merge`) → `pushToRemote` → asynchro
 matching (`tryPreprintMatch`) to backfill venue/bibtex → second save (`patch`). An optional `agent` parameter (`{tags, provenance, projectHash}`, Agent access) goes with the
 first save's operation: the queue adds the agent's tags and Project membership to the paper
 as stored, and Provenance only when that `merge` creates it; the `patch` writes publication
-fields only. A paper already stored (its id, a URL resolving to it, or a fuzzy match) is only
+fields only (marked `enrichment`: it keeps the agent's Provenance). A paper already stored (its id, a URL resolving to it, or a fuzzy match) is only
 attached: a `visit` carrying the agent fields, with no merge, promotion, URL remapping or
 `patch` (the queue attaches the same way when the agent's `merge` finds the paper stored
 meanwhile). It also returns `isNew` (the save's answer) and `done` (after the last write,
@@ -500,7 +500,9 @@ the `downloads` API), `functions.js` (49 misc helpers incl. `miniHash`,
   revoked or Agent access turned off since the job started. The `{ type: "memory" }`
   message route refuses `agent` operations and inline Memories, also inside a `batch`. An
   add's writes are the pipeline's `merge` / `visit` (carrying the agent fields) and `patch`;
-  for a paper already stored, only that first write, which attaches it.
+  for a paper already stored, only that first write, which attaches it. A page's `visit`,
+  `merge`, `patch` or `addTags` (the user opening or editing a paper) removes the paper's
+  Provenance; the enrichment `patch`, the agent's own operations and `retag` keep it.
 - **Pattern mutual exclusion** across sources is a hard invariant (test-enforced).
 - **No top-level use of `functions.js` exports inside source modules** (TDZ — see
   the `base.js` constraint above).

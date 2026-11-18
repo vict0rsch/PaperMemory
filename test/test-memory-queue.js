@@ -427,6 +427,51 @@ describe("Memory queue (memoryQueue.js)", function () {
         expect(chrome.store.papers.a).not.toHaveProperty("provenance");
     });
 
+    it("the user's visit or edit makes an agent's paper the user's; its own writes, the enrichment patch and a tag rename do not", async () => {
+        const provenance = { clientId: "c" };
+        const ids = ["visit", "patch", "addTags", "enrichment", "attach", "agent", "retag"];
+        chrome.store.papers = Object.fromEntries(
+            ids.map((id) => [id, paper(id, { provenance, tags: ["review"] })]),
+        );
+        chrome.store.papers.user = paper("user");
+        // the user's: a visit, an edit, tags added in bulk (fullMemory)
+        await q.runMemoryOp({ op: "visit", id: "visit" });
+        await q.runMemoryOp({ op: "patch", id: "patch", fields: { note: "mine" } });
+        await q.runMemoryOp({ op: "addTags", id: "addTags", tags: ["read"] });
+        // not the user's: the pipeline's publication fields, an agent's attach or change,
+        // a Memory-wide tag rename
+        await q.runMemoryOp({
+            op: "patch",
+            id: "enrichment",
+            fields: { venue: "NeurIPS" },
+            ifEmpty: ["venue"],
+            enrichment: true,
+        });
+        const agent = { tags: ["mine"], projectHash: "h", provenance: { clientId: "o" } };
+        await q.runMemoryOp({ op: "visit", id: "attach", agent });
+        await q.runMemoryOp({
+            op: "agent",
+            change: (papers) => {
+                papers.agent.note = "appended";
+                return { write: true };
+            },
+        });
+        await q.runMemoryOp({ op: "retag", mapping: [["review", "to-review"]] });
+        // and a page's patch cannot make a paper an agent's
+        await q.runMemoryOp({ op: "patch", id: "user", fields: { provenance } });
+        const owner = (id) => chrome.store.papers[id].provenance?.clientId;
+        expect(ids.map(owner)).toEqual([
+            undefined,
+            undefined,
+            undefined,
+            "c",
+            "c",
+            "c",
+            "c",
+        ]);
+        expect(chrome.store.papers.user).not.toHaveProperty("provenance");
+    });
+
     it("a message cannot carry an agent change or an inline Memory, even in a batch; a page's replace still can", async () => {
         chrome.store.papers = { a: paper("a") };
         chrome.store.papersRevision = 3;

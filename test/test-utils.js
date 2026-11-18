@@ -572,48 +572,58 @@ describe("paper.js", () => {
             expect(storage.papers).toEqual({});
         });
 
-        it("the user's visit of the published version of an agent's preprint makes it the user's: no Provenance", async () => {
-            const { makeProvenance, sha256Hex, isOwnAddition } = PMUtils.agentOps;
+        // an agent's add in a Project: its fields, with a Provenance hashed from its keys
+        const agentInProject = async () => {
+            const { makeProvenance, sha256Hex } = PMUtils.agentOps;
             const auth = {
                 clientId: "client-1",
                 sessionId: "22".repeat(32),
                 projectKey: "33".repeat(32),
             };
             const projectHash = await sha256Hex(auth.projectKey);
-            const fields = {
-                tags: ["review", "proj-demo"],
-                projectHash,
-                provenance: await makeProvenance(auth, {
-                    clientName: "Claude Code",
-                    projectLabel: "Demo",
-                    reason: "Cited in the introduction",
-                }),
-            };
+            const provenance = await makeProvenance(auth, {
+                clientName: "Claude Code",
+                projectLabel: "Demo",
+                reason: "Cited in the introduction",
+            });
+            const fields = { tags: ["review", "proj-demo"], projectHash, provenance };
+            return { auth, projectHash, fields };
+        };
+        // the arXiv preprint of the publication at `url`, parsed without network (no
+        // publication found); returns the function that restores the parser and fetch
+        const preprintUrl = "https://arxiv.org/abs/2101.00001";
+        const preprintId = "Arxiv-2101.00001";
+        const parsePreprintOffline = () => {
             const arxiv = getSource("arxiv");
             const arxivParse = arxiv.parse;
+            const { fetch } = global;
             arxiv.parse = async () => ({
                 author: "Jane Doe",
                 bibtex: "@article{doe2021co,\n  title = {CO2 reduction},\n  year = {2021}\n}",
-                id: "Arxiv-2101.00001",
+                id: preprintId,
                 key: "doe2021co",
                 pdfLink: "https://arxiv.org/pdf/2101.00001.pdf",
                 title: "CO2 reduction",
                 venue: "",
                 year: "2021",
             });
-            // offline publication lookups for the new preprint
-            const { fetch } = global;
             global.fetch = async () => {
                 throw new Error("offline");
             };
+            return () => {
+                arxiv.parse = arxivParse;
+                global.fetch = fetch;
+            };
+        };
+
+        it("the user's visit of the published version of an agent's preprint makes it the user's: no Provenance", async () => {
+            const { isOwnAddition } = PMUtils.agentOps;
+            const { auth, projectHash, fields } = await agentInProject();
+            const restore = parsePreprintOffline();
             try {
-                const added = await ingest({
-                    url: "https://arxiv.org/abs/2101.00001",
-                    ...fields,
-                });
-                expect(added).toEqual({ status: "stored", id: "Arxiv-2101.00001" });
-                const preprint = storage.papers["Arxiv-2101.00001"];
-                expect(await isOwnAddition(preprint, auth)).toBe(true);
+                const added = await ingest({ url: preprintUrl, ...fields });
+                expect(added).toEqual({ status: "stored", id: preprintId });
+                expect(await isOwnAddition(storage.papers[preprintId], auth)).toBe(true);
                 // the user opens the published version: it replaces the preprint
                 await capture();
                 expect(Object.keys(storage.papers)).toEqual([id]);
@@ -623,8 +633,39 @@ describe("paper.js", () => {
                 // so its client's delete_paper answers not-own-addition (flag it instead)
                 expect(await isOwnAddition(paper, auth)).toBe(false);
             } finally {
-                arxiv.parse = arxivParse;
-                global.fetch = fetch;
+                restore();
+            }
+        });
+
+        it("an agent's paper keeps its Provenance through its own add; the user's visit takes it", async () => {
+            const { isOwnAddition } = PMUtils.agentOps;
+            const { auth, fields } = await agentInProject();
+            const restore = parsePreprintOffline();
+            const { set } = chrome.storage.local;
+            let paperWrites = 0;
+            chrome.storage.local.set = (items, cb) => {
+                if (items.papers) paperWrites += 1;
+                set(items, cb);
+            };
+            try {
+                const added = await ingest({ url: preprintUrl, ...fields });
+                expect(added).toEqual({ status: "stored", id: preprintId });
+                // its first write and its enrichment patch (no venue yet)
+                expect(paperWrites).toBe(2);
+                expect(await isOwnAddition(storage.papers[preprintId], auth)).toBe(true);
+                // the user opens it: a plain visit
+                const visit = await PMUtils.paper.addOrUpdatePaper({
+                    url: preprintUrl,
+                    is: await PMUtils.paper.isPaper(preprintUrl, true),
+                });
+                await visit.done;
+                const paper = storage.papers[preprintId];
+                expect(paper.count).toBe(2);
+                expect(paper).not.toHaveProperty("provenance");
+                expect(await isOwnAddition(paper, auth)).toBe(false);
+            } finally {
+                restore();
+                chrome.storage.local.set = set;
             }
         });
 

@@ -88,9 +88,9 @@ and Firefox, all lifecycle checks passed, including 65 min and 8 h idles).
   appending notes, applying a **Deletion flag**, and deleting **Own additions**.
 - **Hardening decisions.** Agent tags may not contain `<`, `>`, `"`, `'`, a backtick, `&`, `,`
   or control or format characters, and `proj-` is reserved anywhere in a tag, in any case,
-  with its look-alikes (`proj` then another dash, a minus, `_` or a space, also in
-  compatibility forms such as fullwidth letters, read through NFKC); a tag may not mix Latin
-  with Cyrillic or Greek letters (homoglyphs such as a Cyrillic `ј`).
+  with its look-alikes: `proj` then another dash, a minus, `_` or a space, also in
+  compatibility forms read through NFKC (e.g. fullwidth letters) and with letters that pass
+  for those of `proj` (Cyrillic `р` `о` `ј`, Greek `ρ` `ο` `ϳ`, a dotless `ȷ`, small capitals).
   Everything an agent supplies or a paper carries is escaped where the UI renders it (output
   escaping in UI sinks). **Deny** starts a global 60 s cooldown for pairing requests, not one
   per client name, and a pairing whose requester disconnected expires. Whether a build is a
@@ -104,10 +104,12 @@ and Firefox, all lifecycle checks passed, including 65 min and 8 h idles).
   Memory (its id, a URL resolving to it, a fuzzy match by title, or a paper another page
   stored meanwhile) only attaches it: tags, Project membership and a visit, never its
   metadata, note, id or URLs, and never Provenance; one deleted meanwhile is not re-created
-  (`failed`). A merge or promotion a page makes (the user's visit re-parsing the paper,
-  promoting a preprint to its published version, or reconciling two records of it) removes
-  Provenance and keeps Project memberships: a paper the user's visit merged is no longer an
-  Own addition, so its client can only flag it. With a **Project**, an **Own
+  (`failed`). The user opening or editing a paper removes its Provenance and keeps its
+  Project memberships: a page's visit, merge or promotion (e.g. its published version
+  replacing the preprint), an edit of its note, tags, favourite or fields, or tags added in
+  bulk; not the enrichment write of an agent's own add, an agent's changes, or a Memory-wide
+  tag rename. A paper the user has opened or edited is no longer an Own addition: its client
+  can only flag it. With a **Project**, an **Own
   addition** is a paper this **Paired client** added in the same Project, in any session; the
   **Project key** is an HMAC of the **Project folder** path under a per-install secret salt,
   held by the MCP server and never given to the model. Without a Project (home directory,

@@ -36,7 +36,7 @@ The options page tells you when the installed agent tools are too old for the ex
 - Search the Memory, read a paper's details and BibTeX, list tags.
 - Add a paper from its URL (with a mandatory reason, stored with the paper), add tags, append to a note.
 - Keep a **project** bibliography: list its papers and export its BibTeX.
-- Delete papers they added themselves. For any other paper, they can only add a `to-delete` tag and a reason in the note.
+- Delete papers they added themselves, as long as you have not opened or edited them since. Otherwise they can only flag them for deletion: a `to-delete` tag and a reason in the note.
 
 Agents cannot read or change your settings, your Gist token or your backups.
 
@@ -50,7 +50,7 @@ Add a line to the folder's `CLAUDE.md` or `AGENTS.md` to name the project:
 PaperMemory project: <name>
 ```
 
-A new session in the same folder with the same agent continues the same project and may delete the papers it added earlier. Another agent in the same folder shares the project tag but cannot delete them.
+A new session in the same folder with the same agent continues the same project and may delete the papers it added earlier, unless you opened or edited them since. Another agent in the same folder shares the project tag but cannot delete them.
 
 !!! info "Renaming a project tag"
 
