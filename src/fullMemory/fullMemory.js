@@ -1,4 +1,4 @@
-// fullMemory: the Memory in a tab (design-review/v2-addenda/step5-fullmemory.html).
+// fullMemory: the Memory in a tab.
 // - 1200px and wider: tag sidebar, sortable table, detail pane of the current paper;
 //   900 to 1200px: the pane is a drawer (a row's ⓘ or d); below 900px: the popup's rows.
 // - The search (field, pills, sort menu, tag list) is the popup's (popup/js/memory.js drives

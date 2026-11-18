@@ -1,4 +1,4 @@
-/* BibMatcher page (design-review/v2-addenda/step5-bibmatcher.html). Shared pieces come from
+/* BibMatcher page. Shared pieces come from
    tokens.css + components.css (.pm-*) and options-page.css (top bar, o- cards, dialog); page
    classes are prefixed "b-". body[data-state]: input | matching | stopped | done | none. */
 

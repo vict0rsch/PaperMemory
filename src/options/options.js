@@ -1,4 +1,4 @@
-// Options page (design-review/v2/options.html): one page, six groups, a sticky side nav with
+// Options page: one page, six groups, a sticky side nav with
 // a settings search. Every pref is written with updatePrefs (same keys as the popup menu);
 // sections live in tags.js, io.js and syncSettings.js.
 import {

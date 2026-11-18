@@ -1,6 +1,6 @@
-// Tag input shared by the paper view and the Memory row edit form (design-review/v2/popup.html
-// frame 10): chips with ×, "Add tag…", existing tags with their paper counts, and a hint when the
-// new tag is almost an existing one (ignores case, - _ space, plurals).
+// Tag input shared by the paper view and the Memory row edit form: chips with ×, "Add tag…",
+// existing tags with their paper counts, and a hint when the new tag is almost an existing one
+// (ignores case, - _ space, plurals).
 import { state } from "@pmu/config.js";
 import { escapeHtml } from "@pmu/functions.js";
 import { icon } from "@pm/popup/js/icons.js";

@@ -1,4 +1,4 @@
-/* fullMemory page layout (design-review/v2-addenda/step5-fullmemory.html). Shared pieces come
+/* fullMemory page layout. Shared pieces come
    from tokens.css + components.css (.pm-*), the popup's Memory search and rows from popup.css,
    the top bar, side nav, cards and dialog from options-page.css; page classes are prefixed
    "m-". 1200px and wider: sidebar | table | detail pane; 900 to 1200px: the pane is a drawer;

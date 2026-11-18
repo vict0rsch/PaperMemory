@@ -2,6 +2,7 @@
 // extra/store: screenshot-1..5.png (+ -dark variants) at 1280x800, the 440x280 promo tile and the
 // 1400x560 marquee. The captures are reused as still backgrounds by videos.mjs.
 import fs from "node:fs";
+import { execFileSync } from "node:child_process";
 import * as L from "./lib.mjs";
 
 export const CAP = `${L.WORK}/captures`;
@@ -93,7 +94,7 @@ const captureBibMatcher = async (env) => {
     await L.sleep(300);
     await page.evaluate(() => window.scrollTo(0, 0));
     await page.screenshot({ path: cap("bibmatcher-results"), fullPage: true });
-    // the Results heading 11 px under the toolbar (as in the mockup), in the 1280-wide frame
+    // the Results heading 11 px under the toolbar, in the 1280-wide frame
     const top = await page.evaluate(() => [...document.querySelectorAll("h2, h3")].find((e) => /^\s*Results/.test(e.textContent))?.getBoundingClientRect().top + scrollY);
     fs.writeFileSync(`${CAP}/bibmatcher.json`, JSON.stringify({ by: Math.round((top * 1280) / 1440) - 11 }));
     await done();
@@ -127,4 +128,76 @@ export const compose = async (env) => {
     // smaller PNGs: ffmpeg's encoder with the best filter per row
     for (const [name, src] of Object.entries(out))
         L.ffmpeg(["-i", src, "-pred", "mixed", "-compression_level", "9", `${L.STORE}/${name}.png`]);
+};
+
+const DOCS = `${L.ROOT}docs/assets`;
+const POSTER_AT = "20"; // seconds: "Find it again" chapter, extension UI on screen
+const LOOPS = ["saved", "find", "cite", "export", "bibmatcher"];
+
+/** The views only the docs show: popup Settings panel, "?" sheet, a non-paper page, options groups, welcome tab */
+const captureDocsViews = async (env) => {
+    await env.seed();
+    let page = await env.popup("https://arxiv.org/abs/1706.03762", 2);
+    await page.click("#menu-switch");
+    await L.sleep(500);
+    await page.mouse.move(5, 590);
+    await page.screenshot({ path: `${DOCS}/popup-settings.png` });
+    await page.close();
+    page = await env.popup("https://arxiv.org/abs/1706.03762", 2);
+    await page.keyboard.press("?");
+    await L.sleep(500);
+    await page.screenshot({ path: `${DOCS}/shortcuts.png` });
+    await page.close();
+    page = await env.popup("https://example.com/", 2);
+    await page.screenshot({ path: `${DOCS}/add-website.png` });
+    await page.close();
+    await env.prefs("light");
+    page = await env.page(1440, 900, 2);
+    await page.goto(env.ext("options.html"), { waitUntil: "networkidle0" });
+    await L.sleep(800);
+    await page.screenshot({ path: `${DOCS}/options-page.png` });
+    for (const [group, name] of [["sync", "options-sync"], ["data", "options-data"]]) {
+        await page.evaluate((g) => document.getElementById(g).scrollIntoView(), group);
+        await L.sleep(500);
+        await page.screenshot({ path: `${DOCS}/${name}.png` });
+    }
+    await page.close();
+    page = await env.page(1100, 900, 2);
+    await page.goto(env.ext("welcome.html"), { waitUntil: "networkidle0" });
+    await L.sleep(800);
+    await page.screenshot({ path: `${DOCS}/welcome-tab.png`, fullPage: true });
+    await page.close();
+};
+
+/** Unframed light-theme images for the docs site and the Readme, plus the five loops (docs/assets) */
+export const docsAssets = async (env) => {
+    L.mkdir(DOCS);
+    for (const [from, to] of [
+        ["popup-paper-light", "popup-paper"],
+        ["popup-memory-pill-light", "popup-memory"],
+        ["fullmemory-1440-light", "full-page-memory"],
+        ["crop-block", "papermemory-block"],
+        ["bibmatcher-results", "bibmatcher"],
+    ])
+        fs.copyFileSync(cap(from), `${DOCS}/${to}.png`);
+    await captureDocsViews(env);
+    fs.copyFileSync(`${L.OUT}/loop-saved.gif`, `${DOCS}/loop-saved.gif`);
+    docsVideos();
+};
+
+/** Web videos of docs/assets: 720p walkthrough (+ poster frame), the loop WebMs and their H.264 twins */
+const docsVideos = () => {
+    const walk = `${L.OUT}/walkthrough-1080p.mp4`;
+    const hasAudio = execFileSync(L.FFMPEG.replace(/ffmpeg$/, "ffprobe"), ["-v", "error", "-select_streams", "a", "-show_entries", "stream=index", "-of", "csv=p=0", walk]).toString().trim();
+    for (let crf = 26; crf <= 30; crf += 2) {
+        L.ffmpeg(["-i", walk, "-vf", "scale=1280:720:flags=lanczos", "-c:v", "libx264", "-crf", String(crf), "-preset", "slow", "-pix_fmt", "yuv420p", ...(hasAudio ? ["-c:a", "aac"] : ["-an"]), "-movflags", "+faststart", `${DOCS}/walkthrough.mp4`]);
+        const mb = fs.statSync(`${DOCS}/walkthrough.mp4`).size / 1e6;
+        console.log(`walkthrough.mp4 crf ${crf}: ${mb.toFixed(2)} MB`);
+        if (mb <= 6) break;
+    }
+    L.ffmpeg(["-ss", POSTER_AT, "-i", walk, "-frames:v", "1", "-vf", "scale=1280:720:flags=lanczos", "-q:v", "3", `${DOCS}/walkthrough-poster.jpg`]);
+    for (const n of LOOPS) {
+        fs.copyFileSync(`${L.OUT}/loop-${n}.webm`, `${DOCS}/loop-${n}.webm`);
+        L.ffmpeg(["-i", `${L.OUT}/loop-${n}.webm`, "-an", "-vf", "scale=trunc(iw/2)*2:trunc(ih/2)*2:out_range=tv", "-c:v", "libx264", "-crf", "24", "-pix_fmt", "yuv420p", "-color_range", "tv", "-movflags", "+faststart", `${DOCS}/loop-${n}.mp4`]);
+    }
 };

@@ -1,4 +1,4 @@
-/* PaperMemory design tokens (from design-review/v2/tokens.css).
+/* PaperMemory design tokens.
    Theme: data-theme="light" | "dark" on <html>, set by theme.js before first paint
    ("system" is resolved to one of them there).
    Only --pm-* custom properties and the Inter @font-face, so loading it does not restyle

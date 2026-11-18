@@ -1,4 +1,4 @@
-// The ⓘ panel of a Memory row and of the paper view (design-review/v2-addenda/venue-info.html):
+// The ⓘ panel of a Memory row and of the paper view:
 // opens on click (and `d` on a row), floats over the content without changing the row's height,
 // opens upward when there is no room below, closes on a click outside, a second click, `d`
 // again, Escape, or the focus moving elsewhere. One panel at a time.

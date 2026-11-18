@@ -1,4 +1,4 @@
-/* Popup v2 (design-review/v2/popup.html, popup-states.html): the .pm-ui shell.
+/* Popup: the .pm-ui shell.
    fullMemory also loads this file (for the .pm-* row components); popup layout rules are
    scoped to #pm-popup / #pm-shell. */
 
@@ -899,7 +899,7 @@ button.pm-banner {
     pointer-events: none;
 }
 
-/* ---------- Memory tab (design-review/v2/popup.html frames 2, 2c, 8a–9b) ---------- */
+/* ---------- Memory tab ---------- */
 /* the tab replaces the paper view and its key-hint footer */
 #pm-shell.pm-mem-open #popup-body,
 #pm-shell.pm-mem-open #popup-hints {
@@ -1046,7 +1046,7 @@ button.pm-banner {
     overscroll-behavior: contain;
     scrollbar-width: thin;
 }
-/* the downloaded PDF has no button in the popup's rows (mockup); o opens it when
+/* the downloaded PDF has no button in the popup's rows; o opens it when
    "Open the downloaded PDF" is on. fullMemory shows it. */
 #pm-popup .memory-item-openLocal {
     display: none;

@@ -1,102 +1,114 @@
 ---
-title: Simple & automated in-browser reference manager.
+title: Saves the research papers you read.
 hide:
     - toc
     - navigation
 template: home.html
-description: PaperMemory automatically records and organizes the papers you read, without ever leaving your browser.
+description: PaperMemory saves the research papers you open on arXiv, OpenReview and more. Search, tag, annotate and cite them from your browser.
 ---
 
 <div class="flex-container" markdown>
 <div markdown>
-<h1 style="color: white; max-width: 400px; padding-right: 1rem;">
-    <strong style="color: red">PaperMemory</strong> automatically records and organizes the papers you read, without ever leaving your browser.
+<h1 class="pm-hero__title">
+    <strong class="pm-hero__brand">PaperMemory</strong> saves the research papers you open on arXiv, OpenReview and more. Search, tag, annotate and cite them from your browser.
 </h1>
-[:octicons-arrow-right-24: Get the extension](getting-started.md){ .md-button .md-button--primary }
+[Get the extension](getting-started.md#installation){ .md-button .md-button--primary }
 </div>
-<img src="assets/d2.gif"/>
+<img src="assets/popup-paper.png" alt="The PaperMemory popup on an arXiv paper"/>
+</div>
+
+<div class="pm-walkthrough">
+<video controls preload="metadata" playsinline poster="assets/walkthrough-poster.jpg">
+    <source src="assets/walkthrough.mp4" type="video/mp4">
+    <a href="assets/walkthrough.mp4">Watch the walkthrough</a>
+</video>
 </div>
 
 <br/>
-PaperMemory is designed to be a fast, automated and user-friendly in-browser reference manager, with tons of features to make your life easier.
-<br/>
-<br/>
+Open a paper on a supported site and it is added to your Memory with its title, authors, venue, year, links and BibTeX. You can then search it, tag it, add a note and copy a citation, from the popup or from the full-page Memory.
 
-- :octicons-rocket-24:{ .lg .middle } **Parse papers you open automatically**
+## Recording
 
-    Papers are stored in your Memory automatically, without a click. You can then search them, tag them, take personal notes etc.
+- Papers are saved when you open them on arXiv, OpenReview, NeurIPS, PMLR, ACL Anthology, CVF, Nature, Science, IEEE, ACM, Springer, bioRxiv, PubMed Central and 18 other publishers and archives. Abstract pages and PDFs both work.
+- A small notice on the page confirms the save.
+- Any other web page, such as a blog post or a documentation page, can be added from the popup.
+- For preprints, PaperMemory looks for the published version on public bibliographic services (DBLP, Semantic Scholar, CrossRef, OpenAlex and Google Scholar) and shows the venue when it finds one.
 
-    See the main features and get PaperMemory from your browser's extension store (:fontawesome-brands-chrome: Chrome / :simple-brave: Brave / :fontawesome-brands-firefox-browser: Firefox / :fontawesome-brands-edge: Edge):
+[Saving papers](features.md#saving-papers) · [Preprint matching](features.md#preprint-matching)
 
-    [:octicons-arrow-right-24: Getting started](getting-started.md)
+<figure markdown>
+<video autoplay muted loop playsinline preload="metadata" aria-label="A paper saved as it is opened">
+    <source src="assets/loop-saved.webm" type="video/webm">
+    <source src="assets/loop-saved.mp4" type="video/mp4">
+</video>
+<figcaption>Saved as you read.</figcaption>
+</figure>
 
-    ***
+## Finding papers
 
-- :material-fire:{ .lg .middle } **Match preprints to publications**
+- Search titles, authors, notes, tags, IDs and venues as you type.
+- Filter by tag (`t:`), year (`y:`) or code link (`c:`). Filters appear as pills and combine with free text.
+- Tags, a note, a code link and a favourite star on every paper.
+- Sort by date added, last opened, title, year or number of visits.
+- A full-page Memory with a table view, a tag list and actions on several papers at once (tag, favourite, copy BibTeX, export, delete).
 
-    By querying SemanticScholar, DBLP and CrossRef, PaperMemory can discover the proper publication of Arxiv pre-prints.
+[Searching](features.md#searching) · [Full-page Memory](getting-started.md#full-page-memory)
 
-    [:octicons-arrow-right-24: Preprint Matching](features.md#preprint-matching)
+<figure markdown>
+<video class="pm-loop-tall" autoplay muted loop playsinline preload="metadata" aria-label="Filtering the Memory by tag and year">
+    <source src="assets/loop-find.webm" type="video/webm">
+    <source src="assets/loop-find.mp4" type="video/mp4">
+</video>
+<figcaption>Filter by tag and year, then search the rest.</figcaption>
+</figure>
 
-    ***
+## Citing and sharing
 
-- :octicons-share-android-24:{ .lg .middle } **You live in your browser? So do your papers**
+- Copy a paper's BibTeX, Markdown link, rich link or URL with one click or one key.
+- Export your Memory, or the papers with a given tag, as a `.bib` file.
+- BibMatcher: give it a `.bib` file and it proposes the published version of each preprint (arXiv, bioRxiv, medRxiv, ChemRxiv). You accept or reject every change, and your citation keys can be kept.
 
-    Share papers to your favorite apps by copying:
-    - a :tabler-math-function: **BibTex entry** for :simple-overleaf: Overleaf
-    - a :material-language-markdown-outline: **Markdown link** `[title](url)` link for :simple-github: Github, :material-file-document-outline: HackMD or :simple-notion: Notion
-    - a :tabler-device-desktop-code: **HyperText link** for :octicons-mail-24: emails, :simple-googledocs: Google Docs, :simple-slack: Slack, etc.
+[BibTeX export](features.md#bibtex-export) · [BibMatcher](getting-started.md#bibmatcher)
 
-    [:octicons-arrow-right-24: Memory buttons](getting-started.md#memory)
+<figure markdown>
+<video autoplay muted loop playsinline preload="metadata" aria-label="Copying BibTeX and a Markdown link with one key">
+    <source src="assets/loop-cite.webm" type="video/webm">
+    <source src="assets/loop-cite.mp4" type="video/mp4">
+</video>
+<figcaption>One key for BibTeX, one for a Markdown link.</figcaption>
+</figure>
 
-    ***
+<figure markdown>
+<video autoplay muted loop playsinline preload="metadata" aria-label="Exporting the papers with a tag as a .bib file">
+    <source src="assets/loop-export.webm" type="video/webm">
+    <source src="assets/loop-export.mp4" type="video/mp4">
+</video>
+<figcaption>A tag, as a .bib file.</figcaption>
+</figure>
 
-- :fontawesome-solid-file-code:{ .lg .middle } **Discover code repositories**
+<figure markdown>
+<video autoplay muted loop playsinline preload="metadata" aria-label="BibMatcher proposing the published version of a preprint">
+    <source src="assets/loop-bibmatcher.webm" type="video/webm">
+    <source src="assets/loop-bibmatcher.mp4" type="video/mp4">
+</video>
+<figcaption>From preprint to published.</figcaption>
+</figure>
 
-    Using the PapersWithCode API, PaperMemory will match code repositories with papers in your Memory.
+## On paper pages
 
-    [:octicons-arrow-right-24: Code discovery](features.md#code-repositories)
+- On arXiv, a small PaperMemory block shows whether the paper is saved, with BibTeX, a Markdown link, a PDF download and the published venue.
+- PDF tabs are renamed with the paper's title instead of a file name such as `1706.03762.pdf`.
+- PDFs can be downloaded with a readable name into a PaperMemoryStore folder in your Downloads; on arXiv, the block then shows the file in its folder.
+- Open an arXiv paper on ar5iv, alphaXiv, Hugging Face or SciRate.
 
-    ***
+[PaperMemory block](getting-started.md#papermemory-block) · [PaperMemoryStore](features.md#papermemorystore)
 
-- :simple-arxiv:{ .lg .middle } **Enhance ArXiv.org**
+## Your data
 
-    Display the actual pubication venue of published papers, a link to the code repository, copy the BibTex entry etc.
+- Your Memory is stored in your browser's extension storage. There is no PaperMemory account and no PaperMemory server.
+- No analytics, no tracking.
+- Optional Gist sync copies your Memory to a private Gist in your own GitHub account. Off by default.
 
-    [:octicons-arrow-right-24: Arxiv Enhancements](features.md#arxiv-enhancements)
-
-    ***
-
-- :material-square-root-box:{ .lg .middle } **Instantly copy `.bib`-compatible bibliography entries**
-
-    Export a paper's BibTex entry directly from the extension, or bulk export BibTex entries by paper tag. You can even use PaperMemory to update the ArXiv entries of a stand-alone `.bib` file.
-
-    [:octicons-arrow-right-24: Bibliography tools](features.md#bibliography-tools)
-
-    ***
-
-- :material-keyboard-outline:{ .lg .middle } **Keyboard-driven**
-
-    Use the keyboard to navigate through your papers, search them, copy the data you need (like hyperlinks, BibTex entries, markdown links etc.)
-
-    [:octicons-arrow-right-24: Keyboard navigation](features.md#keyboard-navigation)
-
-    ***
-
-- :octicons-gear-24:{ .lg .middle } **Highly customizable**
-
-    Change the theme to light or dark, control the default link copied to your clipboard, add links to SciRate / HuggingFace Papers / Ar5iv / ArxivSanity, trigger parsing manually, export / import papers etc.
-
-    [:octicons-arrow-right-24: Configuration](configuration.md)
-
-    ***
-
-- :material-sunglasses:{ .lg .middle } **And many more features!**
-
-    Github Gist synchronization, regex-based automatic paper tagging, arbitrary website parsing to record Blog posts or dataset websites, etc.
-
-    [:octicons-arrow-right-24: All features](features.md)
-
-    ***
+[Privacy](features.md#privacy) · [Gist sync](features.md#gist-sync) · [All features](features.md)
 
 <p style="text-align: center; opacity: 0.4; font-size: 0.75rem; margin-top: 2rem;"><a href="privacy-policy/">Privacy Policy</a></p>

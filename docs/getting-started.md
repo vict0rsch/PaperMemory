@@ -1,5 +1,5 @@
 ---
-description: "Install PaperMemory and visualize its core features that make your paper management smooth and smart."
+description: "Install PaperMemory and take a short tour of the popup, the full-page Memory, BibMatcher and the options page."
 icon: octicons/rocket-16
 ---
 
@@ -7,148 +7,153 @@ icon: octicons/rocket-16
 
 ## Installation
 
-![Demo Gif](assets/home_slideshow.gif){ align=right .demo-gif }
-
 ### Browser Stores
 
-<br>
-<br>
-
 <p align="center" markdown>
-[:fontawesome-brands-chrome: Chrome / :simple-brave: Brave / :fontawesome-brands-edge: Edge](https://chromewebstore.google.com/detail/paper-memory/hmebhknlgddhfbbdhgplnillngljgmdi?pli=1){ .md-button .md-button--primary }
+[:fontawesome-brands-chrome: Chrome / :simple-brave: Brave / :fontawesome-brands-edge: Edge](https://chromewebstore.google.com/detail/paper-memory/hmebhknlgddhfbbdhgplnillngljgmdi){ .md-button .md-button--primary }
 </p>
 <br>
 <p align="center" markdown>
   [:fontawesome-brands-firefox-browser: Firefox](https://addons.mozilla.org/en-US/firefox/addon/paper-memory/){ .md-button .md-button--primary }
 </p>
-<br>
-
-<p style="clear: both;" />
 
 ### From source
 
+PaperMemory is built with [WXT](https://wxt.dev/). You need [`npm`](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm) (Node.js 22+ recommended).
+
 === "Chrome / Brave / Edge"
 
-    * Clone the repo
-    * Install dependencies with `npm install` (requires [`npm`](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm), Node.js 22+ recommended)
+    * Clone the repository
+    * Install dependencies with `npm install`
     * Build the extension with `npm run build:chrome`
-    * Go to Chrome/Brave's extension manager `chrome://extensions/`
-    * Enable developer mode (top right)
-    * Click on the "Load unpacked" button
+    * Open the extension manager at `chrome://extensions/`
+    * Turn on developer mode (top right)
+    * Click "Load unpacked"
     * Select the `dist/chrome-mv3/` folder
 
 === "Firefox"
 
-    * Clone the repo
-    * Install dependencies with `npm install` (requires [`npm`](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm), Node.js 22+ recommended)
+    * Clone the repository
+    * Install dependencies with `npm install`
     * Build the extension with `npm run build:firefox`
-    * Go to `about:debugging#/runtime/this-firefox` in the address bar
-    * Click on "Load Temporary Add-on"
+    * Open `about:debugging#/runtime/this-firefox`
+    * Click "Load Temporary Add-on"
     * Select the `manifest.json` file in the `dist/firefox-mv2/` folder
-    * __NB__ this is a temporary install you may have to re-do this loading operation if you close Firefox
+    * This install is temporary: load it again after you restart Firefox
+
+For development commands (`npm run dev`, tests, packaging), see [`contributing.md`](https://github.com/vict0rsch/PaperMemory/blob/master/contributing.md).
 
 !!! tip
 
-    For better usability, I recommend that you *pin* the PaperMemory extension to your browser's toolbar.
+    Pin PaperMemory to your browser's toolbar so its icon is always one click away.
 
-## Main components
+## Welcome tab
 
-### Popup
+![The welcome tab](assets/welcome-tab.png){ align=right .advanced-screenshot }
 
-![Popup](assets/popup.png){ align=right .popup-display }
+The welcome tab opens once, when you install PaperMemory. It covers four things:
 
-Your main interface to PaperMemory is its popup. You can open it by clicking on the PaperMemory extension icon or using the default keyboard shortcut:
+- What gets recorded, where your Memory is kept, and what leaves your browser.
+- A test of the keyboard shortcut that opens the popup, with a link to your browser's shortcut settings if no shortcut is set.
+- The Sources PaperMemory records papers from. Turn off the ones you do not want.
+- The theme: System, Light or Dark.
 
-- ++cmd+shift+"E"++ (:fontawesome-brands-apple:)
-- ++ctrl+shift+"E"++ (:fontawesome-brands-windows:)
-- ++ctrl+shift+"M"++ (:fontawesome-brands-linux:)
-
-!!! tip "User Guide"
-
-    The `User Guide` also contains a recap of keyboard shortcuts and search syntax.
-
-!!! info "Keyboard Shortcuts"
-
-    You can customize keyboard shortcuts (or verify that they work), see [Configuration](configuration.md#keyboard-shortcuts)
+You can open it again from the options page: General, then Welcome page.
 
 <p style="clear: both;" />
 
----
+## Popup
 
-### Popup Menu
+![The popup on a paper page](assets/popup-paper.png){ align=right .popup-display }
 
-![Popup](assets/menu.png){ align=left .popup-display }
+Click the PaperMemory icon in the toolbar, or use the keyboard shortcut (see [Keyboard shortcuts](configuration.md#keyboard-shortcuts)). The popup has two tabs.
 
-By clicking on the popup bottom-right :octicons-gear-16: symbol, you can open the customization menu.
+**Paper** shows the paper of the current tab: title, authors, venue, the date it was added and its number of visits. From there you can:
 
-The detail list of available customization options can be found in [Configuration](./configuration.md#popup-menu).
+- Open the PDF or abstract page, and copy the URL, a rich link, a Markdown link or the BibTeX.
+- Download the PDF, or open the downloaded copy.
+- Edit tags, the code link and a note. Changes are saved as you type.
+- Mark the paper as a favourite, show its info, or remove it from your Memory.
 
-<p style="clear: both;" />
-
----
-
-### Memory
-
-![Popup](assets/memory.png){ align=right .popup-display }
-
-Open your Memory (_i.e._ the list of your papers) by clicking on the popup bottom-left :material-folder-multiple-outline:{ color="red" } button.
-
-In the search bar, you can search by title or author, prefix by `t:` to search for tags or by `y:` to search by year. More information in [Searching for papers](features.md#searching).
-
-You can also
-
-<div class="annotate" markdown>
-
-- :tabler-star: Mark a paper as Favourite
-- :tabler-writing: Edit the paper's tags, code link and note
-- :tabler-vocabulary: open a downloaded PDF
-- :tabler-external-link: Go to the paper's online page (1)
-- :octicons-link-24: Copy the link to the paper (2)
-- :tabler-device-desktop-code: Copy a formatted hyperlink (to share papers in emails, Google Docs or Slack for instance)
-- :material-language-markdown-outline: Copy a `[$title]($url)` Markdown-formatted link (3)
-- :tabler-math-function: Copy a BibTex entry for your `.bib` bibliography.
-
-</div>
-
-1.  This will lead you to the paper's PDF or Abstract, depending on your settings in the :octicons-gear-16: Popup Menu.
-2.  This will copy the paper's PDF or Abstract, depending on your settings in the :octicons-gear-16: Popup Menu.
-3.  The URL used will be the paper's PDF or Abstract, depending on your settings in the :octicons-gear-16: Popup Menu.
+If the paper is not in your Memory yet, click _Add it now_. On a page that is not a paper, the popup offers to open your Memory, and can add the page by hand (see [Adding any website](features.md#adding-any-website)).
 
 <p style="clear: both;" />
 
----
+![The Memory tab with filter pills](assets/popup-memory.png){ align=left .popup-display }
 
-### Paper page
+**Memory** lists your saved papers. Press ++a++ to open it.
 
-![Popup](assets/paper.png){ align=left .advanced-screenshot }
-
-When on a known article's page, PaperMemory will display its meta-data (title, authors, code link), similar actions as in the memory (:tabler-writing:, :tabler-vocabulary:, :tabler-external-link:, :octicons-link-24:, :tabler-device-desktop-code:, :material-language-markdown-outline:, :tabler-math-function:) and customization options.
-
-<p style="clear: both;" />
-
----
-
-### BibMatcher
-
-![Popup](assets/bibMatcher.gif){ align=right .advanced-screenshot }
-
-Update your `.bib` file with actual published references.
-
-At the bottom of the :octicons-gear-16: Popup Menu, click on the _PaperMemory BibMatcher_ link to open a tool that allows you to seamlessly match Arxiv references in your `.bib` file to actual publications, using the PaperMemory's [preprint matching feature](features.md#preprint-matching).
+- Search titles, authors, notes, tags, IDs and venues as you type.
+- Filter by tag (`t:`), year (`y:`) or code link (`c:`). Filters become pills and combine with free text. See [Searching](features.md#searching).
+- Sort by last opened, last added, year, title or visits, and show favourites only.
+- Each row can be opened, copied (URL, rich link, Markdown, BibTeX), edited, starred or deleted. Press ++"?"++ for their keys.
 
 <p style="clear: both;" />
 
----
+## Popup Settings
 
-### Advanced Options
+![popup Settings](assets/popup-settings.png){ align=right .popup-display }
 
-![Popup](assets/advanced.png){ align=left .advanced-screenshot }
+Click the :octicons-gear-16: button or press ++p++ to open popup Settings. It holds the settings you change most often: theme, automatic recording, what ++enter++ does on a paper, and links to the full-page Memory, BibMatcher and the options page.
 
-More customization options and features are available in the advanced options page:
+Every setting is listed in [Configuration](configuration.md#popup-settings).
 
-- Right click on the extension's button in your browser toolbar and select _Options_
-- Open the :octicons-gear-16: Popup Menu, scroll down and click on _Options page_.
+<p style="clear: both;" />
 
-More details in [Configuration](configuration.md#advanced-options).
+## Full-page Memory
+
+![The full-page Memory](assets/full-page-memory.png){ align=left .advanced-screenshot }
+
+Open it from popup Settings with _Full Memory_. Your Memory is shown in its own tab:
+
+- A sortable table with venue, year, tags, last opened and visits.
+- A tag list on the side, and a filter for favourites.
+- A detail pane for the selected paper.
+- Actions on several papers at once: add a tag, favourite, copy BibTeX, export a `.bib` file, delete.
+
+Search and filters work as in the popup.
+
+<p style="clear: both;" />
+
+## PaperMemory block
+
+![The PaperMemory block on an arXiv abstract page](assets/papermemory-block.png){ align=right .popup-display }
+
+On arXiv abstract pages, PaperMemory adds a small block next to the abstract. It shows whether the paper is in your Memory (with an _Add to Memory_ button if not), and can include:
+
+- A PDF download button, or _Show in folder_ when the PDF is in your PaperMemoryStore.
+- A Markdown link to copy.
+- The BibTeX citation, to show or copy.
+- The published venue and the code link, when known.
+
+Choose which rows appear in popup Settings or on the options page (see [General](configuration.md#general)).
+
+<p style="clear: both;" />
+
+## BibMatcher
+
+![BibMatcher](assets/bibmatcher.png){ align=left .advanced-screenshot }
+
+BibMatcher finds the published version of the preprints (arXiv, bioRxiv, medRxiv, ChemRxiv) in a `.bib` file. Open it from popup Settings.
+
+- Paste your BibTeX, or drop or choose a `.bib` file.
+- PaperMemory looks each preprint up on DBLP, Semantic Scholar, Google Scholar, CrossRef and OpenAlex.
+- Each proposed change is shown as a diff. Accept or reject it, one by one or all at once.
+- Turn on _Keep my citation keys_ so your `\cite{}` commands keep working.
+- Copy or download the result. Entries you did not accept are left as they were.
+
+BibMatcher never changes your Memory. See also [Preprint matching](features.md#preprint-matching).
+
+<p style="clear: both;" />
+
+## Options page
+
+![The options page](assets/options-page.png){ align=right .advanced-screenshot }
+
+The options page holds every setting, in six groups: General, Capture & sources, Tags & matching, Import & export, Sync, and Keyboard shortcuts. A search field at the top filters the settings.
+
+To open it, click _All options_ in popup Settings, or right-click the PaperMemory icon in the toolbar and choose _Options_.
+
+Each group is described in [Configuration](configuration.md#options-page).
 
 <p style="clear: both;" />

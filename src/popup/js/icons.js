@@ -1,4 +1,4 @@
-// Popup icons (from design-review/v2/src/shared.js): 24px stroke icons, drawn with .pm-i.
+// Popup icons: 24px stroke icons, drawn with .pm-i.
 // In static HTML write <i data-i="name" class="pm-i-sm"></i>; paintIcons() swaps it for the svg.
 const ICONS = {
     open: '<path d="M15 3h6v6"/><path d="M10 14 21 3"/><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/>',
@@ -40,7 +40,7 @@ const ICONS = {
         '<rect x="2" y="6" width="20" height="12" rx="2"/><path d="M6 10h.01"/><path d="M10 10h.01"/><path d="M14 10h.01"/><path d="M18 10h.01"/><path d="M7 14h10"/>',
 };
 
-// Brand mark (design-review/v2 mockup; replaced by the final icon in step 7)
+// Brand mark
 const MARK =
     '<svg viewBox="0 0 128 128" aria-hidden="true"><path d="M28 0h68l32 32v68a28 28 0 0 1-28 28H28A28 28 0 0 1 0 100V28A28 28 0 0 1 28 0z" fill="#B42318"/><path d="M96 0v24a8 8 0 0 0 8 8h24z" fill="#7A170F"/><path d="M68 18 30 74h30l-8 38 46-62H70z" fill="#fff" stroke="#fff" stroke-width="6" stroke-linejoin="round"/></svg>';
 

@@ -7,9 +7,9 @@ import { seedPapers } from "./data.mjs";
 export const HERE = new URL(".", import.meta.url).pathname;
 export const ROOT = new URL("../../", import.meta.url).pathname;
 export const STORE = `${ROOT}extra/store`;
-export const OUT = `${ROOT}design-review/step7/out`;
-export const WORK = `${ROOT}design-review/step7/work`; // captures and intermediate clips
-export const FFMPEG = process.env.FFMPEG || "/opt/homebrew/bin/ffmpeg";
+export const OUT = `${ROOT}tmp/store-assets/out`;
+export const WORK = `${ROOT}tmp/store-assets/work`; // captures and intermediate clips
+export const FFMPEG = process.env.FFMPEG || "ffmpeg";
 export const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 export const mkdir = (d) => (fs.mkdirSync(d, { recursive: true }), d);
 

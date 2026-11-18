@@ -416,7 +416,7 @@ the `downloads` API), `functions.js` (49 misc helpers incl. `miniHash`,
   DBLP, Semantic Scholar, OpenAlex, Google Scholar.
 - **Permissions:** `activeTab`, `storage`, `unlimitedStorage`, `downloads`(+`.open`),
   `scripting`, and `host_permissions: *://*/*`.
-- **Docs site:** MkDocs Material (`mkdocs.yml`, `docs/`) published to papermemory.org.
+- **Docs site:** MkDocs Material (`mkdocs.yml`, `docs/`) published to papermemory.org. Site and Readme screenshots and web videos (walkthrough + feature loops) are generated from the real build with `node scripts/store-assets/build.mjs docs` (writes `docs/assets/`).
 
 ## Key Design Decisions
 

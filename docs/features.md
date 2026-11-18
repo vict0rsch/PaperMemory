@@ -1,278 +1,146 @@
 ---
-description: "PaperMemory's core features: illustrations and explanations."
+description: "What PaperMemory does: saving papers, venues, search, preprint matching, citations, sync and privacy."
 icon: octicons/gift-16
 ---
 
 # Features
 
-## User Guides
+## Saving papers
 
-<p align="center">
-<img src="https://raw.github.com/vict0rsch/PaperMemory/master/extra/imgs/guide-arrows.png?raw=true">
-</p>
+Open a paper on a supported site and PaperMemory saves it to your Memory: title, authors, venue, year, links and BibTeX. The list of Sources is under [Venues](#venues).
 
-<p align="center">
-<img src="https://raw.github.com/vict0rsch/PaperMemory/master/extra/imgs/guide-memory.png?raw=true">
-</p>
+- Abstract pages and PDFs both work. To save only from PDFs, turn on "Only record from PDF pages" in the [popup Settings](getting-started.md#popup-settings).
+- A small notice in the corner of the page confirms the save. You can turn it off on the [options page](configuration.md#general).
+- Opening a paper again does not create a duplicate: PaperMemory updates the paper, its last-opened date and its number of visits.
+- To choose papers yourself, turn off "Record papers automatically" on the [options page](configuration.md#capture). You then add a paper from the popup, or with the "Parse this page" [keyboard shortcut](configuration.md#keyboard-shortcuts).
+- You can turn individual Sources off on the [options page](configuration.md#capture), or when you pick them in the [welcome tab](getting-started.md#welcome-tab).
+- On a paper's PDF, the browser tab shows the paper's title instead of a file name such as `1706.03762.pdf`.
 
-## Keyboard Navigation
+## Venues
 
-<div class="flex-container" markdown id="keyboard-nav">
-<div id="keyboard-nav-text" markdown>
-Navigate the Popup with your keyboard:
+PaperMemory reads papers from these 31 Sources. Where a site has an open API, PaperMemory uses it; otherwise it reads the page. On a PDF, PaperMemory finds the abstract page from the PDF's URL. If a site's URLs do not allow that, the PDF is not saved.
 
-- Open the Memory:
-    - ++"A"++ from the popup's home will open it
-    - navigate to the bottom left button with ++tab++ and hit ++enter++
-- Search
-    - Search field is automatically focused on memory open
-    - Navigate to the top input with ++tab++ or ++shift+tab++
-    - More info on the search syntax down in the [Searching section](#searching)
-- Navigate papers
-    - ++tab++ will iterate through papers down the list
-    - ++shift+tab++ will go back up the list
-- Edit a paper
-    - Press ++e++ to _edit_ the paper's metadata: tags, code and note when the paper is _focused_ (from click or keyboard ++tab++ navigation)
-    - Navigate through fields with (++shift++ +) ++tab++: tags and note if you're on a paper's page.
-    - Press ++enter++ on the `Done` button to close the edits (they were already saved automatically)
-- Delete a paper
-    - Delete a focused paper with backspace
-    - A confirmation will be prompted first don't worry
-- Copy shortcuts
-    - ++o++ ↦ open the paper in a new tab.
-    - ++c++ ↦ copy the paper's link.
-    - ++m++ ↦ copy the paper's markdown link.
-    - ++b++ ↦ copy the paper's bibtex.
-    - ++h++ ↦ copy the paper's hyperlink.
-    - ++d++ ↦ show the paper's metadata.
-- Open ArXiv papers on alternative websites:
-    - ++5++ ↦ go to the paper's Ar5iv page
-    - ++x++ ↦ go to the paper's AlphaXiv page
-    - ++f++ ↦ go to the paper's HuggingFace page
-    - ++s++ ↦ go to the paper's SciRate page
-- Set a default action for the current paper in the Menu
-    - When a paper is focused in the popup: ++enter++ ↦ execute the default action for the current paper
-    - Without opening PaperMemory's popup: ++alt+shift+e++ ↦ execute the default action for the current paper
-- Close Memory, Menu, Modals (such as the user guide) or Popup - ++esc++ closes items up until you're back to the popup, at which point it will close the popup. - :material-alert-box-outline: This does not work in Firefox. The whole popup will close at any point with ++esc++.
+??? info "Supported Sources"
 
-</div>
-<img src="../assets/keyboard-nav.png"/>
-</div>
-
-## Arxiv Enhancements
-
-PaperMemory enhances paper pages on ArXiv.org to make its parsing abilities readily available without even opening the popup:
-
-- Displays the publication venue if one exists
-- Allows you to directly download a paper to your [PaperMemoryStore](#local-file-storage)
-
-![Arxiv enhancements](assets/display.png)
-
-<p style="clear: both;" />
-
-## Memory: Parsing papers
-
-### Venues
-
-In order to parse papers from the websites you visit, PaperMemory contains a custom function for each individual paper provider (ArXiv, ScienceDirect, OpenReview, Nature, Science, FrontiersIn, etc.).
-
-<div class="annotate" markdown>
-Whenever possible, PaperMemory queries the API the provider offers. If they don't offer an open and free API, PaperMemory will parse the page's `HTML` code. When on a PDF's page, PaperMemory contains an URL reversal process to go from PDF to Abstract page. If that cannot be infered from the URL because of the paper provider's URL scheme, there's nothing PaperMemory can do and the PDF will not be stored.(1)
-</div>
-
-1.  PDFs are notoriously hard to parse as stand-alone files, so PaperMemory cannot (currently) extract metadata from the raw file. This feature has a low priority and would require a PR to move forward.
-
-??? info "PaperMemory known venues"
-
-    * Arxiv
-      * PaperMemory will try to find if a pre-print has been published and create a corresponding `note` to the paper (see [preprints](#preprint-matching))
-      * Also detects and matches papers from [huggingface.co/papers](https://huggingface.co/papers), [AlphaXiv](https://alphaxiv.org), [ar5iv.org](https://ar5iv.org) and [scirate.com/](https://scirate.com/)
-    * BioRxiv
-    * NeurIPS
-    * Open Review (ICLR etc.)
-    * Computer Vision Foundation (I/ECCV, CVPR etc.)
-    * Proceedings of Machine Learning Research (PMLR) (AISTATS, ICML, CoRL, CoLT, ALT, UAI etc.)
-    * Association for Computational Linguistics (ACL) (EMNLP, ACL, CoNLL, NAACL etc.)
-    * Proceedings of the National Academy of Sciences (PNAS)
-    * SciRate
-    * Nature (Nature, Nature Communications, Nature Machine Intelligence etc.)
-    * American Chemical Society (ACS)
-    * IOPscience
-    * PubMed Central
-    * International Joint Conferences on Artificial Intelligence (IJCAI)
-    * Association for Computing Machinery (ACM)
-    * IEEE
-    * Springer (books, chapters and, of course, articles)
-    * American Physical Society (APS)
-    * Wiley (Advanced Materials, InfoMat etc.)
-    * Science Direct
-    * Science (Science, Science Immunology, Science Robotics etc.)
-    * FrontiersIn (Frontiers in Neuroscience, Frontiers in Neuroscience, Frontiers in Microbiology etc.)
-    * PLOS
-    * Royal Society of Chemistry
-    * MDPI
-    * Oxford University Press
-    * HAL Archives ouvertes
-    * American Institute of Physics (AIP)
+    * arXiv, also from [alphaXiv](https://alphaxiv.org), [ar5iv](https://ar5iv.labs.arxiv.org), [Hugging Face papers](https://huggingface.co/papers) and [SciRate](https://scirate.com)
+    * ACL Anthology (Association for Computational Linguistics)
+    * ACM (Association for Computing Machinery)
+    * ACS (American Chemical Society)
+    * AIP (American Institute of Physics)
+    * APS (American Physical Society)
+    * bioRxiv
     * Cell
     * ChemRxiv
-    * INSPIRE - High Energy Physics (IHEP)
-    * Journal of Machine Learning Research (JMLR)
-    * [Sci-Hub](./faq.md#can-i-reference-my-pdf-in-papermemory)
-    * [Add more](https://github.com/vict0rsch/PaperMemory/issues/13)
+    * CVF (Computer Vision Foundation)
+    * Frontiers
+    * HAL
+    * IEEE (Institute of Electrical and Electronics Engineers)
+    * IHEP (INSPIRE - High Energy Physics)
+    * IJCAI (International Joint Conferences on Artificial Intelligence)
+    * IOP (Institute Of Physics)
+    * JMLR (Journal of Machine Learning Research)
+    * MDPI (Multidisciplinary Digital Publishing Institute)
+    * Nature
+    * NeurIPS (Neural Information Processing Systems)
+    * OpenReview
+    * OUP (Oxford University Press)
+    * PLOS (Public Library of Science)
+    * PMC (PubMed Central)
+    * PMLR (Proceedings of Machine Learning Research)
+    * PNAS (Proceedings of the National Academy of Sciences)
+    * RSC (Royal Society of Chemistry)
+    * Science
+    * ScienceDirect
+    * Springer
+    * Wiley
+    * [Request a site](https://github.com/vict0rsch/PaperMemory/issues/13)
 
-    [About finding published papers from preprints](#preprint-matching)
+A paper's venue is shown in a short form, such as `ICML 2023`, in the popup, the full-page Memory and the PaperMemory block. The full name is in the paper's Info panel (++d++). Short forms come from a table of known conferences and from standard journal abbreviations; PaperMemory does not invent abbreviations.
 
-### Code repositories
+For preprints, PaperMemory also looks for the published version: see [Preprint matching](#preprint-matching).
 
-PaperMemory uses [Papers With Code](https://paperswithcode.com)'s [API](https://paperswithcode.com/api/v1/docs/) to discover code repositories for your paper.
+## Searching
 
-By default, PaperMemory only stores _official_ code repositories. You can configure that (and a preferred framework) in the [Advanced Options](./configuration.md#advanced-options).
+![The Memory in the popup, with filter pills](assets/popup-memory.png){ .popup-display }
 
-??? example "How it works"
+The Memory search runs as you type, in the popup and in the [full-page Memory](getting-started.md#full-page-memory).
 
-    PaperMemory uses the PapersWithCode API in order to discover code repositories. If the paper being added to the Memory is from Arxiv, PaperMemory will use PWC's `arxiv_id` search field. Otherwise it will query per title. PaperMemory then expects exactly `1` result from the API. Any different `count` in the response will make PaperMemory consider there is no match.
+- Free text matches the title, authors, note, tags, ID and venue. Every word must match: `gan im` finds papers that contain both "gan" and "im".
+- `t:` filters by tag, `y:` by year, `c:` by code link. Press ++tab++ or ++enter++ to turn a complete filter into a pill. Pills combine with each other and with free text. ++backspace++ in an empty search field removes the last pill.
+    - `t:gan` keeps the papers tagged `gan`. While you type, `t:` also matches parts of tags.
+    - `y:2020, 2021` keeps the papers from 2020 or 2021. `y:<2015` and `y:>2019` keep papers from strictly before or after a year. Two-digit years work: `y:>19`.
+    - `c:github` keeps the papers whose code link contains "github".
+- Show only your favourites with the star button.
+- Sort by last opened, last added, year, title, number of visits or ID, in either direction.
 
-    If a match is found, the selected repo is the official (if it exists) one with the most stars (customizable in the Advanced Options).
+## Preprint matching
 
-    Here's an example return value from PWC's API
+There is no central record of which preprint became which publication. PaperMemory looks for the published version of a paper on public bibliographic services when the paper has no note or no venue yet. Papers from conference sites such as OpenReview, PMLR, NeurIPS or CVF get an `Accepted @ <venue>` note from the site itself.
 
-    ```json
-    "https://paperswithcode.com/api/v1/papers/?title=climategan"
+When a published version is found:
 
-    {
-    "count": 1,
-    "next": null,
-    "previous": null,
-    "results": [
-        {
-        "id": "climategan-raising-climate-change-awareness",
-        "arxiv_id": "2110.02871",
-        "nips_id": null,
-        "url_abs": "https://arxiv.org/abs/2110.02871v1",
-        "url_pdf": "https://arxiv.org/pdf/2110.02871v1.pdf",
-        "title": "ClimateGAN: Raising Climate Change Awareness by Generating Images of Floods",
-        "abstract": "...",
-        "authors": ["..."],
-        "published": "2021-10-06",
-        "conference": "climategan-raising-climate-change-awareness-1",
-        "conference_url_abs": "https://openreview.net/forum?id=EZNOb_uNpJk",
-        "conference_url_pdf": "https://openreview.net/pdf?id=EZNOb_uNpJk",
-        "proceeding": "iclr-2022-4"
-        }
-    ]
-    }
+- the paper's venue is set and shown in the popup, the full-page Memory and the PaperMemory block;
+- if the paper has no note, a note `Accepted @ <venue> -- [<service>]` is added;
+- the paper's BibTeX is updated with the publication's venue and year, and its DOI when the service provides one (CrossRef matches add the venue and year only). Preprint-only fields (such as `eprint` and `archiveprefix`) are removed. The citation key, title and authors are kept, except for a Google Scholar match, which replaces the whole BibTeX entry, citation key and authors included.
 
-    "https://paperswithcode.com/api/v1/papers/climategan-raising-climate-change-awareness/repositories/"
+A preprint record (arXiv, bioRxiv, medRxiv, ChemRxiv) is never taken as the published version. Every service requires an exact title match, after ignoring case and punctuation.
 
-    {
-    "count": 2,
-    "next": null,
-    "previous": null,
-    "results": [
-        {
-        "url": "https://github.com/cc-ai/climategan",
-        "owner": "cc-ai",
-        "name": "climategan",
-        "description": "Code and pre-trained model for the algorithm generating visualisations of 3 climate change related events: floods, wildfires and smog. ",
-        "stars": 25,
-        "framework": "pytorch",
-        "is_official": true
-        },
-        {
-        "url": "https://github.com/cc-ai/mila-simulated-floods",
-        "owner": "cc-ai",
-        "name": "mila-simulated-floods",
-        "description": "",
-        "stars": 7,
-        "framework": "pytorch",
-        "is_official": true
-        }
-    ]
-    }
+??? example "How each service is used"
 
-    ```
+    All services are queried at the same time. The first one in this order that finds a match is used.
 
-### Searching
+    * [Google Scholar](https://scholar.google.com)
 
-You can search for (partial) terms:
+        * PaperMemory searches the paper's title and opens the BibTeX export of the matching result.
+        * The result is used if its journal is not a preprint server.
+        * The note is `Accepted @ ${venue} -- [scholar.google.com]` and the paper's BibTeX becomes Google Scholar's entry.
 
-- In a paper's authors, title and note.
-    - Split queries on spaces: `gan im` will look for: _all papers whose (title OR author) contain ("gan" AND "im")_
-- In a paper's code link
-    - Start the search query with `c:` to only search code links
-- Paper years
-    - Start the search query with `y: ${year}`, optionally with `,` separating requested years or starting with `>` or `<` to filter paper published after/before a given year (stricly)
-        - `y: 20,21,22` will display papers published in `2020 OR 2021 OR 2022`
-        - `y: <2015` will display papers published before (strictly) `2015`
-        - `y: >19` will display papers published after (strictly) `2019`
-- Paper tags
-    - Start the search query with `t:` to filter by tags
-    - `t: gan` will look for _all papers whose tag-list contains at least 1 tag containing "gan"_
-    - `t: gan tim` will look for _all papers whose tag-list contains (at least 1 tag containing "gan") AND (at least 1 tag containing "tim")_
+    * [Semantic Scholar](https://www.semanticscholar.org)
 
-### Preprint matching
+        * A title query is sent to its [API](https://www.semanticscholar.org/product/api); the first 5 results are checked.
+        * A match has the same title, a year within 2 years of the preprint's and a venue that is not a preprint server.
+        * The venue is the conference's acronym when Semantic Scholar has a plausible one, otherwise an abbreviation of its venue name.
+        * The note is `Accepted @ ${venue} (${year}) -- [semanticscholar.org]`.
 
-There currently exists, to my knowledge, no centralized source for matching a preprint to its subsequent published article. This makes it really hard to try and implement best practices in terms of citing published papers rather than their preprint.
+    * [CrossRef](https://www.crossref.org)
 
-My approach with PaperMemory is to try and notify you that a publication likely exists by utilizing the `note` field. You will occasionally notice `Accepted @ X` in a Paper's notes. This will be added automatically if you are on a known published venue's website (as Nature, PMLR or NeurIPS) but also from PapersWithCode, DBLP.org SemanticScholar.org, CrossRef.org and Unpaywall.org.
+        * A title query is sent to its [API](https://api.crossref.org/swagger-ui/index.html); the 5 best results are checked.
+        * A match has the same title, a conference `event` name, a year within 2 years of the preprint's, and is not a preprint record. Journal articles have no event, so CrossRef only finds conference papers.
+        * The note is `Accepted @ ${event.name} -- [crossref.org]`.
+        * Try for instance [Attention-Guided Generative Adversarial Networks for Unsupervised Image-to-Image Translation](http://arxiv.org/pdf/1903.12296v3).
 
-??? example "How it works"
+    * [dblp](https://dblp.org)
 
-    Here's an overview of jhow PaprMemory deals with publication APIs:
+        * The query goes to its [SPARQL endpoint](https://sparql.dblp.org) (dblp's search API now answers programs with a bot check).
+        * Records with the same title, a year within 2 years of the preprint's and a venue other than `CoRR` (arXiv) are kept; the oldest one is used.
+        * Journal names are abbreviated with ISO 4 abbreviations.
+        * The note is `Accepted @ ${venue} ${year} -- [dblp.org]`.
+        * Try for instance [Domain-Adversarial Training of Neural Networks](http://arxiv.org/pdf/1505.07818v4).
 
+    * [OpenAlex](https://openalex.org)
 
-    * [PapersWithCode.com](https://paperswithcode.com)
+        * A title search is sent to its [API](https://docs.openalex.org); the first 10 results are checked.
+        * A match has the same title, is published in a journal or a conference, has a year within 2 years of the preprint's and is not a preprint record.
+        * The note is `Accepted @ ${venue} (${year}) -- [openalex.org]`.
 
-        * A query is sent to their [api](https://paperswithcode.com/api/v1/docs/) from an Arxiv ID or a paper's plain text title if it's not an Arxiv paper
-        * As PaperMemory retrieves code, it also looks for a `proceeding` field in PWC's response.
-        * If it exists and is not `null` then it is expected to look like `${conf}-${year}-${month}`.
-        * In this case a note is added to the paper: `Accepted @ ${conf} ${year} -- [paperswithcode.com]`
+    There is room for improvement here. Please open an [issue](https://github.com/vict0rsch/PaperMemory/issues) if you want to help.
 
-    * [dblp.org](https://dblp.org)
+[BibMatcher](getting-started.md#bibmatcher) uses the same services to update the preprints of a `.bib` file.
 
-        * A query is sent to their [SPARQL endpoint](https://sparql.dblp.org) for an exact paper title match (dblp.org's search API now answers programs with a bot check)
-        * The oldest record which is not a preprint (venue other than `CoRR`) is used
-        * If such a match is found, a note is added as: `Accepted @ ${venue} ${year} -- [dblp.org]`
+## Adding any website
 
-            * In this case, the paper's BibTeX gets the publication's venue, year and DOI
-            * Try for instance [Domain-Adversarial Training of Neural Networks](http://arxiv.org/pdf/1505.07818v4)
-            * Note that DBLP journals may use ISO4 abbreviations
+![The popup on a page that is not a paper](assets/add-website.png){ .popup-display }
 
-    * [SemanticScholar.org](https://www.semanticscholar.org/)
+Any other web page, such as a blog post or a documentation page, can be added to your Memory from the popup.
 
-        * A query is sent to their [api](https://www.semanticscholar.org/product/api) for an exact paper title match
-        * Up to 50 relevant papers are returned in `response.data` as an `Array`
-        * In case of a match, the venue should not be `"ArXiv"`
-        * If there's a match and its venue is not Arxiv then `match.venue` and `match.year` are used to create a note: `Accepted @ {venue} ({year}) -- [semanticscholar.org]`
+- On a page that is not a paper, click "Parse this page". PaperMemory reads the page's title, uses the site name (or domain) as the author and the current year as the year, then shows them in a "Check the details" form.
+- Correct the URL, title, authors and year in this form if needed, add an optional note, and save.
+- If the page cannot be read, try again or click "Fill in by hand".
+- The "Parse this page" button can be turned off with "Parse any website" in the [popup Settings](getting-started.md#popup-settings).
 
-    * [CrossRef.org](https://crossref.org)
+A website is exported as a `@misc` BibTeX entry with its URL and the date you added it:
 
-        * A query is sent to their [api](https://api.crossref.org/swagger-ui/index.html) for an exact paper title match
-        * The response *must* contain an `event` field with a `name` attribute. If it does not it'll be ignored.
-        * If it does, a note is added as: `Accepted @ ${items.event.name} -- [crossref.org]`
-
-            * Try for instance [Attention-Guided Generative Adversarial Networks for Unsupervised Image-to-Image Translation](http://arxiv.org/pdf/1903.12296v3)
-
-    * [OpenAlex.org](https://openalex.org) (it replaces Unpaywall's title search, retired in 2026)
-
-        * A query is sent to their [api](https://docs.openalex.org) searching for works by title
-        * Amongst the results, we're looking for an exact title match published in a journal or a conference
-        * If there's one, a note is added to the paper as: `Accepted @ ${venue} (${year}) -- [openalex.org]`
-
-    There's room for improvement here^, please contact me (an issue will do) if you want to help
-
-### Parsing arbitrary websites
-
-![Parse arbitrary website gif](assets/website.gif){ align=right .demo-gif }
-
-PaperMemory allows you to parse any website, such as blog posts, PDFs hosted on personal websites, documentations etc.
-
-Just hit the `Parse Current Website` button and adjust the automatically-filled fields.
-
-A _website_ will be exported as a BibTex entry like:
-
-```
+```bibtex
 @misc{wolfe2023history,
   author = {Cameron Wolfe},
   title  = {The History of Open-Source LLMs: Early Days (Part One)},
@@ -282,65 +150,76 @@ A _website_ will be exported as a BibTex entry like:
 }
 ```
 
-<p style="clear: both;"/>
+## Code links
 
-## Bibliography tools
+Each paper can have one code link. Add it by hand when you edit a paper (++e++), next to its tags and note. The code link then shows on the paper in the popup and in the PaperMemory block on arXiv, and you can filter on it with `c:` in the [search](#searching).
 
-- **Copy** the BibTex entry of the current paper from the Popup or any paper in your Memory by clicking the :tabler-math-function: icon
-- **Export** all papers with a given tag into a `.bib` file in the [Advanced Options](./configuration.md#advanced-options).
-- **Match** the ArXiv pre-prints of an existing `.bib` file to actual publications with PaperMemory's [BibMatcher](./getting-started.md#bibmatcher)
+## BibTeX export
 
-## Local File Storage
+- Copy one paper's BibTeX from the popup with ++b++ or its BibTeX button. ++m++ copies a Markdown link, ++h++ a rich link and ++c++ the URL.
+- In the [full-page Memory](getting-started.md#full-page-memory), select several papers to copy their BibTeX or download it as a `.bib` file.
+- On the [options page](configuration.md#import-export), export your whole Memory as BibTeX, or only the papers that have any or all of a set of tags, as `.bib` or `.json`.
+- [BibMatcher](getting-started.md#bibmatcher) takes a `.bib` file and proposes the published version of each preprint (arXiv, bioRxiv, medRxiv, ChemRxiv). You accept or reject every change, and your citation keys can be kept.
 
-PaperMemory can store pdfs in your Downloads folder and use this file instead of re-downloading a pdf from the internet.
+![Import and export on the options page](assets/options-data.png)
 
-How it works:
+## PaperMemoryStore
 
-- Enable the feature from the :octicons-gear-16: Popup Menu
-- Click on the :tabler-file-download: Download button in the PaperMemory popup when reading a paper
-- The extension creates a `PaperMemoryStore/` folder in your `Downloads/`
-- PDFs are stored in there
-- When opening a paper from your Memory, if it is not already open in a tab, the extension will open a new tab (or your PDF reader, the Browser decides) to the local file instead of the paper's online pdf
+PaperMemory can keep PDFs in a `PaperMemoryStore/` folder in your Downloads and open that file instead of downloading the PDF again.
 
-**Limitations**:
+- Turn on "Keep PDFs in Downloads/PaperMemoryStore" in the [popup Settings](getting-started.md#popup-settings).
+- Download a paper's PDF from the popup, from the PaperMemory block on arXiv, or with the "Download PDF" [keyboard shortcut](configuration.md#keyboard-shortcuts). The file is named after the paper's title.
+- On arXiv, the PaperMemory block then shows "Show in folder" for that file.
+- To have ++o++ in the Memory open the downloaded file, turn on "Open the downloaded PDF when there is one" on the [options page](configuration.md#general).
+
+**Limitations:**
 
 <div class="annotate" markdown>
 
-- PaperMemory can _only access folders in your Downloads_ so the storage _has_ to happen there
-- It relies on **title matching** to 1/ Open a local file from the Memory 2/ Detect if a currently open file is a known paper to display the Popup. Make sure to have the title in your custom title function.
-- If you move files or rename them altering the titles they may not be detected anymore (1).
+- Browsers only let extensions write in your Downloads folder, so the PaperMemoryStore has to be there.
+- If you move or rename files, PaperMemory may no longer find them (1).
 
 </div>
 
-1.  PaperMemory primarily relies on <a href="https://developer.chrome.com/docs/extensions/reference/downloads/#type-DownloadItem"
-            target="_blank" rel="noopenner noreferrer">`file.finalUrl`</a> to detect if a file corresponds to a known paper. If, for some reason this were to fail, the secondary matching strategy relies on said file name / paper title string matching.
+1.  PaperMemory first matches a file to a paper by the URL it was downloaded from. If that fails, it looks for the paper's title in the file name, ignoring case and punctuation.
 
-## Online Synchronization
+See also [Can I reference my PDF in PaperMemory?](faq.md#can-i-reference-my-pdf-in-papermemory)
 
-![Sync screenshot](assets/sync.png){ align=right .demo-gif }
+## Gist sync
 
-Your data can be synced online to be safe-guarded or shared across devices using [Github Gists](https://docs.github.com/en/get-started/writing-on-github/editing-and-sharing-content-with-gists/creating-gists#about-gists).
+![The Sync group of the options page](assets/options-sync.png)
 
-This means your data gets written as a commit to a Gist on your Github account, and Papers added to your memory will be saved there. You can use this to sync your full memory across devices.
+Your Memory can be copied to a private [GitHub Gist](https://docs.github.com/en/get-started/writing-on-github/editing-and-sharing-content-with-gists/creating-gists#about-gists) in your own GitHub account, so you can use PaperMemory on several computers. Sync is off by default.
 
-This feature can be enabled in the [Advanced Options](./configuration.md#advanced-options).
-
-<p style="clear: both;" />
+- On the [options page](configuration.md#sync), save a GitHub personal access token with the `gist` scope only, then click "Start syncing".
+- "Sync now" syncs immediately. "Disconnect" stops syncing.
 
 !!! warning
 
-    Syncing is meant for **sequential** use across multiple devices.
+    Sync is meant for one computer at a time. Edits made at the same moment on two computers are not merged, and one of them can be lost.
 
-    Syncing does NOT turn PaperMemory into a multi-user tool: in its current state, PaperMemory will NOT handle conflicts or concurrent writes to the remote data. Any conflict will result in potential loss of data.
+## Keyboard navigation
+
+![The popup's keyboard shortcuts sheet](assets/shortcuts.png){ .popup-display }
+
+Almost everything in the popup works from the keyboard. Press ++"?"++ in the popup to see every key. The full list is in [Keyboard shortcuts](configuration.md#keyboard-shortcuts).
+
+- ++a++ opens and closes the Memory, ++p++ opens the popup Settings.
+- In the Memory, ++"/"++ focuses the search field. ++tab++ and ++shift+tab++ move through the papers.
+- On a paper: ++o++ opens it, ++c++ ++m++ ++h++ ++b++ ++t++ copy its URL, Markdown link, rich link, BibTeX or title, ++e++ edits its tags, code link and note, ++d++ shows its Info panel, ++backspace++ deletes it (after a confirmation).
+- ++enter++ runs the default action you chose on the [options page](configuration.md#general). The "Default action" browser shortcut runs it without opening the popup; Edit and Show info only work from the popup.
+- ++5++ ++x++ ++f++ ++s++ open an arXiv paper on ar5iv, alphaXiv, Hugging Face or SciRate, when these links are turned on in the [popup Settings](getting-started.md#popup-settings).
 
 ## Privacy
 
 Your Memory is stored locally in your browser's extension storage. To fetch paper metadata, PaperMemory sends requests to academic and publication services (e.g. arXiv, CrossRef, DBLP, Semantic Scholar); these requests can include a paper's title or identifier.
 
-Your Memory is only uploaded to GitHub when you set up Gist Synchronization: saving your GitHub token in the options creates a private Gist containing your Memory if you don't already have one, even before you start syncing.
+Your Memory is only uploaded to GitHub when you set up Gist sync: saving your GitHub token on the options page creates a private Gist containing your Memory if you don't already have one, even before you start syncing.
 
-In this case, you voluntarily upload your data to Github Gists. Remember, although private Gists are non-discoverable, they are accessible to anyone with the link. So don't store personal or sensitive information in your paper notes if you enable Gists Synchronization. Your GitHub token is stored in your browser's extension storage and sent to GitHub's API to authenticate sync requests.
+In this case, you choose to upload your data to GitHub Gists. Although private Gists are not discoverable, anyone with the link can read them. Do not keep personal or sensitive information in your paper notes if you turn on Gist sync. Your GitHub token is stored in your browser's extension storage and sent to GitHub's API to authenticate sync requests.
+
+See the [privacy policy](privacy-policy.md) for details.
 
 ## Feature requests
 
-I'm regularly adding feature ideas in the [issues](https://github.com/vict0rsch/PaperMemory/issues). Feel free to go upvote the ones you'd like to see happen or submit your own requests.
+Feature ideas are tracked in the [issues](https://github.com/vict0rsch/PaperMemory/issues). Upvote the ones you would like to see, or submit your own.

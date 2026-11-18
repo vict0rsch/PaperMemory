@@ -1,177 +1,201 @@
 ---
-description: PaperMemory's configuration and documentation.
+description: PaperMemory's keyboard shortcuts, popup Settings and options page.
 icon: octicons/gear-16
 ---
 
 # Configuring PaperMemory
 
-## Keyboard Shortcuts
+## Keyboard shortcuts
 
-By default, and _if_ they are not already attributed, the following keyboard shortcuts are available:
+![The shortcut sheet in the popup](assets/shortcuts.png){ align=right .popup-display }
 
-!!! note ":fontawesome-brands-apple:"
+Press ++"?"++ in the popup to see every key. The same list is on the options page, in the _Keyboard shortcuts_ group (see [Keyboard](#keyboard)).
 
-    Replace ++ctrl++ by ++cmd++ on a Mac.
+### From any tab
 
-- Open the PaperMemory Popup
-    - :fontawesome-brands-apple: / :fontawesome-brands-windows: ▶️ ++ctrl+shift+"E"++
-    - :fontawesome-brands-linux: ▶️ ++ctrl+shift+"M"++
-- Download PDF of current paper
-    - :fontawesome-brands-apple: / :fontawesome-brands-windows: / :fontawesome-brands-linux: ▶️ ++ctrl+shift+"S"++
-    - If you have enabled this feature in the menu, the paper will be downloaded in your PaperMemoryStore (see thee [below](#paper-memory-store)).
-- Trigger paper parsing
-    - :fontawesome-brands-apple: / :fontawesome-brands-windows: / :fontawesome-brands-linux: ▶️ ++ctrl+shift+"P"++
-    - Trigger the manual parsing of a paper if you have disabled automatic paper detection [in the menu](#disable-automatic-parsing).
-- Execute the default action for the current paper
-    - :fontawesome-brands-apple: / :fontawesome-brands-windows: / :fontawesome-brands-linux: ▶️ ++alt+shift+"E"++
-    - This will not work if the current page is not a paper's page or the current action is not available for this paper (e.g. trying to open the AlphaXiv page of a non-Arxiv paper).
+These shortcuts are set by your browser. The browser assigns the default keys only if no other extension already uses them.
 
-!!! info "Customization & Issues"
+| Action | Default keys |
+| --- | --- |
+| Open the popup | ++ctrl+shift+"E"++ (++cmd+shift+"E"++ on macOS, ++ctrl+shift+"M"++ on Linux) |
+| Parse this page | ++ctrl+shift+"P"++ |
+| Download the PDF | ++ctrl+shift+"S"++ |
+| Default action | ++alt+shift+"E"++ |
 
-    All those shortcuts can be verified, changed or removed from `chrome://extensions/shortcuts` (:fontawesome-brands-chrome: Chrome / :simple-brave: Brave / :fontawesome-brands-edge: Edge) or `about:addons` (:fontawesome-brands-firefox-browser: Firefox).
+On macOS, ++ctrl++ in the other shortcuts is ++cmd++ too.
 
-## Popup Menu
+- **Parse this page** records the paper of the current tab. Use it when automatic recording is off (see [Capture](#capture)).
+- **Download the PDF** downloads the current paper's PDF if it is in your Memory. With _Keep downloaded PDFs_ on, the file goes to `Downloads/PaperMemoryStore/`.
+- **Default action** runs, on the current paper's page, the action you chose for ++enter++ (see [General](#general)). Edit and Show info only work from the popup.
 
-<p align="center" markdown>
-![Popup](assets/popup.png){ align=left .popup-display }
-![Popup](assets/menu.png){ align=right .popup-display }
-</p>
+To change them:
 
-<p style="clear: both;"/>
+- Chrome, Brave, Edge: open `chrome://extensions/shortcuts`.
+- Firefox: open `about:addons`, click the gear icon, then _Manage Extension Shortcuts_.
 
-The following :fontawesome-solid-toggle-on: items are displayed in PaperMemory's :octicons-gear-16: Popup Menu and can be changed anytime (close and re-open popup to see changes).
+The _Open browser shortcuts_ button on the options page and on the welcome tab takes you there. On Firefox versions that cannot open that screen from an extension, the button opens Mozilla's help page on extension shortcuts instead.
 
----
+<p style="clear: both;" />
 
-### Arxiv enhancements
+### In the popup
 
-`Add PDF direct download button`
+Keys do nothing while you type in a field.
 
-: Add the blue animated button to download the PDF to your Downloads without opening it.
+| Key | Action |
+| --- | --- |
+| ++a++ | Open the Memory (press again to close it) |
+| ++p++ | Open popup Settings (press again to close them) |
+| ++"?"++ | Show the shortcut sheet (press again to close it) |
+| ++tab++ / ++shift+tab++ | Next / previous paper |
+| ++"/"++ | Search the Memory |
 
-`Add Markdown Link section`
+**On a paper** (the Paper tab, or the focused row in the Memory):
 
-: In the right-most column on ArXiv.org, add the copy-able box with a :material-language-markdown-outline: Markdown-ready link `[$title]($url)`.
+| Key | Action |
+| --- | --- |
+| ++"o"++ | Open the paper |
+| ++"c"++ | Copy the URL |
+| ++"h"++ | Copy a rich link (the title as a clickable link) |
+| ++"m"++ | Copy a Markdown link |
+| ++"b"++ | Copy the BibTeX |
+| ++"t"++ | Copy the title |
+| ++"e"++ | Edit tags, code link and note |
+| ++ctrl+enter++ (++cmd+enter++ on macOS) | Done editing (changes are saved as you type) |
+| ++backspace++ | Delete the paper (asks first) |
+| ++enter++ | Default action (see [General](#general)) |
+| ++"d"++ | Show info |
+| ++"+"++ | Show all authors |
+| ++"5"++ / ++"x"++ | Open on ar5iv / alphaXiv |
+| ++"f"++ / ++"s"++ | Open on Hugging Face / SciRate |
 
-`Add BibTex citation section`
+The last two lines work on arXiv papers, when those links are turned on.
 
-: In the right-most column on ArXiv.org, add the copy-able box with a :tabler-math-function: BibTex citation.
+**In the search field:**
 
----
+| Keys | Action |
+| --- | --- |
+| `t:gan` then ++tab++ | Add a tag filter |
+| `c:github` then ++tab++ | Add a code link filter |
+| `y:>2020` then ++tab++ | Add a year filter |
+| ++backspace++ (empty field) | Remove the last filter |
 
-### User interface
+### In the full-page Memory
 
-`Display notification when a paper is added`
+The paper keys above work on the focused row. ++space++ selects a row, for actions on several papers at once.
 
-: Enable/Disable the red sliding notification displayed by PaperMemory when a Paper is parsed or a new code repository is found.
+## Popup Settings
 
-`Use Dark Mode`
+![popup Settings](assets/popup-settings.png){ align=right .popup-display }
 
-: Choose between light and dark mode for the Popup, Advanced Options and BibMatcher.
+Open popup Settings with the :octicons-gear-16: button or ++p++. The top row opens the full-page Memory, BibMatcher and the options page (_All options_) in a new tab. Every setting below is also on the [options page](#options-page).
 
-`Directly open the Memory when not on a Paper's page`
+**Most used**
 
-: This feature assumes that your primary reason to open PaperMemory -- when you're not on a paper's page -- is to look for a paper in your Memory and therefore directly opens it without you cliking on the :material-folder-multiple-outline: button or pressing ++a++.
+- **Theme**: System, Light or Dark.
+- **Record papers automatically**: when off, open the popup on a paper and add it yourself.
+- **Open on Memory when the page is not a paper**
+- **Keep search and filters when leaving the Memory**: until the popup closes.
+- **Show a notice when a paper is saved**
+- **↵ on a paper**: what ++enter++ does on a paper. Choose between edit, show info, open, copy URL, copy Markdown, copy BibTeX, copy rich link, or open on ar5iv, alphaXiv, Hugging Face or SciRate.
 
-`Change paper tab titles`
+**Links & copying**
 
-: By default, PaperMemory will replace your browser's tab titles with the paper's title so they are more easily searched and bookmarked.
+- **Prefer PDF links**: otherwise links point to the abstract page.
+- **Add venue and year to Markdown links**
+- **Open the downloaded PDF when there is one**: applies to ++"o"++ in the Memory.
 
-`Add a link to SciRate in the popup`
+**Recording**
 
-: Add a :tabler-scirate: icon to your papers to open directly on [SciRate](https://scirate.com).
+- **Only record from PDF pages**: abstract pages are ignored.
+- **Keep PDFs in Downloads/PaperMemoryStore**: reopen a file instead of downloading it again.
+- **Parse any website** (experimental): adds a _Parse this page_ button to the popup. See [Adding any website](features.md#adding-any-website).
 
-`Add a link to AlphaXiv in the popup`
+**Extra links in the popup**
 
-: Add a :material-alpha: icon to your papers to open directly on [AlphaXiv](https://alphaxiv.org).
+- ar5iv, alphaXiv, Hugging Face papers (arXiv papers only) and SciRate.
 
-`Add a link to ar5iv in the popup`
+**On paper pages**
 
-: Add a :tabler-ar5iv: icon to your papers to open directly on [ar5iv](https://ar5iv.labs.arxiv.org/).
+- **Rename paper tabs with the paper title**
+- **arXiv: direct PDF download button**, **arXiv: Markdown link section**, **arXiv: BibTeX section**: the rows of the [PaperMemory block](getting-started.md#papermemory-block).
 
-`Add a link to the HuggingFace paper page in the popup (Arxiv only)`
+<p style="clear: both;" />
 
-: Add a :tabler-hf-logo-transparent-darktheme: icon to your papers to open directly on [HuggingFace Papers](https://huggingface.co/papers).
+## Options page
 
-### Functionalities
+![The options page](assets/options-page.png){ .advanced-screenshot }
 
-`Include a paper's venue and year when available in the Markdown link`
+The options page holds every setting. Open it in one of these ways:
 
-: Choose between `[$title]($url)` and `[$title -- $venue ($year)]($url)` when creating the :material-language-markdown-outline: Markdown links for a paper (only if a venue is known).
+- Click _All options_ in popup Settings.
+- Right-click the PaperMemory icon in the toolbar and choose _Options_.
+- Click _All settings_ at the bottom of the welcome tab.
 
-`Favor PDFs for paper links (otherwise, links will point to a paper's abstract page)`
+Changes are saved as you make them. The search field at the top filters the settings; press ++"/"++ to focus it.
 
-: Whenever a link is involved (:material-language-markdown-outline:, :tabler-external-link:, :octicons-link-24: etc.) prefer linking to the online PDF (if known) over the default HTML/Abstract page.
+### General
 
-`Only record papers on their pdf pages, not from their abstracts`
+- **Theme**: System, Light or Dark. System follows your computer's setting.
+- **Open on Memory when the page is not a paper**: otherwise the popup shows a short introduction.
+- **Keep search and filters when leaving the Memory**
+- **Show a notice when a paper is saved**: a small confirmation in the corner of the paper's page.
+- **Rename paper tabs with the paper title**: instead of a file name such as `1706.03762.pdf`.
+- **↵ on a paper**: what ++enter++ does on a focused paper. Every action keeps its own key.
+- **Welcome page**: open the [welcome tab](getting-started.md#welcome-tab) again.
 
-: Prevent PaperMemory from recording _all_ papers, but only those of which you open the PDF.
+**Links**
 
-`Disable automatic recording of papers. You will have to manually open the popup and click a button`{ #disable-automatic-parsing }
+- **Prefer PDF links**, **Add venue and year to Markdown links**, **Open the downloaded PDF when there is one**: as in popup Settings.
+- **Extra links in the popup**: ar5iv, alphaXiv, Hugging Face and SciRate, each with its own key.
+- **Additions to arXiv pages**: PDF download button, Markdown link, BibTeX citation in the [PaperMemory block](getting-started.md#papermemory-block).
 
-: Prevent PaperMemory from recording _any_ paper, you will have to trigger the parsing from the Popup or the [Keyboard Shortcut](./configuration.md#keyboard-shortcuts).
+### Capture
 
-`When hitting Enter on a memory item, open a local PDF file when one is available instead of the the link to the paper.`
+On the options page this group is named _Capture & sources_.
 
-: Choose to open the local PDF file you have in your `Downloads/` (if any) instead of opening the online version of the PDF, when pressing ++enter++ on a paper in your Memory.
+- **Record papers automatically**: when off, open the popup on a paper and add it yourself, or use the _Parse this page_ shortcut.
+- **Only record from PDF pages**: abstract pages are ignored.
+- **Keep downloaded PDFs**: saved in `Downloads/PaperMemoryStore/` so a paper reopens without downloading again. See [PaperMemoryStore](features.md#papermemorystore).
+- **Parse any website** (experimental): adds a _Parse this page_ button to the popup on pages that are not a known Source.
+- **Sources**: the sites PaperMemory records papers from. Turning one off stops new recordings from it; papers already saved stay in your Memory.
 
-`Download pdfs to PaperMemory's folder in your Downloads to be able to open them instead of re-downloading.`{ #paper-memory-store }
+Code links are added by hand on a paper, in its Code field. See [Code links](features.md#code-links).
 
-: Enable the `PaperMemoryStore/` folder in your `Downloads/` to enable PaperMemory to handle local files instead of re-downloading online PDFs every time.
+### Tags & matching
 
-`Enable parsing of arbitrary website by adding a button in the popup.`
+- **Auto-tagging**: rules that tag new papers whose title or authors match a pattern (a regular expression, case-insensitive). Leave a field empty to match everything.
+- **Tags**: rename a tag, merge tags that mean the same thing, or delete one. Changes apply to every paper with that tag. Filter the list, and sort it by use or A to Z.
+- **Find published versions of preprints**: _Check preprints_ looks up the preprints in your Memory on DBLP, CrossRef, Semantic Scholar and OpenAlex, and asks before changing anything. See [Preprint matching](features.md#preprint-matching).
+- **Match a .bib file instead**: opens [BibMatcher](getting-started.md#bibmatcher).
 
-: Adds the `Parse Current Website` button when on an unknown web page (_i.e._ not detected as a paper provider) to record arbitrary web pages to your Memory.
+### Import & export
 
-### Keyboard Default Action
+![Import and export](assets/options-data.png){ align=right .advanced-screenshot }
 
-Whenever you focus a paper in your memory (through ++tab++ or click), its border will be highlighted. This means you can now use the keyboard shortcuts described in the [Keyboard Navigation section](./features.md#keyboard-navigation).
+- **Export everything**: _Memory_ (the full backup, `.json`), _BibTeX_ (`.bib`) or _BibTeX as JSON_.
+- **Export by tag**: the papers that have any (or all) of the chosen tags, as `.bib`, `.json` or `.json` (URLs only).
+- **Import papers from URLs**: a `.json` list of paper URLs, optionally with tags and a code link. Papers are fetched one at a time. The expected format is shown on the page.
+- **Replace your Memory from a backup**: overwrites all your papers with a `.json` backup. A copy of the current Memory is downloaded first.
 
-From the Menu, you can also define a default keyboard shortcut to execute when typing ++enter++ on a paper.
+See [BibTeX export](features.md#bibtex-export).
 
-## Advanced Options
+<p style="clear: both;" />
 
-<p align="center" markdown>
-![Popup](assets/advanced.png){ .advanced-screenshot }
-</p>
+![Sync settings](assets/options-sync.png){ align=right .advanced-screenshot }
 
-More customization options and features are available in the **Advanced Options page**:
+### Sync
 
-- Right click on the extension's button in your browser toolbar and select _Options_
-- Open the :octicons-gear-16: Popup Menu, scroll down and click on _Options page_.
-- Paste one of those URLs in your address bar
-    ```bash
-    # Chrome / Brave / Edge:
-    chrome-extension://ehchlpggdaffcncbeopdopnndhdjelbc/options.html
-    # Firefox:
-    moz-extension://05b6ef8a-7314-4c1d-a519-80f48a5794a6/options.html
-    ```
+Sync is in beta. It keeps one private GitHub Gist up to date so you can use PaperMemory on several computers, one at a time. Edits made at the same moment on two computers are not merged.
 
-`PapersWithCode preferences`
+- Paste a GitHub **personal access token** with the `gist` scope only. The page links to GitHub's token form with that scope selected.
+- Your token is stored in the browser's extension storage and only sent to GitHub's API.
+- Saving a token creates a private Gist with your Memory if you do not already have one.
+- Then use _Start syncing_, _Sync now_ or _Disconnect_.
 
-: Choose whether or not you enable unofficial repositories and if you have a preferred (Tensorflow / PyTorch) Deep Learning framework.
+See [Gist sync](features.md#gist-sync).
 
-`Auto-tagging`
+<p style="clear: both;" />
 
-: Define a list of regexs to apply to `title` and `author` fields to automatically tag papers in your Memory.
+### Keyboard
 
-`Preprint matching`
-
-: Trigger the preprint-matching process for your current memory: this will search for published versions of your ArXiv preprints. PaperMemory will continuously look for publications when you visit a preprint's ArXiv page, but this feature bulks the process for all preprints in your memory.
-
-`Select Sources`
-
-: Select the paper sources you want PaperMemory to parse papers from.
-
-`Data Management`
-
-: Manage your data:
-
-    * export your memory as `.bib` or `.json` files
-    * import an existing `.json` memory you have backed-up
-    * export a bibliography by tag
-    * import a list of URLs into your memory.
-
-`Online synchronization`
-
-: Enable [Online Synchronization](features.md#online-synchronization) by providing a Github Personal Access Token.
+On the options page this group is named _Keyboard shortcuts_. It lists every key, as in [Keyboard shortcuts](#keyboard-shortcuts) above, and has an _Open browser shortcuts_ button to change the keys that work from any tab.

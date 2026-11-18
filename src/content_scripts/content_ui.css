@@ -1,4 +1,4 @@
-/* PaperMemory's UI on web pages (design-review/v2/content-script.html + the step-6 addendum).
+/* PaperMemory's UI on web pages.
    Loaded inside the shadow roots of <papermemory-block> (arXiv abstract pages) and
    <papermemory-notices> (notices and tooltips, every page), so the page's CSS cannot restyle
    it and none of it applies to the page. The --pm-* tokens (public/tokens.css) are prepended
