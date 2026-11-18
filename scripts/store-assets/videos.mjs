@@ -2,7 +2,7 @@
 // cues (cues.mjs: a cursor that clicks, a camera that zooms without cropping its target), then
 // ffmpeg composites it into the drawn window of frame.html (framing A: a 1600 x 1000 window on a
 // slate backdrop, the chapter line under it) and joins the shots with short cross-fades.
-// Chapters start and end on the full window. Plan: design-review/v2-addenda/step7-video-direction.md.
+// Chapters start and end on the full window.
 // Pages are recorded at 2x (2560 px wide) so the zoom stays sharp.
 // Loops have no chapter line and end on their first frame.
 import fs from "node:fs";
@@ -220,7 +220,7 @@ const bib = ({ drop = true, results = true, closed = false } = {}) => ({
         return page;
     },
 });
-// ---------- cards and chapter bands (step7-video-direction.md)
+// ---------- cards and chapter bands
 const OPEN = { card: { t: "slateopen", h: "Saves the papers you read.", p: "Automatically, as you browse arXiv, OpenReview and more." } };
 const END = { card: { t: "slateend" } };
 const CHAPTERS = [
@@ -428,7 +428,7 @@ const film = async (env, name, shots) => {
     L.ffmpeg(["-i", mp4, "-an", "-c:v", "libvpx-vp9", "-crf", "32", "-b:v", "0", "-row-mt", "1", "-deadline", "good", "-cpu-used", "2", `${L.OUT}/${name}-1080p.webm`]);
 };
 
-// ---------- feature loops (design-review/v2-addenda/step7-loops-v2.md): seamless, no rings
+// ---------- feature loops: seamless, no rings
 const NOTICE_SAVED = () => document.querySelector("papermemory-notices")?.shadowRoot?.querySelector(".pm-toast")?.textContent.includes("Saved");
 const union = (a, b) => {
     const l = Math.min(a[0] - a[2] / 2, b[0] - b[2] / 2), r = Math.max(a[0] + a[2] / 2, b[0] + b[2] / 2);

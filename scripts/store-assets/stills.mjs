@@ -94,7 +94,7 @@ const captureBibMatcher = async (env) => {
     await L.sleep(300);
     await page.evaluate(() => window.scrollTo(0, 0));
     await page.screenshot({ path: cap("bibmatcher-results"), fullPage: true });
-    // the Results heading 11 px under the toolbar (as in the mockup), in the 1280-wide frame
+    // the Results heading 11 px under the toolbar, in the 1280-wide frame
     const top = await page.evaluate(() => [...document.querySelectorAll("h2, h3")].find((e) => /^\s*Results/.test(e.textContent))?.getBoundingClientRect().top + scrollY);
     fs.writeFileSync(`${CAP}/bibmatcher.json`, JSON.stringify({ by: Math.round((top * 1280) / 1440) - 11 }));
     await done();

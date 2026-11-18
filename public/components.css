@@ -1,5 +1,4 @@
-/* PaperMemory shared components (from design-review/v2/components.css and the memory row of
-   design-review/v2/popup.html). Namespaced so they cannot collide with the existing page CSS:
+/* PaperMemory shared components (including the memory row). Namespaced so they cannot collide with the existing page CSS:
    - every class is prefixed "pm-" (.pm-btn, .pm-chip, .pm-item…); state classes (.is-focus,
      .is-hover, .is-active, .is-disabled, .is-invalid, .is-error, .is-open, .menu-open) only
      appear compounded with a pm- class;
@@ -477,7 +476,7 @@
 .pm-field .pm-ph {
     color: var(--pm-text-3);
 }
-/* multi-line text (notes): same box as .pm-input, height follows rows (v2: .edit .field.ta) */
+/* multi-line text (notes): same box as .pm-input, height follows rows */
 .pm-textarea {
     display: block;
     width: 100%;
@@ -494,7 +493,7 @@
 .pm-textarea::placeholder {
     color: var(--pm-text-3);
 }
-/* invalid value (v2 popup: code-link field) + the message under the field */
+/* invalid value (code-link field) + the message under the field */
 .pm-field.is-invalid,
 .pm-input.is-invalid,
 .pm-textarea.is-invalid {
@@ -601,7 +600,7 @@
     font-size: var(--pm-fs-sm);
 }
 
-/* text caret for drawn (non-live) inputs in the mockups */
+/* text caret drawn after a static value (appended with ::after) */
 .pm-caret::after {
     content: "";
     display: inline-block;
@@ -724,7 +723,7 @@
     text-transform: uppercase;
 }
 
-/* memory row (from design-review/v2/popup.html) */
+/* memory row */
 /* A row is a rounded card at all times: its padding and outline exist at rest (transparent), so
    focus and hover only change colours and the row never moves or resizes. Height follows content. */
 .pm-item {
@@ -934,7 +933,7 @@
     padding: 0;
     color: var(--pm-text-3);
 }
-/* overflow menu: the four "open elsewhere" links (click … in the mockup) */
+/* overflow menu: the four "open elsewhere" links */
 .pm-pop {
     position: absolute;
     z-index: 3;
@@ -988,7 +987,7 @@
     text-underline-offset: 2px;
 }
 
-/* ---------- memory row: live states and controls (step 3b) ---------- */
+/* ---------- memory row: live states and controls ---------- */
 /* keyboard focus: the same quiet card as .is-focus (tint, hairline, 3px blue left edge),
    never the generic focus ring; only colours change, so the row keeps its size */
 .pm-item:focus,
@@ -1240,7 +1239,7 @@
     vertical-align: -1px;
 }
 
-/* ---------- ⓘ Info panel (design-review/v2-addenda/venue-info.html) ---------- */
+/* ---------- ⓘ Info panel ---------- */
 /* quiet ⓘ next to the time (rows) / before the star (paper view) */
 .pm-info-btn {
     display: inline-flex;

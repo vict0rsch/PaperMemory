@@ -1,5 +1,5 @@
 // Seeded Memory and the BibMatcher sample for the store assets: real papers only, no personal data.
-// The BibMatcher source answers are mocked (deterministic, no rate limits), as in the step-7 mockups.
+// The BibMatcher source answers are mocked (deterministic, no rate limits).
 import fs from "node:fs";
 
 const ago = (h) => new Date(Date.now() - h * 3600e3).toJSON();
@@ -125,7 +125,7 @@ const OA = {
     [key("Language models of protein sequences at the scale of evolution enable accurate structure prediction")]: ["Science", 2023, "journal"],
 };
 let s2Calls = 0;
-/** Before each BibMatcher run: Semantic Scholar answers once, then rate-limits (as in the mockups) */
+/** Before each BibMatcher run: Semantic Scholar answers once, then rate-limits */
 export const resetMocks = () => (s2Calls = 0);
 
 const answer = (url) => {

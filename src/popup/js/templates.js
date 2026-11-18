@@ -116,7 +116,7 @@ const infoButton = (cls, label, attrs = "") =>
     `<button type="button" class="pm-info-btn ${cls}" ${attrs} aria-label="${label}" data-tip="Info" data-tip-key="d" aria-haspopup="dialog" aria-expanded="false">${icon("info")}</button>`;
 
 /**
- * A paper in the Memory list (design-review/v2/popup.html frames 2 and 2b): title, favourite
+ * A paper in the Memory list: title, favourite
  * and last-opened time, venue · authors, all tags, the note (3 lines, then "more…") and the
  * quiet action line. The row is the only Tab stop: its buttons have tabindex -1 and keys.
  * Class names (memory-container, memory-item-*, memory-delete…) are the ones the keyboard
@@ -193,7 +193,7 @@ export const getMemoryItemHTML = (paper) => {
 };
 
 /**
- * The row edit form (design-review/v2/popup.html frame 5): tags, code link, note; saved as
+ * The row edit form: tags, code link, note; saved as
  * you type, Done (⌘↵) closes it. The note's value is set in JS: inside <textarea> markup a
  * leading line break would be dropped by the HTML parser.
  * @param {object} paper
@@ -221,7 +221,7 @@ export const getMemoryEditHTML = (paper) => /*html*/ `
     </form>`;
 
 /**
- * Memory list with nothing to show (popup-states.html frame 12)
+ * Memory list with nothing to show
  * @param {string} query The free text typed in the search field
  * @param {boolean} empty Whether the Memory itself is empty
  * @returns {string} HTML
@@ -246,7 +246,7 @@ export const getMemoryEmptyHTML = (query, empty) =>
         </div>`;
 
 // ---------------------------------------------------------------------------------------
-// -----  Popup paper view and states (design-review/v2/popup.html, popup-states.html)  -----
+// -----  Popup paper view and states  -----
 // ---------------------------------------------------------------------------------------
 
 const REPORT_URL = "https://github.com/vict0rsch/PaperMemory/issues/new";

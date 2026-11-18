@@ -1,9 +1,9 @@
 // Store assets from the real build: one command rebuilds everything.
 //   npm run build:chrome            (dist/chrome-mv3, the build that is recorded)
 //   node scripts/store-assets/build.mjs [stills|videos|docs]   (default: stills + videos; docs is never in the default)
-// Writes extra/store/*.png (screenshots, tile, marquee) and design-review/step7/out/*.{mp4,webm,gif}
+// Writes extra/store/*.png (screenshots, tile, marquee) and tmp/store-assets/out/*.{mp4,webm,gif}
 // (promo, walkthrough, loops; not committed). `docs` writes unframed light PNGs, loop-saved.gif, walkthrough.mp4 + poster and the 5 loops (.webm + .mp4) to docs/assets/. Needs the network (arxiv.org) and ffmpeg
-// (dev-only prerequisite; /opt/homebrew/bin/ffmpeg or $FFMPEG). Headless, a fresh profile, seeded
+// (dev-only prerequisite; ffmpeg on PATH or $FFMPEG). Headless, a fresh profile, seeded
 // with the real papers of seed.json; the BibMatcher sources are mocked; nothing is downloaded.
 import fs from "node:fs";
 import * as L from "./lib.mjs";

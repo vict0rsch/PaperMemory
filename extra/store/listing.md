@@ -1,7 +1,5 @@
 # PaperMemory · store listing
 
-Approved with the step-7 mockups (2026-11-16).
-
 ## Name
 
 PaperMemory

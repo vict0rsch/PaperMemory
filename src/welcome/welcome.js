@@ -1,4 +1,4 @@
-// First-run welcome page (design-review/v2-addenda/step5-welcome.html), opened by the background
+// First-run welcome page, opened by the background
 // on install (src/background/welcome.js) and from Settings > General > Welcome page.
 // 1 what gets recorded (static), 2 shortcut test, 3 sources (shared picker), 4 theme (the
 // [data-set-theme] buttons are wired by the top bar, as on the options page).

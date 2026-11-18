@@ -416,7 +416,7 @@ export const trySemanticScholar = async (paper, toBackground) => {
                         .map((a) => a.name)
                         .join(" and ");
                     const doi = publishedDoi(match.externalIds?.DOI);
-                    // the key Semantic Scholar matches used to get: BibMatcher's "new key"
+                    // the key Semantic Scholar matches get: BibMatcher's "new key"
                     const citationKey =
                         miniHash(
                             (match.authors?.[0]?.name ?? paper.author ?? "")

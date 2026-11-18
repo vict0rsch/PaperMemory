@@ -1,4 +1,4 @@
-// BibMatcher (design-review/v2-addenda/step5-bibmatcher.html): finds the published version of the
+// BibMatcher: finds the published version of the
 // preprints (arXiv, bioRxiv, medRxiv, ChemRxiv: isPreprintEntry) of a .bib file on DBLP,
 // Semantic Scholar, Google Scholar, CrossRef and OpenAlex, in that order (preprintMatching.js,
 // which never returns a preprint record as a match), shows each proposed change as a BibTeX
