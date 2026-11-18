@@ -126,6 +126,18 @@ const setFields = (paper, fields = {}, ifEmpty = []) => {
     return paper;
 };
 
+/**
+ * An agent's add (Agent access, agentIngest.js): its tags and Project membership, and its
+ * Provenance only on a paper this operation creates, never on one already stored
+ */
+const addAgentFields = (paper, { tags, projectHash, provenance }, created) => {
+    paper.tags = [...new Set([...(paper.tags ?? []), ...tags])];
+    if (projectHash && !paper.projectHashes?.includes(projectHash))
+        paper.projectHashes = [...(paper.projectHashes ?? []), projectHash];
+    if (created && !paper.provenance) paper.provenance = provenance;
+    return paper;
+};
+
 const isPaperId = (id) => typeof id === "string" && id && !id.startsWith("__");
 const earliest = (a, b) => (!a ? b : !b ? a : a < b ? a : b);
 const latest = (a, b) => (!a ? b : !b ? a : a > b ? a : b);
@@ -200,6 +212,7 @@ const apply = async (memory, op, ctx) => {
         case "visit": {
             if (!isPaperId(op.id) || !papers[op.id]) return keep({ missing: true });
             setFields(visit(papers[op.id]), op.fill, Object.keys(op.fill ?? {}));
+            if (op.agent) addAgentFields(papers[op.id], op.agent, false);
             return done({ paper: papers[op.id] });
         }
         case "create": {
@@ -239,6 +252,7 @@ const apply = async (memory, op, ctx) => {
             }
             // e.g. a code repository found while parsing: only where there is none
             setFields(paper, op.fill, Object.keys(op.fill ?? {}));
+            if (op.agent) addAgentFields(paper, op.agent, !base);
             if (source && op.fromId !== paper.id) delete papers[op.fromId];
             papers[paper.id] = paper;
             return done({ paper, created: !base });

@@ -266,6 +266,44 @@ describe("Memory queue (memoryQueue.js)", function () {
         expect(chrome.store.papers.a.note).toBe("typed\nappended");
     });
 
+    it("an agent's add: tags and membership on the paper as stored, Provenance only on one the merge creates", async () => {
+        const agent = {
+            tags: ["review", "proj-x"],
+            projectHash: "h",
+            provenance: { clientId: "c" },
+        };
+        chrome.store.papers = { a: paper("a", { tags: ["mine"] }) };
+        await q.runMemoryOp({ op: "visit", id: "a", agent });
+        expect(chrome.store.papers.a).toMatchObject({
+            tags: ["mine", "review", "proj-x"],
+            projectHashes: ["h"],
+            count: 2,
+        });
+        expect(chrome.store.papers.a.provenance).toBeUndefined();
+        const created = await q.runMemoryOp({
+            op: "merge",
+            paper: paper("b"),
+            visit: true,
+            agent,
+        });
+        expect(created.result.created).toBe(true);
+        expect(chrome.store.papers.b).toMatchObject({
+            tags: ["review", "proj-x"],
+            projectHashes: ["h"],
+            provenance: { clientId: "c" },
+        });
+        // merged into the stored paper: no Provenance, the membership once
+        const merged = await q.runMemoryOp({
+            op: "merge",
+            paper: paper("a"),
+            visit: true,
+            agent,
+        });
+        expect(merged.result.created).toBe(false);
+        expect(chrome.store.papers.a.projectHashes).toEqual(["h"]);
+        expect(chrome.store.papers.a.provenance).toBeUndefined();
+    });
+
     it("two interleaved replaces each commit their own staging copy, then remove it", async () => {
         chrome.store.papers = { a: paper("a") };
         chrome.store.papersRevision = 7;

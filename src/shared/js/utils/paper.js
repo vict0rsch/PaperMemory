@@ -306,9 +306,15 @@ export const updatePaperVisits = (paper) => {
  * @param {string} url The url from which to parse a paper
  * @param {object} is The paper's source info
  * @param {object} checks The user's preferences
- * @returns {Promise<{paper: object, id: string, saving: Promise}|undefined>} The paper and
- * its id (`paper.id`, not the id resolved from `url`), or undefined if parsing failed;
- * `saving`: the background's answer to the write ({ok}), which lands after this returns
+ * @param {object} agent Agent access fields `{tags, provenance, projectHash}`, carried by
+ * the first write's operation: the queue adds the tags and Project membership to the paper
+ * as stored, and the Provenance only to a paper this operation creates (memoryQueue.js)
+ * @returns {Promise<{paper: object, id: string, saving: Promise, isNew: boolean, done:
+ * Promise}|undefined>} The paper and its id (`paper.id`, not the id resolved from `url`),
+ * or undefined if parsing failed; `saving`: the background's answer to the write ({ok}),
+ * which lands after this returns; `isNew`: whether this call created the paper (final once
+ * `saving` has answered); `done`: resolved once processing has finished, after the last
+ * write
  */
 export const addOrUpdatePaper = async ({
     url,
@@ -322,6 +328,7 @@ export const addOrUpdatePaper = async ({
         done: () => {},
         feedback: null,
     },
+    agent = null,
 }) => {
     // start time
     const aouStart = Date.now();
@@ -460,6 +467,9 @@ export const addOrUpdatePaper = async ({
         await updateDuplicatedUrls(url, paper.id);
     }
 
+    // Agent access: the agent's fields go with the first write, the queue applies them
+    if (agent) saveOp.agent = agent;
+
     // Store may be false if the user has disabled:
     //   * paper storage from Abstract URLs
     //   * automatic parsing altogether
@@ -468,6 +478,9 @@ export const addOrUpdatePaper = async ({
         store && !state.deleted[paper.id]
             ? memoryOp(saveOp)
             : Promise.resolve({ ok: true, result: { paper } });
+    let resolveDone;
+    const done = new Promise((resolve) => (resolveDone = resolve));
+    const result = { paper, id: paper.id, saving, isNew, done };
     saving.then(async (answer) => {
         if (!answer.ok) {
             // not saved: say so (never "Saved ✓"), and stop here
@@ -477,11 +490,13 @@ export const addOrUpdatePaper = async ({
                 contentScriptCallbacks.feedback({ error: "write" });
             console.groupEnd();
             contentScriptCallbacks["done"](paper);
+            resolveDone();
             return;
         }
         if (answer.result?.paper) {
             paper = answer.result.paper;
             if (saveOp.op === "merge") isNew = !!answer.result.created;
+            result.isNew = isNew;
         }
         // tell the content script the paper has been parsed/updated
         contentScriptCallbacks["update"](paper);
@@ -555,9 +570,10 @@ export const addOrUpdatePaper = async ({
         info(`Done processing paper (${(Date.now() - aouStart) / 1e3}s).`);
         console.groupEnd();
         contentScriptCallbacks["done"](paper);
+        resolveDone();
     });
 
-    return { paper, id: paper.id, saving };
+    return result;
 };
 
 /**

@@ -6,8 +6,9 @@ import { knownPaperPages } from "@pmu/sources/index.js";
 // Agent access ingest (see CONTEXT.md § Agent access): a paper a Paired client adds
 // goes through the same Detect → Parse → Store pipeline as a visited page. On Chrome
 // it runs in the offscreen document agentIngest.html, whose storage calls the
-// background makes for it (filtered by filterStorageRequest); on Firefox, in the
-// background page.
+// background makes for it (filtered by filterStorageRequest) and whose Memory writes
+// are operations sent to the background's queue, like a page's (memoryOp); on
+// Firefox, in the background page.
 
 // storage keys the offscreen document never reads, besides the Agent access keys
 // (`agent*`): sync credentials and state, and backups
@@ -20,13 +21,16 @@ const HIDDEN_KEYS = [
     "weeklyBackups",
     "papersBackup",
     "uploadBackup",
+    "memoryRecovery",
 ];
-// the only storage keys the offscreen document writes
-const WRITABLE_KEYS = ["papers", "urlHashToId"];
+// the only storage key the offscreen document writes (its Memory writes are queue
+// operations)
+const WRITABLE_KEYS = ["urlHashToId"];
 
 /**
- * Add a paper from its URL for a Paired client: the pipeline applies the agent's
- * tags, Project membership and, to a new paper, Provenance before each write.
+ * Add a paper from its URL for a Paired client: the pipeline's first write carries the
+ * agent's tags, Project membership and Provenance, which the Memory's queue adds to the
+ * paper as stored (Provenance only to a paper that write creates).
  * @param {object} job {url, tags, provenance, projectHash}
  * @returns {Promise<object>} {status, id?}: `stored` (new paper) or
  * `already-present`, with the paper's id; `unsupported-url` if no Source detects the
@@ -46,6 +50,7 @@ export const ingest = async ({ url, tags, provenance, projectHash }) => {
         });
         if (!r) return { status: "failed" };
         await r.done;
+        if (!(await r.saving).ok) return { status: "failed" };
         return { status: r.isNew ? "stored" : "already-present", id: r.id };
     } catch (error) {
         logError("[agentIngest]", error);
@@ -56,8 +61,8 @@ export const ingest = async ({ url, tags, provenance, projectHash }) => {
 /**
  * Filter a storage call of the offscreen document before the background makes it:
  * a `get` reads neither sync credentials and state, nor backups, nor Agent access
- * keys (they are reported absent); a `set` writes only `papers` and `urlHashToId`
- * (other keys are dropped, and the call still completes).
+ * keys (they are reported absent); a `set` writes only `urlHashToId` (other keys, such
+ * as `papers`, are dropped, and the call still completes).
  * @param {string} op "get" or "set"
  * @param {string|string[]|object} keysOrItems The key(s) to get, or the items to set
  * @returns {string[]|object|null} The keys to read, the items to write, or null for

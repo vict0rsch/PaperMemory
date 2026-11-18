@@ -20,6 +20,7 @@ describe("Agent access background", () => {
                     "weeklyBackups",
                     "papersBackup",
                     "uploadBackup",
+                    "memoryRecovery",
                     "agentAccess",
                     "agentClients",
                     "prefs",
@@ -43,16 +44,15 @@ describe("Agent access background", () => {
             expect(storage).toEqual({ prefs: { checkNoAuto: false } });
         });
 
-        it("writes only papers and urlHashToId", () => {
-            const papers = { __dataVersion: 10000 };
+        it("writes only urlHashToId: papers go through the Memory's queue", () => {
             expect(
                 filterStorageRequest("set", {
-                    papers,
+                    papers: { __dataVersion: 10000 },
                     urlHashToId: { abc: "Arxiv-1" },
                     weeklyBackups: {},
                     agentClients: {},
                 }),
-            ).toEqual({ papers, urlHashToId: { abc: "Arxiv-1" } });
+            ).toEqual({ urlHashToId: { abc: "Arxiv-1" } });
         });
     });
 

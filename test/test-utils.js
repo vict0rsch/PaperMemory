@@ -289,14 +289,31 @@ describe("paper.js", () => {
             count: 5,
         };
 
-        // run addOrUpdatePaper on `url` and wait until it is done processing
-        const capture = async () => {
+        // the Agent access fields of an agent's add_paper in a Project
+        const agentFields = {
+            tags: ["review", "proj-demo"],
+            provenance: {
+                clientId: "client-1",
+                clientName: "Claude Code",
+                sessionHash: "11".repeat(32),
+                projectHash: "ab".repeat(32),
+                projectLabel: "Demo",
+                addedAt: "2026-01-01T00:00:00.000Z",
+                reason: "Cited in the introduction",
+            },
+            projectHash: "ab".repeat(32),
+        };
+
+        // run addOrUpdatePaper on `url`, for `agent` if given, and wait until it is
+        // done processing
+        const capture = async (agent) => {
             let done;
             const processed = new Promise((resolve) => (done = resolve));
             const returned = await PMUtils.paper.addOrUpdatePaper({
                 url,
                 is: await PMUtils.paper.isPaper(url, true),
                 contentScriptCallbacks: { update: () => {}, preprints: () => {}, done },
+                agent,
             });
             await processed;
             return returned;
@@ -421,6 +438,80 @@ describe("paper.js", () => {
             await capture();
             // the preprint is promoted to the publication's id, the other paper kept
             expect(Object.keys(storage.papers).sort()).toEqual([id, other.id].sort());
+        });
+
+        it("agent capture of a new paper keeps Provenance, review and membership through the second write", async () => {
+            // a parse without note and venue, so that preprint matching runs and the
+            // paper is written a second time
+            const parseWithNote = acs.parse;
+            const { note, venue, ...parsed } = await parseWithNote();
+            acs.parse = async () => ({ ...parsed });
+            // offline preprint matching: the runtime stub answers nothing (e.g. no
+            // Google Scholar match) and fetches to the other databases fail
+            const { fetch } = global;
+            global.fetch = async () => {
+                throw new Error("offline");
+            };
+            const { set } = chrome.storage.local;
+            let paperWrites = 0;
+            chrome.storage.local.set = (items, cb) => {
+                if (items.papers) paperWrites += 1;
+                set(items, cb);
+            };
+            try {
+                const returned = await capture(agentFields);
+                await returned.done;
+                expect(returned.isNew).toBe(true);
+                expect(paperWrites).toBe(2);
+                const paper = storage.papers[id];
+                expect(paper.provenance).toEqual(agentFields.provenance);
+                expect(paper.tags).toEqual(["review", "proj-demo"]);
+                expect(paper.projectHashes).toEqual([agentFields.projectHash]);
+            } finally {
+                acs.parse = parseWithNote;
+                global.fetch = fetch;
+                chrome.storage.local.set = set;
+            }
+        });
+
+        it("agent capture of a paper another page stored meanwhile adds tags and membership, no Provenance", async () => {
+            // parsed as new, but stored by another page before this capture's write
+            beforeGet = (key) => {
+                if (key !== "urlHashToId") return;
+                storage.papers = { [id]: stored };
+                beforeGet = () => {};
+            };
+            const returned = await capture(agentFields);
+            await returned.done;
+            expect(returned.isNew).toBe(false);
+            const paper = storage.papers[id];
+            expect(paper.tags).toEqual(["mytag", "review", "proj-demo"]);
+            expect(paper.projectHashes).toEqual([agentFields.projectHash]);
+            expect(paper).not.toHaveProperty("provenance");
+            expect(paper.note).toBe("my note");
+        });
+
+        it("agent capture of a fuzzy match whose id changes adds tags and membership, no Provenance", async () => {
+            // a stored preprint which the parsed publication matches by title
+            const preprint = {
+                ...stored,
+                id: "Arxiv-1234.56789",
+                source: "arxiv",
+                title: "CO2 reduction",
+                venue: "",
+                pdfLink: "https://arxiv.org/pdf/1234.56789.pdf",
+            };
+            storage.papers = { [preprint.id]: preprint };
+            const returned = await capture(agentFields);
+            await returned.done;
+            expect(returned.isNew).toBe(false);
+            // the preprint is promoted to the publication's id
+            expect(returned.id).toEqual(id);
+            expect(Object.keys(storage.papers)).toEqual([id]);
+            const paper = storage.papers[id];
+            expect(paper.tags).toEqual(["mytag", "review", "proj-demo"]);
+            expect(paper.projectHashes).toEqual([agentFields.projectHash]);
+            expect(paper).not.toHaveProperty("provenance");
         });
     });
 });
