@@ -20,8 +20,8 @@
 
 [![](https://img.shields.io/chrome-web-store/stars/hmebhknlgddhfbbdhgplnillngljgmdi)](https://chromewebstore.google.com/detail/paper-memory/hmebhknlgddhfbbdhgplnillngljgmdi)
 [![](https://img.shields.io/badge/buy%20me-a%20coffee%20%E2%98%95%EF%B8%8F-FFDD03)](https://www.buymeacoffee.com/vict0rsch)
-[![](https://img.shields.io/badge/Source%20%5BWIP%5D-v1.2.1-important)](https://github.com/vict0rsch/PaperMemory)
-[![](https://img.shields.io/badge/Release-v1.2.1-A41716)](https://github.com/vict0rsch/PaperMemory/tree/1.2.1)
+[![](https://img.shields.io/badge/Source%20%5BWIP%5D-v2.0.0-important)](https://github.com/vict0rsch/PaperMemory)
+[![](https://img.shields.io/badge/Release-v2.0.0-A41716)](https://github.com/vict0rsch/PaperMemory/tree/2.0.0)
 
 PaperMemory keeps a record of the research papers you read. Open a paper on a supported site and it is saved to your Memory with its title, authors, venue, year, links and BibTeX. No clicks, no account, no server. You can then search it, tag it, add a note and copy a citation, from the popup or from a full-page view. It complements reference managers such as Zotero: it keeps every paper you open, without being asked.
 
