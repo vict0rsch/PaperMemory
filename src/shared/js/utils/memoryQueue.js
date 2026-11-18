@@ -271,6 +271,13 @@ const apply = async (memory, op, ctx) => {
             paper.tags = tags;
             return done({ paper });
         }
+        case "agent": {
+            // Agent access's changes (agentAccess.js), from the background only: no message
+            // carries a function. `change` checks the Memory as stored now and may change it
+            // in place; it is written only when `change` answers `write: true`
+            const { write, ...result } = await op.change(papers);
+            return write ? done(result) : keep(result);
+        }
         case "replace": {
             // the new Memory: written by the page under memoryStaging (fromStaging: its
             // id); inline (op.memory) only inside the background or in tests

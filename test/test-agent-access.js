@@ -2,7 +2,8 @@ import { expect } from "expect";
 import { filterStorageRequest } from "@pm/background/agentIngest.js";
 import { isValidPairSender, initAgentAccess } from "@pm/background/agentAccess.js";
 import { sendMessageToBackground, setLocalBackgroundHandler } from "@pmu/functions.js";
-import { sha256Hex } from "@pmu/agentOps.js";
+import { runMemoryOp } from "@pmu/memoryQueue.js";
+import { sha256Hex, makeProvenance } from "@pmu/agentOps.js";
 
 describe("Agent access background", () => {
     describe("#filterStorageRequest", () => {
@@ -444,6 +445,52 @@ describe("Agent access background", () => {
                 projectAuth,
             );
             expect(attached.result.tags).toEqual(["proj-demo"]);
+        });
+
+        it("changes a paper as stored when the change runs, in the Memory's queue", async () => {
+            // an add ahead keeps the change queued while another page writes the note
+            let release;
+            ingest = () =>
+                new Promise(
+                    (resolve) => (release = () => resolve({ status: "failed" })),
+                );
+            const adding = send(
+                12,
+                "add_paper",
+                { url, tags: [], reason: "Why" },
+                auth,
+            );
+            await waitFor(() => release);
+            const text = "Cited in section 2";
+            const appending = send(12, "append_note", { id: paperId, text }, auth);
+            await runMemoryOp({ op: "patch", id: paperId, fields: { note: "Mine" } });
+            const revision = storage.papersRevision;
+            release();
+            expect((await answerTo(adding)).result.status).toBe("failed");
+            expect((await answerTo(appending)).ok).toBe(true);
+            expect(storage.papers[paperId].note).toBe(`Mine\n${text}`);
+            // one Memory operation: the queue counted its write
+            expect(storage.papersRevision).toBe(revision + 1);
+        });
+
+        it("deletes only an Own addition, checked as stored, and its urls", async () => {
+            const ownId = "Arxiv-2101.00003";
+            const provenance = await makeProvenance(auth, {
+                clientName: "Claude Code",
+                reason: "Why",
+            });
+            storage.papers = {
+                ...storage.papers,
+                [ownId]: { ...makePaper(ownId), provenance },
+            };
+            storage.urlHashToId = { own: ownId, user: paperId };
+            const refused = await request(13, "delete_paper", { id: paperId }, auth);
+            expect(refused.error.code).toBe("not-own-addition");
+            expect(storage.papers).toHaveProperty([paperId]);
+            const deleted = await request(13, "delete_paper", { id: ownId }, auth);
+            expect(deleted.result).toEqual({ deleted: true });
+            expect(storage.papers).not.toHaveProperty([ownId]);
+            expect(storage.urlHashToId).toEqual({ user: paperId });
         });
     });
 });

@@ -1,5 +1,6 @@
 // ES Module imports
-import { getStorage, setStorage, deletePaperInStorage } from "@pmu/data.js";
+import { getStorage, setStorage, updateDuplicatedUrls } from "@pmu/data.js";
+import { runMemoryOp } from "@pmu/memoryQueue.js";
 import {
     logError,
     cleanPapers,
@@ -65,6 +66,8 @@ const UNAUTHORIZED = failure(
 );
 const AGENT_ACCESS_OFF = failure("unauthorized", "Agent access is off in PaperMemory");
 const INTERNAL = failure("internal", "PaperMemory could not complete this operation");
+// a change whose job is past its deadline: its agent was answered, it is not made
+const EXPIRED = failure("timeout", "PaperMemory did not finish this change in time");
 
 let pushSync = async () => {}; // the background's pushSyncPapers
 let port = null; // the Native host connection
@@ -374,6 +377,15 @@ const runIngest = async (job) => {
 // -----  Changes  -----
 // ---------------------
 
+// a change checked and made in one step of the Memory's queue (memoryQueue.js), on the
+// papers as stored then: no other write comes between the check and the change.
+// `change(papers)` answers the outcome ({result} or {error}), with `write: true` when
+// it changed the papers
+const changeMemory = async (change) => {
+    const answer = await runMemoryOp({ op: "agent", change });
+    return answer.ok ? answer.result : INTERNAL;
+};
+
 // add_paper: ingest, then append the note, whose total is known only then
 const addPaper = async (job) => {
     const { args, auth, client, project, projectHash } = job;
@@ -394,54 +406,58 @@ const addPaper = async (job) => {
     if (status !== "stored" && status !== "already-present") {
         return { result: { status: "failed", message: FAILED_MESSAGE } };
     }
-    const papers = (await getStorage("papers")) ?? {};
-    let outcome = { result: { status, id } };
-    if (typeof id === "string" && cleanPapers(papers).hasOwnProperty(id)) {
-        const invalid =
-            args.note && validateArgs("append_note", { id, text: args.note }, papers);
+    const outcome = await changeMemory((papers) => {
+        if (typeof id !== "string" || !cleanPapers(papers).hasOwnProperty(id)) {
+            return { result: { status, id } };
+        }
+        if (!args.note)
+            return { result: { status, id, paper: paperSummary(papers[id]) } };
+        const invalid = validateArgs("append_note", { id, text: args.note }, papers);
         if (invalid) {
             const message = `${invalid.message}: the paper was added (${id}) without your note`;
-            outcome = failure(invalid.code, message);
-        } else {
-            if (args.note) {
-                appendNote(papers[id], args.note);
-                if (job.expired) return;
-                await setStorage("papers", papers);
-            }
-            outcome = { result: { status, id, paper: paperSummary(papers[id]) } };
+            return failure(invalid.code, message);
         }
-    }
+        if (job.expired) return EXPIRED;
+        appendNote(papers[id], args.note);
+        return { write: true, result: { status, id, paper: paperSummary(papers[id]) } };
+    });
     pushSync().catch(() => {});
     return outcome;
 };
 
-// a change to one paper, re-read and re-checked right before it is made
+// a change to one paper, checked and made on the paper as stored (changeMemory)
 const editPaper = async (job, change) => {
-    const papers = (await getStorage("papers")) ?? {};
-    const invalid = validateArgs(job.op, job.args, papers);
-    if (invalid) return { error: invalid };
-    change(papers[job.args.id]);
-    if (job.expired) return;
-    await setStorage("papers", papers);
-    pushSync().catch(() => {});
-    return { result: paperSummary(papers[job.args.id]) };
+    const outcome = await changeMemory((papers) => {
+        const invalid = validateArgs(job.op, job.args, papers);
+        if (invalid) return { error: invalid };
+        if (job.expired) return EXPIRED;
+        change(papers[job.args.id]);
+        return { write: true, result: paperSummary(papers[job.args.id]) };
+    });
+    if (outcome.result) pushSync().catch(() => {});
+    return outcome;
 };
 
-// delete_paper: only an Own addition
+// delete_paper: only an Own addition, checked on the paper as stored (changeMemory)
 const deletePaper = async (job) => {
-    const papers = (await getStorage("papers")) ?? {};
-    const invalid = validateArgs(job.op, job.args, papers);
-    if (invalid) return { error: invalid };
-    if (!(await isOwnAddition(papers[job.args.id], job.auth))) {
-        return failure(
-            "not-own-addition",
-            "You did not add this paper in this project: use flag_for_deletion",
-        );
-    }
-    if (job.expired) return;
-    await deletePaperInStorage(job.args.id, papers);
+    const outcome = await changeMemory(async (papers) => {
+        const invalid = validateArgs(job.op, job.args, papers);
+        if (invalid) return { error: invalid };
+        if (!(await isOwnAddition(papers[job.args.id], job.auth))) {
+            return failure(
+                "not-own-addition",
+                "You did not add this paper in this project: use flag_for_deletion",
+            );
+        }
+        if (job.expired) return EXPIRED;
+        delete papers[job.args.id];
+        return { write: true, result: { deleted: true } };
+    });
+    if (!outcome.result) return outcome;
+    // as deletePaperInStorage does: its urls no longer lead to it
+    await updateDuplicatedUrls(null, job.args.id, true);
     pushSync().catch(() => {});
-    return { result: { deleted: true } };
+    return outcome;
 };
 
 // operations that change the Library, run by the queue

@@ -232,6 +232,40 @@ describe("Memory queue (memoryQueue.js)", function () {
         expect(chrome.store.papersRevision).toBe(4);
     });
 
+    it("an agent change checks the Memory as stored now and is written only when it asks", async () => {
+        chrome.store.papers = { a: paper("a") };
+        chrome.store.papersRevision = 3;
+        // Agent access (in the background): a refused change writes nothing
+        const refused = await q.runMemoryOp({
+            op: "agent",
+            change: (papers) => {
+                papers.a.note = "not written";
+                return { error: { code: "bad-args" } };
+            },
+        });
+        expect(refused).toEqual({
+            ok: true,
+            result: { error: { code: "bad-args" } },
+            revision: 3,
+        });
+        expect(chrome.store.papers.a.note).toBe("");
+        // a page's write meanwhile is what the next change sees
+        await q.runMemoryOp({ op: "patch", id: "a", fields: { note: "typed" } });
+        const made = await q.runMemoryOp({
+            op: "agent",
+            change: async (papers) => {
+                papers.a.note += "\nappended";
+                return { write: true, result: papers.a.note };
+            },
+        });
+        expect(made).toEqual({
+            ok: true,
+            result: { result: "typed\nappended" },
+            revision: 5,
+        });
+        expect(chrome.store.papers.a.note).toBe("typed\nappended");
+    });
+
     it("two interleaved replaces each commit their own staging copy, then remove it", async () => {
         chrome.store.papers = { a: paper("a") };
         chrome.store.papersRevision = 7;
