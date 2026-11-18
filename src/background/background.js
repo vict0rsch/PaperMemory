@@ -33,27 +33,30 @@ export function initBackground() {
     var tabStatuses = {};
     var paperTitles = {};
 
+    // Firefox MV2 exposes browserAction instead of action
+    const actionApi = chrome.action ?? chrome.browserAction;
+
     const badgeOk = () => {
-        chrome.action.setBadgeText({ text: "OK!" });
-        chrome.action.setBadgeBackgroundColor({ color: "rgb(68, 164, 68)" });
+        actionApi.setBadgeText({ text: "OK!" });
+        actionApi.setBadgeBackgroundColor({ color: "rgb(68, 164, 68)" });
     };
 
     const badgeWait = (text) => {
-        chrome.action.setBadgeText({ text });
-        chrome.action.setBadgeBackgroundColor({ color: "rgb(189, 127, 10)" });
+        actionApi.setBadgeText({ text });
+        actionApi.setBadgeBackgroundColor({ color: "rgb(189, 127, 10)" });
     };
 
     const badgeError = () => {
-        chrome.action.setBadgeText({ text: "Error" });
-        chrome.action.setBadgeBackgroundColor({ color: "rgb(195, 40, 56)" });
+        actionApi.setBadgeText({ text: "Error" });
+        actionApi.setBadgeBackgroundColor({ color: "rgb(195, 40, 56)" });
     };
 
     const badgeClear = (preventTimeout = false) => {
         if (preventTimeout) {
-            chrome.action.setBadgeText({ text: "" });
+            actionApi.setBadgeText({ text: "" });
         } else {
             setTimeout(() => {
-                chrome.action.setBadgeText({ text: "" });
+                actionApi.setBadgeText({ text: "" });
             }, 2000);
         }
     };
@@ -310,7 +313,7 @@ export function initBackground() {
             consoleHeader(`Pushing ${String.fromCodePoint("0x23EB")}`);
             log("Writing to Github...");
             badgeWait("Push...");
-            chrome.action.setBadgeBackgroundColor({
+            actionApi.setBadgeBackgroundColor({
                 color: "rgb(189, 127, 10)",
             });
             const papers = (await getStorage("papers")) ?? {};
