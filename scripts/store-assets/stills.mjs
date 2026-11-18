@@ -128,3 +128,56 @@ export const compose = async (env) => {
     for (const [name, src] of Object.entries(out))
         L.ffmpeg(["-i", src, "-pred", "mixed", "-compression_level", "9", `${L.STORE}/${name}.png`]);
 };
+
+const DOCS = `${L.ROOT}docs/assets`;
+const LOOPS = ["saved", "find", "cite", "export", "bibmatcher"];
+
+/** The views only the docs show: popup Settings panel, "?" sheet, a non-paper page, options groups, welcome tab */
+const captureDocsViews = async (env) => {
+    await env.seed();
+    let page = await env.popup("https://arxiv.org/abs/1706.03762", 2);
+    await page.click("#menu-switch");
+    await L.sleep(500);
+    await page.mouse.move(5, 590);
+    await page.screenshot({ path: `${DOCS}/popup-settings.png` });
+    await page.close();
+    page = await env.popup("https://arxiv.org/abs/1706.03762", 2);
+    await page.keyboard.press("?");
+    await L.sleep(500);
+    await page.screenshot({ path: `${DOCS}/shortcuts.png` });
+    await page.close();
+    page = await env.popup("https://example.com/", 2);
+    await page.screenshot({ path: `${DOCS}/add-website.png` });
+    await page.close();
+    await env.prefs("light");
+    page = await env.page(1440, 900, 2);
+    await page.goto(env.ext("options.html"), { waitUntil: "networkidle0" });
+    await L.sleep(800);
+    await page.screenshot({ path: `${DOCS}/options-page.png` });
+    for (const [group, name] of [["sync", "options-sync"], ["data", "options-data"]]) {
+        await page.evaluate((g) => document.getElementById(g).scrollIntoView(), group);
+        await L.sleep(500);
+        await page.screenshot({ path: `${DOCS}/${name}.png` });
+    }
+    await page.close();
+    page = await env.page(1100, 900, 2);
+    await page.goto(env.ext("welcome.html"), { waitUntil: "networkidle0" });
+    await L.sleep(800);
+    await page.screenshot({ path: `${DOCS}/welcome-tab.png`, fullPage: true });
+    await page.close();
+};
+
+/** Unframed light-theme images for the docs site and the Readme, plus the five loops (docs/assets) */
+export const docsAssets = async (env) => {
+    L.mkdir(DOCS);
+    for (const [from, to] of [
+        ["popup-paper-light", "popup-paper"],
+        ["popup-memory-pill-light", "popup-memory"],
+        ["fullmemory-1440-light", "full-page-memory"],
+        ["crop-block", "papermemory-block"],
+        ["bibmatcher-results", "bibmatcher"],
+    ])
+        fs.copyFileSync(cap(from), `${DOCS}/${to}.png`);
+    await captureDocsViews(env);
+    for (const n of LOOPS) fs.copyFileSync(`${L.OUT}/loop-${n}.gif`, `${DOCS}/loop-${n}.gif`);
+};

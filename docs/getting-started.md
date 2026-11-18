@@ -125,7 +125,7 @@ Search and filters work as in the popup.
 
 ## PaperMemory block
 
-![The PaperMemory block on an arXiv abstract page](assets/papermemory-block.png){ align=right .advanced-screenshot }
+![The PaperMemory block on an arXiv abstract page](assets/papermemory-block.png){ align=right .popup-display }
 
 On arXiv abstract pages, PaperMemory adds a small block next to the abstract. It shows whether the paper is in your Memory (with an _Add to Memory_ button if not), and can include:
 

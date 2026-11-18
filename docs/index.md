@@ -9,8 +9,8 @@ description: PaperMemory saves the research papers you open on arXiv, OpenReview
 
 <div class="flex-container" markdown>
 <div markdown>
-<h1 style="color: white; max-width: 400px; padding-right: 1rem;">
-    <strong style="color: red">PaperMemory</strong> saves the research papers you open on arXiv, OpenReview and more. Search, tag, annotate and cite them from your browser.
+<h1 class="pm-hero__title">
+    <strong class="pm-hero__brand">PaperMemory</strong> saves the research papers you open on arXiv, OpenReview and more. Search, tag, annotate and cite them from your browser.
 </h1>
 [Get the extension](getting-started.md#installation){ .md-button .md-button--primary }
 </div>

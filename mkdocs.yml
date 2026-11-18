@@ -9,14 +9,25 @@ repo_url: https://github.com/vict0rsch/PaperMemory
 theme:
   name: material
   palette:
-    scheme: slate
-    primary: custom
-    accent: deep orange
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: custom
+      accent: custom
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: custom
+      accent: custom
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
   font:
-    text: Yantramanav
+    text: Inter
     code: Fira Code
-  logo: assets/bolt-white.svg
-  favicon: assets/favicon-192x192.png
+  logo: assets/logo.svg
+  favicon: assets/favicon-192.png
   custom_dir: docs/overrides
   features:
     - content.code.select
@@ -40,8 +51,8 @@ plugins:
   - search
   - social:
       cards_layout_options:
-        background_color: "#b31b1b"
-        font_family: Yantramanav
+        background_color: "#b42318"
+        font_family: Inter
 extra:
   social:
     - icon: fontawesome/brands/github

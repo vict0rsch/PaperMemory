@@ -61,7 +61,7 @@ For preprints, PaperMemory also looks for the published version: see [Preprint m
 
 ## Searching
 
-![The Memory in the popup, with filter pills](assets/popup-memory.png)
+![The Memory in the popup, with filter pills](assets/popup-memory.png){ .popup-display }
 
 The Memory search runs as you type, in the popup and in the [full-page Memory](getting-started.md#full-page-memory).
 
@@ -129,7 +129,7 @@ A preprint record (arXiv, bioRxiv, medRxiv, ChemRxiv) is never taken as the publ
 
 ## Adding any website
 
-![The popup on a page that is not a paper](assets/add-website.png)
+![The popup on a page that is not a paper](assets/add-website.png){ .popup-display }
 
 Any other web page, such as a blog post or a documentation page, can be added to your Memory from the popup.
 
@@ -200,7 +200,7 @@ Your Memory can be copied to a private [GitHub Gist](https://docs.github.com/en/
 
 ## Keyboard navigation
 
-![The popup's keyboard shortcuts sheet](assets/shortcuts.png)
+![The popup's keyboard shortcuts sheet](assets/shortcuts.png){ .popup-display }
 
 Almost everything in the popup works from the keyboard. Press ++"?"++ in the popup to see every key. The full list is in [Keyboard shortcuts](configuration.md#keyboard-shortcuts).
 
