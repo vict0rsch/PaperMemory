@@ -73,8 +73,8 @@ The full list of 31 Sources is on [papermemory.org](https://papermemory.org/feat
 
 - Your Memory lives in your browser's extension storage. There is no PaperMemory account and no PaperMemory server.
 - No analytics, no tracking.
-- To fill in a paper's details, PaperMemory sends only that paper's title or identifier to academic services. Your notes and tags are never sent.
-- Optional sync: with a GitHub token you provide, your Memory is copied to a private Gist in your own account. Off by default.
+- To fill in a paper's details, PaperMemory sends only that paper's title or identifier to academic services. Your notes and tags are never sent to these services.
+- Optional sync: with a GitHub token you provide, your whole Memory, notes and tags included, is uploaded to a private Gist in your own account. The Gist is created when you save the token.
 - Export a full JSON backup at any time, and import it back.
 
 ## Documentation

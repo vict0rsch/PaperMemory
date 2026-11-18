@@ -81,7 +81,7 @@ When a published version is found:
 
 - the paper's venue is set and shown in the popup, the full-page Memory and the PaperMemory block;
 - if the paper has no note, a note `Accepted @ <venue> -- [<service>]` is added;
-- the paper's BibTeX is updated with the publication's venue and year, and its DOI when the service has one. Preprint-only fields (such as `eprint` and `archiveprefix`) are removed. The citation key, title and authors are kept.
+- the paper's BibTeX is updated with the publication's venue and year, and its DOI when the service provides one (CrossRef matches add the venue and year only). Preprint-only fields (such as `eprint` and `archiveprefix`) are removed. The citation key, title and authors are kept, except for a Google Scholar match, which replaces the whole BibTeX entry, citation key and authors included.
 
 A preprint record (arXiv, bioRxiv, medRxiv, ChemRxiv) is never taken as the published version. Every service requires an exact title match, after ignoring case and punctuation.
 
@@ -133,8 +133,8 @@ A preprint record (arXiv, bioRxiv, medRxiv, ChemRxiv) is never taken as the publ
 
 Any other web page, such as a blog post or a documentation page, can be added to your Memory from the popup.
 
-- On a page that is not a paper, click "Parse this page". PaperMemory reads the page's title, authors and year, then shows them in a "Check the details" form.
-- Correct the URL, title, authors and year if needed, add an optional note, and save.
+- On a page that is not a paper, click "Parse this page". PaperMemory reads the page's title, uses the site name (or domain) as the author and the current year as the year, then shows them in a "Check the details" form.
+- Correct the URL, title, authors and year in this form if needed, add an optional note, and save.
 - If the page cannot be read, try again or click "Fill in by hand".
 - The "Parse this page" button can be turned off with "Parse any website" in the [popup Settings](getting-started.md#popup-settings).
 
@@ -207,7 +207,7 @@ Almost everything in the popup works from the keyboard. Press ++"?"++ in the pop
 - ++a++ opens and closes the Memory, ++p++ opens the popup Settings.
 - In the Memory, ++"/"++ focuses the search field. ++tab++ and ++shift+tab++ move through the papers.
 - On a paper: ++o++ opens it, ++c++ ++m++ ++h++ ++b++ ++t++ copy its URL, Markdown link, rich link, BibTeX or title, ++e++ edits its tags, code link and note, ++d++ shows its Info panel, ++backspace++ deletes it (after a confirmation).
-- ++enter++ runs the default action you chose on the [options page](configuration.md#general). The "Default action" browser shortcut runs it without opening the popup.
+- ++enter++ runs the default action you chose on the [options page](configuration.md#general). The "Default action" browser shortcut runs it without opening the popup; Edit and Show info only work from the popup.
 - ++5++ ++x++ ++f++ ++s++ open an arXiv paper on ar5iv, alphaXiv, Hugging Face or SciRate, when these links are turned on in the [popup Settings](getting-started.md#popup-settings).
 
 ## Privacy

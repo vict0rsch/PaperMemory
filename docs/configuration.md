@@ -26,7 +26,7 @@ On macOS, ++ctrl++ in the other shortcuts is ++cmd++ too.
 
 - **Parse this page** records the paper of the current tab. Use it when automatic recording is off (see [Capture](#capture)).
 - **Download the PDF** downloads the current paper's PDF if it is in your Memory. With _Keep downloaded PDFs_ on, the file goes to `Downloads/PaperMemoryStore/`.
-- **Default action** runs, on the current paper's page, the action you chose for ++enter++ (see [General](#general)).
+- **Default action** runs, on the current paper's page, the action you chose for ++enter++ (see [General](#general)). Edit and Show info only work from the popup.
 
 To change them:
 
