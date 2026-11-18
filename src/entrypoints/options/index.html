@@ -52,6 +52,10 @@
                         ><i data-i="cloud"></i><span>Sync</span
                         ><span class="pm-spacer"></span><span class="pm-count"></span
                     ></a>
+                    <a href="#agent-access" data-nav="agent-access"
+                        ><i data-i="code"></i><span>Agent access</span
+                        ><span class="pm-spacer"></span><span class="pm-count"></span
+                    ></a>
                     <a href="#keyboard" data-nav="keyboard"
                         ><i data-i="keyboard"></i><span>Keyboard shortcuts</span
                         ><span class="pm-spacer"></span><span class="pm-count"></span
@@ -73,6 +77,56 @@
                     <button type="button" class="pm-btn pm-btn-sm" id="search-clear">
                         Clear search
                     </button>
+                </div>
+
+                <!-- an agent's pairing request (agentAccessUI.js), shown when the
+                     background opened this page for it: #agent-pairing=<requestId> -->
+                <div
+                    class="o-card o-agent o-agent-pairing"
+                    id="agent-pairing"
+                    aria-labelledby="agent-pairing-title"
+                    hidden
+                >
+                    <div class="o-card-head">
+                        <div>
+                            <h3 id="agent-pairing-title">Agent pairing request</h3>
+                        </div>
+                    </div>
+                    <div class="o-card-body">
+                        <div id="agent-pairing-request" hidden>
+                            <p>
+                                <b><bdi id="agent-pairing-client"></bdi></b> wants to
+                                read and add papers in this browser's PaperMemory
+                                library.
+                            </p>
+                            <p>
+                                Only allow it if you are using this agent right now. You
+                                can revoke it later in
+                                <a href="#agent-access">Agent access</a>.
+                            </p>
+                            <div class="o-btns" id="agent-pairing-buttons">
+                                <button
+                                    type="button"
+                                    class="pm-btn"
+                                    id="agent-pairing-allow"
+                                >
+                                    Allow
+                                </button>
+                                <button
+                                    type="button"
+                                    class="pm-btn"
+                                    id="agent-pairing-deny"
+                                >
+                                    Deny
+                                </button>
+                            </div>
+                        </div>
+                        <p id="agent-pairing-allowed" hidden><b>Allowed.</b></p>
+                        <p id="agent-pairing-denied" hidden><b>Denied.</b></p>
+                        <p id="agent-pairing-expired" hidden>
+                            This pairing request has expired or was already answered.
+                        </p>
+                    </div>
                 </div>
 
                 <!-- ================= GENERAL ================= -->
@@ -1018,6 +1072,145 @@
                             <button type="button" class="pm-btn" id="save-pat">
                                 Save
                             </button>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- ================= AGENT ACCESS ================= -->
+                <!-- agentAccessUI.js: the background writes agentClients; client names are
+                     only ever shown as text -->
+                <section
+                    class="o-section o-agent"
+                    id="agent-access"
+                    aria-labelledby="agent-access-title"
+                >
+                    <h2 class="o-section-title" id="agent-access-title">
+                        Agent access
+                    </h2>
+                    <div class="o-card">
+                        <div class="o-card-head">
+                            <div>
+                                <h3>Local AI agents</h3>
+                                <p>
+                                    Lets AI agents running on this computer, such as
+                                    Claude Code, Codex, Cursor, OpenCode or Oh-My-Pi,
+                                    search your Memory and add papers to it. Papers an
+                                    agent adds get the <code>review</code> tag.
+                                </p>
+                            </div>
+                        </div>
+                        <div
+                            class="pm-row o-row"
+                            data-s
+                            data-k="agents ai mcp install npx papermemory-mcp tools"
+                        >
+                            <div class="pm-row-text">
+                                <div class="pm-row-label">Agent tools</div>
+                                <div class="pm-row-help">
+                                    Install them once with
+                                    <code>npx -y papermemory-mcp install</code>, then
+                                    turn Agent access on. The first time an agent asks
+                                    for access, PaperMemory opens this page so that you
+                                    can allow or deny it.
+                                </div>
+                            </div>
+                        </div>
+                        <label
+                            class="pm-row o-row"
+                            data-s
+                            data-k="agents ai mcp claude codex cursor opencode local enable"
+                        >
+                            <span class="pm-row-text">
+                                <span class="pm-row-label">Enable Agent access</span>
+                                <span class="pm-row-help"
+                                    >The agents you allow can read your whole Memory and
+                                    may send what they read to their AI provider.</span
+                                >
+                            </span>
+                            <input
+                                type="checkbox"
+                                class="pm-toggle"
+                                id="agent-access-toggle"
+                            />
+                        </label>
+                        <div
+                            class="pm-row o-row o-agent-status"
+                            id="agent-access-status"
+                            hidden
+                        >
+                            <span class="pm-dot" id="agent-status-dot"></span>
+                            <div class="pm-row-text">
+                                <div
+                                    class="agent-status"
+                                    id="agent-status-connected"
+                                    hidden
+                                >
+                                    <div class="pm-row-label">Connected</div>
+                                </div>
+                                <div
+                                    class="agent-status"
+                                    id="agent-status-not-installed"
+                                    hidden
+                                >
+                                    <div class="pm-row-label">
+                                        PaperMemory agent tools not installed
+                                    </div>
+                                    <div class="pm-row-help">
+                                        Run <code>npx -y papermemory-mcp install</code>
+                                    </div>
+                                </div>
+                                <div
+                                    class="agent-status"
+                                    id="agent-status-outdated"
+                                    hidden
+                                >
+                                    <div class="pm-row-label">
+                                        PaperMemory agent tools outdated
+                                    </div>
+                                    <div class="pm-row-help">
+                                        Run
+                                        <code
+                                            >npx -y papermemory-mcp@latest install</code
+                                        >
+                                    </div>
+                                </div>
+                                <div
+                                    class="agent-status"
+                                    id="agent-status-outdated-extension"
+                                    hidden
+                                >
+                                    <div class="pm-row-label">
+                                        PaperMemory is older than the agent tools
+                                    </div>
+                                    <div class="pm-row-help">Update the extension.</div>
+                                </div>
+                                <div
+                                    class="agent-status"
+                                    id="agent-status-refused"
+                                    hidden
+                                >
+                                    <div class="pm-row-label">Permission refused</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div
+                        class="o-card"
+                        data-s
+                        data-k="agents ai mcp paired clients revoke pairing"
+                    >
+                        <div class="o-card-head">
+                            <div>
+                                <h3>Paired clients</h3>
+                                <p>
+                                    The agents you allowed. Revoke one to refuse its
+                                    requests.
+                                </p>
+                            </div>
+                        </div>
+                        <div id="agent-clients-list"></div>
+                        <div class="o-card-body" id="agent-clients-empty" hidden>
+                            <p class="o-muted">No paired clients yet.</p>
                         </div>
                     </div>
                 </section>

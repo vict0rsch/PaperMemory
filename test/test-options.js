@@ -105,7 +105,7 @@ describe("Options page", function () {
     });
 
     describe("Page", function () {
-        it("has the six groups, a password token field and no remote stylesheet or script", async function () {
+        it("has the seven groups, a password token field and no remote stylesheet or script", async function () {
             const groups = await page.$$eval(".o-nav a", (as) =>
                 as.map((a) => a.querySelector("span").textContent),
             );
@@ -115,6 +115,7 @@ describe("Options page", function () {
                 "Tags & matching",
                 "Import & export",
                 "Sync",
+                "Agent access",
                 "Keyboard shortcuts",
             ]);
             expect(await page.$eval("#pat-input", (el) => el.type)).toBe("password");

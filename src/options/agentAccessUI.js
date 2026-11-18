@@ -1,5 +1,4 @@
 // ES Module imports
-import { findEl, showId, hideId, addListener, queryAll } from "@pmu/miniquery.js";
 import { getStorage, setStorage } from "@pmu/data.js";
 import { sendMessageToBackground } from "@pmu/functions.js";
 import { PROTOCOL_MIN, PROTOCOL_MAX } from "@pm/background/agentAccess.js";
@@ -10,6 +9,8 @@ import { PROTOCOL_MIN, PROTOCOL_MAX } from "@pm/background/agentAccess.js";
 
 const NATIVE_MESSAGING = { permissions: ["nativeMessaging"] };
 const STATUS_POLL_MS = 2000;
+
+const $ = (id) => document.getElementById(id);
 
 const hasNativeMessaging = () =>
     new Promise((resolve) => chrome.permissions.contains(NATIVE_MESSAGING, resolve));
@@ -28,18 +29,16 @@ const element = (tag, className, ...children) => {
 
 // show the status message `agent-status-<name>`, or no status
 const showStatus = (name) => {
-    queryAll(".agent-status").forEach(hideId);
-    if (!name) {
-        hideId("agent-access-status");
-        return;
-    }
-    showId(`agent-status-${name}`, "inline");
-    showId("agent-access-status", "flex");
+    document.querySelectorAll(".agent-status").forEach((el) => (el.hidden = true));
+    $("agent-access-status").hidden = !name;
+    if (!name) return;
+    $(`agent-status-${name}`).hidden = false;
+    $("agent-status-dot").classList.toggle("is-error", name !== "connected");
 };
 
 // the background's connection to the Native host, while Agent access is on
 const refreshStatus = async () => {
-    const toggle = findEl({ element: "agent-access-toggle" });
+    const toggle = $("agent-access-toggle");
     if (!toggle.checked) return;
     const status = await sendMessageToBackground({ type: "agent-status" });
     if (!toggle.checked) return; // turned off meanwhile
@@ -86,8 +85,9 @@ const onToggleClick = (event) => {
 // a Paired client and its Revoke button: the list is shown again when the background
 // has written the change
 const makeClientRow = ([clientId, { clientName, pairedAt }]) => {
-    const revoke = element("button", "", "Revoke");
-    addListener(revoke, "click", async () => {
+    const revoke = element("button", "pm-btn pm-btn-sm", "Revoke");
+    revoke.type = "button";
+    revoke.addEventListener("click", async () => {
         revoke.disabled = true;
         const revoked = await sendMessageToBackground({
             type: "agent-revoke",
@@ -97,19 +97,27 @@ const makeClientRow = ([clientId, { clientName, pairedAt }]) => {
     });
     return element(
         "div",
-        "row align-items-center mb-2",
-        // bdi: the name's text direction cannot change the text around it
-        element("div", "col-5", element("strong", "", element("bdi", "", clientName))),
-        element("div", "col-4", `paired on ${new Date(pairedAt).toLocaleDateString()}`),
-        element("div", "col-3", revoke),
+        "pm-row o-row",
+        element(
+            "div",
+            "pm-row-text",
+            // bdi: the name's text direction cannot change the text around it
+            element("div", "pm-row-label", element("bdi", "", clientName)),
+            element(
+                "div",
+                "pm-row-help",
+                `Paired on ${new Date(pairedAt).toLocaleDateString()}`,
+            ),
+        ),
+        revoke,
     );
 };
 
 // in pairing order: the background adds each new client last
 const showClients = (clients) => {
     const rows = Object.entries(clients ?? {}).map(makeClientRow);
-    findEl({ element: "agent-clients-list" }).replaceChildren(...rows);
-    rows.length ? hideId("agent-clients-empty") : showId("agent-clients-empty");
+    $("agent-clients-list").replaceChildren(...rows);
+    $("agent-clients-empty").hidden = rows.length > 0;
 };
 
 // ----------------------------
@@ -122,25 +130,25 @@ const setupPairingPrompt = async () => {
     const requestId = window.location.hash.match(/^#agent-pairing=(.+)$/)?.[1];
     if (!requestId) return;
     const info = await sendMessageToBackground({ type: "agent-pair-info", requestId });
-    showId("agent-pairing");
+    $("agent-pairing").hidden = false;
     if (typeof info?.clientName !== "string") {
-        showId("agent-pairing-expired");
+        $("agent-pairing-expired").hidden = false;
         return;
     }
-    findEl({ element: "agent-pairing-client" }).textContent = info.clientName;
-    showId("agent-pairing-request");
+    $("agent-pairing-client").textContent = info.clientName;
+    $("agent-pairing-request").hidden = false;
     const decide = async (allow) => {
-        hideId("agent-pairing-buttons");
+        $("agent-pairing-buttons").hidden = true;
         const decided = await sendMessageToBackground({
             type: "agent-pair-decision",
             requestId,
             allow,
         });
-        if (decided !== true) showId("agent-pairing-expired");
-        else showId(allow ? "agent-pairing-allowed" : "agent-pairing-denied");
+        if (decided !== true) $("agent-pairing-expired").hidden = false;
+        else $(allow ? "agent-pairing-allowed" : "agent-pairing-denied").hidden = false;
     };
-    addListener("agent-pairing-allow", "click", () => decide(true));
-    addListener("agent-pairing-deny", "click", () => decide(false));
+    $("agent-pairing-allow").addEventListener("click", () => decide(true));
+    $("agent-pairing-deny").addEventListener("click", () => decide(false));
 };
 
 /**
@@ -151,9 +159,8 @@ export const setupAgentAccess = async () => {
     setupPairingPrompt();
     const { enabled } = (await getStorage("agentAccess")) ?? {};
     // the background connects only once the permission is granted too
-    findEl({ element: "agent-access-toggle" }).checked =
-        enabled === true && (await hasNativeMessaging());
-    addListener("agent-access-toggle", "click", onToggleClick);
+    $("agent-access-toggle").checked = enabled === true && (await hasNativeMessaging());
+    $("agent-access-toggle").addEventListener("click", onToggleClick);
     refreshStatus();
     setInterval(refreshStatus, STATUS_POLL_MS);
     showClients(await getStorage("agentClients"));

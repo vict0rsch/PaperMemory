@@ -1,6 +1,6 @@
-// Options page: one page, six groups, a sticky side nav with
+// Options page: one page, seven groups, a sticky side nav with
 // a settings search. Every pref is written with updatePrefs (same keys as the popup menu);
-// sections live in tags.js, io.js and syncSettings.js.
+// sections live in tags.js, io.js, syncSettings.js and agentAccessUI.js.
 import {
     getPrefs,
     updatePrefs,
