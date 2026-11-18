@@ -6,6 +6,9 @@ import { glob } from "glob";
 
 const pkg = createRequire(import.meta.url)("./package.json");
 const disableBrowserStartup = process.env.WXT_NO_BROWSER === "1";
+// Agent access test builds only: nativeMessaging is granted at install instead of
+// requested, as automated tests cannot click the optional-permission prompt
+const agentTestBuild = process.env.WXT_PM_AGENT_TEST === "1";
 
 function htmlIncludePlugin(basePath) {
     return {
@@ -42,7 +45,7 @@ export default defineConfig({
     webExt: {
         disabled: disableBrowserStartup,
     },
-    manifest: {
+    manifest: ({ browser }) => ({
         name: "PaperMemory",
         version: pkg.version,
         description:
@@ -94,7 +97,11 @@ export default defineConfig({
             "downloads",
             "downloads.open",
             "scripting",
+            "alarms",
+            ...(browser !== "firefox" ? ["offscreen"] : []),
+            ...(agentTestBuild ? ["nativeMessaging"] : []),
         ],
+        ...(agentTestBuild ? {} : { optional_permissions: ["nativeMessaging"] }),
         host_permissions: ["*://*/*"],
         web_accessible_resources: [
             {
@@ -110,7 +117,7 @@ export default defineConfig({
                 id: "{ff9cbac9-82ff-4e2b-96ae-ae0845aa85f5}",
             },
         },
-    },
+    }),
     hooks: {
         // Firefox MV2 only opens the popup with `_execute_browser_action`
         "build:manifestGenerated": (wxt, manifest) => {
@@ -132,6 +139,7 @@ export default defineConfig({
             "docs/**",
             "test/**",
             "scripts/**",
+            "agent/**",
             "CNAME",
             "mkdocs.yml",
             // Defense in depth: never ship credentials/keys in the sources zip
