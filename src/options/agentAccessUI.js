@@ -8,6 +8,9 @@ import { PROTOCOL_MIN, PROTOCOL_MAX } from "@pm/background/agentAccess.js";
 // background writes agentClients; client names are only ever shown as text.
 
 const NATIVE_MESSAGING = { permissions: ["nativeMessaging"] };
+// notifications: the OS notification of a pairing request (agentAccess.js), requested
+// in the same prompt
+const AGENT_PERMISSIONS = { permissions: ["nativeMessaging", "notifications"] };
 const STATUS_POLL_MS = 2000;
 
 const $ = (id) => document.getElementById(id);
@@ -67,8 +70,10 @@ const onToggleClick = (event) => {
         return;
     }
     setStorage("agentAccess", { enabled: true });
-    chrome.permissions.request(NATIVE_MESSAGING, (granted) => {
-        if (granted) {
+    chrome.permissions.request(AGENT_PERMISSIONS, async (granted) => {
+        // refusing notifications alone, when nativeMessaging was granted before, keeps
+        // Agent access on
+        if (granted || (await hasNativeMessaging())) {
             refreshStatus();
             return;
         }

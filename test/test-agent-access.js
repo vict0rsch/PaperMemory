@@ -169,8 +169,14 @@ describe("Agent access background", () => {
         const hostListeners = [];
         const storageListeners = []; // chrome.storage.onChanged
         const sent = []; // the messages PaperMemory posted to the Native host
-        const tabs = []; // the tabs PaperMemory opened: {id, url}
+        const tabs = []; // the tabs PaperMemory opened: {id, windowId, url}
         let opensTabs = true; // whether chrome.tabs.create opens a tab
+        let opensWindows = true; // whether chrome.windows.create opens a window
+        const granted = new Set(["nativeMessaging"]); // the permissions the user granted
+        const focused = []; // chrome.windows.update calls: {windowId, ...updateInfo}
+        const activated = []; // the tabs PaperMemory made active again
+        const notifications = new Map(); // the notifications shown: id => options
+        const notificationListeners = []; // chrome.notifications.onClicked
         let ingest; // the offscreen document's outcome for an ingest job
         const ingested = []; // the jobs it was given
         let connected = false;
@@ -263,6 +269,7 @@ describe("Agent access background", () => {
             const event = (listeners = []) => ({
                 addListener: (fn) => listeners.push(fn),
                 removeListener: (fn) => listeners.splice(listeners.indexOf(fn), 1),
+                hasListener: (fn) => listeners.includes(fn),
             });
             global.chrome = {
                 runtime: {
@@ -308,19 +315,44 @@ describe("Agent access background", () => {
                     onChanged: event(storageListeners),
                 },
                 permissions: {
-                    contains: (permissions, cb) => cb(true),
+                    contains: ({ permissions }, cb) =>
+                        cb(permissions.every((p) => granted.has(p))),
                     onAdded: event(),
                     onRemoved: event(),
                 },
                 alarms: { create: () => {}, clear: () => {}, onAlarm: event() },
+                // tabs open in window 1; a new window is window 2
                 tabs: {
-                    create: ({ url: tabUrl }, cb) => {
+                    create: ({ url: tabUrl, active }, cb) => {
                         const tab = opensTabs
-                            ? { id: tabs.length + 1, url: tabUrl }
+                            ? { id: tabs.length + 1, windowId: 1, url: tabUrl, active }
                             : undefined;
                         if (tab) tabs.push(tab);
                         setTimeout(() => cb(tab));
                     },
+                    update: (tabId, { active }, cb) => {
+                        const tab = tabs.find((t) => t.id === tabId);
+                        if (tab && active) activated.push(tabId);
+                        setTimeout(() => cb(tab));
+                    },
+                },
+                windows: {
+                    create: ({ url: tabUrl }, cb) => {
+                        const tab = opensWindows
+                            ? { id: tabs.length + 1, windowId: 2, url: tabUrl }
+                            : undefined;
+                        if (tab) tabs.push(tab);
+                        setTimeout(() => cb(tab && { id: 2, tabs: [tab] }));
+                    },
+                    update: (windowId, updateInfo, cb) => {
+                        focused.push({ windowId, ...updateInfo });
+                        setTimeout(() => cb?.());
+                    },
+                },
+                notifications: {
+                    create: (id, options) => notifications.set(id, options),
+                    clear: (id) => notifications.delete(id),
+                    onClicked: event(notificationListeners),
                 },
             };
             initAgentAccess({
@@ -376,8 +408,10 @@ describe("Agent access background", () => {
 
         it("ends a pairing request at once when its prompt cannot open", async () => {
             opensTabs = false;
+            opensWindows = false;
             const failed = await request(3, "pair", { clientName: "Cursor" });
             opensTabs = true;
+            opensWindows = true;
             expect(failed.error.code).toBe("internal");
             // it no longer holds the one pending pairing request
             const prompt = nextTab();
@@ -410,6 +444,69 @@ describe("Agent access background", () => {
             const allowed = send(8, "pair", { clientName: "Zed" });
             expect(await decide(await prompt, true)).toBe(true);
             expect((await answerTo(allowed)).ok).toBe(true);
+        });
+
+        it("brings the pairing prompt to the front, in a new window when no window can take a tab", async () => {
+            const front = { focused: true, drawAttention: true };
+            focused.length = 0;
+            let prompt = nextTab();
+            const inTab = send(18, "pair", { clientName: "Goose" });
+            let tab = await prompt;
+            expect(tab).toMatchObject({ windowId: 1, active: true });
+            expect(await waitFor(() => focused.length)).toBe(1);
+            expect(focused[0]).toEqual({ windowId: 1, ...front });
+            expect(await decide(tab, true)).toBe(true);
+            expect((await answerTo(inTab)).ok).toBe(true);
+            // e.g. a browser on macOS, running without a window
+            focused.length = 0;
+            opensTabs = false;
+            prompt = nextTab();
+            const inWindow = send(18, "pair", { clientName: "Goose" });
+            tab = await prompt;
+            opensTabs = true;
+            expect(tab.windowId).toBe(2);
+            expect(await waitFor(() => focused.length)).toBe(1);
+            expect(focused[0]).toEqual({ windowId: 2, ...front });
+            expect(await decide(tab, true)).toBe(true);
+            expect((await answerTo(inWindow)).ok).toBe(true);
+        });
+
+        it("notifies a pairing request only with the notifications permission, and a click shows its prompt", async () => {
+            // Agent access turned on before PaperMemory asked for notifications
+            let prompt = nextTab();
+            const silent = send(19, "pair", { clientName: "Amp" });
+            let tab = await prompt;
+            await new Promise((resolve) => setTimeout(resolve, 20));
+            expect(notifications.size).toBe(0);
+            expect(await decide(tab, true)).toBe(true);
+            expect((await answerTo(silent)).ok).toBe(true);
+
+            granted.add("notifications");
+            prompt = nextTab();
+            // a right-to-left override would turn the rest of the title around
+            const notified = send(19, "pair", { clientName: "Amp‮gnp.exe" });
+            tab = await prompt;
+            const shown = await waitFor(() => notifications.get("pm-agent-pairing"));
+            expect(shown).toEqual({
+                type: "basic",
+                iconUrl: extensionUrl("icons/icon-128.png"),
+                title: "Ampgnp.exe wants to use PaperMemory",
+                message:
+                    "Click Allow on the PaperMemory tab to let it read and add papers.",
+            });
+            // the user clicks it from another application: its tab, then its window
+            focused.length = 0;
+            notificationListeners.forEach((listener) => listener("pm-agent-pairing"));
+            expect(await waitFor(() => focused.length)).toBe(1);
+            expect(activated.at(-1)).toBe(tab.id);
+            expect(focused[0]).toMatchObject({ windowId: tab.windowId, focused: true });
+            expect(notifications.size).toBe(0);
+            // the user's decision clears it too
+            notifications.set("pm-agent-pairing", shown);
+            expect(await decide(tab, true)).toBe(true);
+            expect((await answerTo(notified)).ok).toBe(true);
+            expect(notifications.size).toBe(0);
+            granted.delete("notifications");
         });
 
         it("removes the Project a failed first add created, keeps one a stored add created", async () => {

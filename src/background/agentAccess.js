@@ -42,6 +42,8 @@ const KEEPALIVE_ALARM = "pm-agent-keepalive";
 // the Native host exits on a larger message
 const MAX_MESSAGE_BYTES = 1024 * 1024;
 const PAIRING_TIMEOUT_MS = 120000;
+// the OS notification of the pending pairing request (one at a time)
+const PAIRING_NOTIFICATION = "pm-agent-pairing";
 const DENY_COOLDOWN_MS = 60000;
 const MAX_QUEUED_JOBS = 50;
 const JOB_START_DEADLINE_MS = 30000;
@@ -125,6 +127,13 @@ const isEnabled = async () => (await getStorage("agentAccess"))?.enabled === tru
 const hasNativeMessaging = () =>
     new Promise((resolve) =>
         chrome.permissions.contains({ permissions: ["nativeMessaging"] }, resolve),
+    );
+
+// optional, requested with nativeMessaging: users who turned Agent access on before
+// may not have it
+const hasNotifications = () =>
+    new Promise((resolve) =>
+        chrome.permissions.contains({ permissions: ["notifications"] }, resolve),
     );
 
 // ----------------------------
@@ -616,7 +625,64 @@ const cancelPairing = (matches, outcome) => {
     if (!pending || !matches(pending)) return;
     pendingPairing = null;
     clearTimeout(pending.timer);
+    chrome.notifications?.clear(PAIRING_NOTIFICATION);
     if (outcome) post(pending, outcome);
+};
+
+// bring a window to the front, also out of another application. The window may be
+// gone: reading lastError keeps that quiet
+const focusWindow = (windowId) =>
+    chrome.windows.update(
+        windowId,
+        { focused: true, drawAttention: true },
+        () => void chrome.runtime.lastError,
+    );
+
+// the pairing prompt in a new active tab, brought to the front; in a new window when
+// no window can take the tab (a browser on macOS runs on without any). `callback` gets
+// the prompt's tab, none if it could not open
+const openPairingTab = (url, callback) => {
+    const opened = (tab) => {
+        if (tab) focusWindow(tab.windowId);
+        callback(tab);
+    };
+    chrome.tabs.create({ url, active: true }, (tab) => {
+        if (tab) return opened(tab);
+        chrome.windows.create({ url }, (win) => opened(win?.tabs?.[0]));
+    });
+};
+
+// a click on the pairing request's notification: show its prompt
+const onNotificationClicked = (notificationId) => {
+    if (notificationId !== PAIRING_NOTIFICATION) return;
+    chrome.notifications.clear(PAIRING_NOTIFICATION);
+    const tabId = pendingPairing?.tabId;
+    if (!Number.isInteger(tabId)) return;
+    // the user may have closed the prompt: reading lastError keeps that quiet
+    chrome.tabs.update(tabId, { active: true }, (tab) =>
+        tab ? focusWindow(tab.windowId) : void chrome.runtime.lastError,
+    );
+};
+
+// an OS notification of the pairing request, for a user in another application, only
+// if they granted the permission. The client chose its name: shown as plain text,
+// without control or format characters (e.g. bidi overrides), cut to 64 characters
+const notifyPairing = async (pending) => {
+    // Chrome may lack the API in a worker that started before the permission was granted
+    if (!chrome.notifications || !(await hasNotifications())) return;
+    if (pending !== pendingPairing) return; // decided meanwhile
+    if (!chrome.notifications.onClicked.hasListener(onNotificationClicked)) {
+        chrome.notifications.onClicked.addListener(onNotificationClicked);
+    }
+    const name = [...removeControlChars(pending.clientName).replace(/\p{Cf}/gu, "")]
+        .slice(0, 64)
+        .join("");
+    chrome.notifications.create(PAIRING_NOTIFICATION, {
+        type: "basic",
+        iconUrl: chrome.runtime.getURL("icons/icon-128.png"),
+        title: `${name} wants to use PaperMemory`,
+        message: "Click Allow on the PaperMemory tab to let it read and add papers.",
+    });
 };
 
 // ask the user to allow a client, in an options tab; answered on the user's decision
@@ -660,23 +726,24 @@ const pair = async (request, clientName) => {
         PAIRING_TIMEOUT_MS,
     );
     pending.tabCreated = new Promise((resolve) =>
-        chrome.tabs.create(
-            { url: `${optionsUrl}#agent-pairing=${requestId}` },
-            (tab) => {
-                pending.tabId = tab?.id;
-                // no prompt for the user to answer: end the request now
-                if (!Number.isInteger(pending.tabId)) {
-                    cancelPairing(
-                        (p) => p === pending,
-                        failure(
-                            "internal",
-                            "PaperMemory could not open its pairing prompt",
-                        ),
-                    );
-                }
-                resolve();
-            },
-        ),
+        openPairingTab(`${optionsUrl}#agent-pairing=${requestId}`, (tab) => {
+            pending.tabId = tab?.id;
+            // no prompt for the user to answer: end the request now
+            if (!Number.isInteger(pending.tabId)) {
+                cancelPairing(
+                    (p) => p === pending,
+                    failure(
+                        "internal",
+                        "PaperMemory could not open its pairing prompt",
+                    ),
+                );
+            } else {
+                notifyPairing(pending).catch((e) =>
+                    logError("[agentAccess] notification:", e),
+                );
+            }
+            resolve();
+        }),
     );
     pendingPairing = pending;
 };

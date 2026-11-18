@@ -54,17 +54,30 @@ and Firefox, all lifecycle checks passed, including 65 min and 8 h idles).
   flag first and the fresh worker reopens the options page. The options page starts the
   enable write and then requests the permission in the same synchronous turn, because Firefox
   only honours a permission request inside the user gesture. A refused prompt turns the setting
-  back off. Firefox needs no reload. Only manual acceptance exercises the real Chrome grant;
-  automated tests use a test build where the permission is required.
+  back off, unless `nativeMessaging` was granted before. Firefox needs no reload. Only manual
+  acceptance exercises the real Chrome grant; automated tests use a test build where the
+  permissions are required. `notifications` (OS notifications of pairing requests) is optional
+  too, requested in the same prompt: a new required permission with a warning would disable
+  PaperMemory on update in Chrome. Users who turned Agent access on before it was requested
+  are not asked again: PaperMemory notifies only when it is granted.
 - **Persistent background while enabled.** The open port keeps Chrome's service worker alive
   for as long as Agent access is on (PaperMemory's Firefox build is MV2 with a persistent
   background page, which needs no keep-alive). Accepted: it is opt-in. A
   1-minute alarm calls the idempotent reconnect as a safety net.
 - **Pairing and authorization live in PaperMemory.** The first request from an unknown client
   makes PaperMemory open its options page in a new tab on a pairing prompt naming the client
-  (Zotero-10 style); **Allow** creates a per-client random secret returned once to the MCP
-  server, which stores it in a 0600 file (written atomically, named by a hash of the client
-  name, never by the raw name); **Deny** rejects. A pairing decision is accepted only for a
+  (Zotero-10 style), bring that tab's window to the front and draw attention to it (in a new
+  window when no window can take the tab), and, with the `notifications` permission, show an
+  OS notification whose click shows the prompt; **Allow** creates a per-client random secret
+  returned once to the MCP server, which stores it in a 0600 file (written atomically, named
+  by a hash of the client name, never by the raw name); **Deny** rejects. The MCP server waits
+  about 2 s for the decision, then answers the tool call `pairing-required`, a message the
+  agent relays to the user (which browser, click **Allow**, call again): an agent cannot
+  speak while its call is blocked. The request stays open on its own connection until the
+  user decides or PaperMemory ends it (2 minutes), so the credential is saved whenever the
+  user allows, and later calls wait for that request instead of sending another. Agents call
+  the `connect` tool at the start of their work, so that pairing happens then rather than in
+  the middle of a task. A pairing decision is accepted only for a
   pending, single-use, unguessable request id and only from the exact options tab PaperMemory
   opened for it, so content scripts (which share the extension id) and replays are ignored.
   PaperMemory stores only a SHA-256 hash and lists **Paired clients** with a **Revoke** button.
@@ -97,8 +110,8 @@ and Firefox, all lifecycle checks passed, including 65 min and 8 h idles).
   test build is decided in `wxt.config.js` alone, for its manifest and its code (`define`),
   from `WXT_PM_AGENT_TEST` in the environment or a `.env` file. The zip and submit npm
   scripts refuse to run when the variable is set, and zipping refuses a built extension that
-  contains the test build's auto-allow, so a test build (which has `nativeMessaging` as a
-  required permission and allows every pairing request) cannot be published.
+  contains the test build's auto-allow, so a test build (which has `nativeMessaging` and
+  `notifications` as required permissions and allows every pairing request) cannot be published.
 - **Ownership is a capability, not a claim.** **Provenance** is written by the Memory queue
   only when the pipeline's first write creates the paper. Adding a paper already in the
   Memory (its id, a URL resolving to it, a fuzzy match by title, or a paper another page

@@ -16,6 +16,8 @@ import { selfheal } from "./install.mjs";
 import { listLibraries, negotiate, opError, request, resolveLibrary } from "./libraries.mjs";
 
 const ROOTS_TIMEOUT_MS = 2_000;
+// how long a tool call waits for the user's pairing decision before it answers `pairing-required`
+const PAIRING_WAIT_MS = 2_000;
 const CONTROL_CHARS = /\p{Cc}/gu;
 
 const TAG_RENAME_HINT =
@@ -135,7 +137,28 @@ export async function serve() {
         return auth;
     }
 
-    const pairing = new Map(); // libraryId -> pending pairing, so concurrent first calls pair once
+    // libraryId -> the pairing request waiting for the user. It outlives the tool call that sent it: its
+    // connection stays open until the user decides or PaperMemory ends it (2 minutes), and later calls
+    // wait for it instead of sending another `pair`. Once it ends, the next call pairs again.
+    const pairing = new Map();
+    const browserOf = (lib) => lib.browser || "the browser";
+
+    // PaperMemory's refusals to start a pairing, told so that the agent can relay them
+    function pairingRefusal(err, lib) {
+        if (err.code === "rate-limited") {
+            return opError(
+                err.code,
+                `The user denied a PaperMemory pairing request less than a minute ago, so PaperMemory refuses new ones for now. Ask the user whether ${clientName()} may use PaperMemory. If they agree, call this tool again in a minute: PaperMemory then opens a tab in ${browserOf(lib)} where they click **Allow**.`,
+            );
+        }
+        if (err.code === "busy") {
+            return opError(
+                err.code,
+                `Another PaperMemory pairing request is waiting for the user in ${browserOf(lib)}. Ask the user to answer it on its PaperMemory tab, then call this tool again.`,
+            );
+        }
+        return err;
+    }
 
     async function credentialFor(lib, protocol, file, pair) {
         const cred = readCredential(file);
@@ -151,7 +174,22 @@ export async function serve() {
             })().finally(() => pairing.delete(lib.libraryId));
             pairing.set(lib.libraryId, pending);
         }
-        return pending;
+        let timer;
+        const waited = new Promise((resolve) => (timer = setTimeout(resolve, PAIRING_WAIT_MS, null)));
+        let created;
+        try {
+            created = await Promise.race([pending, waited]);
+        } catch (err) {
+            throw pairingRefusal(err, lib);
+        } finally {
+            clearTimeout(timer);
+        }
+        if (created) return created;
+        // the user has not decided yet: the agent tells them (an error, as the call did nothing)
+        throw opError(
+            "pairing-required",
+            `Tell the user: "PaperMemory needs your OK to let ${clientName()} use it: switch to ${browserOf(lib)} and click **Allow** on the PaperMemory tab that just opened (the request stays open for 2 minutes)." Then, once they have clicked Allow, call this tool again.`,
+        );
     }
 
     // Authenticated op: load the credential file, else pair (unless `pair` is false) and save it.
@@ -167,7 +205,7 @@ export async function serve() {
             fs.rmSync(file, { force: true });
             throw opError(
                 "unauthorized",
-                `PaperMemory no longer accepts ${clientName()}: the user must pair it again (the next PaperMemory call asks them in the browser).`,
+                `PaperMemory no longer accepts ${clientName()}: the user must pair it again (the next PaperMemory call asks them again in ${browserOf(lib)}).`,
             );
         }
     }
@@ -272,6 +310,18 @@ export async function serve() {
             }
             if (none === true) optedOut = true;
             return getProject(p);
+        },
+    );
+    register(
+        "connect",
+        "Check that you may use the user's PaperMemory library, and pair with it if needed. Call it at the start of PaperMemory work, right after confirming the project with the user. If PaperMemory needs the user's OK, it answers `pairing-required`: tell the user to click **Allow** in their browser, as the answer says, then call it again. Answers `paired: true` once you may use the library.",
+        { library },
+        async ({ library: name = "auto" }, p) => {
+            const lib = await resolveLibrary(name);
+            const alreadyPaired = readCredential(credentialFile(lib.libraryId, clientName())) !== null;
+            // an authenticated read: PaperMemory checks the saved credential, or the pairing starts
+            await callLibrary(lib, "list_tags", {}, p);
+            return { paired: true, alreadyPaired, clientName: clientName(), library: lib.label };
         },
     );
     opTool(

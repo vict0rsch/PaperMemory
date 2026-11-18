@@ -146,7 +146,9 @@ port → `agentAccess.js` in the background → operation handlers.
 - **`agent/` package** (`papermemory-mcp`, published to npm; excluded from the
   extension zip): `cli.mjs` (`install`, `uninstall`, `selfheal`, `libraries`,
   `serve`), `host/host.mjs` (native host hub), `src/serve.mjs` (MCP server, resolves
-  the Project folder and derives the Project key), `src/libraries.mjs` (socket
+  the Project folder and derives the Project key; pairs on the first authenticated call
+  or `connect`: the call answers `pairing-required` after ~2 s while the `pair` request
+  stays open until the user decides, and later calls wait for it), `src/libraries.mjs` (socket
   discovery, version negotiation, requests), `src/install.mjs` + `browsers.mjs` +
   `agents.mjs` (the installer: local copy in `~/.papermemory/bin` with wrappers, native
   host manifests, agent registration, skill copy), `skills/<name>/SKILL.md` (the
@@ -156,8 +158,9 @@ port → `agentAccess.js` in the background → operation handlers.
 - **`src/background/agentAccess.js`** (initialised from `background.js` with the
   injected `pushSyncPapers` and the message handler): connects the native port,
   authorizes every op (per-client secret hash, rate limit, bounded queue), runs one
-  serialized mutation queue with per-job deadlines, handles pairing and the storage
-  proxy, and re-connects from a 1-minute `alarms` alarm. Its changes to papers are
+  serialized mutation queue with per-job deadlines, handles pairing (a prompt tab whose
+  window it brings to the front, and an OS notification when `notifications` is granted)
+  and the storage proxy, and re-connects from a 1-minute `alarms` alarm. Its changes to papers are
   `agent` operations of the Memory's queue (`memoryQueue.js`, see _Concurrency_).
 - **`src/shared/js/utils/agentOps.js`**: pure operations (argument validation and
   bounds, tag rules, search, Project papers, BibTeX export, Provenance, ownership,
@@ -174,8 +177,8 @@ port → `agentAccess.js` in the background → operation handlers.
   in the background.
 - **Options page** ([`src/options/agentAccessUI.js`](src/options/agentAccessUI.js)):
   its "Agent access" section (between Sync and Keyboard shortcuts) holds the Agent
-  access toggle (requests the optional `nativeMessaging` permission in the click's
-  gesture), connection status and the **Paired clients** list with Revoke; the pairing
+  access toggle (requests the optional `nativeMessaging` and `notifications` permissions
+  in the click's gesture), connection status and the **Paired clients** list with Revoke; the pairing
   prompt (Allow / Deny, accepted only from the options tab the background opened for
   it) is a card above the settings.
 
@@ -526,8 +529,8 @@ the `downloads` API), `functions.js` (49 misc helpers incl. `miniHash`,
 - **External APIs (no project backend):** arXiv, OpenReview, GitHub Gist, CrossRef,
   DBLP, Semantic Scholar, OpenAlex, Google Scholar.
 - **Permissions:** `activeTab`, `storage`, `unlimitedStorage`, `downloads`(+`.open`),
-  `scripting`, `alarms`, `offscreen` (Chrome build only), optional `nativeMessaging`
-  (requested when Agent access is turned on; granted at install only in
+  `scripting`, `alarms`, `offscreen` (Chrome build only), optional `nativeMessaging` and
+  `notifications` (requested together when Agent access is turned on; granted at install only in
   `WXT_PM_AGENT_TEST=1` test builds, set in the environment or a `.env` file, which
   `wxt zip` refuses), and `host_permissions: *://*/*`.
 - **Docs site:** MkDocs Material (`mkdocs.yml`, `docs/`) published to papermemory.org. Site and Readme screenshots and web videos (walkthrough + feature loops) are generated from the real build with `node scripts/store-assets/build.mjs docs` (writes `docs/assets/`).
