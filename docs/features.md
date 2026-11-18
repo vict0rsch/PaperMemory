@@ -231,11 +231,11 @@ My approach with PaperMemory is to try and notify you that a publication likely 
 
     * [dblp.org](https://dblp.org)
 
-        * A query is sent to their [api](https://dblp.org/faq/How+to+use+the+dblp+search+API.html) for an exact paper title match
-        * The oldest `hit` in the response which is not a preprint (`hit.venue !== "CoRR"`) is used
+        * A query is sent to their [SPARQL endpoint](https://sparql.dblp.org) for an exact paper title match (dblp.org's search API now answers programs with a bot check)
+        * The oldest record which is not a preprint (venue other than `CoRR`) is used
         * If such a match is found, a note is added as: `Accepted @ ${venue} ${year} -- [dblp.org]`
 
-            * In this case, **the original Arxiv bibtex data is overwritten to use DBLP's**
+            * In this case, the paper's BibTeX gets the publication's venue, year and DOI
             * Try for instance [Domain-Adversarial Training of Neural Networks](http://arxiv.org/pdf/1505.07818v4)
             * Note that DBLP journals may use ISO4 abbreviations
 
@@ -254,11 +254,11 @@ My approach with PaperMemory is to try and notify you that a publication likely 
 
             * Try for instance [Attention-Guided Generative Adversarial Networks for Unsupervised Image-to-Image Translation](http://arxiv.org/pdf/1903.12296v3)
 
-    * [Unpaywall.org](https://unpaywall.org)
+    * [OpenAlex.org](https://openalex.org) (it replaces Unpaywall's title search, retired in 2026)
 
-        * A query is sent to their [api](https://unpaywall.org/products/api) searching for papers
-        * Amongst `response.results`, we're looking for an exact title match.
-        * If there's one, a to the paper note is added as: `Accepted @ ${result.journal_name} -- [unpaywall.org]`
+        * A query is sent to their [api](https://docs.openalex.org) searching for works by title
+        * Amongst the results, we're looking for an exact title match published in a journal or a conference
+        * If there's one, a note is added to the paper as: `Accepted @ ${venue} (${year}) -- [openalex.org]`
 
     There's room for improvement here^, please contact me (an issue will do) if you want to help
 
@@ -335,9 +335,11 @@ This feature can be enabled in the [Advanced Options](./configuration.md#advance
 
 ## Privacy
 
-None of your data ever leaves your computer, except when you enable Gist Synchronization.
+Your Memory is stored locally in your browser's extension storage. To fetch paper metadata, PaperMemory sends requests to academic and publication services (e.g. arXiv, CrossRef, DBLP, Semantic Scholar); these requests can include a paper's title or identifier.
 
-In this case, you voluntarily upload your data to Github Gists. Remember, although private Gists are non-discoverable, they are accessible to anyone with the link. So don't store personal or sensitive information in your paper notes if you enable Gists Synchronization.
+Your Memory is only uploaded to GitHub when you set up Gist Synchronization: saving your GitHub token in the options creates a private Gist containing your Memory if you don't already have one, even before you start syncing.
+
+In this case, you voluntarily upload your data to Github Gists. Remember, although private Gists are non-discoverable, they are accessible to anyone with the link. So don't store personal or sensitive information in your paper notes if you enable Gists Synchronization. Your GitHub token is stored in your browser's extension storage and sent to GitHub's API to authenticate sync requests.
 
 ## Feature requests
 

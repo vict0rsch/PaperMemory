@@ -1,9 +1,36 @@
-<div id="modal-manualParsing-content" class="popup-modal-content" style="display: none">
-    <h3>Manual Parsing</h3>
-    <p>Automatic, url-based parsing has been disabled.</p>
-    <p>
-        To manually add papers you must now setup a keyboard shortcut to trigger this
-        action.
-    </p>
-    <p>Visit your browser's settings to set it.</p>
+<!-- shown when "Record papers automatically" is switched off (checkNoAuto on) -->
+<div
+    id="modal-manualParsing-content"
+    class="popup-modal-content pm-sheet"
+    role="dialog"
+    tabindex="-1"
+    aria-labelledby="modal-manualParsing-heading"
+    style="display: none"
+>
+    <div class="pm-sheet-head">
+        <h2 id="modal-manualParsing-heading">Automatic recording is off</h2>
+        <span class="pm-spacer"></span>
+        <button class="pm-btn pm-btn-ghost pm-btn-sm pm-sheet-close">
+            <i data-i="x" class="pm-i-sm"></i>Close
+        </button>
+    </div>
+    <div class="pm-sheet-body">
+        <p>
+            Papers are no longer saved when you open them. To add one, open it and use
+            <b>Add it now</b> in this popup, or the keyboard shortcut.
+        </p>
+        <div class="pm-quote pm-quote-row">
+            Add the current paper <span class="pm-spacer"></span
+            ><span class="pm-kbd" data-cmd="manualParsing"></span>
+        </div>
+        <p class="pm-sheet-small">
+            The shortcut is set in your browser and only works if nothing else uses it.
+        </p>
+    </div>
+    <div class="pm-sheet-actions">
+        <button class="pm-btn pm-open-shortcuts">
+            Open browser shortcuts <i data-i="open" class="pm-i-sm"></i>
+        </button>
+        <button class="pm-btn pm-btn-primary pm-sheet-close">Got it</button>
+    </div>
 </div>

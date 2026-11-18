@@ -1,772 +1,314 @@
-<div id="modal-whatsnew-content" class="popup-modal-content" style="display: none">
-    <h3 style="margin-bottom: 0px">What's new</h3>
-    <ul>
-        <li>
-            <strong>Current: </strong>
-            <a href="https://github.com/vict0rsch/PaperMemory/releases/tag/1.2.1"
-                >1.2.1</a
-            >
-            <em>(2026-11-16)</em>
-            <ul>
-                <li>
-                    [dev] Fix the keyboard shortcut not opening the popup on Firefox
-                </li>
-            </ul>
-        </li>
-        <li>
-            <a href="https://github.com/vict0rsch/PaperMemory/releases/tag/1.2.0"
-                >1.2.0</a
-            >
-            <em>(2026-11-12)</em>
-            <ul>
-                <li>
-                    [feature] Detect papers opened through a proxy URL or a PDF viewer
-                    (e.g. another extension's) and save the underlying paper (proxies
-                    that rewrite the host name are not supported)
-                </li>
-                <li>
-                    [feature] Re-parsing an already saved paper no longer overwrites its
-                    tags, visit count, add date or favorite status
-                </li>
-                <li>
-                    [dev] Fix paper parsing for ACS, RSC (new platform), ScienceDirect,
-                    ChemRxiv, IJCAI, Cell and PMLR
-                </li>
-                <li>
-                    [dev] Detect paper sources from the website's host only, removing
-                    false detections; http:// ChemRxiv and OUP URLs are now detected
-                </li>
-                <li>
-                    [dev] Fix the PDF tab title not being set the first time an ACS/RSC
-                    paper is captured
-                </li>
-                <li>
-                    [dev] Fix race conditions and data-integrity issues when updating or
-                    de-duplicating stored papers
-                </li>
-                <li>
-                    [dev] Refactor the codebase to ES modules, built with WXT (Vite) for
-                    Chrome and Firefox; integration tests now run on cloakbrowser
-                </li>
-                <li>[dev] Add a privacy policy page to the docs</li>
-                <li>[dev] Rebuild the tag input without the select2 library</li>
-                <li>
-                    [deprecation] Automatic code repository discovery through Papers
-                    with Code is disabled since its API was discontinued
-                </li>
-            </ul>
-        </li>
-        <li>
-            <a href="https://github.com/vict0rsch/PaperMemory/releases/tag/1.0.3"
-                >1.0.3</a
-            >
-            <em>(2025-11-15)</em>
-            <ul>
-                <li>
-                    [dev] Hotfix Arxiv paper parsing after Arxiv enables CORS
-                    restrictions.
-                </li>
-                <li>[new source] Add AIP as a paper source</li>
-                <li>[new source] Add Cell as a paper source</li>
-                <li>
-                    [feature] New loading notification when PaperMemory is working in
-                    the background to fetch a paper's data
-                </li>
-                <li>[feature] New notification style, more discrete</li>
-                <li>
-                    [dev] Make Abstracts the defaults not PDFs (for new users only, go
-                    to your settings otherwise)
-                </li>
-                <li>[dev] Fix a keyboard shortcut bug</li>
-                <li>[dev] Fix a post-click feedback bug</li>
-                <li>[dev] Fix a sync bug not storing Github PAT tokens</li>
-            </ul>
-        </li>
-        <li>
-            <strong>Current: </strong>
-            <a href="https://github.com/vict0rsch/PaperMemory/releases/tag/1.0.2"
-                >1.0.2</a
-            >
-            <em>(2025-03-12)</em>
-            <ul>
-                <li>[feature] Add a link to AlphaXiv in the popup.</li>
-                <li>[feature] Add keyboard shortcuts to:</li>
-                <ul>
-                    <li>open a paper in a new tab</li>
-                    <li>copy the PDF link to the clipboard</li>
-                    <li>copy the Markdown link to the clipboard</li>
-                    <li>copy the Bibtex citation to the clipboard</li>
-                </ul>
-                <li>
-                    [feature] Improve Firefox warnings: Firefox does not trigger content
-                    scripts on PDF pages.
-                </li>
-                <li>
-                    [feature] Add warning when clicking on ar5iv.org button for current
-                    month papers.
-                </li>
-                <li>
-                    [deprecation] Remove arXiv Vanity as a paper source because the
-                    website is discontinued.
-                </li>
-            </ul>
-        </li>
-        <li>
-            <a href="https://github.com/vict0rsch/PaperMemory/releases/tag/1.0.1"
-                >1.0.1</a
-            >
-            <em>(2025-03-06)</em>
-            <ul>
-                <li>
-                    [fix] Fix a bug where copying metadata to the clipboard would not
-                    work if the paper's ID contained a dot.
-                </li>
-            </ul>
-        </li>
-        <li>
-            <a href="https://github.com/vict0rsch/PaperMemory/releases/tag/1.0.0"
-                >1.0.0</a
-            >
-            <em>(2025-03-01)</em>
-            <ul>
-                <li>
-                    [feature] A tooltip with paper metadata shows up when hovering a
-                    paper's title
-                </li>
-                <li>
-                    [feature] PaperMemory is now much more usable from your
-                    keyboard-only. See the settings for more info.
-                </li>
-                <li>[new source] Add ChemRxiv as a paper source</li>
-                <li>
-                    [dev] Major upgrade to Manifest V3 for Chrome/Firefox/Edge
-                    compatibility
-                </li>
-                <li>[dev] Fix HAL parsing</li>
-                <li>[dev] Fix BibMatcher parsing stalling on Unpaywall</li>
-                <li>[dev] Improve Google Scholar matching</li>
-                <li>[dev] Improve gist handling with octokit</li>
-                <li>[dev] Better error handling across the board</li>
-                <li>[dev] Improved Firefox compatibility</li>
-                <li>
-                    [dev] Fix a bug where PaperMemory would not load on some websites
-                </li>
-                <li>[dev] Improved contributions guidelines</li>
-            </ul>
-        </li>
-        <li>
-            <a href="https://github.com/vict0rsch/PaperMemory/releases/tag/0.7.0"
-                >0.7.0</a
-            >
-            <em>(2023-12-04)</em>
-            <ul>
-                <li>
-                    [feature] PaperMemory has a new
-                    <strong>website</strong>!
-                    <a
-                        class="link-in-new-tab"
-                        href="https://papermemory.org"
-                        style="margin-top: unset"
-                        >papermemory.org</a
-                    >
-                </li>
-                <li>
-                    [feature] A new
-                    <a
-                        class="link-in-new-tab"
-                        href="https://papermemory.org/getting-started/#bibmatcher"
-                        style="margin-top: unset"
-                        ><strong>BibMatcher</strong></a
-                    >
-                    tool to match arxiv references in a
-                    <code>.bib</code> file to actual publications.
-                </li>
-                <li>
-                    [feature] You can now copy a
-                    <strong>hyperlink</strong> to cite a paper in an email, Google Docs
-                    or Slack, displaying the title and linking to the URL.
-                </li>
-                <li>
-                    [feature] Add a <strong>tooltip</strong> on paper titles to show
-                    some more metadata (including publication venue if any)
-                </li>
-                <li>
-                    [Feature] Long author lists can now be
-                    <strong>expanded</strong> on clicking on the "..." symbol in the
-                </li>
-            </ul>
-
-            <br />
-            <ul>
-                <li>
-                    [new source] Parse papers from
-                    <strong>MDPI</strong> journals.
-                </li>
-                <li>[new source] Parse papers from <strong>HAL</strong>.</li>
-            </ul>
-            <br />
-            <ul>
-                <li>[dev] Deprecate custom title function as announced for months.</li>
-                <li>
-                    [dev] Fix a bug in OpenReview and PubMed Central paper parsing
-                    procedures.
-                </li>
-                <li>[dev] Handle OpenReview API v2.</li>
-                <li>
-                    [dev] Use the Unpaywall.org API to match preprints to publications.
-                </li>
-            </ul>
-        </li>
-        <li>
-            <a href="https://github.com/vict0rsch/PaperMemory/releases/tag/0.5.13"
-                >0.5.13</a
-            >
-            <em>(2023-08-22)</em>
-            <ul>
-                <li>[dev] Fix several source parsing: NeurIPS, PMLR, IOP</li>
-                <li>
-                    [dev] Update tabler icons class names not to interfere with other
-                    websites
-                </li>
-            </ul>
-        </li>
-        <li>
-            <a href="https://github.com/vict0rsch/PaperMemory/releases/tag/0.5.12"
-                >0.5.12</a
-            >
-            <em>(2023-06-28)</em>
-            <ul>
-                <li>[dev] Fix sync when parsing arbitrary websites</li>
-            </ul>
-        </li>
-        <li>
-            <a href="https://github.com/vict0rsch/PaperMemory/releases/tag/0.5.11"
-                >0.5.11</a
-            >
-            <em>(2023-05-19)</em>
-            <ul>
-                <li>[dev] Update Firefox popup shortcut and instructions</li>
-                <li>
-                    [dev] Arbitrary website parsing enabled by default for new users
-                </li>
-            </ul>
-        </li>
-        <li>
-            <a href="https://github.com/vict0rsch/PaperMemory/releases/tag/0.5.10"
-                >0.5.10</a
-            >
-            <em>(2023-05-18)</em>
-            <ul>
-                <li>
-                    [feature] You can now parse arbitrary websites: you just need to
-                    confirm / update the information PaperMemory was able to extract
-                    from the webpage
-                </li>
-                <li>
-                    [new source] Papers from
-                    <code>huggingface.co/papers/</code> will now be added as arxiv
-                    papers. If PaperMemory discovers a publication venue, a badge will
-                    be displayed on the HF paper page
-                </li>
-                <li>
-                    [new source] Thanks to @julien-blanchon you can also automatically
-                    go to ar5iv or arxiv-vanity paper pages. Those will be stored as
-                    Arxiv papers.
-                </li>
-                <li>
-                    [dev] Various bug fixes in the notifications and parsing procedures
-                </li>
-            </ul>
-        </li>
-        <li>
-            <a href="https://github.com/vict0rsch/PaperMemory/releases/tag/0.5.9"
-                >0.5.9</a
-            >
-            <em>(2022-09-30)</em>
-            <ul>
-                <li>
-                    [dev] Fix a bug that would display arxiv enhancements twice for some
-                    papers with a delayed venue matching
-                </li>
-                <li>[new source] Add PLOS journals as paper sources</li>
-                <li>
-                    [new source] Add Royal Society of Chemistry journals as paper
-                    sources
-                </li>
-            </ul>
-        </li>
-        <li>
-            <a href="https://github.com/vict0rsch/PaperMemory/releases/tag/0.5.8"
-                >0.5.8</a
-            >
-            <em>(2022-09-27)</em>
-            <ul>
-                <li>[new source] Add Inspire HEP paper source</li>
-                <li>
-                    [feature] Display a list of all existing tags when searching for
-                    <code>t:</code>
-                </li>
-                <li>[dev] Add Popup warnings component</li>
-                <li>[dev] Fix OpenReview paper parsing</li>
-            </ul>
-        </li>
-        <li>
-            <a href="https://github.com/vict0rsch/PaperMemory/releases/tag/0.5.7"
-                >0.5.7</a
-            >
-            <em>(2022-06-13)</em>
-            <ul>
-                <li>[new source] Add FrontiersIn paper source</li>
-                <li>[dev] Improve preprint/publication matching</li>
-            </ul>
-        </li>
-        <li>
-            <a href="https://github.com/vict0rsch/PaperMemory/releases/tag/0.5.6"
-                >0.5.6</a
-            >
-            <em>(2022-06-13)</em>
-            <ul>
-                <li>[feature] Add paper code to arxiv.org's rightmost column</li>
-                <li>[feature] Badge-like publication display on arxiv.org</li>
-                <li>[feature] Improve arxiv.org metadata display</li>
-                <li>
-                    [feature] Display arxiv.org metadata even if auto-parsing is
-                    disabled or if parsing is only enabled on pdf pages
-                </li>
-                <li>[dev] Improve IEEE parsing</li>
-            </ul>
-        </li>
-        <li>
-            <a href="https://github.com/vict0rsch/PaperMemory/releases/tag/0.5.5"
-                >0.5.5</a
-            >
-            <em>(2022-06-09)</em>
-            <ul>
-                <li>[dev] Fix ACM parsing</li>
-                <li>
-                    [feature] Inject publication venue onto arxiv.org's rightmost column
-                </li>
-                <li>
-                    [feature] Use a paper's published Bibtex on arxiv.org's rightmost
-                    column
-                </li>
-                <li>
-                    [feature] Detect papers downloaded into ~/Downloads/PaperMemoryStore
-                    from alternative sources (Sci-Hub etc.
-                    <a
-                        href="https://github.com/vict0rsch/papermemory#ad-hoc-pdfs"
-                        style="margin-top: 0"
-                        >more info</a
-                    >)
-                </li>
-            </ul>
-        </li>
-        <li>
-            <a href="https://github.com/vict0rsch/PaperMemory/releases/tag/0.5.4"
-                >0.5.4</a
-            >
-            <em>(2022-05-10)</em>
-            <ul>
-                <li>[new source] Add Science papers parsing</li>
-                <li>[dev] Paginate memory results for faster display</li>
-                <li>[dev] Improve JavaScript console logs</li>
-                <li>[dev] More tests</li>
-            </ul>
-        </li>
-        <li>
-            <a href="https://github.com/vict0rsch/PaperMemory/releases/tag/0.5.3"
-                >0.5.3</a
-            >
-            <em>(2022-05-05)</em>
-            <ul>
-                <li>[new source] Add IEEE papers parsing</li>
-                <li>[new source] Add Springer papers parsing</li>
-                <li>[new source] Add APS papers parsing</li>
-                <li>[new source] Add ScienceDirect papers parsing</li>
-                <li>[new source] Add Wiley papers parsing</li>
-                <br />
-                <li>
-                    [feature] You can now include the venue and year of a paper in its
-                    Markdown link (see popup menu)
-                </li>
-                <li>
-                    [feature] Deduplication: PaperMemory now matches and merges papers
-                    based on their titles not to create multiple Memory entries for the
-                    same paper
-                </li>
-                <li>
-                    [feature] Paper imports: in the advanced options page, in the Data
-                    Management section, you can now import papers from a list of urls
-                </li>
-                <li>
-                    [feature] Paper exports by tag: in the same Data Management section,
-                    you can now select papers to export by providing a list of tags and
-                    obtain a
-                    <code>.bib</code> or <code>.json</code> file with the appropriate
-                    papers.
-                    <ul>
-                        <li>
-                            If you export papers by tags and give the file to someone on
-                            your team, they'll be able to import them!
-                        </li>
-                    </ul>
-                </li>
-                <li>
-                    [feature] In the menu, you can now disable automatic paper
-                    recording. In which case you can trigger paper parsing manually from
-                    the popup or with a keyboard shortcut
-                    <code>ctrl/cmd + shift + p</code>
-                </li>
-                <li>
-                    [feature] There's a new keyboard shortcut to download a paper (it
-                    goes to your PaperMemoryStore if you have enabled the feature)
-                    <code>cmd/ctrl + shift + s</code>
-                </li>
-                <br />
-                <li>[dev] More tests</li>
-                <li>
-                    [dev] Fix paper parsing from pdf urls for Nature and IJCAI venues
-                </li>
-            </ul>
-        </li>
-        <li>
-            <a href="https://github.com/vict0rsch/PaperMemory/releases/tag/0.5.2"
-                >0.5.2</a
-            >
-            <em>(2022-04-19)</em>
-            <ul>
-                <li>
-                    [feature] Add preferred framework when discovering code repositories
-                    with PapersWithCode. Check out the options page.
-                </li>
-                <li>[dev] Testing infrastructure to make development more robust</li>
-                <li>[dev] Various bug fixes parsing some ACS/ACL/PMC papers</li>
-            </ul>
-        </li>
-        <li>
-            <a href="https://github.com/vict0rsch/PaperMemory/releases/tag/0.5.1"
-                >0.5.1</a
-            >
-            <em>(2022-04-13)</em>
-            <ul>
-                <li>[new source] Add PubMed Central papers parsing</li>
-                <li>[new source] Add IJCAI papers parsing</li>
-                <li>[new source] Add ACM papers parsing</li>
-                <li>[dev] Improve developer console logs</li>
-                <li>[dev] Minor code improvements</li>
-            </ul>
-        </li>
-        <li>
-            <a href="https://github.com/vict0rsch/PaperMemory/releases/tag/0.5.0"
-                >0.5.0</a
-            >
-            <em>(2022-03-23)</em>
-            <ul>
-                <li>
-                    [feature] In an effort to use as few as possible arxiv.org
-                    references, PaperMemory will use dblp.org and crossref.org bibtex
-                    data whenever possible for your published papers' citations. In
-                    other words it tries to discover published versions of you
-                    pre-prints and this will be effective when copying/exporting bibtex
-                    data
-                </li>
-                <li>
-                    [feature] New configuration option to only store official
-                    repositories when discovering code with PapersWithCode
-                </li>
-                <li>
-                    [feature] New configuration option to prefer using links to abstract
-                    pages vs pdfs
-                </li>
-                <li>
-                    [feature] New configuration option to only record paper from pdfs,
-                    not their online pages/abstracts
-                </li>
-                <li>
-                    [feature] New full-page memory (link at the bottom of the menu) to
-                    explore your memory in a fill-size and dedicated tab.
-                </li>
-
-                <li>
-                    [feature] New advanced options to filter out default paper sources.
-                </li>
-                <li>
-                    [feature] You can now also sort your memory by paper
-                    upload/publication year
-                </li>
-                <li>
-                    [feature] You can now search papers by year (<code>y: 18,19</code>),
-                    including before/after a date (<code>y: &lt;2019</code>,
-                    <code>y: &gt;2018</code>).
-                </li>
-                <li>
-                    [feature] Weekly local backups (up to 6 weeks) in case of a bug/user
-                    mistake (see Readme on Github)
-                </li>
-                <br />
-                <li>[new source] Add Nature papers parsing</li>
-                <li>[new source] Add ACS papers parsing</li>
-                <li>[new source] Add IOPscience papers parsing</li>
-                <li>[new source] Add JMLR papers parsing</li>
-                <br />
-                <li>
-                    [dev] New permission to monitor all urls. This is necessary because
-                    otherwise every new paper source will be associated with a new
-                    permission, disabling the extension until you re-enable it manually.
-                </li>
-
-                <li>
-                    [dev] Performance improvements, notably a step towards losing the
-                    JQuery dependency
-                </li>
-                <li>
-                    [dev] Improve & standardize Bibtex parsing, formatting and exporting
-                </li>
-                <li>[dev] Fix PNAS paper parsing (due to website update)</li>
-                <li>
-                    [dev] Improve search to include tags (still
-                    <code>t:tagName</code> to search tags only)
-                </li>
-                <li>[dev] Various refactors and small bug fixes</li>
-            </ul>
-        </li>
-        <li>
-            <a href="https://github.com/vict0rsch/PaperMemory/releases/tag/0.4.4.1"
-                >0.4.4.1</a
-            >
-            <em>(2022-03-08)</em>
-            <ul>
-                <li>[dev] Fix Arxiv markdown link</li>
-            </ul>
-        </li>
-        <li>
-            <a href="https://github.com/vict0rsch/PaperMemory/releases/tag/0.4.4"
-                >0.4.4</a
-            >
-            <em>(2022-03-07)</em>
-            <ul>
-                <li>
-                    [feature] Automatically discover code repositories using
-                    PapersWithCode!
-                </li>
-                <li>
-                    [dev] Improve Memory search triggers (especially on paste and clear)
-                </li>
-                <li>[refactor] Improve utilities files structure</li>
-            </ul>
-        </li>
-        <li>
-            <a href="https://github.com/vict0rsch/PaperMemory/releases/tag/0.4.3.1"
-                >0.4.3.1</a
-            >
-            <em>(2022-01-05)</em>
-            <ul>
-                <li>[dev] Hotfix: Auto-tagging issue when the Author Regex is empty</li>
-            </ul>
-        </li>
-        <li>
-            <a href="https://github.com/vict0rsch/PaperMemory/releases/tag/0.4.3"
-                >0.4.3</a
-            >
-            <em>(2022-01-03)</em>
-            <ul>
-                <li>[feature] Add a direct link to SciRate in the popup</li>
-                <li>
-                    [feature][beta] Download pdfs in a dedicated folder to open those
-                    local files instead of re-downloading pdfs all the time
-                </li>
-                <br />
-                <li>
-                    [new source] Parse papers from scirate.com/arxiv/ as Arxiv papers
-                    into your Memory
-                </li>
-                <br />
-                <li>[dev] Hotfix: Improve long code links display</li>
-            </ul>
-        </li>
-        <li>
-            <a href="https://github.com/vict0rsch/PaperMemory/releases/tag/0.4.2.3"
-                >0.4.2.3</a
-            >
-            <em>(2021-12-13)</em>
-            <ul>
-                <li>[dev] Hotfix: match ACL pdf webpages</li>
-            </ul>
-        </li>
-        <li>
-            <a href="https://github.com/vict0rsch/PaperMemory/releases/tag/0.4.2.2"
-                >0.4.2.2</a
-            >
-            <em>(2021-12-13)</em>
-            <ul>
-                <li>[dev] Hotfix: fix lower case Memory search</li>
-            </ul>
-        </li>
-        <li>
-            <a href="https://github.com/vict0rsch/PaperMemory/releases/tag/0.4.2.1"
-                >0.4.2.1</a
-            >
-            <em>(2021-12-13)</em>
-            <ul>
-                <li>[dev] Hotfix: improve ACL titles</li>
-            </ul>
-        </li>
-        <li>
-            <a href="https://github.com/vict0rsch/PaperMemory/releases/tag/0.4.2"
-                >0.4.2</a
-            >
-            <em>(2021-12-13)</em>
-            <ul>
-                <li>[new source] Add ACL (aclanthology.org)</li>
-                <li>
-                    [new source] Add Proceedings of the National Academy of Sciences
-                    (pnas.org)
-                </li>
-            </ul>
-        </li>
-        <li>
-            <a href="https://github.com/vict0rsch/PaperMemory/releases/tag/0.4.1"
-                >0.4.1</a
-            >
-            <em>(2021-12-09)</em>
-            <ul>
-                <li>[dev] Minor bug fixes and text improvements</li>
-            </ul>
-        </li>
-        <li>
-            <a href="https://github.com/vict0rsch/PaperMemory/releases/tag/0.4.0"
-                >0.4.0</a
-            >
-            <em>(2021-12-07)</em>
-            <ul>
-                <li>
-                    [refactor] Move data management and pdf title function to Options
-                </li>
-                <li>[feature] Custom title function out of Beta</li>
-                <li>[feature] Add auto-tagging from regex</li>
-                <li>
-                    [feature] Find published versions of pre-prints on dblp.org and
-                    crossref.org
-                </li>
-                <li>[dev] Add Gulp as build tool</li>
-                <li>[dev] Improve contribution guidelines</li>
-            </ul>
-        </li>
-        <li>
-            <a href="https://github.com/vict0rsch/PaperMemory/releases/tag/0.3.3"
-                >0.3.3</a
-            >
-            <em>(2021-11-24)</em>
-            <ul>
-                <li>
-                    [feature] Add manual trigger button on Firefox (as content scripts
-                    are not triggered on pdfs)
-                </li>
-                <li>
-                    [feature] Add "cancel" option in slider notification when a paper is
-                    automatically added to the memory
-                </li>
-                <li>
-                    [feature] Add "auto-open" feature: automatically opens the memory
-                    when opening the popup if you are not on a paper page (enable in the
-                    menu)
-                </li>
-                <li>[feature] Add this "What's new" section</li>
-                <li>Drop legacy arxiv-vanity support</li>
-            </ul>
-        </li>
-
-        <li>
-            <a href="https://github.com/vict0rsch/PaperMemory/releases/tag/0.3.2"
-                >0.3.2</a
-            >
-            <em>(2021-11-19)</em>
-            <ul>
-                <li>[new source] Add PMLR (ICML, AISTATS, CoLT, CoRL) etc.</li>
-            </ul>
-        </li>
-
-        <li>
-            <a href="https://github.com/vict0rsch/PaperMemory/releases/tag/0.3.1"
-                >0.3.1</a
-            >
-            <em>(2021-11-15)</em>
-            <ul>
-                <li>[new source] Add BioRxiv</li>
-            </ul>
-        </li>
-
-        <li>
-            <a href="https://github.com/vict0rsch/PaperMemory/releases/tag/0.3.0"
-                >0.3.0</a
-            >
-            <em>(2021-11-13)</em>
-            <ul>
-                <li>[feature] Firefox support</li>
-                <li>
-                    [new source] Add support for CvF conferences (I/ECCV, CVPR etc.)
-                </li>
-                <li>Memory open speedup & reduce popup loading time</li>
-                <li>Improve notes/tags UI</li>
-                <li>Improve data migration</li>
-                <li>Various bug fixes</li>
-                <li>Abandon Papers With Code integration (no CORS)</li>
-            </ul>
-        </li>
-
-        <li>
-            <a href="https://github.com/vict0rsch/PaperMemory/releases/tag/0.2.5"
-                >0.2.5</a
-            >
-            <em>(2021-10-04)</em>
-            <ul>
-                <li>Code refactor</li>
-                <li>Add custom title parsing feature (beta)</li>
-                <li>Add bibtex copy & direct download from popup</li>
-                <li>Fix some bugs</li>
-            </ul>
-        </li>
-
-        <li>
-            <a href="https://github.com/vict0rsch/PaperMemory/releases/tag/0.2.3"
-                >0.2.3</a
-            >
-            <em>(2021-10-01)</em>
-            <ul>
-                <li>Improve Bibtex "key" attribute</li>
-                <li>[new source] Add support for NeurIPS papers</li>
-            </ul>
-        </li>
-
-        <li>
-            <a href="https://github.com/vict0rsch/PaperMemory/releases/tag/0.2.2"
-                >0.2.2</a
-            >
-            <em>(2021-10-01)</em>
-            <ul>
-                <li>Fix pdf title bug in Chrome/Brave</li>
-            </ul>
-        </li>
-
-        <li>
-            <a href="https://github.com/vict0rsch/PaperMemory/releases/tag/0.2.1"
-                >0.2.1</a
-            >
-            <em>(2021-09-30)</em>
-            <ul>
-                <li>Add "Memory" feature</li>
-            </ul>
-        </li>
-
-        <li>
-            <a href="https://github.com/vict0rsch/PaperMemory/releases/tag/0.1.0"
-                >0.1.0</a
-            >
-            <em>(2020-03-23)</em>
-            <ul>
-                <li>Initial release</li>
-                <li>Features Arxiv enhancements: titles, bibtex & markdown links</li>
-            </ul>
-        </li>
-    </ul>
+<!-- Release notes (newest first). Opened from the "What's new" link; its red dot
+     is cleared once opened (storage key "whatsnew"). -->
+<div
+    id="modal-whatsnew-content"
+    class="popup-modal-content pm-sheet"
+    role="dialog"
+    tabindex="-1"
+    aria-labelledby="modal-whatsnew-heading"
+    style="display: none"
+>
+    <div class="pm-sheet-head">
+        <h2 id="modal-whatsnew-heading">What’s new</h2>
+        <span class="pm-spacer"></span>
+        <button class="pm-btn pm-btn-ghost pm-btn-sm pm-sheet-close">
+            <i data-i="x" class="pm-i-sm"></i>Close
+        </button>
+    </div>
+    <div class="pm-sheet-body pm-wn">
+        <h3><a class="link-in-new-tab" data-tip="Open GitHub release notes" href="https://github.com/vict0rsch/PaperMemory/releases/tag/1.2.1">1.2.1</a> <small>16 Nov 2026</small></h3>
+        <ul>
+            <li><em>Dev</em><span>Fix the keyboard shortcut not opening the popup on Firefox</span></li>
+        </ul>
+        <h3><a class="link-in-new-tab" data-tip="Open GitHub release notes" href="https://github.com/vict0rsch/PaperMemory/releases/tag/1.2.0">1.2.0</a> <small>12 Nov 2026</small></h3>
+        <ul>
+            <li><em>New</em><span>Detect papers opened through a proxy URL or a PDF viewer (e.g. another extension's) and save the underlying paper (proxies that rewrite the host name are not supported)</span></li>
+            <li><em>New</em><span>Re-parsing an already saved paper no longer overwrites its tags, visit count, add date or favorite status</span></li>
+            <li><em>Dev</em><span>Fix paper parsing for ACS, RSC (new platform), ScienceDirect, ChemRxiv, IJCAI, Cell and PMLR</span></li>
+            <li><em>Dev</em><span>Detect paper sources from the website's host only, removing false detections; http:// ChemRxiv and OUP URLs are now detected</span></li>
+            <li><em>Dev</em><span>Fix the PDF tab title not being set the first time an ACS/RSC paper is captured</span></li>
+            <li><em>Dev</em><span>Fix race conditions and data-integrity issues when updating or de-duplicating stored papers</span></li>
+            <li><em>Dev</em><span>Refactor the codebase to ES modules, built with WXT (Vite) for Chrome and Firefox; integration tests now run on cloakbrowser</span></li>
+            <li><em>Dev</em><span>Add a privacy policy page to the docs</span></li>
+            <li><em>Dev</em><span>Rebuild the tag input without the select2 library</span></li>
+            <li><em>Removed</em><span>Automatic code repository discovery through Papers with Code is disabled since its API was discontinued</span></li>
+        </ul>
+        <h3><a class="link-in-new-tab" data-tip="Open GitHub release notes" href="https://github.com/vict0rsch/PaperMemory/releases/tag/1.0.3">1.0.3</a> <small>15 Nov 2025</small></h3>
+        <ul>
+            <li><em>Dev</em><span>Hotfix Arxiv paper parsing after Arxiv enables CORS restrictions.</span></li>
+            <li><em>Source</em><span>Add AIP as a paper source</span></li>
+            <li><em>Source</em><span>Add Cell as a paper source</span></li>
+            <li><em>New</em><span>New loading notification when PaperMemory is working in the background to fetch a paper's data</span></li>
+            <li><em>New</em><span>New notification style, more discrete</span></li>
+            <li><em>Dev</em><span>Make Abstracts the defaults not PDFs (for new users only, go to your settings otherwise)</span></li>
+            <li><em>Dev</em><span>Fix a keyboard shortcut bug</span></li>
+            <li><em>Dev</em><span>Fix a post-click feedback bug</span></li>
+            <li><em>Dev</em><span>Fix a sync bug not storing Github PAT tokens</span></li>
+        </ul>
+        <h3><a class="link-in-new-tab" data-tip="Open GitHub release notes" href="https://github.com/vict0rsch/PaperMemory/releases/tag/1.0.2">1.0.2</a> <small>12 Mar 2025</small></h3>
+        <ul>
+            <li><em>New</em><span>Add a link to AlphaXiv in the popup.</span></li>
+            <li><em>New</em><span>Add keyboard shortcuts to: open a paper in a new tab, copy the PDF link to the clipboard, copy the Markdown link to the clipboard, copy the Bibtex citation to the clipboard.</span></li>
+            <li><em>New</em><span>Improve Firefox warnings: Firefox does not trigger content scripts on PDF pages.</span></li>
+            <li><em>New</em><span>Add warning when clicking on ar5iv.org button for current month papers.</span></li>
+            <li><em>Removed</em><span>Remove arXiv Vanity as a paper source because the website is discontinued.</span></li>
+        </ul>
+        <h3><a class="link-in-new-tab" data-tip="Open GitHub release notes" href="https://github.com/vict0rsch/PaperMemory/releases/tag/1.0.1">1.0.1</a> <small>6 Mar 2025</small></h3>
+        <ul>
+            <li><em>Fixed</em><span>Fix a bug where copying metadata to the clipboard would not work if the paper's ID contained a dot.</span></li>
+        </ul>
+        <h3><a class="link-in-new-tab" data-tip="Open GitHub release notes" href="https://github.com/vict0rsch/PaperMemory/releases/tag/1.0.0">1.0.0</a> <small>1 Mar 2025</small></h3>
+        <ul>
+            <li><em>New</em><span>A tooltip with paper metadata shows up when hovering a paper's title</span></li>
+            <li><em>New</em><span>PaperMemory is now much more usable from your keyboard-only. See the settings for more info.</span></li>
+            <li><em>Source</em><span>Add ChemRxiv as a paper source</span></li>
+            <li><em>Dev</em><span>Major upgrade to Manifest V3 for Chrome/Firefox/Edge compatibility</span></li>
+            <li><em>Dev</em><span>Fix HAL parsing</span></li>
+            <li><em>Dev</em><span>Fix BibMatcher parsing stalling on Unpaywall</span></li>
+            <li><em>Dev</em><span>Improve Google Scholar matching</span></li>
+            <li><em>Dev</em><span>Improve gist handling with octokit</span></li>
+            <li><em>Dev</em><span>Better error handling across the board</span></li>
+            <li><em>Dev</em><span>Improved Firefox compatibility</span></li>
+            <li><em>Dev</em><span>Fix a bug where PaperMemory would not load on some websites</span></li>
+            <li><em>Dev</em><span>Improved contributions guidelines</span></li>
+        </ul>
+        <h3><a class="link-in-new-tab" data-tip="Open GitHub release notes" href="https://github.com/vict0rsch/PaperMemory/releases/tag/0.7.0">0.7.0</a> <small>4 Dec 2023</small></h3>
+        <ul>
+            <li><em>New</em><span>PaperMemory has a new <strong>website</strong>! <a class="link-in-new-tab" href="https://papermemory.org" data-tip="Open papermemory.org">papermemory.org</a></span></li>
+            <li><em>New</em><span>A new <a class="link-in-new-tab" href="https://papermemory.org/getting-started/#bibmatcher" data-tip="Open the BibMatcher guide on papermemory.org"><strong>BibMatcher</strong></a> tool to match arxiv references in a <code>.bib</code> file to actual publications.</span></li>
+            <li><em>New</em><span>You can now copy a <strong>hyperlink</strong> to cite a paper in an email, Google Docs or Slack, displaying the title and linking to the URL.</span></li>
+            <li><em>New</em><span>Add a <strong>tooltip</strong> on paper titles to show some more metadata (including publication venue if any)</span></li>
+            <li><em>New</em><span>Long author lists can now be <strong>expanded</strong> on clicking on the "..." symbol in the</span></li>
+            <li><em>Source</em><span>Parse papers from <strong>MDPI</strong> journals.</span></li>
+            <li><em>Source</em><span>Parse papers from <strong>HAL</strong>.</span></li>
+            <li><em>Dev</em><span>Deprecate custom title function as announced for months.</span></li>
+            <li><em>Dev</em><span>Fix a bug in OpenReview and PubMed Central paper parsing procedures.</span></li>
+            <li><em>Dev</em><span>Handle OpenReview API v2.</span></li>
+            <li><em>Dev</em><span>Use the Unpaywall.org API to match preprints to publications.</span></li>
+        </ul>
+        <h3><a class="link-in-new-tab" data-tip="Open GitHub release notes" href="https://github.com/vict0rsch/PaperMemory/releases/tag/0.5.13">0.5.13</a> <small>22 Aug 2023</small></h3>
+        <ul>
+            <li><em>Dev</em><span>Fix several source parsing: NeurIPS, PMLR, IOP</span></li>
+            <li><em>Dev</em><span>Update tabler icons class names not to interfere with other websites</span></li>
+        </ul>
+        <h3><a class="link-in-new-tab" data-tip="Open GitHub release notes" href="https://github.com/vict0rsch/PaperMemory/releases/tag/0.5.12">0.5.12</a> <small>28 Jun 2023</small></h3>
+        <ul>
+            <li><em>Dev</em><span>Fix sync when parsing arbitrary websites</span></li>
+        </ul>
+        <h3><a class="link-in-new-tab" data-tip="Open GitHub release notes" href="https://github.com/vict0rsch/PaperMemory/releases/tag/0.5.11">0.5.11</a> <small>19 May 2023</small></h3>
+        <ul>
+            <li><em>Dev</em><span>Update Firefox popup shortcut and instructions</span></li>
+            <li><em>Dev</em><span>Arbitrary website parsing enabled by default for new users</span></li>
+        </ul>
+        <h3><a class="link-in-new-tab" data-tip="Open GitHub release notes" href="https://github.com/vict0rsch/PaperMemory/releases/tag/0.5.10">0.5.10</a> <small>18 May 2023</small></h3>
+        <ul>
+            <li><em>New</em><span>You can now parse arbitrary websites: you just need to confirm / update the information PaperMemory was able to extract from the webpage</span></li>
+            <li><em>Source</em><span>Papers from <code>huggingface.co/papers/</code> will now be added as arxiv papers. If PaperMemory discovers a publication venue, a badge will be displayed on the HF paper page</span></li>
+            <li><em>Source</em><span>Thanks to @julien-blanchon you can also automatically go to ar5iv or arxiv-vanity paper pages. Those will be stored as Arxiv papers.</span></li>
+            <li><em>Dev</em><span>Various bug fixes in the notifications and parsing procedures</span></li>
+        </ul>
+        <h3><a class="link-in-new-tab" data-tip="Open GitHub release notes" href="https://github.com/vict0rsch/PaperMemory/releases/tag/0.5.9">0.5.9</a> <small>30 Sep 2022</small></h3>
+        <ul>
+            <li><em>Dev</em><span>Fix a bug that would display arxiv enhancements twice for some papers with a delayed venue matching</span></li>
+            <li><em>Source</em><span>Add PLOS journals as paper sources</span></li>
+            <li><em>Source</em><span>Add Royal Society of Chemistry journals as paper sources</span></li>
+        </ul>
+        <h3><a class="link-in-new-tab" data-tip="Open GitHub release notes" href="https://github.com/vict0rsch/PaperMemory/releases/tag/0.5.8">0.5.8</a> <small>27 Sep 2022</small></h3>
+        <ul>
+            <li><em>Source</em><span>Add Inspire HEP paper source</span></li>
+            <li><em>New</em><span>Display a list of all existing tags when searching for <code>t:</code></span></li>
+            <li><em>Dev</em><span>Add Popup warnings component</span></li>
+            <li><em>Dev</em><span>Fix OpenReview paper parsing</span></li>
+        </ul>
+        <h3><a class="link-in-new-tab" data-tip="Open GitHub release notes" href="https://github.com/vict0rsch/PaperMemory/releases/tag/0.5.7">0.5.7</a> <small>13 Jun 2022</small></h3>
+        <ul>
+            <li><em>Source</em><span>Add FrontiersIn paper source</span></li>
+            <li><em>Dev</em><span>Improve preprint/publication matching</span></li>
+        </ul>
+        <h3><a class="link-in-new-tab" data-tip="Open GitHub release notes" href="https://github.com/vict0rsch/PaperMemory/releases/tag/0.5.6">0.5.6</a> <small>13 Jun 2022</small></h3>
+        <ul>
+            <li><em>New</em><span>Add paper code to arxiv.org's rightmost column</span></li>
+            <li><em>New</em><span>Badge-like publication display on arxiv.org</span></li>
+            <li><em>New</em><span>Improve arxiv.org metadata display</span></li>
+            <li><em>New</em><span>Display arxiv.org metadata even if auto-parsing is disabled or if parsing is only enabled on pdf pages</span></li>
+            <li><em>Dev</em><span>Improve IEEE parsing</span></li>
+        </ul>
+        <h3><a class="link-in-new-tab" data-tip="Open GitHub release notes" href="https://github.com/vict0rsch/PaperMemory/releases/tag/0.5.5">0.5.5</a> <small>9 Jun 2022</small></h3>
+        <ul>
+            <li><em>Dev</em><span>Fix ACM parsing</span></li>
+            <li><em>New</em><span>Inject publication venue onto arxiv.org's rightmost column</span></li>
+            <li><em>New</em><span>Use a paper's published Bibtex on arxiv.org's rightmost column</span></li>
+            <li><em>New</em><span>Detect papers downloaded into ~/Downloads/PaperMemoryStore from alternative sources (Sci-Hub etc. <a class="link-in-new-tab" href="https://github.com/vict0rsch/papermemory#ad-hoc-pdfs" data-tip="Open the README on GitHub">more info</a>)</span></li>
+        </ul>
+        <h3><a class="link-in-new-tab" data-tip="Open GitHub release notes" href="https://github.com/vict0rsch/PaperMemory/releases/tag/0.5.4">0.5.4</a> <small>10 May 2022</small></h3>
+        <ul>
+            <li><em>Source</em><span>Add Science papers parsing</span></li>
+            <li><em>Dev</em><span>Paginate memory results for faster display</span></li>
+            <li><em>Dev</em><span>Improve JavaScript console logs</span></li>
+            <li><em>Dev</em><span>More tests</span></li>
+        </ul>
+        <h3><a class="link-in-new-tab" data-tip="Open GitHub release notes" href="https://github.com/vict0rsch/PaperMemory/releases/tag/0.5.3">0.5.3</a> <small>5 May 2022</small></h3>
+        <ul>
+            <li><em>Source</em><span>Add IEEE papers parsing</span></li>
+            <li><em>Source</em><span>Add Springer papers parsing</span></li>
+            <li><em>Source</em><span>Add APS papers parsing</span></li>
+            <li><em>Source</em><span>Add ScienceDirect papers parsing</span></li>
+            <li><em>Source</em><span>Add Wiley papers parsing</span></li>
+            <li><em>New</em><span>You can now include the venue and year of a paper in its Markdown link (see popup menu)</span></li>
+            <li><em>New</em><span>Deduplication: PaperMemory now matches and merges papers based on their titles not to create multiple Memory entries for the same paper</span></li>
+            <li><em>New</em><span>Paper imports: in the advanced options page, in the Data Management section, you can now import papers from a list of urls</span></li>
+            <li><em>New</em><span>Paper exports by tag: in the same Data Management section, you can now select papers to export by providing a list of tags and obtain a <code>.bib</code> or <code>.json</code> file with the appropriate papers. <ul> <li> If you export papers by tags and give the file to someone on your team, they'll be able to import them! </li> </ul></span></li>
+            <li><em>New</em><span>In the menu, you can now disable automatic paper recording. In which case you can trigger paper parsing manually from the popup or with a keyboard shortcut <code>ctrl/cmd + shift + p</code></span></li>
+            <li><em>New</em><span>There's a new keyboard shortcut to download a paper (it goes to your PaperMemoryStore if you have enabled the feature) <code>cmd/ctrl + shift + s</code></span></li>
+            <li><em>Dev</em><span>More tests</span></li>
+            <li><em>Dev</em><span>Fix paper parsing from pdf urls for Nature and IJCAI venues</span></li>
+        </ul>
+        <h3><a class="link-in-new-tab" data-tip="Open GitHub release notes" href="https://github.com/vict0rsch/PaperMemory/releases/tag/0.5.2">0.5.2</a> <small>19 Apr 2022</small></h3>
+        <ul>
+            <li><em>New</em><span>Add preferred framework when discovering code repositories with PapersWithCode. Check out the options page.</span></li>
+            <li><em>Dev</em><span>Testing infrastructure to make development more robust</span></li>
+            <li><em>Dev</em><span>Various bug fixes parsing some ACS/ACL/PMC papers</span></li>
+        </ul>
+        <h3><a class="link-in-new-tab" data-tip="Open GitHub release notes" href="https://github.com/vict0rsch/PaperMemory/releases/tag/0.5.1">0.5.1</a> <small>13 Apr 2022</small></h3>
+        <ul>
+            <li><em>Source</em><span>Add PubMed Central papers parsing</span></li>
+            <li><em>Source</em><span>Add IJCAI papers parsing</span></li>
+            <li><em>Source</em><span>Add ACM papers parsing</span></li>
+            <li><em>Dev</em><span>Improve developer console logs</span></li>
+            <li><em>Dev</em><span>Minor code improvements</span></li>
+        </ul>
+        <h3><a class="link-in-new-tab" data-tip="Open GitHub release notes" href="https://github.com/vict0rsch/PaperMemory/releases/tag/0.5.0">0.5.0</a> <small>23 Mar 2022</small></h3>
+        <ul>
+            <li><em>New</em><span>In an effort to use as few as possible arxiv.org references, PaperMemory will use dblp.org and crossref.org bibtex data whenever possible for your published papers' citations. In other words it tries to discover published versions of you pre-prints and this will be effective when copying/exporting bibtex data</span></li>
+            <li><em>New</em><span>New configuration option to only store official repositories when discovering code with PapersWithCode</span></li>
+            <li><em>New</em><span>New configuration option to prefer using links to abstract pages vs pdfs</span></li>
+            <li><em>New</em><span>New configuration option to only record paper from pdfs, not their online pages/abstracts</span></li>
+            <li><em>New</em><span>New full-page memory (link at the bottom of the menu) to explore your memory in a fill-size and dedicated tab.</span></li>
+            <li><em>New</em><span>New advanced options to filter out default paper sources.</span></li>
+            <li><em>New</em><span>You can now also sort your memory by paper upload/publication year</span></li>
+            <li><em>New</em><span>You can now search papers by year (<code>y: 18,19</code>), including before/after a date (<code>y: &lt;2019</code>, <code>y: &gt;2018</code>).</span></li>
+            <li><em>New</em><span>Weekly local backups (up to 6 weeks) in case of a bug/user mistake (see Readme on Github)</span></li>
+            <li><em>Source</em><span>Add Nature papers parsing</span></li>
+            <li><em>Source</em><span>Add ACS papers parsing</span></li>
+            <li><em>Source</em><span>Add IOPscience papers parsing</span></li>
+            <li><em>Source</em><span>Add JMLR papers parsing</span></li>
+            <li><em>Dev</em><span>New permission to monitor all urls. This is necessary because otherwise every new paper source will be associated with a new permission, disabling the extension until you re-enable it manually.</span></li>
+            <li><em>Dev</em><span>Performance improvements, notably a step towards losing the JQuery dependency</span></li>
+            <li><em>Dev</em><span>Improve &amp; standardize Bibtex parsing, formatting and exporting</span></li>
+            <li><em>Dev</em><span>Fix PNAS paper parsing (due to website update)</span></li>
+            <li><em>Dev</em><span>Improve search to include tags (still <code>t:tagName</code> to search tags only)</span></li>
+            <li><em>Dev</em><span>Various refactors and small bug fixes</span></li>
+        </ul>
+        <h3><a class="link-in-new-tab" data-tip="Open GitHub release notes" href="https://github.com/vict0rsch/PaperMemory/releases/tag/0.4.4.1">0.4.4.1</a> <small>8 Mar 2022</small></h3>
+        <ul>
+            <li><em>Dev</em><span>Fix Arxiv markdown link</span></li>
+        </ul>
+        <h3><a class="link-in-new-tab" data-tip="Open GitHub release notes" href="https://github.com/vict0rsch/PaperMemory/releases/tag/0.4.4">0.4.4</a> <small>7 Mar 2022</small></h3>
+        <ul>
+            <li><em>New</em><span>Automatically discover code repositories using PapersWithCode!</span></li>
+            <li><em>Dev</em><span>Improve Memory search triggers (especially on paste and clear)</span></li>
+            <li><em>Dev</em><span>Improve utilities files structure</span></li>
+        </ul>
+        <h3><a class="link-in-new-tab" data-tip="Open GitHub release notes" href="https://github.com/vict0rsch/PaperMemory/releases/tag/0.4.3.1">0.4.3.1</a> <small>5 Jan 2022</small></h3>
+        <ul>
+            <li><em>Dev</em><span>Hotfix: Auto-tagging issue when the Author Regex is empty</span></li>
+        </ul>
+        <h3><a class="link-in-new-tab" data-tip="Open GitHub release notes" href="https://github.com/vict0rsch/PaperMemory/releases/tag/0.4.3">0.4.3</a> <small>3 Jan 2022</small></h3>
+        <ul>
+            <li><em>New</em><span>Add a direct link to SciRate in the popup</span></li>
+            <li><em>New</em><span>[beta] Download pdfs in a dedicated folder to open those local files instead of re-downloading pdfs all the time</span></li>
+            <li><em>Source</em><span>Parse papers from scirate.com/arxiv/ as Arxiv papers into your Memory</span></li>
+            <li><em>Dev</em><span>Hotfix: Improve long code links display</span></li>
+        </ul>
+        <h3><a class="link-in-new-tab" data-tip="Open GitHub release notes" href="https://github.com/vict0rsch/PaperMemory/releases/tag/0.4.2.3">0.4.2.3</a> <small>13 Dec 2021</small></h3>
+        <ul>
+            <li><em>Dev</em><span>Hotfix: match ACL pdf webpages</span></li>
+        </ul>
+        <h3><a class="link-in-new-tab" data-tip="Open GitHub release notes" href="https://github.com/vict0rsch/PaperMemory/releases/tag/0.4.2.2">0.4.2.2</a> <small>13 Dec 2021</small></h3>
+        <ul>
+            <li><em>Dev</em><span>Hotfix: fix lower case Memory search</span></li>
+        </ul>
+        <h3><a class="link-in-new-tab" data-tip="Open GitHub release notes" href="https://github.com/vict0rsch/PaperMemory/releases/tag/0.4.2.1">0.4.2.1</a> <small>13 Dec 2021</small></h3>
+        <ul>
+            <li><em>Dev</em><span>Hotfix: improve ACL titles</span></li>
+        </ul>
+        <h3><a class="link-in-new-tab" data-tip="Open GitHub release notes" href="https://github.com/vict0rsch/PaperMemory/releases/tag/0.4.2">0.4.2</a> <small>13 Dec 2021</small></h3>
+        <ul>
+            <li><em>Source</em><span>Add ACL (aclanthology.org)</span></li>
+            <li><em>Source</em><span>Add Proceedings of the National Academy of Sciences (pnas.org)</span></li>
+        </ul>
+        <h3><a class="link-in-new-tab" data-tip="Open GitHub release notes" href="https://github.com/vict0rsch/PaperMemory/releases/tag/0.4.1">0.4.1</a> <small>9 Dec 2021</small></h3>
+        <ul>
+            <li><em>Dev</em><span>Minor bug fixes and text improvements</span></li>
+        </ul>
+        <h3><a class="link-in-new-tab" data-tip="Open GitHub release notes" href="https://github.com/vict0rsch/PaperMemory/releases/tag/0.4.0">0.4.0</a> <small>7 Dec 2021</small></h3>
+        <ul>
+            <li><em>Dev</em><span>Move data management and pdf title function to Options</span></li>
+            <li><em>New</em><span>Custom title function out of Beta</span></li>
+            <li><em>New</em><span>Add auto-tagging from regex</span></li>
+            <li><em>New</em><span>Find published versions of pre-prints on dblp.org and crossref.org</span></li>
+            <li><em>Dev</em><span>Add Gulp as build tool</span></li>
+            <li><em>Dev</em><span>Improve contribution guidelines</span></li>
+        </ul>
+        <h3><a class="link-in-new-tab" data-tip="Open GitHub release notes" href="https://github.com/vict0rsch/PaperMemory/releases/tag/0.3.3">0.3.3</a> <small>24 Nov 2021</small></h3>
+        <ul>
+            <li><em>New</em><span>Add manual trigger button on Firefox (as content scripts are not triggered on pdfs)</span></li>
+            <li><em>New</em><span>Add "cancel" option in slider notification when a paper is automatically added to the memory</span></li>
+            <li><em>New</em><span>Add "auto-open" feature: automatically opens the memory when opening the popup if you are not on a paper page (enable in the menu)</span></li>
+            <li><em>New</em><span>Add this "What's new" section</span></li>
+            <li><em></em><span>Drop legacy arxiv-vanity support</span></li>
+        </ul>
+        <h3><a class="link-in-new-tab" data-tip="Open GitHub release notes" href="https://github.com/vict0rsch/PaperMemory/releases/tag/0.3.2">0.3.2</a> <small>19 Nov 2021</small></h3>
+        <ul>
+            <li><em>Source</em><span>Add PMLR (ICML, AISTATS, CoLT, CoRL) etc.</span></li>
+        </ul>
+        <h3><a class="link-in-new-tab" data-tip="Open GitHub release notes" href="https://github.com/vict0rsch/PaperMemory/releases/tag/0.3.1">0.3.1</a> <small>15 Nov 2021</small></h3>
+        <ul>
+            <li><em>Source</em><span>Add BioRxiv</span></li>
+        </ul>
+        <h3><a class="link-in-new-tab" data-tip="Open GitHub release notes" href="https://github.com/vict0rsch/PaperMemory/releases/tag/0.3.0">0.3.0</a> <small>13 Nov 2021</small></h3>
+        <ul>
+            <li><em>New</em><span>Firefox support</span></li>
+            <li><em>Source</em><span>Add support for CvF conferences (I/ECCV, CVPR etc.)</span></li>
+            <li><em></em><span>Memory open speedup &amp; reduce popup loading time</span></li>
+            <li><em></em><span>Improve notes/tags UI</span></li>
+            <li><em></em><span>Improve data migration</span></li>
+            <li><em></em><span>Various bug fixes</span></li>
+            <li><em></em><span>Abandon Papers With Code integration (no CORS)</span></li>
+        </ul>
+        <h3><a class="link-in-new-tab" data-tip="Open GitHub release notes" href="https://github.com/vict0rsch/PaperMemory/releases/tag/0.2.5">0.2.5</a> <small>4 Oct 2021</small></h3>
+        <ul>
+            <li><em></em><span>Code refactor</span></li>
+            <li><em></em><span>Add custom title parsing feature (beta)</span></li>
+            <li><em></em><span>Add bibtex copy &amp; direct download from popup</span></li>
+            <li><em></em><span>Fix some bugs</span></li>
+        </ul>
+        <h3><a class="link-in-new-tab" data-tip="Open GitHub release notes" href="https://github.com/vict0rsch/PaperMemory/releases/tag/0.2.3">0.2.3</a> <small>1 Oct 2021</small></h3>
+        <ul>
+            <li><em></em><span>Improve Bibtex "key" attribute</span></li>
+            <li><em>Source</em><span>Add support for NeurIPS papers</span></li>
+        </ul>
+        <h3><a class="link-in-new-tab" data-tip="Open GitHub release notes" href="https://github.com/vict0rsch/PaperMemory/releases/tag/0.2.2">0.2.2</a> <small>1 Oct 2021</small></h3>
+        <ul>
+            <li><em></em><span>Fix pdf title bug in Chrome/Brave</span></li>
+        </ul>
+        <h3><a class="link-in-new-tab" data-tip="Open GitHub release notes" href="https://github.com/vict0rsch/PaperMemory/releases/tag/0.2.1">0.2.1</a> <small>30 Sep 2021</small></h3>
+        <ul>
+            <li><em></em><span>Add "Memory" feature</span></li>
+        </ul>
+        <h3><a class="link-in-new-tab" data-tip="Open GitHub release notes" href="https://github.com/vict0rsch/PaperMemory/releases/tag/0.1.0">0.1.0</a> <small>23 Mar 2020</small></h3>
+        <ul>
+            <li><em></em><span>Initial release</span></li>
+            <li><em></em><span>Features Arxiv enhancements: titles, bibtex &amp; markdown links</span></li>
+        </ul>
+    </div>
+    <div class="pm-sheet-actions">
+        <a
+            class="link-in-new-tab pm-sheet-actions-link"
+            href="https://github.com/vict0rsch/PaperMemory/releases"
+            data-tip="Open every release on GitHub"
+            >All releases on GitHub</a
+        >
+        <button class="pm-btn pm-btn-primary pm-sheet-close">Close</button>
+    </div>
 </div>

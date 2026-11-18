@@ -255,10 +255,18 @@ describe("Test PaperMemory Popup Search Functionality", function () {
         expect(consistency.isConsistent).toBe(true);
     }
 
-    async function verifySearchPlaceholder(page, expectedText) {
-        const searchInput = await getSearchInput(page);
-        const placeholder = await page.evaluate((el) => el.placeholder, searchInput);
-        expect(placeholder).toContain(expectedText);
+    // the result count inside the search field: "3", or "1 of 3" when filtered
+    async function verifyResultCount(page, expectedText) {
+        const count = await page.$eval("#memory-result-count", (el) => el.textContent);
+        expect(count).toBe(expectedText);
+    }
+
+    // the sort menu (sort icon in the search field) replaces the old <select>
+    async function selectSort(page, key) {
+        await page.click("#memory-sort-button");
+        await page.waitForSelector("#memory-sort-menu:not([hidden])");
+        await page.click(`#memory-sort-menu [data-key="${key}"]`);
+        await sleep(100);
     }
 
     async function executeSearch(page, searchQuery) {
@@ -403,8 +411,11 @@ describe("Test PaperMemory Popup Search Functionality", function () {
             await verifySearchByState(PMPage, 3);
         });
 
-        it("should update search placeholder with correct count", async function () {
-            await verifySearchPlaceholder(PMPage, "Search 3 entries");
+        it("should show the result count in the search field", async function () {
+            await verifyResultCount(PMPage, "3");
+            await executeSearch(PMPage, "Cycle");
+            await verifyResultCount(PMPage, "1 of 3");
+            await executeSearch(PMPage, "");
         });
     });
 
@@ -427,22 +438,25 @@ describe("Test PaperMemory Popup Search Functionality", function () {
             await verifySearchByState(PMPage, 1, [PAPER_IDS.CYCLE_GAN]);
         });
 
-        it("should show tags list when tag search is active", async function () {
-            await typeInSearch(PMPage, "t: ");
-
-            // Check if tags list is visible
-            const tagsList = await PMPage.$("#tags-list-container");
-            expect(tagsList).toBeTruthy();
+        it("should show tag suggestions when tag search is active", async function () {
+            await clearSearch(PMPage);
+            await PMPage.keyboard.type("t:");
+            await PMPage.waitForSelector("#memory-tag-suggestions:not([hidden])");
+            const suggestions = await PMPage.$$eval(
+                "#memory-tag-suggestions .pm-sugg-row",
+                (rows) => rows.map((r) => r.textContent),
+            );
+            expect(suggestions.length).toBeGreaterThan(0);
         });
 
         it("should handle tag click to search", async function () {
             await setupPaperTags(PMPage, PAPER_IDS);
+            await clearSearch(PMPage);
+            await executeSearch(PMPage, "");
+            // re-render the rows with the tags set above
+            await PMPage.evaluate(() => PMDebug.memory.applyMemorySearch());
 
-            // First ensure we have tags visible
-            await typeInSearch(PMPage, "t: ");
-            await sleep(100);
-
-            // Click on a tag — must render, or the test has asserted nothing
+            // Click on a tag in a row — must render, or the test has asserted nothing
             const tagElement = await PMPage.$(".memory-tag");
             expect(tagElement).toBeTruthy();
             const tagText = await PMPage.evaluate(
@@ -452,11 +466,55 @@ describe("Test PaperMemory Popup Search Functionality", function () {
 
             await safeClick(".memory-tag", PMPage);
 
-            // The concrete tag the click appended must land in the search input
-            const searchValue = await PMPage.evaluate(() => {
-                return document.getElementById("memory-search").value;
+            // The concrete tag becomes a filter pill
+            const pills = await PMPage.$$eval("#memory-pills .pm-chip", (els) =>
+                els.map((el) => el.textContent),
+            );
+            expect(pills.join(" ")).toContain(tagText);
+            await PMPage.evaluate(() => PMDebug.memory.clearMemorySearch());
+        });
+
+        it("should replace the search with the clicked tag alone", async function () {
+            await setupPaperTags(PMPage, PAPER_IDS);
+            // pills (year, favourites) and free text before the click
+            await PMPage.evaluate((id) => {
+                PMDebug.config.state.papers[id].favorite = true;
+                PMDebug.memory.clearMemorySearch();
+                PMDebug.memory.addFilter({ type: "year", value: ">2000" });
+                PMDebug.memory.addFilter({ type: "fav", value: "" });
+                document.getElementById("memory-search").value = "unpaired";
+                PMDebug.memory.applyMemorySearch();
+            }, PAPER_IDS.CYCLE_GAN);
+            const clicked = await PMPage.evaluate(() => {
+                const tag = [...document.querySelectorAll(".memory-tag")].find(
+                    (t) => t.textContent === "gan",
+                );
+                tag?.click();
+                return !!tag;
             });
-            expect(searchValue).toContain(tagText);
+            expect(clicked).toBe(true);
+            const after = await PMPage.evaluate(() => ({
+                filters: PMDebug.config.state.memoryFilters,
+                text: document.getElementById("memory-search").value,
+                pills: [...document.querySelectorAll("#memory-pills .pm-chip")].map(
+                    (el) => el.textContent,
+                ),
+                fav: document
+                    .getElementById("filter-favorites")
+                    .getAttribute("aria-pressed"),
+                rows: [...document.querySelectorAll("#memory-table .memory-container")].map(
+                    (r) => r.id,
+                ),
+            }));
+            expect(after.filters).toEqual([{ type: "tag", value: "gan" }]);
+            expect(after.text).toBe("");
+            expect(after.pills).toEqual(["taggan"]);
+            expect(after.fav).toBe("false");
+            expect(after.rows).toEqual([`memory-container--${PAPER_IDS.CYCLE_GAN}`]);
+            await PMPage.evaluate((id) => {
+                PMDebug.config.state.papers[id].favorite = false;
+                PMDebug.memory.clearMemorySearch();
+            }, PAPER_IDS.CYCLE_GAN);
         });
     });
 
@@ -533,31 +591,15 @@ describe("Test PaperMemory Popup Search Functionality", function () {
             PMPage = await quickReset(PMPage);
         });
 
-        it("should show clear icon when search has content", async function () {
-            await typeInSearch(PMPage, "test");
-
-            const clearIcon = await PMPage.$("#memory-search-clear-icon");
-            const isVisible = await PMPage.evaluate((el) => {
-                return getComputedStyle(el).visibility !== "hidden";
-            }, clearIcon);
-
-            expect(isVisible).toBe(true);
+        it("should show the no-result state with Clear search", async function () {
+            await typeInSearch(PMPage, "zzzzz");
+            await PMPage.waitForSelector("#memory-empty-clear");
+            await verifySearchResults(PMPage, 0);
         });
 
-        it("should hide clear icon when search is empty", async function () {
-            await clearSearch(PMPage);
-
-            const clearIcon = await PMPage.$("#memory-search-clear-icon");
-            const isHidden = await PMPage.evaluate((el) => {
-                return getComputedStyle(el).visibility === "hidden";
-            }, clearIcon);
-
-            expect(isHidden).toBe(true);
-        });
-
-        it("should clear search when clear icon is clicked", async function () {
-            await typeInSearch(PMPage, "test");
-            await safeClick("#memory-search-clear-icon", PMPage);
+        it("should clear search when Clear search is clicked", async function () {
+            await typeInSearch(PMPage, "zzzzz");
+            await safeClick("#memory-empty-clear", PMPage);
 
             const searchValue = await PMPage.evaluate(() => {
                 return document.getElementById("memory-search").value;
@@ -666,8 +708,8 @@ describe("Test PaperMemory Popup Search Functionality", function () {
                 return null;
             });
 
-            // Check the placeholder text BEFORE search (should show total available papers)
-            await verifySearchPlaceholder(PMPage, "Search 1 entries");
+            // Check the count BEFORE search (favourites only: 1 of the 3 papers)
+            await verifyResultCount(PMPage, "1 of 3");
 
             // Search for something
             await executeSearch(PMPage, "machine");
@@ -730,7 +772,7 @@ describe("Test PaperMemory Popup Search Functionality", function () {
             await verifySearchByState(PMPage, 1, [PAPER_IDS.CYCLE_GAN]);
 
             // Change sort order through the UI select
-            await PMPage.select("#memory-select", "year");
+            await selectSort(PMPage, "year");
             await sleep(100);
 
             await verifySearchByState(PMPage, 1, [PAPER_IDS.CYCLE_GAN]);
@@ -744,9 +786,9 @@ describe("Test PaperMemory Popup Search Functionality", function () {
 
             // The previous spec left the sort on "year": move away first so
             // selecting "year" is a real change
-            await PMPage.select("#memory-select", "title");
+            await selectSort(PMPage, "title");
             await sleep(100);
-            await PMPage.select("#memory-select", "year");
+            await selectSort(PMPage, "year");
             await sleep(100);
 
             const orderedIds = await PMPage.evaluate(() =>
@@ -764,6 +806,176 @@ describe("Test PaperMemory Popup Search Functionality", function () {
         });
     });
 
+    describe("Filter pills (t: c: y: committed with Tab / Enter)", function () {
+        // vision is on two papers, vision-old on a third: a tag pill matches exactly
+        const tagged = () => {
+            const data = structuredClone(testData);
+            data[PAPER_IDS.CYCLE_GAN].tags = ["vision", "gan"]; // 2017
+            data[PAPER_IDS.NANOWIRE].tags = ["vision", "microscopy"]; // 2022
+            data[PAPER_IDS.HYPERPARAMETER].tags = ["vision-old", "optimization"]; // 2012
+            return data;
+        };
+        const pills = (page) =>
+            page.$$eval("#memory-pills .pm-chip", (els) =>
+                els.map((el) => el.textContent),
+            );
+        const listedIds = (page) =>
+            page.$$eval("#memory-table .memory-container", (els) =>
+                els.map((el) => el.id.replace("memory-container--", "")),
+            );
+
+        beforeEach(async function () {
+            await resetPage(PMPage, pmURLs.popupURL);
+            await setupPageWithData(PMPage, tagged());
+            await PMPage.focus("#memory-search");
+        });
+
+        it("should commit a tag on Tab and match the exact tag", async function () {
+            await PMPage.keyboard.type("t:vision");
+            await PMPage.keyboard.press("Tab");
+            await sleep(100);
+            expect(await pills(PMPage)).toEqual(["tagvision"]);
+            // the field is emptied and keeps the focus
+            expect(await PMPage.$eval("#memory-search", (el) => el.value)).toBe("");
+            expect(await PMPage.evaluate(() => document.activeElement.id)).toBe(
+                "memory-search",
+            );
+            // "vision-old" does not match the "vision" pill
+            const ids = await listedIds(PMPage);
+            expect(ids.sort()).toEqual(
+                [PAPER_IDS.CYCLE_GAN, PAPER_IDS.NANOWIRE].sort(),
+            );
+        });
+
+        it("should combine tag, year and free text (all must match)", async function () {
+            await PMPage.keyboard.type("t:vision");
+            await PMPage.keyboard.press("Enter");
+            await PMPage.keyboard.type("y:>2018");
+            await PMPage.keyboard.press("Tab");
+            await sleep(100);
+            expect(await pills(PMPage)).toEqual(["tagvision", "year>2018"]);
+            expect(await listedIds(PMPage)).toEqual([PAPER_IDS.NANOWIRE]);
+            await PMPage.keyboard.type("nanowire");
+            await sleep(150);
+            await verifySearchByState(PMPage, 1, [PAPER_IDS.NANOWIRE]);
+            await executeSearch(PMPage, "cycle");
+            await verifySearchByState(PMPage, 0);
+            await verifyResultCount(PMPage, "0 of 3");
+        });
+
+        it("should move into the list on Tab when the text is not a filter", async function () {
+            await PMPage.keyboard.type("cycle");
+            await sleep(100);
+            await PMPage.keyboard.press("Tab");
+            expect(await pills(PMPage)).toEqual([]);
+            const focused = await PMPage.evaluate(() => document.activeElement.id);
+            expect(focused).toBe(`memory-container--${PAPER_IDS.CYCLE_GAN}`);
+        });
+
+        it("should not commit one t: with two tags", async function () {
+            await PMPage.keyboard.type("t: vision gan");
+            await PMPage.keyboard.press("Tab");
+            expect(await pills(PMPage)).toEqual([]);
+            const focused = await PMPage.evaluate(() =>
+                document.activeElement.classList.contains("memory-container"),
+            );
+            expect(focused).toBe(true);
+        });
+
+        it("should remove the last pill with Backspace in the empty field", async function () {
+            await PMPage.keyboard.type("t:gan");
+            await PMPage.keyboard.press("Tab");
+            await PMPage.keyboard.type("c:");
+            await PMPage.keyboard.press("Backspace");
+            await PMPage.keyboard.press("Backspace");
+            expect(await pills(PMPage)).toEqual(["taggan"]); // the text went first
+            await PMPage.keyboard.press("Backspace");
+            await sleep(100);
+            expect(await pills(PMPage)).toEqual([]);
+            await verifySearchByState(PMPage, 3);
+        });
+
+        it("should rank an exact tag first, before a more used one", async function () {
+            const data = tagged();
+            data[PAPER_IDS.CYCLE_GAN].tags = ["vision-old"]; // vision-old: 2 papers
+            data[PAPER_IDS.NANOWIRE].tags = ["vision"]; // vision: 1 paper
+            await setupPageWithData(PMPage, data);
+            await PMPage.focus("#memory-search");
+            await PMPage.keyboard.type("t:vision");
+            await PMPage.keyboard.press("Tab");
+            await sleep(100);
+            expect(await pills(PMPage)).toEqual(["tagvision"]);
+            expect(await listedIds(PMPage)).toEqual([PAPER_IDS.NANOWIRE]);
+            // the arrows still choose another one
+            await PMPage.keyboard.type("t:visi");
+            await PMPage.keyboard.press("ArrowDown");
+            await PMPage.keyboard.press("Enter");
+            await sleep(100);
+            expect(await pills(PMPage)).toEqual(["tagvision", "tagvision-old"]);
+        });
+
+        it("should commit several years separated by spaces or commas", async function () {
+            await PMPage.keyboard.type("y:2012 2017");
+            await PMPage.keyboard.press("Tab");
+            await sleep(100);
+            expect(await pills(PMPage)).toEqual(["year2012, 2017"]);
+            const ids = await listedIds(PMPage);
+            expect(ids.sort()).toEqual(
+                [PAPER_IDS.CYCLE_GAN, PAPER_IDS.HYPERPARAMETER].sort(),
+            );
+            await PMPage.keyboard.press("Backspace");
+            await PMPage.keyboard.type("y:<15");
+            await PMPage.keyboard.press("Tab");
+            await sleep(100);
+            expect(await pills(PMPage)).toEqual(["year<2015"]);
+            expect(await listedIds(PMPage)).toEqual([PAPER_IDS.HYPERPARAMETER]);
+        });
+
+        it("should cap the tag suggestions at 50", async function () {
+            const data = tagged();
+            data[PAPER_IDS.CYCLE_GAN].tags = Array.from(
+                { length: 120 },
+                (_, i) => `tag-${i}`,
+            );
+            await setupPageWithData(PMPage, data);
+            await PMPage.focus("#memory-search");
+            await PMPage.keyboard.type("t:tag-");
+            await PMPage.waitForSelector("#memory-tag-suggestions:not([hidden])");
+            const { rows, more } = await PMPage.$eval(
+                "#memory-tag-suggestions",
+                (el) => ({
+                    rows: el.querySelectorAll(".pm-sugg-row").length,
+                    more: el.querySelector(".pm-sugg-more")?.textContent,
+                }),
+            );
+            expect(rows).toBe(50);
+            expect(more).toContain("70 more");
+        });
+
+        it("should pick a tag suggestion with the arrows and Enter", async function () {
+            await PMPage.keyboard.type("t:");
+            await PMPage.waitForSelector("#memory-tag-suggestions:not([hidden])");
+            const rows = await PMPage.$$eval(
+                "#memory-tag-suggestions .pm-sugg-row",
+                (els) =>
+                    els.map((el) => ({
+                        tag: el.firstElementChild.textContent,
+                        count: el.querySelector(".pm-count").textContent,
+                        active: el.classList.contains("is-active"),
+                    })),
+            );
+            // counts shown, most used first, first one preselected
+            expect(rows[0]).toEqual({ tag: "vision", count: "2", active: true });
+            await PMPage.keyboard.press("ArrowDown");
+            await PMPage.keyboard.press("Enter");
+            await sleep(100);
+            expect(await pills(PMPage)).toEqual([`tag${rows[1].tag}`]);
+            expect(
+                await PMPage.$eval("#memory-tag-suggestions", (el) => el.hidden),
+            ).toBe(true);
+        });
+    });
+
     describe("Search Integration with Memory Controls", function () {
         before(async function () {
             PMPage = await quickReset(PMPage);
@@ -775,7 +987,7 @@ describe("Test PaperMemory Popup Search Functionality", function () {
             await verifySearchByState(PMPage, 1, [PAPER_IDS.NANOWIRE]);
 
             // Change sort order
-            await PMPage.select("#memory-select", "title");
+            await selectSort(PMPage, "title");
             await sleep(100);
 
             // Search results should still be correct
@@ -787,11 +999,11 @@ describe("Test PaperMemory Popup Search Functionality", function () {
             await verifySearchByState(PMPage, 0);
 
             // Close memory
-            await safeClick("#memory-switch-close", PMPage);
+            await safeClick("#tab-paper", PMPage);
             await sleep(100);
 
             // Reopen memory
-            await safeClick("#memory-switch-open", PMPage);
+            await safeClick("#tab-memory", PMPage);
             await sleep(100);
 
             // Search should be cleared

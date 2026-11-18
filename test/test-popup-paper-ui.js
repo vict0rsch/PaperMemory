@@ -157,6 +157,16 @@ describe("Test PaperMemory Popup UI - Known Paper Page", function () {
                 const titleText = await titleEl.evaluate((el) => el.innerText);
                 expect(miniHash(titleText)).toBe(miniHash(paperData.title));
 
+                // first 3 authors, then "+N more" shows the rest
+                const authorCount = paperData.author.split(" and ").length;
+                const more = await PMPage.$("#popup-authors-more");
+                expect(!!more).toBe(authorCount > 3);
+                if (more) {
+                    expect(await more.evaluate((el) => el.innerText)).toBe(
+                        `+${authorCount - 3} more`,
+                    );
+                    await more.click();
+                }
                 const authorsEl = await verifySelectorExists("#popup-authors", PMPage);
                 const authorsText = await authorsEl.evaluate((el) => el.innerText);
                 expect(
@@ -263,7 +273,7 @@ describe("Test PaperMemory Popup UI - Known Paper Page", function () {
                 PMPage,
             );
             const feedbackText = await feedbackElement.evaluate((el) => el.textContent);
-            expect(feedbackText).toContain("Abstract hyperlink copied!");
+            expect(feedbackText).toContain("Rich link copied");
         });
 
         it("should copy markdown link to clipboard", async function () {
@@ -322,7 +332,7 @@ describe("Test PaperMemory Popup UI - Known Paper Page", function () {
                 PMPage,
             );
             const feedbackText = await feedbackElement.evaluate((el) => el.textContent);
-            expect(feedbackText).toContain("Bibtex");
+            expect(feedbackText).toContain("BibTeX");
             expect(feedbackText).toContain("copied");
         });
     });
@@ -336,10 +346,11 @@ describe("Test PaperMemory Popup UI - Known Paper Page", function () {
             const paperLinkBtn = await verifySelectorExists(paperLinkSelector, PMPage);
             await verifyElementClickable(paperLinkBtn, PMPage);
 
-            // Verify the button has the correct title
-            const title = await paperLinkBtn.evaluate((el) => el.getAttribute("title"));
-            expect(title).toContain("Open");
-            expect(title).toContain("tab");
+            // Verify the button's accessible name (no native title: it has its own tooltip)
+            const label = await paperLinkBtn.evaluate((el) => el.getAttribute("aria-label"));
+            expect(label).toContain("Open");
+            expect(label).toContain("tab");
+            expect(await paperLinkBtn.evaluate((el) => el.hasAttribute("title"))).toBe(false);
         });
 
         it("should have download PDF button that is clickable", async function () {
@@ -350,9 +361,10 @@ describe("Test PaperMemory Popup UI - Known Paper Page", function () {
             const downloadBtn = await verifySelectorExists(downloadSelector, PMPage);
             await verifyElementClickable(downloadBtn, PMPage);
 
-            // Verify the button has the correct title
-            const title = await downloadBtn.evaluate((el) => el.getAttribute("title"));
-            expect(title).toContain("Download PDF");
+            // Verify the button's accessible name (no native title: it has its own tooltip)
+            const label = await downloadBtn.evaluate((el) => el.getAttribute("aria-label"));
+            expect(label).toContain("Download PDF");
+            expect(await downloadBtn.evaluate((el) => el.hasAttribute("title"))).toBe(false);
         });
     });
 
@@ -481,10 +493,10 @@ describe("Test PaperMemory Popup UI - Known Paper Page", function () {
             const papersBefore = await getMemoryPapers(PMPage);
             expect(papersBefore[arxivPaperId].tags).toEqual([]);
 
-            // Click the TomSelect control to focus it
-            const tsControlSelector = `#popup-memory-edit .ts-control`;
-            await PMPage.waitForSelector(tsControlSelector);
-            await PMPage.click(tsControlSelector);
+            // Click the tag field to focus it
+            const tagInputSelector = `#popup-memory-edit .pm-tagin`;
+            await PMPage.waitForSelector(tagInputSelector);
+            await PMPage.click(tagInputSelector);
 
             // Type a new tag and press Enter to create it
             const newTag = "test-autosave-tag";
@@ -507,11 +519,11 @@ describe("Test PaperMemory Popup UI - Known Paper Page", function () {
 
             await setupPopupWithMockedTab(PMPage, arxivPaperUrl, arxivPaperId);
 
-            // Wait for TomSelect to render the existing tag item
-            await PMPage.waitForSelector(`#popup-memory-edit .ts-control .item`);
+            // Wait for the tag field to render the existing tag chip
+            await PMPage.waitForSelector(`#popup-memory-edit .pm-tagfield .pm-chip`);
 
-            // Click the remove button (×) on the tag item
-            await PMPage.click(`#popup-memory-edit .ts-control .item .remove`);
+            // Click the remove button (×) on the tag chip
+            await PMPage.click(`#popup-memory-edit .pm-tagfield .pm-chip .pm-chip-x`);
 
             // Wait for the debounced save
             await sleep(800);
@@ -519,6 +531,439 @@ describe("Test PaperMemory Popup UI - Known Paper Page", function () {
             // Verify the tag was removed from storage
             const papersAfter = await getMemoryPapers(PMPage);
             expect(papersAfter[arxivPaperId].tags).not.toContain("removable-tag");
+        });
+
+        it("should suggest an existing tag that is almost the same (near-duplicate)", async function () {
+            const data = structuredClone(testData);
+            const otherId = Object.keys(data).find(
+                (k) => !k.startsWith("__") && k !== arxivPaperId,
+            );
+            data[otherId].tags = ["reading-group"];
+            data[arxivPaperId].tags = [];
+            await setStorage(PMPage, "papers", data);
+            await setupPopupWithMockedTab(PMPage, arxivPaperUrl, arxivPaperId);
+
+            await PMPage.click(`#popup-memory-edit .pm-tagin`);
+            await PMPage.keyboard.type("Reading_groups");
+            await PMPage.waitForSelector(`#popup-memory-edit .pm-tagsugg:not([hidden])`);
+            const hint = await PMPage.$eval(`#popup-memory-edit .pm-tagsugg`, (el) => [
+                el.querySelector(".pm-sugg-note").textContent,
+                el.querySelector(".pm-sugg-row.is-active span").textContent,
+                el.querySelector(".pm-sugg-row.is-active .pm-count").textContent,
+            ]);
+            expect(hint).toEqual(["Almost the same as an existing tag", "reading-group", "1"]);
+            // Enter uses the existing tag, autosaved
+            await PMPage.keyboard.press("Enter");
+            await sleep(300);
+            const papersAfter = await getMemoryPapers(PMPage);
+            expect(papersAfter[arxivPaperId].tags).toEqual(["reading-group"]);
+        });
+    });
+
+    describe("Paper view: Info panel, keys, code link, delete", function () {
+        beforeEach(async function () {
+            await setStorage(PMPage, "papers", testData);
+        });
+
+        /** The open Info panel: its id, the fields it shows, where it is */
+        const infoPanel = () =>
+            PMPage.evaluate(() => {
+                const panel = document.querySelector("#isArxiv .pm-info-pop");
+                if (!panel) return null;
+                const r = panel.getBoundingClientRect();
+                return {
+                    id: panel.id,
+                    role: panel.getAttribute("role"),
+                    fields: Object.fromEntries(
+                        [...panel.querySelectorAll("dt")].map((dt) => [
+                            dt.textContent,
+                            dt.nextElementSibling.textContent,
+                        ]),
+                    ),
+                    inside:
+                        r.top >= 0 && r.left >= 0 && r.bottom <= 600 && r.right <= 450,
+                };
+            });
+        const expanded = (id) =>
+            PMPage.$eval(`#${id}`, (el) => el.getAttribute("aria-expanded"));
+
+        it("should show the venue on its own line, without the source or ID", async function () {
+            await setupPopupWithMockedTab(PMPage, arxivPaperUrl, arxivPaperId);
+            const view = await PMPage.evaluate(() => ({
+                venue: document.getElementById("popup-venue")?.textContent,
+                authors: document.getElementById("popup-authors").textContent,
+                text: document.getElementById("popup-paper-main").innerText,
+            }));
+            expect(view.venue).toBe("ICCV 2017");
+            expect(view.authors).not.toContain("2017");
+            expect(view.text).not.toContain("1703.10593");
+        });
+
+        it("should show the year after the authors when there is no venue", async function () {
+            const preprint = structuredClone(testData);
+            preprint[arxivPaperId].venue = "";
+            await setStorage(PMPage, "papers", preprint);
+            await setupPopupWithMockedTab(PMPage, arxivPaperUrl, arxivPaperId);
+            const view = await PMPage.evaluate(() => ({
+                venue: !!document.getElementById("popup-venue"),
+                authors: document.getElementById("popup-authors").textContent,
+            }));
+            expect(view.venue).toBe(false);
+            expect(view.authors.trim()).toMatch(/ · 2017$/);
+            // "+1 more" shows every author and keeps the year
+            await PMPage.click("#popup-authors-more");
+            const all = await PMPage.$eval("#popup-authors", (el) => el.textContent.trim());
+            expect(all).toMatch(/Alexei A\. Efros · 2017$/);
+        });
+
+        it("should open the Info panel from the status line's ⓘ and close it on a second click or outside", async function () {
+            await setupPopupWithMockedTab(PMPage, arxivPaperUrl, arxivPaperId);
+            expect(await infoPanel()).toBe(null);
+            await PMPage.click("#popup-info-button");
+            const panel = await infoPanel();
+            expect(panel.id).toBe("popup-info-panel");
+            expect(panel.role).toBe("dialog");
+            expect(panel.inside).toBe(true);
+            expect(await expanded("popup-info-button")).toBe("true");
+            expect(Object.keys(panel.fields)).toEqual([
+                "Added",
+                "Last opened",
+                "Visits",
+                "Source",
+                "Publication",
+                "Citation key",
+            ]); // no PDF file: none downloaded
+            expect(panel.fields.Source).toBe("arXiv 1703.10593");
+            expect(panel.fields.Publication).toBe(
+                "International Conference on Computer Vision (ICCV) 2017",
+            );
+            expect(panel.fields.Visits).toBe(String(testData[arxivPaperId].count));
+            // second click closes
+            await PMPage.click("#popup-info-button");
+            expect(await infoPanel()).toBe(null);
+            expect(await expanded("popup-info-button")).toBe("false");
+            // a click outside closes
+            await PMPage.click("#popup-info-button");
+            expect(await infoPanel()).not.toBe(null);
+            await PMPage.mouse.click(8, 250); // left margin, beside the panel
+            expect(await infoPanel()).toBe(null);
+        });
+
+        it("should toggle the Info panel above the bottom line with 'd' and its button", async function () {
+            await PMPage.evaluate(() => localStorage.removeItem("pm-paper-details"));
+            await setupPopupWithMockedTab(PMPage, arxivPaperUrl, arxivPaperId);
+            expect(await PMPage.$("#popup-details-toggle")).toBe(null); // no Details fold
+            await PMPage.keyboard.press("d");
+            let panel = await infoPanel();
+            expect(panel.id).toBe("popup-info-panel-bar");
+            expect(panel.inside).toBe(true);
+            expect(await expanded("popup-info-open")).toBe("true");
+            const above = await PMPage.evaluate(
+                () =>
+                    document.querySelector("#isArxiv .pm-info-pop").getBoundingClientRect()
+                        .bottom <=
+                    document.getElementById("popup-info-open").getBoundingClientRect().top,
+            );
+            expect(above).toBe(true);
+            await PMPage.keyboard.press("d");
+            expect(await infoPanel()).toBe(null);
+            await PMPage.click("#popup-info-open");
+            expect((await infoPanel()).id).toBe("popup-info-panel-bar");
+            await PMPage.click("#popup-info-open");
+            expect(await infoPanel()).toBe(null);
+            // the Details state is not stored anymore
+            expect(
+                await PMPage.evaluate(() => localStorage.getItem("pm-paper-details")),
+            ).toBe(null);
+        });
+
+        it("should omit Publication without a venue and show the PDF file when there is one", async function () {
+            const preprint = structuredClone(testData);
+            preprint[arxivPaperId].venue = "";
+            await setStorage(PMPage, "papers", preprint);
+            await setupPopupWithMockedTab(PMPage, arxivPaperUrl, arxivPaperId);
+            await PMPage.evaluate((id) => {
+                PMDebug.config.state.files[id] = {
+                    id: 1,
+                    filename: "/Users/me/Downloads/PaperMemoryStore/<img src=x>cyclegan.pdf",
+                };
+            }, arxivPaperId);
+            await PMPage.keyboard.press("d");
+            const panel = await infoPanel();
+            expect(panel.fields.Publication).toBeUndefined();
+            expect(panel.fields["PDF file"]).toBe("PaperMemoryStore/<img src=x>cyclegan.pdf");
+            // escaped: shown as text, no element created
+            expect(
+                await PMPage.evaluate(() => !!document.querySelector(".pm-info-pop dd img")),
+            ).toBe(false);
+        });
+
+        it("should show the action strip's tooltips with the shared mechanism (delay, one line, inside)", async function () {
+            await setupPopupWithMockedTab(PMPage, arxivPaperUrl, arxivPaperId);
+            const pdf = `#popup-memory-item-download--${arxivPaperIdEscaped}`;
+            // no tooltip span inside the button anymore: data-tip + aria-label
+            expect(await PMPage.$eval(pdf, (el) => !!el.querySelector(".pm-tip"))).toBe(false);
+            await PMPage.mouse.move(5, 590);
+            await sleep(500);
+            await PMPage.hover(pdf);
+            await sleep(100);
+            const hidden = () =>
+                PMPage.evaluate(() => document.querySelector(".pm-tip-float")?.hidden ?? true);
+            expect(await hidden()).toBe(true);
+            await sleep(400);
+            const t = await PMPage.evaluate(() => {
+                const tip = document.querySelector(".pm-tip-float");
+                const range = document.createRange();
+                range.selectNodeContents(tip.firstChild);
+                const r = tip.getBoundingClientRect();
+                return {
+                    hidden: tip.hidden,
+                    text: tip.textContent,
+                    lines: range.getClientRects().length,
+                    inside: r.left >= 0 && r.right <= 450,
+                };
+            });
+            expect(t.hidden).toBe(false);
+            expect(t.text).toMatch(/^Download PDF/);
+            expect(t.lines).toBe(1);
+            expect(t.inside).toBe(true);
+            await PMPage.mouse.move(5, 590);
+        });
+
+        it("should close the paper view's edit state with Ctrl+↵ and Esc wherever the focus is", async function () {
+            await setupPopupWithMockedTab(PMPage, arxivPaperUrl, arxivPaperId);
+            const editing = () =>
+                PMPage.evaluate(
+                    (id) => ({
+                        code: !!document.getElementById(`popup-form-codeLink--${id}`),
+                        note: !document.getElementById(`popup-form-note-textarea--${id}`)
+                            .hidden,
+                    }),
+                    arxivPaperId,
+                );
+            await PMPage.keyboard.press("e");
+            expect(await editing()).toEqual({ code: true, note: true });
+            await PMPage.type(`#popup-form-note-textarea--${arxivPaperIdEscaped}`, "kept");
+            await PMPage.evaluate(() => document.activeElement.blur()); // nothing focused
+            await PMPage.keyboard.down("Control");
+            await PMPage.keyboard.press("Enter");
+            await PMPage.keyboard.up("Control");
+            await sleep(400);
+            expect(await editing()).toEqual({ code: false, note: false });
+            expect((await getMemoryPapers(PMPage))[arxivPaperId].note).toMatch(/kept$/);
+            // Esc from the tag input closes too
+            await PMPage.keyboard.press("e");
+            expect((await editing()).note).toBe(true);
+            await PMPage.keyboard.press("Escape");
+            expect(await editing()).toEqual({ code: false, note: false });
+        });
+
+        it("should mark every link that leaves the popup with ↗ and our tooltip", async function () {
+            await setupPopupWithMockedTab(PMPage, "https://example.com/", "");
+            const links = await PMPage.evaluate(() =>
+                [...document.querySelectorAll("a.link-in-new-tab, a.pm-out")].map((a) => ({
+                    text: a.textContent.trim(),
+                    tip: a.dataset.tip ?? "",
+                    marker: getComputedStyle(a, "::after").content,
+                })),
+            );
+            const texts = links.map((l) => l.text);
+            for (const t of ["Supported sites", "Request a site", "User guide", "Guide", "Docs", "Feedback", "Change keys", "All releases on GitHub"])
+                expect(texts).toContain(t);
+            for (const link of links) {
+                expect(link.tip).not.toBe("");
+                expect(link.marker).toContain("↗");
+            }
+            const releases = await PMPage.$$eval(
+                '#modal-whatsnew-content a[href*="/releases/tag/"]',
+                (els) => [...new Set(els.map((a) => a.dataset.tip))],
+            );
+            expect(releases).toEqual(["Open GitHub release notes"]);
+            expect(
+                await PMPage.$eval('a[href="https://papermemory.org/features/#venues"]', (a) => a.dataset.tip),
+            ).toBe("Open the supported sites list on papermemory.org");
+            // navigation buttons: the paper view's "Also on" and a row's "…" menu
+            const buttons = await PMPage.evaluate((id) => {
+                const s = PMDebug.config.state;
+                const paper = s.papers[id];
+                const saved = { ...s.prefs };
+                Object.assign(s.prefs, {
+                    checkAr5iv: true,
+                    checkAlphaxiv: true,
+                    checkHuggingface: true,
+                    checkScirate: true,
+                });
+                const tpl = document.createElement("template");
+                tpl.innerHTML =
+                    PMDebug.templates.getPopupPaperHTML(paper, "https://example.com/x", {}, {}) +
+                    PMDebug.templates.getMemoryItemHTML(paper);
+                Object.assign(s.prefs, saved);
+                return [...tpl.content.querySelectorAll(".pm-pv-also-btn, .pm-pop [role=menuitem]")].map(
+                    (b) => ({ tip: b.dataset.tip, mark: !!b.querySelector(".pm-out-mark") }),
+                );
+            }, arxivPaperId);
+            expect(buttons.length).toBe(8);
+            for (const b of buttons) {
+                expect(b.tip).toMatch(/^Open on (ar5iv|alphaXiv|Hugging Face|SciRate)$/);
+                expect(b.mark).toBe(true);
+            }
+        });
+
+        it("should save a pending tag with Ctrl+↵ after clicking elsewhere, and show the Done hint while editing", async function () {
+            await setupPopupWithMockedTab(PMPage, arxivPaperUrl, arxivPaperId);
+            const foot = () => PMPage.$eval("#popup-edit-foot", (el) => el.hidden);
+            expect(await foot()).toBe(true);
+            await PMPage.keyboard.press("e");
+            expect(await foot()).toBe(false);
+            await PMPage.keyboard.press("Escape");
+            expect(await foot()).toBe(true);
+            // a tag typed, not added, then a click elsewhere: Ctrl+↵ still saves it
+            await PMPage.click("#popup-tags-input");
+            await PMPage.keyboard.type("pending-tag");
+            await PMPage.mouse.click(8, 250);
+            await sleep(250);
+            await PMPage.keyboard.down("Control");
+            await PMPage.keyboard.press("Enter");
+            await PMPage.keyboard.up("Control");
+            await sleep(400);
+            expect((await getMemoryPapers(PMPage))[arxivPaperId].tags).toContain("pending-tag");
+            // IME: Enter while composing adds nothing
+            await PMPage.click("#popup-tags-input");
+            await PMPage.keyboard.type("ime-tag");
+            await PMPage.evaluate(() =>
+                document.activeElement.dispatchEvent(
+                    new KeyboardEvent("keydown", { key: "Enter", isComposing: true, bubbles: true }),
+                ),
+            );
+            await sleep(300);
+            expect((await getMemoryPapers(PMPage))[arxivPaperId].tags).not.toContain("ime-tag");
+            expect(await PMPage.$eval("#popup-tags-input", (el) => el.value)).toBe("ime-tag");
+        });
+
+        it("should toggle the shortcut sheet with '?' and the Memory with 'a'", async function () {
+            await setupPopupWithMockedTab(PMPage, arxivPaperUrl, arxivPaperId);
+            const sheetShown = () =>
+                PMPage.evaluate(
+                    () =>
+                        document.getElementById("popup-modal-wrapper").style.display !==
+                            "none" &&
+                        document.getElementById("modal-shortcuts-content").style
+                            .display !== "none",
+                );
+            await PMPage.keyboard.press("?");
+            expect(await sheetShown()).toBe(true);
+            await PMPage.keyboard.press("?");
+            expect(await sheetShown()).toBe(false);
+
+            const memoryOpen = () =>
+                PMPage.evaluate(() => PMDebug.config.state.memoryIsOpen);
+            await PMPage.keyboard.press("a");
+            expect(await memoryOpen()).toBe(true);
+            await PMPage.evaluate(() => document.activeElement.blur());
+            await PMPage.keyboard.press("a");
+            expect(await memoryOpen()).toBe(false);
+        });
+
+        it("should add https:// to a code link and refuse what is not a URL", async function () {
+            await setupPopupWithMockedTab(PMPage, arxivPaperUrl, arxivPaperId);
+            const inputSel = `#popup-form-codeLink--${arxivPaperIdEscaped}`;
+
+            // not a URL: an error, nothing saved
+            await safeClick("#popup-code-edit", PMPage);
+            await PMPage.waitForSelector(inputSel);
+            await PMPage.type(inputSel, "my repo");
+            await PMPage.keyboard.press("Enter");
+            const error = await PMPage.$eval("#popup-code-msg", (el) => ({
+                hidden: el.hidden,
+                text: el.innerText,
+            }));
+            expect(error.hidden).toBe(false);
+            expect(error.text).toContain("Enter a web address");
+            expect((await getMemoryPapers(PMPage))[arxivPaperId].codeLink).toBe("");
+
+            // a URL without scheme: saved with https://, then shown as a link
+            await PMPage.$eval(inputSel, (el) => (el.value = ""));
+            await PMPage.type(inputSel, "github.com/org/repo");
+            await PMPage.keyboard.press("Enter");
+            await PMPage.waitForFunction(
+                () => !!document.querySelector("#popup-code-link[href]"),
+            );
+            const href = await PMPage.$eval("#popup-code-link", (el) =>
+                el.getAttribute("href"),
+            );
+            expect(href).toBe("https://github.com/org/repo");
+            await sleep(300);
+            expect((await getMemoryPapers(PMPage))[arxivPaperId].codeLink).toBe(
+                "https://github.com/org/repo",
+            );
+
+            // emptying the field removes the link
+            await safeClick("#popup-code-edit", PMPage);
+            await PMPage.$eval(inputSel, (el) => (el.value = ""));
+            await PMPage.focus(inputSel);
+            await PMPage.keyboard.press("Enter");
+            await sleep(300);
+            expect((await getMemoryPapers(PMPage))[arxivPaperId].codeLink).toBe("");
+            expect(
+                await PMPage.$eval("#popup-code-val", (el) => el.innerText),
+            ).toContain("No code link");
+        });
+
+        it("should keep the note's line breaks", async function () {
+            const withNote = structuredClone(testData);
+            withNote[arxivPaperId].note = "line one\n\nline three";
+            await setStorage(PMPage, "papers", withNote);
+            await setupPopupWithMockedTab(PMPage, arxivPaperUrl, arxivPaperId);
+            const text = await PMPage.$eval("#popup-note-display", (el) => el.innerText);
+            expect(text).toBe("line one\n\nline three");
+        });
+
+        it("should keep Info / Remove visible above the footer with a long note", async function () {
+            const long = structuredClone(testData);
+            long[arxivPaperId].note = Array.from({ length: 30 }, (_, i) => `line ${i}`).join("\n");
+            long[arxivPaperId].author = Array.from({ length: 40 }, (_, i) => `Author ${i}`).join(" and ");
+            await setStorage(PMPage, "papers", long);
+            await setupPopupWithMockedTab(PMPage, arxivPaperUrl, arxivPaperId);
+            const layout = await PMPage.evaluate(() => {
+                const r = (id) => document.getElementById(id).getBoundingClientRect();
+                const main = document.getElementById("popup-paper-main");
+                return {
+                    toggleBottom: r("popup-info-open").bottom,
+                    removeBottom: r(
+                        `popup-memory-delete--${PMDebug.config.state.currentId}`,
+                    ).bottom,
+                    footerTop: r("popup-hints").top,
+                    mainScrolls: main.scrollHeight > main.clientHeight,
+                };
+            });
+            expect(layout.mainScrolls).toBe(true);
+            expect(layout.toggleBottom).toBeLessThanOrEqual(layout.footerTop);
+            expect(layout.removeBottom).toBeLessThanOrEqual(layout.footerTop);
+        });
+
+        it("should ask before deleting (Backspace) and delete on Enter", async function () {
+            await setupPopupWithMockedTab(PMPage, arxivPaperUrl, arxivPaperId);
+            await PMPage.keyboard.press("Backspace");
+            await PMPage.waitForFunction(
+                () => document.getElementById("delete-paper-modal").style.display === "flex",
+                { timeout: 2000 },
+            );
+            const quoted = await PMPage.$eval("#delete-modal-title", (el) => el.innerText);
+            expect(miniHash(quoted)).toBe(miniHash(testData[arxivPaperId].title));
+            // nothing is deleted yet
+            expect((await getMemoryPapers(PMPage))[arxivPaperId]).toBeTruthy();
+
+            await PMPage.keyboard.press("Enter");
+            await PMPage.waitForFunction(
+                () => document.getElementById("delete-paper-modal").style.display === "none",
+                { timeout: 2000 },
+            );
+            await sleep(300);
+            expect((await getMemoryPapers(PMPage))[arxivPaperId]).toBeUndefined();
+            // the paper view becomes "not in your Memory", with Add it now
+            await verifySelectorExists("#manual-trigger-btn", PMPage);
+
+            await setStorage(PMPage, "papers", testData);
         });
     });
 });

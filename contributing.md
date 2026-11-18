@@ -4,7 +4,7 @@
 
 PaperMemory is pure JS+HTML with minimal dependencies: no framework, (almost) no external dependencies so it's easy to help :)
 
-The only external deps are [`tom-select`](https://tom-select.js.org/) (tag inputs) and [`jQuery`](https://jquery.com/) (content-script page UI only) — both installed via npm.
+The only runtime deps are [`jQuery`](https://jquery.com/) (content-script page UI only) and [`@octokit/request`](https://github.com/octokit/request.js) (Gist sync) — both installed via npm.
 
 The project uses modern ES modules and [WXT](https://wxt.dev/) for bundling, dev server, manifest generation, and cross-browser packaging.
 
@@ -75,7 +75,7 @@ When using `npm run dev`:
 
 ### Debugging utilities (`PMDebug`)
 
-A global `PMDebug` object is available in all HTML pages (popup, options, fullMemory, bibMatcher) for inspecting internal state from the browser console:
+A global `PMDebug` object is available in all HTML pages (popup, options, fullMemory, bibMatcher, welcome) for inspecting internal state from the browser console:
 
 ```javascript
 PMDebug.config.state; // Global state (papers, prefs, etc.)
@@ -108,8 +108,7 @@ The debug system is implemented in `src/debug/debug.js` and imported by each ent
 │   ├── theme.js          ➤ Dark mode detection (runs before modules, loaded via <script>)
 │   ├── data/             ➤ JSON data files (journals, abbreviations, art)
 │   ├── icons/            ➤ Extension icons
-│   ├── *.css             ➤ Stylesheets loaded at runtime via <link> or chrome.runtime.getURL
-│   └── highlight.min.js  ➤ Code highlighting library (options page)
+│   └── *.css             ➤ Stylesheets loaded at runtime via <link> or chrome.runtime.getURL
 │
 └── src/
     ├── entrypoints/              ➤ WXT entry points (only these are built into the extension)
@@ -124,7 +123,10 @@ The debug system is implemented in `src/debug/debug.js` and imported by each ent
     │   ├── fullMemory/           ➤ Full-page paper memory view
     │   │   ├── index.html
     │   │   └── main.js
-    │   └── bibMatcher/           ➤ BibTeX matching tool
+    │   ├── bibMatcher/           ➤ BibTeX matching tool
+    │   │   ├── index.html
+    │   │   └── main.js
+    │   └── welcome/              ➤ First-run welcome page (opened on install)
     │       ├── index.html
     │       └── main.js
     │
@@ -149,6 +151,7 @@ The debug system is implemented in `src/debug/debug.js` and imported by each ent
     ├── options/                  ➤ Options page logic
     ├── fullMemory/               ➤ Full memory page logic
     ├── bibMatcher/               ➤ BibTeX matcher logic
+    ├── welcome/                  ➤ Welcome page logic
     │
     └── shared/                   ➤ Shared utilities and resources
         ├── js/
@@ -205,11 +208,11 @@ Two aliases are configured in `wxt.config.js` (for Vite/WXT) and `jsconfig.json`
 
 The popup HTML uses `<!--=include path -->` directives to inline partial HTML files (menu, modals, SVGs). A custom Vite plugin in `wxt.config.js` processes these at build time.
 
-### jQuery / Tom Select
+### jQuery
 
 jQuery is installed via npm and exposed globally by `src/shared/js/jquery-setup.js`, imported only by the content-script entry point (`src/entrypoints/content.js`) for injected page UI.
 
-Tag inputs use [Tom Select](https://tom-select.js.org/), imported directly in `src/popup/js/popup.js`, `src/popup/js/handlers.js`, and `src/options/options.js`.
+Tag inputs are plain JS (`src/popup/js/tagfield.js`); there is no tag-input library.
 
 ### Static assets (`public/`)
 

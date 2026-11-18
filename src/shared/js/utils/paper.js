@@ -13,7 +13,6 @@ import {
     urlToWebsiteId,
     consoleHeader,
     logOk,
-    silentPromiseTimeout,
     cleanPapers,
     isPdfUrl,
 } from "@pmu/functions.js";
@@ -25,16 +24,16 @@ import {
     validatePaper,
     makeVenue,
     makeTitleHashToIdList,
-    deletePaperInStorage,
     updateDuplicatedUrls,
 } from "@pmu/data.js";
+import { memoryOp } from "@pmu/memoryQueue.js";
 import {
     bibtexToObject,
     bibtexToString,
     sanitizeBibtexObject,
 } from "@pmu/bibtexParser.js";
 import { pushToRemote } from "@pmu/sync.js";
-import { tryPWCMatch, tryPreprintMatch } from "@pmu/preprintMatching.js";
+import { tryPreprintMatch } from "@pmu/preprintMatching.js";
 import {
     getSource,
     knownPaperPages,
@@ -110,6 +109,16 @@ export const paperToPDF = (paper) => {
     return pdf.replace("http://", "https://");
 };
 
+/**
+ * Whether a regular expression could backtrack for a very long time (a quantified group
+ * that itself contains a quantifier, e.g. "(a+)+", "(\\w+\\s?)*"), or is too long to check.
+ * Such auto-tagging patterns are skipped: matching runs on the page's thread.
+ * @param {string} pattern
+ * @returns {boolean}
+ */
+export const isRiskyPattern = (pattern) =>
+    pattern.length > 300 || /\((?:[^()\\]|\\.)*[+*}](?:[^()\\]|\\.)*\)[+*{]/.test(pattern);
+
 export const autoTagPaper = async (paper) => {
     try {
         const autoTags = await getStorage("autoTags");
@@ -117,16 +126,27 @@ export const autoTagPaper = async (paper) => {
         let tags = new Set();
         for (const at of autoTags) {
             if (!at.tags?.length) continue;
-            if (!at.title && !at.author) continue;
+            // the options page stores the authors pattern as `authors`
+            const authors = at.authors ?? at.author;
+            if (!at.title && !authors) continue;
 
             let titleMatch = true;
             let authorMatch = true;
+            if ([at.title, authors].some((p) => p && isRiskyPattern(p))) {
+                warn("Skipping an auto-tagging rule whose pattern could be too slow:", at);
+                continue;
+            }
             try {
+                // bounded texts: even an unforeseen slow pattern stays short
                 if (at.title) {
-                    titleMatch = new RegExp(at.title, "i").test(paper.title);
+                    titleMatch = new RegExp(at.title, "i").test(
+                        String(paper.title ?? "").slice(0, 500),
+                    );
                 }
-                if (at.author) {
-                    authorMatch = new RegExp(at.author, "i").test(paper.author);
+                if (authors) {
+                    authorMatch = new RegExp(authors, "i").test(
+                        String(paper.author ?? "").slice(0, 2000),
+                    );
                 }
             } catch (e) {
                 continue;
@@ -286,8 +306,9 @@ export const updatePaperVisits = (paper) => {
  * @param {string} url The url from which to parse a paper
  * @param {object} is The paper's source info
  * @param {object} checks The user's preferences
- * @returns {Promise<{paper: object, id: string}|undefined>} The paper and its id
- * (`paper.id`, not the id resolved from `url`), or undefined if parsing failed
+ * @returns {Promise<{paper: object, id: string, saving: Promise}|undefined>} The paper and
+ * its id (`paper.id`, not the id resolved from `url`), or undefined if parsing failed;
+ * `saving`: the background's answer to the write ({ok}), which lands after this returns
  */
 export const addOrUpdatePaper = async ({
     url,
@@ -306,7 +327,9 @@ export const addOrUpdatePaper = async ({
     const aouStart = Date.now();
 
     let paper, isNew;
-    let pwc = {};
+    // what gets written: an operation for the background's queue, applied there to the paper
+    // as stored at that moment (memoryQueue.js), never this function's earlier snapshot
+    let saveOp;
 
     consoleHeader(`PaperMemory Parsing ${String.fromCodePoint("0x1F4DD")}`);
 
@@ -315,7 +338,6 @@ export const addOrUpdatePaper = async ({
 
     // Extract id from url
     state.papers = (await getStorage("papers")) ?? {};
-    const papersBeforeParse = state.papers;
     const id = await parseIdFromUrl(url, tab);
     const paperExists = state.papers.hasOwnProperty(id);
     prefs &&
@@ -327,6 +349,7 @@ export const addOrUpdatePaper = async ({
         // Update paper if it exists
         paper = updatePaperVisits(state.papers[id]);
         isNew = false;
+        saveOp = { op: "visit", id };
     } else {
         // Or create a new one if it does not
         let newPaper = await makePaper(is, url, tab);
@@ -338,6 +361,7 @@ export const addOrUpdatePaper = async ({
         if (existingId && store) {
             // Update paper as already it exists
             let existingPaper = state.papers[existingId];
+            const parsed = { ...newPaper };
             log("New paper", newPaper, "already exists as", existingPaper);
             addPaperToTitleHashToId(newPaper);
 
@@ -357,44 +381,59 @@ export const addOrUpdatePaper = async ({
                     oldPaper: existingPaper,
                     incrementCount: false,
                 });
+                saveOp = {
+                    op: "merge",
+                    id: existingId,
+                    paper: parsed,
+                    overwrites,
+                    visit: true,
+                };
                 await updateDuplicatedUrls(url, existingId);
             } else if (newPaper.venue) {
                 await updateDuplicatedUrls(paperToAbs(existingPaper), newPaper.id);
                 await updateDuplicatedUrls(paperToPDF(existingPaper), newPaper.id);
-                // deletePaperInStorage writes back the papers it is given: re-read them,
-                // as other pages may have stored papers since they were read above
-                state.papers = (await getStorage("papers")) ?? {};
-                await deletePaperInStorage(existingPaper.id, state.papers);
+                const overwrites = [
+                    "lastOpenDate",
+                    "venue",
+                    "bibtex",
+                    "id",
+                    "key",
+                    "pdfLink",
+                    "source",
+                    "year",
+                    "author",
+                ];
                 existingPaper = mergePapers({
                     newPaper: newPaper,
                     oldPaper: existingPaper,
                     incrementCount: false,
-                    overwrites: [
-                        "lastOpenDate",
-                        "venue",
-                        "bibtex",
-                        "id",
-                        "key",
-                        "pdfLink",
-                        "source",
-                        "year",
-                        "author",
-                    ],
+                    overwrites,
                 });
+                // the published version replaces the stored preprint (deleted in the
+                // same queue step as the merged paper is written)
+                saveOp = {
+                    op: "merge",
+                    fromId: existingId,
+                    paper: parsed,
+                    overwrites,
+                    visit: true,
+                };
             } else if (existingPaper.author.toLowerCase() === "anonymous") {
+                const overwrites = ["lastOpenDate", "author", "year", "venue", "bibtex", "note"];
                 existingPaper = mergePapers({
                     newPaper,
                     oldPaper: existingPaper,
                     incrementCount: true, // ?
-                    overwrites: [
-                        "lastOpenDate",
-                        "author",
-                        "year",
-                        "venue",
-                        "bibtex",
-                        "note",
-                    ],
+                    overwrites,
                 });
+                saveOp = {
+                    op: "merge",
+                    id: existingId,
+                    paper: parsed,
+                    overwrites,
+                    incrementCount: true,
+                    visit: true,
+                };
             }
             newPaper = updatePaperVisits(existingPaper);
             isNew = false;
@@ -403,33 +442,15 @@ export const addOrUpdatePaper = async ({
             isNew = true;
         }
         paper = newPaper;
-    }
-
-    if (!paper.codeLink || !paper.venue) {
-        try {
-            const pwcMatch = await silentPromiseTimeout(tryPWCMatch(paper));
-
-            const pwcCodeLink = !paper.codeLink && pwcMatch?.codeLink;
-            const pwcNote = pwcMatch?.note;
-            const pwcBibtex = pwcMatch?.bibtex;
-            const pwcVenue = !paper.venue && pwcMatch?.venue;
-
-            pwc = {
-                codeLink: pwcCodeLink,
-                note: pwcNote,
-                venue: pwcVenue,
-                bibtex: pwcBibtex,
-            };
-
-            if (pwc.codeLink) {
-                paper.codeLink = pwc.codeLink;
-                if (pwcMatch.hasOwnProperty("note")) delete pwcMatch.note;
-                paper.code = pwcMatch;
-            }
-        } catch (error) {
-            log("Error trying to discover a code repository:");
-            log(error);
-        }
+        // a new paper, or one stored meanwhile by another page / a re-parse: then merged
+        // into the stored one (its user fields kept) with a visit
+        saveOp ??= {
+            op: "merge",
+            paper,
+            overwrites: ["lastOpenDate"],
+            anonymousOverwrites: ["author", "year", "venue", "bibtex"],
+            visit: true,
+        };
     }
 
     // Map the visited url to the paper if it does not resolve to it yet (e.g. its
@@ -439,87 +460,53 @@ export const addOrUpdatePaper = async ({
         await updateDuplicatedUrls(url, paper.id);
     }
 
-    // papersBeforeParse holds the papers read before parsing (not the shared
-    // state.papers, which a concurrent call may have refreshed): a new paper already
-    // there is a re-parsed stored paper (e.g. its url resolves no stored id), not one
-    // created by another page in the meantime
-    const wasStored = papersBeforeParse.hasOwnProperty(paper.id);
-    state.papers = (await getStorage("papers")) ?? {};
-
-    // minimize risk of concurrent writes to the same paper
-    if (isNew && state.papers.hasOwnProperty(paper.id)) {
-        if (wasStored) {
-            // update it like the fuzzy match above updates an existing paper, so the
-            // re-parse does not overwrite its user fields and visits. Unlike there, an
-            // anonymous paper keeps its note: mergePapers only fills an empty one
-            let overwrites = ["lastOpenDate"];
-            if (state.papers[paper.id].author.toLowerCase() === "anonymous") {
-                overwrites.push("author", "year", "venue", "bibtex");
-            }
-            paper = updatePaperVisits(
-                mergePapers({
-                    newPaper: paper,
-                    overwrites,
-                    oldPaper: state.papers[paper.id],
-                }),
-            );
-        } else {
-            warn("Paper has been created by another page: merging papers.");
-            paper = mergePapers({
-                newPaper: state.papers[paper.id],
-                oldPaper: paper,
-                incrementCount: true,
-            });
-        }
-        isNew = false;
-    }
-
     // Store may be false if the user has disabled:
     //   * paper storage from Abstract URLs
     //   * automatic parsing altogether
     // but we still want to display paper metadata on arxiv.org
-    if (store && !state.deleted[paper.id]) state.papers[paper.id] = paper;
-
-    chrome.storage.local.set({ papers: state.papers }, async () => {
+    const saving =
+        store && !state.deleted[paper.id]
+            ? memoryOp(saveOp)
+            : Promise.resolve({ ok: true, result: { paper } });
+    saving.then(async (answer) => {
+        if (!answer.ok) {
+            // not saved: say so (never "Saved ✓"), and stop here
+            logError("Could not save the paper:", answer.error);
+            // shown even when save notices are off: the user expects the paper saved
+            contentScriptCallbacks.feedback &&
+                contentScriptCallbacks.feedback({ error: "write" });
+            console.groupEnd();
+            contentScriptCallbacks["done"](paper);
+            return;
+        }
+        if (answer.result?.paper) {
+            paper = answer.result.paper;
+            if (saveOp.op === "merge") isNew = !!answer.result.created;
+        }
         // tell the content script the paper has been parsed/updated
         contentScriptCallbacks["update"](paper);
         pushToRemote();
 
         let notifText;
-        if (isNew || pwc.codeLink) {
-            if (isNew) {
-                // new paper
-                if (store) {
-                    logOk("Added '" + paper.title + "' to your Memory!");
-                } else {
-                    warn(
-                        "Discovered '" +
-                            paper.title +
-                            "' but did not store it (`store` is false).",
-                    );
-                }
-                log("paper: ", paper);
-
-                notifText = "Saved ✓";
-                if (pwc.codeLink) {
-                    notifText +=
-                        "<br/><div id='feedback-pwc'>(+ repo from PapersWithCode) </div>";
-                }
-
-                prefs &&
-                    prefs.checkFeedback &&
-                    store &&
-                    contentScriptCallbacks.feedback &&
-                    contentScriptCallbacks.feedback({ text: notifText, paper });
+        if (isNew) {
+            // new paper
+            if (store) {
+                logOk("Added '" + paper.title + "' to your Memory!");
             } else {
-                // existing paper but new code repo
-                notifText = "Found a code repository on PapersWithCode!";
-                prefs &&
-                    prefs.checkFeedback &&
-                    store &&
-                    contentScriptCallbacks.feedback &&
-                    contentScriptCallbacks.feedback({ text: notifText });
+                warn(
+                    "Discovered '" +
+                        paper.title +
+                        "' but did not store it (`store` is false).",
+                );
             }
+            log("paper: ", paper);
+
+            notifText = "Saved ✓";
+            prefs &&
+                prefs.checkFeedback &&
+                store &&
+                contentScriptCallbacks.feedback &&
+                contentScriptCallbacks.feedback({ text: notifText, paper });
         } else {
             store && logOk("Updated '" + paper.title + "' in your Memory");
         }
@@ -529,10 +516,13 @@ export const addOrUpdatePaper = async ({
             const preprintMatch = await tryPreprintMatch(paper);
             for (const key of ["note", "venue", "bibtex", "doi"]) {
                 if (!paper[key] || key === "bibtex") {
-                    const value = preprintMatch[key] ?? pwc[key];
+                    const value = preprintMatch[key];
                     if (value) {
                         log(`Updating preprint ${key} to`, value);
                         paper[key] = value;
+                        // an abbreviated venue keeps its full name (optional field)
+                        if (key === "venue" && value === preprintMatch.venue && preprintMatch.venueFull)
+                            paper.venueFull = preprintMatch.venueFull;
                     }
                 }
                 if (key === "bibtex" && preprintMatch[key]) {
@@ -543,27 +533,20 @@ export const addOrUpdatePaper = async ({
                 }
             }
 
-            state.papers = (await getStorage("papers")) ?? {};
-
-            // minimize risk of concurrent writes to the same paper
-            if (
-                isNew &&
-                state.papers.hasOwnProperty(paper.id) &&
-                state.papers[paper.id].count > 1
-            ) {
-                warn("Paper has been created by another page: merging papers.");
-                paper = mergePapers({
-                    newPaper: state.papers[paper.id],
-                    oldPaper: paper,
-                    incrementCount: false,
+            // record the publication fields only, on the paper as stored now (a note typed
+            // meanwhile wins; a paper deleted meanwhile, anywhere, is not re-created)
+            if (store && !state.deleted[paper.id]) {
+                const fields = {};
+                for (const key of ["note", "venue", "venueFull", "bibtex", "doi", "year"])
+                    if (paper[key] !== undefined) fields[key] = paper[key];
+                const answer = await memoryOp({
+                    op: "patch",
+                    id: paper.id,
+                    fields,
+                    ifEmpty: ["note", "venue", "venueFull", "doi"],
                 });
+                if (answer.ok && answer.result?.paper) paper = answer.result.paper;
             }
-
-            // record updated paper if store is true
-            if (store && !state.deleted[paper.id]) state.papers[paper.id] = paper;
-            await new Promise((resolve) =>
-                chrome.storage.local.set({ papers: state.papers }, resolve),
-            );
         }
         // tell the content script the pre-print matching procedure has finished
         contentScriptCallbacks["preprints"](paper);
@@ -574,7 +557,7 @@ export const addOrUpdatePaper = async ({
         contentScriptCallbacks["done"](paper);
     });
 
-    return { paper, id: paper.id };
+    return { paper, id: paper.id, saving };
 };
 
 /**

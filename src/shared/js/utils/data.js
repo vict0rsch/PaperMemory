@@ -19,10 +19,12 @@ import {
     prefsCheckNames,
     prefsStorageKeys,
     prefsCheckDefaultFalse,
+    themeChoices,
 } from "@pmu/config.js";
 import { bibtexToString, bibtexToObject } from "@pmu/bibtexParser.js";
 import { getSource, knownPaperPages } from "@pmu/sources/index.js";
-import { sortMemory } from "@pmu/state.js";
+import { sortMemory, makeTags } from "@pmu/state.js";
+import { memoryOp, replaceMemory } from "@pmu/memoryQueue.js";
 
 /**
  * Make sure the currently stored data is compatible with the potentially updated code.
@@ -36,8 +38,15 @@ import { sortMemory } from "@pmu/state.js";
  */
 export const migrateData = async (papers, manifestDataVersion, store = true) => {
     if (typeof papers === "undefined") {
-        chrome.storage.local.set({ papers: { __dataVersion: manifestDataVersion } });
-        return { papers: { __dataVersion: manifestDataVersion }, success: true };
+        const papers = { __dataVersion: manifestDataVersion };
+        if (store) {
+            const answer = await memoryOp({
+                op: "migrate",
+                version: manifestDataVersion,
+            });
+            if (!answer.ok) return { papers, success: false, error: answer.error };
+        }
+        return { papers, success: true };
     }
     const currentVersion = papers["__dataVersion"] || -1;
     var deleteIds = [];
@@ -51,7 +60,7 @@ export const migrateData = async (papers, manifestDataVersion, store = true) => 
             return { papers: papers, success: true };
         }
 
-        store && backupData({ ...papers });
+        // (the backup of the stored Memory is made by the queue's migrate operation)
 
         Object.keys(papers).forEach((key) => {
             if (key.startsWith("__")) {
@@ -250,11 +259,17 @@ export const migrateData = async (papers, manifestDataVersion, store = true) => 
         });
 
         if (store) {
-            chrome.storage.local.set({ papers: newPapers }, () => {
-                log("Migrated papers:");
-                log(newPapers);
-                log("Data version is now " + manifestDataVersion);
+            // the background re-checks the stored version and migrates in its queue; the
+            // stored Memory only counts as migrated once that write is acknowledged
+            const answer = await memoryOp({
+                op: "migrate",
+                version: manifestDataVersion,
             });
+            if (!answer.ok) {
+                logError("The migrated Memory could not be saved:", answer.error);
+                return { papers: newPapers, success: false, error: answer.error };
+            }
+            log("Data version is now " + manifestDataVersion);
         }
         return { papers: newPapers, success: true };
     } catch (err) {
@@ -315,33 +330,97 @@ export const setStorage = async (key, value, cb = () => {}) => {
     });
 };
 
+// ------------------------------
+// -----  Writing the Memory -----
+// ------------------------------
+// Every write goes through the background's queue (memoryQueue.js): memoryOp({op: …}).
+
 /**
- * Delete a paper from storage.
+ * Points the cached state at the stored Memory: state.papers and, on pages that sort it,
+ * the lists and the tag index (same order as before; new papers are sorted in).
+ * state.papersList (the search results shown) is recomputed by the page (memory.js).
+ * @param {object} papers The stored Memory
+ */
+export const refreshPapersState = (papers) => {
+    state.papers = papers;
+    if (!state.papersReady) return;
+    const current = cleanPapers(papers);
+    const known = new Set(state.sortedPapers.map((p) => p.id));
+    state.sortedPapers = state.sortedPapers
+        .filter((p) => current[p.id])
+        .map((p) => current[p.id]);
+    state.papersList = state.papersList
+        .filter((p) => current[p.id])
+        .map((p) => current[p.id]);
+    if (Object.keys(current).some((id) => !known.has(id))) {
+        sortMemory();
+        if (state.sortReversed) state.sortedPapers.reverse();
+    }
+    makeTags();
+};
+
+/**
+ * Replaces the whole Memory (sync pull, first sync), in the background's queue (written to
+ * a staging key first: see replaceMemory)
+ * @param {object} papers The new Memory
+ * @returns {Promise<{ok: boolean, error?: string}>} The queue's answer
+ */
+export const replacePapers = (papers) => replaceMemory(papers);
+
+/**
+ * Keeps the cached state up to date with Memory writes made by any page or context, and
+ * calls `cb` with the ids of the papers that changed (added, edited or deleted) and the
+ * names of the fields that changed ("+" added paper, "-" deleted paper).
+ * @param {function(string[], Set<string>): void} cb E.g. to re-render the rows of those papers
+ */
+export const onPapersChange = (cb = () => {}) => {
+    chrome.storage.onChanged.addListener((changes, area) => {
+        if (area !== "local" || !changes.papers) return;
+        const next = changes.papers.newValue ?? {};
+        const prev = changes.papers.oldValue ?? {};
+        const fields = new Set();
+        const ids = [];
+        for (const id of new Set([...Object.keys(next), ...Object.keys(prev)])) {
+            if (id.startsWith("__")) continue;
+            const a = prev[id];
+            const b = next[id];
+            if (!a || !b) {
+                fields.add(a ? "-" : "+");
+                ids.push(id);
+                continue;
+            }
+            let changed = false;
+            for (const key of new Set([...Object.keys(a), ...Object.keys(b)])) {
+                if (JSON.stringify(a[key]) !== JSON.stringify(b[key])) {
+                    fields.add(key);
+                    changed = true;
+                }
+            }
+            if (changed) ids.push(id);
+        }
+        if (!ids.length) return;
+        refreshPapersState(next);
+        cb(ids, fields);
+    });
+};
+
+/**
+ * Delete a paper from storage (no-op when it is not there)
  *
  * @param {string} id Paper id to delete. Must be exact.
+ * @returns {Promise<boolean>} false when the write failed
  */
-export const deletePaperInStorage = async (id, papers) => {
-    if (!papers) {
-        papers = (await getStorage("papers")) ?? {};
-    }
-    let deleted = false;
-    const existed = papers.hasOwnProperty(id);
-    if (existed) {
-        deleted = delete state.titleHashToIds[miniHash(papers[id].title)];
-        deleted = deleted && delete papers[id];
-        delete state.papers[id];
-        // write papers before the awaited url map update, which would otherwise
-        // widen the window for a stale whole-object write to clobber another tab
-        if (deleted) await setStorage("papers", papers);
+export const deletePaperInStorage = async (id) => {
+    const title = state.papers?.[id]?.title;
+    const answer = await memoryOp({ op: "delete", id });
+    if (answer.ok && !answer.result?.missing) {
+        if (title) delete state.titleHashToIds[miniHash(title)];
         await updateDuplicatedUrls(null, id, true);
-    }
-    if (deleted) {
-        state.papersList = Object.values(cleanPapers(state.papers));
-        sortMemory();
         log("Successfully deleted paper", id);
     } else {
-        log("Error: no deletion");
+        log("Error: no deletion", answer.error ?? "(not in the Memory)");
     }
+    return answer.ok;
 };
 
 /**
@@ -415,7 +494,117 @@ export const weeklyBackup = async () => {
 };
 
 /**
+ * The theme choice stored in `prefs.theme`; mirrored by public/theme.js, which applies it.
+ * Users from before the System / Light / Dark choice only have the `checkDarkMode` boolean.
+ * @param {object} prefs Stored preferences (possibly empty or legacy)
+ * @returns {"system" | "light" | "dark"} `prefs.theme` if valid, else `checkDarkMode` mapped
+ * to "dark" / "light", else (new user) "system"
+ */
+export const themeFromPrefs = (prefs) =>
+    themeChoices.includes(prefs?.theme)
+        ? prefs.theme
+        : prefs?.hasOwnProperty("checkDarkMode")
+          ? prefs.checkDarkMode
+              ? "dark"
+              : "light"
+          : "system";
+
+/**
+ * Value of the legacy `checkDarkMode` boolean for a theme choice, so code still reading it
+ * keeps working. "system" uses the OS setting where it can be read; elsewhere (background
+ * service worker) it keeps `fallback`, the stored value, instead of forcing false.
+ * @param {"system" | "light" | "dark"} theme
+ * @param {boolean} fallback Value for "system" when the OS setting is unavailable
+ * @returns {boolean}
+ */
+export const isDarkTheme = (theme, fallback = false) =>
+    theme === "system"
+        ? globalThis.matchMedia
+            ? globalThis.matchMedia("(prefers-color-scheme: dark)").matches
+            : Boolean(fallback)
+        : theme === "dark";
+
+let prefsWrites = Promise.resolve();
+/**
+ * The single way to write `prefs`: applies a patch to the CURRENTLY stored prefs
+ * (read-modify-write of the patched keys only), one write at a time in this context, so
+ * concurrent changes (theme + a checkbox, two pages) do not overwrite each other.
+ * Also applies the patch to the cached `state.prefs`.
+ * @param {object | function(object): object} patch Keys to set (`undefined` deletes the
+ * key), or a function of the stored prefs returning that patch (`{}`: nothing to write)
+ * @returns {Promise<object>} The stored prefs after the write
+ */
+export const updatePrefs = (patch) => {
+    const run = prefsWrites.then(async () => {
+        const prefs = (await getStorage("prefs")) ?? {};
+        const changes = typeof patch === "function" ? patch(prefs) : patch;
+        if (Object.keys(changes).length === 0) return prefs;
+        for (const target of [prefs, state.prefs].filter(Boolean)) {
+            for (const [key, value] of Object.entries(changes)) {
+                if (value === undefined) delete target[key];
+                else target[key] = value;
+            }
+        }
+        await setStorage("prefs", prefs);
+        return prefs;
+    });
+    prefsWrites = run.catch(() => {}); // a failed write must not block the next ones
+    return run;
+};
+
+/**
+ * Keeps the cached `state.prefs` up to date with writes made by any page or context
+ * (popup, options, other tabs) and calls `cb` with the new stored prefs.
+ * @param {function(object): void} cb E.g. to re-sync controls showing a pref
+ */
+export const onPrefsChange = (cb = () => {}) => {
+    chrome.storage.onChanged.addListener((changes, area) => {
+        if (area !== "local" || !changes.prefs) return;
+        const prefs = changes.prefs.newValue ?? {};
+        if (state.prefs) Object.assign(state.prefs, prefs);
+        cb(prefs);
+    });
+};
+
+/**
+ * Saves a System / Light / Dark choice (popup menu, options page) in prefs.theme, keeping the
+ * legacy checkDarkMode in sync. public/theme.js applies it on every open extension page.
+ * @param {"system" | "light" | "dark"} theme
+ */
+export const saveThemePref = async (theme) => {
+    await updatePrefs({ theme, checkDarkMode: isDarkTheme(theme) });
+    log(`Settings saved for theme (${theme})`);
+};
+
+let followingSystemTheme = false;
+/**
+ * On extension pages, persist checkDarkMode when the OS switches between light and dark
+ * while the theme is "system" (public/theme.js only restyles the pages). Registered once
+ * per page; the patch is a no-op when another page already wrote the same value.
+ */
+const followSystemTheme = () => {
+    if (
+        followingSystemTheme ||
+        !globalThis.matchMedia ||
+        globalThis.location?.origin + "/" !== chrome.runtime.getURL("")
+    )
+        return;
+    followingSystemTheme = true;
+    globalThis
+        .matchMedia("(prefers-color-scheme: dark)")
+        .addEventListener("change", (e) =>
+            updatePrefs((stored) =>
+                themeFromPrefs(stored) === "system" &&
+                stored.checkDarkMode !== e.matches
+                    ? { checkDarkMode: e.matches }
+                    : {},
+            ),
+        );
+};
+
+/**
  * Retrieve the boolean preferences as defined in config.js/prefsStorageKeys
+ * and the theme choice (`prefs.theme`, migrated from `checkDarkMode` if missing).
  * @returns {object} The user's preferences as per the popup's sliders in the menu.
  */
 export const getPrefs = async () => {
@@ -436,16 +625,40 @@ export const getPrefs = async () => {
               ? false
               : true;
     }
+    prefs.theme = themeFromPrefs(legacyPrefs ?? storedPrefs);
+    prefs.checkDarkMode = isDarkTheme(prefs.theme, prefs.checkDarkMode);
 
-    if (prefs.checkOfficialRepos) {
+    const officialRepos = prefs.checkOfficialRepos;
+    if (officialRepos) {
         setStorage("pwcPrefs", { official: true });
         delete prefs.checkOfficialRepos;
-        setStorage("prefs", prefs);
     }
 
-    if (isNew) {
-        setStorage("prefs", prefs);
-    }
+    // Patch, computed against the prefs stored at write time: a new user's defaults, the
+    // theme migrated from checkDarkMode, checkDarkMode re-synced with the theme (e.g. the OS
+    // changed while no page was open), the checkOfficialRepos migration above.
+    updatePrefs((stored) => {
+        const patch = {};
+        if (isNew) {
+            for (const [key, value] of Object.entries(prefs)) {
+                if (!stored.hasOwnProperty(key)) patch[key] = value;
+            }
+        }
+        if (!themeChoices.includes(stored.theme)) {
+            patch.theme = prefs.theme;
+            patch.checkDarkMode = prefs.checkDarkMode;
+        } else if (
+            stored.theme === prefs.theme &&
+            stored.checkDarkMode !== prefs.checkDarkMode
+        ) {
+            patch.checkDarkMode = prefs.checkDarkMode;
+        }
+        if (officialRepos && stored.hasOwnProperty("checkOfficialRepos")) {
+            patch.checkOfficialRepos = undefined;
+        }
+        return patch;
+    });
+    followSystemTheme();
 
     return prefs;
 };

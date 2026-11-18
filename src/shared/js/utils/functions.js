@@ -1,6 +1,5 @@
 // ES Module imports
 import {
-    state,
     descendingSortKeys,
     svgActionsHoverTitles,
     consolHeaderStyle,
@@ -16,7 +15,7 @@ import { val, hasClass, findEl } from "@pmu/miniquery.js";
  * @returns {string} The escaped string
  */
 export const escapeHtml = (str) => {
-    if (typeof str !== "string") return String(str ?? "");
+    if (typeof str !== "string") str = String(str ?? "");
     return str
         .replace(/&/g, "&amp;")
         .replace(/</g, "&lt;")
@@ -383,15 +382,11 @@ export const downloadTextFile = (content, fileName, contentType) => {
     }
 
     var a = document.createElement("a");
-    if (contentType === "text/plain") {
-        content = content.replace(/\\n/g, "%0D%0A").replace(/"/g, "");
-        a.download = fileName;
-        a.href = "data:text/plain," + content;
-    } else {
-        var file = new Blob([content], { type: contentType });
-        a.href = URL.createObjectURL(file);
-        a.download = fileName;
-    }
+    // a Blob for every type: in a data: URL (text/plain before) the first "#" ended the
+    // file, "%xx" was decoded and quotes had to be removed ({\"o} became {\o})
+    var file = new Blob([content], { type: contentType });
+    a.href = URL.createObjectURL(file);
+    a.download = fileName;
     a.click();
 };
 
@@ -753,7 +748,7 @@ export const tablerSvg = (pathName, id, classNames) => {
         case "huggingface":
             return `<img
                 src="${chrome.runtime.getURL(
-                    state.prefs.checkDarkMode
+                    document.documentElement.dataset.theme === "dark"
                         ? "src/shared/hf-logo-transparent-darktheme.svg"
                         : "src/shared/hf-logo-transparent-lighttheme.svg",
                 )}"
@@ -820,32 +815,44 @@ export const parseTags = (el) => {
 };
 
 /**
- * Gets the current state of the 4 user inputs for a given paper and returns it as an object:
- * {note, codeLink, tags, favorite}
- * @param {string} id The paper to find the form values for, either in the popup or the memory
- * @param {boolean} isPopup Whether the paper to monitor is in the popup or the memory
+ * Gets the current state of the user inputs of a memory item's edit form and returns it as
+ * an object: {note, codeLink, tags, favorite}
+ * @param {string} id The paper to find the form values for, in the memory
  * @returns {object} {note, codeLink, tags, favorite}
  */
-export const getPaperEdits = (id, isPopup) => {
-    let note, tags, codeLink, favorite;
-
-    if (isPopup) {
-        note = val(`popup-form-note-textarea--${id}`);
-        codeLink = val(
-            document
-                .getElementById(`popup-form-note--${id}`)
-                .querySelector(".form-code-input"),
-        );
-        tags = parseTags(findEl({ element: `popup-item-tags--${id}` }));
-        favorite = findEl({ element: `checkFavorite--${id}` }).checked;
-    } else {
-        note = val(findEl({ paperId: id, memoryItemClass: "form-note-textarea" }));
-        codeLink = val(findEl({ paperId: id, memoryItemClass: "form-code-input" }));
-        tags = parseTags(findEl({ paperId: id, memoryItemClass: "memory-item-tags" }));
-        favorite = hasClass(`memory-container--${id}`, "favorite");
-    }
+export const getPaperEdits = (id) => {
+    const note = val(findEl({ paperId: id, memoryItemClass: "form-note-textarea" }));
+    const codeLink = val(findEl({ paperId: id, memoryItemClass: "form-code-input" }));
+    const tags = parseTags(findEl({ paperId: id, memoryItemClass: "memory-item-tags" }));
+    const favorite = hasClass(`memory-container--${id}`, "favorite");
 
     return { note, tags, codeLink, favorite };
+};
+
+/**
+ * Checks a code link typed by the user. An explicit scheme must be http or https (mailto:,
+ * javascript:… are refused); without one, "https://" is added. Any valid web host is
+ * accepted (names, IDN, IPv4/IPv6, localhost, ports); no spaces, no credentials.
+ * An empty value is valid (it removes the link).
+ * @param {string} value The raw input
+ * @returns {{url: string} | {error: string}} The normalized link to store, or an error
+ */
+export const normalizeCodeLink = (value) => {
+    const error = { error: "Enter a web address, for example github.com/org/repo" };
+    const raw = (value ?? "").trim();
+    if (!raw) return { url: "" };
+    if (/\s/.test(raw)) return error;
+    // "name:" is a scheme unless a port number follows (localhost:3000, host.org:8080/x)
+    const hasScheme = /^[a-z][a-z\d+.-]*:(?!\d)/i.test(raw);
+    if (hasScheme && !/^https?:\/\//i.test(raw)) return error;
+    try {
+        const url = new URL(hasScheme ? raw : `https://${raw}`);
+        if (!["http:", "https:"].includes(url.protocol)) return error;
+        if (!url.hostname || url.username || url.password) return error;
+        return { url: url.href };
+    } catch (e) {
+        return error;
+    }
 };
 
 /**

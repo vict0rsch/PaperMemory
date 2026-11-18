@@ -24,7 +24,8 @@ library to a private GitHub Gist.
 The system is a **client-side-only** application: there is no backend owned by the
 project. All persistence is in `chrome.storage.local`; all enrichment happens by
 calling third-party public APIs directly from the extension. The "server" role is
-played entirely by the **background service worker**, which brokers
+played entirely by the **background** (a service worker in the Chrome MV3 build, a
+background page in the Firefox MV2 build), which writes the Memory and brokers
 cross-origin fetches and privileged browser APIs on behalf of UI surfaces and
 content scripts.
 
@@ -35,11 +36,12 @@ surface without breaking the (deliberately load-order-sensitive) module graph.
 ## System Architecture
 
 PaperMemory is built with **[WXT](https://wxt.dev/)** (`wxt.config.js`), which
-compiles the `src/` tree into a Manifest V3 extension. WXT's role is purely
+compiles the `src/` tree into a Manifest V3 extension for Chrome and a Manifest V2 one for
+Firefox. WXT's role is purely
 build-time: it wires `src/entrypoints/*` into manifest-declared contexts (background
-worker, content script, and four HTML pages), applies the `@pm` / `@pmu` path
+worker, content script, and five HTML pages), applies the `@pm` / `@pmu` path
 aliases, and produces per-browser bundles. There is no runtime framework — the code
-is plain ES modules plus jQuery and Tom Select for DOM work.
+is plain ES modules (plus jQuery for the content script's injected page UI).
 
 ```mermaid
 graph TB
@@ -52,6 +54,7 @@ graph TB
             FullMem["fullMemory<br/>full-tab library view"]
             Options["options<br/>preferences + import/export"]
             BibM["bibMatcher<br/>batch BibTeX enrichment"]
+            Welcome["welcome<br/>first-run page"]
         end
         subgraph BG["Background Service Worker"]
             BGScript["background.js<br/>message router,<br/>privileged-API broker"]
@@ -64,7 +67,7 @@ graph TB
         Data["data.js<br/>storage, migration, validation"]
         Sources["sources/*<br/>plugin registry (BasePaperSource)"]
         Sync["sync.js<br/>GitHub Gist sync"]
-        Preprint["preprintMatching.js<br/>CrossRef / DBLP / S2 / Unpaywall"]
+        Preprint["preprintMatching.js<br/>CrossRef / DBLP / S2 / OpenAlex"]
         Urls["urls.js · parsers.js · files.js · functions.js"]
     end
 
@@ -72,7 +75,7 @@ graph TB
         Arxiv[(arXiv API)]
         OR[(OpenReview API)]
         Gist[(GitHub Gist)]
-        Match[(CrossRef / DBLP /<br/>Semantic Scholar /<br/>Unpaywall)]
+        Match[(CrossRef / DBLP /<br/>Semantic Scholar /<br/>OpenAlex)]
     end
 
     CScript -->|addOrUpdatePaper| Paper
@@ -85,6 +88,8 @@ graph TB
     Paper -->|pushToRemote| Sync
     CScript -.->|chrome.runtime message| BGScript
     Popup -.->|chrome.runtime message| BGScript
+    Popup -.->|popupOpened message| Welcome
+    BGScript -->|onInstalled install: opens tab| Welcome
     BGScript -->|brokered fetch| Arxiv
     BGScript -->|brokered fetch| OR
     BGScript --> Match
@@ -102,13 +107,17 @@ graph TB
 - **Message passing (`chrome.runtime`).** Used for two things: (1) the content
   script and popup ask the background worker to perform privileged or
   cross-origin operations they cannot do themselves; (2) the worker pushes
-  commands (keyboard shortcuts, tab-URL changes) into content scripts. The router is
+  commands (keyboard shortcuts, tab-URL changes) into content scripts; (3) the popup
+  announces itself (`{ type: "popupOpened" }`, fire-and-forget, `lastError` read so no
+  listener is fine) for the welcome page's shortcut test — the background ignores it. The router is
   the single `chrome.runtime.onMessage` listener in `background.js` (a `type`-keyed
   `if/else` chain). It rejects messages whose `sender.id !== chrome.runtime.id`.
-- **Storage as the integration bus.** All contexts read/write the same
-  `chrome.storage.local` `papers` object. `addOrUpdatePaper` re-reads `papers`
-  immediately before every write and merges, because multiple tabs may parse the
-  same paper concurrently (see _Concurrency_ below).
+- **Storage as the integration bus.** All contexts read the same
+  `chrome.storage.local` `papers` object, but only the background writes it: pages and
+  content scripts send it operations (`memoryOp`, `{ type: "memory" }`,
+  [`memoryQueue.js`](src/shared/js/utils/memoryQueue.js)), which it applies one at a time
+  to the Memory as stored now. `ignoreSources` follows the same pattern
+  (`{ type: "ignoreSources" }`, `ignoreSources.js`). See _Concurrency_ below.
 
 ### Why the background worker brokers fetches
 
@@ -204,7 +213,7 @@ The single domain entity. It is a plain object validated (and defaulted) by
 | `title`, `author`, `year`, `venue` | string        | Core metadata (`author` is `and`-separated)           |
 | `bibtex`, `key`, `doi`             | string        | Citation data; `key` is the BibTeX key                |
 | `pdfLink`, `md`                    | string        | PDF URL and a pre-rendered Markdown link              |
-| `codeLink`, `code`                 | string/object | Repo URL + raw PapersWithCode payload                 |
+| `codeLink`, `code`                 | string/object | Repo URL + legacy PapersWithCode payload (old papers) |
 | `note`                             | string        | Free-text + auto-generated "Accepted @ …" venue notes |
 | `tags`                             | string[]      | User + auto-tags (`autoTagPaper`)                     |
 | `favorite`, `favoriteDate`         | bool/string   | Starring                                              |
@@ -242,9 +251,9 @@ the worker, popup, content script, and full-memory page.
 The heart of the system. `addOrUpdatePaper({url, is, prefs, tab, ...})` is the single
 funnel through which papers enter the Memory. Its pipeline: resolve id
 (`parseIdFromUrl`) → update-visit-or-`makePaper` → fuzzy-dedup merge
-(`mergePapers`) → PapersWithCode code discovery (`tryPWCMatch`) → write to storage →
-`pushToRemote` → asynchronous preprint matching (`tryPreprintMatch`) to backfill
-venue/bibtex → second write. Caller-supplied `contentScriptCallbacks`
+(`mergePapers`) → save through the
+background queue (`memoryOp`: `visit` / `merge`) → `pushToRemote` → asynchronous preprint
+matching (`tryPreprintMatch`) to backfill venue/bibtex → second save (`patch`). Caller-supplied `contentScriptCallbacks`
 (`update`/`preprints`/`done`/`feedback`) let the content script render progressive
 feedback. `makePaper` dispatches to `src.parse()` and stamps `paper.source`.
 
@@ -263,34 +272,83 @@ brokered fetches (arXiv XML, OpenReview notes/forums, Google Scholar, the
 preprint-matching APIs), the toolbar badge state machine
 (`badgeOk/Wait/Error/Clear`), keyboard-command handlers (`manualParsing`,
 `downloadPdf`, `defaultAction`), the PDF-title rewriter (`chrome.tabs.onUpdated` +
-`chrome.scripting.executeScript`), and Gist push/pull. On popup disconnect it pushes
-sync.
+`chrome.scripting.executeScript`), Gist push/pull, and the single writer queues: the Memory
+(`runMemoryOp`, `memoryQueue.js`) and `ignoreSources` (`applyIgnoreSources`,
+`ignoreSources.js`, patches from the sources pickers). On popup disconnect it pushes
+sync. `runtime.onInstalled` (`openWelcomeOnInstall`, `src/background/welcome.js`) opens the
+welcome page in a tab when `reason === "install"` only (never on an update of the extension or
+the browser).
 
 ### `content_script.js` — page integration
 
 **Location:** [`src/content_scripts/content_script.js`](src/content_scripts/content_script.js)
 Injected at `document_start` on `<all_urls>`. On load it runs `initSyncAndState`,
 pings the worker (`hello`), then calls `isPaper(url)`; on a hit it invokes
-`addOrUpdatePaper` and renders the floating feedback notification. Also listens for
+`addOrUpdatePaper` and shows notices (bottom right: "Reading this paper…", "Saved to your
+Memory" + Undo, copied, "Couldn’t save this paper" + Try again). Also listens for
 worker-pushed commands and provides in-page actions (copy BibTeX/MD link, open
 abstract/PDF/ar5iv/HuggingFace, etc., shared with the popup's `handlers.js`).
+On arXiv abstract pages it adds one block at the end of arXiv's right column (status,
+Add to Memory, PDF, Markdown link, BibTeX, venue, Code), never resizing arXiv's columns.
+The block and the notices/tooltips each live in a **shadow root** styled by
+`content_ui.css` (+ `public/tokens.css` scoped to the notices' root, which carries
+`data-theme`), so page CSS and ours never mix; the block takes its colours from the page's
+text colour, the notices follow `prefs.theme`. Bundled Inter is loaded from the extension
+(`fonts/*.woff2`, web-accessible) as "PaperMemory Inter". Its writes (save, Undo, Add to
+Memory, Try again) are Memory operations sent to the background (`memoryOp`); one run at a
+time drives the block (callbacks of an older run are ignored). Whether the paper's PDF is
+downloaded, and showing it in its folder, is asked of the background (`{type: "stored-pdf",
+id, show?}` → `{found}`), which owns the `downloads` API. Its Download asks the background
+too (`download-pdf-to-store`, `store` = PaperMemoryStore/ or the downloads folder), which
+starts it and answers `{id, ok}` at once, remembers download id → tab id
+(`storage.session` `pdfDownloadTabs`, in memory where there is no session storage), and on
+`complete` / `interrupted` / erased (one top-level `downloads.onChanged` / `onErased`
+listener) sends the tab `{message: "pdfDownloadDone", id, ok}` and forgets it; the row then
+reads "Show in folder".
+The manifest-injected `content_script.css` only styles the venue badge of ar5iv /
+HuggingFace pages.
 
-### UI surfaces — `popup`, `fullMemory`, `options`, `bibMatcher`
+### UI surfaces — `popup`, `fullMemory`, `options`, `bibMatcher`, `welcome`
 
-**Location:** `src/popup/`, `src/fullMemory/`, `src/options/`, `src/bibMatcher/`
+**Location:** `src/popup/`, `src/fullMemory/`, `src/options/`, `src/bibMatcher/`, `src/welcome/`
 (thin `src/entrypoints/*/main.js` wrappers import the real logic + `debug.js`).
 
 - **popup** ([`popup/js/popup.js`](src/popup/js/popup.js), `memory.js`, `handlers.js`,
-  `templates.js`) — primary surface: searchable/sortable memory list, per-paper
-  actions, the preferences menu, and on-open parsing of the active tab. HTML is
+  `templates.js`, `tagfield.js`) — primary surface: the Memory list (search with
+  combinable `t:`/`c:`/`y:` filter pills, tag list, sort menu, in-row edit form), per-paper
+  actions, the preferences menu, and on-open parsing of the active tab. `tagfield.js` is
+  the tag input shared by the paper view and the row edit form (suggestions with counts,
+  near-duplicate hint). HTML is
   assembled from `popup/html/**` fragments via a custom `<!--=include -->` Vite
   plugin (`htmlIncludePlugin` in `wxt.config.js`).
-- **fullMemory** — the popup's memory view in a full browser tab.
+- **fullMemory** ([`fullMemory/fullMemory.js`](src/fullMemory/fullMemory.js)) — the Memory
+  in a tab: tag sidebar, sortable table, detail pane (a drawer from 900 to 1200px), bulk
+  select; below 900px the popup's rows. It reuses the popup's search, rows, edit form and
+  handlers (`memory.js` renders its table through `setListRenderer`). Writes go through the
+  background queue (bulk actions as one `batch`; bulk "Add tag" uses the `addTags`
+  operation, which reads the stored tags). Views follow `chrome.storage` changes
+  (`onPapersChange`), held while an edit form, a dialog or a bulk action is in progress;
+  no periodic reload. Sync status comes from `sync.js` as a `pm-sync-status` DOM event.
 - **options** — preferences, custom PDF-title function, auto-tag rules, JSON/BibTeX
-  import & export, sync configuration.
-- **bibMatcher** — a standalone tool: paste a `.bib` file, batch-match each entry
-  against DBLP/Semantic Scholar/CrossRef/Unpaywall/Google Scholar to fill in
-  published venues. Built directly on `preprintMatching.js`.
+  import & export, sync configuration. The sources picker (`ignoreSources`) is shared with the
+  welcome page: `src/shared/js/sourcePicker.js` + `src/shared/html/source-picker.html`. Its
+  changes are `{source: bool}` patches applied by the background, and every open picker
+  re-renders on `ignoreSources` storage changes.
+- **welcome** ([`welcome/welcome.js`](src/welcome/welcome.js)) — first-run page, opened by the
+  background on install and from Settings > General > Welcome page: what gets recorded
+  (static), a shortcut test (key caps from `chrome.commands.getAll()` `_execute_action`;
+  waiting → "It works" on the popup's `popupOpened` message; "No shortcut set" when empty; Open
+  browser shortcuts via `shortcuts.js` `openShortcutSettings`), the shared sources picker, and
+  the theme switch (`[data-set-theme]`, wired by the top bar, writes `prefs.theme`). It
+  writes nothing else.
+- **bibMatcher** — a standalone tool: paste, choose or drop a `.bib` file; each preprint
+  entry (any field mentioning `rxiv`: arXiv, bioRxiv, medRxiv, ChemRxiv) is looked up on
+  DBLP → Semantic Scholar → Google Scholar → CrossRef → OpenAlex (`preprintMatching.js`,
+  whose `isPreprintRecord` refuses a preprint's own record as its published version). Each
+  proposed change is shown as a BibTeX diff to accept or reject; Copy / Download (Blob)
+  replace only the accepted entries in the text as given (everything else, comments and
+  `@string` included, byte for byte), after a warning dialog when some are not reviewed. It
+  never writes the Memory or the prefs.
 
 ### `sync.js` — GitHub Gist synchronisation
 
@@ -320,19 +378,22 @@ the `downloads` API), `functions.js` (49 misc helpers incl. `miniHash`,
    `export.arxiv.org/api/query` (`fetch-arxiv-xml`), parses the Atom XML into a
    `paper`, builds a BibTeX entry.
 6. `initPaper` defaults fields, runs `autoTagPaper`, `validatePaper`.
-7. PapersWithCode code discovery → write `papers` to storage → `pushToRemote`.
-8. Async `tryPreprintMatch` queries CrossRef/DBLP/S2/Unpaywall to backfill the
-   published venue/bibtex; a second storage write persists it.
-9. Content-script callbacks render "Saved ✓ (+ repo …)" feedback; the worker may
-   rewrite the PDF tab title.
+7. The background saves it (`memoryOp`) → `pushToRemote`.
+8. Async `tryPreprintMatch` queries CrossRef/DBLP/S2/OpenAlex to backfill the
+   published venue/bibtex; a second save (`patch` operation) persists it.
+9. Content-script callbacks show the "Saved to your Memory" notice (Undo = a `delete`
+   operation) or, when parsing or the write failed, "Couldn’t save this paper" with Try
+   again; the worker may rewrite the PDF tab title.
 
 ## Concurrency & Invariants
 
-- **Concurrent writers.** Multiple tabs can parse the same paper simultaneously.
-  `addOrUpdatePaper` re-reads `papers` from storage immediately before each
-  `chrome.storage.local.set` and merges (`mergePapers`, `incrementCount`) rather
-  than blindly overwriting. Treat `state.papers` as a stale snapshot, never the
-  source of truth at write time. Likewise, `updateDuplicatedUrls` re-reads
+- **Concurrent writers.** Multiple tabs can parse or edit the same paper simultaneously.
+  The Memory has one writer, the background: every change is an operation (`patch`,
+  `visit`, `merge`, `retag`, `batch`, …) applied in one queue to the Memory as stored now
+  (`runMemoryOp`), never a snapshot written back; a whole-Memory `replace` can be refused
+  when `papersRevision` changed since it was prepared. Treat `state.papers` as a stale
+  snapshot, never the source of truth at write time. `ignoreSources` is written the same
+  way (`applyIgnoreSources`). `updateDuplicatedUrls` (not queued) re-reads
   `urlHashToId` before applying its change and writing the map back.
 - **Pattern mutual exclusion** across sources is a hard invariant (test-enforced).
 - **No top-level use of `functions.js` exports inside source modules** (TDZ — see
@@ -343,7 +404,7 @@ the `downloads` API), `functions.js` (49 misc helpers incl. `miniHash`,
 ## Technical Stack
 
 - **Build:** WXT 0.21 (Vite under the hood), Manifest V3 for Chrome and Manifest V2 for Firefox; a `build:manifestGenerated` hook renames `_execute_action` to `_execute_browser_action` for MV2.
-- **Runtime libs:** jQuery 4, Tom Select 2 (tag inputs), `@octokit/request` (Gist).
+- **Runtime libs:** jQuery 4 (content script: arXiv API title lookup for downloads), `@octokit/request` (Gist).
 - **Language:** plain ES modules (`"type": "module"`), JSDoc-typed, no TypeScript;
   `jsconfig.json` + `@pm`/`@pmu` path aliases.
 - **Tooling:** Prettier; Mocha + jsdom + [cloakbrowser](https://github.com/CloakHQ/cloakbrowser)
@@ -352,8 +413,7 @@ the `downloads` API), `functions.js` (49 misc helpers incl. `miniHash`,
   (`pretest`) then runs Mocha. The cloakbrowser binary (~200MB) auto-downloads
   to `~/.cloakbrowser` on first use; CI caches it via `actions/cache`.
 - **External APIs (no project backend):** arXiv, OpenReview, GitHub Gist, CrossRef,
-  DBLP, Semantic Scholar, Unpaywall, Google Scholar, (historically PapersWithCode —
-  its API is currently stubbed out in `background.js`).
+  DBLP, Semantic Scholar, OpenAlex, Google Scholar.
 - **Permissions:** `activeTab`, `storage`, `unlimitedStorage`, `downloads`(+`.open`),
   `scripting`, and `host_permissions: *://*/*`.
 - **Docs site:** MkDocs Material (`mkdocs.yml`, `docs/`) published to papermemory.org.
@@ -362,7 +422,7 @@ the `downloads` API), `functions.js` (49 misc helpers incl. `miniHash`,
 
 - **Stateless source classes over instances (Option A, per `base.js`).** Saved
   papers are plain objects (JSON in `chrome.storage`, runtime messages, and Gist
-  sync), and MV3 service workers terminate frequently — so there is no long-lived
+  sync), and the background (an MV3 service worker in Chrome) terminates frequently — so there is no long-lived
   "paper with methods" to hydrate, and prototype identity would be lost across
   every storage/message boundary anyway. Each source is therefore a stateless
   `BasePaperSource` subclass: dispatch is a name lookup in the registry followed by
@@ -373,10 +433,11 @@ the `downloads` API), `functions.js` (49 misc helpers incl. `miniHash`,
   derived from it — minimises the surface area and footguns of adding a source.
 - **Background worker as a fetch/permission broker** rather than a stateful server —
   keeps the architecture backend-free while sidestepping page CSP/CORS.
-- **Storage-as-bus with read-before-write merges** instead of a lock — pragmatic
-  concurrency control for an extension with no shared memory across realms.
+- **Storage-as-bus with a single background writer** (operations applied in one queue to
+  the stored data) instead of a lock — concurrency control for an extension with no shared
+  memory across realms.
 - **Gist-based sync with device `__syncId` tagging** — zero project infrastructure,
   user owns their data and credentials.
-- **Two-phase enrichment** (fast parse + store, then async venue/code backfill) so
+- **Two-phase enrichment** (fast parse + store, then async venue backfill) so
   the user gets immediate feedback while slow third-party lookups complete in the
   background.

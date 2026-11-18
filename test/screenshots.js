@@ -50,7 +50,7 @@ const nowStr = () => {
             waitUntil: "domcontentloaded",
         });
         await page.waitForTimeout(1e3);
-        await page.click("#memory-switch");
+        await page.click("#tab-memory");
         await page.waitForTimeout(1e3);
         await page.screenshot({
             path: `${path}/${now}-menu.png`,

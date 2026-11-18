@@ -48,6 +48,7 @@ export const state = {
     ignoreSources: {}, // (source => bool)
     lastRefresh: new Date(),
     memoryIsOpen: false,
+    memoryFilters: [], // Memory search pills, in order: [{type: "tag"|"code"|"year"|"fav", value}]
     memoryItemsPerPage: 10,
     menuIsOpen: false,
     modalIsOpen: false,
@@ -61,6 +62,7 @@ export const state = {
     showFavorites: false,
     sortedPapers: [], // [papers]
     sortKey: "",
+    sortReversed: false, // Memory sort direction: oldest first (or Z to A, fewest first)
     timerIdMap: new WeakMap(), // memory title tooltips
     titleHashToIds: {}, // (miniHash(title) -> [ids])
     titleFunction: null, // function(paper) => string
@@ -94,19 +96,6 @@ export const svgActionsHoverTitles = {
 };
 
 /**
- * Shared TomSelect defaults for PaperMemory tag fields.
- * - `maxItems` and `delimiter` enforce compact comma-separated tag storage.
- * - Plugins assume caret navigation and per-tag removal affordances.
- */
-export const tomSelectOptions = {
-    placeholder: "Tag paper",
-    maxItems: 5,
-    create: true,
-    delimiter: ",",
-    plugins: ["caret_position", "remove_button"],
-};
-
-/**
  * The array of keys in the menu, i.e. options the user can dis/enable in the menu
  */
 export const prefsCheckNames = [
@@ -129,7 +118,12 @@ export const prefsCheckNames = [
     "checkEnterLocalPdf",
     "checkWebsiteParsing",
     "checkPreferPdf",
+    "checkKeepMemorySearch",
 ];
+/**
+ * Values of prefs.theme (public/theme.js applies it to every extension page)
+ */
+export const themeChoices = ["system", "light", "dark"];
 /**
  * Menu check names which should not default to true but to false
  */
@@ -145,6 +139,7 @@ export const prefsCheckDefaultFalse = [
     "checkNoAuto",
     "checkMdYearVenue",
     "checkPreferPdf",
+    "checkKeepMemorySearch",
 ];
 /**
  * All keys to retrieve from the menu, the checkboxes + the custom pdf function
@@ -156,7 +151,7 @@ export const overrideDBLPVenues = {
 };
 
 export const consolHeaderStyle =
-    "@import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@300');font-family:'Fira Code' monospace;font-size:1rem;font-weight:300;display:inline-block;border:2px solid #A41716;border-radius: 4px;padding: 12px; margin: 12px;";
+    "font-family:ui-monospace,'SF Mono',Menlo,Consolas,monospace;font-size:1rem;font-weight:300;display:inline-block;border:2px solid #A41716;border-radius: 4px;padding: 12px; margin: 12px;";
 
 export const storeReadme = `
 /!\\ Warning: This folder has been created automatically by your PaperMemory browser extension.\n
@@ -165,6 +160,16 @@ export const storeReadme = `
 /!\\ If you change the default title function in the Advanced Options and do not include a paper's title in the file name, PaperMemory may not be able to open the file and will instead open the pdf url.\n
 /!\\ Unfortunately, PaperMemory cannot detect papers that have not been *downloaded there* so putting papers in this folder will not make them discoverable by the \`browser.downloads\` API PaperMemory uses.
 `;
+/**
+ * A URL to download storeReadme from: a blob URL where the context has one (pages, the
+ * Firefox background page), else a data: URL (URL.createObjectURL does not exist in the
+ * Chrome MV3 service worker)
+ * @returns {string}
+ */
+export const storeReadmeUrl = () =>
+    typeof URL.createObjectURL === "function"
+        ? URL.createObjectURL(new Blob([storeReadme], { type: "text/plain" }))
+        : `data:text/plain;charset=utf-8,${encodeURIComponent(storeReadme)}`;
 /**
  * English words to ignore when creating an arxiv paper's BibTex key.
  */
@@ -299,5 +304,7 @@ export const englishStopWords = new Set([
 ]);
 
 export const journalAbbreviations = {};
+/** miniHash(full journal name) -> ISO4 abbreviation (reverse of the iso4 table), see venues.js */
+export const journalShortNames = {};
 
 export { knownPaperPages, preprintSources } from "./sources/index.js";

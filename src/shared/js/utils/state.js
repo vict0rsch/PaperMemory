@@ -11,12 +11,14 @@ import {
     getStoredFiles,
     miniHash,
     getRandomInt,
+    escapeHtml,
 } from "@pmu/functions.js";
 import {
     state,
     descendingSortKeys,
     journalAbbreviations,
-    storeReadme,
+    journalShortNames,
+    storeReadmeUrl,
 } from "@pmu/config.js";
 import {
     getStorage,
@@ -59,6 +61,8 @@ export const initState = async ({ papers, isContentScript, print = true } = {}) 
     times.unshift(Date.now());
     print && consoleHeader(`PaperMemory Init ${String.fromCodePoint("0x2705")}`);
 
+    // papers given (a sync pull): migrated here only, the caller stores them
+    const fromStorage = !papers;
     if (!papers) {
         papers = (await getStorage("papers")) ?? {};
         print && log("Time to retrieve stored papers (s): " + duration(times));
@@ -73,10 +77,17 @@ export const initState = async ({ papers, isContentScript, print = true } = {}) 
     print && log("Time to backup papers (weekly) (s): " + duration(times));
     times.unshift(Date.now());
 
-    const migration = await migrateData(papers, state.dataVersion);
+    const migration = await migrateData(papers, state.dataVersion, fromStorage);
     print && log("Time to migrate data (s): " + duration(times));
     times.unshift(Date.now());
 
+    // not saved: the stored Memory is still at its old version; this page shows the
+    // migrated copy and the next opening (or the background) tries again
+    state.migrationError = migration.success
+        ? null
+        : String(migration.error ?? "failed");
+    if (!migration.success)
+        warn("The Memory's migration was not saved:", state.migrationError);
     papers = migration.papers;
     state.papers = papers;
 
@@ -259,6 +270,10 @@ export const readJournalAbbreviations = async () => {
     for (const [key, value] of Object.entries(newAbbreviations)) {
         journalAbbreviations[key] = value;
     }
+    for (const [abbreviation, full] of Object.entries(iso4)) {
+        const key = miniHash(full);
+        if (!(key in journalShortNames)) journalShortNames[key] = abbreviation;
+    }
 };
 
 export const downloadPaperPdf = async (paper) => {
@@ -276,7 +291,7 @@ export const downloadPaperPdf = async (paper) => {
         const storedFiles = await getStoredFiles();
         if (storedFiles.length === 0) {
             chrome.downloads.download({
-                url: URL.createObjectURL(new Blob([storeReadme])),
+                url: storeReadmeUrl(),
                 filename: "PaperMemoryStore/IMPORTANT_README.txt",
                 saveAs: false,
             });
@@ -324,11 +339,11 @@ export const getTagsOptions = (paper) => {
     return [...state.paperTags]
         .sort()
         .map((t, i) => {
-            let h = '<option value="' + t + '"'; // not string literal here for minification
+            let h = '<option value="' + escapeHtml(t) + '"'; // not string literal here for minification
             if (tags.has(t)) {
                 h += ' selected="selected" ';
             }
-            return h + `>${t}</option>`;
+            return h + `>${escapeHtml(t)}</option>`;
         })
         .join("");
 };

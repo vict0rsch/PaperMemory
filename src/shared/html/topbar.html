@@ -1,0 +1,29 @@
+<!-- Top bar of the extension pages (options now; fullMemory and bibMatcher next):
+     Memory · BibMatcher · Settings · Docs ↗ and the theme switch. Included by path
+     ../../shared/html/topbar.html (relative to src/popup/html); src/shared/js/topbar.js marks
+     the current page and wires the theme buttons. -->
+<header class="pm-hdr pm-topbar" id="pm-topbar">
+    <a class="pm-brand" href="/fullMemory.html"
+        ><i data-i="mark"></i><span>PaperMemory</span></a
+    >
+    <nav class="pm-tabs" aria-label="PaperMemory pages">
+        <a class="pm-tab" href="/fullMemory.html" data-page="fullMemory">Memory</a>
+        <a class="pm-tab" href="/bibMatcher.html" data-page="bibMatcher">BibMatcher</a>
+        <a class="pm-tab" href="/options.html" data-page="options">Settings</a>
+        <a
+            class="pm-tab"
+            href="https://papermemory.org"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="Docs (opens in a new tab)"
+            data-tip="Open the documentation on papermemory.org"
+            >Docs <i data-i="open" class="pm-i-sm"></i
+        ></a>
+    </nav>
+    <span class="pm-spacer"></span>
+    <div class="pm-seg pm-topbar-theme" role="group" aria-label="Theme">
+        <button type="button" data-set-theme="system">System</button>
+        <button type="button" data-set-theme="light">Light</button>
+        <button type="button" data-set-theme="dark">Dark</button>
+    </div>
+</header>

@@ -1,0 +1,1733 @@
+{
+ "_note": "Live answers recorded on 2026-11-15 (test/test-preprint-matching.js). Keys: request URLs.",
+ "responses": {
+  "https://sparql.dblp.org/sparql?query=PREFIX%20dblp%3A%20%3Chttps%3A%2F%2Fdblp.org%2Frdf%2Fschema%23%3E%0APREFIX%20ql%3A%20%3Chttp%3A%2F%2Fqlever.cs.uni-freiburg.de%2Fbuiltin-functions%2F%3E%0ASELECT%20%3Fp%20%3Ftitle%20%3Fvenue%20%3Fyear%20%3Ftype%20%3Fdoi%20WHERE%20%7B%0A%20%20%3Ftext%20ql%3Acontains-entity%20%3Ftitle%20.%20%3Ftext%20ql%3Acontains-word%20%22attention%20need%20all%22%20.%0A%20%20%3Fp%20dblp%3Atitle%20%3Ftitle%20.%20%3Fp%20dblp%3AyearOfPublication%20%3Fyear%20.%0A%20%20OPTIONAL%20%7B%20%3Fp%20dblp%3ApublishedIn%20%3Fvenue%20%7D%20OPTIONAL%20%7B%20%3Fp%20dblp%3AbibtexType%20%3Ftype%20%7D%20OPTIONAL%20%7B%20%3Fp%20dblp%3Adoi%20%3Fdoi%20%7D%0A%20%20FILTER(REPLACE(LCASE(STR(%3Ftitle))%2C%20%22%5B%5Ea-z0-9%5D%22%2C%20%22%22)%20%3D%20%22attentionisallyouneed%22)%0A%7D%20LIMIT%2020": {
+   "status": 200,
+   "body": {
+    "head": {
+     "vars": [
+      "p",
+      "title",
+      "venue",
+      "year",
+      "type",
+      "doi"
+     ]
+    },
+    "results": {
+     "bindings": [
+      {
+       "p": {
+        "type": "uri",
+        "value": "https://dblp.org/rec/conf/nips/VaswaniSPUJGKP17"
+       },
+       "title": {
+        "type": "literal",
+        "value": "Attention is All you Need."
+       },
+       "venue": {
+        "type": "literal",
+        "value": "NIPS"
+       },
+       "year": {
+        "datatype": "http://www.w3.org/2001/XMLSchema#gYear",
+        "type": "literal",
+        "value": "2017"
+       },
+       "type": {
+        "type": "uri",
+        "value": "http://purl.org/net/nknouf/ns/bibtex#Inproceedings"
+       }
+      },
+      {
+       "p": {
+        "type": "uri",
+        "value": "https://dblp.org/rec/journals/corr/VaswaniSPUJGKP17"
+       },
+       "title": {
+        "type": "literal",
+        "value": "Attention Is All You Need."
+       },
+       "venue": {
+        "type": "literal",
+        "value": "CoRR"
+       },
+       "year": {
+        "datatype": "http://www.w3.org/2001/XMLSchema#gYear",
+        "type": "literal",
+        "value": "2017"
+       },
+       "type": {
+        "type": "uri",
+        "value": "http://purl.org/net/nknouf/ns/bibtex#Article"
+       },
+       "doi": {
+        "type": "uri",
+        "value": "https://doi.org/10.48550/ARXIV.1706.03762"
+       }
+      }
+     ]
+    },
+    "meta": {
+     "query-time-ms": 123,
+     "result-size-total": 2
+    }
+   }
+  },
+  "https://sparql.dblp.org/sparql?query=PREFIX%20dblp%3A%20%3Chttps%3A%2F%2Fdblp.org%2Frdf%2Fschema%23%3E%0APREFIX%20ql%3A%20%3Chttp%3A%2F%2Fqlever.cs.uni-freiburg.de%2Fbuiltin-functions%2F%3E%0ASELECT%20%3Fp%20%3Ftitle%20%3Fvenue%20%3Fyear%20%3Ftype%20%3Fdoi%20WHERE%20%7B%0A%20%20%3Ftext%20ql%3Acontains-entity%20%3Ftitle%20.%20%3Ftext%20ql%3Acontains-word%20%22optimization%20stochastic%20method%22%20.%0A%20%20%3Fp%20dblp%3Atitle%20%3Ftitle%20.%20%3Fp%20dblp%3AyearOfPublication%20%3Fyear%20.%0A%20%20OPTIONAL%20%7B%20%3Fp%20dblp%3ApublishedIn%20%3Fvenue%20%7D%20OPTIONAL%20%7B%20%3Fp%20dblp%3AbibtexType%20%3Ftype%20%7D%20OPTIONAL%20%7B%20%3Fp%20dblp%3Adoi%20%3Fdoi%20%7D%0A%20%20FILTER(REPLACE(LCASE(STR(%3Ftitle))%2C%20%22%5B%5Ea-z0-9%5D%22%2C%20%22%22)%20%3D%20%22adamamethodforstochasticoptimization%22)%0A%7D%20LIMIT%2020": {
+   "status": 200,
+   "body": {
+    "head": {
+     "vars": [
+      "p",
+      "title",
+      "venue",
+      "year",
+      "type",
+      "doi"
+     ]
+    },
+    "results": {
+     "bindings": [
+      {
+       "p": {
+        "type": "uri",
+        "value": "https://dblp.org/rec/journals/corr/KingmaB14"
+       },
+       "title": {
+        "type": "literal",
+        "value": "Adam: A Method for Stochastic Optimization."
+       },
+       "venue": {
+        "type": "literal",
+        "value": "ICLR (Poster)"
+       },
+       "year": {
+        "datatype": "http://www.w3.org/2001/XMLSchema#gYear",
+        "type": "literal",
+        "value": "2015"
+       },
+       "type": {
+        "type": "uri",
+        "value": "http://purl.org/net/nknouf/ns/bibtex#Inproceedings"
+       },
+       "doi": {
+        "type": "uri",
+        "value": "https://doi.org/10.48550/ARXIV.1412.6980"
+       }
+      }
+     ]
+    },
+    "meta": {
+     "query-time-ms": 353,
+     "result-size-total": 1
+    }
+   }
+  },
+  "https://sparql.dblp.org/sparql?query=PREFIX%20dblp%3A%20%3Chttps%3A%2F%2Fdblp.org%2Frdf%2Fschema%23%3E%0APREFIX%20ql%3A%20%3Chttp%3A%2F%2Fqlever.cs.uni-freiburg.de%2Fbuiltin-functions%2F%3E%0ASELECT%20%3Fp%20%3Ftitle%20%3Fvenue%20%3Fyear%20%3Ftype%20%3Fdoi%20WHERE%20%7B%0A%20%20%3Ftext%20ql%3Acontains-entity%20%3Ftitle%20.%20%3Ftext%20ql%3Acontains-word%20%22comprehensive%20integration%20single%22%20.%0A%20%20%3Fp%20dblp%3Atitle%20%3Ftitle%20.%20%3Fp%20dblp%3AyearOfPublication%20%3Fyear%20.%0A%20%20OPTIONAL%20%7B%20%3Fp%20dblp%3ApublishedIn%20%3Fvenue%20%7D%20OPTIONAL%20%7B%20%3Fp%20dblp%3AbibtexType%20%3Ftype%20%7D%20OPTIONAL%20%7B%20%3Fp%20dblp%3Adoi%20%3Fdoi%20%7D%0A%20%20FILTER(REPLACE(LCASE(STR(%3Ftitle))%2C%20%22%5B%5Ea-z0-9%5D%22%2C%20%22%22)%20%3D%20%22comprehensiveintegrationofsinglecelldata%22)%0A%7D%20LIMIT%2020": {
+   "status": 200,
+   "body": {
+    "head": {
+     "vars": [
+      "p",
+      "title",
+      "venue",
+      "year",
+      "type",
+      "doi"
+     ]
+    },
+    "results": {
+     "bindings": []
+    },
+    "meta": {
+     "query-time-ms": 451,
+     "result-size-total": 0
+    }
+   }
+  },
+  "https://api.openalex.org/works?filter=title.search:An%20Image%20is%20Worth%2016x16%20Words%3A%20Transformers%20for%20Image%20Recognition%20at%20Scale&per_page=10&select=id,doi,display_name,publication_year,type,primary_location": {
+   "status": 200,
+   "body": {
+    "meta": {
+     "notice": "No API key, so this request shares one free daily budget ($0.10) with everyone on your network's IP address. Get a free key with its own $1/day at https://openalex.org/settings/api and add api_key=YOUR_KEY to your requests. An AI agent can get one for its user in one call: POST https://api.openalex.org/api-keys with {\"email\": \"<your user's email>\"}; we email them a link, and the key works once they click it. Docs for agents: https://help.openalex.org/llms.txt",
+     "count": 2,
+     "db_response_time_ms": 11,
+     "page": 1,
+     "per_page": 10,
+     "groups_count": null,
+     "x_query": {
+      "oql": "get works with (An Image is Worth 16x16 Words: Transformers for Image Recognition at Scale) in the title",
+      "x_new_oql": "get works with (An Image is Worth 16x16 Words: Transformers for Image Recognition at Scale) in the title",
+      "oqo": {
+       "get_rows": "works",
+       "filter_rows": [
+        {
+         "column_id": "display_name.search",
+         "value": "An Image is Worth 16x16 Words: Transformers for Image Recognition at Scale",
+         "operator": "has"
+        }
+       ]
+      },
+      "url": "/works?filter=display_name.search:An Image is Worth 16x16 Words: Transformers for Image Recognition at Scale&per_page=10",
+      "order": "best matches first",
+      "order_default": true
+     },
+     "cost_usd": 0.001
+    },
+    "results": [
+     {
+      "id": "https://openalex.org/W3094502228",
+      "doi": "https://doi.org/10.48550/arxiv.2010.11929",
+      "display_name": "An Image is Worth 16x16 Words: Transformers for Image Recognition at Scale",
+      "publication_year": 2020,
+      "type": "preprint",
+      "primary_location": {
+       "id": "pmh:oai:arXiv.org:2010.11929",
+       "doi": null,
+       "is_oa": true,
+       "landing_page_url": "http://arxiv.org/abs/2010.11929",
+       "pdf_url": "https://arxiv.org/pdf/2010.11929",
+       "source": {
+        "id": "https://openalex.org/S4306400194",
+        "display_name": "arXiv (Cornell University)",
+        "issn_l": "2331-8422",
+        "issn": [
+         "2331-8422"
+        ],
+        "is_oa": true,
+        "is_in_doaj": false,
+        "is_core": false,
+        "listed_in": [],
+        "host_organization": "https://openalex.org/I205783295",
+        "host_organization_name": "Cornell University",
+        "host_organization_lineage": [
+         "https://openalex.org/I205783295"
+        ],
+        "host_organization_lineage_names": [],
+        "type": "repository"
+       },
+       "license": null,
+       "license_id": null,
+       "version": "submittedVersion",
+       "is_accepted": false,
+       "is_published": false,
+       "raw_source_name": null,
+       "raw_type": "text"
+      }
+     },
+     {
+      "id": "https://openalex.org/W3119786062",
+      "doi": null,
+      "display_name": "An Image is Worth 16x16 Words: Transformers for Image Recognition at Scale",
+      "publication_year": 2021,
+      "type": "conference-paper",
+      "primary_location": {
+       "id": "mag:3119786062",
+       "doi": null,
+       "is_oa": false,
+       "landing_page_url": "https://openreview.net/pdf?id=YicbFdNTTy",
+       "pdf_url": null,
+       "source": {
+        "id": "https://openalex.org/S4306419637",
+        "display_name": "International Conference on Learning Representations",
+        "issn_l": null,
+        "issn": null,
+        "is_oa": false,
+        "is_in_doaj": false,
+        "is_core": false,
+        "listed_in": [],
+        "host_organization": null,
+        "host_organization_name": null,
+        "host_organization_lineage": [],
+        "host_organization_lineage_names": [],
+        "type": "conference"
+       },
+       "license": null,
+       "license_id": null,
+       "version": null,
+       "is_accepted": false,
+       "is_published": false,
+       "raw_source_name": "International Conference on Learning Representations",
+       "raw_type": null
+      }
+     }
+    ],
+    "group_by": []
+   }
+  },
+  "https://api.openalex.org/works?filter=title.search:Comprehensive%20integration%20of%20single%20cell%20data&per_page=10&select=id,doi,display_name,publication_year,type,primary_location": {
+   "status": 200,
+   "body": {
+    "meta": {
+     "notice": "No API key, so this request shares one free daily budget ($0.10) with everyone on your network's IP address. Get a free key with its own $1/day at https://openalex.org/settings/api and add api_key=YOUR_KEY to your requests. An AI agent can get one for its user in one call: POST https://api.openalex.org/api-keys with {\"email\": \"<your user's email>\"}; we email them a link, and the key works once they click it. Docs for agents: https://help.openalex.org/llms.txt",
+     "count": 21,
+     "db_response_time_ms": 13,
+     "page": 1,
+     "per_page": 10,
+     "groups_count": null,
+     "x_query": {
+      "oql": "get works with (Comprehensive integration of single cell data) in the title",
+      "x_new_oql": "get works with (Comprehensive integration of single cell data) in the title",
+      "oqo": {
+       "get_rows": "works",
+       "filter_rows": [
+        {
+         "column_id": "display_name.search",
+         "value": "Comprehensive integration of single cell data",
+         "operator": "has"
+        }
+       ]
+      },
+      "url": "/works?filter=display_name.search:Comprehensive integration of single cell data&per_page=10",
+      "order": "best matches first",
+      "order_default": true
+     },
+     "cost_usd": 0.001
+    },
+    "results": [
+     {
+      "id": "https://openalex.org/W2949177718",
+      "doi": "https://doi.org/10.1016/j.cell.2019.05.031",
+      "display_name": "Comprehensive Integration of Single-Cell Data",
+      "publication_year": 2019,
+      "type": "article",
+      "primary_location": {
+       "id": "doi:10.1016/j.cell.2019.05.031",
+       "doi": "https://doi.org/10.1016/j.cell.2019.05.031",
+       "is_oa": true,
+       "landing_page_url": "https://doi.org/10.1016/j.cell.2019.05.031",
+       "pdf_url": "http://www.cell.com/article/S0092867419305598/pdf",
+       "source": {
+        "id": "https://openalex.org/S110447773",
+        "display_name": "Cell",
+        "issn_l": "0092-8674",
+        "issn": [
+         "0092-8674",
+         "1097-4172"
+        ],
+        "is_oa": false,
+        "is_in_doaj": false,
+        "is_core": true,
+        "listed_in": [
+         "anvur-scientific",
+         "cwts-core",
+         "dongbi-a",
+         "doyens",
+         "jufo-3",
+         "ki-jl-3",
+         "medline",
+         "norway-2",
+         "poland-200",
+         "russia-white-list-1",
+         "vabb-shw"
+        ],
+        "host_organization": "https://openalex.org/P4310315673",
+        "host_organization_name": "Cell Press",
+        "host_organization_lineage": [
+         "https://openalex.org/P4310315673",
+         "https://openalex.org/P4310320990"
+        ],
+        "host_organization_lineage_names": [
+         "Cell Press",
+         "Elsevier BV"
+        ],
+        "type": "journal"
+       },
+       "license": null,
+       "license_id": null,
+       "version": "publishedVersion",
+       "is_accepted": true,
+       "is_published": true,
+       "raw_source_name": "Cell",
+       "raw_type": "journal-article"
+      }
+     },
+     {
+      "id": "https://openalex.org/W3027051073",
+      "doi": "https://doi.org/10.1186/s13059-020-02015-1",
+      "display_name": "MOFA+: a statistical framework for comprehensive integration of multi-modal single-cell data",
+      "publication_year": 2020,
+      "type": "article",
+      "primary_location": {
+       "id": "doi:10.1186/s13059-020-02015-1",
+       "doi": "https://doi.org/10.1186/s13059-020-02015-1",
+       "is_oa": true,
+       "landing_page_url": "https://doi.org/10.1186/s13059-020-02015-1",
+       "pdf_url": "https://genomebiology.biomedcentral.com/track/pdf/10.1186/s13059-020-02015-1",
+       "source": {
+        "id": "https://openalex.org/S81160022",
+        "display_name": "Genome biology",
+        "issn_l": "1465-6906",
+        "issn": [
+         "1465-6906",
+         "1465-6914",
+         "1474-7596",
+         "1474-760X"
+        ],
+        "is_oa": true,
+        "is_in_doaj": true,
+        "is_core": true,
+        "listed_in": [
+         "anvur-scientific",
+         "cwts-core",
+         "doaj",
+         "dongbi-a",
+         "doyens",
+         "jufo-3",
+         "ki-jl-3",
+         "medline",
+         "norway-2",
+         "oarl",
+         "poland-200",
+         "russia-white-list-1",
+         "vabb-shw"
+        ],
+        "host_organization": "https://openalex.org/P4310320256",
+        "host_organization_name": "BioMed Central",
+        "host_organization_lineage": [
+         "https://openalex.org/P4310320256",
+         "https://openalex.org/P4310319965"
+        ],
+        "host_organization_lineage_names": [
+         "BioMed Central",
+         "Springer Nature"
+        ],
+        "type": "journal"
+       },
+       "license": "cc-by",
+       "license_id": "https://openalex.org/licenses/cc-by",
+       "version": "publishedVersion",
+       "is_accepted": true,
+       "is_published": true,
+       "raw_source_name": "Genome Biology",
+       "raw_type": "journal-article"
+      }
+     },
+     {
+      "id": "https://openalex.org/W7225388616",
+      "doi": "https://doi.org/10.5281/zenodo.21983918",
+      "display_name": "Comprehensive evaluation of single-cell data integration benchmarking - Single-cell integration zoo",
+      "publication_year": 2026,
+      "type": "dataset",
+      "primary_location": {
+       "id": "doi:10.5281/zenodo.21983918",
+       "doi": "https://doi.org/10.5281/zenodo.21983918",
+       "is_oa": true,
+       "landing_page_url": "https://doi.org/10.5281/zenodo.21983918",
+       "pdf_url": null,
+       "source": {
+        "id": "https://openalex.org/S4306400562",
+        "display_name": "Zenodo (CERN European Organization for Nuclear Research)",
+        "issn_l": null,
+        "issn": null,
+        "is_oa": true,
+        "is_in_doaj": false,
+        "is_core": false,
+        "listed_in": [],
+        "host_organization": "https://openalex.org/I67311998",
+        "host_organization_name": "European Organization for Nuclear Research",
+        "host_organization_lineage": [
+         "https://openalex.org/I67311998"
+        ],
+        "host_organization_lineage_names": [],
+        "type": "repository"
+       },
+       "license": "cc-by",
+       "license_id": "https://openalex.org/licenses/cc-by",
+       "version": null,
+       "is_accepted": false,
+       "is_published": false,
+       "raw_source_name": null,
+       "raw_type": "Dataset"
+      }
+     },
+     {
+      "id": "https://openalex.org/W7225314898",
+      "doi": "https://doi.org/10.6084/m9.figshare.34442223",
+      "display_name": "Comprehensive evaluation of single-cell data integration - Datasets",
+      "publication_year": 2026,
+      "type": "dataset",
+      "primary_location": {
+       "id": "doi:10.6084/m9.figshare.34442223",
+       "doi": "https://doi.org/10.6084/m9.figshare.34442223",
+       "is_oa": true,
+       "landing_page_url": "https://doi.org/10.6084/m9.figshare.34442223",
+       "pdf_url": null,
+       "source": {
+        "id": "https://openalex.org/S4377196282",
+        "display_name": "Figshare",
+        "issn_l": null,
+        "issn": null,
+        "is_oa": false,
+        "is_in_doaj": false,
+        "is_core": false,
+        "listed_in": [],
+        "host_organization": "https://openalex.org/I4210132348",
+        "host_organization_name": "Figshare (United Kingdom)",
+        "host_organization_lineage": [
+         "https://openalex.org/I4210132348"
+        ],
+        "host_organization_lineage_names": [],
+        "type": "repository"
+       },
+       "license": "cc-by",
+       "license_id": "https://openalex.org/licenses/cc-by",
+       "version": null,
+       "is_accepted": false,
+       "is_published": false,
+       "raw_source_name": null,
+       "raw_type": "Dataset"
+      }
+     },
+     {
+      "id": "https://openalex.org/W7225396456",
+      "doi": "https://doi.org/10.5281/zenodo.23712758",
+      "display_name": "Comprehensive evaluation of single-cell data integration benchmarking - Code",
+      "publication_year": 2026,
+      "type": "software",
+      "primary_location": {
+       "id": "doi:10.5281/zenodo.23712758",
+       "doi": "https://doi.org/10.5281/zenodo.23712758",
+       "is_oa": true,
+       "landing_page_url": "https://doi.org/10.5281/zenodo.23712758",
+       "pdf_url": null,
+       "source": {
+        "id": "https://openalex.org/S4306400562",
+        "display_name": "Zenodo (CERN European Organization for Nuclear Research)",
+        "issn_l": null,
+        "issn": null,
+        "is_oa": true,
+        "is_in_doaj": false,
+        "is_core": false,
+        "listed_in": [],
+        "host_organization": "https://openalex.org/I67311998",
+        "host_organization_name": "European Organization for Nuclear Research",
+        "host_organization_lineage": [
+         "https://openalex.org/I67311998"
+        ],
+        "host_organization_lineage_names": [],
+        "type": "repository"
+       },
+       "license": "cc-by",
+       "license_id": "https://openalex.org/licenses/cc-by",
+       "version": null,
+       "is_accepted": false,
+       "is_published": false,
+       "raw_source_name": null,
+       "raw_type": "Software"
+      }
+     },
+     {
+      "id": "https://openalex.org/W7213587783",
+      "doi": "https://doi.org/10.1093/nar/gkag909",
+      "display_name": "iPscDB: a comprehensive platform for plant single-cell transcriptomic data integration and analysis",
+      "publication_year": 2026,
+      "type": "article",
+      "primary_location": {
+       "id": "doi:10.1093/nar/gkag909",
+       "doi": "https://doi.org/10.1093/nar/gkag909",
+       "is_oa": true,
+       "landing_page_url": "https://doi.org/10.1093/nar/gkag909",
+       "pdf_url": null,
+       "source": {
+        "id": "https://openalex.org/S134668137",
+        "display_name": "Nucleic Acids Research",
+        "issn_l": "0305-1048",
+        "issn": [
+         "0305-1048",
+         "1362-4954",
+         "1362-4962"
+        ],
+        "is_oa": true,
+        "is_in_doaj": true,
+        "is_core": true,
+        "listed_in": [
+         "anvur-scientific",
+         "cwts-core",
+         "doaj",
+         "dongbi-a",
+         "doyens",
+         "jufo-3",
+         "ki-jl-3",
+         "medline",
+         "norway-2",
+         "oarl",
+         "poland-200",
+         "russia-white-list-1",
+         "vabb-shw"
+        ],
+        "host_organization": "https://openalex.org/P4310311648",
+        "host_organization_name": "Oxford University Press",
+        "host_organization_lineage": [
+         "https://openalex.org/P4310311648",
+         "https://openalex.org/P4310311647"
+        ],
+        "host_organization_lineage_names": [
+         "Oxford University Press",
+         "University of Oxford"
+        ],
+        "type": "journal"
+       },
+       "license": "cc-by-nc",
+       "license_id": "https://openalex.org/licenses/cc-by-nc",
+       "version": "publishedVersion",
+       "is_accepted": true,
+       "is_published": true,
+       "raw_source_name": "Nucleic Acids Research",
+       "raw_type": "journal-article"
+      }
+     },
+     {
+      "id": "https://openalex.org/W4390340990",
+      "doi": "https://doi.org/10.1161/atvbaha.123.320030",
+      "display_name": "Comprehensive Integration of Multiple Single-Cell Transcriptomic Data Sets Defines Distinct Cell Populations and Their Phenotypic Changes in Murine Atherosclerosis",
+      "publication_year": 2023,
+      "type": "review",
+      "primary_location": {
+       "id": "doi:10.1161/atvbaha.123.320030",
+       "doi": "https://doi.org/10.1161/atvbaha.123.320030",
+       "is_oa": false,
+       "landing_page_url": "https://doi.org/10.1161/atvbaha.123.320030",
+       "pdf_url": null,
+       "source": {
+        "id": "https://openalex.org/S3485792",
+        "display_name": "Arteriosclerosis Thrombosis and Vascular Biology",
+        "issn_l": "1079-5642",
+        "issn": [
+         "1079-5642",
+         "1524-4636"
+        ],
+        "is_oa": false,
+        "is_in_doaj": false,
+        "is_core": true,
+        "listed_in": [
+         "cwts-core",
+         "dongbi-b",
+         "doyens",
+         "jufo-2",
+         "ki-jl-2",
+         "medline",
+         "norway-1",
+         "poland-140",
+         "russia-white-list-1"
+        ],
+        "host_organization": "https://openalex.org/P4310315671",
+        "host_organization_name": "Lippincott Williams & Wilkins",
+        "host_organization_lineage": [
+         "https://openalex.org/P4310315671",
+         "https://openalex.org/P4310318547"
+        ],
+        "host_organization_lineage_names": [
+         "Lippincott Williams & Wilkins",
+         "Wolters Kluwer"
+        ],
+        "type": "journal"
+       },
+       "license": null,
+       "license_id": null,
+       "version": "publishedVersion",
+       "is_accepted": true,
+       "is_published": true,
+       "raw_source_name": "Arteriosclerosis, Thrombosis, and Vascular Biology",
+       "raw_type": "journal-article"
+      }
+     },
+     {
+      "id": "https://openalex.org/W7115031541",
+      "doi": "https://doi.org/10.82308/26636",
+      "display_name": "Graph-based cell alignment methods for comprehensive single-cell multiomics data integration and harmonization",
+      "publication_year": 2025,
+      "type": "dissertation",
+      "primary_location": {
+       "id": "pmh:doi:10.82308/26636",
+       "doi": null,
+       "is_oa": false,
+       "landing_page_url": "https://hdl.handle.net/20.500.14905/99083",
+       "pdf_url": null,
+       "source": null,
+       "license": null,
+       "license_id": null,
+       "version": "submittedVersion",
+       "is_accepted": false,
+       "is_published": false,
+       "raw_source_name": null,
+       "raw_type": "https://vocabularies.coar-repositories.org/resource_types/c_46ec/"
+      }
+     },
+     {
+      "id": "https://openalex.org/W4415445372",
+      "doi": "https://doi.org/10.1109/tcbbio.2025.3624040",
+      "display_name": "scMID: A Deep Multi-Omics Integration Framework for Comprehensive Single-Cell Data Analysis",
+      "publication_year": 2025,
+      "type": "article",
+      "primary_location": {
+       "id": "doi:10.1109/tcbbio.2025.3624040",
+       "doi": "https://doi.org/10.1109/tcbbio.2025.3624040",
+       "is_oa": false,
+       "landing_page_url": "https://doi.org/10.1109/tcbbio.2025.3624040",
+       "pdf_url": null,
+       "source": {
+        "id": "https://openalex.org/S36029991",
+        "display_name": "IEEE Transactions on Computational Biology and Bioinformatics",
+        "issn_l": "1545-5963",
+        "issn": [
+         "1545-5963",
+         "1557-9964",
+         "2374-0043",
+         "2998-4165"
+        ],
+        "is_oa": false,
+        "is_in_doaj": false,
+        "is_core": true,
+        "listed_in": [
+         "anvur-scientific",
+         "ccf-b",
+         "cwts-core",
+         "dongbi-b",
+         "doyens",
+         "jufo-2",
+         "medline",
+         "norway-1",
+         "poland-70",
+         "russia-white-list-1",
+         "vabb-shw"
+        ],
+        "host_organization": "https://openalex.org/P4310319808",
+        "host_organization_name": "Institute of Electrical and Electronics Engineers",
+        "host_organization_lineage": [
+         "https://openalex.org/P4310319808"
+        ],
+        "host_organization_lineage_names": [
+         "Institute of Electrical and Electronics Engineers"
+        ],
+        "type": "journal"
+       },
+       "license": null,
+       "license_id": null,
+       "version": "publishedVersion",
+       "is_accepted": true,
+       "is_published": true,
+       "raw_source_name": "IEEE Transactions on Computational Biology and Bioinformatics",
+       "raw_type": "journal-article"
+      }
+     },
+     {
+      "id": "https://openalex.org/W4393858441",
+      "doi": "https://doi.org/10.1016/j.pld.2024.03.008",
+      "display_name": "Comprehensive integration of single-cell transcriptomic data illuminates the regulatory network architecture of plant cell fate specification",
+      "publication_year": 2024,
+      "type": "article",
+      "primary_location": {
+       "id": "doi:10.1016/j.pld.2024.03.008",
+       "doi": "https://doi.org/10.1016/j.pld.2024.03.008",
+       "is_oa": true,
+       "landing_page_url": "https://doi.org/10.1016/j.pld.2024.03.008",
+       "pdf_url": null,
+       "source": {
+        "id": "https://openalex.org/S123216674",
+        "display_name": "Acta Botanica Yunnanica",
+        "issn_l": "0253-2700",
+        "issn": [
+         "0253-2700",
+         "2095-0845",
+         "2096-2703",
+         "2468-2659"
+        ],
+        "is_oa": true,
+        "is_in_doaj": true,
+        "is_core": false,
+        "listed_in": [
+         "doaj",
+         "dongbi-b",
+         "oarl",
+         "poland-20",
+         "russia-white-list-1"
+        ],
+        "host_organization": "https://openalex.org/P4310319982",
+        "host_organization_name": "Science Press",
+        "host_organization_lineage": [
+         "https://openalex.org/P4310319982"
+        ],
+        "host_organization_lineage_names": [
+         "Science Press"
+        ],
+        "type": "journal"
+       },
+       "license": "cc-by-nc-nd",
+       "license_id": "https://openalex.org/licenses/cc-by-nc-nd",
+       "version": "publishedVersion",
+       "is_accepted": true,
+       "is_published": true,
+       "raw_source_name": "Plant Diversity",
+       "raw_type": "journal-article"
+      }
+     }
+    ],
+    "group_by": []
+   }
+  },
+  "https://api.openalex.org/works?filter=title.search:Attention%20Is%20All%20You%20Need&per_page=10&select=id,doi,display_name,publication_year,type,primary_location": {
+   "status": 200,
+   "body": {
+    "meta": {
+     "notice": "No API key, so this request shares one free daily budget ($0.10) with everyone on your network's IP address. Get a free key with its own $1/day at https://openalex.org/settings/api and add api_key=YOUR_KEY to your requests. An AI agent can get one for its user in one call: POST https://api.openalex.org/api-keys with {\"email\": \"<your user's email>\"}; we email them a link, and the key works once they click it. Docs for agents: https://help.openalex.org/llms.txt",
+     "count": 182,
+     "db_response_time_ms": 12,
+     "page": 1,
+     "per_page": 10,
+     "groups_count": null,
+     "x_query": {
+      "oql": "get works with (Attention Is All You Need) in the title",
+      "x_new_oql": "get works with (Attention Is All You Need) in the title",
+      "oqo": {
+       "get_rows": "works",
+       "filter_rows": [
+        {
+         "column_id": "display_name.search",
+         "value": "Attention Is All You Need",
+         "operator": "has"
+        }
+       ]
+      },
+      "url": "/works?filter=display_name.search:Attention Is All You Need&per_page=10",
+      "order": "best matches first",
+      "order_default": true
+     },
+     "cost_usd": 0.001
+    },
+    "results": [
+     {
+      "id": "https://openalex.org/W2626778328",
+      "doi": "https://doi.org/10.48550/arxiv.1706.03762",
+      "display_name": "Attention Is All You Need",
+      "publication_year": 2017,
+      "type": "preprint",
+      "primary_location": {
+       "id": "pmh:oai:arXiv.org:1706.03762",
+       "doi": null,
+       "is_oa": true,
+       "landing_page_url": "http://arxiv.org/abs/1706.03762",
+       "pdf_url": "https://arxiv.org/pdf/1706.03762",
+       "source": {
+        "id": "https://openalex.org/S4306400194",
+        "display_name": "arXiv (Cornell University)",
+        "issn_l": "2331-8422",
+        "issn": [
+         "2331-8422"
+        ],
+        "is_oa": true,
+        "is_in_doaj": false,
+        "is_core": false,
+        "listed_in": [],
+        "host_organization": "https://openalex.org/I205783295",
+        "host_organization_name": "Cornell University",
+        "host_organization_lineage": [
+         "https://openalex.org/I205783295"
+        ],
+        "host_organization_lineage_names": [],
+        "type": "repository"
+       },
+       "license": null,
+       "license_id": null,
+       "version": "submittedVersion",
+       "is_accepted": false,
+       "is_published": false,
+       "raw_source_name": null,
+       "raw_type": "text"
+      }
+     },
+     {
+      "id": "https://openalex.org/W3163652268",
+      "doi": "https://doi.org/10.1109/icassp39728.2021.9413901",
+      "display_name": "Attention Is All You Need In Speech Separation",
+      "publication_year": 2021,
+      "type": "conference-paper",
+      "primary_location": {
+       "id": "doi:10.1109/icassp39728.2021.9413901",
+       "doi": "https://doi.org/10.1109/icassp39728.2021.9413901",
+       "is_oa": false,
+       "landing_page_url": "https://doi.org/10.1109/icassp39728.2021.9413901",
+       "pdf_url": null,
+       "source": {
+        "id": "https://openalex.org/S4363607879",
+        "display_name": "IEEE International Conference on Acoustics Speech and Signal Processing",
+        "issn_l": "1520-6149",
+        "issn": [
+         "1520-6149",
+         "2379-190X"
+        ],
+        "is_oa": false,
+        "is_in_doaj": false,
+        "is_core": false,
+        "listed_in": [
+         "jufo-2",
+         "norway-1"
+        ],
+        "host_organization": "https://openalex.org/P4310319808",
+        "host_organization_name": "Institute of Electrical and Electronics Engineers",
+        "host_organization_lineage": [
+         "https://openalex.org/P4310319808"
+        ],
+        "host_organization_lineage_names": [
+         "Institute of Electrical and Electronics Engineers"
+        ],
+        "type": "conference"
+       },
+       "license": null,
+       "license_id": null,
+       "version": "publishedVersion",
+       "is_accepted": true,
+       "is_published": true,
+       "raw_source_name": "ICASSP 2021 - 2021 IEEE International Conference on Acoustics, Speech and Signal Processing (ICASSP)",
+       "raw_type": "proceedings-article"
+      }
+     },
+     {
+      "id": "https://openalex.org/W2997150500",
+      "doi": "https://doi.org/10.1609/aaai.v34i07.6693",
+      "display_name": "Channel Attention Is All You Need for Video Frame Interpolation",
+      "publication_year": 2020,
+      "type": "conference-paper",
+      "primary_location": {
+       "id": "doi:10.1609/aaai.v34i07.6693",
+       "doi": "https://doi.org/10.1609/aaai.v34i07.6693",
+       "is_oa": true,
+       "landing_page_url": "https://doi.org/10.1609/aaai.v34i07.6693",
+       "pdf_url": null,
+       "source": {
+        "id": "https://openalex.org/S4210191458",
+        "display_name": "Proceedings of the AAAI Conference on Artificial Intelligence",
+        "issn_l": "2159-5399",
+        "issn": [
+         "2159-5399",
+         "2374-3468"
+        ],
+        "is_oa": true,
+        "is_in_doaj": false,
+        "is_core": false,
+        "listed_in": [
+         "jufo-2",
+         "norway-1"
+        ],
+        "host_organization": "https://openalex.org/P4310320058",
+        "host_organization_name": "Association for the Advancement of Artificial Intelligence",
+        "host_organization_lineage": [
+         "https://openalex.org/P4310320058"
+        ],
+        "host_organization_lineage_names": [
+         "Association for the Advancement of Artificial Intelligence"
+        ],
+        "type": "conference"
+       },
+       "license": null,
+       "license_id": null,
+       "version": "publishedVersion",
+       "is_accepted": true,
+       "is_published": true,
+       "raw_source_name": "Proceedings of the AAAI Conference on Artificial Intelligence",
+       "raw_type": "journal-article"
+      }
+     },
+     {
+      "id": "https://openalex.org/W4415754031",
+      "doi": "https://doi.org/10.1201/9781003561460-19",
+      "display_name": "Attention Is All You Need",
+      "publication_year": 2025,
+      "type": "book-chapter",
+      "primary_location": {
+       "id": "doi:10.1201/9781003561460-19",
+       "doi": "https://doi.org/10.1201/9781003561460-19",
+       "is_oa": false,
+       "landing_page_url": "https://doi.org/10.1201/9781003561460-19",
+       "pdf_url": null,
+       "source": {
+        "id": "https://openalex.org/S4306463855",
+        "display_name": "Routledge eBooks",
+        "issn_l": null,
+        "issn": null,
+        "is_oa": false,
+        "is_in_doaj": false,
+        "is_core": false,
+        "listed_in": [],
+        "host_organization": "https://openalex.org/P4310319847",
+        "host_organization_name": "Routledge",
+        "host_organization_lineage": [
+         "https://openalex.org/P4310319847",
+         "https://openalex.org/P4310320547",
+         "https://openalex.org/P4310320449"
+        ],
+        "host_organization_lineage_names": [
+         "Routledge",
+         "Taylor & Francis",
+         "Informa"
+        ],
+        "type": "ebook platform"
+       },
+       "license": null,
+       "license_id": null,
+       "version": "publishedVersion",
+       "is_accepted": true,
+       "is_published": true,
+       "raw_source_name": "Driving Intelligence: The Green Book",
+       "raw_type": "book-chapter"
+      }
+     },
+     {
+      "id": "https://openalex.org/W4390678101",
+      "doi": "https://doi.org/10.1093/bib/bbad467",
+      "display_name": "Attention is all you need: utilizing attention in AI-enabled drug discovery",
+      "publication_year": 2023,
+      "type": "review",
+      "primary_location": {
+       "id": "doi:10.1093/bib/bbad467",
+       "doi": "https://doi.org/10.1093/bib/bbad467",
+       "is_oa": true,
+       "landing_page_url": "https://doi.org/10.1093/bib/bbad467",
+       "pdf_url": "https://academic.oup.com/bib/article-pdf/25/1/bbad467/55123365/bbad467.pdf",
+       "source": {
+        "id": "https://openalex.org/S91767247",
+        "display_name": "Briefings in Bioinformatics",
+        "issn_l": "1467-5463",
+        "issn": [
+         "1467-5463",
+         "1477-4054"
+        ],
+        "is_oa": false,
+        "is_in_doaj": true,
+        "is_core": true,
+        "listed_in": [
+         "ccf-b",
+         "cwts-core",
+         "doaj",
+         "dongbi-b",
+         "doyens",
+         "jufo-2",
+         "ki-jl-2",
+         "medline",
+         "norway-2",
+         "oarl",
+         "poland-140",
+         "russia-white-list-1"
+        ],
+        "host_organization": "https://openalex.org/P4310311648",
+        "host_organization_name": "Oxford University Press",
+        "host_organization_lineage": [
+         "https://openalex.org/P4310311648",
+         "https://openalex.org/P4310311647"
+        ],
+        "host_organization_lineage_names": [
+         "Oxford University Press",
+         "University of Oxford"
+        ],
+        "type": "journal"
+       },
+       "license": "cc-by-nc",
+       "license_id": "https://openalex.org/licenses/cc-by-nc",
+       "version": "publishedVersion",
+       "is_accepted": true,
+       "is_published": true,
+       "raw_source_name": "Briefings in Bioinformatics",
+       "raw_type": "journal-article"
+      }
+     },
+     {
+      "id": "https://openalex.org/W3155713635",
+      "doi": "https://doi.org/10.48550/arxiv.2104.04692",
+      "display_name": "Not All Attention Is All You Need",
+      "publication_year": 2021,
+      "type": "preprint",
+      "primary_location": {
+       "id": "pmh:oai:arXiv.org:2104.04692",
+       "doi": null,
+       "is_oa": true,
+       "landing_page_url": "http://arxiv.org/abs/2104.04692",
+       "pdf_url": "https://arxiv.org/pdf/2104.04692",
+       "source": {
+        "id": "https://openalex.org/S4306400194",
+        "display_name": "arXiv (Cornell University)",
+        "issn_l": "2331-8422",
+        "issn": [
+         "2331-8422"
+        ],
+        "is_oa": true,
+        "is_in_doaj": false,
+        "is_core": false,
+        "listed_in": [],
+        "host_organization": "https://openalex.org/I205783295",
+        "host_organization_name": "Cornell University",
+        "host_organization_lineage": [
+         "https://openalex.org/I205783295"
+        ],
+        "host_organization_lineage_names": [],
+        "type": "repository"
+       },
+       "license": null,
+       "license_id": null,
+       "version": "submittedVersion",
+       "is_accepted": false,
+       "is_published": false,
+       "raw_source_name": null,
+       "raw_type": "text"
+      }
+     },
+     {
+      "id": "https://openalex.org/W7124707810",
+      "doi": "https://doi.org/10.5281/zenodo.18289746",
+      "display_name": "Attention is all you need",
+      "publication_year": 2026,
+      "type": "other",
+      "primary_location": {
+       "id": "pmh:oai:zenodo.org:18289747",
+       "doi": null,
+       "is_oa": true,
+       "landing_page_url": "https://doi.org/10.5281/zenodo.18289747",
+       "pdf_url": null,
+       "source": {
+        "id": "https://openalex.org/S4306400562",
+        "display_name": "Zenodo (CERN European Organization for Nuclear Research)",
+        "issn_l": null,
+        "issn": null,
+        "is_oa": true,
+        "is_in_doaj": false,
+        "is_core": false,
+        "listed_in": [],
+        "host_organization": "https://openalex.org/I67311998",
+        "host_organization_name": "European Organization for Nuclear Research",
+        "host_organization_lineage": [
+         "https://openalex.org/I67311998"
+        ],
+        "host_organization_lineage_names": [],
+        "type": "repository"
+       },
+       "license": "cc-by",
+       "license_id": "https://openalex.org/licenses/cc-by",
+       "version": "submittedVersion",
+       "is_accepted": false,
+       "is_published": false,
+       "raw_source_name": "Bote der Urschweiz, 17.01.2026, 12, (2026-01-17)",
+       "raw_type": "info:eu-repo/semantics/other"
+      }
+     },
+     {
+      "id": "https://openalex.org/W4408534178",
+      "doi": "https://doi.org/10.1080/14746700.2025.2472118",
+      "display_name": "Moral Attention Is All You Need",
+      "publication_year": 2025,
+      "type": "editorial",
+      "primary_location": {
+       "id": "doi:10.1080/14746700.2025.2472118",
+       "doi": "https://doi.org/10.1080/14746700.2025.2472118",
+       "is_oa": true,
+       "landing_page_url": "https://doi.org/10.1080/14746700.2025.2472118",
+       "pdf_url": "https://www.tandfonline.com/doi/pdf/10.1080/14746700.2025.2472118?needAccess=true",
+       "source": {
+        "id": "https://openalex.org/S115193995",
+        "display_name": "Theology and Science",
+        "issn_l": "1474-6700",
+        "issn": [
+         "1474-6700",
+         "1474-6719"
+        ],
+        "is_oa": false,
+        "is_in_doaj": false,
+        "is_core": true,
+        "listed_in": [
+         "anvur-scientific",
+         "cwts-core",
+         "erih-plus",
+         "jufo-1",
+         "norway-1",
+         "poland-140",
+         "russia-white-list-1"
+        ],
+        "host_organization": "https://openalex.org/P4310320547",
+        "host_organization_name": "Taylor & Francis",
+        "host_organization_lineage": [
+         "https://openalex.org/P4310320547",
+         "https://openalex.org/P4310320449"
+        ],
+        "host_organization_lineage_names": [
+         "Taylor & Francis",
+         "Informa"
+        ],
+        "type": "journal"
+       },
+       "license": null,
+       "license_id": null,
+       "version": "publishedVersion",
+       "is_accepted": true,
+       "is_published": true,
+       "raw_source_name": "Theology and Science",
+       "raw_type": "journal-article"
+      }
+     },
+     {
+      "id": "https://openalex.org/W3199258042",
+      "doi": "https://doi.org/10.18653/v1/2021.emnlp-main.132",
+      "display_name": "Cross-Attention is All You Need: Adapting Pretrained Transformers for Machine Translation",
+      "publication_year": 2021,
+      "type": "conference-paper",
+      "primary_location": {
+       "id": "doi:10.18653/v1/2021.emnlp-main.132",
+       "doi": "https://doi.org/10.18653/v1/2021.emnlp-main.132",
+       "is_oa": true,
+       "landing_page_url": "https://doi.org/10.18653/v1/2021.emnlp-main.132",
+       "pdf_url": "https://aclanthology.org/2021.emnlp-main.132.pdf",
+       "source": {
+        "id": "https://openalex.org/S4363608991",
+        "display_name": "Conference on Empirical Methods in Natural Language Processing (EMNLP)",
+        "issn_l": null,
+        "issn": null,
+        "is_oa": false,
+        "is_in_doaj": false,
+        "is_core": false,
+        "listed_in": [],
+        "host_organization": "https://openalex.org/P4310320244",
+        "host_organization_name": "Association for Computational Linguistics",
+        "host_organization_lineage": [
+         "https://openalex.org/P4310320244"
+        ],
+        "host_organization_lineage_names": [
+         "Association for Computational Linguistics"
+        ],
+        "type": "conference"
+       },
+       "license": "cc-by",
+       "license_id": "https://openalex.org/licenses/cc-by",
+       "version": "publishedVersion",
+       "is_accepted": true,
+       "is_published": true,
+       "raw_source_name": "Proceedings of the 2021 Conference on Empirical Methods in Natural Language Processing",
+       "raw_type": "proceedings-article"
+      }
+     },
+     {
+      "id": "https://openalex.org/W3099527960",
+      "doi": "https://doi.org/10.18653/v1/2020.emnlp-main.317",
+      "display_name": "Attention Is All You Need for Chinese Word Segmentation",
+      "publication_year": 2020,
+      "type": "conference-paper",
+      "primary_location": {
+       "id": "doi:10.18653/v1/2020.emnlp-main.317",
+       "doi": "https://doi.org/10.18653/v1/2020.emnlp-main.317",
+       "is_oa": true,
+       "landing_page_url": "https://doi.org/10.18653/v1/2020.emnlp-main.317",
+       "pdf_url": "https://www.aclweb.org/anthology/2020.emnlp-main.317.pdf",
+       "source": {
+        "id": "https://openalex.org/S4363608991",
+        "display_name": "Conference on Empirical Methods in Natural Language Processing (EMNLP)",
+        "issn_l": null,
+        "issn": null,
+        "is_oa": false,
+        "is_in_doaj": false,
+        "is_core": false,
+        "listed_in": [],
+        "host_organization": "https://openalex.org/P4310320244",
+        "host_organization_name": "Association for Computational Linguistics",
+        "host_organization_lineage": [
+         "https://openalex.org/P4310320244"
+        ],
+        "host_organization_lineage_names": [
+         "Association for Computational Linguistics"
+        ],
+        "type": "conference"
+       },
+       "license": "cc-by",
+       "license_id": "https://openalex.org/licenses/cc-by",
+       "version": "publishedVersion",
+       "is_accepted": true,
+       "is_published": true,
+       "raw_source_name": "Proceedings of the 2020 Conference on Empirical Methods in Natural Language Processing (EMNLP)",
+       "raw_type": "proceedings-article"
+      }
+     }
+    ],
+    "group_by": []
+   }
+  },
+  "https://api.semanticscholar.org/graph/v1/paper/search?query=Attention%20Is%20All%20You%20Need&fields=title,venue,year,authors,externalIds,url,publicationVenue&limit=5": {
+   "status": 200,
+   "body": {
+    "total": 7560,
+    "offset": 0,
+    "next": 5,
+    "data": [
+     {
+      "paperId": "204e3073870fae3d05bcbc2f6a8e263d9b72e776",
+      "externalIds": {
+       "MAG": "2963403868",
+       "DBLP": "journals/corr/VaswaniSPUJGKP17",
+       "ArXiv": "1706.03762",
+       "DOI": "10.48550/arXiv.1706.03762",
+       "CorpusId": 13756489
+      },
+      "publicationVenue": {
+       "id": "d9720b90-d60b-48bc-9df8-87a30b9a60dd",
+       "name": "Neural Information Processing Systems",
+       "type": "conference",
+       "alternate_names": [
+        "Neural Inf Process Syst",
+        "NeurIPS",
+        "NIPS"
+       ],
+       "url": "http://neurips.cc/"
+      },
+      "url": "https://www.semanticscholar.org/paper/204e3073870fae3d05bcbc2f6a8e263d9b72e776",
+      "title": "Attention is All you Need",
+      "venue": "Neural Information Processing Systems",
+      "year": 2017,
+      "authors": [
+       {
+        "authorId": "40348417",
+        "name": "Ashish Vaswani"
+       },
+       {
+        "authorId": "1846258",
+        "name": "Noam Shazeer"
+       },
+       {
+        "authorId": "3877127",
+        "name": "N. Parmar"
+       },
+       {
+        "authorId": "39328010",
+        "name": "J. Uszkoreit"
+       },
+       {
+        "authorId": "145024664",
+        "name": "L. Jones"
+       },
+       {
+        "authorId": "19177000",
+        "name": "Aidan N. Gomez"
+       },
+       {
+        "authorId": "40527594",
+        "name": "Lukasz Kaiser"
+       },
+       {
+        "authorId": "3443442",
+        "name": "I. Polosukhin"
+       }
+      ]
+     },
+     {
+      "paperId": "51c9d4d2f50ac5707c1f889aa97f08350d549132",
+      "externalIds": {
+       "MAG": "3094280184",
+       "DBLP": "journals/corr/abs-2010-13154",
+       "ArXiv": "2010.13154",
+       "DOI": "10.1109/ICASSP39728.2021.9413901",
+       "CorpusId": 225068152
+      },
+      "publicationVenue": {
+       "id": "0d6f7fba-7092-46b3-8039-93458dba736b",
+       "name": "IEEE International Conference on Acoustics, Speech, and Signal Processing",
+       "type": "conference",
+       "alternate_names": [
+        "Int Conf Acoust Speech Signal Process",
+        "IEEE Int Conf Acoust Speech Signal Process",
+        "ICASSP",
+        "International Conference on Acoustics, Speech, and Signal Processing"
+       ],
+       "url": "http://ieeexplore.ieee.org/xpl/conhome.jsp?punumber=1000002"
+      },
+      "url": "https://www.semanticscholar.org/paper/51c9d4d2f50ac5707c1f889aa97f08350d549132",
+      "title": "Attention Is All You Need In Speech Separation",
+      "venue": "IEEE International Conference on Acoustics, Speech, and Signal Processing",
+      "year": 2020,
+      "authors": [
+       {
+        "authorId": "1389581270",
+        "name": "Cem Subakan"
+       },
+       {
+        "authorId": "34924498",
+        "name": "M. Ravanelli"
+       },
+       {
+        "authorId": "1381145668",
+        "name": "Samuele Cornell"
+       },
+       {
+        "authorId": "1760944",
+        "name": "Mirko Bronzi"
+       },
+       {
+        "authorId": "2693593",
+        "name": "Jianyuan Zhong"
+       }
+      ]
+     },
+     {
+      "paperId": "b4f9e9130b29754c526c454ab54043b49bdd387d",
+      "externalIds": {
+       "DBLP": "conf/nips/ZhangLYQYGY25",
+       "ArXiv": "2501.06425",
+       "DOI": "10.48550/arXiv.2501.06425",
+       "CorpusId": 275470886
+      },
+      "publicationVenue": {
+       "id": "d9720b90-d60b-48bc-9df8-87a30b9a60dd",
+       "name": "Neural Information Processing Systems",
+       "type": "conference",
+       "alternate_names": [
+        "Neural Inf Process Syst",
+        "NeurIPS",
+        "NIPS"
+       ],
+       "url": "http://neurips.cc/"
+      },
+      "url": "https://www.semanticscholar.org/paper/b4f9e9130b29754c526c454ab54043b49bdd387d",
+      "title": "Tensor Product Attention Is All You Need",
+      "venue": "Neural Information Processing Systems",
+      "year": 2025,
+      "authors": [
+       {
+        "authorId": "2324068754",
+        "name": "Yifan Zhang"
+       },
+       {
+        "authorId": "2331256240",
+        "name": "Yi-Feng Liu"
+       },
+       {
+        "authorId": "2269043785",
+        "name": "Hui-Zhuo Yuan"
+       },
+       {
+        "authorId": "2342254044",
+        "name": "Zhen Qin"
+       },
+       {
+        "authorId": "2294673772",
+        "name": "Yang Yuan"
+       },
+       {
+        "authorId": "2324043551",
+        "name": "Quanquan Gu"
+       },
+       {
+        "authorId": "1770729",
+        "name": "A. Yao"
+       }
+      ]
+     },
+     {
+      "paperId": "bb4a9650ca3946c70a7e92007cc61dc0dfd75522",
+      "externalIds": {
+       "DBLP": "conf/aaai/ChoiKHXL20",
+       "MAG": "2997150500",
+       "DOI": "10.1609/AAAI.V34I07.6693",
+       "CorpusId": 213099044
+      },
+      "publicationVenue": {
+       "id": "bdc2e585-4e48-4e36-8af1-6d859763d405",
+       "name": "AAAI Conference on Artificial Intelligence",
+       "type": "conference",
+       "alternate_names": [
+        "National Conference on Artificial Intelligence",
+        "National Conf Artif Intell",
+        "AAAI Conf Artif Intell",
+        "AAAI"
+       ],
+       "url": "http://www.aaai.org/"
+      },
+      "url": "https://www.semanticscholar.org/paper/bb4a9650ca3946c70a7e92007cc61dc0dfd75522",
+      "title": "Channel Attention Is All You Need for Video Frame Interpolation",
+      "venue": "AAAI Conference on Artificial Intelligence",
+      "year": 2020,
+      "authors": [
+       {
+        "authorId": "83500873",
+        "name": "Myungsub Choi"
+       },
+       {
+        "authorId": "48206011",
+        "name": "Heewon Kim"
+       },
+       {
+        "authorId": "40030651",
+        "name": "Bohyung Han"
+       },
+       {
+        "authorId": "2072804831",
+        "name": "Ning Xu"
+       },
+       {
+        "authorId": "2135837",
+        "name": "Kyoung Mu Lee"
+       }
+      ]
+     },
+     {
+      "paperId": "fa67ce14393ce96ece7d7732e90f579e23382b21",
+      "externalIds": {
+       "ArXiv": "2510.14973",
+       "DBLP": "journals/corr/abs-2510-14973",
+       "DOI": "10.48550/arXiv.2510.14973",
+       "CorpusId": 282139245
+      },
+      "publicationVenue": {
+       "id": "939c6e1d-0d17-4d6e-8a82-66d960df0e40",
+       "name": "International Conference on Learning Representations",
+       "type": "conference",
+       "alternate_names": [
+        "Int Conf Learn Represent",
+        "ICLR"
+       ],
+       "url": "https://iclr.cc/"
+      },
+      "url": "https://www.semanticscholar.org/paper/fa67ce14393ce96ece7d7732e90f579e23382b21",
+      "title": "Attention Is All You Need for KV Cache in Diffusion LLMs",
+      "venue": "International Conference on Learning Representations",
+      "year": 2025,
+      "authors": [
+       {
+        "authorId": "2364407970",
+        "name": "Quan Nguyen-Tri"
+       },
+       {
+        "authorId": "2346835688",
+        "name": "Mukul Ranjan"
+       },
+       {
+        "authorId": "2276491016",
+        "name": "Zhi-Qiang Shen"
+       }
+      ]
+     }
+    ]
+   }
+  },
+  "https://api.crossref.org/works?rows=5&mailto=schmidtv%40mila.quebec&select=event%2Ctitle%2Cissued%2Ctype%2CDOI&query.title=BERT%3A%20Pre-training%20of%20Deep%20Bidirectional%20Transformers%20for%20Language%20Understanding": {
+   "status": 200,
+   "body": {
+    "status": "ok",
+    "message-type": "work-list",
+    "message-version": "1.0.0",
+    "message": {
+     "facets": {},
+     "total-results": 2835730,
+     "items": [
+      {
+       "event": {
+        "name": "Proceedings of the 2019 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies, Volume 1 (Long and Short Papers)",
+        "start": {
+         "date-parts": [
+          [
+           2019,
+           6
+          ]
+         ]
+        },
+        "location": "Minneapolis, Minnesota",
+        "end": {
+         "date-parts": [
+          [
+           2019,
+           6
+          ]
+         ]
+        }
+       },
+       "title": [
+        "BERT: Pre-training of Deep Bidirectional Transformers for Language Understanding"
+       ],
+       "issued": {
+        "date-parts": [
+         [
+          2019
+         ]
+        ]
+       },
+       "type": "proceedings-article",
+       "DOI": "10.18653/v1/n19-1423"
+      },
+      {
+       "title": [
+        "FAD-BERT: Improved prediction of FAD binding sites using pre-training of deep bidirectional transformers"
+       ],
+       "issued": {
+        "date-parts": [
+         [
+          2021,
+          4
+         ]
+        ]
+       },
+       "type": "journal-article",
+       "DOI": "10.1016/j.compbiomed.2021.104258"
+      },
+      {
+       "title": [
+        "Spectrum-BERT: Pre-training of Deep Bidirectional Transformers for Spectral Classification of Chinese Liquors_supp1-3374300.docx"
+       ],
+       "issued": {
+        "date-parts": [
+         [
+          null
+         ]
+        ]
+       },
+       "type": "component",
+       "DOI": "10.1109/tim.2024.3374300/mm1"
+      },
+      {
+       "title": [
+        "Trajectory‐BERT: Pre‐training and fine‐tuning bidirectional transformers for crowd trajectory enhancement"
+       ],
+       "issued": {
+        "date-parts": [
+         [
+          2023,
+          5
+         ]
+        ]
+       },
+       "type": "journal-article",
+       "DOI": "10.1002/cav.2190"
+      },
+      {
+       "event": {
+        "name": "Proceedings of the 15th International Conference on Natural Language Generation",
+        "start": {
+         "date-parts": [
+          [
+           2022,
+           7
+          ]
+         ]
+        },
+        "location": "Waterville, Maine, USA and virtual meeting",
+        "end": {
+         "date-parts": [
+          [
+           2022,
+           7
+          ]
+         ]
+        }
+       },
+       "title": [
+        "Arabic Image Captioning using Pre-training of Deep Bidirectional Transformers"
+       ],
+       "issued": {
+        "date-parts": [
+         [
+          2022
+         ]
+        ]
+       },
+       "type": "proceedings-article",
+       "DOI": "10.18653/v1/2022.inlg-main.4"
+      }
+     ],
+     "items-per-page": 5,
+     "query": {
+      "start-index": 0,
+      "search-terms": null
+     }
+    }
+   }
+  },
+  "https://api.crossref.org/works?rows=5&mailto=schmidtv%40mila.quebec&select=event%2Ctitle%2Cissued%2Ctype%2CDOI&query.title=Attention%20Is%20All%20You%20Need": {
+   "status": 200,
+   "body": {
+    "status": "ok",
+    "message-type": "work-list",
+    "message-version": "1.0.0",
+    "message": {
+     "facets": {},
+     "total-results": 943239,
+     "items": [
+      {
+       "title": [
+        "Attention Is All You Need"
+       ],
+       "issued": {
+        "date-parts": [
+         [
+          2025,
+          8,
+          23
+         ]
+        ]
+       },
+       "type": "posted-content",
+       "DOI": "10.65215/ysbyhc05"
+      },
+      {
+       "title": [
+        "Attention Is All You Need"
+       ],
+       "issued": {
+        "date-parts": [
+         [
+          2025,
+          8,
+          23
+         ]
+        ]
+       },
+       "type": "posted-content",
+       "DOI": "10.65215/pc26a033"
+      },
+      {
+       "title": [
+        "Is Attention All You Need?"
+       ],
+       "issued": {
+        "date-parts": [
+         [
+          2025
+         ]
+        ]
+       },
+       "type": "book-chapter",
+       "DOI": "10.1007/978-3-031-84300-6_13"
+      },
+      {
+       "title": [
+        "Attention Is All You Need"
+       ],
+       "issued": {
+        "date-parts": [
+         [
+          2025,
+          11,
+          13
+         ]
+        ]
+       },
+       "type": "posted-content",
+       "DOI": "10.65215/r5bs2d54"
+      },
+      {
+       "title": [
+        "Attention Is All You Need"
+       ],
+       "issued": {
+        "date-parts": [
+         [
+          2025,
+          10,
+          31
+         ]
+        ]
+       },
+       "type": "book-chapter",
+       "DOI": "10.1201/9781003561460-19"
+      }
+     ],
+     "items-per-page": 5,
+     "query": {
+      "start-index": 0,
+      "search-terms": null
+     }
+    }
+   }
+  }
+ }
+}

@@ -15,6 +15,7 @@ import * as files from "@pmu/files.js";
 import * as parsers from "@pmu/parsers.js";
 import * as sources from "@pmu/sources/index.js";
 import * as preprintMatching from "@pmu/preprintMatching.js";
+import * as memoryQueue from "@pmu/memoryQueue.js";
 // Import popup-specific modules (when available)
 // Important: these modules themselves import popup.js which contains
 // immediately-invoked functions that should not be called twice. This is why
@@ -25,6 +26,7 @@ import * as preprintMatching from "@pmu/preprintMatching.js";
 import * as templates from "@pm/popup/js/templates.js";
 import * as handlers from "@pm/popup/js/handlers.js";
 import * as memory from "@pm/popup/js/memory.js";
+import * as popup from "@pm/popup/js/popup.js";
 
 // Create the debug object
 const PMDebug = {
@@ -42,10 +44,12 @@ const PMDebug = {
     parsers,
     sources,
     preprintMatching,
+    memoryQueue,
     // Popup modules
     templates,
     handlers,
     memory,
+    popup,
 
     // Helper to access commonly used functions directly
     get getStorage() {

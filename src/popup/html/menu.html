@@ -1,322 +1,260 @@
 <div id="menu-container" style="display: none">
-    <a href="#" tabindex="-1" id="menu-feedback-header"></a>
-    <h3>⋗ Feedback</h3>
+    <div class="pm-menu-body" id="menu-body" tabindex="-1">
+        <p class="pm-menu-links-label">Open in a new tab</p>
+        <div class="pm-menu-links">
+            <button
+                class="pm-btn"
+                id="full-memory"
+                aria-label="Full Memory (opens in a new tab)"
+                data-tip="Open the full-page Memory in a new tab"
+            >
+                <i data-i="list"></i>Full Memory<i data-i="open" class="pm-ext"></i>
+            </button>
+            <button class="pm-btn" id="bib-matcher" aria-label="BibMatcher (opens in a new tab)" data-tip="Open BibMatcher in a new tab">
+                <i data-i="swap"></i>BibMatcher<i data-i="open" class="pm-ext"></i>
+            </button>
+            <button
+                class="pm-btn"
+                id="advanced-configuration"
+                aria-label="All options (opens in a new tab)"
+                data-tip="Open the options page in a new tab"
+            >
+                <i data-i="sliders"></i>All options<i data-i="open" class="pm-ext"></i>
+            </button>
+        </div>
 
-    <p>It's the little things that make your research smoother.</p>
-
-    <p>Look at the code ; raise issues ; share improvement ideas</p>
-
-    <p>
-        <a class="link-in-new-tab" href="https://github.com/vict0rsch/PaperMemory"
-            >https://github.com/vict0rsch/PaperMemory</a
-        >
-    </p>
-    <p>
-        <em>PaperMemory version: <span id="pm-version"></span></em>
-    </p>
-
-    <h3>⋗ Help</h3>
-
-    <button class="code-font" style="font-size: 1rem" id="keyboardShortcutsMenu">
-        User guide
-    </button>
-    <br />
-    <br />
-    <p>
-        Documentation:
-        <a class="link-in-new-tab" href="https://papermemory.org">PaperMemory.org</a>
-    </p>
-
-    <h3 class="mt-4">⋗ Configuration</h3>
-
-    <div id="options">
-        <h4>Arxiv.org enhancement</h4>
-        <input
-            class="switch"
-            type="checkbox"
-            id="checkDownload"
-            name="checkDownload"
-            value="checkDownload"
-        />
-        <label for="checkDownload">Add PDF direct download button</label><br /><br />
-
-        <input
-            class="switch"
-            type="checkbox"
-            id="checkMd"
-            name="checkMd"
-            value="checkMd"
-        />
-        <label for="checkMd"> Add Markdown Link section</label><br /><br />
-
-        <input
-            class="switch"
-            type="checkbox"
-            id="checkBib"
-            name="checkBib"
-            value="checkBib"
-        />
-        <label for="checkBib"> Add BibTex citation section</label><br /><br />
-
-        <h4>User Interface</h4>
-
-        <input
-            class="switch"
-            type="checkbox"
-            id="checkFeedback"
-            name="checkFeedback"
-            value="checkFeedback"
-        />
-        <label for="checkFeedback"> Display notification when a paper is added</label
-        ><br /><br />
-
-        <input
-            class="switch"
-            type="checkbox"
-            id="checkDarkMode"
-            name="checkDarkMode"
-            value="checkDarkMode"
-        />
-        <label for="checkDarkMode">Use Dark Mode</label><br /><br />
-
-        <input
-            class="switch"
-            type="checkbox"
-            id="checkDirectOpen"
-            name="checkDirectOpen"
-            value="checkDirectOpen"
-        />
-        <label for="checkDirectOpen"
-            >Directly open the Memory when not on a Paper's page</label
-        ><br /><br />
-
-        <input
-            class="switch"
-            type="checkbox"
-            id="checkPdfTitle"
-            name="checkPdfTitle"
-            value="checkPdfTitle"
-        />
-        <label for="checkPdfTitle"> Change paper tab titles</label><br /><br />
-
-        <input
-            class="switch"
-            type="checkbox"
-            id="checkScirate"
-            name="checkScirate"
-            value="checkScirate"
-        />
-        <label for="checkScirate">Add a link to SciRate in the popup</label><br /><br />
-
-        <input
-            class="switch"
-            type="checkbox"
-            id="checkAlphaxiv"
-            name="checkAlphaxiv"
-            value="checkAlphaxiv"
-        />
-        <label for="checkAlphaxiv">Add a link to AlphaXiv in the popup</label
-        ><br /><br />
-
-        <input
-            class="switch"
-            type="checkbox"
-            id="checkAr5iv"
-            name="checkAr5iv"
-            value="checkAr5iv"
-        />
-        <label for="checkAr5iv">Add a link to ar5iv in the popup</label><br /><br />
-
-        <input
-            class="switch"
-            type="checkbox"
-            id="checkHuggingface"
-            name="checkHuggingface"
-            value="checkHuggingface"
-        />
-        <label for="checkHuggingface"
-            >Add a link to the HuggingFace paper page in the popup (Arxiv only)</label
-        ><br /><br />
-
-        <h4>Functionalities</h4>
-
-        <input
-            class="switch"
-            type="checkbox"
-            id="checkMdYearVenue"
-            name="checkMdYearVenue"
-            value="checkMdYearVenue"
-        />
-        <label for="checkMdYearVenue"
-            >Include a paper's venue and year when available in the Markdown link</label
-        ><br /><br />
-
-        <input
-            class="switch"
-            type="checkbox"
-            id="checkPreferPdf"
-            name="checkPreferPdf"
-            value="checkPreferPdf"
-        />
-        <label for="checkPreferPdf"
-            >Favor PDFs for paper links (otherwise, links will point to a paper's
-            abstract page)</label
-        ><br /><br />
-
-        <input
-            class="switch"
-            type="checkbox"
-            id="checkPdfOnly"
-            name="checkPdfOnly"
-            value="checkPdfOnly"
-        />
-        <label for="checkPdfOnly"
-            >Only record papers on their pdf pages, not from their abstracts</label
-        ><br /><br />
-
-        <input
-            class="switch"
-            type="checkbox"
-            id="checkNoAuto"
-            name="checkNoAuto"
-            value="checkNoAuto"
-        />
-        <label for="checkNoAuto"
-            >Disable automatic recording of papers. You will have to manually open the
-            popup and click a button</label
-        ><br /><br />
-
-        <input
-            class="switch"
-            type="checkbox"
-            id="checkEnterLocalPdf"
-            name="checkEnterLocalPdf"
-            value="checkEnterLocalPdf"
-        />
-        <label for="checkEnterLocalPdf"
-            >When hitting Enter on a memory item, open a local PDF file when one is
-            available instead of the the link to the paper.</label
-        ><br /><br />
-
-        <input
-            class="switch"
-            type="checkbox"
-            id="checkStore"
-            name="checkStore"
-            value="checkStore"
-        />
-        <label for="checkStore"
-            >Download pdfs to PaperMemory's folder in your Downloads to be able to open
-            them instead of re-downloading.</label
-        ><br /><br />
-        <input
-            class="switch"
-            type="checkbox"
-            id="checkWebsiteParsing"
-            name="checkWebsiteParsing"
-            value="checkWebsiteParsing"
-        />
-        <label for="checkWebsiteParsing"
-            >Enable parsing of arbitrary website by adding a button in the popup. This
-            is still very experimental, see #146 on Github.</label
-        ><br /><br />
-
-        <h4>Keyboard Navigation</h4>
-
-        <p>Open the popup with <code>cmd/ctrl + shift + e</code> from any website.</p>
-
-        <p>
-            When on the popup press <code>a</code> to open the memory or
-            <code>p</code> to open the preferences menu.
-        </p>
-
-        <p>
-            When your memory is open, you can navigate through the papers using the
-            <code>tab</code> key. When a paper is selected, its border will be
-            highlighted. You can then perform actions on the paper by pressing the
-            following keys:
-        </p>
-
-        <ul id="menu-keyboard-shortcuts">
-            <li><code>o</code> ↦ Open the paper in a new tab.</li>
-            <li><code>c</code> ↦ Copy the paper's link.</li>
-            <li><code>m</code> ↦ Copy the paper's markdown link.</li>
-            <li><code>b</code> ↦ Copy the paper's bibtex.</li>
-            <li><code>h</code> ↦ Copy the paper's hyperlink.</li>
-            <li><code>d</code> ↦ Show the paper's metadata.</li>
-            <li><code>e</code> ↦ Edit the paper's metadata from the memory.</li>
-            <li><code>Backspace</code> ↦ Delete the paper from the memory.</li>
-            <p>
-                The following keys are available when enabled in the "User Interface
-                section" above:
-            </p>
-            <li><code>5</code> ↦ Go to a paper's Ar5iv page.</li>
-            <li><code>x</code> ↦ Go to a paper's AlphaXiv page.</li>
-            <li><code>f</code> ↦ Go to a paper's HuggingFace page.</li>
-            <li><code>s</code> ↦ Go to a paper's SciRate page.</li>
-        </ul>
-
-        <p>
-            Press <code>Enter</code> to execute the default action for the current
-            paper:
-
-            <select id="memory-item-default-action">
-                <option value="e">Edit paper's metadata</option>
-                <option value="d">Show paper's metadata</option>
-                <option value="o">Go to paper's page (PDF / Abstract)</option>
-                <optgroup label="Copy data to clipboard:">
-                    <option value="c">Copy Link</option>
+        <p class="pm-section-title pm-menu-label">Most used</p>
+        <div class="pm-menu-group">
+            <div class="pm-row">
+                <div class="pm-row-text"><div class="pm-row-label">Theme</div></div>
+                <div class="pm-seg" role="group" aria-label="Theme" id="theme-select">
+                    <button data-value="system">System</button>
+                    <button data-value="light">Light</button>
+                    <button data-value="dark">Dark</button>
+                </div>
+            </div>
+            <label class="pm-row">
+                <span class="pm-row-text">
+                    <span class="pm-row-label">Record papers automatically</span>
+                    <span class="pm-row-help">Off: add a paper from the popup yourself.</span>
+                </span>
+                <!-- checkNoAuto is stored inverted: checked here = checkNoAuto false -->
+                <input type="checkbox" class="pm-toggle" id="checkNoAuto" data-invert />
+            </label>
+            <label class="pm-row">
+                <span class="pm-row-text">
+                    <span class="pm-row-label"
+                        >Open on Memory when the page is not a paper</span
+                    >
+                </span>
+                <input type="checkbox" class="pm-toggle" id="checkDirectOpen" />
+            </label>
+            <label class="pm-row">
+                <span class="pm-row-text">
+                    <span class="pm-row-label"
+                        >Keep search and filters when leaving the Memory</span
+                    >
+                    <span class="pm-row-help"
+                        >Until the popup closes. Otherwise they are cleared.</span
+                    >
+                </span>
+                <input type="checkbox" class="pm-toggle" id="checkKeepMemorySearch" />
+            </label>
+            <label class="pm-row">
+                <span class="pm-row-text">
+                    <span class="pm-row-label">Show a notice when a paper is saved</span>
+                </span>
+                <input type="checkbox" class="pm-toggle" id="checkFeedback" />
+            </label>
+            <div class="pm-row">
+                <div class="pm-row-text">
+                    <label class="pm-row-label" for="memory-item-default-action"
+                        ><span class="pm-kbd">↵</span> on a paper</label
+                    >
+                </div>
+                <select class="pm-select" id="memory-item-default-action">
+                    <option value="e">Edit tags &amp; note</option>
+                    <option value="d">Show info</option>
+                    <option value="o">Open paper</option>
+                    <option value="c">Copy URL</option>
                     <option value="m">Copy Markdown</option>
-                    <option value="b">Copy Bibtex</option>
-                    <option value="h">Copy Hyperlink</option>
-                </optgroup>
-                <optgroup label="For ArXiv papers">
-                    <option value="5">Go to paper's Ar5iv page</option>
-                    <option value="x">Go to paper's AlphaXiv page</option>
-                    <option value="f">Go to paper's HuggingFace page</option>
-                    <option value="s">Go to paper's SciRate page</option>
-                </optgroup>
-            </select>
-        </p>
+                    <option value="b">Copy BibTeX</option>
+                    <option value="h">Copy rich link</option>
+                    <option value="5">Open on ar5iv</option>
+                    <option value="x">Open on alphaXiv</option>
+                    <option value="f">Open on Hugging Face</option>
+                    <option value="s">Open on SciRate</option>
+                </select>
+            </div>
+        </div>
 
-        <p>
-            You can also perform those actions ↑ when the main popup shows a paper's
-            data (i.e. when you're on a paper's web page/pdf).
-        </p>
+        <p class="pm-section-title pm-menu-label pm-menu-label-more">More</p>
+        <div class="pm-menu-group pm-menu-more">
+            <details>
+                <summary>
+                    <span class="pm-gicon"><i data-i="link"></i></span>Links &amp; copying
+                    <span class="pm-spacer"></span><small>3 settings</small
+                    ><i data-i="down" class="pm-i-sm pm-caret-i"></i>
+                </summary>
+                <label class="pm-row">
+                    <span class="pm-row-text">
+                        <span class="pm-row-label">Prefer PDF links</span>
+                        <span class="pm-row-help"
+                            >Otherwise links point to the abstract page.</span
+                        >
+                    </span>
+                    <input type="checkbox" class="pm-toggle" id="checkPreferPdf" />
+                </label>
+                <label class="pm-row">
+                    <span class="pm-row-text">
+                        <span class="pm-row-label"
+                            >Add venue and year to Markdown links</span
+                        >
+                    </span>
+                    <input type="checkbox" class="pm-toggle" id="checkMdYearVenue" />
+                </label>
+                <label class="pm-row">
+                    <span class="pm-row-text">
+                        <span class="pm-row-label"
+                            >Open the downloaded PDF when there is one</span
+                        >
+                        <span class="pm-row-help"
+                            >Applies to <span class="pm-kbd">o</span> in the Memory.</span
+                        >
+                    </span>
+                    <input type="checkbox" class="pm-toggle" id="checkEnterLocalPdf" />
+                </label>
+            </details>
+            <details>
+                <summary>
+                    <span class="pm-gicon"><i data-i="doc"></i></span>Recording
+                    <span class="pm-spacer"></span><small>3 settings</small
+                    ><i data-i="down" class="pm-i-sm pm-caret-i"></i>
+                </summary>
+                <label class="pm-row">
+                    <span class="pm-row-text">
+                        <span class="pm-row-label">Only record from PDF pages</span>
+                        <span class="pm-row-help">Ignore abstract pages.</span>
+                    </span>
+                    <input type="checkbox" class="pm-toggle" id="checkPdfOnly" />
+                </label>
+                <label class="pm-row">
+                    <span class="pm-row-text">
+                        <span class="pm-row-label"
+                            >Keep PDFs in Downloads/PaperMemoryStore</span
+                        >
+                        <span class="pm-row-help"
+                            >Reopen a file instead of downloading it again.</span
+                        >
+                    </span>
+                    <input type="checkbox" class="pm-toggle" id="checkStore" />
+                </label>
+                <label class="pm-row">
+                    <span class="pm-row-text">
+                        <span class="pm-row-label"
+                            >Parse any website
+                            <span class="pm-badge pm-badge-warn">Experimental</span></span
+                        >
+                        <span class="pm-row-help"
+                            >Adds a “Parse this page” button to the popup.</span
+                        >
+                    </span>
+                    <input type="checkbox" class="pm-toggle" id="checkWebsiteParsing" />
+                </label>
+            </details>
+            <details>
+                <summary>
+                    <span class="pm-gicon"><i data-i="open"></i></span>Extra links in the
+                    popup <span class="pm-spacer"></span><small>4 settings</small
+                    ><i data-i="down" class="pm-i-sm pm-caret-i"></i>
+                </summary>
+                <label class="pm-row">
+                    <span class="pm-row-text">
+                        <span class="pm-row-label">ar5iv <span class="pm-kbd">5</span></span>
+                    </span>
+                    <input type="checkbox" class="pm-toggle" id="checkAr5iv" />
+                </label>
+                <label class="pm-row">
+                    <span class="pm-row-text">
+                        <span class="pm-row-label"
+                            >alphaXiv <span class="pm-kbd">x</span></span
+                        >
+                    </span>
+                    <input type="checkbox" class="pm-toggle" id="checkAlphaxiv" />
+                </label>
+                <label class="pm-row">
+                    <span class="pm-row-text">
+                        <span class="pm-row-label"
+                            >Hugging Face papers <span class="pm-kbd">f</span></span
+                        >
+                        <span class="pm-row-help">arXiv papers only.</span>
+                    </span>
+                    <input type="checkbox" class="pm-toggle" id="checkHuggingface" />
+                </label>
+                <label class="pm-row">
+                    <span class="pm-row-text">
+                        <span class="pm-row-label"
+                            >SciRate <span class="pm-kbd">s</span></span
+                        >
+                    </span>
+                    <input type="checkbox" class="pm-toggle" id="checkScirate" />
+                </label>
+            </details>
+            <details>
+                <summary>
+                    <span class="pm-gicon"><i data-i="globe"></i></span>On paper pages
+                    <span class="pm-spacer"></span><small>4 settings</small
+                    ><i data-i="down" class="pm-i-sm pm-caret-i"></i>
+                </summary>
+                <label class="pm-row">
+                    <span class="pm-row-text">
+                        <span class="pm-row-label"
+                            >Rename paper tabs with the paper title</span
+                        >
+                    </span>
+                    <input type="checkbox" class="pm-toggle" id="checkPdfTitle" />
+                </label>
+                <label class="pm-row">
+                    <span class="pm-row-text">
+                        <span class="pm-row-label"
+                            >arXiv: direct PDF download button</span
+                        >
+                    </span>
+                    <input type="checkbox" class="pm-toggle" id="checkDownload" />
+                </label>
+                <label class="pm-row">
+                    <span class="pm-row-text">
+                        <span class="pm-row-label">arXiv: Markdown link section</span>
+                    </span>
+                    <input type="checkbox" class="pm-toggle" id="checkMd" />
+                </label>
+                <label class="pm-row">
+                    <span class="pm-row-text">
+                        <span class="pm-row-label">arXiv: BibTeX section</span>
+                    </span>
+                    <input type="checkbox" class="pm-toggle" id="checkBib" />
+                </label>
+            </details>
+        </div>
     </div>
-
-    <h3 class="mt-4">⋗ Advanced</h3>
-
-    <p>
-        Open the <a href="#" id="bib-matcher">PaperMemory BibMatcher</a> page to match
-        the ArXiv entries of your <code>.bib</code> file to a publication.
-    </p>
-
-    <p>
-        Open your <a href="#" id="full-memory">full-page memory</a> to explore papers
-        more easily, in a dedicated tab.
-    </p>
-
-    <p>
-        Open the <a href="#" id="advanced-configuration">options page</a> to access
-        advanced customization features:
-    </p>
-
-    <ul>
-        <li>
-            <p>Auto tagging papers from regex</p>
-        </li>
-        <li>
-            <p>Import papers from lists of URLs</p>
-        </li>
-        <li>
-            <p>Manage your data (export/load)</p>
-        </li>
-        <li>
-            <p>Ignore some paper sources</p>
-        </li>
-        <li>
-            <p>And more!</p>
-        </li>
-    </ul>
+    <footer class="pm-hints">
+        <span><span class="pm-kbd">p</span> Close</span>
+        <span class="pm-spacer"></span>
+        <a
+            class="link-in-new-tab"
+            href="https://papermemory.org/getting-started/"
+            data-tip="Open the user guide on papermemory.org"
+            >Guide</a
+        >
+        <a class="link-in-new-tab" href="https://papermemory.org" data-tip="Open the documentation on papermemory.org"
+            >Docs</a
+        >
+        <a
+            class="link-in-new-tab"
+            href="https://github.com/vict0rsch/PaperMemory/issues"
+            data-tip="Report a problem or suggest an idea on GitHub"
+            >Feedback</a
+        >
+        <span class="pm-version">v<span id="pm-version"></span></span>
+    </footer>
 </div>

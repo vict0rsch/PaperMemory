@@ -38,8 +38,7 @@
     "homepage": "https://github.com/vict0rsch/PaperMemory",
     "dependencies": {
         "@octokit/request": "^10.0.16",
-        "jquery": "^4.0.0",
-        "tom-select": "^2.6.2"
+        "jquery": "^4.0.0"
     },
     "devDependencies": {
         "cloakbrowser": "^0.6.5",

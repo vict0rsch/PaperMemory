@@ -7,12 +7,13 @@ import {
     sendMessageToBackground,
     consoleHeader,
     log,
+    logError,
 } from "@pmu/functions.js";
-import { getStorage, setStorage } from "@pmu/data.js";
-import { setPlaceholder, showId, hideId } from "@pmu/miniquery.js";
+import { getStorage, setStorage, replacePapers } from "@pmu/data.js";
+import { showId, hideId } from "@pmu/miniquery.js";
 import { state } from "@pmu/config.js";
 import { initState } from "@pmu/state.js";
-import { makeMemoryHTML } from "@pm/popup/js/memory.js";
+import { makeMemoryHTML, updateMemoryCount } from "@pm/popup/js/memory.js";
 import { fetchText, fetchJSON } from "@pmu/parsers.js";
 import { request as octokitRequest } from "@octokit/request";
 
@@ -213,6 +214,30 @@ export const pushToRemote = async () =>
     await sendMessageToBackground({ type: "writeSync" });
 
 /**
+ * Sync now (options page): pulls the gist, and only if that worked, writes it locally and
+ * uploads this browser's Memory. Errors are returned, not swallowed.
+ * @returns {Promise<{ok: boolean, error?: string}>}
+ */
+export const syncBothWays = async () => {
+    const noAnswer = {
+        ok: false,
+        error: "No answer from PaperMemory's background page.",
+    };
+    const pulled =
+        (await sendMessageToBackground({ type: "pullSync", report: true })) ?? noAnswer;
+    if (!pulled.ok) return { ok: false, error: `Download failed: ${pulled.error}` };
+    await initState({ papers: pulled.papers, print: false });
+    // the upload only happens once the gist's Memory is saved here
+    const saved = await replacePapers(state.papers);
+    if (!saved.ok) return { ok: false, error: `Saving here failed: ${saved.error}` };
+    const pushed =
+        (await sendMessageToBackground({ type: "writeSync", report: true })) ??
+        noAnswer;
+    if (!pushed.ok) return { ok: false, error: `Upload failed: ${pushed.error}` };
+    return { ok: true };
+};
+
+/**
  * Pulls the current `papers` from the default sync Gist file.
  * If remote papers are found, the local `papers` will be updated. and set to storage.
  * @param {object} papers - The current `papers` in the user memory
@@ -232,7 +257,12 @@ export const pullFromRemote = async (papers, isContentScript) => {
         });
         const time = (Date.now() - start) / 1e3;
         info(`Successfully pulled from Github (${time}s).`);
-        await setStorage("papers", state.papers);
+        const saved = await replacePapers(state.papers);
+        if (!saved.ok) {
+            logError("Could not save the pulled Memory:", saved.error);
+            console.groupEnd();
+            return undefined; // the caller shows the sync error
+        }
     }
     console.groupEnd();
     return remotePapers;
@@ -276,8 +306,7 @@ export const initSyncAndState = async ({
     const remotePapers = await pullFromRemote(papers, isContentScript);
     if (remotePapers) {
         if (!isContentScript) {
-            const n = state.sortedPapers.length;
-            setPlaceholder("memory-search", `Search ${n} entries...`);
+            updateMemoryCount();
             if (
                 !state.memoryIsOpen &&
                 typeof window !== "undefined" &&
@@ -294,11 +323,17 @@ export const initSyncAndState = async ({
     remoteIsReady();
 };
 
+/** Tells the page where a sync is ("syncing" | "synced" | "error"): fullMemory shows it */
+const announceSync = (status) =>
+    typeof document !== "undefined" &&
+    document.dispatchEvent(new CustomEvent("pm-sync-status", { detail: status }));
+
 /**
  * Show the sync loader in the popup.
  * @returns {Promise}
  */
 export const startSyncLoader = async () => {
+    announceSync("syncing");
     showId("sync-popup-feedback");
     hideId("sync-popup-error");
     hideId("sync-popup-synced");
@@ -309,6 +344,7 @@ export const startSyncLoader = async () => {
  * @returns {Promise}
  */
 export const successSyncLoader = async () => {
+    announceSync("synced");
     showId("sync-popup-feedback");
     hideId("sync-popup-syncing");
     hideId("sync-popup-error");
@@ -318,17 +354,16 @@ export const successSyncLoader = async () => {
     }, 2000);
 };
 /**
- * Hide the sync loader in the popup and display the error message.
+ * Hide the sync loader in the popup and display the error message. It stays until the
+ * next sync: in the popup it links to the sync settings.
  * @returns {Promise}
  */
 export const errorSyncLoader = async () => {
+    announceSync("error");
     showId("sync-popup-feedback");
     hideId("sync-popup-syncing");
     hideId("sync-popup-synced");
     showId("sync-popup-error");
-    setTimeout(() => {
-        hideId("sync-popup-feedback");
-    }, 2000);
 };
 
 /**

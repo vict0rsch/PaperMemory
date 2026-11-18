@@ -1,11 +1,24 @@
-<div id="modal-ar5iv-content" class="popup-modal-content" style="display: none">
-    <h3>Ar5iv Warning</h3>
-    <p>
-        <a href="https://ar5iv.labs.arxiv.org/">Ar5iv is not a live preview service</a>.
-        It typically does not include current month papers.
-    </p>
-    <div>
-        <button id="ar5iv-modal-ok-button">OK</button>
-        <button id="ar5iv-modal-cancel-button">Cancel</button>
+<div
+    id="modal-ar5iv-content"
+    class="popup-modal-content pm-sheet"
+    role="dialog"
+    tabindex="-1"
+    aria-labelledby="modal-ar5iv-heading"
+    style="display: none"
+>
+    <div class="pm-sheet-head">
+        <h2 id="modal-ar5iv-heading">ar5iv may not have this paper yet</h2>
+    </div>
+    <div class="pm-sheet-body">
+        <p>
+            ar5iv is not a live service. Papers from the current month are usually
+            missing, so the page may come up empty.
+        </p>
+    </div>
+    <div class="pm-sheet-actions">
+        <button class="pm-btn" id="ar5iv-modal-cancel-button">Cancel</button>
+        <button class="pm-btn pm-btn-primary" id="ar5iv-modal-ok-button">
+            Open ar5iv anyway <i data-i="open" class="pm-i-sm"></i>
+        </button>
     </div>
 </div>

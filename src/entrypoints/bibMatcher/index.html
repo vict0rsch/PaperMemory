@@ -1,204 +1,305 @@
 <!doctype html>
-<html>
+<html lang="en">
     <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
         <title>PaperMemory BibMatcher</title>
+        <link rel="stylesheet" type="text/css" href="/tokens.css" wxt-ignore />
+        <link rel="stylesheet" type="text/css" href="/components.css" wxt-ignore />
+        <link rel="stylesheet" type="text/css" href="/options-page.css" wxt-ignore />
+        <link rel="stylesheet" type="text/css" href="/bibMatcher-page.css" wxt-ignore />
+        <!-- after every stylesheet: applies the theme before first paint -->
         <script src="/theme.js"></script>
-        <style>
-            @import url("https://fonts.googleapis.com/css2?family=Yantramanav:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;1,600&display=swap");
-            @import url("https://fonts.googleapis.com/css2?family=Fira+Code:wght@300;400;500;600;700&display=swap");
-        </style>
-        <link
-            href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css"
-            rel="stylesheet"
-            integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC"
-            crossorigin="anonymous"
-        />
-        <link rel="stylesheet" type="text/css" href="/vars.css" wxt-ignore />
-        <link rel="stylesheet" type="text/css" href="/loader.css" wxt-ignore />
-        <link rel="stylesheet" type="text/css" href="/github.min.css" wxt-ignore />
-        <link rel="stylesheet" type="text/css" href="/bibMatcher.css" wxt-ignore />
     </head>
 
-    <body>
-        <div id="header">
-            <div id="header-wrapper">
-                <h1>Bib Matcher</h1>
-                <svg viewBox="0 0 24 24" class="pm-tabler-icon ml-3" id="header-icon">
-                    <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                    <polyline points="13 3 13 10 19 10 11 21 11 14 5 14 13 3" />
-                </svg>
-            </div>
-        </div>
-        <div id="content" class="container">
-            <div class="row" id="match-params-container">
-                <div class="col-12">
-                    <p style="margin-bottom: 3rem">
-                        Paste the content of your <code>.bib</code> file and PaperMemory
-                        will automatically match the Arxiv entries to publications by
-                        fetching information from DBLP, Semantic Scholar, CrossRef and
-                        Google Scholar.
-                    </p>
+    <!-- design-review/v2-addenda/step5-bibmatcher.html. data-state: input | matching |
+         stopped | done | none (no preprint in the file); src/bibMatcher/bibMatcher.js -->
+    <body class="pm-ui" id="pm-bibmatcher" data-state="input">
+        <!--=include ../../shared/html/topbar.html -->
 
-                    <p>
-                        The matching procedure is identical to the one you can trigger
-                        to match your PaperMemory ArXiv entries in the
-                        <a href="/options.html#preprint-matching" target="_blank">
-                            Advanced Options
-                        </a>
-                    </p>
+        <main class="b-page">
+            <h1 class="o-title">BibMatcher</h1>
+            <p class="o-sub">
+                Finds the published version of the preprints (arXiv, bioRxiv, medRxiv,
+                ChemRxiv) in a <span class="pm-mono">.bib</span> file. Nothing in your
+                bibliography changes until you accept it.
+            </p>
 
-                    <p>
-                        <strong style="color: rgb(224, 50, 50)">Warning:</strong>
-                        the matching procedure produces an output which does
-                        <strong>NOT</strong> maintain comments. Select matched entries
-                        one by one if you want to keep your initial comment structure.
-                    </p>
-                </div>
-                <div class="col-12">
-                    <textarea
-                        class="w-100"
-                        id="bib-text"
-                        placeholder="@article{foo2023bar, ..."
-                        rows="12"
-                    ></textarea>
-                </div>
-                <div class="col-12">
-                    <div class="row">
-                        <div class="col-12 option-item d-flex-center-center">
-                            <div class="d-flex-center-center">
-                                <input
-                                    type="checkbox"
-                                    id="keep-keys"
-                                    checked
-                                    class="switch"
-                                    style="min-width: 38px"
-                                />&nbsp;&nbsp;
-                                <label for="keep-keys" style="min-width: 150px"
-                                    >Keep citation keys</label
-                                >
-                            </div>
-                            <br />
-                            <div class="option-help d-flex-center-center">
-                                When a pre-print is matched to a publication, the latter
-                                may have a standard citation key. You can either update
-                                the entry's citation key or use the new one. Note that
-                                if you use the new one, your existing citations will be
-                                broken.
-                            </div>
-                        </div>
-                        <div class="col-12 option-item d-flex-center-center">
-                            <div class="d-flex-center-center">
-                                <input
-                                    type="checkbox"
-                                    id="api-timeout"
-                                    checked
-                                    class="switch"
-                                    style="min-width: 38px"
-                                />&nbsp;&nbsp;
-                                <label for="api-timeout" style="min-width: 150px"
-                                    >Wait for 3s between queries</label
-                                >
-                            </div>
-                            <br />
-                            <div class="option-help d-flex-center-center">
-                                Data providers protect their APIs by restricting the
-                                number of queries per seconds you can make.
-                                PaperMemory's BibMatcher may iterate too fast over your
-                                entries, reaching the API rate limits. Adding a timeout
-                                between requests slows down the matching process but
-                                increases your matching rate.
-                            </div>
-                        </div>
-                        <!-- <div class="col-12 col-xl-6 option-item">
-
-                    </div> -->
-                    </div>
-                </div>
-                <div class="col-12" id="errors-container" style="display: none">
-                    <div class="row">
-                        <pre id="bibmatch-errors"></pre>
-                    </div>
-                </div>
-                <div class="col-12 d-flex-center-center">
-                    <button id="match-bib" class="mt-4">Match</button>
-                    <button
-                        id="match-bib-stop"
-                        style="background-color: rgb(255 113 113); display: none"
-                        class="mt-4"
-                    >
-                        Stop
-                    </button>
-                </div>
-            </div>
-
-            <div
-                class="row mt-5"
-                id="matching-feedback-container"
-                style="display: none"
-            >
-                <div class="col-12">
-                    <span id="n-arxivs"></span>
-                </div>
-                <div
-                    id="matching-progress-container"
-                    style="display: none"
-                    class="col-12"
-                >
-                    <div class="row mt-3">
-                        <div class="col-6">
-                            <div class="progress-container">
-                                <div class="progress" id="matching-progress-bar"></div>
-                            </div>
-                            <div style="padding: 8px; text-align: center">
-                                <span id="matching-status-index"></span> /
-                                <span id="matching-status-total"></span>
-                            </div>
-                        </div>
-                        <div id="matching-status" class="col-6">
-                            <div id="matching-status-title"></div>
-                            <div>
-                                Looking for publications on
-                                <span id="matching-status-provider"></span>
-                            </div>
-                        </div>
-                        <div id="status-info"></div>
-                    </div>
-                </div>
-
-                <div class="col-12" id="matched-list"></div>
-            </div>
-            <div class="row mt-5" id="your-bib-container" style="display: none">
-                <div class="col-12">
-                    <h2 id="your-bibliography" style="display: none">
-                        Your Bibliography
-                    </h2>
-                    <div
-                        id="result-controls"
-                        class="d-flex-center-center"
-                        style="display: none"
-                    >
-                        <div class="d-flex-center-center">
-                            <input
-                                class="switch"
-                                type="checkbox"
-                                id="show-only-matches"
-                                name="Show only matches"
-                            />
-                            <label for="show-only-matches"
-                                >Show only new matched entries</label
+            <!-- ============ 1 · input ============ -->
+            <section class="o-section" aria-labelledby="b-input-title">
+                <h2 class="o-section-title" id="b-input-title">Your bibliography</h2>
+                <div class="o-card">
+                    <div class="o-card-body">
+                        <div class="b-input-head">
+                            <span class="o-muted" id="b-hint"
+                                >Paste your BibTeX below, or drop a
+                                <span class="pm-mono">.bib</span> file on it.</span
                             >
+                            <span class="b-filechip" id="b-filechip" hidden
+                                ><i data-i="doc"></i><b id="b-filename"></b
+                                ><span id="b-filecount"></span
+                            ></span>
+                            <button
+                                type="button"
+                                class="pm-btn pm-btn-sm"
+                                id="b-choose"
+                            >
+                                <i data-i="upload" class="pm-i-sm"></i>Choose a .bib
+                                file…
+                            </button>
+                            <input
+                                type="file"
+                                id="b-file"
+                                accept=".bib,.txt,text/plain,text/x-bibtex,application/x-bibtex"
+                                hidden
+                            />
+                            <button
+                                type="button"
+                                class="pm-iconbtn pm-bordered b-clear"
+                                id="b-clear"
+                                aria-label="Clear the bibliography"
+                                data-tip="Clear the bibliography"
+                                hidden
+                            >
+                                <i data-i="x" class="pm-i-sm"></i>
+                            </button>
                         </div>
-                        <button id="copy-results">Copy to clipboard</button>
+
+                        <div class="b-textwrap" id="b-drop">
+                            <textarea
+                                class="pm-textarea b-text"
+                                id="bib-text"
+                                placeholder=" "
+                                spellcheck="false"
+                                autocomplete="off"
+                                aria-label="Your BibTeX"
+                                aria-describedby="b-error"
+                            ></textarea>
+                            <div class="b-empty" aria-hidden="true">
+                                <i data-i="upload"></i>
+                                <span>Paste BibTeX here, or drop a file</span>
+                                <code>@article{foo2023bar, ...</code>
+                            </div>
+                        </div>
+                        <p
+                            class="pm-field-msg is-error b-err"
+                            id="b-error"
+                            role="alert"
+                            hidden
+                        >
+                            <i data-i="alert"></i><span id="b-error-text"></span>
+                        </p>
                     </div>
-                    <p id="bib-desc"></p>
-                    <pre id="match-results" style="display: none"></pre>
+
+                    <label class="pm-row o-row">
+                        <span class="pm-row-text">
+                            <span class="pm-row-label">Keep my citation keys</span>
+                            <span class="pm-row-help"
+                                >Off: a matched entry takes DBLP's or Semantic Scholar's
+                                key, which breaks the
+                                <span class="pm-mono">\cite{…}</span> you already
+                                wrote.</span
+                            >
+                        </span>
+                        <input
+                            type="checkbox"
+                            class="pm-toggle"
+                            id="keep-keys"
+                            checked
+                        />
+                    </label>
+                    <label class="pm-row o-row">
+                        <span class="pm-row-text">
+                            <span class="pm-row-label"
+                                >Wait 3 seconds between entries</span
+                            >
+                            <span class="pm-row-help"
+                                >Slower, but DBLP, Semantic Scholar and the others
+                                refuse fewer requests, so more entries get
+                                matched.</span
+                            >
+                        </span>
+                        <input
+                            type="checkbox"
+                            class="pm-toggle"
+                            id="api-timeout"
+                            checked
+                        />
+                    </label>
+
+                    <div class="b-go">
+                        <span class="o-muted"
+                            >Looks on DBLP, Semantic Scholar, Google Scholar, CrossRef
+                            and OpenAlex, in that order. Your Memory's preprints are
+                            matched against the same five sources in
+                            <a
+                                href="/options.html#preprint-matching"
+                                target="_blank"
+                                data-tip="Open Settings in a new tab"
+                                >Settings · Tags &amp; matching</a
+                            >.</span
+                        >
+                        <button
+                            type="button"
+                            class="pm-btn pm-btn-primary"
+                            id="match-bib"
+                            disabled
+                        >
+                            <i data-i="refresh" class="pm-i-sm"></i
+                            ><span id="match-bib-label">Find published versions</span>
+                            <span class="pm-kbd" data-mod-enter>⌘↵</span>
+                        </button>
+                        <button type="button" class="pm-btn" id="match-bib-stop" hidden>
+                            Stop
+                        </button>
+                    </div>
                 </div>
-            </div>
+            </section>
 
-            <div class="section"></div>
-        </div>
+            <!-- ============ 2 · matching ============ -->
+            <section class="o-section b-when-run" aria-labelledby="b-matching-title">
+                <h2 class="o-section-title" id="b-matching-title">Matching</h2>
+                <div class="o-card">
+                    <div class="b-progress" aria-live="polite">
+                        <div class="b-progress-top" id="b-progress-top">
+                            <div class="o-progress"><div id="b-bar"></div></div>
+                            <span class="pm-count" id="b-progress-count"></span>
+                        </div>
+                        <div class="b-now" id="b-now">
+                            <b id="b-now-title"></b>
+                            <span
+                                ><i class="b-spin"></i><span id="b-now-source"></span
+                            ></span>
+                        </div>
+                        <div class="b-done" id="b-done" hidden>
+                            <span class="pm-badge" id="b-done-badge"></span>
+                            <b id="b-done-text"></b>
+                            <span class="o-muted" id="b-done-more"></span>
+                        </div>
+                        <div id="b-warnings"></div>
+                    </div>
+                </div>
+            </section>
 
-        <script src="/highlight.min.js"></script>
+            <!-- ============ 3 · results + accept / reject ============ -->
+            <section class="o-section b-when-results" aria-labelledby="b-results-title">
+                <h2 class="o-section-title" id="b-results-title">Results</h2>
+                <div class="o-card b-results">
+                    <div class="b-reshead">
+                        <div
+                            class="pm-seg"
+                            role="group"
+                            aria-label="Show"
+                            id="b-filters"
+                        >
+                            <button type="button" data-filter="all" aria-pressed="true">
+                                All <span class="pm-count" data-count="all"></span>
+                            </button>
+                            <button
+                                type="button"
+                                data-filter="review"
+                                aria-pressed="false"
+                            >
+                                To review
+                                <span class="pm-count" data-count="review"></span>
+                            </button>
+                            <button
+                                type="button"
+                                data-filter="matched"
+                                aria-pressed="false"
+                            >
+                                Matched
+                                <span class="pm-count" data-count="matched"></span>
+                            </button>
+                            <button
+                                type="button"
+                                data-filter="notfound"
+                                aria-pressed="false"
+                            >
+                                Not found
+                                <span class="pm-count" data-count="notfound"></span>
+                            </button>
+                        </div>
+                        <button
+                            type="button"
+                            class="pm-btn pm-btn-sm"
+                            id="b-reject-all"
+                        >
+                            Reject all pending
+                        </button>
+                        <button
+                            type="button"
+                            class="pm-btn pm-btn-sm"
+                            id="b-accept-all"
+                        >
+                            Accept all pending
+                        </button>
+                    </div>
+                    <div class="b-row b-rowhead" aria-hidden="true">
+                        <span class="pm-label-caps">Status</span>
+                        <span class="pm-label-caps">Citation key</span>
+                        <span class="pm-label-caps">Title</span>
+                        <span class="pm-label-caps">Published in</span>
+                        <span class="pm-label-caps b-right">Change</span>
+                    </div>
+                    <div id="b-rows"></div>
+                    <p class="o-muted b-empty-filter" id="b-empty-filter" hidden>
+                        No entry here.
+                    </p>
+                </div>
+
+                <!-- ============ footer: Copy / Download ============ -->
+                <div class="b-foot" id="b-foot">
+                    <div class="b-foot-in">
+                        <div class="pm-row-text">
+                            <div class="pm-row-label" id="b-foot-title"></div>
+                            <div class="pm-row-help" id="b-foot-help"></div>
+                        </div>
+                        <div
+                            class="pm-seg"
+                            role="group"
+                            aria-label="What to copy or download"
+                            id="b-scope"
+                        >
+                            <button type="button" data-scope="all" aria-pressed="true">
+                                Whole bibliography
+                            </button>
+                            <button
+                                type="button"
+                                data-scope="updated"
+                                aria-pressed="false"
+                            >
+                                Updated entries only
+                            </button>
+                        </div>
+                        <button type="button" class="pm-btn" id="copy-results">
+                            <i data-i="bib" class="pm-i-sm"></i><span>Copy</span>
+                        </button>
+                        <button
+                            type="button"
+                            class="pm-btn pm-btn-primary"
+                            id="download-results"
+                        >
+                            <i data-i="download" class="pm-i-sm"></i>Download .bib
+                        </button>
+                    </div>
+                    <details class="b-preview">
+                        <summary>Show the resulting BibTeX</summary>
+                        <pre class="b-result" id="match-results"></pre>
+                    </details>
+                </div>
+            </section>
+        </main>
+
+        <!-- Copy / Download with changes not reviewed yet (src/options/dialog.js) -->
+        <dialog class="o-dialog" id="o-dialog" aria-labelledby="o-dialog-title">
+            <form method="dialog">
+                <h2 id="o-dialog-title"></h2>
+                <div class="o-dialog-body" id="o-dialog-body"></div>
+                <div class="o-dialog-foot" id="o-dialog-foot"></div>
+            </form>
+        </dialog>
+
         <script type="module" src="./main.js"></script>
     </body>
 </html>

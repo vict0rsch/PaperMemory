@@ -1,0 +1,746 @@
+/* fullMemory page layout (design-review/v2-addenda/step5-fullmemory.html). Shared pieces come
+   from tokens.css + components.css (.pm-*), the popup's Memory search and rows from popup.css,
+   the top bar, side nav, cards and dialog from options-page.css; page classes are prefixed
+   "m-". 1200px and wider: sidebar | table | detail pane; 900 to 1200px: the pane is a drawer;
+   below 900px: the popup's rows. */
+
+#pm-fullmemory [hidden] {
+    display: none !important;
+}
+
+.m-app {
+    display: grid;
+    grid-template-columns: 208px minmax(0, 1fr) 352px;
+    min-height: calc(100vh - 48px);
+}
+
+/* ---------- tag sidebar ---------- */
+.m-side {
+    position: sticky;
+    top: 48px;
+    align-self: start;
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 48px);
+    padding: var(--pm-s-5) var(--pm-s-3) var(--pm-s-4) var(--pm-s-4);
+    border-right: 1px solid var(--pm-border);
+    overflow-y: auto;
+}
+.m-side .pm-label-caps {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: var(--pm-s-5) 0 6px;
+    padding: 0 10px;
+}
+.m-side .o-nav a .pm-count,
+.m-tag .pm-count {
+    margin-left: auto;
+}
+.m-side .o-nav a[aria-current="true"] .m-fav {
+    color: var(--pm-accent);
+}
+#m-favs[aria-current="true"] .m-fav {
+    fill: currentColor;
+}
+.m-tagfilter {
+    min-height: 28px;
+    margin: 0 0 6px;
+    padding: 1px 8px;
+    font-size: var(--pm-fs-sm);
+}
+.m-tagfilter .pm-i {
+    width: 13px;
+    height: 13px;
+    color: var(--pm-text-3);
+}
+.m-tagfilter input {
+    flex: 1;
+    min-width: 0;
+    height: 24px;
+    padding: 0;
+    border: 0;
+    outline: none;
+    background: none;
+    color: var(--pm-text);
+    font-size: var(--pm-fs-sm);
+    box-shadow: none;
+}
+.m-tagfilter input::placeholder {
+    color: var(--pm-text-3);
+}
+.m-tag {
+    display: flex;
+    align-items: center;
+    gap: var(--pm-s-2);
+    width: 100%;
+    min-height: 28px;
+    padding: 3px 10px;
+    border: 0;
+    border-radius: var(--pm-r-md);
+    background: none;
+    color: var(--pm-text-2);
+    font-size: var(--pm-fs-base);
+    text-align: left;
+    cursor: pointer;
+}
+.m-tag span:first-child {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+.m-tag:hover {
+    background: var(--pm-surface-3);
+    color: var(--pm-text);
+}
+.m-tag[aria-pressed="true"] {
+    background: var(--pm-selected);
+    color: var(--pm-link);
+}
+.m-tag-none {
+    padding: 3px 10px;
+    color: var(--pm-text-3);
+    font-size: var(--pm-fs-sm);
+}
+.m-side-foot {
+    margin-top: auto;
+}
+.m-side-foot .o-linkbtn {
+    display: block;
+    margin: var(--pm-s-4) 10px 0;
+    font-size: var(--pm-fs-sm);
+}
+.m-side .o-side-status {
+    margin-top: var(--pm-s-3);
+}
+.m-sync {
+    flex-wrap: wrap;
+    white-space: nowrap;
+}
+.m-sync a {
+    flex-basis: 100%;
+    margin-left: 15px;
+}
+.m-sync.is-error {
+    color: var(--pm-danger);
+}
+
+/* ---------- list ---------- */
+.m-main {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    padding: var(--pm-s-5) var(--pm-s-6) var(--pm-s-3);
+}
+.m-searchwrap {
+    position: relative;
+}
+.m-searchfield {
+    position: relative;
+}
+.m-searchfield .pm-mv-search {
+    position: relative;
+}
+.m-searchfield .pm-sugg {
+    position: absolute;
+    z-index: 6;
+    top: calc(100% + 6px);
+    right: 0;
+    left: 0;
+}
+.m-searchfield .pm-sortmenu.pm-sugg {
+    right: -1px;
+    left: auto;
+    width: 216px;
+}
+.m-pillline {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px var(--pm-s-3);
+}
+.m-pillline .pm-pillrow {
+    flex: 1;
+    margin: 10px 0 0;
+    padding: 0;
+}
+.m-searchwrap .pm-tagpanel {
+    top: calc(100% + 6px);
+    right: 0;
+    left: 0;
+    max-height: min(420px, 70vh);
+}
+.m-only-narrow,
+.m-sync-narrow,
+.m-rows-wrap {
+    display: none;
+}
+
+.m-tablecard {
+    margin-top: var(--pm-s-4);
+    overflow: hidden;
+}
+.m-table {
+    table-layout: fixed;
+    width: 100%;
+    border-collapse: collapse;
+    font-size: var(--pm-fs-base);
+}
+.m-table th {
+    height: 34px;
+    padding: 0 8px;
+    border-bottom: 1px solid var(--pm-border);
+    background: var(--pm-surface-2);
+    text-align: left;
+    white-space: nowrap;
+}
+.m-sort {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    height: 24px;
+    margin: 0 -4px;
+    padding: 0 4px;
+    border: 0;
+    border-radius: var(--pm-r-sm);
+    background: none;
+    color: var(--pm-text-3);
+    font-size: var(--pm-fs-xs);
+    font-weight: var(--pm-fw-bold);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    cursor: pointer;
+}
+.m-sort:hover {
+    color: var(--pm-text);
+}
+.m-sort .pm-i {
+    width: 12px;
+    height: 12px;
+    opacity: 0;
+}
+.m-sort:hover .pm-i {
+    opacity: 0.5;
+}
+th[aria-sort] .m-sort {
+    color: var(--pm-text);
+}
+th[aria-sort] .m-sort .pm-i {
+    opacity: 1;
+}
+th[aria-sort="ascending"] .m-sort .pm-i {
+    transform: rotate(180deg);
+}
+.m-table td {
+    padding: 9px 8px;
+    border-top: 1px solid var(--pm-border);
+    vertical-align: top;
+    color: var(--pm-text-2);
+}
+.m-table tbody tr:first-child td {
+    border-top: 0;
+}
+.m-table tbody tr {
+    cursor: default;
+}
+.m-table tbody tr:focus-visible {
+    outline: none;
+    box-shadow: none;
+}
+.m-table tbody tr:hover td {
+    background: var(--pm-surface-2);
+}
+.m-table tr.is-selected td {
+    background: var(--pm-selected);
+}
+.m-table tr.is-current td {
+    background: var(--pm-surface-2);
+}
+.m-table tr.is-current td:first-child {
+    box-shadow: inset 3px 0 0 var(--pm-focus);
+}
+.m-table tr.is-selected.is-current td {
+    background: var(--pm-selected);
+}
+.m-table tr:focus-visible td {
+    background: var(--pm-surface-2);
+}
+.m-table tr:focus-visible td:first-child {
+    box-shadow: inset 3px 0 0 var(--pm-focus);
+}
+.m-table .c-check {
+    width: 38px;
+    padding-left: 14px;
+    padding-right: 4px;
+}
+.m-table th.c-check .pm-check {
+    display: block;
+}
+.m-table td.c-check {
+    padding-top: 11px;
+}
+.m-table .c-fav {
+    width: 22px;
+    padding-left: 0;
+    padding-right: 0;
+}
+.m-table td.c-fav {
+    padding-top: 10px;
+}
+.m-table .c-num {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+.m-table th.c-num .m-sort {
+    flex-direction: row-reverse;
+}
+.m-table .c-venue {
+    width: 108px;
+}
+.m-table .c-year {
+    width: 50px;
+}
+.m-table .c-tags {
+    width: 176px;
+}
+.m-table .c-open {
+    width: 76px;
+}
+.m-table .c-visits {
+    width: 72px;
+    padding-right: 14px;
+}
+.m-table .c-info {
+    display: none;
+    width: 34px;
+    padding-left: 0;
+}
+.m-t {
+    display: -webkit-box;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    color: var(--pm-text);
+    font-weight: var(--pm-fw-bold);
+    line-height: var(--pm-lh-tight);
+    letter-spacing: -0.005em;
+}
+.m-a {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 2px 6px;
+    margin-top: 2px;
+    color: var(--pm-text-3);
+    font-size: var(--pm-fs-sm);
+}
+.m-a .pm-i {
+    width: 12px;
+    height: 12px;
+}
+.m-glyph {
+    display: inline-flex;
+}
+.m-venue {
+    color: var(--pm-text);
+    font-weight: var(--pm-fw-medium);
+    overflow-wrap: anywhere;
+}
+.m-tags {
+    font-size: var(--pm-fs-sm);
+    line-height: 1.5;
+}
+/* tags are buttons drawn as text (click: the search becomes that tag pill) */
+.m-tags .pm-tg {
+    padding: 0;
+    border: 0;
+    background: none;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    white-space: nowrap;
+}
+.m-tags .pm-tg:hover {
+    color: var(--pm-link);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+.m-tags .pm-tg:not(:last-child)::after {
+    content: "\00b7";
+    display: inline-block;
+    margin: 0 5px;
+    opacity: 0.6;
+}
+.m-star {
+    display: inline-flex;
+    padding: 0;
+    border: 0;
+    background: none;
+    color: var(--pm-border-strong);
+    cursor: pointer;
+}
+.m-star:hover {
+    color: var(--pm-text-3);
+}
+.m-star .pm-i {
+    width: 14px;
+    height: 14px;
+}
+.m-star[aria-pressed="true"] {
+    color: var(--pm-accent);
+}
+.m-star[aria-pressed="true"] .pm-i {
+    fill: currentColor;
+}
+.m-table td.c-info .pm-info-btn {
+    margin: 0;
+}
+.pm-check.is-mixed {
+    border-color: var(--pm-ink);
+    background: var(--pm-ink) linear-gradient(var(--pm-ink-on), var(--pm-ink-on))
+        center / 8px 2px no-repeat;
+}
+#m-empty .pm-empty {
+    min-height: 320px;
+}
+/* sticky footer: the bulk bar (while papers are selected) over the key hints. Opaque, so
+   rows scroll under it; at the end of the list it sits under the table, clear of it, and
+   nothing stays hidden. */
+.m-foot {
+    position: sticky;
+    bottom: 0;
+    z-index: 4;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: var(--pm-s-3) 0 var(--pm-s-4);
+    background: var(--pm-bg);
+}
+.m-tablecard + .m-foot {
+    margin-top: var(--pm-s-2);
+}
+.m-tablefoot {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px var(--pm-s-4);
+    padding: 0 2px;
+    color: var(--pm-text-3);
+    font-size: var(--pm-fs-sm);
+}
+.m-tablefoot span {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+}
+.m-tablefoot .m-break {
+    flex-basis: 100%;
+    height: 0;
+}
+/* d opens the drawer: only where there is one */
+.m-hint-d {
+    display: none !important;
+}
+
+.m-bulk {
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    align-self: center;
+    padding: 5px 6px 5px 14px;
+    border: 1px solid var(--pm-border-strong);
+    border-radius: var(--pm-r-xl);
+    background: var(--pm-surface);
+    box-shadow: var(--pm-shadow-lg);
+    white-space: nowrap;
+}
+[data-theme="dark"] .m-bulk {
+    background: var(--pm-surface-2);
+}
+.m-bulk b {
+    margin-right: var(--pm-s-2);
+    color: var(--pm-text);
+    font-size: var(--pm-fs-base);
+    font-weight: var(--pm-fw-bold);
+}
+.m-bulk .pm-btn-ghost .pm-i {
+    width: 14px;
+    height: 14px;
+}
+.m-bulk .m-danger {
+    color: var(--pm-danger);
+}
+.m-bulk .pm-mv-sep {
+    height: 18px;
+    margin: 0 6px;
+}
+.m-bulk .m-bulk-x {
+    width: 26px;
+    height: 26px;
+}
+
+/* ---------- detail pane ---------- */
+.m-detail {
+    position: sticky;
+    top: 48px;
+    align-self: start;
+    height: calc(100vh - 48px);
+    padding: var(--pm-s-5);
+    border-left: 1px solid var(--pm-border);
+    background: var(--pm-surface);
+    overflow-y: auto;
+}
+.m-d-top {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--pm-s-3);
+}
+.m-d-title {
+    flex: 1;
+    color: var(--pm-text);
+    font-size: var(--pm-fs-lg);
+    font-weight: var(--pm-fw-bold);
+    line-height: var(--pm-lh-tight);
+    letter-spacing: -0.01em;
+    overflow-wrap: anywhere;
+}
+.pm-iconbtn.m-d-fav {
+    margin: -5px -6px 0 0;
+    background: none;
+    color: var(--pm-border-strong);
+}
+.pm-iconbtn.m-d-fav[aria-pressed="true"] {
+    color: var(--pm-accent);
+}
+.m-d-fav[aria-pressed="true"] .pm-i {
+    fill: currentColor;
+}
+.m-d-close {
+    display: none;
+    margin: -5px -6px 0 0;
+}
+.m-d-authors {
+    margin-top: 6px;
+    color: var(--pm-text-3);
+    font-size: var(--pm-fs-base);
+}
+.m-d-venue {
+    margin-top: 3px;
+    color: var(--pm-text-2);
+    font-size: var(--pm-fs-base);
+    font-weight: var(--pm-fw-medium);
+}
+.m-acts {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+    margin-top: var(--pm-s-4);
+}
+.m-acts .pm-btn {
+    justify-content: space-between;
+    padding: 0 8px 0 10px;
+}
+.m-acts .pm-btn .pm-i {
+    color: var(--pm-text-3);
+}
+.m-also {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 2px 4px;
+    margin-top: var(--pm-s-2);
+    color: var(--pm-text-3);
+    font-size: var(--pm-fs-sm);
+}
+.m-also .pm-quiet {
+    height: 24px;
+    padding: 0 5px;
+    font-weight: var(--pm-fw);
+}
+.m-d-h {
+    display: flex;
+    align-items: center;
+    gap: var(--pm-s-2);
+    margin: var(--pm-s-5) 0 var(--pm-s-2);
+}
+.m-d-h .pm-quiet {
+    margin-left: auto;
+}
+.m-fields {
+    border: 1px solid var(--pm-border);
+    border-radius: var(--pm-r-lg);
+}
+.m-field {
+    display: grid;
+    grid-template-columns: 44px minmax(0, 1fr);
+    gap: var(--pm-s-2);
+    padding: 9px var(--pm-s-3);
+    border-top: 1px solid var(--pm-border);
+    font-size: var(--pm-fs-base);
+}
+.m-field:first-child {
+    border-top: 0;
+}
+.m-field > span:first-child {
+    color: var(--pm-text-3);
+    font-size: var(--pm-fs-sm);
+    line-height: 20px;
+}
+.m-field .m-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+.m-field .m-note {
+    color: var(--pm-text);
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+.m-field a {
+    overflow-wrap: anywhere;
+}
+.m-detail .pm-ph {
+    color: var(--pm-text-3);
+}
+/* edit form (the popup's row editor) in place of the fields */
+.m-detail.is-edit .m-fields,
+.m-detail.is-edit .m-d-edit {
+    display: none;
+}
+.m-detail .pm-edit {
+    margin-top: 0;
+    grid-template-columns: 44px minmax(0, 1fr);
+}
+.m-info {
+    display: grid;
+    grid-template-columns: 86px minmax(0, 1fr);
+    gap: 6px 10px;
+    margin: 0;
+    font-size: var(--pm-fs-sm);
+    line-height: 1.4;
+}
+.m-info dt {
+    color: var(--pm-text-3);
+}
+.m-info dd {
+    margin: 0;
+    color: var(--pm-text);
+    overflow-wrap: anywhere;
+}
+.m-d-foot {
+    display: flex;
+    align-items: center;
+    margin-top: var(--pm-s-5);
+    padding-top: var(--pm-s-3);
+    border-top: 1px solid var(--pm-border);
+}
+.m-d-foot .pm-quiet {
+    margin-left: auto;
+    color: var(--pm-danger);
+}
+.m-d-foot .pm-quiet .pm-i {
+    color: inherit;
+}
+.m-d-empty {
+    min-height: 240px;
+}
+
+/* ---------- dialogs, toast ---------- */
+.m-addtags .pm-tagfield {
+    min-height: var(--pm-h-md);
+}
+.o-dialog-body .m-addtags + p {
+    margin-top: var(--pm-s-2);
+    color: var(--pm-text-3);
+    font-size: var(--pm-fs-sm);
+}
+#pm-fullmemory .pm-ptoast {
+    position: fixed;
+    bottom: 128px;
+}
+
+/* ---------- 900 to 1200px: the detail pane is a drawer over the table ----------
+   body[data-layout] (wide | mid | narrow) follows the window width (fullMemory.js), once
+   the open edit forms are saved */
+body[data-layout="mid"] .m-app {
+    grid-template-columns: 208px minmax(0, 1fr);
+}
+body[data-layout="mid"] .m-detail {
+    display: none;
+    position: fixed;
+    top: 48px;
+    right: 0;
+    bottom: 0;
+    z-index: 7;
+    width: 376px;
+    height: auto;
+    align-self: stretch;
+    box-shadow: var(--pm-shadow-lg);
+}
+body[data-layout="mid"][data-pane="open"] .m-detail {
+    display: block;
+}
+body[data-layout="mid"] .m-d-close {
+    display: inline-flex;
+}
+body[data-layout="mid"] .m-table .c-info {
+    display: table-cell;
+}
+body[data-layout="mid"] .m-table td.c-info {
+    padding-top: 8px;
+}
+body[data-layout="mid"] .m-table .c-visits {
+    display: none;
+}
+body[data-layout="mid"] .m-hint-d {
+    display: inline-flex !important;
+}
+
+/* ---------- below 900px: the popup's rows, no sidebar, no pane, no bulk select ---------- */
+body[data-layout="narrow"] .m-app {
+    display: block;
+}
+body[data-layout="narrow"] .m-side,
+body[data-layout="narrow"] .m-detail,
+body[data-layout="narrow"] .m-tablecard,
+body[data-layout="narrow"] .m-foot {
+    display: none !important;
+}
+body[data-layout="narrow"] .m-only-narrow {
+    display: inline-flex;
+}
+body[data-layout="narrow"] .m-main {
+    display: block;
+    max-width: 720px;
+    margin: 0 auto;
+    padding: var(--pm-s-4) var(--pm-s-4) 64px;
+}
+body[data-layout="narrow"] .m-searchwrap {
+    position: sticky;
+    top: 48px;
+    z-index: 3;
+    margin: calc(-1 * var(--pm-s-4)) calc(-1 * var(--pm-s-4)) 0;
+    padding: var(--pm-s-4) var(--pm-s-4) var(--pm-s-3);
+    background: var(--pm-bg);
+}
+body[data-layout="narrow"] .m-searchwrap .pm-tagpanel {
+    right: var(--pm-s-4);
+    left: var(--pm-s-4);
+}
+body[data-layout="narrow"] .m-sync-narrow:not([hidden]) {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin: 10px 0 0 auto;
+    color: var(--pm-text-3);
+    font-size: var(--pm-fs-sm);
+}
+body[data-layout="narrow"] .m-sync-narrow.is-error {
+    color: var(--pm-danger);
+}
+body[data-layout="narrow"] .m-rows-wrap {
+    display: block;
+    margin-top: var(--pm-s-3);
+    padding: 4px var(--pm-s-2) var(--pm-s-2);
+}

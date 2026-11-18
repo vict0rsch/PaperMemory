@@ -25,6 +25,9 @@ export function BibtexParser() {
         "dec",
     ];
     this.notKey = [",", "{", "}", " ", "="];
+    // @string definitions (lowercase name -> value): read from @string blocks, and can be
+    // given before parsing (one entry of a file whose @string blocks were read already)
+    this.strings = {};
     this.pos = 0;
     this.input = "";
     this.entries = new Array();
@@ -88,7 +91,8 @@ export function BibtexParser() {
             this.pos++;
         }
         if (this.input[this.pos] == "%" && canCommentOut == true) {
-            while (this.input[this.pos] != "\n") {
+            // a comment on the last line has no "\n": stop at the end of the input
+            while (this.pos < this.input.length && this.input[this.pos] != "\n") {
                 this.pos++;
             }
             this.skipWhitespace(canCommentOut);
@@ -173,6 +177,9 @@ export function BibtexParser() {
             var k = this.key();
             if (k.match("^[0-9]+$")) return k;
             else if (this.months.indexOf(k.toLowerCase()) >= 0) return k.toLowerCase();
+            // a @string macro's name (journal = jmlr): its value, else the name as written
+            else if (/^[A-Za-z][\w.:+\/-]*$/.test(k))
+                return this.strings[k.toLowerCase()] ?? k;
             else
                 throw (
                     "Value expected: single_value" +
@@ -259,6 +266,12 @@ export function BibtexParser() {
         return "@" + this.key();
     };
 
+    // @string{name = value}: kept for the values that use it (it was called but never defined)
+    this.string = function () {
+        var kv = this.key_equals_value();
+        this.strings[kv[0].toLowerCase()] = kv[1];
+    };
+
     this.preamble = function () {
         this.currentEntry = {};
         this.currentEntry["entryType"] = "PREAMBLE";
@@ -312,7 +325,9 @@ export function BibtexParser() {
         while (this.matchAt()) {
             var d = this.directive();
             this.match("{");
-            this.cleanCitationKey();
+            // entries only: @string / @preamble / @comment have no citation key
+            if (!["@STRING", "@PREAMBLE", "@COMMENT"].includes(d.toUpperCase()))
+                this.cleanCitationKey();
             if (d.toUpperCase() == "@STRING") {
                 this.string();
             } else if (d.toUpperCase() == "@PREAMBLE") {

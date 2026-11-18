@@ -13,24 +13,24 @@ function htmlIncludePlugin(basePath) {
         transformIndexHtml: {
             order: "pre",
             handler(html, ctx) {
-                return html.replace(
-                    /<!--=include\s+(.+?)\s+-->/g,
-                    (match, includePath) => {
+                // an included file may include others (paths stay relative to basePath)
+                const expand = (text, depth = 0) =>
+                    text.replace(/<!--=include\s+(.+?)\s+-->/g, (match, includePath) => {
                         const fullPath = path.resolve(basePath, includePath);
                         try {
-                            if (includePath.includes("*")) {
-                                return glob
-                                    .sync(fullPath)
-                                    .map((f) => fs.readFileSync(f, "utf-8"))
-                                    .join("\n");
-                            }
-                            return fs.readFileSync(fullPath, "utf-8");
+                            const content = includePath.includes("*")
+                                ? glob
+                                      .sync(fullPath)
+                                      .map((f) => fs.readFileSync(f, "utf-8"))
+                                      .join("\n")
+                                : fs.readFileSync(fullPath, "utf-8");
+                            return depth < 5 ? expand(content, depth + 1) : content;
                         } catch {
                             console.warn(`Could not include file: ${fullPath}`);
                             return match;
                         }
-                    },
-                );
+                    });
+                return expand(html);
             },
         },
     };
@@ -43,12 +43,18 @@ export default defineConfig({
         disabled: disableBrowserStartup,
     },
     manifest: {
-        name: "Paper Memory",
+        name: "PaperMemory",
         version: pkg.version,
         description:
-            "Automatically record papers and their codes from Arxiv, OpenReview & more! Organize your library with tags, links and quick notes.",
+            "Saves the research papers you open on arXiv, OpenReview and more. Search, tag, annotate and cite them from your browser.",
         homepage_url: "https://papermemory.org",
-        icons: { 192: "icons/favicon-192x192.png" },
+        icons: {
+            16: "icons/icon-16.png",
+            32: "icons/icon-32.png",
+            48: "icons/icon-48.png",
+            128: "icons/icon-128.png",
+            192: "icons/icon-192.png",
+        },
         commands: {
             _execute_action: {
                 suggested_key: {
@@ -74,7 +80,11 @@ export default defineConfig({
             },
         },
         action: {
-            default_icon: "icons/favicon-192x192.png",
+            default_icon: {
+                16: "icons/icon-16.png",
+                32: "icons/icon-32.png",
+                48: "icons/icon-48.png",
+            },
             default_title: "PaperMemory",
         },
         permissions: [
@@ -88,7 +98,7 @@ export default defineConfig({
         host_permissions: ["*://*/*"],
         web_accessible_resources: [
             {
-                resources: ["data/*.json", "dark.css", "github-dark-dimmed.css"],
+                resources: ["data/*.json", "dark.css", "fonts/*.woff2"],
                 matches: ["<all_urls>"],
             },
         ],
@@ -105,6 +115,9 @@ export default defineConfig({
         // Firefox MV2 only opens the popup with `_execute_browser_action`
         "build:manifestGenerated": (wxt, manifest) => {
             if (manifest.manifest_version !== 2) return;
+            // the popup entrypoint already created `browser_action`, so WXT never
+            // converts `action`: carry its icon and title over
+            manifest.browser_action = { ...manifest.action, ...manifest.browser_action };
             manifest.commands = Object.fromEntries(
                 Object.entries(manifest.commands).map(([name, command]) => [
                     name === "_execute_action" ? "_execute_browser_action" : name,

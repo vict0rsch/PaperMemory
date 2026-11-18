@@ -46,9 +46,9 @@ export const fetchText = async (url) => {
     }
 };
 
-export const fetchJSON = async (url) => {
+export const fetchJSON = async (url, options) => {
     try {
-        const response = await fetch(url);
+        const response = await fetch(url, options);
         const status = response.status;
         const data = response.ok ? await response.json() : null;
         return { data, status };

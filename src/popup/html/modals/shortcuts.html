@@ -1,0 +1,24 @@
+<!-- "?" from anywhere in the popup. Browser-level keys (data-cmd) are read from
+     chrome.commands, so they show the user's own shortcuts. -->
+<div
+    id="modal-shortcuts-content"
+    class="popup-modal-content pm-sheet"
+    role="dialog"
+    tabindex="-1"
+    aria-labelledby="modal-shortcuts-heading"
+    style="display: none"
+>
+    <div class="pm-sheet-head">
+        <h2 id="modal-shortcuts-heading">Keyboard shortcuts</h2>
+        <span class="pm-spacer"></span>
+        <button class="pm-btn pm-btn-ghost pm-btn-sm pm-sheet-close" aria-label="Close (?)">
+            <i data-i="x" class="pm-i-sm"></i>Close
+        </button>
+    </div>
+    <!--=include shortcut-keys.html -->
+    <div class="pm-sheet-foot">
+        <span><span class="pm-kbd">?</span> Close</span>
+        <span class="pm-spacer"></span>
+        <a href="#" class="pm-open-shortcuts pm-out" data-tip="Open the browser’s shortcut settings">Change keys</a>
+    </div>
+</div>

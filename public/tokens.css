@@ -1,0 +1,171 @@
+/* PaperMemory design tokens (from design-review/v2/tokens.css).
+   Theme: data-theme="light" | "dark" on <html>, set by theme.js before first paint
+   ("system" is resolved to one of them there).
+   Only --pm-* custom properties and the Inter @font-face, so loading it does not restyle
+   existing pages. color-scheme (light/dark) lives on .pm-ui in components.css for the same
+   reason.
+   Neutral, slightly cool greys. Red is the brand accent and is used sparingly.
+   Blue is reserved for keyboard focus and links. */
+
+/* Inter 4 variable (wght 100-900) from @fontsource-variable/inter 5.2.8, split by
+   unicode-range: the Latin file (48 KB) covers most text; Latin Extended (83 KB, e.g. Ł, ő, ș in
+   author names) is only downloaded by pages that render such characters.
+   SIL Open Font License 1.1: see fonts/Inter-OFL.txt */
+@font-face {
+    font-family: "Inter";
+    font-style: normal;
+    font-weight: 100 900;
+    font-display: block; /* bundled files, load in a few ms: avoid a fallback-font flash */
+    src: url("fonts/inter-latin-ext-wght.woff2") format("woff2");
+    unicode-range:
+        U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308,
+        U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0,
+        U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+@font-face {
+    font-family: "Inter";
+    font-style: normal;
+    font-weight: 100 900;
+    font-display: block;
+    src: url("fonts/inter-latin-wght.woff2") format("woff2");
+    unicode-range:
+        U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304,
+        U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215,
+        U+FEFF, U+FFFD;
+}
+
+:root {
+    /* surfaces */
+    --pm-bg: #f3f4f6; /* page background behind cards */
+    --pm-surface: #ffffff; /* popup body, cards */
+    --pm-surface-2: #f5f6f8; /* hover, inset fields, footers */
+    --pm-surface-3: #eaecf0; /* pressed, chips, key caps */
+    --pm-border: #e2e5ea;
+    --pm-border-strong: #c9ced6; /* inputs, buttons */
+
+    /* text */
+    --pm-text: #1b2028; /* titles, values */
+    --pm-text-2: #4d5664; /* body, labels */
+    --pm-text-3: #6f7886; /* metadata, help (4.6:1 on white) */
+
+    /* brand accent: sparingly (mark, active tab, favourite, danger) */
+    --pm-accent: #b42318;
+    --pm-accent-hover: #981d13;
+    --pm-accent-soft: #fbeceb;
+    --pm-accent-on: #ffffff;
+
+    /* neutral "ink" for primary buttons, toggles, checkboxes */
+    --pm-ink: #262d38;
+    --pm-ink-hover: #151a21;
+    --pm-ink-on: #ffffff;
+
+    /* focus + links: blue, never the accent */
+    --pm-focus: #2f6fed;
+    --pm-link: #2459c9;
+    --pm-selected: #eef3fd; /* focused row tint */
+
+    /* status */
+    --pm-success: #1a7f4e;
+    --pm-success-soft: #e7f5ed;
+    --pm-warning: #8f5a00;
+    --pm-warning-soft: #fdf4dc;
+    --pm-danger: #b42318;
+    --pm-danger-soft: #fdf1f0;
+
+    --pm-scrim: rgba(27, 32, 40, 0.38);
+
+    /* type */
+    --pm-font: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --pm-font-mono:
+        ui-monospace, "SF Mono", "Cascadia Mono", Menlo, Consolas, monospace; /* code-like values only */
+    --pm-fs-xs: 11px; /* key caps, counters */
+    --pm-fs-sm: 12px; /* metadata, help */
+    --pm-fs-base: 13px; /* popup body, controls */
+    --pm-fs-md: 14px; /* pages body, row titles */
+    --pm-fs-lg: 16px; /* card titles */
+    --pm-fs-xl: 18px; /* popup paper title */
+    --pm-fs-2xl: 26px; /* page title */
+    --pm-lh-tight: 1.3;
+    --pm-lh: 1.5;
+    --pm-fw: 400;
+    --pm-fw-medium: 500;
+    --pm-fw-bold: 600;
+
+    /* space (4px grid) */
+    --pm-s-1: 4px;
+    --pm-s-2: 8px;
+    --pm-s-3: 12px;
+    --pm-s-4: 16px;
+    --pm-s-5: 20px;
+    --pm-s-6: 24px;
+    --pm-s-8: 32px;
+    --pm-s-12: 48px;
+
+    /* radius */
+    --pm-r-sm: 4px; /* key caps, checkboxes */
+    --pm-r-md: 7px; /* buttons, inputs */
+    --pm-r-lg: 10px; /* grouped lists, popup cards */
+    --pm-r-xl: 12px; /* page cards, sheets */
+    --pm-r-pill: 999px;
+
+    /* elevation */
+    --pm-shadow-sm: 0 1px 2px rgba(27, 32, 40, 0.05);
+    --pm-shadow-md: 0 2px 8px rgba(27, 32, 40, 0.08), 0 1px 2px rgba(27, 32, 40, 0.05);
+    --pm-shadow-lg:
+        0 16px 40px rgba(27, 32, 40, 0.16), 0 2px 6px rgba(27, 32, 40, 0.08);
+
+    /* focus ring: 2px gap in surface colour + 2px blue */
+    --pm-ring: 0 0 0 2px var(--pm-surface), 0 0 0 4px var(--pm-focus);
+    --pm-ring-inset: inset 0 0 0 2px var(--pm-focus);
+    /* text inputs: quieter than the ring; a 1px border in the focus colour plus this soft halo */
+    --pm-ring-input: 0 0 0 3px color-mix(in srgb, var(--pm-focus) 16%, transparent);
+
+    /* motion */
+    --pm-motion: 120ms cubic-bezier(0.2, 0, 0, 1);
+
+    /* control heights */
+    --pm-h-sm: 26px;
+    --pm-h-md: 32px;
+    --pm-h-lg: 36px;
+}
+
+/* Dark: medium slate, same luminance family as today's dark.css (#222a35 / #323942),
+   deliberately not near-black. */
+[data-theme="dark"] {
+    --pm-bg: #212833;
+    --pm-surface: #252d39;
+    --pm-surface-2: #2d3643;
+    --pm-surface-3: #38424f;
+    --pm-border: #364050;
+    --pm-border-strong: #4c586a;
+
+    --pm-text: #e6edf5;
+    --pm-text-2: #b7c2cf;
+    --pm-text-3: #93a0b0; /* 5.2:1 on surface */
+
+    --pm-accent: #f1786c;
+    --pm-accent-hover: #f79489;
+    --pm-accent-soft: rgba(241, 120, 108, 0.14);
+    --pm-accent-on: #1f2630;
+
+    --pm-ink: #d5deea;
+    --pm-ink-hover: #f0f5fb;
+    --pm-ink-on: #1f2630;
+
+    --pm-focus: #7fb0ff;
+    --pm-link: #8ab6ff;
+    --pm-selected: #2c3a52;
+
+    --pm-success: #6fd0a0;
+    --pm-success-soft: rgba(111, 208, 160, 0.14);
+    --pm-warning: #e6b866;
+    --pm-warning-soft: rgba(230, 184, 102, 0.14);
+    --pm-danger: #f58d83;
+    --pm-danger-soft: rgba(245, 141, 131, 0.1);
+
+    --pm-scrim: rgba(15, 19, 25, 0.5);
+
+    --pm-shadow-sm: 0 1px 2px rgba(10, 14, 20, 0.25);
+    --pm-shadow-md: 0 2px 8px rgba(10, 14, 20, 0.28), 0 1px 2px rgba(10, 14, 20, 0.2);
+    --pm-shadow-lg: 0 16px 40px rgba(10, 14, 20, 0.4), 0 2px 6px rgba(10, 14, 20, 0.25);
+}

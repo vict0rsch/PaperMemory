@@ -214,7 +214,7 @@ describe("Test PaperMemory Extension Loading", function () {
                             const nameElement = item.shadowRoot.querySelector("#name");
                             if (
                                 nameElement &&
-                                nameElement.textContent.includes("Paper Memory")
+                                nameElement.textContent.includes("PaperMemory")
                             ) {
                                 return true;
                             }

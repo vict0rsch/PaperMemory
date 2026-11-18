@@ -1,21 +1,12 @@
 // ES Module imports
-import {
-    addListener,
-    setHTML,
-    findEl,
-    style,
-    querySelector,
-    addClass,
-    hasClass,
-    removeClass,
-    queryAll,
-} from "@pmu/miniquery.js";
+import { querySelector, queryAll } from "@pmu/miniquery.js";
 import {
     copyTextToClipboard,
     isPdfUrl,
     warn,
     log,
     info,
+    logError,
     sendMessageToBackground,
     downloadURI,
     dummyEvent,
@@ -26,11 +17,13 @@ import {
     getStorage,
     deletePaperInStorage,
     getDefaultKeyboardAction,
+    themeFromPrefs,
 } from "@pmu/data.js";
 import { isPaper, addOrUpdatePaper } from "@pmu/paper.js";
 import { state } from "@pmu/config.js";
 import { getSource } from "@pmu/sources/index.js";
 import { initSyncAndState, sleep } from "@pmu/sync.js";
+import { formatVenue } from "@pmu/venues.js";
 import {
     handleOpenItemAr5iv,
     handleCopyBibtex,
@@ -42,215 +35,390 @@ import {
     handleOpenItemScirate,
     handleCopyHyperLink,
 } from "@pm/popup/js/handlers.js";
+import { icon } from "@pm/popup/js/icons.js";
 import { stateTitleFunction } from "@pmu/state.js";
 import { parseIdFromUrl, isSourceURL, isArxivAbstractUrl } from "@pmu/urls.js";
+import tokensCss from "../../public/tokens.css?raw";
+import uiCss from "./content_ui.css?raw";
 
-// Notification object for feedback system
-var notif = {
-    element: null,
-    timeout: null,
-    prevent: false,
-    isLoading: false,
-    displayDuration: 5000,
-    showSpeed: 500,
-    hideSpeed: 200,
+// ---------------------------------------------------------------------------------------
+// PaperMemory's UI on web pages: the arXiv block, notices (bottom right) and tooltips.
+// Each lives in a shadow root (content_ui.css): the page's CSS cannot restyle it, and none
+// of ours reaches the page. Every text from the page or the Memory is set with textContent.
+// ---------------------------------------------------------------------------------------
+
+// tokens.css without its @font-face rules (they move to the page, below) and with :root
+// mapped to the notices' own root, which carries data-theme
+const FONT_FACES = tokensCss.match(/@font-face\s*{[^}]*}/g) ?? [];
+const SHADOW_CSS =
+    FONT_FACES.reduce((css, face) => css.replace(face, ""), tokensCss).replaceAll(
+        ":root",
+        ".pm-layer",
+    ) + uiCss;
+
+let fontsAdded = false;
+/** Bundled Inter, as "PaperMemory Inter" (no clash with a page's own Inter), from the
+ * extension's web-accessible fonts/: @font-face is ignored inside a shadow root in Chrome */
+const addFonts = () => {
+    if (fontsAdded) return;
+    fontsAdded = true;
+    const style = document.createElement("style");
+    style.textContent = FONT_FACES.map((face) =>
+        face
+            .replace('"Inter"', '"PaperMemory Inter"')
+            .replace(
+                /url\("fonts\/([\w.-]+)"\)/,
+                (_, file) => `url("${chrome.runtime.getURL(`fonts/${file}`)}")`,
+            ),
+    ).join("\n");
+    (document.head ?? document.documentElement).append(style);
 };
-
-/*
- * jQuery Easing v1.3 - http://gsgd.co.uk/sandbox/jquery/easing/
- *
- * Uses the built in easing capabilities added In jQuery 1.1
- * to offer multiple easing options
- *
- * TERMS OF USE - jQuery Easing
- *
- * Open source under the BSD License.
- *
- * Copyright 2008 George McGinley Smith
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without modification,
- * are permitted provided that the following conditions are met:
- *
- * Redistributions of source code must retain the above copyright notice, this list of
- * conditions and the following disclaimer.
- * Redistributions in binary form must reproduce the above copyright notice, this list
- * of conditions and the following disclaimer in the documentation and/or other materials
- * provided with the distribution.
- *
- * Neither the name of the author nor the names of contributors may be used to endorse
- * or promote products derived from this software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY
- * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
- * COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
- * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
- * AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
- * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
- * OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- */
-
-/*
- *
- * TERMS OF USE - EASING EQUATIONS
- *
- * Open source under the BSD License.
- *
- * Copyright 2001 Robert Penner
- * All rights reserved.
- *
- * Redistribution and use in source and binary forms, with or without modification,
- * are permitted provided that the following conditions are met:
- *
- * Redistributions of source code must retain the above copyright notice, this list of
- * conditions and the following disclaimer.
- * Redistributions in binary form must reproduce the above copyright notice, this list
- * of conditions and the following disclaimer in the documentation and/or other materials
- * provided with the distribution.
- *
- * Neither the name of the author nor the names of contributors may be used to endorse
- * or promote products derived from this software without specific prior written permission.
- *
- * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY
- * EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
- * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
- * COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
- * EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
- * GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
- * AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
- * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED
- * OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- */
-
-// t: current time, b: begInnIng value, c: change In value, d: duration
-$.extend($.easing, {
-    easeInOutBack: (x, t, b, c, d, s) => {
-        if (s == undefined) s = 1.70158;
-        if ((t /= d / 2) < 1)
-            return (c / 2) * (t * t * (((s *= 1.525) + 1) * t - s)) + b;
-        return (c / 2) * ((t -= 2) * t * (((s *= 1.525) + 1) * t + s) + 2) + b;
-    },
-});
 
 /**
- * Centralizes HTML svg codes
- * @param {string} name svg type
- * @returns {string} the HTML code for a specific svg
+ * A DOM element. attrs: class, text (textContent), on<event> listeners, other attributes
+ * (skipped when null / undefined / false); children: nodes or strings (as text)
  */
-const svg = (name) => {
-    switch (name) {
-        case "download":
-            return /*html*/ `<svg width="52px" height="42px" viewBox="0 0 22 16">
-                <path
-                    d="M2,10 L6,13 L12.8760559,4.5959317 C14.1180021,3.0779974 16.2457925,2.62289624 18,3.5 L18,3.5 C19.8385982,4.4192991 21,6.29848669 21,8.35410197 L21,10 C21,12.7614237 18.7614237,15 16,15 L1,15"
-                    id="check"
-                ></path>
-                <polyline points="4.5 8.5 8 11 11.5 8.5" class="svg-out"></polyline>
-                <path d="M8,1 L8,11" class="svg-out"></path>
-            </svg>`;
-        case "clipboard-default":
-            return /*html*/ `<svg
-                class="copy-feedback pm-tabler-icon"
-                xmlns="http://www.w3.org/2000/svg"
-                width="64"
-                height="32"
-                viewBox="0 0 24 24"
-                stroke-width="1.25"
-                stroke="rgb(0, 119, 255)"
-                fill="none"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-            >
-                <path
-                    d="M9 5H7a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2V7a2 2 0 0 0 -2 -2h-2"
-                />
-                <rect x="9" y="3" width="6" height="4" rx="2" />
-                <line x1="9" y1="12" x2="9.01" y2="12" />
-                <line x1="13" y1="12" x2="15" y2="12" />
-                <line x1="9" y1="16" x2="9.01" y2="16" />
-                <line x1="13" y1="16" x2="15" y2="16" />
-            </svg>`;
-
-        case "clipboard-default-ok":
-            return /*html*/ `<svg
-                xmlns="http://www.w3.org/2000/svg"
-                class="pm-tabler-icon copy-feedback-ok"
-                style="display:none"
-                width="64" height="64" viewBox="0 0 24 24"
-                stroke-width="1.25" stroke="rgb(0, 200, 84)" fill="none"
-                stroke-linecap="round" stroke-linejoin="round"
-            >
-                <path stroke="none" d="M0 0h24v24H0z"/>
-                <path d="M9 5H7a2 2 0 0 0 -2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2 -2V7a2 2 0 0 0 -2 -2h-2" />
-                <rect x="9" y="3" width="6" height="4" rx="2" />
-                <path d="M9 14l2 2l4 -4" />
-            </svg>`;
-
-        case "notif-cancel":
-            return /*html*/ `<svg
-                width="20"
-                height="20"
-                viewBox="0 0 24 24"
-                stroke-width="1"
-                fill="none"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke="#b31b1b"
-            >
-                <path stroke="none" d="M0 0h24v24H0z" fill="none" />
-                <line x1="4" y1="7" x2="20" y2="7" />
-                <line x1="10" y1="11" x2="10" y2="17" />
-                <line x1="14" y1="11" x2="14" y2="17" />
-                <path d="M5 7l1 12a2 2 0 0 0 2 2h8a2 2 0 0 0 2 -2l1 -12" />
-                <path d="M9 7v-3a1 1 0 0 1 1 -1h4a1 1 0 0 1 1 1v3" />
-            </svg>`;
-
-        default:
-            break;
+const h = (tag, attrs = {}, ...children) => {
+    const el = document.createElement(tag);
+    for (const [key, value] of Object.entries(attrs)) {
+        if (value === undefined || value === null || value === false) continue;
+        if (key === "class") el.className = value;
+        else if (key === "text") el.textContent = value;
+        else if (key.startsWith("on")) el.addEventListener(key.slice(2), value);
+        else el.setAttribute(key, value === true ? "" : value);
     }
+    el.append(...children.filter((c) => c !== null && c !== undefined && c !== false));
+    return el;
+};
+/** An icon (constant markup from icons.js) */
+const svgIcon = (name, cls = "") => {
+    const tpl = document.createElement("template");
+    tpl.innerHTML = icon(name, cls);
+    return tpl.content.firstElementChild;
 };
 
-const injectNotifCSS = () => {
-    let el = document.createElement("style");
-    el.type = "text/css";
-    el.innerText = `
-        .pm-notif-loader {
-            width: 16px;
-            height: 16px;
-            border: 1px solid #b31b1b;
-            border-bottom-color: transparent;
-            border-radius: 50%;
-            display: inline-block;
-            box-sizing: border-box;
-            animation: rotation 1s linear infinite;
-            }
+/** A shadow host with the UI's styles */
+const makeHost = (tag) => {
+    const host = document.createElement(tag);
+    const root = host.attachShadow({ mode: "open" });
+    root.append(h("style", { text: SHADOW_CSS }));
+    addFonts();
+    setupTooltips(root);
+    return { host, root };
+};
 
-        @keyframes rotation {
-            0% {
-                transform: rotate(0deg);
-            }
-            100% {
-                transform: rotate(360deg);
-            }
-        } 
-    `;
-    document.head.appendChild(el);
-    return el;
+// ----- notices' theme: the PaperMemory theme; "System" follows the computer -----
+const darkMedia = matchMedia("(prefers-color-scheme: dark)");
+const noticeTheme = () => {
+    const theme = themeFromPrefs(state.prefs);
+    return theme === "system" ? (darkMedia.matches ? "dark" : "light") : theme;
+};
+
+let layer = null; // {host, el}: notices and tooltips, on top of the page
+const getLayer = () => {
+    if (!layer?.host.isConnected) {
+        const { host, root } = makeHost("papermemory-notices");
+        const el = h("div", { class: "pm-layer" });
+        root.append(el);
+        document.body.append(host);
+        layer = { host, el };
+    }
+    layer.el.dataset.theme = noticeTheme();
+    return layer;
+};
+darkMedia.addEventListener("change", () => {
+    if (layer) layer.el.dataset.theme = noticeTheme();
+});
+
+// ----- tooltips: hover and keyboard focus; Escape closes them (never advertised) -----
+const TIP_DELAY = 400; // ms, as in the popup
+const TIP_MARGIN = 6;
+let tip = null;
+let tipFor = null;
+let tipTimer = null;
+
+const hideTip = () => {
+    clearTimeout(tipTimer);
+    tipTimer = null;
+    tipFor = null;
+    if (tip) tip.hidden = true;
+};
+const showTip = (el) => {
+    if (!el.isConnected) return hideTip();
+    const { el: root } = getLayer();
+    if (!tip?.isConnected) {
+        tip = h("span", { class: "pm-tip", "aria-hidden": "true" });
+        root.append(tip);
+    }
+    tip.textContent = el.dataset.tip;
+    tip.classList.remove("is-long");
+    tip.style.maxWidth = "";
+    tip.style.left = "0px";
+    tip.style.top = "0px";
+    tip.hidden = false;
+    // one line, unless wider than the max width (a long URL): then it wraps
+    const maxWidth = Math.min(320, window.innerWidth - 2 * TIP_MARGIN);
+    if (tip.getBoundingClientRect().width > maxWidth) {
+        tip.classList.add("is-long");
+        tip.style.maxWidth = `${maxWidth}px`;
+    }
+    // under the control (above when there is no room), kept inside the window
+    const r = el.getBoundingClientRect();
+    const t = tip.getBoundingClientRect();
+    const left = Math.max(
+        TIP_MARGIN,
+        Math.min(
+            r.left + r.width / 2 - t.width / 2,
+            window.innerWidth - TIP_MARGIN - t.width,
+        ),
+    );
+    let top = r.bottom + TIP_MARGIN;
+    if (top + t.height > window.innerHeight - TIP_MARGIN)
+        top = r.top - TIP_MARGIN - t.height;
+    tip.style.left = `${Math.round(left)}px`;
+    tip.style.top = `${Math.round(Math.max(top, TIP_MARGIN))}px`;
+    tipFor = el;
+};
+const scheduleTip = (el) => {
+    hideTip();
+    tipTimer = setTimeout(() => showTip(el), TIP_DELAY);
+};
+/** Tooltips of the controls with data-tip in a shadow root */
+const setupTooltips = (root) => {
+    const target = (e) => e.target?.closest?.("[data-tip]");
+    root.addEventListener("mouseover", (e) => {
+        const el = target(e);
+        if (el && el !== tipFor) scheduleTip(el);
+    });
+    root.addEventListener("mouseout", (e) => {
+        const el = target(e);
+        if (!el || !el.contains(e.relatedTarget)) hideTip();
+    });
+    root.addEventListener("focusin", (e) => {
+        const el = target(e);
+        if (el && el.matches(":focus-visible")) scheduleTip(el);
+        else hideTip();
+    });
+    root.addEventListener("focusout", hideTip);
+    root.addEventListener("mousedown", hideTip, true);
+};
+document.addEventListener(
+    "keydown",
+    (e) => e.key === "Escape" && (tipFor || tipTimer) && hideTip(),
+    true,
+);
+window.addEventListener("scroll", () => (tipFor || tipTimer) && hideTip(), true);
+
+// ----- notices: bottom right, one at a time -----
+const NOTICE_MS = 3500; // auto-hiding notices leave after this, unless hovered / focused
+const notice = {
+    el: null,
+    kind: null,
+    timer: null,
+    autoHide: false,
+    hover: false,
+    focus: false,
+};
+let pendingNotice = null; // asked for before the page has a body
+
+const clearNotice = () => {
+    pendingNotice = null; // a notice queued before <body> is older than this change
+    clearTimeout(notice.timer);
+    notice.el?.remove();
+    Object.assign(notice, { el: null, kind: null, timer: null });
+};
+const armNotice = () => {
+    clearTimeout(notice.timer);
+    if (notice.autoHide && !notice.hover && !notice.focus)
+        notice.timer = setTimeout(clearNotice, NOTICE_MS);
+};
+
+/**
+ * Shows a notice (replacing the current one)
+ * @param {object} opts kind ("loading", "saved", "removed", "copied", "error", "text"),
+ *   role ("status" | "alert"), autoHide, small (the loading look), children
+ */
+const showNotice = (opts) => {
+    if (!document.body) {
+        if (!pendingNotice)
+            document.addEventListener("DOMContentLoaded", () => {
+                const next = pendingNotice;
+                pendingNotice = null;
+                next && showNotice(next);
+            });
+        pendingNotice = opts;
+        return;
+    }
+    const { kind, role = "status", autoHide = true, small = false, children } = opts;
+    const { el: root } = getLayer();
+    hideTip();
+    clearNotice();
+    const el = h(
+        "div",
+        { class: `pm-toast${small ? " small" : ""}`, role },
+        ...children,
+    );
+    el.addEventListener("mouseenter", () => ((notice.hover = true), armNotice()));
+    el.addEventListener("mouseleave", () => ((notice.hover = false), armNotice()));
+    el.addEventListener("focusin", () => ((notice.focus = true), armNotice()));
+    el.addEventListener("focusout", (e) => {
+        if (el.contains(e.relatedTarget)) return;
+        notice.focus = false;
+        armNotice();
+    });
+    root.append(el);
+    Object.assign(notice, { el, kind, autoHide, hover: false, focus: false });
+    armNotice();
+};
+
+const dismissButton = () =>
+    h(
+        "button",
+        {
+            type: "button",
+            class: "pm-iconbtn",
+            "aria-label": "Dismiss",
+            "data-tip": "Dismiss",
+            onclick: () => (hideTip(), clearNotice()),
+        },
+        svgIcon("x", "pm-i-sm"),
+    );
+
+const noticeLoading = () =>
+    showNotice({
+        kind: "loading",
+        small: true,
+        autoHide: false,
+        children: [
+            h("span", { class: "pm-spinner" }),
+            h("span", { text: "Reading this paper…" }),
+        ],
+    });
+const hideLoadingNotice = () => {
+    if (pendingNotice?.kind === "loading") pendingNotice = null;
+    if (notice.kind === "loading") clearNotice();
+};
+
+const noticeCopied = (text) =>
+    showNotice({
+        kind: "copied",
+        children: [svgIcon("check", "ok"), h("span", { text })],
+    });
+
+const noticeSaved = (paper) =>
+    showNotice({
+        kind: "saved",
+        children: [
+            svgIcon("mark"),
+            h("span", { text: "Saved to your Memory" }),
+            h(
+                "button",
+                { type: "button", class: "pm-btn", onclick: () => undoSave(paper) },
+                svgIcon("undo", "pm-i-sm"),
+                "Undo",
+            ),
+            dismissButton(),
+        ],
+    });
+
+/** "Couldn’t save this paper" + Try again; stays until dismissed */
+const noticeError = (reason) =>
+    showNotice({
+        kind: "error",
+        role: "alert",
+        autoHide: false,
+        children: [
+            svgIcon("alert", "err"),
+            h("span", {}, "Couldn’t save this paper", h("small", { text: reason })),
+            h(
+                "button",
+                { type: "button", class: "pm-btn", onclick: () => savePaper() },
+                "Try again",
+            ),
+            dismissButton(),
+        ],
+    });
+
+/** Undo of "Saved": the same deletion as the popup's (a background Memory operation); the
+ * paper is not added again until the page is reloaded */
+const undoSave = async (paper) => {
+    state.deleted[paper.id] = true; // set first: the preprint update must not re-create it
+    if (!(await deletePaperInStorage(paper.id))) {
+        delete state.deleted[paper.id];
+        showNotice({
+            kind: "error",
+            role: "alert",
+            autoHide: false,
+            children: [
+                svgIcon("alert", "err"),
+                h("span", { text: "Couldn’t remove this paper" }),
+                dismissButton(),
+            ],
+        });
+        return;
+    }
+    showNotice({
+        kind: "removed",
+        children: [
+            svgIcon("mark"),
+            h("span", { text: "Removed from your Memory" }),
+            dismissButton(),
+        ],
+    });
+    renderArxivBlock();
+};
+
+/**
+ * Feedback from addOrUpdatePaper (contentScriptCallbacks.feedback)
+ * @param {object} opts loading; paper: a new paper was saved; error: "write" (the
+ *   background did not save it) or "read" (the page could not be parsed); text: anything else
+ */
+const feedback = ({ text, paper = null, loading = false, error = null }) => {
+    if (error) {
+        settleBlock();
+        return noticeError(
+            error === "write"
+                ? "Your Memory could not be updated"
+                : "The page could not be read",
+        );
+    }
+    if (loading) return noticeLoading();
+    if (paper) return noticeSaved(paper);
+    if (text) showNotice({ kind: "text", children: [h("span", { text })] });
+};
+
+let runMain = null; // (manualTrigger) => contentScriptMain on this page, set by initContentScript
+// each contentScriptMain run gets a number: callbacks of an older run (e.g. the late
+// preprint update of a metadata-only run) cannot change the block or the notices any more
+let activeRun = 0;
+
+/** The active run is over: the block shows its status again, a manual save may start */
+const settleBlock = () => {
+    block.pending = false;
+    block.saving = false;
+    renderArxivBlock();
+};
+
+/** "Add to Memory" and "Try again": parse and store this page now (once at a time) */
+const savePaper = () => {
+    if (block.saving) return;
+    for (const id of [block.id, block.paper?.id]) if (id) delete state.deleted[id];
+    block.saving = true;
+    block.pending = true;
+    renderArxivBlock();
+    noticeLoading();
+    runMain?.(true);
 };
 
 const makePaperMemoryHTMLDiv = (paper) => {
     return paper.venue
         ? /*html*/ `
-         <div 
+         <div
             id="pm-container"
-            style="position: absolute; top: 10px; left: 50%; transform: translateX(-50%); font-family: 'Noto Sans','Noto Sans Fallback',sans-serif; font-size: 0.8rem;"
+            style="position: absolute; top: 10px; left: 50%; transform: translateX(-50%); font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; font-size: 0.8rem;"
         >
-            <div 
-                style="display: flex; justify-content: center; align-items: center;" 
+            <div
+                style="display: flex; justify-content: center; align-items: center;"
                 id="pm-venue"
             >
                 <span id="pm-venue-name">${escapeHtml(paper.venue)}</span>
@@ -285,19 +453,19 @@ const handleDefaultAction = async () => {
             break;
         case "c":
             handleCopyPDFLink(e);
-            text = "Link to paper copied!";
+            text = "URL copied";
             break;
         case "m":
             handleCopyMarkdownLink(e);
-            text = "Markdown link copied!";
+            text = "Markdown link copied";
             break;
         case "b":
             handleCopyBibtex(e);
-            text = "Bibtex citation copied!";
+            text = "BibTeX copied";
             break;
         case "h":
             handleCopyHyperLink(e);
-            text = "Hyperlink copied!";
+            text = "Rich link copied";
             break;
         case "d":
             console.log("Invalid action:", action);
@@ -320,7 +488,7 @@ const handleDefaultAction = async () => {
         default:
             warn("Unknown action:", action);
     }
-    text && feedback({ text });
+    text && noticeCopied(text);
 };
 
 /** Whether or not to ignore the current paper based on its `is` object
@@ -380,8 +548,12 @@ const contentScriptMain = async ({
     stateIsReady,
     manualTrigger = false,
     paperUpdateDoneCallbacks = {},
+    run = activeRun,
 } = {}) => {
     console.log("url: ", url);
+    const isActive = () => run === activeRun;
+    // the arXiv block shows no status until this run says whether the paper is saved
+    block.pending = true;
     if (!stateIsReady) {
         let remoteReadyPromise;
         const stateReadyPromise = new Promise((stateResolve) => {
@@ -412,14 +584,26 @@ const contentScriptMain = async ({
         (!isIgnored && ((!isPdfPrevented && !isAutoDisabled) || is.arxiv))
     ) {
         const store = !(isPdfPrevented || isAutoDisabled) || manualTrigger;
-        update = await addOrUpdatePaper({
-            url,
-            is,
-            prefs,
-            store,
-            contentScriptCallbacks: paperUpdateDoneCallbacks,
-        });
+        try {
+            update = await addOrUpdatePaper({
+                url,
+                is,
+                prefs,
+                store,
+                contentScriptCallbacks: paperUpdateDoneCallbacks,
+            });
+        } catch (error) {
+            logError("Could not parse the paper:", error);
+        }
+        if (!update && isActive()) {
+            // parsing failed: say so when the paper was to be saved (else the loading
+            // notice of a metadata-only read just ends)
+            settleBlock();
+            hideLoadingNotice();
+            store && feedback({ error: "read" });
+        }
     } else {
+        if (isActive()) settleBlock();
         if (ignorePaper(is, ignoreSources)) {
             warn(
                 "Paper is being ignored because its source has been disabled in the Advanced Options.",
@@ -461,186 +645,6 @@ const contentScriptMain = async ({
     }
 };
 
-const makeNotif = () => {
-    if (notif.element) return;
-    const notifHtml = /*html*/ ` <div id="feedback-notif"></div> `;
-    document.body.insertAdjacentHTML("beforeend", notifHtml);
-    notif.element = $("#feedback-notif");
-    style("feedback-notif", "padding", "0px");
-};
-
-const hideNotif = () =>
-    new Promise(async (resolve) => {
-        const end = ({ dontWait = false } = {}) => {
-            notif.prevent = false;
-            notif.isLoading = false;
-            querySelector("#feedback-notif")?.classList.remove("notif-small");
-            setTimeout(resolve, dontWait ? 0 : 150);
-        };
-
-        if (!notif.element) {
-            // warn("[hideNotif] Notif element not found");
-            end({ dontWait: true });
-            return;
-        }
-
-        notif.element.animate(
-            { right: "-200px", opacity: "0" },
-            notif.hideSpeed,
-            "easeInOutBack",
-            end,
-        );
-        // sometimes animate does not call the callback
-        setTimeout(end, notif.hideSpeed + 50);
-    });
-
-const setNotifContent = (text) => {
-    if (!notif.element) {
-        warn("[setNotifContent] Notif element not found");
-        return;
-    }
-    notif.element.html(text);
-};
-
-const showNotif = () =>
-    new Promise((resolve) => {
-        if (!notif.element) {
-            console.warn("[PM][showNotif] Notif element not found");
-            makeNotif();
-        }
-        notif.element.animate(
-            {
-                right: "64px",
-                opacity: "1",
-            },
-            notif.showSpeed,
-            "easeInOutBack",
-            resolve,
-        );
-    });
-
-/**
- * Slides a div in then out, bottom right, with some text to give the user
- * a feedback on some action performed
- * @param {string} text the text to display in the slider div
- * @returns {void}
- */
-const feedback = async ({
-    text,
-    paper = null,
-    displayDuration = notif.displayDuration,
-    loading = false,
-}) => {
-    if (document.readyState === "loading") {
-        setTimeout(() => feedback({ text, paper, displayDuration, loading }), 250);
-        return;
-    }
-    makeNotif();
-    if (notif.prevent && !notif.isLoading) {
-        setTimeout(() => feedback({ text, paper, displayDuration, loading }), 100);
-        return;
-    }
-    try {
-        clearTimeout(notif.timeout);
-        await hideNotif();
-        notif.prevent = true;
-    } catch (error) {}
-
-    let content = "";
-    notif.isLoading = false;
-
-    if (paper) {
-        content = /*html*/ ` <div id="notif-text">
-                <div>${text}</div>
-            </div>
-            <div title="Cancel" id="notif-cancel">
-                ${svg("notif-cancel")}
-            </div>`;
-    } else if (loading) {
-        notif.isLoading = true;
-        querySelector("#feedback-notif")?.classList.add("notif-small");
-        content = /*html*/ `<div id="notif-text"><span class="pm-notif-loader"></span></div>`;
-    } else {
-        content = /*html*/ ` <div id="notif-text">
-                <div style="display: flex;">${text}</div>
-            </div>`;
-    }
-
-    setNotifContent(content);
-    await showNotif();
-    notif.timeout = setTimeout(hideNotif, displayDuration);
-
-    paper &&
-        addListener("notif-cancel", "click", async () => {
-            clearTimeout(notif.timeout);
-            await deletePaperInStorage(paper.id, state.papers);
-            if (!state.deleted) {
-                state.deleted = {};
-            }
-            state.deleted[paper.id] = true;
-            setTimeout(() => delete state.deleted[paper.id], 30 * 1000);
-            notif.timeout = setTimeout(hideNotif, displayDuration);
-            setHTML("notif-text", "<div>Removed from memory</div>");
-        });
-};
-
-/**
- * Changes the width of the arxiv columns: left is smaller, right is bigger
- * @param {string} newColWidth the new width of the left column
- * @returns {void}
- */
-const adjustArxivColWidth = (newColWidth = "33%") => {
-    document
-        .querySelector(".leftcolumn")
-        ?.setAttribute("style", `width: calc(100% - ${newColWidth}) !important`);
-    document
-        .querySelector(".extra-services")
-        ?.setAttribute("style", `width: ${newColWidth} !important`);
-};
-
-/** Adds a paper's venue html element to the arxiv page
- * @param {object} paper The paper object
- * @returns {void}
- * */
-const displayPaperVenue = (paper) => {
-    if (!paper.venue) {
-        return;
-    }
-    const venueDiv = /*html*/ `
-        <div id="pm-publication-wrapper">
-            <div id="pm-publication-venue">
-                <span id="pm-venue-name">${escapeHtml(paper.venue)}</span>
-                <span id="pm-venue-year">${escapeHtml(bibtexToObject(paper.bibtex).year)}</span>
-            </div>
-        </div>`;
-    findEl({ element: "pm-publication-wrapper" })?.remove();
-    findEl({ element: "pm-header-content" })?.insertAdjacentHTML(
-        "afterbegin",
-        venueDiv,
-    );
-};
-
-/** Adds a paper's code html element to the arxiv page
- * @param {object} paper The paper object
- * @returns {void}
- * */
-const displayPaperCode = (paper) => {
-    if (!paper.codeLink) {
-        return;
-    }
-    const safeLink = /^https?:\/\//.test(paper.codeLink)
-        ? escapeHtml(paper.codeLink)
-        : "";
-    if (!safeLink) return;
-    const code = /*html*/ `
-        <div id="pm-code">
-        <h3>Code:</h3> <a id="pm-code-link" href="${safeLink}">${safeLink}</a>
-        </div>
-    `;
-    findEl({ element: "pm-code" })?.remove();
-    findEl({ element: "pm-extras" })?.insertAdjacentHTML("afterbegin", code);
-};
-
 /**
  * Adds the venue badge to HuggingFace paper pages
  * @param {object} paper The paper object
@@ -670,181 +674,321 @@ const huggingfacePapers = (paper, url) => {
     }, 100);
 };
 
+// ---------------------------------------------------------------------------------------
+// arXiv abstract page: one compact block at the end of arXiv's "Access Paper" column, at
+// arXiv's own width. Its colours come from the page's text colour (content_ui.css).
+// ---------------------------------------------------------------------------------------
+const COPIED_MS = 1500;
+const block = {
+    root: null, // the block's shadow root
+    id: null, // id from the url
+    paper: null, // the paper parsed or saved
+    pdfUrl: null,
+    pending: false, // a save may be running: no status yet
+    saving: false, // an "Add to Memory" / "Try again" save is running
+    bibOpen: false,
+    copied: null, // timer while BibTeX's Copy reads "Copied"
+    hasFile: false, // the PDF is in the downloads (PaperMemoryStore)
+    downloaded: false, // a Download from this page completed: never back to "Download"
+    downloading: false, // a Download is in flight: its button is disabled
+    downloadId: null, // its id, once the background answered
+    earlyDone: {}, // id → ok: ends reported before that answer
+};
+
+/** The paper as stored in the Memory, or undefined */
+const storedPaper = () =>
+    state.papers?.[block.paper?.id] ?? state.papers?.[block.id] ?? undefined;
+
+/** An http(s) URL, else null */
+const safeHttpUrl = (value) => {
+    try {
+        const url = new URL(String(value).trim());
+        return ["http:", "https:"].includes(url.protocol) ? url.href : null;
+    } catch (e) {
+        return null;
+    }
+};
+
+const bibText = (paper) => bibtexToString(paper.bibtex).replaceAll("\t", "  ");
+
+const blockButton = (act, iconName, label, onclick, extra = {}) =>
+    h(
+        "button",
+        { type: "button", class: "pmx-btn", "data-act": act, onclick, ...extra },
+        svgIcon(iconName),
+        label,
+    );
+const blockRow = (label, ...buttons) =>
+    h(
+        "div",
+        { class: "pmx-row" },
+        h("span", { class: "pmx-label", text: label }),
+        h("span", { class: "pmx-acts" }, ...buttons),
+    );
+
+const downloadPdf = async () => {
+    if (block.downloading) return;
+    const id = block.id;
+    let pdfUrl = block.pdfUrl ?? querySelector(".abs-button.download-pdf")?.href;
+    if (!pdfUrl) {
+        console.error(
+            "Could not parse the PDF URL from HTML element: `.abs-button.download-pdf`",
+        );
+        return;
+    }
+    if (!state.papers.hasOwnProperty(id)) {
+        const title = await fetch(
+            `https://export.arxiv.org/api/query?id_list=${id.split("-")[1]}`,
+        ).then((data) => {
+            return $($(data).find("entry title")[0]).text();
+        });
+        downloadURI(pdfUrl, `${title}.pdf`);
+    } else {
+        let title = stateTitleFunction(id);
+        if (!title.endsWith(".pdf")) {
+            title += ".pdf";
+        }
+        // the background starts it and answers at once; "pdfDownloadDone" comes when it
+        // ends (only this button's downloads are reported to this tab)
+        block.downloading = true;
+        renderArxivBlock();
+        const answer = await sendMessageToBackground({
+            type: "download-pdf-to-store",
+            pdfUrl,
+            title,
+            store: !!state.prefs.checkStore,
+        });
+        const early = block.earlyDone;
+        block.earlyDone = {};
+        if (!answer?.ok) return endDownload(false);
+        block.downloadId = answer.id;
+        if (answer.id in early) endDownload(early[answer.id]);
+    }
+};
+
+const endDownload = (ok) => {
+    block.downloading = false;
+    block.downloadId = null;
+    if (ok) block.downloaded = block.hasFile = true;
+    renderArxivBlock();
+};
+/** The background's report on a download of this tab: only this page's counts (another
+ * paper opened earlier in the tab may have started one) */
+const onPdfDownloadDone = ({ id, ok }) => {
+    if (!block.downloading) return;
+    if (block.downloadId === null)
+        block.earlyDone[id] = ok; // before the answer
+    else if (id === block.downloadId) endDownload(ok);
+};
+
+/** Whether the saved paper's PDF is in the downloads (the background owns that API) */
+const checkStoredPdf = async () => {
+    const id = storedPaper()?.id;
+    if (!id || !state.prefs?.checkDownload) return;
+    const answer = await sendMessageToBackground({ type: "stored-pdf", id });
+    const found = !!answer?.found || block.downloaded;
+    if (found !== block.hasFile) {
+        block.hasFile = found;
+        renderArxivBlock();
+    }
+};
+const showStoredPdf = async () => {
+    const id = storedPaper()?.id;
+    const answer =
+        id && (await sendMessageToBackground({ type: "stored-pdf", id, show: true }));
+    if (!answer?.found) {
+        // the file is gone (deleted, erased from the downloads)
+        block.hasFile = block.downloaded = false;
+        renderArxivBlock();
+    }
+};
+
+const copyMarkdown = () => {
+    const title = storedPaper()?.title ?? document.title;
+    copyTextToClipboard(`[${title}](${block.pdfUrl})`);
+    noticeCopied("Markdown link copied");
+};
+const copyBibtex = () => {
+    const paper = storedPaper() ?? block.paper;
+    if (!paper?.bibtex) return;
+    copyTextToClipboard(bibText(paper));
+    clearTimeout(block.copied);
+    block.copied = setTimeout(() => {
+        block.copied = null;
+        renderArxivBlock();
+    }, COPIED_MS);
+    renderArxivBlock();
+    noticeCopied("BibTeX copied");
+};
+const toggleBibtex = () => {
+    block.bibOpen = !block.bibOpen;
+    renderArxivBlock();
+};
+
+/** (Re)draws the block from the current state; keeps the keyboard focus */
+const renderArxivBlock = () => {
+    if (!block.root) return;
+    const prefs = state.prefs ?? {};
+    const stored = storedPaper();
+    const paper = stored ?? block.paper;
+    const focused = block.root.activeElement?.dataset?.act;
+
+    const rows = [
+        h(
+            "div",
+            { class: "pmx-head" },
+            svgIcon("mark"),
+            h("span", { text: "PaperMemory" }),
+        ),
+    ];
+    // status row (none while a save may be running); not saved: automatic recording off,
+    // the source ignored, a failed save, or Undo
+    if (!block.pending)
+        rows.push(
+            stored
+                ? h(
+                      "div",
+                      { class: "pmx-row" },
+                      h(
+                          "span",
+                          { class: "pmx-label pmx-status" },
+                          svgIcon("check", "pm-i-sm"),
+                          "In your Memory",
+                      ),
+                  )
+                : blockRow(
+                      "Not saved",
+                      blockButton("add", "plus", "Add to Memory", savePaper),
+                  ),
+        );
+    if (prefs.checkDownload)
+        rows.push(
+            blockRow(
+                "PDF",
+                stored && block.hasFile
+                    ? blockButton(
+                          "show-file",
+                          "folder",
+                          "Show in folder",
+                          showStoredPdf,
+                      )
+                    : blockButton("download", "download", "Download", downloadPdf, {
+                          "data-tip": prefs.checkStore
+                              ? "Download to Downloads/PaperMemoryStore"
+                              : null,
+                          disabled: block.downloading,
+                      }),
+            ),
+        );
+    if (prefs.checkMd)
+        rows.push(
+            blockRow("Markdown link", blockButton("md", "copy", "Copy", copyMarkdown)),
+        );
+    if (prefs.checkBib && paper?.bibtex) {
+        rows.push(
+            blockRow(
+                "BibTeX",
+                blockButton(
+                    "bib-show",
+                    "down",
+                    block.bibOpen ? "Hide" : "Show",
+                    toggleBibtex,
+                    {
+                        "aria-expanded": String(block.bibOpen),
+                        "aria-controls": "pm-bibtex",
+                    },
+                ),
+                block.copied
+                    ? blockButton("bib-copy", "check", "Copied", copyBibtex, {
+                          class: "pmx-btn ok",
+                      })
+                    : blockButton("bib-copy", "copy", "Copy", copyBibtex),
+            ),
+            h("pre", { id: "pm-bibtex", hidden: !block.bibOpen, text: bibText(paper) }),
+        );
+    }
+    const venue = paper?.venue ? formatVenue(paper).short : "";
+    if (venue)
+        rows.push(
+            h(
+                "div",
+                { class: "pmx-row venue" },
+                h("em", { text: "Published in" }),
+                ` ${venue}`,
+            ),
+        );
+    const codeUrl = paper?.codeLink && safeHttpUrl(paper.codeLink);
+    if (codeUrl) {
+        const shown = String(paper.codeLink).trim();
+        rows.push(
+            h(
+                "div",
+                { class: "pmx-row info" },
+                h("em", { text: "Code" }),
+                h(
+                    "a",
+                    {
+                        class: "pmx-val",
+                        href: codeUrl,
+                        target: "_blank",
+                        rel: "noopener",
+                        "data-act": "code",
+                        "data-tip": shown,
+                    },
+                    shown.replace(/^https?:\/\//i, ""),
+                    h("span", { class: "pm-sr", text: " (opens in new tab)" }),
+                ),
+                h("span", { class: "pmx-out", "aria-hidden": "true", text: "↗" }),
+            ),
+        );
+    }
+
+    block.root.querySelector(".pmx")?.remove();
+    block.root.append(
+        h("div", { class: "pmx", role: "group", "aria-label": "PaperMemory" }, ...rows),
+    );
+    if (focused) block.root.querySelector(`[data-act="${focused}"]`)?.focus();
+};
+
 /**
- * Handle the ArXiv UI enhancements
- * @param {object} checks The user's stored preferences regarding menu options
+ * Draws the PaperMemory block on an arXiv abstract page (once; later calls redraw it)
+ * @param {string} url The page's url
  * @returns {void}
  * */
-const arxiv = async (checks) => {
-    const { checkMd, checkBib, checkDownload, checkStore } = checks;
-
-    const url = window.location.href;
+const arxiv = async (url) => {
     const isArxivAbs = url.includes("https://arxiv.org/abs/");
 
     if (!isArxivAbs) return;
 
     const id = await parseIdFromUrl(url);
-    const previousHTML = querySelector(".extra-services .full-text")?.innerHTML || "";
-    const pmTitle = '<h2 id="pm-col-title">PaperMemory:</h2>';
-    setHTML(
-        querySelector(".extra-services .full-text"),
-        /*html*/ `<div>${previousHTML}</div>
-        <div id="pm-download-wrapper" class="pm-container">
-            <div id="pm-header" style="width: 100%">
-                ${previousHTML.includes(pmTitle) ? "" : pmTitle}
-                <div id="pm-header-content"></div>
-            </div>
-        </div>
-        <div id="pm-extras"></div>`,
-    );
-    let pdfUrlButton = await queryOrWait({ query: ".abs-button.download-pdf" });
-    let pdfUrl = pdfUrlButton?.href;
-    const arxivPMDiv = await queryOrWait({ query: "#pm-extras" });
-
-    // -----------------------------
-    // -----  Download Button  -----
-    // -----------------------------
-    if (checkDownload) {
-        const button = /*html*/ `
-            <div id="pm-arxiv-direct-download" class="pm-container" style="align-items: end;">
-                <div id="arxiv-button">${svg("download")}</div>
-                <div style="font-size: 0.6rem; color: #cac7c7; padding-bottom: 0.6rem;">Download to<br/>PaperMemoryStore</div>
-            </div>
-        `;
-        findEl({ element: "pm-arxiv-direct-download" })?.remove();
-        (await queryOrWait({ query: "#pm-header-content" }))?.insertAdjacentHTML(
-            "beforeend",
-            button,
-        );
-        var downloadTimeout;
-        addListener("arxiv-button", "click", async () => {
-            removeClass("arxiv-button", "downloaded");
-            addClass("arxiv-button", "downloaded");
-            downloadTimeout && clearTimeout(downloadTimeout);
-            downloadTimeout = setTimeout(() => {
-                hasClass("arxiv-button", "downloaded") &&
-                    removeClass("arxiv-button", "downloaded");
-            }, 1500);
-            if (!pdfUrl) {
-                pdfUrl = querySelector(".abs-button.download-pdf")?.href;
-            }
-            if (!pdfUrl) {
-                console.error(
-                    "Could not parse the PDF URL from HTML element: `.abs-button.download-pdf`",
-                );
-                return;
-            }
-            if (!state.papers.hasOwnProperty(id)) {
-                const title = await fetch(
-                    `https://export.arxiv.org/api/query?id_list=${id.split("-")[1]}`,
-                ).then((data) => {
-                    return $($(data).find("entry title")[0]).text();
-                });
-                downloadURI(pdfUrl, `${title}.pdf`);
-            } else {
-                let title = stateTitleFunction(id);
-                if (!title.endsWith(".pdf")) {
-                    title += ".pdf";
-                }
-                checkStore
-                    ? sendMessageToBackground({
-                          type: "download-pdf-to-store",
-                          pdfUrl,
-                          title,
-                      })
-                    : downloadURI(pdfUrl, title);
-            }
-        });
+    const column = await queryOrWait({ query: ".extra-services .full-text" });
+    if (!column) return;
+    if (!block.root?.host.isConnected) {
+        const { host, root } = makeHost("papermemory-block");
+        column.append(host);
+        block.root = root;
     }
-    // ---------------------------
-    // -----  Markdown Link  -----
-    // ---------------------------
-
-    let paper = state.papers.hasOwnProperty(id)
-        ? state.papers[id]
-        : await getSource("arxiv").parse(url, null, {});
-
-    if (paper.venue) {
-        displayPaperVenue(paper);
+    block.id = id;
+    block.pdfUrl = (await queryOrWait({ query: ".abs-button.download-pdf" }))?.href;
+    if (!block.paper) {
+        try {
+            block.paper = state.papers.hasOwnProperty(id)
+                ? state.papers[id]
+                : await getSource("arxiv").parse(url, null, {});
+        } catch (error) {
+            warn("Could not read the arXiv paper for PaperMemory's block:", error);
+        }
     }
+    renderArxivBlock();
+    checkStoredPdf();
+};
 
-    if (paper.codeLink) {
-        displayPaperCode(paper);
-    }
-
-    if (checkMd) {
-        const mdTitle = state.papers.hasOwnProperty(id)
-            ? state.papers[id].title
-            : document.title;
-        const mdContent = `[${mdTitle}](${pdfUrl})`;
-        const mdHtml = /*html*/ `
-        <div id="markdown-container">
-            <div id="markdown-header" class="pm-sub-header">
-                <h3>Markdown</h3>
-                ${svg("clipboard-default")} ${svg("clipboard-default-ok")}
-            </div>
-            <div id="markdown-link" class="pm-codify">${mdContent}</div>
-        </div>`;
-        findEl({ element: "markdown-container" })?.remove();
-        arxivPMDiv?.insertAdjacentHTML("beforeend", mdHtml);
-    }
-
-    if (checkBib) {
-        const bibLoader = /*html*/ `
-            <div id="loader-container" class="pm-container">
-                <div class="sk-folding-cube">
-                    <div class="sk-cube1 sk-cube"></div>
-                    <div class="sk-cube2 sk-cube"></div>
-                    <div class="sk-cube4 sk-cube"></div>
-                    <div class="sk-cube3 sk-cube"></div>
-                </div>
-            </div>
-        `;
-        arxivPMDiv?.insertAdjacentHTML("beforeend", bibLoader);
-        findEl({ element: "bibtexDiv" })?.remove();
-        const bibtexDiv = /*html*/ `
-            <div id="bibtexDiv">
-                <div id="texHeader" class="pm-sub-header">
-                    <h3>BibTex:</h3>
-                    ${svg("clipboard-default")} ${svg("clipboard-default-ok")}
-                </div>
-                <div id="pm-bibtex-textarea" class="pm-codify">${bibtexToString(
-                    paper.bibtex,
-                ).replaceAll("\t", "  ")}</div>
-            </div>
-        `;
-
-        (await queryOrWait({ query: "#loader-container" }))?.remove();
-        arxivPMDiv?.insertAdjacentHTML("beforeend", bibtexDiv);
-        addListener(querySelector("#texHeader .copy-feedback"), "click", (e) => {
-            $("#texHeader .copy-feedback").fadeOut(200, () => {
-                $("#texHeader .copy-feedback-ok").fadeIn(200, () => {
-                    setTimeout(() => {
-                        $("#texHeader .copy-feedback-ok").fadeOut(200, () => {
-                            $("#texHeader .copy-feedback").fadeIn(200);
-                        });
-                    }, 1500);
-                });
-            });
-            copyTextToClipboard(findEl({ element: "pm-bibtex-textarea" }).innerText);
-            feedback({ text: "Bibtex Citation Copied!" });
-        });
-        addListener(querySelector("#markdown-header .copy-feedback"), "click", (e) => {
-            $("#markdown-header .copy-feedback").fadeOut(200, () => {
-                $("#markdown-header .copy-feedback-ok").fadeIn(200, () => {
-                    setTimeout(() => {
-                        $("#markdown-header .copy-feedback-ok").fadeOut(200, () => {
-                            $("#markdown-header .copy-feedback").fadeIn(200);
-                        });
-                    }, 1500);
-                });
-            });
-            copyTextToClipboard(
-                findEl({ element: "markdown-link" }).innerText.replaceAll("\n", ""),
-            );
-            feedback({ text: "Markdown Link Copied!" });
-        });
-    }
+/** A paper was saved or updated (contentScriptCallbacks.update / preprints) */
+const onPaperUpdate = (paper) => {
+    hideLoadingNotice();
+    if (paper) block.paper = paper;
+    settleBlock();
+    checkStoredPdf();
 };
 
 // Because Puppeteer does not receive content script logs as "console" events,
@@ -871,19 +1015,13 @@ const tryArxivDisplay = async ({
 } = {}) => {
     // a paper was parsed
 
-    // user preferences
-    const prefs = state.prefs;
-
     // paper.source may not be "arxiv" even on arxiv.org
     // because of the existing paper matching mechanism
     let is = await isPaper(url, true);
 
     if (is.arxiv && !isPdfUrl(url) && isArxivAbstractUrl(url)) {
-        // larger arxiv column
-        adjustArxivColWidth();
-
         // display arxiv paper metadata
-        await arxiv(prefs);
+        await arxiv(url);
         huggingfacePapers(paper, url);
 
         // wait for publication databases to be queried
@@ -896,20 +1034,9 @@ const tryArxivDisplay = async ({
             paper = state.papers[id];
         }
 
-        // update bibtex
-        if (prefs.checkBib) {
-            if (findEl({ element: "pm-bibtex-textarea" })) {
-                findEl({ element: "pm-bibtex-textarea" }).innerHTML = bibtexToString(
-                    paper.bibtex,
-                ).replaceAll("\t", "  ");
-            }
-        }
-
-        // update venue
-        displayPaperVenue(paper);
-
-        // update codeLink
-        displayPaperCode(paper);
+        // update bibtex, venue and code link
+        if (paper) block.paper = paper;
+        renderArxivBlock();
     }
 };
 
@@ -933,38 +1060,51 @@ export async function initContentScript() {
         warn("Cannot connect to background script");
     }
 
+    /** contentScriptMain as a new run: only its callbacks act while it is the latest */
+    const startRun = (opts) => {
+        const run = ++activeRun;
+        const active = () => run === activeRun;
+        return contentScriptMain({
+            ...opts,
+            stateIsReady,
+            run,
+            paperUpdateDoneCallbacks: {
+                update: (p) => {
+                    paperResolve(p);
+                    active() && onPaperUpdate(p);
+                },
+                preprints: (p) => {
+                    preprintsResolve(p);
+                    active() && onPaperUpdate(p);
+                },
+                done: updateCompleteSecretHTML,
+                feedback: (f) => active() && feedback(f),
+            },
+        }).catch((error) => {
+            // a run that failed before addOrUpdatePaper answered: no notice left running
+            logError("PaperMemory could not process this page:", error);
+            if (!active()) return;
+            settleBlock();
+            opts.manualTrigger ? feedback({ error: "read" }) : hideLoadingNotice();
+        });
+    };
+    // "Add to Memory" and "Try again"
+    runMain = (manualTrigger) => startRun({ url, manualTrigger });
+
     // listen to the background script for :
     //  1. tab url updates (SPAs)
     //  2. manual parsing keyboard shortcuts
     chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
         if (request.message === "tabUrlUpdate") {
             info("Running PaperMemory's content script for url update");
-            contentScriptMain({
-                url: request.url,
-                stateIsReady,
-                manualTrigger: false,
-                paperUpdateDoneCallbacks: {
-                    update: paperResolve,
-                    preprints: preprintsResolve,
-                    done: updateCompleteSecretHTML,
-                    feedback,
-                },
-            });
+            startRun({ url: request.url, manualTrigger: false });
         } else if (request.message === "manualParsing") {
             info("Triggering manual parsing");
-            contentScriptMain({
-                url,
-                stateIsReady,
-                manualTrigger: true,
-                paperUpdateDoneCallbacks: {
-                    update: paperResolve,
-                    preprints: preprintsResolve,
-                    done: updateCompleteSecretHTML,
-                    feedback,
-                },
-            });
+            runMain(true);
         } else if (request.message === "defaultAction") {
             handleDefaultAction();
+        } else if (request.message === "pdfDownloadDone") {
+            onPdfDownloadDone(request);
         }
     });
 
@@ -978,17 +1118,7 @@ export async function initContentScript() {
             // the main functions.
             paperResolve = par;
             if (await isSourceURL(url, true)) {
-                contentScriptMain({
-                    url,
-                    stateIsReady,
-                    manualTrigger: false,
-                    paperUpdateDoneCallbacks: {
-                        update: paperResolve,
-                        preprints: preprintsResolve,
-                        done: updateCompleteSecretHTML,
-                        feedback,
-                    },
-                });
+                runMain(false);
             } else {
                 // if the url is not associated to a known source:
                 paperResolve(null);
@@ -999,10 +1129,7 @@ export async function initContentScript() {
 
     // Promise resolved when the DOM is loaded
     const domReadyPromise = new Promise((resolve) => {
-        document.addEventListener("DOMContentLoaded", () => {
-            injectNotifCSS();
-            resolve();
-        });
+        document.addEventListener("DOMContentLoaded", resolve);
     });
 
     // wait for the paper to be parsed and the DOM to be loaded
@@ -1019,5 +1146,4 @@ export async function initContentScript() {
             }, 1000);
         }
     }
-    await hideNotif();
 } // end initContentScript
