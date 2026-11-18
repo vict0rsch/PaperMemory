@@ -301,7 +301,7 @@ The single domain entity. It is a plain object validated (and defaulted) by
 | `favorite`, `favoriteDate`         | bool/string   | Starring                                              |
 | `count`, `addDate`, `lastOpenDate` | number/string | Visit tracking + sort keys                            |
 | `extras`                           | object        | Optional per-source overflow                          |
-| `provenance`                       | object        | Optional, Agent access: which client added the paper, why, when (hashes only, never the keys) |
+| `provenance`                       | object        | Optional, Agent access: which client added the paper, why, when (hashes only, never the keys); removed when a page's merge or promotion (e.g. the user's visit of its published version) makes the paper the user's |
 | `projectHashes`                    | string[]      | Optional, Agent access: hashes of the Projects the paper belongs to |
 
 ### Storage layout (`chrome.storage.local`)
@@ -343,7 +343,11 @@ background queue (`memoryOp`: `visit` / `merge`) → `pushToRemote` → asynchro
 matching (`tryPreprintMatch`) to backfill venue/bibtex → second save (`patch`). An optional `agent` parameter (`{tags, provenance, projectHash}`, Agent access) goes with the
 first save's operation: the queue adds the agent's tags and Project membership to the paper
 as stored, and Provenance only when that `merge` creates it; the `patch` writes publication
-fields only. It also returns `isNew` (the save's answer) and `done` (after the last write).
+fields only. A paper already stored (its id, a URL resolving to it, or a fuzzy match) is only
+attached: a `visit` carrying the agent fields, with no merge, promotion, URL remapping or
+`patch` (the queue attaches the same way when the agent's `merge` finds the paper stored
+meanwhile). It also returns `isNew` (the save's answer) and `done` (after the last write,
+also when processing fails).
 Caller-supplied `contentScriptCallbacks`
 (`update`/`preprints`/`done`/`feedback`) let the content script render progressive
 feedback. `makePaper` dispatches to `src.parse()` and stamps `paper.source`.
@@ -492,8 +496,11 @@ the `downloads` API), `functions.js` (49 misc helpers incl. `miniHash`,
   that Agent access is on and the client still authorized. Each change to papers is one
   `agent` operation of the Memory's queue (background only: it carries a function), which
   checks the arguments, the note length and, for a deletion, ownership on the papers as
-  stored, in the same step that changes them. An add's writes are the pipeline's `merge` /
-  `visit` (carrying the agent fields) and `patch`.
+  stored, in the same step that changes them, and refuses the change if the client was
+  revoked or Agent access turned off since the job started. The `{ type: "memory" }`
+  message route refuses `agent` operations and inline Memories, also inside a `batch`. An
+  add's writes are the pipeline's `merge` / `visit` (carrying the agent fields) and `patch`;
+  for a paper already stored, only that first write, which attaches it.
 - **Pattern mutual exclusion** across sources is a hard invariant (test-enforced).
 - **No top-level use of `functions.js` exports inside source modules** (TDZ — see
   the `base.js` constraint above).
@@ -516,7 +523,8 @@ the `downloads` API), `functions.js` (49 misc helpers incl. `miniHash`,
 - **Permissions:** `activeTab`, `storage`, `unlimitedStorage`, `downloads`(+`.open`),
   `scripting`, `alarms`, `offscreen` (Chrome build only), optional `nativeMessaging`
   (requested when Agent access is turned on; granted at install only in
-  `WXT_PM_AGENT_TEST=1` test builds), and `host_permissions: *://*/*`.
+  `WXT_PM_AGENT_TEST=1` test builds, set in the environment or a `.env` file, which
+  `wxt zip` refuses), and `host_permissions: *://*/*`.
 - **Docs site:** MkDocs Material (`mkdocs.yml`, `docs/`) published to papermemory.org. Site and Readme screenshots and web videos (walkthrough + feature loops) are generated from the real build with `node scripts/store-assets/build.mjs docs` (writes `docs/assets/`).
 
 ## Key Design Decisions

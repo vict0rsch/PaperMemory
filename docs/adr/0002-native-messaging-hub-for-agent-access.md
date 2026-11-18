@@ -72,27 +72,42 @@ and Firefox, all lifecycle checks passed, including 65 min and 8 h idles).
   fixed bounds (http/https URLs only, unknown arguments rejected, length caps, tag limits,
   per-client write rate limits, bounded queue, one pending pairing at a time). All writes go
   through one serialized queue with per-job deadlines; right before each job it re-checks
-  that Agent access is on and the client is still authorized. A tag, note, attach or delete
+  that Agent access is on and the client is still authorized, and the Memory step that makes
+  a change refuses it if the client was revoked or Agent access turned off since the job
+  started. A tag, note, attach or delete
   change is one operation of PaperMemory's single-writer Memory queue, which checks it
   (arguments, note length, and ownership for a deletion) on the papers as stored, in the
   same step that makes it, so no other write comes between the check and the change
   (`add_paper` writes through the pipeline's own queue operations). Agent tags may not use
   the `proj-` prefix, which is reserved for **Project tags**. Revoking a client or turning Agent access off cancels its queued jobs, and
-  a closed agent connection drops its own (a job already running finishes). Operations never
+  a closed agent connection drops its own (a job already running finishes, but its change is
+  refused in its Memory step; a running add may still store its paper). Operations never
   expose settings, the Gist PAT, backups or arbitrary storage keys; writes are limited to adding
-  papers (forced **Review tag**, **Provenance**), attaching papers to a Project, adding tags,
+  papers (forced **Review tag**, **Provenance**; a paper already in the Memory is only
+  attached), attaching papers to a Project, adding tags,
   appending notes, applying a **Deletion flag**, and deleting **Own additions**.
 - **Hardening decisions.** Agent tags may not contain `<`, `>`, `"`, `'`, a backtick, `&`, `,`
-  or control or format characters, and `proj-` is reserved anywhere in a tag, in any case.
+  or control or format characters, and `proj-` is reserved anywhere in a tag, in any case,
+  with its look-alikes (`proj` then another dash, a minus, `_` or a space, also in
+  compatibility forms such as fullwidth letters, read through NFKC); a tag may not mix Latin
+  with Cyrillic or Greek letters (homoglyphs such as a Cyrillic `ј`).
   Everything an agent supplies or a paper carries is escaped where the UI renders it (output
   escaping in UI sinks). **Deny** starts a global 60 s cooldown for pairing requests, not one
-  per client name, and a pairing whose requester disconnected expires. The zip and submit npm
-  scripts refuse to run when `WXT_PM_AGENT_TEST` is set, so a test build (which has
-  `nativeMessaging` as a required permission) cannot be published.
+  per client name, and a pairing whose requester disconnected expires. Whether a build is a
+  test build is decided in `wxt.config.js` alone, for its manifest and its code (`define`),
+  from `WXT_PM_AGENT_TEST` in the environment or a `.env` file. The zip and submit npm
+  scripts refuse to run when the variable is set, and zipping refuses a built extension that
+  contains the test build's auto-allow, so a test build (which has `nativeMessaging` as a
+  required permission and allows every pairing request) cannot be published.
 - **Ownership is a capability, not a claim.** **Provenance** is written by the Memory queue
-  only when the pipeline's first write creates the paper, so a duplicate (including a fuzzy
-  match whose id changes, or a paper another page stored meanwhile) gains tags and Project
-  membership but never Provenance. With a **Project**, an **Own
+  only when the pipeline's first write creates the paper. Adding a paper already in the
+  Memory (its id, a URL resolving to it, a fuzzy match by title, or a paper another page
+  stored meanwhile) only attaches it: tags, Project membership and a visit, never its
+  metadata, note, id or URLs, and never Provenance; one deleted meanwhile is not re-created
+  (`failed`). A merge or promotion a page makes (the user's visit re-parsing the paper,
+  promoting a preprint to its published version, or reconciling two records of it) removes
+  Provenance and keeps Project memberships: a paper the user's visit merged is no longer an
+  Own addition, so its client can only flag it. With a **Project**, an **Own
   addition** is a paper this **Paired client** added in the same Project, in any session; the
   **Project key** is an HMAC of the **Project folder** path under a per-install secret salt,
   held by the MCP server and never given to the model. Without a Project (home directory,
@@ -146,10 +161,11 @@ and Firefox, all lifecycle checks passed, including 65 min and 8 h idles).
   work. A failure inside ingest reaches the agent only as a generic `failed`. The pipeline
   gains one optional parameter: its first write's operation carries the agent's tags, Project
   membership and Provenance, which the Memory queue applies to the paper as stored
-  (Provenance only when that operation creates it); its later enrichment write changes
+  (Provenance only when that operation creates it; a paper already stored is only attached,
+  with no enrichment write); its later enrichment write changes
   publication fields only, so it cannot drop them. The pipeline reports whether the paper
-  was new and when processing has finished, so the agent is answered only after the final
-  write. On Firefox a job that misses its deadline cannot be aborted and may still
+  was new and when processing has finished (also when it failed), so the agent is answered
+  only after the final write. On Firefox a job that misses its deadline cannot be aborted and may still
   complete later; the agent gets `timeout-may-complete`, and a late paper still carries the
   **Review tag** and **Provenance**, so it stays visible and deletable by its client.
 - **Install durability and updates.** `install` copies a single-file bundled MCP server and

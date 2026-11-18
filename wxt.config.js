@@ -7,8 +7,12 @@ import { glob } from "glob";
 const pkg = createRequire(import.meta.url)("./package.json");
 const disableBrowserStartup = process.env.WXT_NO_BROWSER === "1";
 // Agent access test builds only: nativeMessaging is granted at install instead of
-// requested, as automated tests cannot click the optional-permission prompt
-const agentTestBuild = process.env.WXT_PM_AGENT_TEST === "1";
+// requested, as automated tests cannot click the optional-permission prompt, and every
+// pairing request is allowed (agentAccess.js). The one source for the manifest and the
+// bundle (define), read while building: after WXT has loaded the .env files
+const agentTestBuild = () => process.env.WXT_PM_AGENT_TEST === "1";
+// in a test build's code only (agentAccess.js): zipping refuses a build that has it
+const AGENT_TEST_MARKER = "pm-agent-test-auto-allow";
 
 function htmlIncludePlugin(basePath) {
     return {
@@ -99,9 +103,9 @@ export default defineConfig({
             "scripting",
             "alarms",
             ...(browser !== "firefox" ? ["offscreen"] : []),
-            ...(agentTestBuild ? ["nativeMessaging"] : []),
+            ...(agentTestBuild() ? ["nativeMessaging"] : []),
         ],
-        ...(agentTestBuild ? {} : { optional_permissions: ["nativeMessaging"] }),
+        ...(agentTestBuild() ? {} : { optional_permissions: ["nativeMessaging"] }),
         host_permissions: ["*://*/*"],
         web_accessible_resources: [
             {
@@ -131,6 +135,18 @@ export default defineConfig({
                     command,
                 ]),
             );
+        },
+        // never zip an Agent access test build, whatever turned it on: checked on the
+        // built files, before anything is zipped
+        "zip:start": (wxt) => {
+            const built = glob.sync("**/*.{js,html}", {
+                cwd: wxt.config.outDir,
+                absolute: true,
+            });
+            if (built.some((f) => fs.readFileSync(f, "utf-8").includes(AGENT_TEST_MARKER)))
+                throw new Error(
+                    "Refusing to zip an Agent access test build: unset WXT_PM_AGENT_TEST (environment and .env files) and run the command again.",
+                );
         },
     },
     zip: {
@@ -164,6 +180,7 @@ export default defineConfig({
         },
         define: {
             __DEV__: JSON.stringify(command === "serve"),
+            "import.meta.env.WXT_PM_AGENT_TEST": JSON.stringify(agentTestBuild() ? "1" : ""),
         },
         plugins: [htmlIncludePlugin(path.resolve("src/popup/html"))],
     }),

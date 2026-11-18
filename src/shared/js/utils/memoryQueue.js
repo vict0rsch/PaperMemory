@@ -147,7 +147,9 @@ const latest = (a, b) => (!a ? b : !b ? a : a > b ? a : b);
  * record's metadata, and the user's data of both: tags (union); notes combined (the
  * published one's, a blank line, the other's; once if identical); the published code
  * link, the other's added to the note as "Code (preprint): <url>" when different;
- * favourite if either; visits summed; first added; last opened.
+ * favourite if either; visits summed; first added; last opened; Project memberships
+ * (union). No Provenance: a page's merge makes the record the user's, no agent's Own
+ * addition (an agent can still flag it).
  * @param {object} published The record that stays (its metadata wins)
  * @param {object} other The record merged into it
  * @returns {object}
@@ -177,6 +179,11 @@ export const reconcileRecords = (published, other) => {
     out.count = (Number(published.count) || 0) + (Number(other.count) || 0);
     out.addDate = earliest(published.addDate, other.addDate);
     out.lastOpenDate = latest(published.lastOpenDate, other.lastOpenDate);
+    const projectHashes = [
+        ...new Set([...(published.projectHashes ?? []), ...(other.projectHashes ?? [])]),
+    ];
+    if (projectHashes.length) out.projectHashes = projectHashes;
+    delete out.provenance;
     return out;
 };
 
@@ -227,8 +234,11 @@ const apply = async (memory, op, ctx) => {
             // a parsed paper, merged into the stored one (stored user fields win, see
             // mergePapers) or created; fromId: a stored duplicate (a preprint) it replaces
             const target = op.id ?? op.paper.id;
+            // the target (a fuzzy match) deleted meanwhile: merged into the stored paper of
+            // the parsed id instead, never over it (op.overwrites were for the target)
+            const fallback = !papers[target] && !!papers[op.paper?.id];
             const source = op.fromId && op.fromId !== target ? papers[op.fromId] : null;
-            const destination = papers[target];
+            const destination = papers[fallback ? op.paper.id : target];
             // both stored: one record with the user's data of both (then merged below)
             const base =
                 source && destination
@@ -238,8 +248,14 @@ const apply = async (memory, op, ctx) => {
             if (!base) {
                 if (op.ifMissing === "skip") return keep({ missing: true });
                 paper = op.paper;
+            } else if (op.agent) {
+                // an agent's add of a stored paper only attaches it (its tags and Project,
+                // below) and counts the visit: nothing of the parse is merged in
+                paper = op.visit ? visit(base) : base;
             } else {
-                const overwrites = [...(op.overwrites ?? ["lastOpenDate"])];
+                const overwrites = fallback
+                    ? ["lastOpenDate"]
+                    : [...(op.overwrites ?? ["lastOpenDate"])];
                 if (String(base.author).toLowerCase() === "anonymous")
                     overwrites.push(...(op.anonymousOverwrites ?? []));
                 paper = mergePapers({
@@ -249,6 +265,9 @@ const apply = async (memory, op, ctx) => {
                     incrementCount: !!op.incrementCount,
                 });
                 if (op.visit) visit(paper);
+                // a page's merge or promotion (e.g. the user's visit): the paper is the
+                // user's now, no agent's Own addition (an agent can still flag it)
+                delete paper.provenance;
             }
             // e.g. a code repository found while parsing: only where there is none
             setFields(paper, op.fill, Object.keys(op.fill ?? {}));
@@ -416,6 +435,20 @@ export const runMemoryOp = (op) => {
     });
     queue = run.catch(() => {});
     return run;
+};
+
+/**
+ * Runs an operation a page, content script or document sent ({type: "memory"} message).
+ * Never an Agent access change (`agent`: the background's own, it carries a function) nor
+ * an inline Memory (a page's replace goes through memoryStaging), even inside a batch.
+ * @param {object} op
+ * @returns {Promise<{ok: boolean, result?: object, revision?: number, error?: string}>}
+ */
+export const runMemoryOpFromMessage = async (op) => {
+    const ops = op?.op === "batch" && Array.isArray(op.ops) ? [op, ...op.ops] : [op];
+    if (ops.some((o) => o?.op === "agent" || o?.memory !== undefined))
+        return { ok: false, error: "This Memory operation cannot come from a message" };
+    return runMemoryOp(op);
 };
 
 /** In the background: answer the pages' operations (one queue for the whole extension) */

@@ -81,6 +81,7 @@ let status = { connected: false };
 let pendingPairing = null; // the one pairing request waiting for the user
 let deniedAt = -Infinity; // when the user last denied a pairing request
 const revokedClients = new Set(); // client ids revoked since the worker started
+let disables = 0; // times Agent access was turned off since the worker started
 const rateWindows = new Map(); // client id => times of its recent changes
 const queue = []; // changes waiting to run
 let queueRunning = false;
@@ -386,6 +387,16 @@ const changeMemory = async (change) => {
     return answer.ok ? answer.result : INTERNAL;
 };
 
+// a job's change at its commit point (its Memory step), refused if the job is past its
+// deadline (its agent was answered), or if its client was revoked or Agent access turned
+// off since the job started (that does not stop a running job); null if it may be made
+const refusal = (job) => {
+    if (job.expired) return EXPIRED;
+    if (revokedClients.has(job.auth.clientId)) return UNAUTHORIZED;
+    if (job.disables !== disables) return AGENT_ACCESS_OFF;
+    return null;
+};
+
 // add_paper: ingest, then append the note, whose total is known only then
 const addPaper = async (job) => {
     const { args, auth, client, project, projectHash } = job;
@@ -417,7 +428,8 @@ const addPaper = async (job) => {
             const message = `${invalid.message}: the paper was added (${id}) without your note`;
             return failure(invalid.code, message);
         }
-        if (job.expired) return EXPIRED;
+        const refused = refusal(job);
+        if (refused) return refused;
         appendNote(papers[id], args.note);
         return { write: true, result: { status, id, paper: paperSummary(papers[id]) } };
     });
@@ -430,7 +442,8 @@ const editPaper = async (job, change) => {
     const outcome = await changeMemory((papers) => {
         const invalid = validateArgs(job.op, job.args, papers);
         if (invalid) return { error: invalid };
-        if (job.expired) return EXPIRED;
+        const refused = refusal(job);
+        if (refused) return refused;
         change(papers[job.args.id]);
         return { write: true, result: paperSummary(papers[job.args.id]) };
     });
@@ -449,7 +462,8 @@ const deletePaper = async (job) => {
                 "You did not add this paper in this project: use flag_for_deletion",
             );
         }
-        if (job.expired) return EXPIRED;
+        const refused = refusal(job);
+        if (refused) return refused;
         delete papers[job.args.id];
         return { write: true, result: { deleted: true } };
     });
@@ -504,7 +518,9 @@ const enqueue = (job) => {
 };
 
 // right before a change: Agent access is still on and the client still authorized
+// (checked again when the change is made: refusal)
 const runMutation = async (job) => {
+    job.disables = disables;
     if (!(await isEnabled())) return AGENT_ACCESS_OFF;
     job.client = await authorize(job.auth);
     if (!job.client) return UNAUTHORIZED;
@@ -849,8 +865,9 @@ const onHostDisconnect = (hostPort) => {
 };
 
 // Agent access turned off, or its permission removed: refuse the queued changes and
-// the pairing request, then disconnect (a running change finishes)
+// the pairing request, then disconnect (a running job finishes, its change is refused)
 const disable = () => {
+    disables++;
     clearTimeout(reconnectTimer);
     chrome.alarms.clear(KEEPALIVE_ALARM);
     const hostPort = port;

@@ -1,6 +1,7 @@
 import { expect } from "expect";
 import { JSDOM } from "jsdom";
 import { getSource, unwrapUrl } from "@pmu/sources/index.js";
+import { ingest } from "@pm/background/agentIngest.js";
 
 import { loadPaperMemoryUtils, range, readJSON } from "./utilsForTests.js";
 
@@ -491,27 +492,160 @@ describe("paper.js", () => {
             expect(paper.note).toBe("my note");
         });
 
-        it("agent capture of a fuzzy match whose id changes adds tags and membership, no Provenance", async () => {
+        it("agent add of a stored preprint's published page only attaches the preprint: no promotion", async () => {
             // a stored preprint which the parsed publication matches by title
             const preprint = {
                 ...stored,
                 id: "Arxiv-1234.56789",
                 source: "arxiv",
                 title: "CO2 reduction",
+                author: "J. Doe and A. Smith",
                 venue: "",
+                bibtex: "@article{doe2021preprint,\n  title = {CO2 reduction}\n}",
                 pdfLink: "https://arxiv.org/pdf/1234.56789.pdf",
             };
             storage.papers = { [preprint.id]: preprint };
-            const returned = await capture(agentFields);
-            await returned.done;
-            expect(returned.isNew).toBe(false);
-            // the preprint is promoted to the publication's id
-            expect(returned.id).toEqual(id);
-            expect(Object.keys(storage.papers)).toEqual([id]);
-            const paper = storage.papers[id];
-            expect(paper.tags).toEqual(["mytag", "review", "proj-demo"]);
-            expect(paper.projectHashes).toEqual([agentFields.projectHash]);
+            const outcome = await ingest({ url, ...agentFields });
+            expect(outcome).toEqual({ status: "already-present", id: preprint.id });
+            expect(Object.keys(storage.papers)).toEqual([preprint.id]);
+            const paper = storage.papers[preprint.id];
+            expect(paper).toMatchObject({
+                source: "arxiv",
+                author: preprint.author,
+                bibtex: preprint.bibtex,
+                venue: "",
+                note: "my note",
+                count: 6,
+                tags: ["mytag", "review", "proj-demo"],
+                projectHashes: [agentFields.projectHash],
+            });
             expect(paper).not.toHaveProperty("provenance");
+            // its urls are not remapped to the publication
+            expect(storage.urlHashToId).toBeUndefined();
+        });
+
+        it("agent add of a stored anonymous paper keeps the user's note: attach only, no re-parse", async () => {
+            const openreview = getSource("openreview");
+            const orParse = openreview.parse;
+            openreview.parse = async () => {
+                throw new Error("the stored paper is not parsed again");
+            };
+            const orId = "OR-ICLR-2022_xQUe1pOKPam";
+            storage.papers = {
+                [orId]: {
+                    ...stored,
+                    id: orId,
+                    source: "openreview",
+                    author: "Anonymous",
+                    venue: "ICLR 2022",
+                    note: "my reading notes",
+                    pdfLink: "https://openreview.net/pdf?id=xQUe1pOKPam",
+                },
+            };
+            try {
+                const outcome = await ingest({
+                    url: "https://openreview.net/forum?id=xQUe1pOKPam",
+                    ...agentFields,
+                });
+                expect(outcome).toEqual({ status: "already-present", id: orId });
+                const paper = storage.papers[orId];
+                expect(paper).toMatchObject({
+                    author: "Anonymous",
+                    note: "my reading notes",
+                    count: 6,
+                    tags: ["mytag", "review", "proj-demo"],
+                    projectHashes: [agentFields.projectHash],
+                });
+                expect(paper).not.toHaveProperty("provenance");
+            } finally {
+                openreview.parse = orParse;
+            }
+        });
+
+        it("agent add of a stored paper deleted before its write fails and does not re-create it", async () => {
+            storage.papers = { [id]: stored };
+            // deleted (e.g. in another tab) while the agent's add parses the page
+            beforeGet = (key) => {
+                if (key === "autoTags") delete storage.papers[id];
+            };
+            expect(await ingest({ url, ...agentFields })).toEqual({ status: "failed" });
+            expect(storage.papers).toEqual({});
+        });
+
+        it("the user's visit of the published version of an agent's preprint makes it the user's: no Provenance", async () => {
+            const { makeProvenance, sha256Hex, isOwnAddition } = PMUtils.agentOps;
+            const auth = {
+                clientId: "client-1",
+                sessionId: "22".repeat(32),
+                projectKey: "33".repeat(32),
+            };
+            const projectHash = await sha256Hex(auth.projectKey);
+            const fields = {
+                tags: ["review", "proj-demo"],
+                projectHash,
+                provenance: await makeProvenance(auth, {
+                    clientName: "Claude Code",
+                    projectLabel: "Demo",
+                    reason: "Cited in the introduction",
+                }),
+            };
+            const arxiv = getSource("arxiv");
+            const arxivParse = arxiv.parse;
+            arxiv.parse = async () => ({
+                author: "Jane Doe",
+                bibtex: "@article{doe2021co,\n  title = {CO2 reduction},\n  year = {2021}\n}",
+                id: "Arxiv-2101.00001",
+                key: "doe2021co",
+                pdfLink: "https://arxiv.org/pdf/2101.00001.pdf",
+                title: "CO2 reduction",
+                venue: "",
+                year: "2021",
+            });
+            // offline publication lookups for the new preprint
+            const { fetch } = global;
+            global.fetch = async () => {
+                throw new Error("offline");
+            };
+            try {
+                const added = await ingest({
+                    url: "https://arxiv.org/abs/2101.00001",
+                    ...fields,
+                });
+                expect(added).toEqual({ status: "stored", id: "Arxiv-2101.00001" });
+                const preprint = storage.papers["Arxiv-2101.00001"];
+                expect(await isOwnAddition(preprint, auth)).toBe(true);
+                // the user opens the published version: it replaces the preprint
+                await capture();
+                expect(Object.keys(storage.papers)).toEqual([id]);
+                const paper = storage.papers[id];
+                expect(paper).not.toHaveProperty("provenance");
+                expect(paper.projectHashes).toEqual([projectHash]);
+                // so its client's delete_paper answers not-own-addition (flag it instead)
+                expect(await isOwnAddition(paper, auth)).toBe(false);
+            } finally {
+                arxiv.parse = arxivParse;
+                global.fetch = fetch;
+            }
+        });
+
+        it("a failure while processing still ends it: done resolves", async () => {
+            const returned = await PMUtils.paper.addOrUpdatePaper({
+                url,
+                is: await PMUtils.paper.isPaper(url, true),
+                contentScriptCallbacks: {
+                    update: () => {
+                        throw new Error("the page went away");
+                    },
+                    preprints: () => {},
+                    done: () => {},
+                },
+            });
+            let timer;
+            const timeout = new Promise((r) => (timer = setTimeout(r, 2000, "timeout")));
+            const ended = await Promise.race([returned.done.then(() => "done"), timeout]);
+            clearTimeout(timer);
+            expect(ended).toBe("done");
+            expect(storage.papers[id]).toBeDefined();
         });
     });
 });

@@ -74,6 +74,17 @@ export const sha256Hex = async (str) => {
  */
 export const normalizeTags = (tags) => tags.map((t) => t.trim()).filter((t) => t);
 
+// a tag that could pass for a Project tag: proj- anywhere, in any case, also with another
+// dash, a minus, _ or a space, and in compatibility forms (e.g. fullwidth, read through
+// NFKC); or Latin letters mixed with Cyrillic or Greek ones (e.g. a Cyrillic ј in proј-)
+const looksLikeProjectTag = (tag) => {
+    const t = tag.normalize("NFKC");
+    return (
+        /proj[\p{Pd}\u2212_\s]/iu.test(t) ||
+        (/\p{Script=Latin}/u.test(t) && /[\p{Script=Cyrillic}\p{Script=Greek}]/u.test(t))
+    );
+};
+
 // each argument's bound, and the rule reported when it is not met
 const ARG_BOUNDS = {
     clientName: {
@@ -104,19 +115,19 @@ const ARG_BOUNDS = {
             }
             const tags = normalizeTags(v);
             // no markup characters, comma (the tag inputs' delimiter) or \p{C}
-            // (control, format, private-use, unassigned) characters, and no proj-
-            // anywhere, in any case: the Project tags' prefix
+            // (control, format, private-use, unassigned) characters, and nothing that
+            // could pass for a Project tag
             return (
                 tags.length <= 20 &&
                 tags.every(
                     (t) =>
                         t.length <= 64 &&
                         !/[<>"'`&,\p{C}]/u.test(t) &&
-                        !/proj-/i.test(t),
+                        !looksLikeProjectTag(t),
                 )
             );
         },
-        rule: "at most 20 tags of at most 64 characters, without < > \" ' ` & , or control or format characters, and without proj- (reserved for Project tags)",
+        rule: "at most 20 tags of at most 64 characters, without < > \" ' ` & , or control or format characters, without proj- or a look-alike (reserved for Project tags), and without mixing Latin with Cyrillic or Greek letters",
     },
     reason: {
         check: (v) => isString(v, 1, 500),

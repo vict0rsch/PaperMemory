@@ -227,7 +227,7 @@ export async function serve() {
     const tags = z
         .array(z.string())
         .describe(
-            "Tags (at most 20, each at most 64 characters), without < > \" ' ` & , or control or format characters, and without `proj-` anywhere, in any case: it is reserved for Project tags.",
+            "Tags (at most 20, each at most 64 characters), without < > \" ' ` & , or control or format characters, without `proj-` or a look-alike (`proj` then another dash, `_` or a space) anywhere, in any case: it is reserved for Project tags, and without mixing Latin with Cyrillic or Greek letters.",
         );
     const page = {
         limit: z.number().int().optional().describe("Number of papers, 1–50 (default 20)."),

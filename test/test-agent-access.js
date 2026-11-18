@@ -2,7 +2,7 @@ import { expect } from "expect";
 import { filterStorageRequest } from "@pm/background/agentIngest.js";
 import { isValidPairSender, initAgentAccess } from "@pm/background/agentAccess.js";
 import { sendMessageToBackground, setLocalBackgroundHandler } from "@pmu/functions.js";
-import { runMemoryOp } from "@pmu/memoryQueue.js";
+import { runMemoryOp, runMemoryOpFromMessage } from "@pmu/memoryQueue.js";
 import { sha256Hex, makeProvenance } from "@pmu/agentOps.js";
 
 describe("Agent access background", () => {
@@ -167,6 +167,7 @@ describe("Agent access background", () => {
         const storage = {};
         const runtimeListeners = [];
         const hostListeners = [];
+        const storageListeners = []; // chrome.storage.onChanged
         const sent = []; // the messages PaperMemory posted to the Native host
         const tabs = []; // the tabs PaperMemory opened: {id, url}
         let opensTabs = true; // whether chrome.tabs.create opens a tab
@@ -276,6 +277,7 @@ describe("Agent access background", () => {
                             onMessage: event(hostListeners),
                             onDisconnect: event(),
                             postMessage: (message) => sent.push(message),
+                            disconnect: () => {},
                         };
                     },
                     // an ingest job, to the offscreen document
@@ -303,14 +305,14 @@ describe("Agent access background", () => {
                             cb?.();
                         },
                     },
-                    onChanged: event(),
+                    onChanged: event(storageListeners),
                 },
                 permissions: {
                     contains: (permissions, cb) => cb(true),
                     onAdded: event(),
                     onRemoved: event(),
                 },
-                alarms: { create: () => {}, onAlarm: event() },
+                alarms: { create: () => {}, clear: () => {}, onAlarm: event() },
                 tabs: {
                     create: ({ url: tabUrl }, cb) => {
                         const tab = opensTabs
@@ -491,6 +493,117 @@ describe("Agent access background", () => {
             expect(deleted.result).toEqual({ deleted: true });
             expect(storage.papers).not.toHaveProperty([ownId]);
             expect(storage.urlHashToId).toEqual({ user: paperId });
+        });
+
+        it("an agent's paper the user's visit promoted is the user's: delete_paper → not-own-addition", async () => {
+            const preprintId = "Arxiv-2101.00004";
+            const publishedId = "NeurIPS-2021_abc";
+            // what the pipeline stores for a new paper: the agent's fields and Provenance
+            ingest = async ({ tags, provenance }) => {
+                const paper = { ...makePaper(preprintId), tags, provenance };
+                storage.papers = { ...storage.papers, [preprintId]: paper };
+                return { status: "stored", id: preprintId };
+            };
+            const addArgs = { url, tags: [], reason: "Why" };
+            expect((await request(14, "add_paper", addArgs, auth)).result.status).toBe(
+                "stored",
+            );
+            // the user opens the published version: its page's queue operation (paper.js)
+            const published = {
+                ...makePaper(preprintId),
+                id: publishedId,
+                source: "neurips",
+                venue: "NeurIPS",
+            };
+            const visit = await runMemoryOpFromMessage({
+                op: "merge",
+                fromId: preprintId,
+                paper: published,
+                overwrites: ["lastOpenDate", "venue", "id", "pdfLink", "source"],
+                visit: true,
+                ifMissing: "skip",
+            });
+            expect(visit.ok).toBe(true);
+            const refused = await request(14, "delete_paper", { id: publishedId }, auth);
+            expect(refused.error.code).toBe("not-own-addition");
+            expect(storage.papers).toHaveProperty([publishedId]);
+        });
+
+        // a change that passed the checks before it runs, held in the Memory's queue behind
+        // a slow operation (e.g. a large replace) until `release`
+        const holdMemoryQueue = () => {
+            let open;
+            const gate = new Promise((resolve) => (open = resolve));
+            const held = runMemoryOp({
+                op: "agent",
+                change: async () => {
+                    await gate;
+                    return {};
+                },
+            });
+            return async () => {
+                open();
+                await held;
+            };
+        };
+        // a Paired client and a paper it added (its Own addition)
+        const pairWithOwnAddition = async (clientId, ownId) => {
+            const clientAuth = { ...auth, clientId };
+            storage.agentClients[clientId] = {
+                clientName: "Codex",
+                secretHash: await sha256Hex(clientAuth.secret),
+                pairedAt: "2026-01-01T00:00:00.000Z",
+                lastSeenAt: "2026-01-01T00:00:00.000Z",
+            };
+            const provenance = await makeProvenance(clientAuth, {
+                clientName: "Codex",
+                reason: "Why",
+            });
+            storage.papers = {
+                ...storage.papers,
+                [ownId]: { ...makePaper(ownId), provenance },
+            };
+            return clientAuth;
+        };
+        // its job passed the checks before the change (lastSeenAt is written last)
+        const passedChecks = (clientId) =>
+            waitFor(
+                () =>
+                    storage.agentClients[clientId]?.lastSeenAt !==
+                    "2026-01-01T00:00:00.000Z",
+            );
+
+        it("refuses a change at its commit point if its client was revoked since the job started", async () => {
+            const ownId = "Arxiv-2101.00005";
+            const clientAuth = await pairWithOwnAddition("client-revoked", ownId);
+            const release = holdMemoryQueue();
+            const deleting = send(15, "delete_paper", { id: ownId }, clientAuth);
+            expect(await passedChecks(clientAuth.clientId)).toBe(true);
+            const revoke = { type: "agent-revoke", clientId: clientAuth.clientId };
+            const options = { url: extensionUrl("options.html") };
+            expect(await toBackground(revoke, options)).toBe(true);
+            await release();
+            expect((await answerTo(deleting)).error.code).toBe("unauthorized");
+            expect(storage.papers).toHaveProperty([ownId]);
+        });
+
+        // last: turning Agent access off disconnects from the Native host
+        it("refuses a change at its commit point if Agent access was turned off since the job started", async () => {
+            const ownId = "Arxiv-2101.00006";
+            const clientAuth = await pairWithOwnAddition("client-off", ownId);
+            const release = holdMemoryQueue();
+            const deleting = send(16, "delete_paper", { id: ownId }, clientAuth);
+            expect(await passedChecks(clientAuth.clientId)).toBe(true);
+            // the options page's toggle
+            storage.agentAccess = { enabled: false };
+            const changes = { agentAccess: { newValue: { enabled: false } } };
+            storageListeners.forEach((listener) => listener(changes, "local"));
+            await release();
+            expect((await answerTo(deleting)).error).toEqual({
+                code: "unauthorized",
+                message: "Agent access is off in PaperMemory",
+            });
+            expect(storage.papers).toHaveProperty([ownId]);
         });
     });
 });

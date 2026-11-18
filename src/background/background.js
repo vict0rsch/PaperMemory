@@ -8,7 +8,7 @@ import {
     updateGistFile,
 } from "@pmu/sync.js";
 import { getStorage, setStorage } from "@pmu/data.js";
-import { runMemoryOp, serveMemoryOps } from "@pmu/memoryQueue.js";
+import { runMemoryOpFromMessage, serveMemoryOps } from "@pmu/memoryQueue.js";
 import { openWelcomeOnInstall } from "@pm/background/welcome.js";
 import { applyIgnoreSources } from "@pmu/ignoreSources.js";
 import { isSourceURL, parseIdFromUrl } from "@pmu/urls.js";
@@ -481,7 +481,7 @@ export function initBackground() {
                 });
         } else if (payload.type === "memory") {
             // the one queue that writes the Memory (memoryQueue.js)
-            runMemoryOp(payload.op).then(sendResponse);
+            runMemoryOpFromMessage(payload.op).then(sendResponse);
         } else if (payload.type === "ignoreSources") {
             // the one queue that writes ignoreSources (ignoreSources.js)
             applyIgnoreSources(payload.change).then(

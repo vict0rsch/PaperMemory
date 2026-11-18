@@ -30,11 +30,13 @@ const WRITABLE_KEYS = ["urlHashToId"];
 /**
  * Add a paper from its URL for a Paired client: the pipeline's first write carries the
  * agent's tags, Project membership and Provenance, which the Memory's queue adds to the
- * paper as stored (Provenance only to a paper that write creates).
+ * paper as stored (Provenance only to a paper that write creates; a paper already stored
+ * is only attached).
  * @param {object} job {url, tags, provenance, projectHash}
  * @returns {Promise<object>} {status, id?}: `stored` (new paper) or
  * `already-present`, with the paper's id; `unsupported-url` if no Source detects the
- * URL; `failed` if parsing failed or threw
+ * URL; `failed` if parsing failed or threw, the write failed, or the stored paper it
+ * found was deleted meanwhile
  */
 export const ingest = async ({ url, tags, provenance, projectHash }) => {
     try {
@@ -50,7 +52,9 @@ export const ingest = async ({ url, tags, provenance, projectHash }) => {
         });
         if (!r) return { status: "failed" };
         await r.done;
-        if (!(await r.saving).ok) return { status: "failed" };
+        const saved = await r.saving;
+        // not written, or the stored paper it found was deleted meanwhile: not added
+        if (!saved.ok || saved.result?.missing) return { status: "failed" };
         return { status: r.isNew ? "stored" : "already-present", id: r.id };
     } catch (error) {
         logError("[agentIngest]", error);

@@ -113,7 +113,7 @@ The `proj-<slug>` tag PaperMemory adds to every paper added to or attached to a 
 _Avoid_: project label, folder tag
 
 **Attach**:
-Adding an existing paper to a **Project** (its **Project tag** and membership) without making it an **Own addition**.
+Adding an existing paper to a **Project** (its **Project tag** and membership) without making it an **Own addition**. An agent's add of a paper already in the **Library** is an Attach too, with its tags and the **Review tag**, and counts a visit; the paper keeps its id, metadata and note.
 _Avoid_: add, link, import
 
 **Provenance**:
@@ -121,7 +121,7 @@ The record stored on a paper an agent added: which **Paired client**, hashes of 
 _Avoid_: origin, source (a **Source** is a publisher), audit log
 
 **Own addition**:
-A paper the current **Paired client** added in the current **Project**, in any **Agent session** (or, without a Project, in the current **Agent session**); the only papers an agent may delete.
+A paper the current **Paired client** added in the current **Project**, in any **Agent session** (or, without a Project, in the current **Agent session**); the only papers an agent may delete. It stops being one when a visit of the user merges or promotes it (e.g. its published version replaces the preprint), which removes its **Provenance**.
 _Avoid_: agent paper, my paper
 
 **Review tag**:
@@ -140,7 +140,7 @@ _Avoid_: delete request, trash
 - The storage test visits both **Abstract URL** and **PDF URL** in each **Parsing order**; an order-dependent failure implicates the **Abstract URL**↔**PDF URL** conversion.
 - Each browser profile with **Agent access** on has exactly one **Library** and one **Native host**; one **MCP server** can reach several **Libraries** and must name one when more than one is connected.
 - A paper an agent adds goes through the same **Detect** → **Parse** → **Store** pipeline as a visited page; the **Review tag**, **Project tag** and **Provenance** are applied inside **Store**, with its first write (**Provenance** only when that write creates the paper).
-- If the pipeline reports the paper as already in the **Library** (including a fuzzy match whose id changes), the agent's tags, the **Review tag** and the **Project tag** are merged in but no **Provenance** is written, so it behaves like an **Attach** and never becomes an **Own addition**.
+- If the paper is already in the **Library** (same id, a URL resolving to it, or a fuzzy match by title), the add is an **Attach**: the agent's tags, the **Review tag** and the **Project tag** are added, the paper keeps its id, metadata and note, and no **Provenance** is written, so it never becomes an **Own addition**.
 - An **Agent session** belongs to exactly one **Paired client**; revoking the client ends all its sessions.
 - A **Project** is shared by every **Paired client** working in the same **Project folder** (same **Project tag**), but **Own additions** stay per client: another client in the same Project can only put a **Deletion flag**.
 
