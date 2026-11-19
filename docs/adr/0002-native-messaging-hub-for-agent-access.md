@@ -92,7 +92,9 @@ and Firefox, all lifecycle checks passed, including 65 min and 8 h idles).
   (arguments, note length, and ownership for a deletion) on the papers as stored, in the
   same step that makes it, so no other write comes between the check and the change
   (`add_paper` writes through the pipeline's own queue operations). Agent tags may not use
-  the `proj-` prefix, which is reserved for **Project tags**. Revoking a client or turning Agent access off cancels its queued jobs, and
+  the `proj-` prefix, which is reserved for **Project tags**. Revoking a client or turning
+  Agent access off cancels its queued jobs (`unauthorized` after a revoke, which makes the MCP
+  server delete its credential; `disabled` after the toggle, which keeps the client paired), and
   a closed agent connection drops its own (a job already running finishes, but its change is
   refused in its Memory step; a running add may still store its paper). Operations never
   expose settings, the Gist PAT, backups or arbitrary storage keys; writes are limited to adding

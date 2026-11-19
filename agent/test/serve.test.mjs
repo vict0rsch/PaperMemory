@@ -522,3 +522,35 @@ test("connect: pairing-required, paired once the user allows, then already paire
     assert.ok(!fs.existsSync(credentialPath(home)));
     await s.close();
 });
+
+test("Agent access turned off (`disabled`) keeps the credential; only `unauthorized` deletes it", async () => {
+    const home = installedHome();
+    const listed = { ok: true, result: { total: 0, papers: [] } };
+    let reply = listed;
+    const seen = await fakeLibrary(home, {
+        pair: () => ({ ok: true, result: { clientId: "client-1", secret: "test-secret-1" } }),
+        search_papers: () => reply,
+    });
+    const [demo] = projectDirs("demo-project");
+    const s = await startServe({ home, cwd: demo });
+    json(await s.call("search_papers", { query: "x" })); // pairs
+    assert.ok(fs.existsSync(credentialPath(home)));
+
+    // a change in flight when the user turned Agent access off
+    reply = { ok: false, error: { code: "disabled", message: "Agent access is off in PaperMemory's options" } };
+    const off = await s.call("search_papers", { query: "y" });
+    assert.equal(off.isError, true);
+    assert.equal(off.content[0].text, "disabled: Agent access is off in PaperMemory's options");
+    assert.ok(fs.existsSync(credentialPath(home)), "still paired");
+
+    // turned back on: the same credential, no new pairing request
+    reply = listed;
+    json(await s.call("search_papers", { query: "z" }));
+    assert.equal(seen.filter((r) => r.op === "pair").length, 1);
+    assert.equal(seen.at(-1).auth.secret, "test-secret-1");
+
+    reply = { ok: false, error: { code: "unauthorized", message: "unknown client" } };
+    assert.match((await s.call("search_papers", { query: "w" })).content[0].text, /^unauthorized: .*pair it again/);
+    assert.ok(!fs.existsSync(credentialPath(home)));
+    await s.close();
+});

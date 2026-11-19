@@ -53,6 +53,7 @@ test("papermemory-setup/SKILL.md links the guide, keeps the user in charge, and 
         "Run `npx -y papermemory-mcp@latest install`",
         "Update the PaperMemory extension",
         "the user must pair it again",
+        "Agent access is off in PaperMemory's options",
         "The user denied this client access",
         "The user denied a pairing request less than a minute ago",
         "The user did not answer the pairing request in time",

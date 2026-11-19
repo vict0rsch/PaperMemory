@@ -114,7 +114,7 @@ arguments. `projectKey` and `projectFolderName` are absent when the server has n
 
 `Summary = {id, title, author, year, venue, tags, url, pdfLink, addDate, codeLink,
 provenance?: {clientName, addedAt, reason, projectLabel?}}` — never ids or hashes from
-Provenance. Errors `{code, message}`, `code` ∈ `unauthorized`, `denied`, `timeout`,
+Provenance. Errors `{code, message}`, `code` ∈ `unauthorized`, `disabled`, `denied`, `timeout`,
 `bad-args`, `not-found`, `not-own-addition`, `no-project`, `too-large`, `unsupported-url`,
 `rate-limited`, `busy`, `unknown-op`, `protocol-mismatch`, `internal`.
 
@@ -195,8 +195,11 @@ agent to check with `search_papers`. Right before acting: re-check `agentAccess.
 authorization. Each change to papers is one `agent` operation of the Memory queue
 (background only), which checks arguments, note length and, for a deletion, ownership on the
 papers as stored, in the same step that changes them. On `client-closed`
-that connection's queued jobs are dropped; on revoke or toggle-off the client's queued jobs get
-`unauthorized`; a running job finishes.
+that connection's queued jobs are dropped; on revoke the client's queued jobs get
+`unauthorized`; on toggle-off every queued job, and a pending pairing, gets `disabled` ("Agent
+access is off in PaperMemory's options"), which keeps the client paired (the MCP server deletes
+its credential file only on `unauthorized`); a running job finishes, and its change is refused
+with the same code.
 
 **Sync.** Gist stays last-writer-wins. After each completed mutation the extension calls the
 injected `pushSyncPapers()` once, un-awaited with `.catch(() => {})`; its failure never changes

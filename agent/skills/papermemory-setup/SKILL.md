@@ -1,6 +1,6 @@
 ---
 name: papermemory-setup
-description: Set up, connect or troubleshoot PaperMemory's agent tools with the user, one step at a time. Use when the user wants to install or connect PaperMemory, when the PaperMemory tools are missing, or when a PaperMemory tool fails because no library is connected, the install is incomplete, the client must pair again or the protocol is outdated.
+description: Set up, connect or troubleshoot PaperMemory's agent tools with the user, one step at a time. Use when the user wants to install or connect PaperMemory, when the PaperMemory tools are missing, or when a PaperMemory tool fails because no library is connected, the install is incomplete, the client must pair again, Agent access is off or the protocol is outdated.
 ---
 
 # PaperMemory setup
@@ -30,6 +30,7 @@ Run `~/.papermemory/bin/papermemory-mcp libraries`:
 | ``protocol-mismatch: Run `npx -y papermemory-mcp@latest install` `` | The same, then a new agent session |
 | `protocol-mismatch: Update the PaperMemory extension` | The user updates the extension |
 | `unauthorized: ... the user must pair it again ...` | Step 3 |
+| `disabled: Agent access is off in PaperMemory's options` | The user turns Agent access back on (step 2); this client stays paired |
 | `denied: The user denied this client access` | Ask whether they meant it; if not, wait one minute, then step 3 |
 | `rate-limited: The user denied a pairing request less than a minute ago` | Wait one minute, then step 3 |
 | `timeout: The user did not answer the pairing request in time` | Step 3 |

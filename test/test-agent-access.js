@@ -732,22 +732,35 @@ describe("Agent access background", () => {
         });
 
         // last: turning Agent access off disconnects from the Native host
-        it("refuses a change at its commit point if Agent access was turned off since the job started", async () => {
+        it("answers disabled when Agent access is turned off: the running change at its commit point, queued changes, a pairing request; clients stay paired", async () => {
             const ownId = "Arxiv-2101.00006";
             const clientAuth = await pairWithOwnAddition("client-off", ownId);
             const release = holdMemoryQueue();
             const deleting = send(16, "delete_paper", { id: ownId }, clientAuth);
             expect(await passedChecks(clientAuth.clientId)).toBe(true);
+            // a change queued behind it, and a pairing request waiting for the user
+            const tags = { id: paperId, tags: ["later"] };
+            const tagging = send(16, "add_tags", tags, clientAuth);
+            const prompt = nextTab();
+            const pairing = send(17, "pair", { clientName: "Zed" });
+            await prompt;
             // the options page's toggle
             storage.agentAccess = { enabled: false };
             const changes = { agentAccess: { newValue: { enabled: false } } };
             storageListeners.forEach((listener) => listener(changes, "local"));
+            const off = {
+                code: "disabled",
+                message: "Agent access is off in PaperMemory's options",
+            };
+            expect((await answerTo(pairing)).error).toEqual(off);
             await release();
-            expect((await answerTo(deleting)).error).toEqual({
-                code: "unauthorized",
-                message: "Agent access is off in PaperMemory",
-            });
+            expect((await answerTo(deleting)).error).toEqual(off);
+            expect((await answerTo(tagging)).error).toEqual(off);
             expect(storage.papers).toHaveProperty([ownId]);
+            expect(storage.papers[paperId].tags).not.toContain("later");
+            // not unauthorized: its MCP server keeps its credential, which works again
+            // once Agent access is back on
+            expect(storage.agentClients).toHaveProperty([clientAuth.clientId]);
         });
     });
 });

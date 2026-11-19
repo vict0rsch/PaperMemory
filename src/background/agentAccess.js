@@ -66,7 +66,11 @@ const UNAUTHORIZED = failure(
     "unauthorized",
     "This client is not paired with PaperMemory, or was revoked",
 );
-const AGENT_ACCESS_OFF = failure("unauthorized", "Agent access is off in PaperMemory");
+// not `unauthorized`: the client stays paired (its MCP server keeps its credential)
+const AGENT_ACCESS_OFF = failure(
+    "disabled",
+    "Agent access is off in PaperMemory's options",
+);
 const INTERNAL = failure("internal", "PaperMemory could not complete this operation");
 // a change whose job is past its deadline: its agent was answered, it is not made
 const EXPIRED = failure("timeout", "PaperMemory did not finish this change in time");

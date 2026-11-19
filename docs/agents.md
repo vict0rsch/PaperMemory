@@ -411,7 +411,7 @@ Click **Revoke**. PaperMemory refuses that agent's requests at once, including t
 
 ### Turning Agent access off
 
-Turn off **Enable Agent access**. PaperMemory closes the connection, and agents get the message `no PaperMemory library is connected`. The paired clients stay in the list, and work again when you turn Agent access back on.
+Turn off **Enable Agent access**. PaperMemory closes the connection, and agents get the message `no PaperMemory library is connected`. A change an agent was making at that moment is not made: the agent gets `disabled: Agent access is off in PaperMemory's options`. The paired clients stay in the list, and work again when you turn Agent access back on, without a new pairing request.
 
 ## Update and uninstall
 
@@ -494,7 +494,8 @@ Agents often repeat PaperMemory's messages in their own words. The word before t
 | `PaperMemory's install is incomplete (~/.papermemory/salt is missing): ...` | A file of the install is missing. | Run `npx -y papermemory-mcp@latest install`. |
 | `protocol-mismatch: Update the PaperMemory extension` or `unknown-op: Unknown operation` | The extension is too old for the agent tools. | [Update the extension](#in-the-options-page). |
 | ``protocol-mismatch: Run `npx -y papermemory-mcp@latest install` `` | The agent tools are too old for the extension. | Run it, then start a new agent session. |
-| `unauthorized: PaperMemory no longer accepts <agent>: the user must pair it again (...)` | You revoked the agent, PaperMemory no longer knows it (for example after you reinstalled the extension), or you turned Agent access off during one of its changes. | Its next call opens a new pairing request: allow it, or deny it to keep it out. |
+| `unauthorized: PaperMemory no longer accepts <agent>: the user must pair it again (...)` | You revoked the agent, or PaperMemory no longer knows it (for example after you reinstalled the extension). | Its next call opens a new pairing request: allow it, or deny it to keep it out. |
+| `disabled: Agent access is off in PaperMemory's options` | You turned Agent access off while the agent was making a change: the change was not made. The agent stays allowed. | Turn Agent access back on, then ask the agent to try again. |
 | `denied: The user denied this client access` | You clicked Deny. | If it was a mistake, wait one minute and ask the agent to try again. |
 | `rate-limited: The user denied a pairing request less than a minute ago` | After a Deny, PaperMemory refuses pairing requests for one minute. | Wait one minute. |
 | `rate-limited: At most 30 changes per minute` | Each agent can make 30 changes per minute. | Wait one minute. |
