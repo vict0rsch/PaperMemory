@@ -141,11 +141,27 @@ const addAgentFields = (paper, { tags, projectHash, provenance }, created) => {
 /**
  * The user opened or edited the paper (a page's visit, merge, patch or added tags): it is
  * theirs now, no agent's Own addition, which its agent could delete (it can still flag it).
- * Not for an agent's own writes, nor for the pipeline's publication fields (`enrichment`).
+ * Its Provenance stays as a record of who added it, when and why, released: without the
+ * hashes that made it an Own addition, with the time it was first released. Not for an
+ * agent's own writes, nor for the pipeline's publication fields (`enrichment`).
  */
-const dropProvenance = (paper) => {
-    delete paper.provenance;
+const releaseProvenance = (paper) => {
+    if (paper.provenance && !paper.provenance.releasedAt) {
+        const { clientName, addedAt, reason, projectLabel } = paper.provenance;
+        paper.provenance = { clientName, addedAt, reason };
+        if (projectLabel) paper.provenance.projectLabel = projectLabel;
+        paper.provenance.releasedAt = new Date().toJSON();
+    }
     return paper;
+};
+
+/**
+ * A page's fields or paper, without `provenance`: only an agent's add writes one
+ * (addAgentFields), so no page can make a paper an agent's or undo a release
+ */
+const withoutProvenance = (fields) => {
+    const { provenance, ...rest } = fields ?? {};
+    return rest;
 };
 
 const isPaperId = (id) => typeof id === "string" && id && !id.startsWith("__");
@@ -158,8 +174,8 @@ const latest = (a, b) => (!a ? b : !b ? a : a > b ? a : b);
  * published one's, a blank line, the other's; once if identical); the published code
  * link, the other's added to the note as "Code (preprint): <url>" when different;
  * favourite if either; visits summed; first added; last opened; Project memberships
- * (union). No Provenance: a page's merge makes the record the user's, no agent's Own
- * addition (an agent can still flag it).
+ * (union). Its Provenance released: a page's merge makes the record the user's, no
+ * agent's Own addition (an agent can still flag it).
  * @param {object} published The record that stays (its metadata wins)
  * @param {object} other The record merged into it
  * @returns {object}
@@ -193,7 +209,7 @@ export const reconcileRecords = (published, other) => {
         ...new Set([...(published.projectHashes ?? []), ...(other.projectHashes ?? [])]),
     ];
     if (projectHashes.length) out.projectHashes = projectHashes;
-    return dropProvenance(out);
+    return releaseProvenance(out);
 };
 
 /**
@@ -222,20 +238,21 @@ const apply = async (memory, op, ctx) => {
                 );
                 return keep({ missing: true });
             }
-            setFields(papers[op.id], op.fields, op.ifEmpty);
+            setFields(papers[op.id], withoutProvenance(op.fields), op.ifEmpty);
             // the user's edit, unless the pipeline's own publication fields (paper.js)
-            if (!op.enrichment) dropProvenance(papers[op.id]);
+            if (!op.enrichment) releaseProvenance(papers[op.id]);
             return done({ paper: papers[op.id] });
         }
         case "visit": {
             if (!isPaperId(op.id) || !papers[op.id]) return keep({ missing: true });
-            setFields(visit(papers[op.id]), op.fill, Object.keys(op.fill ?? {}));
+            const fill = withoutProvenance(op.fill);
+            setFields(visit(papers[op.id]), fill, Object.keys(fill));
             if (op.agent) addAgentFields(papers[op.id], op.agent, false);
-            else dropProvenance(papers[op.id]); // the user's visit
+            else releaseProvenance(papers[op.id]); // the user's visit
             return done({ paper: papers[op.id] });
         }
         case "create": {
-            const paper = op.paper;
+            const paper = withoutProvenance(op.paper);
             if (!isPaperId(paper?.id)) return keep({ invalid: true });
             if (papers[paper.id])
                 return keep({ exists: true, paper: papers[paper.id] });
@@ -259,7 +276,7 @@ const apply = async (memory, op, ctx) => {
             let paper;
             if (!base) {
                 if (op.ifMissing === "skip") return keep({ missing: true });
-                paper = op.paper;
+                paper = withoutProvenance(op.paper);
             } else if (op.agent) {
                 // an agent's add of a stored paper only attaches it (its tags and Project,
                 // below) and counts the visit: nothing of the parse is merged in
@@ -271,17 +288,18 @@ const apply = async (memory, op, ctx) => {
                 if (String(base.author).toLowerCase() === "anonymous")
                     overwrites.push(...(op.anonymousOverwrites ?? []));
                 paper = mergePapers({
-                    newPaper: op.paper,
+                    newPaper: withoutProvenance(op.paper),
                     oldPaper: base,
                     overwrites,
                     incrementCount: !!op.incrementCount,
                 });
                 if (op.visit) visit(paper);
                 // a page's merge or promotion (e.g. the user's visit)
-                dropProvenance(paper);
+                releaseProvenance(paper);
             }
             // e.g. a code repository found while parsing: only where there is none
-            setFields(paper, op.fill, Object.keys(op.fill ?? {}));
+            const fill = withoutProvenance(op.fill);
+            setFields(paper, fill, Object.keys(fill));
             if (op.agent) addAgentFields(paper, op.agent, !base);
             if (source && op.fromId !== paper.id) delete papers[op.fromId];
             papers[paper.id] = paper;
@@ -313,7 +331,7 @@ const apply = async (memory, op, ctx) => {
             if (tags.join("\n") === (paper.tags ?? []).join("\n"))
                 return keep({ paper });
             paper.tags = tags;
-            dropProvenance(paper); // the user's edit
+            releaseProvenance(paper); // the user's edit
             return done({ paper });
         }
         case "agent": {

@@ -417,6 +417,8 @@ export async function runSuite(driver) {
             projectTag = ok(await s1.call("get_project")).tag;
             assert.equal(projectTag, "proj-alpha");
             assertAdded(r.paper, { title: /attention is all you need/i, author: /vaswani/i, reason, projectTag });
+            const { note } = ok(await s1.call("get_paper", { id: r.paper.id }));
+            assert.ok(note.endsWith(`\nAdded by ${CLIENT}: ${reason}`), `the note says who added it: ${note}`);
             arxiv = r.paper;
             return arxiv.id;
         });

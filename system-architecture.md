@@ -203,7 +203,7 @@ sequenceDiagram
     B->>I: ingest job (url, tags, provenance, project hash)
     I->>Q: addOrUpdatePaper: merge / visit carrying the agent fields, then patch
     I-->>B: stored / already-present / failed
-    B->>Q: agent op: the note, checked on the paper as stored
+    B->>Q: agent op: "Added by" line (new paper) and note, checked on the paper as stored
     B-->>H: result
     H-->>M: reply
     M-->>A: tool result
@@ -313,7 +313,7 @@ The single domain entity. It is a plain object validated (and defaulted) by
 | `favorite`, `favoriteDate`         | bool/string   | Starring                                              |
 | `count`, `addDate`, `lastOpenDate` | number/string | Visit tracking + sort keys                            |
 | `extras`                           | object        | Optional per-source overflow                          |
-| `provenance`                       | object        | Optional, Agent access: which client added the paper, why, when (hashes only, never the keys); removed once the user opens or edits the paper (a page's `visit`, `merge`, `patch` or `addTags`; not the pipeline's enrichment `patch`, an agent's own writes or a `retag`) |
+| `provenance`                       | object        | Optional, Agent access: which client added the paper, why, when (hashes only, never the keys); released once the user opens or edits the paper (a page's `visit`, `merge`, `patch` or `addTags`; not the pipeline's enrichment `patch`, an agent's own writes or a `retag`): the client's name, reason, dates and Project label stay, with `releasedAt`, and the client id and hashes go. A page operation never writes it |
 | `projectHashes`                    | string[]      | Optional, Agent access: hashes of the Projects the paper belongs to |
 
 ### Storage layout (`chrome.storage.local`)
@@ -514,9 +514,12 @@ the `downloads` API), `functions.js` (49 misc helpers incl. `miniHash`,
   revoked or Agent access turned off since the job started. The `{ type: "memory" }`
   message route refuses `agent` operations and inline Memories, also inside a `batch`. An
   add's writes are the pipeline's `merge` / `visit` (carrying the agent fields) and `patch`;
-  for a paper already stored, only that first write, which attaches it. A page's `visit`,
-  `merge`, `patch` or `addTags` (the user opening or editing a paper) removes the paper's
-  Provenance; the enrichment `patch`, the agent's own operations and `retag` keep it.
+  for a paper already stored, only that first write, which attaches it; then, for a paper
+  the add created, an `agent` operation appends `Added by <client>: <reason>` to its note.
+  A page's `visit`, `merge`, `patch` or `addTags` (the user opening or editing a paper)
+  releases the paper's Provenance (`releasedAt`, without the client id and hashes); the
+  enrichment `patch`, the agent's own operations and `retag` keep it as it is. The queue
+  ignores `provenance` in a page's fields and papers, so no page sets or un-releases one.
 - **Pattern mutual exclusion** across sources is a hard invariant (test-enforced).
 - **No top-level use of `functions.js` exports inside source modules** (TDZ — see
   the `base.js` constraint above).

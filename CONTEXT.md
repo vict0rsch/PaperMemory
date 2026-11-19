@@ -117,11 +117,11 @@ Adding an existing paper to a **Project** (its **Project tag** and membership) w
 _Avoid_: add, link, import
 
 **Provenance**:
-The record stored on a paper an agent added: which **Paired client**, hashes of its **Agent session** and **Project key**, the **Project label**, when, and the agent's stated reason.
+The record stored on a paper an agent added: which **Paired client**, hashes of its **Agent session** and **Project key**, the **Project label**, when, and the agent's stated reason. Once the user opens or edits the paper it is released: it keeps the client's name, the **Project label**, when and why, with the time of the release, and drops the client id and hashes. The reason is also visible in the paper's note, as the line `Added by <client>: <reason>` appended when the add stored it.
 _Avoid_: origin, source (a **Source** is a publisher), audit log
 
 **Own addition**:
-A paper the current **Paired client** added in the current **Project**, in any **Agent session** (or, without a Project, in the current **Agent session**); the only papers an agent may delete. It stops being one once the user opens or edits it (a visit, a merge or promotion such as its published version replacing the preprint, an edit of its note, tags or fields), which removes its **Provenance**.
+A paper the current **Paired client** added in the current **Project**, in any **Agent session** (or, without a Project, in the current **Agent session**); the only papers an agent may delete. It stops being one once the user opens or edits it (a visit, a merge or promotion such as its published version replacing the preprint, an edit of its note, tags or fields), which releases its **Provenance**.
 _Avoid_: agent paper, my paper
 
 **Review tag**:
@@ -139,7 +139,7 @@ _Avoid_: delete request, trash
 - Finished processing triggers exactly one **Completion meta**, and in the storage test's default configuration that means the paper was stored; its absence (a test timeout) means the pipeline stopped at **Detect**, **Parse**, or **Store** — not necessarily **Parse**.
 - The storage test visits both **Abstract URL** and **PDF URL** in each **Parsing order**; an order-dependent failure implicates the **Abstract URL**↔**PDF URL** conversion.
 - Each browser profile with **Agent access** on has exactly one **Library** and one **Native host**; one **MCP server** can reach several **Libraries** and must name one when more than one is connected.
-- A paper an agent adds goes through the same **Detect** → **Parse** → **Store** pipeline as a visited page; the **Review tag**, **Project tag** and **Provenance** are applied inside **Store**, with its first write (**Provenance** only when that write creates the paper).
+- A paper an agent adds goes through the same **Detect** → **Parse** → **Store** pipeline as a visited page; the **Review tag**, **Project tag** and **Provenance** are applied inside **Store**, with its first write (**Provenance** only when that write creates the paper); a paper that write creates then gets `Added by <client>: <reason>` in its note.
 - If the paper is already in the **Library** (same id, a URL resolving to it, or a fuzzy match by title), the add is an **Attach**: the agent's tags, the **Review tag** and the **Project tag** are added, the paper keeps its id, metadata and note, and no **Provenance** is written, so it never becomes an **Own addition**.
 - An **Agent session** belongs to exactly one **Paired client**; revoking the client ends all its sessions.
 - A **Project** is shared by every **Paired client** working in the same **Project folder** (same **Project tag**), but **Own additions** stay per client: another client in the same Project can only put a **Deletion flag**.

@@ -98,8 +98,9 @@ and Firefox, all lifecycle checks passed, including 65 min and 8 h idles).
   a closed agent connection drops its own (a job already running finishes, but its change is
   refused in its Memory step; a running add may still store its paper). Operations never
   expose settings, the Gist PAT, backups or arbitrary storage keys; writes are limited to adding
-  papers (forced **Review tag**, **Provenance**; a paper already in the Memory is only
-  attached), attaching papers to a Project, adding tags,
+  papers (forced **Review tag**, **Provenance** and, in the note of a paper the add stores, a
+  line `Added by <client>: <reason>`; a paper already in the Memory is only attached),
+  attaching papers to a Project, adding tags,
   appending notes, applying a **Deletion flag**, and deleting **Own additions**.
 - **Hardening decisions.** Agent tags may not contain `<`, `>`, `"`, `'`, a backtick, `&`, `,`
   or control or format characters, and `proj-` is reserved anywhere in a tag, in any case,
@@ -119,12 +120,18 @@ and Firefox, all lifecycle checks passed, including 65 min and 8 h idles).
   Memory (its id, a URL resolving to it, a fuzzy match by title, or a paper another page
   stored meanwhile) only attaches it: tags, Project membership and a visit, never its
   metadata, note, id or URLs, and never Provenance; one deleted meanwhile is not re-created
-  (`failed`). The user opening or editing a paper removes its Provenance and keeps its
+  (`failed`). The user opening or editing a paper releases its Provenance and keeps its
   Project memberships: a page's visit, merge or promotion (e.g. its published version
   replacing the preprint), an edit of its note, tags, favourite or fields, or tags added in
   bulk; not the enrichment write of an agent's own add, an agent's changes, or a Memory-wide
-  tag rename. A paper the user has opened or edited is no longer an Own addition: its client
-  can only flag it. With a **Project**, an **Own
+  tag rename. A released Provenance keeps who added the paper, when, why and for which
+  Project label, with the time of the release (`releasedAt`), and drops the client id and
+  hashes, so the agent's reason is not lost. A paper the user has opened or edited is no
+  longer an Own addition: its client can only flag it. No page operation can write a
+  Provenance or undo a release: the Memory queue ignores `provenance` in a page's fields and
+  papers. The reason is also visible: an add that stores a new paper appends
+  `Added by <client>: <reason>` to its note, unless the note would exceed 20,000 characters.
+  With a **Project**, an **Own
   addition** is a paper this **Paired client** added in the same Project, in any session; the
   **Project key** is an HMAC of the **Project folder** path under a per-install secret salt,
   held by the MCP server and never given to the model. Without a Project (home directory,

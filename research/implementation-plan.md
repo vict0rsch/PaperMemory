@@ -113,8 +113,8 @@ arguments. `projectKey` and `projectFolderName` are absent when the server has n
 | `delete_paper` | `{id}` | `{deleted:true}`; else `not-own-addition` |
 
 `Summary = {id, title, author, year, venue, tags, url, pdfLink, addDate, codeLink,
-provenance?: {clientName, addedAt, reason, projectLabel?}}` — never ids or hashes from
-Provenance. Errors `{code, message}`, `code` ∈ `unauthorized`, `disabled`, `denied`, `timeout`,
+provenance?: {clientName, addedAt, reason, projectLabel?, releasedAt?}}` — never ids or hashes
+from Provenance. Errors `{code, message}`, `code` ∈ `unauthorized`, `disabled`, `denied`, `timeout`,
 `bad-args`, `not-found`, `not-own-addition`, `no-project`, `too-large`, `unsupported-url`,
 `rate-limited`, `busy`, `unknown-op`, `protocol-mismatch`, `internal`.
 
@@ -163,6 +163,8 @@ keep applying the Project's original tag to new papers."
 Project) the Project tag plus membership into new **and** already-present papers.
 `attach_paper` adds only the Project tag and membership. `flag_for_deletion` adds `to-delete`
 and appends `\n[to-delete] <reason>`. `append_note` appends `\n<text>`; nothing replaces a note.
+An `add_paper` that stores a new paper (`stored`) appends `\nAdded by <clientName>: <reason>`
+to its note, before the agent's `note`, unless the note would exceed 20,000 characters.
 `list_project_papers` / `export_bibtex` = cleaned papers whose `projectHashes` contains the
 projectHash, by `addDate` ascending; BibTeX is `bibtexToString(p.bibtex)` joined with `\n`,
 identical to the options page's tag export; a paper without `bibtex`, or whose
@@ -171,7 +173,10 @@ identical to the options page's tag export; a paper without `bibtex`, or whose
 **Provenance and ownership.** `provenance = {clientId, clientName, sessionHash, projectHash?,
 projectLabel?, addedAt (ISO), reason}`, `sessionHash = SHA-256(sessionId)`; written only by
 Step 9's hook when the pipeline reports `isNew === true` and no Provenance exists; never
-overwritten. **Own addition** ⇔ `provenance.clientId === auth.clientId` and either
+overwritten. The user's visit or edit releases it: `{clientName, addedAt, reason,
+projectLabel?, releasedAt}`, without `clientId` and the hashes; a page operation never writes
+`provenance`. **Own addition** ⇔ `provenance` is not released, `provenance.clientId ===
+auth.clientId` and either
 (`provenance.projectHash` is set and equals SHA-256(`auth.projectKey`)) or (`projectHash` is
 unset and `sessionHash` equals SHA-256(`auth.sessionId`)). `sessionId` = 32 random bytes hex per
 MCP server process, never returned to the model.

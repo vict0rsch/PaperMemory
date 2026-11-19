@@ -615,7 +615,15 @@ describe("paper.js", () => {
                 reason: "Cited in the introduction",
             });
             const fields = { tags: ["review", "proj-demo"], projectHash, provenance };
-            return { auth, projectHash, fields };
+            // what the user's visit or edit keeps of it: no ids or hashes
+            const released = {
+                clientName: "Claude Code",
+                projectLabel: "Demo",
+                addedAt: provenance.addedAt,
+                reason: "Cited in the introduction",
+                releasedAt: expect.any(String),
+            };
+            return { auth, projectHash, fields, released };
         };
         // the arXiv preprint of the publication at `url`, parsed without network (no
         // publication found); returns the function that restores the parser and fetch
@@ -644,9 +652,9 @@ describe("paper.js", () => {
             };
         };
 
-        it("the user's visit of the published version of an agent's preprint makes it the user's: no Provenance", async () => {
+        it("the user's visit of the published version of an agent's preprint makes it the user's: its Provenance released", async () => {
             const { isOwnAddition } = PMUtils.agentOps;
-            const { auth, projectHash, fields } = await agentInProject();
+            const { auth, projectHash, fields, released } = await agentInProject();
             const restore = parsePreprintOffline();
             try {
                 const added = await ingest({ url: preprintUrl, ...fields });
@@ -656,7 +664,7 @@ describe("paper.js", () => {
                 await capture();
                 expect(Object.keys(storage.papers)).toEqual([id]);
                 const paper = storage.papers[id];
-                expect(paper).not.toHaveProperty("provenance");
+                expect(paper.provenance).toEqual(released);
                 expect(paper.projectHashes).toEqual([projectHash]);
                 // so its client's delete_paper answers not-own-addition (flag it instead)
                 expect(await isOwnAddition(paper, auth)).toBe(false);
@@ -665,9 +673,9 @@ describe("paper.js", () => {
             }
         });
 
-        it("an agent's paper keeps its Provenance through its own add; the user's visit takes it", async () => {
+        it("an agent's paper keeps its Provenance through its own add; the user's visit releases it", async () => {
             const { isOwnAddition } = PMUtils.agentOps;
-            const { auth, fields } = await agentInProject();
+            const { auth, fields, released } = await agentInProject();
             const restore = parsePreprintOffline();
             const { set } = chrome.storage.local;
             let paperWrites = 0;
@@ -689,7 +697,7 @@ describe("paper.js", () => {
                 await visit.done;
                 const paper = storage.papers[preprintId];
                 expect(paper.count).toBe(2);
-                expect(paper).not.toHaveProperty("provenance");
+                expect(paper.provenance).toEqual(released);
                 expect(await isOwnAddition(paper, auth)).toBe(false);
             } finally {
                 restore();

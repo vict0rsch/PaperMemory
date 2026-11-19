@@ -237,7 +237,8 @@ export const projectTag = (label, hash, existingTags) => {
 
 /**
  * Describe a paper to an agent. Of its Provenance, only the client's name, the date,
- * the reason and the Project label are given, never ids or hashes.
+ * the reason, the Project label and when the user made the paper theirs (released it)
+ * are given, never ids or hashes.
  * @param {object} paper The paper to describe
  * @returns {object} The paper's Summary
  */
@@ -255,9 +256,11 @@ export const paperSummary = (paper) => {
         codeLink: paper.codeLink,
     };
     if (paper.provenance) {
-        const { clientName, addedAt, reason, projectLabel } = paper.provenance;
+        const { clientName, addedAt, reason, projectLabel, releasedAt } =
+            paper.provenance;
         summary.provenance = { clientName, addedAt, reason };
         if (projectLabel) summary.provenance.projectLabel = projectLabel;
+        if (releasedAt) summary.provenance.releasedAt = releasedAt;
     }
     return summary;
 };
@@ -386,6 +389,21 @@ export const appendNote = (paper, text) => {
 };
 
 /**
+ * Show the user who added a paper and why: the line `Added by <client>: <reason>`
+ * appended to its note, unless the note would exceed its 20,000 characters (the
+ * Provenance keeps the reason anyway).
+ * @param {object} paper The paper an agent's add stored, updated in place
+ * @param {object} provenance Its Provenance ({clientName, reason})
+ * @returns {boolean} Whether the line was appended
+ */
+export const appendAddedBy = (paper, { clientName, reason }) => {
+    const line = `Added by ${clientName}: ${reason}`;
+    if ((paper.note ?? "").length + 1 + line.length > MAX_NOTE_LENGTH) return false;
+    appendNote(paper, line);
+    return true;
+};
+
+/**
  * Put a Deletion flag on a paper: the `to-delete` tag and the reason in its note.
  * @param {object} paper The paper, updated in place
  * @param {string} reason Why the paper should be deleted
@@ -420,14 +438,17 @@ export const makeProvenance = async (auth, { clientName, projectLabel, reason })
 /**
  * Is a paper an Own addition of the requesting Paired client: added by that client
  * in the same Project (in any Agent session) or, when added without a Project, in
- * the same Agent session?
+ * the same Agent session, and not opened or edited by the user since (its Provenance
+ * is then released)?
  * @param {object} paper The paper
  * @param {object} auth The request's auth ({clientId, sessionId, projectKey?})
  * @returns {Promise<boolean>} Whether the paper is an Own addition
  */
 export const isOwnAddition = async (paper, auth) => {
     const provenance = paper.provenance;
-    if (!provenance || provenance.clientId !== auth.clientId) return false;
+    if (!provenance || provenance.releasedAt || provenance.clientId !== auth.clientId) {
+        return false;
+    }
     if (provenance.projectHash) {
         return (
             Boolean(auth.projectKey) &&

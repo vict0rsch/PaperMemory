@@ -284,9 +284,11 @@ PaperMemory's tools ask agents to search your Memory first, so that they do not 
 - `proj-protein-lm-survey`, the project's tag;
 - the tags the agent chose, if any.
 
+Its note ends with a line that says which agent added it, and why: `Added by Claude Code: it is the Transformer paper we compare against.`
+
 To list the papers agents added, type `t:review` in the Memory's search field and press ++tab++. Remove the `review` tag when you have looked at a paper.
 
-If the paper was already in your Memory, PaperMemory does not make a copy. It adds the agent's tags, `review` and the project's tag to your paper, and keeps its note and details.
+If the paper was already in your Memory, PaperMemory does not make a copy. It adds the agent's tags, `review` and the project's tag to your paper, and keeps its note (without an `Added by` line) and details.
 
 ## Everyday use
 
@@ -306,9 +308,9 @@ If the paper was already in your Memory, PaperMemory does not make a copy. It ad
 
 Agents add papers from their page on a site PaperMemory supports, such as arXiv or OpenReview (see [Venues](features.md#venues)).
 
-!!! note "The reason is not shown in PaperMemory"
+!!! note "Who added a paper, and why"
 
-    PaperMemory stores the agent's reason with the paper, for agents to read. It does not show it, and removes it when you open or edit the paper. To keep a reason, ask the agent to also write it in the paper's note.
+    When an agent adds a paper that was not in your Memory, PaperMemory appends `Added by <agent>: <reason>` to its note, unless the note has no room left for it (a note holds at most 20,000 characters). It also keeps the agent's name and reason with the paper for agents to read, also after you open or edit it.
 
 ### What agents can change
 

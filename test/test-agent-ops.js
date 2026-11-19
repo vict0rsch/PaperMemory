@@ -12,6 +12,7 @@ import {
     countPapers,
     mergeTags,
     appendNote,
+    appendAddedBy,
     flagForDeletion,
     makeProvenance,
     isOwnAddition,
@@ -538,6 +539,17 @@ describe("agentOps.js", () => {
             }
         });
 
+        it("gives when a released Provenance was released, still without ids or hashes", () => {
+            const released = {
+                clientName: "Claude Code",
+                addedAt: "2026-01-01T00:00:00.000Z",
+                reason: "Cited in the intro",
+                releasedAt: "2026-01-02T00:00:00.000Z",
+            };
+            const summary = paperSummary(makePaper(1, { provenance: released }));
+            expect(summary.provenance).toEqual(released);
+        });
+
         it("links the abstract page and omits a missing Provenance", () => {
             const summary = paperSummary(makePaper(1));
             expect(summary.url).toBe("https://arxiv.org/abs/2101.00001");
@@ -626,10 +638,28 @@ describe("agentOps.js", () => {
         });
     });
 
-    describe("#appendNote, #flagForDeletion", () => {
+    describe("#appendNote, #appendAddedBy, #flagForDeletion", () => {
         it("appends to the note without replacing it", () => {
             const paper = appendNote(makePaper(1, { note: "mine" }), "agent text");
             expect(paper.note).toBe("mine\nagent text");
+        });
+
+        it("appends who added the paper and why, while the note stays within 20,000 characters", () => {
+            const provenance = {
+                clientName: "Claude Code",
+                reason: "Cited in the intro",
+            };
+            const line = "Added by Claude Code: Cited in the intro";
+            const paper = makePaper(1, { note: "Published @ NeurIPS (2021)" });
+            expect(appendAddedBy(paper, provenance)).toBe(true);
+            expect(paper.note).toBe(`Published @ NeurIPS (2021)\n${line}`);
+            // exactly full, then one character too many: left out
+            const full = makePaper(2, { note: "x".repeat(20000 - 1 - line.length) });
+            expect(appendAddedBy(full, provenance)).toBe(true);
+            expect(full.note.length).toBe(20000);
+            const over = makePaper(3, { note: "x".repeat(20000 - line.length) });
+            expect(appendAddedBy(over, provenance)).toBe(false);
+            expect(over.note).toBe("x".repeat(20000 - line.length));
         });
 
         it("adds to-delete once and appends the reason to the note", () => {
@@ -698,6 +728,25 @@ describe("agentOps.js", () => {
             const paper = await addedBy(auth("c1", "s1"));
             expect(await isOwnAddition(paper, auth("c1", "s2"))).toBe(false);
             expect(await isOwnAddition(paper, auth("c1", "s1"))).toBe(true);
+        });
+
+        it("is false once the user released it, also for its client in its Project", async () => {
+            const paper = await addedBy(auth("c1", "s1", "p1"));
+            const by = auth("c1", "s1", "p1");
+            expect(await isOwnAddition(paper, by)).toBe(true);
+            // with or without the hashes a release drops (memoryQueue.js)
+            const releasedAt = "2026-01-02T00:00:00.000Z";
+            paper.provenance = { ...paper.provenance, releasedAt };
+            expect(await isOwnAddition(paper, by)).toBe(false);
+            const { clientName, addedAt, reason, projectLabel } = paper.provenance;
+            paper.provenance = {
+                clientName,
+                addedAt,
+                reason,
+                projectLabel,
+                releasedAt,
+            };
+            expect(await isOwnAddition(paper, by)).toBe(false);
         });
 
         it("is false for a paper without Provenance", async () => {

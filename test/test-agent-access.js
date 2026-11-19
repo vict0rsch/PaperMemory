@@ -673,6 +673,53 @@ describe("Agent access background", () => {
             expect(unresolved.result).toEqual({ status: "unsupported-url", message });
         });
 
+        // what the pipeline stores for a new paper: the agent's fields and Provenance, and
+        // the note its page gave
+        const storesNew = (id, note) => async ({ tags, provenance }) => {
+            const paper = { ...makePaper(id), tags, provenance, note };
+            storage.papers = { ...storage.papers, [id]: paper };
+            return { status: "stored", id };
+        };
+
+        it("shows who added a paper it stored, and why, in its note before the agent's note; not on a paper already stored", async () => {
+            const newId = "Arxiv-2101.00009";
+            ingest = storesNew(newId, "Published @ NeurIPS (2021)");
+            const args = {
+                url,
+                tags: [],
+                reason: "The baseline we compare against",
+                note: "See section 3",
+            };
+            const added = await request(19, "add_paper", args, auth);
+            expect(added.result.status).toBe("stored");
+            const note = [
+                "Published @ NeurIPS (2021)",
+                "Added by Claude Code: The baseline we compare against",
+                "See section 3",
+            ].join("\n");
+            expect(storage.papers[newId].note).toBe(note);
+            // already in the Memory: only attached, its note unchanged
+            ingest = async () => ({ status: "already-present", id: newId });
+            const again = { url, tags: [], reason: "Cited again" };
+            const attached = await request(19, "add_paper", again, auth);
+            expect(attached.result.status).toBe("already-present");
+            expect(storage.papers[newId].note).toBe(note);
+        });
+
+        it("leaves the line out of a note without room for it: the Provenance keeps the reason", async () => {
+            const fullId = "Arxiv-2101.00010";
+            const full = "x".repeat(19990);
+            ingest = storesNew(fullId, full);
+            const args = { url, tags: [], reason: "Why" };
+            const added = await request(20, "add_paper", args, auth);
+            expect(added.result.status).toBe("stored");
+            expect(added.result.paper.provenance).toMatchObject({
+                clientName: "Claude Code",
+                reason: "Why",
+            });
+            expect(storage.papers[fullId].note).toBe(full);
+        });
+
         // a change that passed the checks before it runs, held in the Memory's queue behind
         // a slow operation (e.g. a large replace) until `release`
         const holdMemoryQueue = () => {

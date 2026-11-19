@@ -20,6 +20,7 @@ import {
     countPapers,
     mergeTags,
     appendNote,
+    appendAddedBy,
     flagForDeletion,
     makeProvenance,
     isOwnAddition,
@@ -410,7 +411,9 @@ const refusal = (job) => {
     return null;
 };
 
-// add_paper: ingest, then append the note, whose total is known only then
+// add_paper: ingest, then append to the note of the paper as stored the line that shows
+// who added it and why (only to a paper this add stored) and the agent's note: the
+// note's length is known only then
 const addPaper = async (job) => {
     const { args, auth, client, project, projectHash } = job;
     const tags = mergeTags(
@@ -436,15 +439,17 @@ const addPaper = async (job) => {
         if (typeof id !== "string" || !cleanPapers(papers).hasOwnProperty(id)) {
             return { result: { status, id } };
         }
+        // part of the add, like its Provenance: written also if the agent's note is not
+        const write = status === "stored" && appendAddedBy(papers[id], provenance);
         if (!args.note)
-            return { result: { status, id, paper: paperSummary(papers[id]) } };
+            return { write, result: { status, id, paper: paperSummary(papers[id]) } };
         const invalid = validateArgs("append_note", { id, text: args.note }, papers);
         if (invalid) {
             const message = `${invalid.message}: the paper was added (${id}) without your note`;
-            return failure(invalid.code, message);
+            return { write, ...failure(invalid.code, message) };
         }
         const refused = refusal(job);
-        if (refused) return refused;
+        if (refused) return { write, ...refused };
         appendNote(papers[id], args.note);
         return { write: true, result: { status, id, paper: paperSummary(papers[id]) } };
     });
