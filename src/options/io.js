@@ -230,6 +230,11 @@ const importFromFile = async (file) => {
                 continue;
             }
             const paper = await parsePaper(pageUrl, is, doi);
+            // its Source could not parse the page (e.g. the site refused): nothing to add
+            if (!paper) {
+                line(`${url} could not be read.`, false);
+                continue;
+            }
             if (p.codeLink) paper.codeLink = p.codeLink;
             if (Array.isArray(p.tags) && p.tags.length > 0)
                 paper.tags = p.tags.filter(

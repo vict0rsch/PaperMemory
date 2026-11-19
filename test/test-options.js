@@ -759,6 +759,53 @@ describe("Options page", function () {
         });
     });
 
+    describe("Import papers from URLs", function () {
+        let onRequest;
+
+        beforeEach(async function () {
+            // every site answers 404: a Source cannot read its paper's page
+            await page.setRequestInterception(true);
+            onRequest = (r) =>
+                /^https?:/.test(r.url())
+                    ? r.respond({ status: 404, contentType: "text/plain", body: "" })
+                    : r.continue();
+            page.on("request", onRequest);
+        });
+        afterEach(async function () {
+            page.off("request", onRequest);
+            await page.setRequestInterception(false);
+        });
+
+        it("reports an entry whose page could not be read, and adds nothing", async function () {
+            const url = "https://pubs.acs.org/doi/10.1021/acs.jpca.9b00311";
+            const before = await storageGet("papers");
+            const dir = fs.mkdtempSync(path.join(os.tmpdir(), "pm-import-"));
+            const file = path.join(dir, "papers.json");
+            fs.writeFileSync(file, JSON.stringify([url]));
+            try {
+                const [chooser] = await Promise.all([
+                    page.waitForFileChooser(),
+                    page.click("#import-json-choose"),
+                ]);
+                await chooser.accept([file]);
+                await page.waitForFunction(
+                    () =>
+                        document
+                            .getElementById("import-json-status")
+                            .textContent.startsWith("Done"),
+                    { timeout: 20000 },
+                );
+            } finally {
+                fs.rmSync(dir, { recursive: true, force: true });
+            }
+            const lines = await page.$$eval("#json-import-feedback li", (items) =>
+                items.map((li) => [li.className, li.textContent]),
+            );
+            expect(lines).toEqual([["is-error", `${url} could not be read.`]]);
+            expect(await storageGet("papers")).toEqual(before);
+        });
+    });
+
     describe("Restore from a backup", function () {
         it("downloads the current Memory first, asks, then replaces it", async function () {
             // record downloads (downloadTextFile clicks an <a download>) and when they happen
