@@ -201,7 +201,7 @@ export const validateArgs = (op, args, papers) => {
                   ? `[to-delete] ${args.reason}`
                   : null;
         const note = cleaned[args.id].note ?? "";
-        if (appended !== null && note.length + 1 + appended.length > MAX_NOTE_LENGTH) {
+        if (appended !== null && note.length + (note ? 1 : 0) + appended.length > MAX_NOTE_LENGTH) {
             return agentError(
                 "bad-args",
                 `The note would exceed ${MAX_NOTE_LENGTH} characters`,
@@ -384,7 +384,7 @@ export const mergeTags = (tags, newTags) => [...new Set([...tags, ...newTags])];
  * @returns {object} The paper
  */
 export const appendNote = (paper, text) => {
-    paper.note = `${paper.note ?? ""}\n${text}`;
+    paper.note = paper.note ? `${paper.note}\n${text}` : text;
     return paper;
 };
 

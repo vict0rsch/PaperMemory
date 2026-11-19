@@ -642,6 +642,8 @@ describe("agentOps.js", () => {
         it("appends to the note without replacing it", () => {
             const paper = appendNote(makePaper(1, { note: "mine" }), "agent text");
             expect(paper.note).toBe("mine\nagent text");
+            // an empty note: the text alone, no blank first line
+            expect(appendNote(makePaper(2), "agent text").note).toBe("agent text");
         });
 
         it("appends who added the paper and why, while the note stays within 20,000 characters", () => {
@@ -671,6 +673,9 @@ describe("agentOps.js", () => {
             flagForDeletion(paper, "Duplicate");
             expect(paper.tags).toEqual(["nlp", "to-delete"]);
             expect(paper.note).toBe("mine\n[to-delete] Duplicate");
+            expect(flagForDeletion(makePaper(2), "Duplicate").note).toBe(
+                "[to-delete] Duplicate",
+            );
         });
     });
 
