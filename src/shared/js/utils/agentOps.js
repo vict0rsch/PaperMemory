@@ -390,16 +390,17 @@ export const appendNote = (paper, text) => {
 
 /**
  * Show the user who added a paper and why: the line `Added by <client>: <reason>`
- * appended to its note, unless the note would exceed its 20,000 characters (the
- * Provenance keeps the reason anyway).
+ * appended to its note (the whole note if it was empty), unless the note would exceed
+ * its 20,000 characters (the Provenance keeps the reason anyway).
  * @param {object} paper The paper an agent's add stored, updated in place
  * @param {object} provenance Its Provenance ({clientName, reason})
  * @returns {boolean} Whether the line was appended
  */
 export const appendAddedBy = (paper, { clientName, reason }) => {
     const line = `Added by ${clientName}: ${reason}`;
-    if ((paper.note ?? "").length + 1 + line.length > MAX_NOTE_LENGTH) return false;
-    appendNote(paper, line);
+    const note = paper.note ? `${paper.note}\n${line}` : line;
+    if (note.length > MAX_NOTE_LENGTH) return false;
+    paper.note = note;
     return true;
 };
 

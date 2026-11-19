@@ -174,8 +174,9 @@ keep applying the Project's original tag to new papers."
 Project) the Project tag plus membership into new **and** already-present papers.
 `attach_paper` adds only the Project tag and membership. `flag_for_deletion` adds `to-delete`
 and appends `\n[to-delete] <reason>`. `append_note` appends `\n<text>`; nothing replaces a note.
-An `add_paper` that stores a new paper (`stored`) appends `\nAdded by <clientName>: <reason>`
-to its note, before the agent's `note`, unless the note would exceed 20,000 characters.
+An `add_paper` that stores a new paper (`stored`) appends the line `Added by <clientName>:
+<reason>` to its note (the whole note if it was empty), before the agent's `note`, unless the
+note would exceed 20,000 characters.
 `list_project_papers` / `export_bibtex` = cleaned papers whose `projectHashes` contains the
 projectHash, by `addDate` ascending; BibTeX is `bibtexToString(p.bibtex)` joined with `\n`,
 identical to the options page's tag export; a paper without `bibtex`, or whose

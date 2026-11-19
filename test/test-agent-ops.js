@@ -653,6 +653,10 @@ describe("agentOps.js", () => {
             const paper = makePaper(1, { note: "Published @ NeurIPS (2021)" });
             expect(appendAddedBy(paper, provenance)).toBe(true);
             expect(paper.note).toBe(`Published @ NeurIPS (2021)\n${line}`);
+            // an empty note: the line alone, no blank line before it
+            const empty = makePaper(4);
+            expect(appendAddedBy(empty, provenance)).toBe(true);
+            expect(empty.note).toBe(line);
             // exactly full, then one character too many: left out
             const full = makePaper(2, { note: "x".repeat(20000 - 1 - line.length) });
             expect(appendAddedBy(full, provenance)).toBe(true);
