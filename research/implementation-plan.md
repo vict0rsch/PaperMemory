@@ -289,13 +289,17 @@ host manifests (path = absolute `papermemory-host`) under
 `~/Library/Application Support/<root>/NativeMessagingHosts/` for each existing root:
 `Google/Chrome`, `Google/Chrome for Testing`, `Chromium`, `BraveSoftware/Brave-Browser`,
 `Microsoft Edge`, `Mozilla`. Record files, created dirs and the package `version` in
-`~/.papermemory/install.json`. `uninstall` removes exactly what is recorded plus
-`~/.papermemory`. `selfheal` rewrites wrappers and manifests from the local copy only. Flags:
+`~/.papermemory/install.json`. `uninstall` removes exactly what is recorded plus everything
+else in `~/.papermemory` except `salt` and `clients/` (agent keys), so a reinstall resumes the
+same Project keys and pairings; `uninstall --purge` (the only accepted flag) removes
+`~/.papermemory` entirely and reminds the user to revoke Paired clients in the options page.
+A partial failure exits 1 and keeps `install.json`. `selfheal` rewrites wrappers and manifests from the local copy only. Flags:
 `--yes`, `--dry-run`, `--extension-id <id>` (repeatable), `--user-data-dir <dir>` (also writes
 `<dir>/NativeMessagingHosts/`).
 Verify: temp-`HOME` test → exact `allowed_origins`/`allowed_extensions`; wrappers are 0755 and
 find node with `PATH=/usr/bin:/bin`; a second install keeps `salt` byte-identical and leaves
-no `bin.*`; `uninstall` restores the temp `HOME`.
+no `bin.*`; `uninstall` keeps `salt` and `clients/` (same bytes), a reinstall reuses the salt,
+`uninstall --purge` restores the temp `HOME`; an unknown flag exits 1.
 
 **Step 6 — Agent registration and skill copy.** `agent/src/agents.mjs`. For each detected
 agent ask `Register PaperMemory with <Agent>? [y/N]` (`--yes` skips) and register server
@@ -563,7 +567,7 @@ one table row per check below (check, browser or client, PASS/FAIL, observation)
    including its `source` (`roots` means the client sent MCP roots).
 5. Quit and reopen the browser → `papermemory-mcp libraries` lists it with no UI open.
 6. Revoke Claude Code → its next call answers `unauthorized`.
-7. `uninstall` → every file recorded in `install.json` is gone.
+7. `uninstall` → every recorded file is gone; salt and clients kept; `--purge` removes all.
 Verify: `research/manual-acceptance.md` exists, has a row for each check (check 4 has five
 rows), and contains no `FAIL`.
 

@@ -3,7 +3,7 @@ const USAGE = `Usage: papermemory-mcp <command>
 
 Commands:
   install      Install the native host and register PaperMemory with agents
-  uninstall    Remove everything install created
+  uninstall    Remove what install created (keeps pairing keys and salt; --purge removes them too)
   selfheal     Rewrite wrappers and host manifests from the local copy
   libraries    List connected PaperMemory libraries as JSON
   serve        Run the MCP server on stdio

@@ -209,7 +209,7 @@ and Firefox, all lifecycle checks passed, including 65 min and 8 h idles).
   never run `npx` at startup (no registry lookup, offline start, no automatic execution of a
   newly published version). Every `serve` start repairs wrappers and manifests from the local
   copy only. Updating is explicit: `npx -y papermemory-mcp@latest install` replaces the copy
-  atomically, keeps the salt, and replaces PaperMemory's own agent entries; the options page
+  atomically, keeps the salt (a plain `uninstall` also keeps the salt and the agents' keys, `uninstall --purge` removes them), and replaces PaperMemory's own agent entries; the options page
   says the agent tools are outdated when the installed copy is too old for the extension.
 - **Multi-library routing.** Each profile's host names its socket after the `libraryId`
   (validated as a UUID and sanitized). The MCP server lists live Libraries on demand (never

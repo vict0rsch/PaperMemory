@@ -22,6 +22,12 @@ npx -y papermemory-mcp@latest install
 npx -y papermemory-mcp uninstall
 ```
 
+This keeps `~/.papermemory/salt` and `~/.papermemory/clients/` (your pairing keys and project salt) so a reinstall picks up where you left off. Add `--purge` to remove them too:
+
+```sh
+npx -y papermemory-mcp uninstall --purge
+```
+
 See the [Agent access guide](https://papermemory.org/agents/) for details.
 
 ## Testing a development build

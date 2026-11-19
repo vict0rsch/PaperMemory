@@ -203,15 +203,44 @@ export async function install(args) {
     saveState(stateFile, state);
 }
 
+const KEPT = ["salt", "clients"];
+
+// Remove everything under root except `keep` (names directly under root).
+function clearRoot(root, keep) {
+    if (!fs.existsSync(root)) return;
+    for (const name of fs.readdirSync(root)) {
+        if (!keep.includes(name)) fs.rmSync(path.join(root, name), { recursive: true, force: true });
+    }
+}
+
+// Plain uninstall keeps the salt and the agent keys so a reinstall resumes; --purge removes them.
+function finishUninstall(root, purge) {
+    if (purge) {
+        fs.rmSync(root, { recursive: true, force: true });
+        console.log("Uninstalled PaperMemory agent access");
+        console.log(
+            "Agents you paired are still listed in PaperMemory's options \u2192 Agent access \u2192 Paired clients: revoke them there.",
+        );
+        return;
+    }
+    clearRoot(root, KEPT);
+    console.log("Uninstalled PaperMemory agent access");
+    if (KEPT.some((n) => fs.existsSync(path.join(root, n)))) {
+        console.log(
+            "Kept your PaperMemory pairing keys and project salt in ~/.papermemory so a reinstall picks up where you left off. " +
+                "Run `npx -y papermemory-mcp uninstall --purge` to remove them too.",
+        );
+    }
+}
+
 export function uninstall(args) {
     assertMac();
-    parseFlags(args, {});
+    const { purge } = parseFlags(args, { purge: { type: "boolean" } });
     const { home, root, stateFile } = homePaths();
     const state = loadState(stateFile);
     if (!state) {
-        console.log("No install record found; removing only ~/.papermemory");
-        fs.rmSync(root, { recursive: true, force: true });
-        console.log("Uninstalled PaperMemory agent access");
+        console.log(`No install record found; removing only ~/.papermemory${purge ? "" : " (except the salt and agent keys)"}`);
+        finishUninstall(root, purge);
         return;
     }
     const left = [];
@@ -238,15 +267,13 @@ export function uninstall(args) {
     }
     rmdirsIfEmpty(state.dirs);
     if (left.length === 0) {
-        fs.rmSync(root, { recursive: true, force: true });
-        console.log("Uninstalled PaperMemory agent access");
+        finishUninstall(root, purge);
         return;
     }
-    // Keep only what remains, so a rerun finishes the cleanup; everything else under root goes.
+    // Keep only what remains, so a rerun finishes the cleanup; everything else under root goes
+    // (except the salt and agent keys on a plain uninstall).
     saveState(stateFile, { ...state, agents, files, dirs: state.dirs.filter((d) => fs.existsSync(d)) });
-    for (const name of fs.readdirSync(root)) {
-        if (name !== "install.json") fs.rmSync(path.join(root, name), { recursive: true, force: true });
-    }
+    clearRoot(root, purge ? ["install.json"] : ["install.json", ...KEPT]);
     console.error(`Not removed: ${left.join(", ")}. Fix the problem and run uninstall again.`);
     process.exitCode = 1;
 }

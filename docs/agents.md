@@ -93,7 +93,7 @@ You do this once per Mac, in the Terminal. On this page, `~` means your home fol
 | --- | --- |
 | `~/.papermemory/bin/` | A copy of the agent tools: `papermemory-mcp`, which agents start, and `papermemory-host`, which browsers start. Browsers and agents only run this copy. |
 | `~/.papermemory/salt` | A random secret, used to recognize your project folders. Keep it private. |
-| `~/.papermemory/install.json` | The list of everything the installer did, used to update and uninstall. |
+| `~/.papermemory/install.json` | The list of everything the installer did, used to update and uninstall. A plain uninstall keeps `salt` and `clients/` next to it. |
 | `~/Library/Application Support/Google/Chrome/NativeMessagingHosts/org.papermemory.agent.json` | Tells Chrome where the Native host is. The same file goes in `Mozilla/` for Firefox, and in the folders of Brave, Edge, Chromium and Chrome for Testing. Only for the browsers whose folder exists. |
 | Claude Code, Codex | A user-wide `papermemory` server, added with `claude mcp add` and `codex mcp add`. |
 | Cursor | A `papermemory` entry in `~/.cursor/mcp.json`. |
@@ -443,7 +443,21 @@ It replaces the copy in `~/.papermemory/bin`, and asks again about each agent: `
 npx -y papermemory-mcp uninstall
 ```
 
-It removes what the installer created: the agent registrations, the browser files, the two skills, the settings files it created (when nothing else is in them) and the whole `~/.papermemory` folder, with the agents' keys and the salt. It prints `Uninstalled PaperMemory agent access`.
+It removes what the installer created: the agent registrations, the browser files, the two skills, the settings files it created (when nothing else is in them) and the programs in `~/.papermemory`. It prints `Uninstalled PaperMemory agent access`.
+
+It keeps the agents' keys (`~/.papermemory/clients`) and the project salt (`~/.papermemory/salt`), and tells you so:
+
+```text
+Kept your PaperMemory pairing keys and project salt in ~/.papermemory so a reinstall picks up where you left off. Run `npx -y papermemory-mcp uninstall --purge` to remove them too.
+```
+
+This is on purpose: after a reinstall, agents continue your projects with the same tags, and the agents you already allowed keep working, with no new pairing and no duplicate under Paired clients. To remove everything, including the keys and the salt, add `--purge`:
+
+```sh
+npx -y papermemory-mcp uninstall --purge
+```
+
+It then removes the whole `~/.papermemory` folder and reminds you: `Agents you paired are still listed in PaperMemory's options → Agent access → Paired clients: revoke them there.` `--purge` is the only flag `uninstall` accepts.
 
 It keeps:
 
@@ -451,7 +465,7 @@ It keeps:
 - files it did not create, such as other entries in your agents' settings, or skill files you wrote;
 - the Agent access switch and the Paired clients list in PaperMemory. Turn Agent access off and revoke the agents yourself.
 
-Because the salt is deleted, agents cannot continue your projects after a reinstall: they start new ones. A new project with the same name as an old one gets a tag with a code added, such as `proj-protein-lm-survey-3f9a`. Agents also need to be allowed again.
+After `uninstall --purge` the salt is gone, so agents cannot continue your projects after a reinstall: they start new ones. A new project with the same name as an old one gets a tag with a code added, such as `proj-protein-lm-survey-3f9a`. Agents also need to be allowed again.
 
 If something cannot be removed, uninstall says what and ends with an error (exit code 1):
 
@@ -491,7 +505,7 @@ Fix the problem, here by running the command in a Terminal where `claude` works,
 | The options page closed and opened again (Chrome). | Normal, once: Chrome restarts PaperMemory to use the new permission. | Click **Agent access** again. Reload paper tabs that were open. |
 | No status line, for more than a minute | PaperMemory did not manage to connect, and got no error. | Quit the browser and open it again. |
 | "This pairing request has expired or was already answered." | The request expired (2 minutes after it opened), the agent's session ended, or you had already answered. | Ask the agent to try again. |
-| The same agent twice under Paired clients | It was allowed again, for example after you reinstalled the agent tools (uninstall deletes the agents' keys). The older entry is no longer used. | Revoke the older one: see its "Paired on" date. |
+| The same agent twice under Paired clients | It was allowed again, for example after you reinstalled the agent tools following `uninstall --purge`, which deletes the agents' keys. The older entry is no longer used. | Revoke the older one: see its "Paired on" date. |
 
 ### In your agent's answers
 

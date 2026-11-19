@@ -108,7 +108,7 @@ test("manifests, wrappers, salt, reinstall and uninstall in a temp HOME", () => 
     }
 
     // Removes both skills, like everything else install created.
-    assert.equal(runCli(home, ["uninstall"]).status, 0);
+    assert.equal(runCli(home, ["uninstall", "--purge"]).status, 0);
     assert.deepEqual(walk(home), before);
 });
 
@@ -124,7 +124,7 @@ test("--user-data-dir writes <dir>/NativeMessagingHosts and --dry-run writes not
     assert.equal(runCli(home, ["install", "--user-data-dir", udd]).status, 0);
     const m = read(path.join(udd, "NativeMessagingHosts", "org.papermemory.agent.json"));
     assert.deepEqual(m.allowed_origins, [`chrome-extension://${CHROME_ID}/`]);
-    assert.equal(runCli(home, ["uninstall"]).status, 0);
+    assert.equal(runCli(home, ["uninstall", "--purge"]).status, 0);
     assert.ok(!fs.existsSync(udd));
     assert.deepEqual(walk(home), []);
 });
@@ -206,7 +206,7 @@ test("agent registration: argv of claude/codex, OpenCode, Cursor and OMP merges"
 
     assert.equal(runCli(home, ["install", "--yes"], { fakes: ["claude", "codex"] }).status, 0);
 
-    const un = runCli(home, ["uninstall"], { fakes: ["claude", "codex"] });
+    const un = runCli(home, ["uninstall", "--purge"], { fakes: ["claude", "codex"] });
     assert.equal(un.status, 0, un.stderr);
     assert.equal(
         un.calls,
@@ -241,7 +241,7 @@ test("created config files are removed on uninstall", () => {
     assert.equal(runCli(home, ["install", "--yes"]).status, 0);
     assert.ok(fs.existsSync(path.join(home, ".omp", "agent", "mcp.json")));
     assert.ok(fs.existsSync(path.join(home, ".config", "opencode", "opencode.jsonc")));
-    assert.equal(runCli(home, ["uninstall"]).status, 0);
+    assert.equal(runCli(home, ["uninstall", "--purge"]).status, 0);
     assert.deepEqual(walk(home), before);
 });
 
@@ -315,7 +315,7 @@ test("uninstall keeps failed registrations in the record, exits 1, and a rerun f
     const state = read(stateFile);
     assert.deepEqual(Object.keys(state.agents).sort(), ["claude", "codex"]);
     assert.deepEqual(state.files, []);
-    assert.deepEqual(fs.readdirSync(path.join(home, ".papermemory")), ["install.json"]);
+    assert.deepEqual(fs.readdirSync(path.join(home, ".papermemory")).sort(), ["install.json", "salt"]);
     for (const name of SKILLS) assert.ok(!fs.existsSync(path.join(home, ".agents", "skills", name, "SKILL.md")));
 
     // Only codex is fixed: claude stays recorded.
@@ -323,7 +323,7 @@ test("uninstall keeps failed registrations in the record, exits 1, and a rerun f
     assert.equal(half.status, 1);
     assert.deepEqual(Object.keys(read(stateFile).agents), ["claude"]);
 
-    const good = runCli(home, ["uninstall"], { fakes: ["claude"] });
+    const good = runCli(home, ["uninstall", "--purge"], { fakes: ["claude"] });
     assert.equal(good.status, 0, good.stderr);
     assert.ok(!fs.existsSync(path.join(home, ".papermemory")));
     assert.deepEqual(walk(home), before);
@@ -334,7 +334,60 @@ test("uninstall treats a 'not registered' answer from the CLI as success", () =>
     assert.equal(runCli(home, ["install", "--yes"], { fakes: ["codex"] }).status, 0);
     const fakeBin = tempDir("pmi-fakebin-");
     fs.writeFileSync(path.join(fakeBin, "codex"), `#!/bin/sh\necho "No MCP server named 'papermemory' found." >&2\nexit 1\n`, { mode: 0o755 });
-    const res = spawnSync(process.execPath, [CLI, "uninstall"], { env: { HOME: home, PATH: `${fakeBin}:/usr/bin:/bin` }, encoding: "utf8" });
+    const res = spawnSync(process.execPath, [CLI, "uninstall", "--purge"], { env: { HOME: home, PATH: `${fakeBin}:/usr/bin:/bin` }, encoding: "utf8" });
     assert.equal(res.status, 0, res.stderr);
     assert.ok(!fs.existsSync(path.join(home, ".papermemory")));
+});
+
+const KEPT_MSG =
+    "Kept your PaperMemory pairing keys and project salt in ~/.papermemory so a reinstall picks up where you left off. Run `npx -y papermemory-mcp uninstall --purge` to remove them too.";
+const PURGE_MSG =
+    "Agents you paired are still listed in PaperMemory's options \u2192 Agent access \u2192 Paired clients: revoke them there.";
+
+test("plain uninstall keeps the salt and agent keys, and a reinstall reuses them", () => {
+    const home = tempDir("pmi-home-");
+    const before = walk(home);
+    assert.equal(runCli(home, ["install", "--yes"], { fakes: ["claude"] }).status, 0);
+    const root = path.join(home, ".papermemory");
+    const salt = fs.readFileSync(path.join(root, "salt"));
+    const keyFile = path.join(root, "clients", "lib-1", "key-1.json");
+    fs.mkdirSync(path.dirname(keyFile), { recursive: true });
+    fs.writeFileSync(keyFile, '{"secret":"x"}\n');
+    fs.mkdirSync(path.join(root, "logs"), { recursive: true });
+    fs.writeFileSync(path.join(root, "logs", "wrapper.log"), "log\n");
+    const state = read(path.join(root, "install.json"));
+    assert.ok(!state.files.some((f) => f.startsWith(path.join(root, "salt")) || f.startsWith(path.join(root, "clients"))));
+
+    const un = runCli(home, ["uninstall"], { fakes: ["claude"] });
+    assert.equal(un.status, 0, un.stderr);
+    assert.match(un.stdout, /^Uninstalled PaperMemory agent access$/m);
+    assert.ok(un.stdout.includes(KEPT_MSG));
+    assert.ok(!un.stdout.includes("Paired clients"));
+    assert.deepEqual(fs.readdirSync(root).sort(), ["clients", "salt"]);
+    assert.ok(salt.equals(fs.readFileSync(path.join(root, "salt"))));
+    assert.equal(fs.readFileSync(keyFile, "utf8"), '{"secret":"x"}\n');
+    assert.ok(!fs.existsSync(path.join(home, ".agents", "skills", SKILLS[0])));
+    assert.ok(!fs.existsSync(path.join(home, ".claude", "skills", SKILLS[0])));
+    assert.match(un.calls, /claude\nmcp\nremove\n/);
+
+    assert.equal(runCli(home, ["install", "--yes"], { fakes: ["claude"] }).status, 0);
+    assert.ok(salt.equals(fs.readFileSync(path.join(root, "salt"))));
+    assert.equal(fs.readFileSync(keyFile, "utf8"), '{"secret":"x"}\n');
+
+    const purge = runCli(home, ["uninstall", "--purge"], { fakes: ["claude"] });
+    assert.equal(purge.status, 0, purge.stderr);
+    assert.ok(purge.stdout.includes(PURGE_MSG));
+    assert.ok(!purge.stdout.includes("Kept your"));
+    assert.ok(!fs.existsSync(root));
+    assert.deepEqual(walk(home), before);
+});
+
+test("uninstall rejects unknown flags", () => {
+    const home = tempDir("pmi-home-");
+    assert.equal(runCli(home, ["install"]).status, 0);
+    for (const flag of ["--yes", "--force"]) {
+        const res = runCli(home, ["uninstall", flag]);
+        assert.equal(res.status, 1);
+    }
+    assert.ok(fs.existsSync(path.join(home, ".papermemory", "install.json")));
 });
