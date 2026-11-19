@@ -331,13 +331,13 @@ entry.
 
 **Step 7 — Manifest.** In `wxt.config.js` make `manifest` a function `({ browser }) =>
 ({...})` with unchanged content; add `"alarms"` to `permissions`; add `"offscreen"` only when
-`browser !== "firefox"`; add `optional_permissions: ["nativeMessaging"]`, except when
-`process.env.WXT_PM_AGENT_TEST === "1"`, which puts `nativeMessaging` in `permissions`
-instead (test builds only).
+`browser !== "firefox"`; add `optional_permissions: ["nativeMessaging", "notifications"]`, except when
+`process.env.WXT_PM_AGENT_TEST === "1"`, which puts both in `permissions` instead (test
+builds only).
 Verify: `npm run build`; `dist/chrome-mv3/manifest.json` has `offscreen`,
-`dist/firefox-mv2/manifest.json` does not; both list `nativeMessaging` only under
-`optional_permissions`; after `WXT_PM_AGENT_TEST=1 npm run build` it is under `permissions`
-in both; `dist/chrome-mv3/background.js` exists.
+`dist/firefox-mv2/manifest.json` does not; both list `nativeMessaging` and `notifications` only under
+`optional_permissions`; after `WXT_PM_AGENT_TEST=1 npm run build` they are under
+`permissions` in both; `dist/chrome-mv3/background.js` exists.
 
 **Step 8 — Pure operations module.** `src/shared/js/utils/agentOps.js`, no `chrome.*`:
 `validateArgs(op, args, papers)` (Bounds), `normalizeTags`, `projectTag(label, hash,
@@ -570,7 +570,7 @@ rows), and contains no `FAIL`.
 ## Final acceptance check
 
 - Root `npm test` and package `npm test` pass; both e2e scripts print `OVERALL PASS`.
-- Production `npm run build` succeeds; `nativeMessaging` only under `optional_permissions` in
+- Production `npm run build` succeeds; `nativeMessaging` and `notifications` only under `optional_permissions` in
   `dist/chrome-mv3/manifest.json` and `dist/firefox-mv2/manifest.json`;
   `grep -r "pm-agent-test-auto-allow" dist/chrome-mv3 dist/firefox-mv2` prints nothing.
 - `research/manual-acceptance.md` has no `FAIL`; no secrets in the diff.
