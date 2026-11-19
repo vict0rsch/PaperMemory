@@ -43,10 +43,10 @@ Firefox; Brave, Edge and Chromium host manifests are written best-effort and are
 - `addOrUpdatePaper` internals except Step 9's change.
 - Windows/Linux installer paths (exit 1: `Windows/Linux are not supported yet`).
 - Any UI showing Provenance or Projects. No cloud path, no WebMCP.
-- Existing bug (do not fix here; report to the maintainer): `pushSyncPapers` calls
-  `chrome.action.*` badge calls via `badgeWait` / `setBadgeBackgroundColor`
-  (`src/background/background.js:311-313`), which Firefox MV2 lacks, so it likely
-  rejects on Firefox when Gist sync is on.
+- No longer out of scope, fixed on this branch (#359): `pushSyncPapers`'s badge calls
+  (`badgeWait` / `setBadgeBackgroundColor` in `src/background/background.js`) used
+  `chrome.action.*`, which Firefox MV2 lacks; they now use `chrome.action ??
+  chrome.browserAction`.
 
 ## Context to read first
 
@@ -118,6 +118,17 @@ from Provenance. Errors `{code, message}`, `code` ∈ `unauthorized`, `disabled`
 `bad-args`, `not-found`, `not-own-addition`, `no-project`, `too-large`, `unsupported-url`,
 `rate-limited`, `busy`, `unknown-op`, `protocol-mismatch`, `internal`.
 
+**Pairing and `connect` (MCP server).** A call that needs pairing sends `pair` and waits ≤ 2 s,
+then answers `pairing-required` (MCP side only: an error result the agent relays verbatim:
+switch to the named browser, click **Allow** on the PaperMemory tab, call again). The `pair`
+request stays open until the user decides or PaperMemory ends it (120 s), so a later **Allow**
+still saves the credential; later calls wait for it instead of sending another. Tool
+`connect({library?})` pairs up front, or checks the credential with an authenticated
+`list_tags`, and answers `{paired: true, alreadyPaired, clientName, library}`; agents call it
+right after confirming the Project. PaperMemory brings the pairing tab's window to the front
+and, with the optional `notifications` permission (requested with `nativeMessaging`), shows
+an OS notification.
+
 **Bounds (checked before any work → `bad-args`).** Unknown arg keys rejected. `url`
 http/https, or a DOI (`doi:…` or a bare `10.…`), ≤ 2,048. `query` ≤ 256. `reason` 1–500. `note`/`text` ≤ 2,000 per call,
 note total ≤ 20,000. `clientName`, `projectLabel` 1–64 after removing control characters.
@@ -133,7 +144,7 @@ that every tool call awaits: after `notifications/initialized`, if the client de
 `roots` capability, send `roots/list` and wait ≤ 2 s; use the first `file://` root. On no
 `roots` capability, an empty list, an error or the timeout, use `process.cwd()`. Then
 `realpath`. Later `roots/list_changed` notifications are ignored. No Project when the folder is
-`$HOME`, `/`, or inside an application bundle (`/Applications`), `os.tmpdir()`, `/tmp`,
+`$HOME`, `/`, or inside `/Applications`, `os.tmpdir()`, `/tmp`,
 `/private/tmp` or `/var/tmp` (each excluded path compared after its own `realpath`, so
 `/private/var/tmp` is covered), or after the agent calls `set_project({none:true})`; adds then fall back to
 session-scoped ownership, and `get_project` says why (`reason`) and suggests registering
@@ -222,7 +233,7 @@ Verify: `git merge-base --is-ancestor origin/master HEAD` exits 0; root `npm tes
 
 **Step 1 — Package and CLI dispatch.** Create `agent/package.json` (`name:
 "papermemory-mcp"`, `type: "module"`, `bin: {"papermemory-mcp": "dist/cli.mjs"}`, `files:
-["dist", "skill", "README.md"]`, `engines.node: ">=18"`, `dependencies: {}`; devDependencies
+["dist", "skills", "README.md"]`, `engines.node: ">=18"`, `dependencies: {}`; devDependencies
 `@modelcontextprotocol/sdk`, `zod`, `esbuild`, `jsonc-parser`; scripts `build` (esbuild,
 platform node, format esm, all deps bundled; entry `src/cli.mjs` → `dist/cli.mjs`; Step 2
 adds the host entry), `prepublishOnly: "npm run build"`, `test: "node --test test/"`).
@@ -253,7 +264,7 @@ protocolMin, protocolMax}`.
 Verify: unit test with a fake socket server under a temp `HOME`: `auto` with 0/1/2 libraries,
 negotiation overlap/no-overlap; `node dist/cli.mjs libraries` with no sockets prints `[]`.
 
-**Step 4 — `agent/skill/SKILL.md`.** Frontmatter `name: papermemory`, description "Use
+**Step 4 — `agent/skills/papermemory/SKILL.md`.** Frontmatter `name: papermemory`, description "Use
 PaperMemory to look up, save and organize research papers in the user's library, per
 project". Rules: at the start of research work call `get_project` and confirm with the user
 which PaperMemory project this is, or none; if the folder's `CLAUDE.md`/`AGENTS.md` has no
@@ -307,7 +318,8 @@ no `cwd`, so clients launch it in the project folder:
   `omp` lists the server.
 
 JSON writes are atomic, keep other keys, and replace an existing `papermemory` entry. Copy
-`agent/skill/SKILL.md` to `~/.agents/skills/papermemory/` and `~/.claude/skills/papermemory/`.
+each `agent/skills/<name>/SKILL.md` (`papermemory`, and `papermemory-setup` for setup and
+troubleshooting) to `~/.agents/skills/<name>/` and `~/.claude/skills/<name>/`.
 Record all in `install.json`; `uninstall` reverses it.
 Verify: temp `HOME` + fake `claude`/`codex` scripts logging argv → exact argv; the OpenCode
 edit keeps a comment and an unrelated server and writes `mcp.papermemory` (no

@@ -97,7 +97,7 @@ The folder an **MCP server** process works for: the first MCP root the agent cli
 _Avoid_: repo, workspace, project root
 
 **Project**:
-The bibliography a **Paired client** keeps for one **Project folder** across **Agent sessions**. There is no Project when the **Project folder** is the home directory, the filesystem root, inside an application bundle or a temporary directory, or after the agent opts out.
+The bibliography a **Paired client** keeps for one **Project folder** across **Agent sessions**. There is no Project when the **Project folder** is the home directory, the filesystem root, inside `/Applications` or a temporary directory, or after the agent opts out.
 _Avoid_: repo, workspace, collection
 
 **Project key**:

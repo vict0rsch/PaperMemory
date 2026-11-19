@@ -22,7 +22,7 @@ npx -y papermemory-mcp@latest install
 npx -y papermemory-mcp uninstall
 ```
 
-See [docs/agents.md](../docs/agents.md) for details.
+See the [Agent access guide](https://papermemory.org/agents/) for details.
 
 ## Testing a development build
 
@@ -52,7 +52,7 @@ For contributors. `papermemory-mcp` is not on npm until it is released, so `npx 
 
     A clone under `~/Documents` is fine: `install` copies the host and the CLI to `~/.papermemory/bin` and points the browsers and agents there, so they never run anything from your clone (a host under `~/Documents` would wait on a macOS privacy prompt). After you change agent code, run `npm run build` in `agent/` and `install` again, then start a new agent session.
 
-4. Turn on Agent access in the development build's options page (Step 2 of [docs/agents.md](../docs/agents.md)), then use an agent as in its Step 3.
+4. Turn on Agent access in the development build's options page ([Step 2 of the guide](https://papermemory.org/agents/#step-2-turn-on-agent-access)), then use an agent as in its [Step 3](https://papermemory.org/agents/#step-3-first-use).
 
 5. Remove everything the same way:
 

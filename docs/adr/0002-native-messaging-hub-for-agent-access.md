@@ -135,8 +135,8 @@ and Firefox, all lifecycle checks passed, including 65 min and 8 h idles).
   addition** is a paper this **Paired client** added in the same Project, in any session; the
   **Project key** is an HMAC of the **Project folder** path under a per-install secret salt,
   held by the MCP server and never given to the model. Without a Project (home directory,
-  filesystem root, an application bundle, a temporary directory, a client that gives no usable
-  folder, or an explicit opt-out), ownership falls back to the **Agent session**:
+  filesystem root, a folder inside `/Applications`, a temporary directory, a client that
+  gives no usable folder, or an explicit opt-out), ownership falls back to the **Agent session**:
   an opaque per-process id the model never sees. Provenance stores only hashes of these keys,
   so a synced Gist or an export does not reveal them. Another client in the same Project can
   only flag.
