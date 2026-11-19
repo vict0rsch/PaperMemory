@@ -1,6 +1,6 @@
 import { BasePaperSource } from "./base.js";
 import { miniHash, noParamUrl } from "@pmu/functions.js";
-import { fetchBibtexToPaper, fetchDom } from "@pmu/parsers.js";
+import { fetchBibtexToPaper } from "@pmu/parsers.js";
 
 export class AcsSource extends BasePaperSource {
     static name = "acs";
@@ -36,9 +36,7 @@ export class AcsSource extends BasePaperSource {
         url = noParamUrl(url).replace("pubs.acs.org/doi/pdf/", "pubs.acs.org/doi/");
         const doi = url.includes("pubs.acs.org/doi/")
             ? url.replace("/abs/", "/").split("/doi/")[1]
-            : (await fetchDom(url))
-                  .querySelector('meta[name="citation_doi"]')
-                  ?.getAttribute("content");
+            : await AcsSource.pageDoi(url);
         if (!/^10\.\d{4,9}\/[-._;()\/:A-Za-z0-9]+$/.test(doi)) {
             throw new Error(`ACS: invalid or missing DOI (${doi}) for ${url}`);
         }
@@ -51,6 +49,29 @@ export class AcsSource extends BasePaperSource {
         const venue = data.journal;
 
         return { author, bibtex, id, key, note, pdfLink, title, venue, year };
+    }
+
+    // Silverchair article pages carry no DOI in their URL: read the page's citation_doi
+    static async pageDoi(url) {
+        const selector = 'meta[name="citation_doi"]';
+        // in the paper's own tab, read the loaded page rather than fetching it again
+        if (noParamUrl(globalThis.location?.href ?? "") === url) {
+            const doi = document.querySelector(selector)?.getAttribute("content");
+            if (doi) return doi;
+        }
+        const response = await fetch(url);
+        if (!response.ok) {
+            throw new Error(
+                `ACS: could not read the DOI of ${url} (HTTP ${response.status})` +
+                    (response.status === 403
+                        ? ": blocked by ACS's bot protection, open the paper in a tab instead"
+                        : ""),
+            );
+        }
+        return new DOMParser()
+            .parseFromString(await response.text(), "text/html")
+            .querySelector(selector)
+            ?.getAttribute("content");
     }
 
     static toAbs(paper) {

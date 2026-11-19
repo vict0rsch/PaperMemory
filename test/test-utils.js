@@ -288,6 +288,60 @@ describe("paper.js", () => {
         });
     });
 
+    describe("#acs Silverchair article page", () => {
+        // no DOI in the URL: AcsSource.pageDoi reads the page's citation_doi
+        const url =
+            "https://pubs.acs.org/aaembp/article-abstract/7/24/11165/3659702/Atomistic-Insights-into-Cu-Amorphous-TaxN";
+        const doi = "10.1021/acsaelm.5c02157";
+        const acs = getSource("acs");
+        const { fetch } = globalThis;
+        let meta;
+
+        before(() => {
+            global.DOMParser = new JSDOM().window.DOMParser;
+        });
+
+        after(() => {
+            delete global.DOMParser;
+        });
+
+        afterEach(() => {
+            globalThis.fetch = fetch;
+            delete globalThis.location;
+            meta?.remove();
+        });
+
+        it("is recognised as an acs page", async () => {
+            expect((await PMUtils.paper.isPaper(url)).acs).toBe(true);
+        });
+
+        it("reads the DOI from its own tab without fetching", async () => {
+            meta = document.createElement("meta");
+            meta.setAttribute("name", "citation_doi");
+            meta.setAttribute("content", doi);
+            document.head.appendChild(meta);
+            globalThis.location = { href: `${url}?redirectedFrom=fulltext` };
+            globalThis.fetch = () => {
+                throw new Error("unexpected fetch");
+            };
+            expect(await acs.pageDoi(url)).toEqual(doi);
+        });
+
+        it("reads the DOI from the fetched page without a tab", async () => {
+            globalThis.fetch = async () =>
+                new Response(
+                    `<html><head><meta name="citation_doi" content="${doi}"></head></html>`,
+                );
+            expect(await acs.pageDoi(url)).toEqual(doi);
+        });
+
+        it("explains a fetch blocked by bot protection", async () => {
+            globalThis.fetch = async () =>
+                new Response("Just a moment...", { status: 403 });
+            await expect(acs.pageDoi(url)).rejects.toThrow("bot protection");
+        });
+    });
+
     describe("#addOrUpdatePaper", () => {
         // ACS Silverchair article url: AcsSource.urlToId reads no DOI from it
         const url = "https://pubs.acs.org/jpca/article/123/12/2345/123456/Some-Title";
