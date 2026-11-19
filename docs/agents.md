@@ -162,11 +162,11 @@ It prints `[]`: the list of connected browsers, which stays empty until Step 2.
 1. Open PaperMemory's options page: click the PaperMemory icon in the toolbar (in Chrome, it may be under the puzzle-piece icon), click the gear (or press ++p++), then click **All options**.
 2. In the left column, click **Agent access**.
 3. Turn on **Enable Agent access**.
-4. Your browser asks for a new permission:
+4. Your browser asks for new permissions:
 
 === "Chrome"
 
-    Chrome asks to let PaperMemory "Communicate with cooperating native applications". Click **Allow**.
+    Chrome asks to let PaperMemory "Communicate with cooperating native applications" and "Display notifications". Click **Allow**.
 
     After a moment, the options page closes and opens again by itself: Chrome restarts PaperMemory once, so that it can use the new permission. Click **Agent access** in the left column again. Paper tabs that were already open lose PaperMemory's features until you reload them.
 
@@ -174,7 +174,9 @@ It prints `[]`: the list of connected browsers, which stays empty until Step 2.
 
 === "Firefox"
 
-    Firefox asks to let PaperMemory "Exchange messages with programs other than Firefox". Click **Allow**.
+    Firefox asks to let PaperMemory "Exchange messages with programs other than Firefox" and "Display notifications to you". Click **Allow**.
+
+The first permission lets your browser start the Native host. The second lets PaperMemory show a system notification when an agent asks for your OK (see [Allow the agent](#allow-the-agent)). If you refuse, Agent access turns itself off ("Permission refused"). If the browser asks only about notifications, because you allowed the first permission before, refusing keeps Agent access on: PaperMemory then shows no notification, only the pairing tab. On macOS, notifications also need your browser to be allowed in System Settings → Notifications.
 
 Within a few seconds, a status line appears under the switch. **Connected** means it works. Agents can reach your Memory only while this browser is running.
 
@@ -253,7 +255,9 @@ Say yes before the agent adds its first paper: the project's tag is fixed then (
 
 ### Allow the agent
 
-The first time the agent reads or changes your Memory, PaperMemory opens its options page in a new tab, on this card:
+Right after you confirm the project, PaperMemory's skill tells the agent to call PaperMemory's `connect` tool, so that PaperMemory asks for your OK now rather than in the middle of a task. Without the skill, the same happens the first time the agent reads or changes your Memory.
+
+PaperMemory opens its options page in a new tab and brings that window to the front (in a new window if the browser has none open). If you allowed notifications in Step 2, a system notification also says "_the agent's name_ wants to use PaperMemory": click it to show the tab. The tab shows this card:
 
 > **Agent pairing request**
 >
@@ -263,10 +267,14 @@ The first time the agent reads or changes your Memory, PaperMemory opens its opt
 >
 > **Allow** · **Deny**
 
+The agent does not wait for you to click: after about 2 seconds, it tells you something like this (the `pairing-required` answer):
+
+> PaperMemory needs your OK to let Claude Code use it: switch to Chrome and click **Allow** on the PaperMemory tab that just opened (the request stays open for 2 minutes).
+
 The name is the one the agent gives itself. Only allow a name you expect.
 
-- **Allow**: the card says "Allowed." The agent's request goes through, and the agent appears under **Paired clients**. PaperMemory does not ask again for this agent in this browser profile, unless you revoke it.
-- **Deny**: the card says "Denied." The agent gets the error `denied: The user denied this client access`. For one minute, PaperMemory refuses every new pairing request.
+- **Allow**: the card says "Allowed." The agent appears under **Paired clients**. Tell the agent you allowed it: its next call goes through. PaperMemory does not ask again for this agent in this browser profile, unless you revoke it.
+- **Deny**: the card says "Denied." For one minute, PaperMemory refuses every new pairing request: if the agent tries again within that minute, it gets `rate-limited: The user denied a PaperMemory pairing request less than a minute ago, ...` and asks you whether to allow it.
 
 Answer within 2 minutes. After that, the request expires and the card says "This pairing request has expired or was already answered.": ask the agent to try again.
 
@@ -306,7 +314,9 @@ If the paper was already in your Memory, PaperMemory does not make a copy. It ad
 | "This paper is off-topic: flag it for deletion." | Adds the `to-delete` tag and the reason to its note. You delete it yourself. |
 | "Remove the paper you added by mistake." | Deletes it, or flags it for you to delete (see [Deleting papers](#deleting-papers)). |
 
-Agents add papers from their page on a site PaperMemory supports, such as arXiv or OpenReview (see [Venues](features.md#venues)).
+Agents add papers from their page on a site PaperMemory supports, such as arXiv or OpenReview (see [Venues](features.md#venues)). They can also give a DOI, as `10.…`, `doi:10.…` or a `https://doi.org/10.…` link: PaperMemory looks up the page the DOI leads to, and adds the paper from that page if its site is supported.
+
+Some publishers, such as IEEE Xplore, refuse PaperMemory's requests when the page is not open in a tab: an agent cannot add their papers. Open the paper's page yourself: PaperMemory saves it, and the agent can then attach it to the project.
 
 !!! note "Who added a paper, and why"
 
@@ -480,7 +490,7 @@ Fix the problem, here by running the command in a Terminal where `claude` works,
 | Permission refused | You refused the browser's permission. The switch turned itself off. | Turn it on again, and click **Allow**. |
 | The options page closed and opened again (Chrome). | Normal, once: Chrome restarts PaperMemory to use the new permission. | Click **Agent access** again. Reload paper tabs that were open. |
 | No status line, for more than a minute | PaperMemory did not manage to connect, and got no error. | Quit the browser and open it again. |
-| "This pairing request has expired or was already answered." | The agent stopped waiting (after 2 minutes, or its session ended), or you had already answered. | Ask the agent to try again. |
+| "This pairing request has expired or was already answered." | The request expired (2 minutes after it opened), the agent's session ended, or you had already answered. | Ask the agent to try again. |
 | The same agent twice under Paired clients | It was allowed again, for example after you reinstalled the agent tools (uninstall deletes the agents' keys). The older entry is no longer used. | Revoke the older one: see its "Paired on" date. |
 
 ### In your agent's answers
@@ -498,17 +508,18 @@ Agents often repeat PaperMemory's messages in their own words. The word before t
 | ``protocol-mismatch: Run `npx -y papermemory-mcp@latest install` `` | The agent tools are too old for the extension. | Run it, then start a new agent session. |
 | `unauthorized: PaperMemory no longer accepts <agent>: the user must pair it again (...)` | You revoked the agent, or PaperMemory no longer knows it (for example after you reinstalled the extension). | Its next call opens a new pairing request: allow it, or deny it to keep it out. |
 | `disabled: Agent access is off in PaperMemory's options` | You turned Agent access off while the agent was making a change: the change was not made. The agent stays allowed. | Turn Agent access back on, then ask the agent to try again. |
+| `pairing-required`, with "PaperMemory needs your OK to let <agent> use it: switch to <browser> and click **Allow** on the PaperMemory tab that just opened (the request stays open for 2 minutes)." | This agent is not allowed in this browser profile yet (or no longer): PaperMemory opened a pairing tab. | Click **Allow** on that tab within 2 minutes (see [Allow the agent](#allow-the-agent)), then tell the agent to go on. |
 | `denied: The user denied this client access` | You clicked Deny. | If it was a mistake, wait one minute and ask the agent to try again. |
-| `rate-limited: The user denied a pairing request less than a minute ago` | After a Deny, PaperMemory refuses pairing requests for one minute. | Wait one minute. |
+| `rate-limited: The user denied a PaperMemory pairing request less than a minute ago, ...` | After a Deny, PaperMemory refuses pairing requests for one minute. | To allow the agent, wait one minute and ask it to try again. |
 | `rate-limited: At most 30 changes per minute` | Each agent can make 30 changes per minute. | Wait one minute. |
-| `busy: Another pairing request is waiting for the user: try again later` | PaperMemory shows one pairing request at a time. | Answer the pairing card that is already open. |
+| `busy: Another PaperMemory pairing request is waiting for the user in <browser>. ...` | PaperMemory shows one pairing request at a time. | Answer the pairing card that is already open. |
 | `busy: PaperMemory has too many changes waiting: try again later` or `busy: PaperMemory was busy with other changes: try again later` | Agents asked for many changes at once. | Wait a little, then try again. |
 | `timeout: The user did not answer the pairing request in time` | Nobody clicked Allow or Deny within 2 minutes. | Ask the agent to try again, and watch for the new tab. |
-| `internal: PaperMemory could not open its pairing prompt` | The browser has no open window, so PaperMemory could not open a tab. | Open a window of that browser, then ask the agent to try again. |
+| `internal: PaperMemory could not open its pairing prompt` | PaperMemory could open neither a tab nor a window for its pairing card. | Open a window of that browser, then ask the agent to try again. |
 | `timeout: PaperMemory did not answer ... in time` or `timeout: PaperMemory did not finish this change in time` | The browser took too long, for example because it was busy or the Mac was asleep. | Try again. If it keeps happening, check the status in the options page, or restart the browser. |
 | `timeout-may-complete`, with "PaperMemory did not finish adding this paper in time, but it may still store it later" | Adding the paper took more than 90 seconds. It may still appear. | Ask the agent to search for it before adding it again. |
-| `failed`, with "PaperMemory could not add this paper" | PaperMemory could not read the paper's page: the site was down or refused, or its page changed. OpenReview sometimes refuses automated requests and asks for a challenge instead. | Try again later, or give the agent another page of the same paper, such as its arXiv page. For OpenReview, open the page yourself: if PaperMemory saves it, ask the agent to attach it to the project. |
-| `unsupported-url` | The link is not a paper page on a site PaperMemory supports. | Give the agent the paper's page on a [supported site](features.md#venues). |
+| `failed`, with "PaperMemory could not add this paper" | PaperMemory could not read the paper's page: the site was down or refused, or its page changed. OpenReview sometimes refuses automated requests and asks for a challenge instead; IEEE Xplore refuses requests for pages that are not open in a tab. | Try again later, or give the agent another page of the same paper, such as its arXiv page. For OpenReview or IEEE Xplore, open the page yourself: if PaperMemory saves it, ask the agent to attach it to the project. |
+| `unsupported-url` | The link is not a paper page on a site PaperMemory supports. For a DOI, the answer gives the page the DOI leads to (`resolvedUrl`), or says `DOI could not be resolved`: doi.org does not know the DOI, or could not be reached. | Give the agent the paper's page on a [supported site](features.md#venues). |
 | `not-own-addition: You did not add this paper in this project: use flag_for_deletion` | The agent may not delete this paper (see [Deleting papers](#deleting-papers)). | Nothing: the agent flags it, and you delete it yourself. |
 | `no-project: This session has no Project: see get_project` | The agent works without a project (see [Folders without a project](#folders-without-a-project)). | Start the agent from your project folder. |
 | `not-found: No paper has this id` | The paper is no longer in your Memory, or the agent used a wrong id. | Ask the agent to search again. |

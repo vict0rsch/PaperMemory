@@ -29,12 +29,13 @@ Run `~/.papermemory/bin/papermemory-mcp libraries`:
 | `PaperMemory's install is incomplete (~/.papermemory/salt is missing)` | Step 1 with `npx -y papermemory-mcp@latest install` |
 | ``protocol-mismatch: Run `npx -y papermemory-mcp@latest install` `` | The same, then a new agent session |
 | `protocol-mismatch: Update the PaperMemory extension` | The user updates the extension |
+| `pairing-required: Tell the user: "PaperMemory needs your OK to let ...` | Relay the quoted message verbatim and wait; once the user has clicked Allow, call the tool again (step 3) |
 | `unauthorized: ... the user must pair it again ...` | Step 3 |
 | `disabled: Agent access is off in PaperMemory's options` | The user turns Agent access back on (step 2); this client stays paired |
 | `denied: The user denied this client access` | Ask whether they meant it; if not, wait one minute, then step 3 |
-| `rate-limited: The user denied a pairing request less than a minute ago` | Wait one minute, then step 3 |
+| `rate-limited: The user denied a PaperMemory pairing request less than a minute ago ...` | Ask whether they meant it; if not, wait one minute, then step 3 |
 | `timeout: The user did not answer the pairing request in time` | Step 3 |
-| `busy: Another pairing request is waiting for the user` | The user answers the pairing card already open |
+| `busy: Another PaperMemory pairing request is waiting for the user ...` | The user answers the pairing card already open |
 | `internal: PaperMemory could not open its pairing prompt` | The user opens a browser window, then step 3 |
 
 No PaperMemory tools at all: check `claude mcp list` or `codex mcp list` (or the agent's MCP settings) for `papermemory`. Missing: step 1. Present: the user starts a new agent session.
@@ -42,11 +43,11 @@ No PaperMemory tools at all: check `claude mcp list` or `codex mcp list` (or the
 ## Steps
 
 1. **Install.** Needs macOS and Node.js 18 or newer (`node -v`). The user runs `npx -y papermemory-mcp install` and answers `y` for their agent. Check: `~/.papermemory/bin/papermemory-mcp libraries` runs (it prints `[]` until step 2) and the agent's MCP list shows `papermemory`. A newly registered agent needs a new session.
-2. **Turn on Agent access.** PaperMemory's options page, section Agent access: turn on "Enable Agent access", then click Allow in the browser's permission prompt. Chrome reloads PaperMemory and reopens the options page. Check: the status under the switch says "Connected", and `libraries` lists the Library. Other statuses:
+2. **Turn on Agent access.** PaperMemory's options page, section Agent access: turn on "Enable Agent access", then click Allow in the browser's permission prompt (it also asks to display notifications, which announce pairing requests). Chrome reloads PaperMemory and reopens the options page. Check: the status under the switch says "Connected", and `libraries` lists the Library. Other statuses:
     - "PaperMemory agent tools not installed": step 1, also after installing a new browser. For a Chrome started with `--user-data-dir <dir>`, install with `--user-data-dir <dir>`.
     - "PaperMemory agent tools outdated": `npx -y papermemory-mcp@latest install`.
     - "PaperMemory is older than the agent tools": the user updates the extension.
     - "Permission refused": turn the switch on again and click Allow.
-3. **Pair.** Call a tool that reads the Memory, such as `list_tags`. PaperMemory opens its options page in a new tab, on an "Agent pairing request" card: the user clicks Allow within 2 minutes. Check: the call succeeds and the agent is listed under Paired clients.
+3. **Pair.** Call `connect`. If it answers `pairing-required`, relay its message verbatim: PaperMemory has opened its options page in a new tab, brought to the front, on an "Agent pairing request" card. The user clicks Allow within 2 minutes and tells you; then call `connect` again. Check: `connect` answers `paired: true` and the agent is listed under Paired clients.
 
 Then follow the `papermemory` skill.
