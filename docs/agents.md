@@ -196,7 +196,8 @@ It now prints one entry, like this one:
     "browser": "Chrome",
     "paperCount": 412,
     "protocolMin": 1,
-    "protocolMax": 1
+    "protocolMax": 1,
+    "recommendedToolsVersion": "0.1.0"
   }
 ]
 ```
@@ -208,6 +209,7 @@ Agents call this a **library**: the Memory of one browser profile where Agent ac
 | Status | Meaning | What to do |
 | --- | --- | --- |
 | Connected | Your browser started the Native host. Agents can reach this Memory. | Go to Step 3. |
+| Connected, then "Update available: ..." | A newer version of the agent tools is available. Yours still work. | See [Update](#update). |
 | PaperMemory agent tools not installed | Your browser could not start the Native host. | Run `npx -y papermemory-mcp install`. If you already did, see [Troubleshooting](#in-the-options-page). |
 | PaperMemory agent tools outdated | The agent tools are too old for this version of PaperMemory. | Run `npx -y papermemory-mcp@latest install`. |
 | PaperMemory is older than the agent tools | The extension is too old for the agent tools. | [Update the extension](#in-the-options-page). |
@@ -430,13 +432,28 @@ Turn off **Enable Agent access**. PaperMemory closes the connection, and agents 
 
 ### Update
 
-Update the agent tools when the options page says "PaperMemory agent tools outdated", or when an agent says so:
+PaperMemory tells you when to update the agent tools. It does not look for updates online: each version of PaperMemory knows which version of the agent tools it recommends, and compares it with the one your browser runs.
+
+- **An update is available.** Your agent tools still work. Under **Agent access**, the status line says **Connected**, then "Update available: run `npx -y papermemory-mcp@latest install`, then restart your agent sessions." Agents tell you too, once per session: PaperMemory tells them "A newer version of PaperMemory's agent tools is available" when they check their project or their connection, at the start of their work.
+- **The agent tools are too old.** They no longer work with this version of PaperMemory. The status line says "PaperMemory agent tools outdated", and agents get ``protocol-mismatch: Run `npx -y papermemory-mcp@latest install` ``.
+
+In both cases, run:
 
 ```sh
 npx -y papermemory-mcp@latest install
 ```
 
-It replaces the copy in `~/.papermemory/bin`, and asks again about each agent: `y` replaces PaperMemory's entry, `n` leaves it as it is. It keeps your pairings and your projects. Then start new agent sessions.
+It replaces the copy in `~/.papermemory/bin`, and asks again about each agent: `y` replaces PaperMemory's entry, `n` leaves it as it is. It keeps your pairings and your projects. Nothing updates by itself: the agent tools change only when you run this command.
+
+Then:
+
+1. Start new agent sessions. A session that was already running keeps the version it started with.
+2. If the status line still says "Update available" or "PaperMemory agent tools outdated", turn **Enable Agent access** off and on, or quit and reopen your browser: until then, your browser keeps running the Native host it started before the update. The agents you allowed stay allowed.
+
+Different versions work together as long as they share a protocol version, the language PaperMemory and its agent tools speak:
+
+- Agent tools older than the version PaperMemory recommends keep working, with the update notices above.
+- Agent tools newer than PaperMemory keep working too. When PaperMemory is too old for them, the status line says "PaperMemory is older than the agent tools": [update the extension](#in-the-options-page).
 
 ### Uninstall
 
@@ -501,6 +518,7 @@ Fix the problem, here by running the command in a Terminal where `claude` works,
 | --- | --- | --- |
 | PaperMemory agent tools not installed | Your browser could not start the Native host. Usually the agent tools are not installed. It also happens when: you installed this browser after the tools; Chrome runs with its own `--user-data-dir`; no Node.js 18 or newer was found (the last line of `~/.papermemory/logs/wrapper.log` then ends with `no usable node (>= 18) found`). | Run the install (again), with `--user-data-dir <folder>` if needed, or install Node.js. PaperMemory tries again by itself within about a minute; you can also turn the switch off and on. |
 | PaperMemory agent tools outdated | The agent tools are too old for this version of PaperMemory. | Run `npx -y papermemory-mcp@latest install`, then start new agent sessions. |
+| Connected, then "Update available: ..." | A newer version of the agent tools is available. Yours still work. | Run `npx -y papermemory-mcp@latest install`, then start new agent sessions. If the line is still there, turn Agent access off and on (see [Update](#update)). |
 | PaperMemory is older than the agent tools | The extension is too old for the agent tools. | Update the extension. Browsers do it by themselves, usually within a day. To do it now: in Chrome, open `chrome://extensions`, turn on Developer mode and click **Update**; in Firefox, open `about:addons`, click the gear and **Check for Updates**. |
 | Permission refused | You refused the browser's permission. The switch turned itself off. | Turn it on again, and click **Allow**. |
 | The options page closed and opened again (Chrome). | Normal, once: Chrome restarts PaperMemory to use the new permission. | Click **Agent access** again. Reload paper tabs that were open. |
@@ -521,6 +539,7 @@ Agents often repeat PaperMemory's messages in their own words. The word before t
 | `PaperMemory's install is incomplete (~/.papermemory/salt is missing): ...` | A file of the install is missing. | Run `npx -y papermemory-mcp@latest install`. |
 | `protocol-mismatch: Update the PaperMemory extension` or `unknown-op: Unknown operation` | The extension is too old for the agent tools. | [Update the extension](#in-the-options-page). |
 | ``protocol-mismatch: Run `npx -y papermemory-mcp@latest install` `` | The agent tools are too old for the extension. | Run it, then start a new agent session. |
+| "A newer version of PaperMemory's agent tools is available" | PaperMemory recommends a newer version of the agent tools than this session runs. They still work. Agents say it once per session. | Run `npx -y papermemory-mcp@latest install`, then start a new agent session (see [Update](#update)). |
 | `unauthorized: PaperMemory no longer accepts <agent>: the user must pair it again (...)` | You revoked the agent, or PaperMemory no longer knows it (for example after you reinstalled the extension). | Its next call asks you again (a pairing request appears): allow it, or deny it to keep it out. |
 | `disabled: Agent access is off in PaperMemory's options` | You turned Agent access off while the agent was making a change: the change was not made. The agent stays allowed. | Turn Agent access back on, then ask the agent to try again. |
 | `pairing-required`, with "Stop and ask the user before doing anything else with PaperMemory. Tell them: ..." | This agent is not allowed in this browser profile yet (or no longer): PaperMemory is waiting for your OK. | Click **Allow** next to the agent under **Agent access** (see [Allow the agent](#allow-the-agent)), then tell the agent you allowed it. |

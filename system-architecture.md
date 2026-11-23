@@ -155,8 +155,10 @@ port → `agentAccess.js` in the background → operation handlers.
   or `connect`, `get_project` and `list_libraries` included (`list_libraries` only when
   exactly one Library is connected): the call answers `pairing-required`
   after ~2 s while the `pair` request stays open, with no time limit, until the user decides
-  or the process exits with its stdin, and later calls wait for it), `src/libraries.mjs` (socket
-  discovery, version negotiation, requests), `src/install.mjs` + `browsers.mjs` +
+  or the process exits with its stdin, and later calls wait for it; when the Library
+  recommends newer agent tools, its first answer of `connect` or `get_project` that is not
+  an error tells the agent so, once per process), `src/libraries.mjs` (socket
+  discovery, version negotiation and comparison, requests), `src/install.mjs` + `browsers.mjs` +
   `agents.mjs` (the installer: local copy in `~/.papermemory/bin` with wrappers, native
   host manifests, agent registration, skill copy), `skills/<name>/SKILL.md` (the
   `papermemory` skill for everyday use and the `papermemory-setup` skill for setup and
@@ -164,7 +166,9 @@ port → `agentAccess.js` in the background → operation handlers.
   only.
 - **`src/background/agentAccess.js`** (initialised from `background.js` with the
   injected `pushSyncPapers`, the message handler and `setPairingBadge`): connects the
-  native port, authorizes every op (per-client secret hash, rate limit, bounded queue),
+  native port, answers `hello` with its protocol range and the agent tools version it
+  recommends (`RECOMMENDED_AGENT_TOOLS_VERSION`, raised only once that version is on npm),
+  authorizes every op (per-client secret hash, rate limit, bounded queue),
   runs one serialized mutation queue with per-job deadlines, handles pairing and the
   storage proxy, and re-connects from a 1-minute `alarms` alarm. Pairing requests wait in
   memory, with no time limit, until the user decides in the options page or no connection
@@ -198,7 +202,9 @@ port → `agentAccess.js` in the background → operation handlers.
 - **Options page** ([`src/options/agentAccessUI.js`](src/options/agentAccessUI.js)):
   its "Agent access" section (between Sync and Keyboard shortcuts) holds the Agent
   access toggle (requests the optional `nativeMessaging` and `notifications` permissions
-  in the click's gesture), connection status and the **Paired clients** list with Revoke.
+  in the click's gesture), connection status (under "Connected", "Update available" when
+  the Native host's version is older than `RECOMMENDED_AGENT_TOOLS_VERSION`) and the
+  **Paired clients** list with Revoke.
   The pairing requests waiting for the user are listed, with Allow / Deny, when each asked
   and how many sessions wait for it when several do, in a card above
   the settings and in that section, whose side-nav item gets a red dot; the background

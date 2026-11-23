@@ -275,6 +275,24 @@ and Firefox, all lifecycle checks passed, including 65 min and 8 h idles).
   copy only. Updating is explicit: `npx -y papermemory-mcp@latest install` replaces the copy
   atomically, keeps the salt (a plain `uninstall` also keeps the salt and the agents' keys, `uninstall --purge` removes them), and replaces PaperMemory's own agent entries; the options page
   says the agent tools are outdated when the installed copy is too old for the extension.
+- **Update notices come from the extension, with no network check and no auto-update.** Each
+  PaperMemory release names the agent tools version it recommends
+  (`RECOMMENDED_AGENT_TOOLS_VERSION`, raised only once that version is on npm) and gives it as
+  `recommendedToolsVersion` in its `hello` answer. Tools older than that, by major.minor.patch
+  (a prerelease counts as its release, and what is not a version is never older), that still
+  share a protocol version keep working and are told about the update: from the Native host's
+  `version`, the options page keeps "Connected" and adds "Update available: run
+  `npx -y papermemory-mcp@latest install`, then restart your agent sessions."; the MCP server
+  adds a note to its first answer of `connect` or `get_project` that is not an error, once per
+  Agent session, which asks the agent to tell the user once. Neither blocks anything. The field
+  is additive: older MCP servers ignore it, and an older extension omits it, so no note.
+  Rejected: the MCP server or the host asking the npm registry for the latest version (a
+  network call at every start from tools that otherwise reach only their socket, failing
+  offline, and blind to which version the extension was tested with); automatic updates (they
+  would run a newly published version unasked, which the install avoids, see above). A running
+  Agent session keeps the version it started with until it ends, and the browser keeps the
+  Native host it started until Agent access is turned off and on or the browser restarts, so
+  the options page's line stays until then.
 - **Multi-library routing.** Each profile's host names its socket after the `libraryId`
   (validated as a UUID and sanitized). The MCP server lists live Libraries on demand (never
   polls) and requires an explicit `libraryId` when more than one is connected.

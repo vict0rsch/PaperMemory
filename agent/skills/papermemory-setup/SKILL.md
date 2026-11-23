@@ -29,6 +29,7 @@ Run `~/.papermemory/bin/papermemory-mcp libraries`:
 | `PaperMemory's install is incomplete (~/.papermemory/salt is missing)` | Step 1 with `npx -y papermemory-mcp@latest install` |
 | ``protocol-mismatch: Run `npx -y papermemory-mcp@latest install` `` | The same, then a new agent session |
 | `protocol-mismatch: Update the PaperMemory extension` | The user updates the extension |
+| `A newer version of PaperMemory's agent tools is available` | Tell the user once, then go on: everything keeps working. When they want to update, they run `npx -y papermemory-mcp@latest install` and start a new agent session |
 | `pairing-required: Stop and ask the user before doing anything else with PaperMemory. Tell them: ...` | Stop. Relay the quoted sentence verbatim and wait; once the user says they allowed you, call `connect` (step 3) |
 | `unauthorized: ... the user must pair it again ...` | Step 3 |
 | `disabled: Agent access is off in PaperMemory's options` | The user turns Agent access back on (step 2); this client stays paired |
@@ -44,6 +45,7 @@ No PaperMemory tools at all: check `claude mcp list` or `codex mcp list` (or the
 2. **Turn on Agent access.** PaperMemory's options page, section Agent access: turn on "Enable Agent access", then click Allow in the browser's permission prompt (it also asks to display notifications, which announce pairing requests). Chrome reloads PaperMemory and reopens the options page. Check: the status under the switch says "Connected", and `libraries` lists the Library. Other statuses:
     - "PaperMemory agent tools not installed": step 1, also after installing a new browser. For a Chrome started with `--user-data-dir <dir>`, install with `--user-data-dir <dir>`.
     - "PaperMemory agent tools outdated": `npx -y papermemory-mcp@latest install`.
+    - "Connected", then "Update available": it works; to update, `npx -y papermemory-mcp@latest install`, then new agent sessions. If the line stays, the user turns Agent access off and on.
     - "PaperMemory is older than the agent tools": the user updates the extension.
     - "Permission refused": turn the switch on again and click Allow.
 3. **Pair.** Call `connect`. PaperMemory opens no tab. If it answers `pairing-required`, relay the quoted sentence of its message verbatim. The user sees a red badge on the PaperMemory toolbar icon, a banner in its popup and a notification (if they allowed notifications): they click the PaperMemory toolbar icon (red badge) and then the banner '<your name> is waiting for your OK', or the notification, or open PaperMemory's settings → Agent access, then click Allow next to your name. There is no time limit: the request waits until the user answers or your session ends. When the user says they allowed you, call `connect` again. Check: `connect` answers `paired: true` and the agent is listed under Paired clients.

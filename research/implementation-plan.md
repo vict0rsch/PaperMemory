@@ -78,6 +78,19 @@ update ("Update the PaperMemory extension" or "Run `npx -y papermemory-mcp@lates
 New ops or optional fields do not bump the version; unknown ops → `unknown-op`. A retired
 version stays accepted for at least one release.
 
+**Agent tools version.** `HOST_VERSION` (`agent/host/host.mjs`) equals `agent/package.json`'s
+`version` (a package test enforces it); the host sends it as `version` in `host-ready`, and
+the MCP server is the same version. `hello` also returns `recommendedToolsVersion`, the
+extension's `RECOMMENDED_AGENT_TOOLS_VERSION`, an additive field: older MCP servers ignore it,
+and an older extension omits it. Older by major.minor.patch (a prerelease counts as its
+release; what is not a version is never older) yet within the protocol range → the options
+page keeps "Connected" and adds "Update available: run `npx -y papermemory-mcp@latest
+install`, then restart your agent sessions.", and the MCP server adds to its first answer of
+`connect` or `get_project` that is not an error, once per process, the note "A newer version
+of PaperMemory's agent tools is available. Tell the user once: run `npx -y
+papermemory-mcp@latest install`, then restart this agent session." Nothing checks the
+network or updates by itself.
+
 **Host contract (frozen separately).** Native side: 4-byte little-endian length + UTF-8 JSON,
 ≤ 1 MiB. Socket side: NDJSON, ≤ 1 MiB per line; a longer line closes that connection. First
 native message: `{type:"hello", libraryId, label}`; the host exits 1 unless `libraryId`
@@ -97,7 +110,7 @@ arguments. `projectKey` and `projectFolderName` are absent when the server has n
 
 | op | args | result |
 |---|---|---|
-| `hello` | — | `{protocolMin, protocolMax, libraryId, label, browser, paperCount}` |
+| `hello` | — | `{protocolMin, protocolMax, libraryId, label, browser, paperCount, recommendedToolsVersion}` |
 | `pair` | `{clientName}` | `{clientId, secret}` after **Allow**; else `denied` / `timeout` (120 s) |
 | `search_papers` | `{query, limit 1–50 (20), offset ≥ 0}` | `{total, papers:[Summary]}` |
 | `get_paper` | `{id}` | `Summary` + `bibtex`, `note` |
