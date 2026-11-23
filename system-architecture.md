@@ -115,12 +115,17 @@ graph TB
   imported directly into whichever context needs it (popup, content script, worker).
   There is one logical codebase executed in several JS realms; `state`/`config.js`
   is a per-realm singleton, **not** shared memory across contexts.
-- **Message passing (`chrome.runtime`).** Used for two things: (1) the content
+- **Message passing (`chrome.runtime`).** Used for four things: (1) the content
   script and popup ask the background worker to perform privileged or
   cross-origin operations they cannot do themselves; (2) the worker pushes
   commands (keyboard shortcuts, tab-URL changes) into content scripts; (3) the popup
   announces itself (`{ type: "popupOpened" }`, fire-and-forget, `lastError` read so no
-  listener is fine) for the welcome page's shortcut test — the background ignores it. The router is
+  listener is fine) for the welcome page's shortcut test — the background ignores it; (4)
+  the background tells open extension pages that the pairing requests changed
+  (`agent-pairing-changed`: the options page and the popup ask for the list again,
+  `agent-pairing-requests`), and asks an open options page to show Agent access when the
+  pairing notification is clicked (`agent-pairing-show`, answered with its tab); pages act
+  on these only from a sender without a tab, never a content script's. The router is
   the single `chrome.runtime.onMessage` listener in `background.js` (a `type`-keyed
   `if/else` chain). It rejects messages whose `sender.id !== chrome.runtime.id`.
 - **Storage as the integration bus.** All contexts read the same
@@ -156,11 +161,15 @@ port → `agentAccess.js` in the background → operation handlers.
   troubleshooting, both copied to `~/.agents/skills/` and `~/.claude/skills/`). macOS
   only.
 - **`src/background/agentAccess.js`** (initialised from `background.js` with the
-  injected `pushSyncPapers` and the message handler): connects the native port,
-  authorizes every op (per-client secret hash, rate limit, bounded queue), runs one
-  serialized mutation queue with per-job deadlines, handles pairing (a prompt tab whose
-  window it brings to the front, and an OS notification when `notifications` is granted)
-  and the storage proxy, and re-connects from a 1-minute `alarms` alarm. Its changes to papers are
+  injected `pushSyncPapers`, the message handler and `setPairingBadge`): connects the
+  native port, authorizes every op (per-client secret hash, rate limit, bounded queue),
+  runs one serialized mutation queue with per-job deadlines, handles pairing and the
+  storage proxy, and re-connects from a 1-minute `alarms` alarm. Pairing requests wait in
+  memory, with no time limit, until the user decides in the options page or no connection
+  waits for them (up to 10 at once; a client name already waiting joins its request); it
+  never opens a tab for them: their number goes on the toolbar badge, open pages are told
+  when they change, and an OS notification names a new one when `notifications` is
+  granted (its click shows Agent access in the options page). Its changes to papers are
   `agent` operations of the Memory's queue (`memoryQueue.js`, see _Concurrency_).
 - **`src/shared/js/utils/agentOps.js`**: pure operations (argument validation and
   bounds, tag rules, search, Project papers, BibTeX export, Provenance, ownership,
@@ -184,9 +193,12 @@ port → `agentAccess.js` in the background → operation handlers.
 - **Options page** ([`src/options/agentAccessUI.js`](src/options/agentAccessUI.js)):
   its "Agent access" section (between Sync and Keyboard shortcuts) holds the Agent
   access toggle (requests the optional `nativeMessaging` and `notifications` permissions
-  in the click's gesture), connection status and the **Paired clients** list with Revoke; the pairing
-  prompt (Allow / Deny, accepted only from the options tab the background opened for
-  it) is a card above the settings.
+  in the click's gesture), connection status and the **Paired clients** list with Revoke.
+  The pairing requests waiting for the user are listed, with Allow / Deny, in a card above
+  the settings and in that section, whose side-nav item gets a red dot; the background
+  accepts a decision only from the options page in a tab (any options tab), for a pending
+  request, once. The popup shows a banner while one waits, which opens the options page on
+  Agent access.
 
 ```mermaid
 sequenceDiagram
@@ -376,8 +388,9 @@ fallback. See _Core Concepts_. Source-specific scraping helpers were factored ou
 **Location:** [`src/background/background.js`](src/background/background.js)
 (entrypoint wrapper at `src/entrypoints/background.js`). Hosts the message router,
 brokered fetches (arXiv XML, OpenReview notes/forums, Google Scholar, the
-preprint-matching APIs), the toolbar badge state machine
-(`badgeOk/Wait/Error/Clear`), keyboard-command handlers (`manualParsing`,
+preprint-matching APIs), the toolbar badge (`badge.js`: sync's states
+`badgeOk/Wait/Error/Clear` shown over the number of pairing requests waiting,
+`setPairingBadge`, which comes back once sync clears its state), keyboard-command handlers (`manualParsing`,
 `downloadPdf`, `defaultAction`), the PDF-title rewriter (`chrome.tabs.onUpdated` +
 `chrome.scripting.executeScript`), Gist push/pull, and the single writer queues: the Memory
 (`runMemoryOp`, `memoryQueue.js`) and `ignoreSources` (`applyIgnoreSources`,
@@ -423,7 +436,8 @@ HuggingFace pages.
 - **popup** ([`popup/js/popup.js`](src/popup/js/popup.js), `memory.js`, `handlers.js`,
   `templates.js`, `tagfield.js`) — primary surface: the Memory list (search with
   combinable `t:`/`c:`/`y:` filter pills, tag list, sort menu, in-row edit form), per-paper
-  actions, the preferences menu, and on-open parsing of the active tab. `tagfield.js` is
+  actions, the preferences menu, on-open parsing of the active tab, and a banner above
+  both views while an agent waits for the user's OK (Agent access). `tagfield.js` is
   the tag input shared by the paper view and the row edit form (suggestions with counts,
   near-duplicate hint). HTML is
   assembled from `popup/html/**` fragments via a custom `<!--=include -->` Vite

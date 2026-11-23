@@ -42,8 +42,8 @@ const HOST_NAME = "org.papermemory.agent";
 const KEEPALIVE_ALARM = "pm-agent-keepalive";
 // the Native host exits on a larger message
 const MAX_MESSAGE_BYTES = 1024 * 1024;
-const PAIRING_TIMEOUT_MS = 120000;
-// the OS notification of the pending pairing request (one at a time)
+const MAX_PENDING_PAIRINGS = 10;
+// the OS notification of the latest pairing request (one at a time)
 const PAIRING_NOTIFICATION = "pm-agent-pairing";
 const DENY_COOLDOWN_MS = 60000;
 const MAX_QUEUED_JOBS = 50;
@@ -77,6 +77,7 @@ const INTERNAL = failure("internal", "PaperMemory could not complete this operat
 const EXPIRED = failure("timeout", "PaperMemory did not finish this change in time");
 
 let pushSync = async () => {}; // the background's pushSyncPapers
+let pairingBadge = () => {}; // the background's setPairingBadge
 let port = null; // the Native host connection
 let connecting = null; // the connection attempt in progress
 let connectedAt = 0;
@@ -85,7 +86,11 @@ let reconnectTimer = null;
 let library = null; // {libraryId, label, browser}
 // the Native host's version and protocol range, for the options page
 let status = { connected: false };
-let pendingPairing = null; // the one pairing request waiting for the user
+// the pairing requests waiting for the user, by request id, oldest first: {requestId,
+// clientName, requestedAt, waiters}, waiters being the requests ({port, id, conn})
+// answered with the user's decision
+const pairings = new Map();
+let notifiedPairing = null; // the pairing request the OS notification names
 let deniedAt = -Infinity; // when the user last denied a pairing request
 const revokedClients = new Set(); // client ids revoked since the worker started
 let disables = 0; // times Agent access was turned off since the worker started
@@ -97,20 +102,18 @@ let ingestDocumentOpen = false; // Chrome: the offscreen document exists
 let resolveIngestReady = null;
 
 /**
- * Is a pairing prompt message from the options tab PaperMemory opened for this
- * pairing request? Content scripts share the extension's id: the tab and the page
- * are checked.
+ * Is a pairing decision from PaperMemory's options page, in a tab (any options tab)?
+ * Content scripts share the extension's id but their url is their web page's; the
+ * popup has no tab; other extension pages have their own path. The request it decides
+ * must also be pending, and is decided once (decidePairing).
  * @param {object} sender The message's sender (runtime.MessageSender)
- * @param {object|null} pending The pending pairing request with the message's
- * requestId ({tabId, optionsUrl, ...}), null if there is none (e.g. already decided)
- * @returns {boolean} Whether to accept the message
+ * @returns {boolean} Whether to accept the decision
  */
-export const isValidPairSender = (sender, pending) =>
-    Boolean(pending) &&
-    Number.isInteger(sender?.tab?.id) &&
-    sender.tab.id === pending.tabId &&
+export const isValidPairSender = (sender) =>
+    sender?.id === chrome.runtime.id &&
+    Number.isInteger(sender.tab?.id) &&
     typeof sender.url === "string" &&
-    sender.url.startsWith(pending.optionsUrl);
+    sender.url.split(/[?#]/)[0] === chrome.runtime.getURL("options.html");
 
 // answer a request on the Native host connection it came from: an answer never
 // reaches the connections of another (restarted) host
@@ -630,14 +633,40 @@ const runQueue = async () => {
 // -----  Pairing  -----
 // ---------------------
 
-// end the pending pairing request if it matches; answer it, unless nobody waits
-const cancelPairing = (matches, outcome) => {
-    const pending = pendingPairing;
-    if (!pending || !matches(pending)) return;
-    pendingPairing = null;
-    clearTimeout(pending.timer);
-    chrome.notifications?.clear(PAIRING_NOTIFICATION);
-    if (outcome) post(pending, outcome);
+// a client's name for the user: it chose it, so it is shown as plain text, without
+// control or format characters (e.g. bidi overrides), cut to 64 characters
+const displayName = (clientName) =>
+    [...removeControlChars(clientName).replace(/\p{Cf}/gu, "")].slice(0, 64).join("");
+
+// the pending pairing requests changed: the toolbar badge shows their count, and the
+// open options pages and popup ask for them again (agent-pairing-requests). No page may
+// be open: reading lastError keeps that quiet
+const pairingsChanged = () => {
+    pairingBadge(pairings.size);
+    chrome.runtime.sendMessage(
+        { type: "agent-pairing-changed" },
+        () => void chrome.runtime.lastError,
+    );
+};
+
+// end a pending pairing request; answer its waiters, unless nobody waits for an answer
+const endPairing = (pending, outcome) => {
+    if (!pairings.delete(pending.requestId)) return;
+    if (notifiedPairing === pending) {
+        notifiedPairing = null;
+        chrome.notifications?.clear(PAIRING_NOTIFICATION);
+    }
+    if (outcome) pending.waiters.forEach((waiter) => post(waiter, outcome));
+    pairingsChanged();
+};
+
+// the waiters `matches` selects no longer wait (their connection closed): a request
+// that nobody waits for anymore has expired
+const dropWaiters = (matches) => {
+    for (const pending of [...pairings.values()]) {
+        pending.waiters = pending.waiters.filter((waiter) => !matches(waiter));
+        if (!pending.waiters.length) endPairing(pending, null);
+    }
 };
 
 // bring a window to the front, also out of another application. The window may be
@@ -649,59 +678,65 @@ const focusWindow = (windowId) =>
         () => void chrome.runtime.lastError,
     );
 
-// the pairing prompt in a new active tab, brought to the front; in a new window when
-// no window can take the tab (a browser on macOS runs on without any). `callback` gets
-// the prompt's tab, none if it could not open
-const openPairingTab = (url, callback) => {
-    const opened = (tab) => {
-        if (tab) focusWindow(tab.windowId);
-        callback(tab);
-    };
+// the options page on Agent access in a new active tab, brought to the front; in a new
+// window when no window can take the tab (a browser on macOS runs on without any)
+const openAgentAccessTab = () => {
+    const url = chrome.runtime.getURL("options.html#agent-access");
+    const opened = (tab) => tab && focusWindow(tab.windowId);
     chrome.tabs.create({ url, active: true }, (tab) => {
         if (tab) return opened(tab);
         chrome.windows.create({ url }, (win) => opened(win?.tabs?.[0]));
     });
 };
 
-// a click on the pairing request's notification: show its prompt
+// a click on the pairing notification: the options page on Agent access, in the
+// front. An open options page shows Agent access and answers with its tab; else a new
+// one opens (no page answers: reading lastError keeps that quiet)
 const onNotificationClicked = (notificationId) => {
     if (notificationId !== PAIRING_NOTIFICATION) return;
     chrome.notifications.clear(PAIRING_NOTIFICATION);
-    const tabId = pendingPairing?.tabId;
-    if (!Number.isInteger(tabId)) return;
-    // the user may have closed the prompt: reading lastError keeps that quiet
-    chrome.tabs.update(tabId, { active: true }, (tab) =>
-        tab ? focusWindow(tab.windowId) : void chrome.runtime.lastError,
-    );
-};
-
-// an OS notification of the pairing request, for a user in another application, only
-// if they granted the permission. The client chose its name: shown as plain text,
-// without control or format characters (e.g. bidi overrides), cut to 64 characters
-const notifyPairing = async (pending) => {
-    // Chrome may lack the API in a worker that started before the permission was granted
-    if (!chrome.notifications || !(await hasNotifications())) return;
-    if (pending !== pendingPairing) return; // decided meanwhile
-    if (!chrome.notifications.onClicked.hasListener(onNotificationClicked)) {
-        chrome.notifications.onClicked.addListener(onNotificationClicked);
-    }
-    const name = [...removeControlChars(pending.clientName).replace(/\p{Cf}/gu, "")]
-        .slice(0, 64)
-        .join("");
-    chrome.notifications.create(PAIRING_NOTIFICATION, {
-        type: "basic",
-        iconUrl: chrome.runtime.getURL("icons/icon-128.png"),
-        title: `${name} wants to use PaperMemory`,
-        message: "Click Allow on the PaperMemory tab to let it read and add papers.",
+    chrome.runtime.sendMessage({ type: "agent-pairing-show" }, (tabId) => {
+        void chrome.runtime.lastError;
+        if (!Number.isInteger(tabId)) return openAgentAccessTab();
+        // the user may have closed it meanwhile: reading lastError keeps that quiet
+        chrome.tabs.update(tabId, { active: true }, (tab) =>
+            tab ? focusWindow(tab.windowId) : void chrome.runtime.lastError,
+        );
     });
 };
 
-// ask the user to allow a client, in an options tab; answered on the user's decision
+// an OS notification of a new pairing request, for a user in another application,
+// only if they granted the permission
+const notifyPairing = async (pending) => {
+    // Chrome may lack the API in a worker that started before the permission was granted
+    if (!chrome.notifications || !(await hasNotifications())) return;
+    if (!pairings.has(pending.requestId)) return; // decided meanwhile
+    if (!chrome.notifications.onClicked.hasListener(onNotificationClicked)) {
+        chrome.notifications.onClicked.addListener(onNotificationClicked);
+    }
+    notifiedPairing = pending;
+    chrome.notifications.create(PAIRING_NOTIFICATION, {
+        type: "basic",
+        iconUrl: chrome.runtime.getURL("icons/icon-128.png"),
+        title: `${displayName(pending.clientName)} wants to use PaperMemory`,
+        message: "Click to allow or deny it in PaperMemory's options.",
+    });
+};
+
+// ask the user to allow a client: the request waits, listed in the options page, until
+// the user decides (every waiter gets the decision) or no connection waits for it
+// anymore. The same client asking again, on any connection, joins its request
 const pair = async (request, clientName) => {
-    if (pendingPairing) {
+    const waiter = { port: request.port, id: request.id, conn: request.conn };
+    const asked = [...pairings.values()].find((p) => p.clientName === clientName);
+    if (asked) {
+        asked.waiters.push(waiter);
+        return;
+    }
+    if (pairings.size >= MAX_PENDING_PAIRINGS) {
         return failure(
             "busy",
-            "Another pairing request is waiting for the user: try again later",
+            "Too many pairing requests are waiting for the user: try again later",
         );
     }
     if (Date.now() - deniedAt < DENY_COOLDOWN_MS) {
@@ -715,74 +750,44 @@ const pair = async (request, clientName) => {
         console.info("pm-agent-test-auto-allow");
         return { result: await addClient(clientName) };
     }
-    const requestId = crypto.randomUUID();
-    const optionsUrl = chrome.runtime.getURL("options.html");
     const pending = {
-        port: request.port,
-        id: request.id,
-        conn: request.conn,
-        requestId,
+        requestId: crypto.randomUUID(),
         clientName,
-        optionsUrl,
+        requestedAt: Date.now(),
+        waiters: [waiter],
     };
-    pending.timer = setTimeout(
-        () =>
-            cancelPairing(
-                (p) => p === pending,
-                failure(
-                    "timeout",
-                    "The user did not answer the pairing request in time",
-                ),
-            ),
-        PAIRING_TIMEOUT_MS,
-    );
-    pending.tabCreated = new Promise((resolve) =>
-        openPairingTab(`${optionsUrl}#agent-pairing=${requestId}`, (tab) => {
-            pending.tabId = tab?.id;
-            // no prompt for the user to answer: end the request now
-            if (!Number.isInteger(pending.tabId)) {
-                cancelPairing(
-                    (p) => p === pending,
-                    failure(
-                        "internal",
-                        "PaperMemory could not open its pairing prompt",
-                    ),
-                );
-            } else {
-                notifyPairing(pending).catch((e) =>
-                    logError("[agentAccess] notification:", e),
-                );
-            }
-            resolve();
-        }),
-    );
-    pendingPairing = pending;
+    pairings.set(pending.requestId, pending);
+    pairingsChanged();
+    notifyPairing(pending).catch((e) => logError("[agentAccess] notification:", e));
 };
 
-// the options tab's pairing prompt: the client's name, then the user's decision,
-// accepted once
-const answerPairingPage = async (message, sender) => {
-    const pending =
-        pendingPairing?.requestId === message.requestId ? pendingPairing : null;
-    // the tab's id is known once it is created
-    await pending?.tabCreated;
-    if (pending !== pendingPairing || !isValidPairSender(sender, pending)) return false;
-    if (message.type === "agent-pair-info") return { clientName: pending.clientName };
-    cancelPairing((p) => p === pending, null);
-    if (message.allow !== true) deniedAt = Date.now();
-    // the MCP server that asked has closed its connection: the request has expired,
-    // and no client is created that nobody would receive
-    if (pending.closed) return false;
-    if (message.allow === true) {
+// the pending pairing requests, for the options page and the popup, oldest first
+const listPairings = () =>
+    [...pairings.values()].map(({ requestId, clientName, requestedAt }) => ({
+        requestId,
+        clientName: displayName(clientName),
+        requestedAt,
+    }));
+
+// the user's decision on a pending pairing request, accepted once, only from the
+// options page (isValidPairSender); anything but `allow: true` denies it
+const decidePairing = async (message, sender) => {
+    const pending = pairings.get(message.requestId);
+    if (!pending || !isValidPairSender(sender)) return false;
+    endPairing(pending, null);
+    let outcome;
+    if (message.allow !== true) {
+        deniedAt = Date.now();
+        outcome = failure("denied", "The user denied this client access");
+    } else {
         try {
-            post(pending, { result: await addClient(pending.clientName) });
+            outcome = { result: await addClient(pending.clientName) };
         } catch (e) {
             logError("[agentAccess] pairing:", e);
-            post(pending, INTERNAL);
+            outcome = INTERNAL;
         }
-    } else {
-        post(pending, failure("denied", "The user denied this client access"));
     }
+    pending.waiters.forEach((waiter) => post(waiter, outcome));
     return true;
 };
 
@@ -913,18 +918,15 @@ const onHostMessage = (hostPort, message) => {
         };
         reconnectDelay = 1000;
     } else if (message.id === undefined && message.type === "client-closed") {
-        // that connection's queued changes: nobody waits for them. Its pairing request
-        // stays until decided or timed out: one at a time, so that prompts are
-        // throttled; its decision is then answered as expired
+        // that connection's queued changes and pairing requests: nobody waits for them
+        // (the Agent session ended)
         const conn = String(message.conn);
         failQueued((job) => job.port === hostPort && job.conn === conn, null);
-        if (pendingPairing?.port === hostPort && pendingPairing.conn === conn) {
-            pendingPairing.closed = true;
-        }
+        dropWaiters((waiter) => waiter.port === hostPort && waiter.conn === conn);
     }
 };
 
-// the Native host is gone: drop its queued changes and pairing request, and
+// the Native host is gone: drop its queued changes and pairing requests, and
 // reconnect after 1 s, then up to 60 s
 const onHostDisconnect = (hostPort) => {
     if (hostPort !== port) return;
@@ -935,7 +937,7 @@ const onHostDisconnect = (hostPort) => {
         error: chrome.runtime.lastError?.message ?? hostPort.error?.message ?? null,
     };
     failQueued((job) => job.port === hostPort, null);
-    cancelPairing((p) => p.port === hostPort, null);
+    dropWaiters((waiter) => waiter.port === hostPort);
     if (Date.now() - connectedAt > 10000) reconnectDelay = 1000;
     clearTimeout(reconnectTimer);
     reconnectTimer = setTimeout(ensureConnected, reconnectDelay);
@@ -943,7 +945,7 @@ const onHostDisconnect = (hostPort) => {
 };
 
 // Agent access turned off, or its permission removed: refuse the queued changes and
-// the pairing request, then disconnect (a running job finishes, its change is refused)
+// the pairing requests, then disconnect (a running job finishes, its change is refused)
 const disable = () => {
     disables++;
     clearTimeout(reconnectTimer);
@@ -953,7 +955,8 @@ const disable = () => {
     port = null;
     status = { connected: false };
     failQueued((job) => job.port === hostPort, AGENT_ACCESS_OFF);
-    cancelPairing((p) => p.port === hostPort, AGENT_ACCESS_OFF);
+    // they all came through this connection
+    [...pairings.values()].forEach((pending) => endPairing(pending, AGENT_ACCESS_OFF));
     hostPort.disconnect();
 };
 
@@ -989,20 +992,22 @@ const isOptionsPage = (sender) =>
     typeof sender.url === "string" &&
     sender.url.startsWith(chrome.runtime.getURL("options.html"));
 
+const isPopup = (sender) => sender.url === chrome.runtime.getURL("popup.html");
+
 const onExtensionMessage = (message, sender, sendResponse) => {
     if (sender.id !== chrome.runtime.id || !message) return;
     if (message.type === "agent-ingest-ready") {
         if (!sender.tab && sender.url === chrome.runtime.getURL("agentIngest.html")) {
             resolveIngestReady?.();
         }
-    } else if (
-        message.type === "agent-pair-info" ||
-        message.type === "agent-pair-decision"
-    ) {
-        answerPairingPage(message, sender).then(sendResponse, () =>
-            sendResponse(false),
-        );
+    } else if (message.type === "agent-pair-decision") {
+        decidePairing(message, sender).then(sendResponse, () => sendResponse(false));
         return true;
+    } else if (
+        message.type === "agent-pairing-requests" &&
+        (isOptionsPage(sender) || isPopup(sender))
+    ) {
+        sendResponse(listPairings());
     } else if (message.type === "agent-status" && isOptionsPage(sender)) {
         sendResponse(status);
     } else if (
@@ -1022,10 +1027,16 @@ const onExtensionMessage = (message, sender, sendResponse) => {
  * Start Agent access in the background: connect to the Native host while Agent
  * access is on, answer its requests and the options page's messages.
  * @param {object} background The background's `pushSyncPapers` (Gist push after each
- * change) and `handleBackgroundMessage` (its runtime message handler)
+ * change), `handleBackgroundMessage` (its runtime message handler) and
+ * `setPairingBadge` (the toolbar badge: the number of pending pairing requests)
  */
-export const initAgentAccess = ({ pushSyncPapers, handleBackgroundMessage }) => {
+export const initAgentAccess = ({
+    pushSyncPapers,
+    handleBackgroundMessage,
+    setPairingBadge,
+}) => {
     pushSync = pushSyncPapers;
+    pairingBadge = setPairingBadge;
     if (import.meta.env.FIREFOX) {
         // ingest runs in this background page, and Sources fetch through
         // sendMessageToBackground: a context never receives its own runtime messages

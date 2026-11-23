@@ -65,25 +65,36 @@ and Firefox, all lifecycle checks passed, including 65 min and 8 h idles).
   background page, which needs no keep-alive). Accepted: it is opt-in. A
   1-minute alarm calls the idempotent reconnect as a safety net.
 - **Pairing and authorization live in PaperMemory.** The first request from an unknown client
-  makes PaperMemory open its options page in a new tab on a pairing prompt naming the client
-  (Zotero-10 style), bring that tab's window to the front and draw attention to it (in a new
-  window when no window can take the tab), and, with the `notifications` permission, show an
-  OS notification whose click shows the prompt; **Allow** creates a per-client random secret
-  returned once to the MCP server, which stores it in a 0600 file (written atomically, named
-  by a hash of the client name, never by the raw name); **Deny** rejects. The MCP server waits
-  about 2 s for the decision, then answers the tool call `pairing-required`, a message the
-  agent relays to the user (which browser, click **Allow**, call again): an agent cannot
-  speak while its call is blocked. The request stays open on its own connection until the
-  user decides or PaperMemory ends it (2 minutes), so the credential is saved whenever the
-  user allows, and later calls wait for that request instead of sending another. Agents call
-  the `connect` tool at the start of their work, so that pairing happens then rather than in
-  the middle of a task. A pairing decision is accepted only for a
-  pending, single-use, unguessable request id and only from the exact options tab PaperMemory
-  opened for it, so content scripts (which share the extension id) and replays are ignored.
+  becomes a pairing request that waits in PaperMemory, which neither opens a tab nor brings
+  the browser to the front for it: an agent may ask at any moment, and must not take over
+  the user's browser. PaperMemory shows the waiting requests where the user looks: its options
+  page lists each one, naming the client, with **Allow** and **Deny** (in a card above the
+  settings and in Agent access, whose side-nav item gets a red dot), its toolbar badge shows
+  how many wait (Gist sync's short-lived badge states show over it until they clear), its
+  popup shows a banner (`<client> is waiting for your OK`) that opens the options page on
+  Agent access, and, with the `notifications` permission, an OS notification names the new
+  client and its click shows Agent access in an open options page, brought to the front, or
+  in a new tab (a new window when no window can take the tab). The background tells open
+  pages when the requests change, so all of these are current without a reload. **Allow**
+  creates a per-client random secret returned once to the MCP server, which stores it in a
+  0600 file (written atomically, named by a hash of the client name, never by the raw name);
+  **Deny** rejects. The MCP server waits about 2 s for the decision, then answers the tool
+  call `pairing-required`, a message the agent relays to the user (which browser, click
+  **Allow**, call again): an agent cannot speak while its call is blocked. The request stays
+  open, with no time limit, until the user decides or no connection waits for it anymore (the
+  Agent session ended), so the credential is saved whenever the user allows, and later calls
+  wait for that request instead of sending another. Because requests can wait long, several
+  clients may wait at once (up to 10 per Library, then `busy`); a client name that already
+  waits joins its request, from any connection, and the user's one decision answers every
+  connection waiting for it, with the same credential. Agents call the `connect` tool at the
+  start of their work, so that pairing happens then rather than in the middle of a task. A
+  pairing decision is accepted only for a pending request id, once, and only from
+  PaperMemory's options page in a tab, any options tab (see *Decision binding* below);
+  anything but `allow: true` denies.
   PaperMemory stores only a SHA-256 hash and lists **Paired clients** with a **Revoke** button.
   Every operation is authorized at PaperMemory's operation boundary, not by the host, against
   fixed bounds (http/https URLs or DOIs only, unknown arguments rejected, length caps, tag limits,
-  per-client write rate limits, bounded queue, one pending pairing at a time). All writes go
+  per-client write rate limits, bounded queue, at most 10 pairing requests waiting). All writes go
   through one serialized queue with per-job deadlines; right before each job it re-checks
   that Agent access is on and the client is still authorized, and the Memory step that makes
   a change refuses it if the client was revoked or Agent access turned off since the job
@@ -102,14 +113,31 @@ and Firefox, all lifecycle checks passed, including 65 min and 8 h idles).
   line `Added by <client>: <reason>`; a paper already in the Memory is only attached),
   attaching papers to a Project, adding tags,
   appending notes, applying a **Deletion flag**, and deleting **Own additions**.
+- **Decision binding.** The background accepts a pairing decision only when its sender has
+  PaperMemory's id, has a tab, and has a URL that is PaperMemory's `options.html` once any
+  query or fragment is removed; the request must still be pending, and the first decision
+  ends it. The first version bound a decision to the exact options tab PaperMemory had
+  opened for the request, behind an unguessable request id: PaperMemory opened the prompt
+  itself, so exactly one tab was expected to answer, and nothing else that can message the
+  background (content scripts share the extension's id) could approve a client. The user
+  now opens the options page themselves, in any tab, so the binding is on the page instead
+  of the tab. Content scripts and web pages still cannot reach the decision: a content
+  script's sender URL is its web page's, the popup and the offscreen document have no tab,
+  and `options.html` is not web-accessible, so no web page can frame it. Request ids stay
+  random but are no longer secret: they only name a request, and the background lists them
+  to the options page and the popup only. What widens is the set of extension pages that can
+  decide: every options tab, and any PaperMemory page that would frame `options.html` (none
+  does). They run PaperMemory's own code, which already holds the whole Memory: accepted.
 - **Hardening decisions.** Agent tags may not contain `<`, `>`, `"`, `'`, a backtick, `&`, `,`
   or control or format characters, and `proj-` is reserved anywhere in a tag, in any case,
   with its look-alikes: `proj` then another dash, a minus, `_` or a space, also in
   compatibility forms read through NFKC (e.g. fullwidth letters) and with letters that pass
   for those of `proj` (Cyrillic `р` `о` `ј`, Greek `ρ` `ο` `ϳ`, a dotless `ȷ`, small capitals).
   Everything an agent supplies or a paper carries is escaped where the UI renders it (output
-  escaping in UI sinks). **Deny** starts a global 60 s cooldown for pairing requests, not one
-  per client name, and a pairing whose requester disconnected expires. Whether a build is a
+  escaping in UI sinks); a client's name is shown as text, without control or format
+  characters (e.g. bidi overrides), cut to 64 characters. **Deny** starts a global 60 s
+  cooldown for new pairing requests, not one per client name (requests already waiting stay),
+  and a pairing request expires once no connection waits for it. Whether a build is a
   test build is decided in `wxt.config.js` alone, for its manifest and its code (`define`),
   from `WXT_PM_AGENT_TEST` in the environment or a `.env` file. The zip and submit npm
   scripts refuse to run when the variable is set, and zipping refuses a built extension that
@@ -156,7 +184,10 @@ and Firefox, all lifecycle checks passed, including 65 min and 8 h idles).
   one release, and a no-overlap error names which side to update.
 - **Accepted residual risk: same-user malware.** A malicious process running as the user can
   connect to the socket, read the client secret file or the salt, or read PaperMemory's storage
-  files on disk directly. Neither transport defends against that (see *The Native Menace*,
+  files on disk directly. Through the socket it can also join a waiting pairing request under
+  the same client name, and so receive the credential the user allows (the file it could read
+  anyway), or keep opening pairing requests, each with a notification (at most 10 wait, and a
+  Deny stops new ones for a minute). Neither transport defends against that (see *The Native Menace*,
   arXiv 2611.04291). The socket is not reachable from web pages, which is the exposure that
   matters.
 - **Accepted residual risk: a prompt-injected agent with a shell.** All five target clients

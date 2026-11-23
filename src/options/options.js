@@ -442,7 +442,7 @@ const followMemoryChanges = () => {
     setupTooltips();
     setupTopbar("options");
     setupNavAndSearch();
-    // before the Gist pull, which must not delay a pairing prompt
+    // before the Gist pull, which must not delay the pairing requests
     setupAgentAccess();
     await initSyncAndState();
     await setupPrefs();

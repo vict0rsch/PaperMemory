@@ -718,17 +718,20 @@ a.pm-btn:hover {
     font-size: 0.92em;
     color: var(--pm-text-2);
 }
-.o-agent-status[hidden],
-.o-agent-pairing [hidden] {
+.o-agent-status[hidden] {
     display: none;
 }
-/* the pairing prompt, above the settings: a decision to make */
+/* the pairing requests, above the settings and in Agent access: decisions to make */
 .o-agent-pairing {
     border-color: var(--pm-warning);
 }
-.o-agent-pairing p + p,
-.o-agent-pairing .o-btns {
-    margin-top: var(--pm-s-3);
+.o-agent-pairing .o-status {
+    margin: 0;
+    padding: var(--pm-s-3) var(--pm-s-5) var(--pm-s-4);
+}
+/* the red dot of Agent access in the nav while a pairing request waits */
+.o-nav .pm-dot {
+    flex: none;
 }
 
 /* ---------- keyboard ---------- */

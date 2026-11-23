@@ -54,6 +54,18 @@
 #popup-notice-slot:not(:empty) {
     padding: var(--pm-s-3) var(--pm-s-5) 0;
 }
+/* the agents waiting for the user's OK: above the paper view and the Memory tab */
+#popup-pairing-slot:not(:empty) {
+    flex: none;
+    padding: var(--pm-s-3) var(--pm-s-5) 0;
+}
+/* aligned with the Memory tab's search field */
+#pm-shell.pm-mem-open #popup-pairing-slot:not(:empty) {
+    padding-inline: var(--pm-s-4);
+}
+#popup-pairing-slot bdi {
+    overflow-wrap: anywhere;
+}
 #pm-shell.pm-is-loading .pm-hint-nav {
     display: none;
 }

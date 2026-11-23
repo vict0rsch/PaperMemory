@@ -449,3 +449,53 @@ export const verifyPageNavigation = async (expectedUrlPattern, browser) => {
     );
     return await target.page();
 };
+
+/**
+ * For page.evaluateOnNewDocument: the background's answers about Agent access pairing
+ * requests, in this page. The background keeps them only while an agent's connection
+ * is open, which a test browser never has: the page's list is window.__pairing.requests,
+ * which a test changes, and its decisions are recorded in window.__pairing.decisions
+ * (answered true for a listed request, which leaves the list). Other messages go to the
+ * background.
+ * @param {{requestId: string, clientName: string, requestedAt: number}[]} requests
+ */
+export const stubPairingRequests = (requests) => {
+    window.__pairing = { requests, decisions: [] };
+    const send = chrome.runtime.sendMessage.bind(chrome.runtime);
+    chrome.runtime.sendMessage = (message, callback) => {
+        const stub = window.__pairing;
+        if (message?.type === "agent-pairing-requests") {
+            setTimeout(() => callback(structuredClone(stub.requests)));
+        } else if (message?.type === "agent-pair-decision") {
+            stub.decisions.push(message);
+            const listed = stub.requests.some((r) => r.requestId === message.requestId);
+            stub.requests = stub.requests.filter(
+                (r) => r.requestId !== message.requestId,
+            );
+            setTimeout(() => callback(listed));
+        } else {
+            return send(message, callback);
+        }
+    };
+};
+
+/**
+ * Tell the extension's pages that the pairing requests changed, from the background's
+ * service worker as agentAccess.js does: they ask for the list again.
+ * @param {object} browser
+ */
+export const notifyPairingChanged = async (browser) => {
+    const target = await browser.waitForTarget(
+        (t) => t.type() === "service_worker" && t.url().endsWith("/background.js"),
+        { timeout: 10000 },
+    );
+    const worker = await target.createCDPSession();
+    try {
+        await worker.send("Runtime.evaluate", {
+            expression: `chrome.runtime.sendMessage({ type: "agent-pairing-changed" }).catch(() => {})`,
+            awaitPromise: true,
+        });
+    } finally {
+        await worker.detach();
+    }
+};

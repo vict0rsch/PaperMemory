@@ -1,12 +1,18 @@
 // The options page (src/entrypoints/options, src/options/*): settings search, old anchors,
 // prefs, sources filter / turn all on-off, auto-tag live counts, tag manager (rename, merge,
 // delete: papers' tags actually change), restore (a backup is downloaded before confirming),
-// token field type, no remote stylesheet or script.
+// token field type, no remote stylesheet or script, Agent access pairing requests (listed,
+// decided, kept current).
 import { expect } from "expect";
 import fs from "fs";
 import os from "os";
 import path from "path";
-import { findExtensionId, makeBrowser } from "./browser.js";
+import {
+    findExtensionId,
+    makeBrowser,
+    notifyPairingChanged,
+    stubPairingRequests,
+} from "./browser.js";
 import { loadConfig, root, readJSON, indent, sleep } from "./utilsForTests.js";
 
 const { headless } = loadConfig();
@@ -1849,6 +1855,138 @@ describe("Options page", function () {
             expect(
                 await page.$eval("#overwriteFeedback", (el) => el.textContent),
             ).toContain("Download the replaced Memory");
+        });
+    });
+
+    describe("Agent access: pairing requests", function () {
+        // the background's pairing requests are stubbed in the page (stubPairingRequests):
+        // it keeps them only while an agent's connection is open
+        const now = Date.now();
+        // a client's name is its own: markup and a right-to-left override stay text
+        const hostile = "<img src=x onerror=alert(1)>‮evil";
+        const requests = [
+            { requestId: "request-1", clientName: "Claude Code", requestedAt: now },
+            { requestId: "request-2", clientName: hostile, requestedAt: now + 1000 },
+        ];
+        let stubbed;
+
+        /** The options page, its pairing requests stubbed, set up */
+        const openStubbed = async (listed) => {
+            stubbed = await browser.newPage();
+            await stubbed.evaluateOnNewDocument(stubPairingRequests, listed);
+            await stubbed.goto(optionsURL, { waitUntil: "networkidle0" });
+            await stubbed.waitForFunction(
+                () => document.documentElement.dataset.optionsReady === "true",
+                { timeout: 15000 },
+            );
+            return stubbed;
+        };
+        /** The client names listed in a card, as text */
+        const names = (p, card) =>
+            p.$$eval(`${card} .agent-pairing-list bdi`, (els) =>
+                els.map((el) => el.textContent),
+            );
+        const shown = (p, selector) =>
+            p.$eval(selector, (el) => !el.hidden && el.getClientRects().length > 0);
+        const outcome = (p) =>
+            p.$eval("#agent-pairing .agent-pairing-outcome", (el) => el.textContent);
+        /** Waits until both cards list exactly these client names */
+        const waitForNames = (p, expected) =>
+            p.waitForFunction(
+                (expected) =>
+                    ["#agent-pairing", "#agent-pairing-requests"].every(
+                        (card) =>
+                            JSON.stringify(
+                                [
+                                    ...document.querySelectorAll(
+                                        `${card} .agent-pairing-list bdi`,
+                                    ),
+                                ].map((el) => el.textContent),
+                            ) === JSON.stringify(expected),
+                    ),
+                { timeout: 5000 },
+                expected,
+            );
+
+        afterEach(async function () {
+            await stubbed?.close();
+            stubbed = null;
+        });
+
+        it("lists every request at the top and in Agent access, with a red dot on Agent access, kept current", async function () {
+            const p = await openStubbed(requests);
+            const listed = ["Claude Code", hostile];
+            expect(await names(p, "#agent-pairing")).toEqual(listed);
+            expect(await names(p, "#agent-pairing-requests")).toEqual(listed);
+            expect(await p.$$eval(".agent-pairing-list img", (els) => els.length)).toBe(
+                0,
+            );
+            expect(await shown(p, "#agent-pairing")).toBe(true);
+            expect(await shown(p, "#agent-pairing-requests")).toBe(true);
+            expect(await shown(p, "#agent-nav-dot")).toBe(true);
+            // Allow, in Agent access
+            await p.click("#agent-pairing-requests .agent-pairing-list .pm-row button");
+            await p.waitForFunction(() => window.__pairing.decisions.length === 1);
+            expect(await p.evaluate(() => window.__pairing.decisions)).toEqual([
+                { type: "agent-pair-decision", requestId: "request-1", allow: true },
+            ]);
+            await waitForNames(p, [hostile]);
+            expect(await outcome(p)).toBe("Allowed Claude Code.");
+            expect(await shown(p, "#agent-nav-dot")).toBe(true);
+            // Deny, at the top: none waits, the dot goes, the cards keep the outcome
+            const deny = await p.$$("#agent-pairing .agent-pairing-list button");
+            await deny[1].click();
+            await waitForNames(p, []);
+            expect(await p.evaluate(() => window.__pairing.decisions.at(-1))).toEqual({
+                type: "agent-pair-decision",
+                requestId: "request-2",
+                allow: false,
+            });
+            expect(await outcome(p)).toBe(`Denied ${hostile}.`);
+            expect(await shown(p, "#agent-nav-dot")).toBe(false);
+            expect(await shown(p, "#agent-pairing")).toBe(true);
+            // a new request, while the page is open: the background says the list
+            // changed
+            await p.evaluate(() => {
+                window.__pairing.requests = [
+                    { requestId: "request-3", clientName: "Codex", requestedAt: 0 },
+                ];
+            });
+            await notifyPairingChanged(browser);
+            await waitForNames(p, ["Codex"]);
+            expect(await shown(p, "#agent-nav-dot")).toBe(true);
+            // answered elsewhere (another options tab) before this page heard of it
+            await p.evaluate(() => (window.__pairing.requests = []));
+            await p.click("#agent-pairing .agent-pairing-list .pm-row button");
+            await p.waitForFunction(
+                () =>
+                    document.querySelector("#agent-pairing .agent-pairing-outcome")
+                        .textContent ===
+                    "This pairing request has expired or was already answered.",
+                { timeout: 5000 },
+            );
+            await waitForNames(p, []);
+            expect(await shown(p, "#agent-nav-dot")).toBe(false);
+        });
+
+        it("shows no card and no dot when no request waits, until one does", async function () {
+            const p = await openStubbed([]);
+            expect(await shown(p, "#agent-pairing")).toBe(false);
+            expect(await shown(p, "#agent-pairing-requests")).toBe(false);
+            expect(await shown(p, "#agent-nav-dot")).toBe(false);
+            await p.evaluate(
+                (listed) => (window.__pairing.requests = listed),
+                requests,
+            );
+            await notifyPairingChanged(browser);
+            await waitForNames(p, ["Claude Code", hostile]);
+            expect(await shown(p, "#agent-nav-dot")).toBe(true);
+            // the request ended (its agent session closed): gone without a reload
+            await p.evaluate(() => (window.__pairing.requests = []));
+            await notifyPairingChanged(browser);
+            await waitForNames(p, []);
+            expect(await shown(p, "#agent-pairing")).toBe(false);
+            expect(await shown(p, "#agent-nav-dot")).toBe(false);
         });
     });
 });

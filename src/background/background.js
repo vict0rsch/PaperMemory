@@ -34,6 +34,7 @@ import {
     getStoredFiles,
 } from "@pmu/functions.js";
 import { initAgentAccess } from "@pm/background/agentAccess.js";
+import { createBadge } from "@pm/background/badge.js";
 
 export function initBackground() {
     serveMemoryOps(); // this context runs the Memory's write queue for every page
@@ -44,30 +45,9 @@ export function initBackground() {
     // Firefox MV2 exposes browserAction instead of action
     const actionApi = chrome.action ?? chrome.browserAction;
 
-    const badgeOk = () => {
-        actionApi.setBadgeText({ text: "OK!" });
-        actionApi.setBadgeBackgroundColor({ color: "rgb(68, 164, 68)" });
-    };
-
-    const badgeWait = (text) => {
-        actionApi.setBadgeText({ text });
-        actionApi.setBadgeBackgroundColor({ color: "rgb(189, 127, 10)" });
-    };
-
-    const badgeError = () => {
-        actionApi.setBadgeText({ text: "Error" });
-        actionApi.setBadgeBackgroundColor({ color: "rgb(195, 40, 56)" });
-    };
-
-    const badgeClear = (preventTimeout = false) => {
-        if (preventTimeout) {
-            actionApi.setBadgeText({ text: "" });
-        } else {
-            setTimeout(() => {
-                actionApi.setBadgeText({ text: "" });
-            }, 2000);
-        }
-    };
+    // sync's states, and the pairing requests waiting for the user (Agent access)
+    const { badgeOk, badgeWait, badgeError, badgeClear, setPairingBadge } =
+        createBadge(actionApi);
 
     const initGist = async () => {
         if (!(await shouldSync())) {
@@ -626,5 +606,5 @@ export function initBackground() {
         }
     });
 
-    initAgentAccess({ pushSyncPapers, handleBackgroundMessage });
+    initAgentAccess({ pushSyncPapers, handleBackgroundMessage, setPairingBadge });
 } // end initBackground

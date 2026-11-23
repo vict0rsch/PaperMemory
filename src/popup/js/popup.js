@@ -9,6 +9,7 @@ import {
     log,
     miniHash,
     normalizeCodeLink,
+    sendMessageToBackground,
     shouldWarn,
     urlToWebsiteId,
     warn,
@@ -280,6 +281,65 @@ const setupMenu = async (prefs) => {
     addListener("bib-matcher", "click", () => {
         chrome.tabs.create({ url: chrome.runtime.getURL("bibMatcher.html") });
     });
+};
+
+// ------------------------------------
+// -----  Agent pairing requests  -----
+// ------------------------------------
+
+/**
+ * The agents waiting for the user's OK (Agent access): a banner that opens the options
+ * page on Agent access. The clients chose their names: shown as text only
+ * @param {{clientName: string}[]} requests The pending pairing requests, oldest first
+ */
+const showPairingBanner = (requests) => {
+    const slot = findEl({ element: "popup-pairing-slot" });
+    if (!requests.length) return slot.replaceChildren();
+    const others = requests.length - 1;
+    const name = document.createElement("bdi");
+    name.textContent = requests[0].clientName;
+    const title = document.createElement("b");
+    title.append(
+        name,
+        others
+            ? ` and ${others} other agent${others > 1 ? "s" : ""} are waiting for your OK`
+            : " is waiting for your OK",
+    );
+    const text = document.createElement("div");
+    text.append(
+        title,
+        `Allow or deny ${others ? "them" : "it"} in PaperMemory's options`,
+    );
+    const banner = document.createElement("button");
+    banner.className = "pm-banner";
+    banner.id = "pairing-banner";
+    banner.dataset.tip = "Open Agent access in a new tab";
+    banner.innerHTML = icon("code");
+    banner.append(text);
+    banner.addEventListener("click", () =>
+        chrome.tabs.create({ url: chrome.runtime.getURL("options.html#agent-access") }),
+    );
+    slot.replaceChildren(banner);
+};
+
+// the pending pairing requests, from the background, kept current while the popup is
+// open: the background says when they change (it has no tab, unlike a content script)
+const followPairingRequests = () => {
+    const refresh = async () => {
+        const requests = await sendMessageToBackground({
+            type: "agent-pairing-requests",
+        });
+        showPairingBanner(Array.isArray(requests) ? requests : []);
+    };
+    chrome.runtime.onMessage.addListener((message, sender) => {
+        if (
+            sender.id === chrome.runtime.id &&
+            !sender.tab &&
+            message?.type === "agent-pairing-changed"
+        )
+            refresh();
+    });
+    refresh();
 };
 
 // ------------------------------
@@ -1039,6 +1099,7 @@ export const popupMain = async (url, is, manualTrigger = false, tab = null) => {
             { type: "popupOpened" },
             () => void chrome.runtime.lastError,
         );
+        followPairingRequests();
 
         let stateReadyPromise, remoteIsReadyPromise;
         remoteIsReadyPromise = new Promise((remoteReadyResolve) => {

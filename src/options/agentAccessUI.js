@@ -4,8 +4,9 @@ import { sendMessageToBackground } from "@pmu/functions.js";
 import { PROTOCOL_MIN, PROTOCOL_MAX } from "@pm/background/agentAccess.js";
 
 // Agent access in the options page (see CONTEXT.md § Agent access and ADR 0002): the
-// toggle, the Native host status, the Paired clients and the pairing prompt. The
-// background writes agentClients; client names are only ever shown as text.
+// toggle, the Native host status, the Paired clients and the pairing requests. The
+// background writes agentClients and keeps the pairing requests; client names are only
+// ever shown as text.
 
 const NATIVE_MESSAGING = { permissions: ["nativeMessaging"] };
 // notifications: the OS notification of a pairing request (agentAccess.js), requested
@@ -125,43 +126,121 @@ const showClients = (clients) => {
     $("agent-clients-empty").hidden = rows.length > 0;
 };
 
-// ----------------------------
-// -----  Pairing prompt  -----
-// ----------------------------
+// ------------------------------
+// -----  Pairing requests  -----
+// ------------------------------
 
-// the prompt PaperMemory opens for an agent client's first request: the client is
-// allowed only if the user clicks Allow
-const setupPairingPrompt = async () => {
-    const requestId = window.location.hash.match(/^#agent-pairing=(.+)$/)?.[1];
-    if (!requestId) return;
-    const info = await sendMessageToBackground({ type: "agent-pair-info", requestId });
-    $("agent-pairing").hidden = false;
-    if (typeof info?.clientName !== "string") {
-        $("agent-pairing-expired").hidden = false;
-        return;
+let requests = []; // the pairing requests waiting for the user, as last listed
+const deciding = new Set(); // the requests this page sent the user's decision for
+let outcome = null; // the last decision made in this page: {allow, clientName} or {expired}
+
+// the last decision's outcome, under the requests
+const showOutcome = () => {
+    for (const status of document.querySelectorAll(".agent-pairing-outcome")) {
+        status.classList.toggle("is-error", outcome?.expired === true);
+        if (!outcome) status.replaceChildren();
+        else if (outcome.expired) {
+            status.replaceChildren(
+                "This pairing request has expired or was already answered.",
+            );
+        } else {
+            const decided = outcome.allow ? "Allowed" : "Denied";
+            status.replaceChildren(
+                `${decided} `,
+                element("bdi", "", outcome.clientName),
+                ".",
+            );
+        }
     }
-    $("agent-pairing-client").textContent = info.clientName;
-    $("agent-pairing-request").hidden = false;
-    const decide = async (allow) => {
-        $("agent-pairing-buttons").hidden = true;
-        const decided = await sendMessageToBackground({
-            type: "agent-pair-decision",
-            requestId,
-            allow,
-        });
-        if (decided !== true) $("agent-pairing-expired").hidden = false;
-        else $(allow ? "agent-pairing-allowed" : "agent-pairing-denied").hidden = false;
-    };
-    $("agent-pairing-allow").addEventListener("click", () => decide(true));
-    $("agent-pairing-deny").addEventListener("click", () => decide(false));
+};
+
+// the user's decision on a pairing request, sent once; the client is allowed only if
+// the user clicks Allow
+const decide = async ({ requestId, clientName }, allow) => {
+    if (deciding.has(requestId)) return;
+    deciding.add(requestId);
+    showPairingRequests(); // its buttons disabled
+    const decided = await sendMessageToBackground({
+        type: "agent-pair-decision",
+        requestId,
+        allow,
+    });
+    outcome = decided === true ? { allow, clientName } : { expired: true };
+    refreshPairingRequests();
+};
+
+// a pairing request: the client's name and when it asked, with Allow and Deny
+const makeRequestRow = (request) => {
+    const buttons = ["Allow", "Deny"].map((label) => {
+        const button = element("button", "pm-btn", label);
+        button.type = "button";
+        button.disabled = deciding.has(request.requestId);
+        button.addEventListener("click", () => decide(request, label === "Allow"));
+        return button;
+    });
+    const askedAt = new Date(request.requestedAt).toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+    });
+    return element(
+        "div",
+        "pm-row o-row",
+        element(
+            "div",
+            "pm-row-text",
+            // bdi: the name's text direction cannot change the text around it
+            element("div", "pm-row-label", element("bdi", "", request.clientName)),
+            element(
+                "div",
+                "pm-row-help",
+                `Asked at ${askedAt} to search your Memory and add papers to it`,
+            ),
+        ),
+        element("div", "o-btns", ...buttons),
+    );
+};
+
+// the requests at the top of the page and in Agent access, and the red dot of Agent
+// access in the nav while one waits
+const showPairingRequests = () => {
+    for (const list of document.querySelectorAll(".agent-pairing-list")) {
+        list.replaceChildren(...requests.map(makeRequestRow));
+    }
+    showOutcome();
+    const shown = requests.length > 0 || outcome !== null;
+    $("agent-pairing").hidden = !shown;
+    $("agent-pairing-requests").hidden = !shown;
+    $("agent-nav-dot").hidden = requests.length === 0;
+};
+
+// the pairing requests waiting for the user, from the background
+const refreshPairingRequests = async () => {
+    const listed = await sendMessageToBackground({ type: "agent-pairing-requests" });
+    requests = Array.isArray(listed) ? listed : [];
+    showPairingRequests();
+};
+
+// the background's messages (it has no tab, unlike a content script): the pairing
+// requests changed, or the user clicked the pairing notification, so this page shows
+// Agent access and answers with its tab, which the background brings to the front
+const onBackgroundMessage = (message, sender, sendResponse) => {
+    if (sender.id !== chrome.runtime.id || sender.tab) return;
+    if (message?.type === "agent-pairing-changed") {
+        refreshPairingRequests();
+    } else if (message?.type === "agent-pairing-show") {
+        $("agent-access").scrollIntoView({ block: "start" });
+        chrome.tabs.getCurrent((tab) => sendResponse(tab?.id));
+        return true;
+    }
 };
 
 /**
- * Set up the Agent access section, and the pairing prompt when PaperMemory opened
- * this page for a pairing request (`#agent-pairing=<requestId>`).
+ * Set up the Agent access section, and the pairing requests waiting for the user,
+ * kept current while the page is open.
  */
 export const setupAgentAccess = async () => {
-    setupPairingPrompt();
+    chrome.runtime.onMessage.addListener(onBackgroundMessage);
+    refreshPairingRequests();
     const { enabled } = (await getStorage("agentAccess")) ?? {};
     // the background connects only once the permission is granted too
     $("agent-access-toggle").checked = enabled === true && (await hasNativeMessaging());

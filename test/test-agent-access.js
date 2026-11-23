@@ -1,6 +1,7 @@
 import { expect } from "expect";
 import { filterStorageRequest } from "@pm/background/agentIngest.js";
 import { isValidPairSender, initAgentAccess } from "@pm/background/agentAccess.js";
+import { createBadge } from "@pm/background/badge.js";
 import { sendMessageToBackground, setLocalBackgroundHandler } from "@pmu/functions.js";
 import { runMemoryOp, runMemoryOpFromMessage } from "@pmu/memoryQueue.js";
 import { sha256Hex, makeProvenance } from "@pmu/agentOps.js";
@@ -57,54 +58,124 @@ describe("Agent access background", () => {
     });
 
     describe("#isValidPairSender", () => {
-        const optionsUrl = "chrome-extension://pmid/options.html";
-        const pairingTab = { id: 7 };
-        const fromPairingTab = {
-            id: "pmid",
-            tab: pairingTab,
-            url: `${optionsUrl}#agent-pairing=request-1`,
-        };
-        const makePending = () => ({
-            requestId: "request-1",
-            tabId: pairingTab.id,
-            optionsUrl,
-            clientName: "Claude Code",
+        const previousChrome = global.chrome;
+        const page = (path) => `chrome-extension://pmid/${path}`;
+        const optionsTab = { id: "pmid", tab: { id: 7 }, url: page("options.html") };
+
+        before(() => {
+            global.chrome = { runtime: { id: "pmid", getURL: page } };
         });
 
-        it("accepts the options tab opened for the request", () => {
-            expect(isValidPairSender(fromPairingTab, makePending())).toBe(true);
+        after(() => {
+            global.chrome = previousChrome;
+            if (previousChrome === undefined) delete global.chrome;
         });
 
-        it("rejects a content script: other tab, web page", () => {
-            const contentScript = {
-                id: "pmid",
-                tab: { id: 8 },
-                url: "https://example.org/paper",
-            };
-            expect(isValidPairSender(contentScript, makePending())).toBe(false);
-        });
-
-        it("rejects a content script in the pairing tab after it navigated", () => {
-            const contentScript = { ...fromPairingTab, url: "https://example.org/" };
-            expect(isValidPairSender(contentScript, makePending())).toBe(false);
-        });
-
-        it("rejects the options page in another tab, and a sender without tab", () => {
+        it("accepts the options page in any tab, on any section", () => {
+            expect(isValidPairSender(optionsTab)).toBe(true);
+            const elsewhere = { ...optionsTab, tab: { id: 8 } };
             expect(
-                isValidPairSender({ ...fromPairingTab, tab: { id: 8 } }, makePending()),
-            ).toBe(false);
-            const { tab, ...noTab } = fromPairingTab;
-            expect(isValidPairSender(noTab, makePending())).toBe(false);
+                isValidPairSender({ ...elsewhere, url: page("options.html#sync") }),
+            ).toBe(true);
+            expect(
+                isValidPairSender({ ...elsewhere, url: page("options.html?a=1") }),
+            ).toBe(true);
         });
 
-        it("rejects a decision for an already-used requestId", () => {
-            // the background keeps one pending request, deleted on its first decision
-            let pending = makePending();
-            const lookUp = (requestId) =>
-                pending?.requestId === requestId ? pending : null;
-            expect(isValidPairSender(fromPairingTab, lookUp("request-1"))).toBe(true);
-            pending = null;
-            expect(isValidPairSender(fromPairingTab, lookUp("request-1"))).toBe(false);
+        it("rejects a content script: its url is its web page's", () => {
+            const contentScript = { id: "pmid", tab: { id: 8 } };
+            for (const url of [
+                "https://example.org/paper",
+                "https://example.org/options.html",
+                `https://example.org/?${page("options.html")}`,
+            ]) {
+                expect(isValidPairSender({ ...contentScript, url })).toBe(false);
+            }
+        });
+
+        it("rejects the popup, the offscreen document and the options page without a tab", () => {
+            expect(isValidPairSender({ id: "pmid", url: page("popup.html") })).toBe(
+                false,
+            );
+            expect(
+                isValidPairSender({ id: "pmid", url: page("agentIngest.html") }),
+            ).toBe(false);
+            const { tab, ...noTab } = optionsTab;
+            expect(isValidPairSender(noTab)).toBe(false);
+        });
+
+        it("rejects the other extension pages and other extensions", () => {
+            for (const path of [
+                "fullMemory.html",
+                "bibMatcher.html",
+                "welcome.html",
+                "popup.html",
+                "options.htm",
+                "options.html.html",
+            ]) {
+                expect(isValidPairSender({ ...optionsTab, url: page(path) })).toBe(
+                    false,
+                );
+            }
+            expect(isValidPairSender({ ...optionsTab, id: "other" })).toBe(false);
+            const otherOptions = "chrome-extension://other/options.html";
+            expect(isValidPairSender({ ...optionsTab, url: otherOptions })).toBe(false);
+        });
+    });
+
+    describe("#createBadge", () => {
+        const RED = "rgb(195, 40, 56)";
+        // the browser's action API, and its badge as shown
+        const makeAction = () => {
+            const badge = { text: "", color: null };
+            const api = {
+                setBadgeText: ({ text }) => (badge.text = text),
+                setBadgeBackgroundColor: ({ color }) => (badge.color = color),
+            };
+            return { badge, api };
+        };
+
+        it("shows the number of pairing requests in red, and nothing once none waits", () => {
+            const { badge, api } = makeAction();
+            const { setPairingBadge } = createBadge(api);
+            setPairingBadge(2);
+            expect(badge).toEqual({ text: "2", color: RED });
+            setPairingBadge(1);
+            expect(badge).toEqual({ text: "1", color: RED });
+            setPairingBadge(0);
+            expect(badge.text).toBe("");
+        });
+
+        it("lets a sync state show over it, and shows it again once sync clears its badge", () => {
+            const { badge, api } = makeAction();
+            const { badgeWait, badgeOk, badgeClear, setPairingBadge } =
+                createBadge(api);
+            setPairingBadge(1);
+            badgeWait("Push...");
+            expect(badge).toEqual({ text: "Push...", color: "rgb(189, 127, 10)" });
+            // a request arriving during the upload waits for sync's state to clear
+            setPairingBadge(2);
+            expect(badge.text).toBe("Push...");
+            badgeOk();
+            expect(badge).toEqual({ text: "OK!", color: "rgb(68, 164, 68)" });
+            // sync clears its badge 2 s later
+            const timers = [];
+            const previousSetTimeout = global.setTimeout;
+            global.setTimeout = (fn, ms) => timers.push({ fn, ms });
+            try {
+                badgeClear();
+            } finally {
+                global.setTimeout = previousSetTimeout;
+            }
+            expect(timers.map(({ ms }) => ms)).toEqual([2000]);
+            expect(badge.text).toBe("OK!");
+            timers[0].fn();
+            expect(badge).toEqual({ text: "2", color: RED });
+            // with no request waiting, sync's clear empties the badge, as before
+            setPairingBadge(0);
+            badgeWait("Pull...");
+            badgeClear(true);
+            expect(badge.text).toBe("");
         });
     });
 
@@ -169,14 +240,18 @@ describe("Agent access background", () => {
         const hostListeners = [];
         const storageListeners = []; // chrome.storage.onChanged
         const sent = []; // the messages PaperMemory posted to the Native host
-        const tabs = []; // the tabs PaperMemory opened: {id, windowId, url}
+        const tabs = []; // the tabs open: {id, windowId, url}
         let opensTabs = true; // whether chrome.tabs.create opens a tab
-        let opensWindows = true; // whether chrome.windows.create opens a window
-        const granted = new Set(["nativeMessaging"]); // the permissions the user granted
         const focused = []; // chrome.windows.update calls: {windowId, ...updateInfo}
         const activated = []; // the tabs PaperMemory made active again
+        const granted = new Set(["nativeMessaging"]); // the permissions the user granted
         const notifications = new Map(); // the notifications shown: id => options
         const notificationListeners = []; // chrome.notifications.onClicked
+        const broadcasts = []; // the types of the messages the background sent its pages
+        // the tab of the options page that answers a click on the notification, if one
+        // is open
+        let optionsPageTab;
+        const badges = []; // the numbers of pairing requests the toolbar badge showed
         let ingest; // the offscreen document's outcome for an ingest job
         const ingested = []; // the jobs it was given
         let connected = false;
@@ -237,20 +312,29 @@ describe("Agent access background", () => {
         };
         const answerTo = (id, ms) => waitFor(() => sent.find((m) => m.id === id), ms);
         const request = (...args) => answerTo(send(...args));
-        // the next pairing prompt PaperMemory opens, and the user's decision in it
-        const nextTab = () => {
-            const n = tabs.length;
-            return waitFor(() => tabs[n]);
+        // an options page the user opened, in a tab
+        const optionsPage = { tab: { id: 40 }, url: extensionUrl("options.html") };
+        // the pairing requests waiting for the user, as the options page lists them
+        const listRequests = () =>
+            toBackground({ type: "agent-pairing-requests" }, optionsPage);
+        const requestOf = async (clientName) => {
+            for (const start = now(); now() - start < 2000;) {
+                const listed = await listRequests();
+                const pending = listed.find((r) => r.clientName === clientName);
+                if (pending) return pending;
+                await new Promise((resolve) => setTimeout(resolve, 5));
+            }
+            return null;
         };
-        const decide = (tab, allow) =>
-            toBackground(
-                {
-                    type: "agent-pair-decision",
-                    requestId: tab.url.split("#agent-pairing=")[1],
-                    allow,
-                },
-                { tab: { id: tab.id }, url: tab.url },
-            );
+        // a client's pairing request on a connection, once the user can see it (under
+        // the name the options page shows)
+        const pair = async (conn, clientName, shownAs = clientName) => {
+            const id = send(conn, "pair", { clientName });
+            return { conn, id, pending: await requestOf(shownAs) };
+        };
+        // the user's decision in an options page
+        const decide = (requestId, allow, sender = optionsPage) =>
+            toBackground({ type: "agent-pair-decision", requestId, allow }, sender);
 
         before(async () => {
             Date.now = () => now() + clock;
@@ -287,12 +371,24 @@ describe("Agent access background", () => {
                             disconnect: () => {},
                         };
                     },
-                    // an ingest job, to the offscreen document
-                    sendMessage: async ({ type, jobId, job }) => {
-                        if (type !== "agent-ingest-job") return;
-                        ingested.push(job);
-                        const outcome = await ingest(job);
-                        return { type: "agent-ingest-result", jobId, outcome };
+                    // an ingest job, to the offscreen document; else a message to the
+                    // extension's pages, which an open options page answers when the
+                    // user clicked the pairing notification
+                    sendMessage: (message, callback) => {
+                        if (message.type !== "agent-ingest-job") {
+                            broadcasts.push(message.type);
+                            const show = message.type === "agent-pairing-show";
+                            setTimeout(() =>
+                                callback?.(show ? optionsPageTab : undefined),
+                            );
+                            return;
+                        }
+                        return (async () => {
+                            ingested.push(message.job);
+                            const outcome = await ingest(message.job);
+                            const { jobId } = message;
+                            return { type: "agent-ingest-result", jobId, outcome };
+                        })();
                     },
                 },
                 // once created, the offscreen document says it is ready
@@ -338,11 +434,9 @@ describe("Agent access background", () => {
                 },
                 windows: {
                     create: ({ url: tabUrl }, cb) => {
-                        const tab = opensWindows
-                            ? { id: tabs.length + 1, windowId: 2, url: tabUrl }
-                            : undefined;
-                        if (tab) tabs.push(tab);
-                        setTimeout(() => cb(tab && { id: 2, tabs: [tab] }));
+                        const tab = { id: tabs.length + 1, windowId: 2, url: tabUrl };
+                        tabs.push(tab);
+                        setTimeout(() => cb({ id: 2, tabs: [tab] }));
                     },
                     update: (windowId, updateInfo, cb) => {
                         focused.push({ windowId, ...updateInfo });
@@ -358,6 +452,7 @@ describe("Agent access background", () => {
             initAgentAccess({
                 pushSyncPapers: async () => {},
                 handleBackgroundMessage: () => {},
+                setPairingBadge: (count) => badges.push(count),
             });
             expect(await waitFor(() => connected)).toBe(true);
             fromHost({
@@ -375,9 +470,7 @@ describe("Agent access background", () => {
         });
 
         it("answers a client's message with an id as a request, never as the host's", async () => {
-            const prompt = nextTab();
-            const pairing = send(1, "pair", { clientName: "Codex" });
-            const tab = await prompt;
+            const codex = await pair(1, "Codex");
             // another client sends the host's own messages: the host forwards them with
             // an id
             const closed = forward(2, { type: "client-closed", conn: 1 });
@@ -399,112 +492,251 @@ describe("Agent access background", () => {
                 protocolMax: 1,
             });
             // connection 1 is still open: its pairing request is answered
-            expect(await decide(tab, true)).toBe(true);
-            expect((await answerTo(pairing)).result).toEqual({
+            expect(await decide(codex.pending.requestId, true)).toBe(true);
+            expect((await answerTo(codex.id)).result).toEqual({
                 clientId: expect.any(String),
                 secret: expect.any(String),
             });
         });
 
-        it("ends a pairing request at once when its prompt cannot open", async () => {
-            opensTabs = false;
-            opensWindows = false;
-            const failed = await request(3, "pair", { clientName: "Cursor" });
-            opensTabs = true;
-            opensWindows = true;
-            expect(failed.error.code).toBe("internal");
-            // it no longer holds the one pending pairing request
-            const prompt = nextTab();
-            const pairing = send(4, "pair", { clientName: "Cursor" });
-            expect(await decide(await prompt, true)).toBe(true);
-            expect((await answerTo(pairing)).ok).toBe(true);
+        it("lists a pairing request for the user, counted on the toolbar badge, without opening a tab or bringing a window to the front", async () => {
+            const tabsBefore = tabs.length;
+            focused.length = 0;
+            badges.length = 0;
+            broadcasts.length = 0;
+            const cursor = await pair(3, "Cursor");
+            expect(cursor.pending).toEqual({
+                requestId: expect.any(String),
+                clientName: "Cursor",
+                requestedAt: expect.any(Number),
+            });
+            // the open options pages and popup ask for the list again
+            expect(broadcasts).toEqual(["agent-pairing-changed"]);
+            expect(badges).toEqual([1]);
+            expect(tabs.length).toBe(tabsBefore);
+            expect(focused).toEqual([]);
+            // the client waits for the user
+            expect(await answerTo(cursor.id, 50)).toBeNull();
+            // only the options page and the popup get the list
+            const listFrom = (sender) =>
+                toBackground({ type: "agent-pairing-requests" }, sender);
+            const popup = { url: extensionUrl("popup.html") };
+            expect(await listFrom(popup)).toEqual([cursor.pending]);
+            const contentScript = { tab: { id: 9 }, url: "https://example.org/" };
+            expect(await listFrom(contentScript)).toBeUndefined();
+            expect(await decide(cursor.pending.requestId, true)).toBe(true);
+            expect((await answerTo(cursor.id)).ok).toBe(true);
+            expect(badges).toEqual([1, 0]);
+            expect(await listRequests()).toEqual([]);
         });
 
-        it("answers a decision as expired once the requesting connection closed", async () => {
-            const prompt = nextTab();
-            const pairing = send(5, "pair", { clientName: "OpenCode" });
-            const tab = await prompt;
+        it("keeps a pairing request, with no time limit, until its connection closes; a decision then answers expired", async () => {
+            // no timer is set to end it (the requests used to time out after 2 minutes)
+            const timers = [];
+            const previousSetTimeout = global.setTimeout;
+            global.setTimeout = (fn, ms, ...args) => {
+                timers.push(ms ?? 0);
+                return previousSetTimeout(fn, ms, ...args);
+            };
+            let openCode;
+            try {
+                openCode = await pair(5, "OpenCode");
+            } finally {
+                global.setTimeout = previousSetTimeout;
+            }
+            expect(timers.filter((ms) => ms > 5000)).toEqual([]);
+            clock += 60 * 60000; // an hour later
+            expect(await listRequests()).toEqual([openCode.pending]);
+            // the agent session ended
             fromHost({ type: "client-closed", conn: 5 });
-            expect(await decide(tab, true)).toBe(false);
+            expect(await listRequests()).toEqual([]);
+            expect(badges.at(-1)).toBe(0);
+            expect(await decide(openCode.pending.requestId, true)).toBe(false);
             const names = Object.values(storage.agentClients).map((c) => c.clientName);
             expect(names).not.toContain("OpenCode");
-            expect(await answerTo(pairing, 100)).toBeNull();
+            expect(await answerTo(openCode.id, 100)).toBeNull();
         });
 
-        it("refuses every pairing request for a minute after a Deny", async () => {
-            let prompt = nextTab();
-            const denied = send(6, "pair", { clientName: "Oh-My-Pi" });
-            expect(await decide(await prompt, false)).toBe(true);
-            expect((await answerTo(denied)).error.code).toBe("denied");
+        it("refuses every new pairing request for a minute after a Deny; anything but allow: true denies", async () => {
+            const ohMyPi = await pair(6, "Oh-My-Pi");
+            expect(await decide(ohMyPi.pending.requestId, false)).toBe(true);
+            expect((await answerTo(ohMyPi.id)).error.code).toBe("denied");
             // another client's name
             const refused = await request(7, "pair", { clientName: "Zed" });
             expect(refused.error.code).toBe("rate-limited");
             clock += 60000;
-            prompt = nextTab();
-            const allowed = send(8, "pair", { clientName: "Zed" });
-            expect(await decide(await prompt, true)).toBe(true);
-            expect((await answerTo(allowed)).ok).toBe(true);
+            const zed = await pair(8, "Zed");
+            expect(await decide(zed.pending.requestId, "true")).toBe(true);
+            expect((await answerTo(zed.id)).error.code).toBe("denied");
+            expect(
+                Object.values(storage.agentClients).map((c) => c.clientName),
+            ).not.toContain("Zed");
+            clock += 60000;
+            const allowed = await pair(8, "Zed");
+            expect(await decide(allowed.pending.requestId, true)).toBe(true);
+            expect((await answerTo(allowed.id)).ok).toBe(true);
         });
 
-        it("brings the pairing prompt to the front, in a new window when no window can take a tab", async () => {
-            const front = { focused: true, drawAttention: true };
-            focused.length = 0;
-            let prompt = nextTab();
-            const inTab = send(18, "pair", { clientName: "Goose" });
-            let tab = await prompt;
-            expect(tab).toMatchObject({ windowId: 1, active: true });
-            expect(await waitFor(() => focused.length)).toBe(1);
-            expect(focused[0]).toEqual({ windowId: 1, ...front });
-            expect(await decide(tab, true)).toBe(true);
-            expect((await answerTo(inTab)).ok).toBe(true);
-            // e.g. a browser on macOS, running without a window
-            focused.length = 0;
-            opensTabs = false;
-            prompt = nextTab();
-            const inWindow = send(18, "pair", { clientName: "Goose" });
-            tab = await prompt;
-            opensTabs = true;
-            expect(tab.windowId).toBe(2);
-            expect(await waitFor(() => focused.length)).toBe(1);
-            expect(focused[0]).toEqual({ windowId: 2, ...front });
-            expect(await decide(tab, true)).toBe(true);
-            expect((await answerTo(inWindow)).ok).toBe(true);
+        it("keeps several pairing requests at once, oldest first, up to ten: a client asking again joins its request", async () => {
+            badges.length = 0;
+            const first = await pair(20, "Agent 0");
+            // the same client asks again, on its connection and on another one (e.g. a
+            // new session): no new request
+            const again = send(20, "pair", { clientName: "Agent 0" });
+            const elsewhere = send(21, "pair", { clientName: "Agent 0" });
+            const others = [];
+            for (let i = 1; i < 10; i++) others.push(await pair(21 + i, `Agent ${i}`));
+            const listed = await listRequests();
+            expect(listed.map((r) => r.clientName)).toEqual(
+                Array.from({ length: 10 }, (_, i) => `Agent ${i}`),
+            );
+            expect(badges).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+            const busy = await request(40, "pair", { clientName: "Agent 10" });
+            expect(busy.error.code).toBe("busy");
+            // a client already waiting still joins its request
+            const third = send(41, "pair", { clientName: "Agent 0" });
+            expect(await answerTo(third, 50)).toBeNull();
+            expect(await listRequests()).toEqual(listed);
+            // one decision answers every request that joined it, with one credential
+            expect(await decide(first.pending.requestId, true)).toBe(true);
+            const answers = await Promise.all(
+                [first.id, again, elsewhere, third].map((id) => answerTo(id)),
+            );
+            expect(answers[0].result).toEqual({
+                clientId: expect.any(String),
+                secret: expect.any(String),
+            });
+            answers.forEach((a) => expect(a.result).toEqual(answers[0].result));
+            const paired = Object.values(storage.agentClients).filter(
+                (c) => c.clientName === "Agent 0",
+            );
+            expect(paired).toHaveLength(1);
+            expect(badges.at(-1)).toBe(9);
+            // the others' sessions end
+            for (const { conn } of others) fromHost({ type: "client-closed", conn });
+            expect(await listRequests()).toEqual([]);
+            expect(badges.at(-1)).toBe(0);
         });
 
-        it("notifies a pairing request only with the notifications permission, and a click shows its prompt", async () => {
+        it("ends a joined pairing request only once no connection waits for it", async () => {
+            const gemini = await pair(42, "Gemini");
+            const joined = send(43, "pair", { clientName: "Gemini" });
+            fromHost({ type: "client-closed", conn: 42 });
+            expect(await listRequests()).toEqual([gemini.pending]);
+            fromHost({ type: "client-closed", conn: 43 });
+            expect(await listRequests()).toEqual([]);
+            expect(await answerTo(gemini.id, 50)).toBeNull();
+            expect(await answerTo(joined, 50)).toBeNull();
+            // the one left waiting gets the decision
+            const kimi = await pair(44, "Kimi");
+            const kimiAgain = send(45, "pair", { clientName: "Kimi" });
+            fromHost({ type: "client-closed", conn: 44 });
+            expect(await decide(kimi.pending.requestId, true)).toBe(true);
+            expect((await answerTo(kimiAgain)).ok).toBe(true);
+            expect(await answerTo(kimi.id, 50)).toBeNull();
+        });
+
+        it("accepts a decision only from an options page in a tab (any), once", async () => {
+            const windsurf = await pair(50, "Windsurf");
+            const decision = {
+                type: "agent-pair-decision",
+                requestId: windsurf.pending.requestId,
+                allow: true,
+            };
+            const refusedFrom = [
+                { url: extensionUrl("popup.html") }, // the popup: no tab
+                { url: extensionUrl("options.html") }, // the options page without tab
+                { url: extensionUrl("agentIngest.html") }, // the offscreen document
+                { tab: { id: 60 }, url: "https://example.org/paper" }, // content script
+                { tab: { id: 61 }, url: extensionUrl("fullMemory.html") }, // another page
+                { tab: { id: 62 }, url: extensionUrl("welcome.html") },
+            ];
+            for (const sender of refusedFrom) {
+                expect(await toBackground(decision, sender)).toBe(false);
+            }
+            // another extension: not answered at all
+            const otherExtension = {
+                id: "other",
+                tab: { id: 63 },
+                url: "chrome-extension://other/options.html",
+            };
+            expect(await toBackground(decision, otherExtension)).toBeUndefined();
+            expect(await answerTo(windsurf.id, 50)).toBeNull();
+            expect(await listRequests()).toEqual([windsurf.pending]);
+            // an options page the user opened on another section, in another tab
+            const optionsElsewhere = {
+                tab: { id: 64 },
+                url: extensionUrl("options.html#sync"),
+            };
+            expect(await toBackground(decision, optionsElsewhere)).toBe(true);
+            expect((await answerTo(windsurf.id)).ok).toBe(true);
+            // once: the same decision again, from any page, is refused
+            expect(await toBackground(decision, optionsPage)).toBe(false);
+            expect(await toBackground({ ...decision, allow: false }, optionsPage)).toBe(
+                false,
+            );
+            const paired = Object.values(storage.agentClients).filter(
+                (c) => c.clientName === "Windsurf",
+            );
+            expect(paired).toHaveLength(1);
+        });
+
+        it("notifies a new pairing request only with the notifications permission; a click shows Agent access in an open options page, else in a new tab", async () => {
             // Agent access turned on before PaperMemory asked for notifications
-            let prompt = nextTab();
-            const silent = send(19, "pair", { clientName: "Amp" });
-            let tab = await prompt;
+            const silent = await pair(19, "Amp");
             await new Promise((resolve) => setTimeout(resolve, 20));
             expect(notifications.size).toBe(0);
-            expect(await decide(tab, true)).toBe(true);
-            expect((await answerTo(silent)).ok).toBe(true);
+            expect(await decide(silent.pending.requestId, true)).toBe(true);
+            expect((await answerTo(silent.id)).ok).toBe(true);
 
             granted.add("notifications");
-            prompt = nextTab();
             // a right-to-left override would turn the rest of the title around
-            const notified = send(19, "pair", { clientName: "Amp‮gnp.exe" });
-            tab = await prompt;
+            const notified = await pair(19, "Amp‮gnp.exe", "Ampgnp.exe");
+            expect(notified.pending).not.toBeNull();
             const shown = await waitFor(() => notifications.get("pm-agent-pairing"));
             expect(shown).toEqual({
                 type: "basic",
                 iconUrl: extensionUrl("icons/icon-128.png"),
                 title: "Ampgnp.exe wants to use PaperMemory",
-                message:
-                    "Click Allow on the PaperMemory tab to let it read and add papers.",
+                message: "Click to allow or deny it in PaperMemory's options.",
             });
-            // the user clicks it from another application: its tab, then its window
+            // the user clicks it from another application, with an options page open:
+            // that page shows Agent access, its tab and window come to the front
+            const front = { focused: true, drawAttention: true };
+            tabs.push({ id: 70, windowId: 3, url: extensionUrl("options.html#sync") });
+            const tabsBefore = tabs.length;
+            optionsPageTab = 70;
             focused.length = 0;
+            broadcasts.length = 0;
             notificationListeners.forEach((listener) => listener("pm-agent-pairing"));
             expect(await waitFor(() => focused.length)).toBe(1);
-            expect(activated.at(-1)).toBe(tab.id);
-            expect(focused[0]).toMatchObject({ windowId: tab.windowId, focused: true });
+            expect(broadcasts).toEqual(["agent-pairing-show"]);
+            expect(activated.at(-1)).toBe(70);
+            expect(focused[0]).toEqual({ windowId: 3, ...front });
+            expect(tabs.length).toBe(tabsBefore);
             expect(notifications.size).toBe(0);
+            // no options page open: one opens on Agent access, in a new tab, in front
+            optionsPageTab = undefined;
+            focused.length = 0;
+            notificationListeners.forEach((listener) => listener("pm-agent-pairing"));
+            const tab = await waitFor(() => tabs[tabsBefore]);
+            const agentAccess = extensionUrl("options.html#agent-access");
+            expect(tab).toMatchObject({ url: agentAccess, active: true, windowId: 1 });
+            expect(await waitFor(() => focused.length)).toBe(1);
+            expect(focused[0]).toEqual({ windowId: 1, ...front });
+            // e.g. a browser on macOS, running without a window: in a new window
+            opensTabs = false;
+            focused.length = 0;
+            notificationListeners.forEach((listener) => listener("pm-agent-pairing"));
+            const inWindow = await waitFor(() => tabs[tabsBefore + 1]);
+            opensTabs = true;
+            expect(inWindow).toMatchObject({ url: agentAccess, windowId: 2 });
+            expect(await waitFor(() => focused.length)).toBe(1);
+            expect(focused[0]).toEqual({ windowId: 2, ...front });
             // the user's decision clears it too
             notifications.set("pm-agent-pairing", shown);
-            expect(await decide(tab, true)).toBe(true);
-            expect((await answerTo(notified)).ok).toBe(true);
+            expect(await decide(notified.pending.requestId, true)).toBe(true);
+            expect((await answerTo(notified.id)).ok).toBe(true);
             expect(notifications.size).toBe(0);
             granted.delete("notifications");
         });
@@ -621,7 +853,12 @@ describe("Agent access background", () => {
                 ifMissing: "skip",
             });
             expect(visit.ok).toBe(true);
-            const refused = await request(14, "delete_paper", { id: publishedId }, auth);
+            const refused = await request(
+                14,
+                "delete_paper",
+                { id: publishedId },
+                auth,
+            );
             expect(refused.error.code).toBe("not-own-addition");
             expect(storage.papers).toHaveProperty([publishedId]);
         });
@@ -675,11 +912,13 @@ describe("Agent access background", () => {
 
         // what the pipeline stores for a new paper: the agent's fields and Provenance, and
         // the note its page gave
-        const storesNew = (id, note) => async ({ tags, provenance }) => {
-            const paper = { ...makePaper(id), tags, provenance, note };
-            storage.papers = { ...storage.papers, [id]: paper };
-            return { status: "stored", id };
-        };
+        const storesNew =
+            (id, note) =>
+            async ({ tags, provenance }) => {
+                const paper = { ...makePaper(id), tags, provenance, note };
+                storage.papers = { ...storage.papers, [id]: paper };
+                return { status: "stored", id };
+            };
 
         it("shows who added a paper it stored, and why, in its note before the agent's note; not on a paper already stored", async () => {
             const newId = "Arxiv-2101.00009";
@@ -785,12 +1024,10 @@ describe("Agent access background", () => {
             const release = holdMemoryQueue();
             const deleting = send(16, "delete_paper", { id: ownId }, clientAuth);
             expect(await passedChecks(clientAuth.clientId)).toBe(true);
-            // a change queued behind it, and a pairing request waiting for the user
+            // a change queued behind it, and pairing requests waiting for the user
             const tags = { id: paperId, tags: ["later"] };
             const tagging = send(16, "add_tags", tags, clientAuth);
-            const prompt = nextTab();
-            const pairing = send(17, "pair", { clientName: "Zed" });
-            await prompt;
+            const pairings = [await pair(17, "Zed"), await pair(18, "Goose")];
             // the options page's toggle
             storage.agentAccess = { enabled: false };
             const changes = { agentAccess: { newValue: { enabled: false } } };
@@ -799,7 +1036,10 @@ describe("Agent access background", () => {
                 code: "disabled",
                 message: "Agent access is off in PaperMemory's options",
             };
-            expect((await answerTo(pairing)).error).toEqual(off);
+            for (const { id } of pairings)
+                expect((await answerTo(id)).error).toEqual(off);
+            expect(await listRequests()).toEqual([]);
+            expect(badges.at(-1)).toBe(0);
             await release();
             expect((await answerTo(deleting)).error).toEqual(off);
             expect((await answerTo(tagging)).error).toEqual(off);
