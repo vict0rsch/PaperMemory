@@ -13,6 +13,9 @@ const NATIVE_MESSAGING = { permissions: ["nativeMessaging"] };
 // in the same prompt
 const AGENT_PERMISSIONS = { permissions: ["nativeMessaging", "notifications"] };
 const STATUS_POLL_MS = 2000;
+// a pairing row's buttons ignore clicks this long after the row appeared or moved: a
+// row that slides under the cursor cannot take a click meant for another agent
+const SETTLE_MS = 1000;
 
 const $ = (id) => document.getElementById(id);
 
@@ -184,8 +187,6 @@ const makeRequestRow = (request) => {
     const buttons = ["Allow", "Deny"].map((label) => {
         const button = element("button", "pm-btn", label);
         button.type = "button";
-        button.disabled = deciding.has(request.requestId);
-        button.addEventListener("click", () => decide(request, label === "Allow"));
         return button;
     });
     const help = [
@@ -200,25 +201,64 @@ const makeRequestRow = (request) => {
             element("div", "pm-row-help", `${request.sessions} sessions waiting`),
         );
     }
-    return element(
-        "div",
-        "pm-row o-row",
-        element(
+    const row = {
+        since: Date.now(),
+        buttons,
+        el: element(
             "div",
-            "pm-row-text",
-            // bdi: the name's text direction cannot change the text around it
-            element("div", "pm-row-label", element("bdi", "", request.clientName)),
-            ...help,
+            "pm-row o-row",
+            element(
+                "div",
+                "pm-row-text",
+                // bdi: the name's text direction cannot change the text around it
+                element("div", "pm-row-label", element("bdi", "", request.clientName)),
+                ...help,
+            ),
+            element("div", "o-btns", ...buttons),
         ),
-        element("div", "o-btns", ...buttons),
+    };
+    buttons.forEach((button, i) =>
+        button.addEventListener("click", () => {
+            if (Date.now() - row.since < SETTLE_MS) return;
+            decide(request, i === 0);
+        }),
     );
+    setTimeout(() => syncButtons(request, row), SETTLE_MS);
+    return row;
+};
+
+// the buttons of a row: disabled while it settles and once its decision was sent
+const syncButtons = ({ requestId }, row) => {
+    const disabled = Date.now() - row.since < SETTLE_MS || deciding.has(requestId);
+    row.buttons.forEach((button) => (button.disabled = disabled));
+};
+
+// the rows shown in each list, by request: a row whose request, and position, did not
+// change stays as it is, with the time it appeared at that position
+const shownRows = new Map(); // list element -> Map(requestId -> {request, index, row})
+
+const showRequestRows = (list) => {
+    const before = shownRows.get(list) ?? new Map();
+    const after = new Map();
+    requests.forEach((request, index) => {
+        const kept = before.get(request.requestId);
+        const same =
+            kept &&
+            kept.index === index &&
+            JSON.stringify(kept.request) === JSON.stringify(request);
+        const row = same ? kept.row : makeRequestRow(request);
+        syncButtons(request, row);
+        after.set(request.requestId, { request, index, row });
+    });
+    shownRows.set(list, after);
+    list.replaceChildren(...[...after.values()].map(({ row }) => row.el));
 };
 
 // the requests at the top of the page and in Agent access, and the red dot of Agent
 // access in the nav while one waits
 const showPairingRequests = () => {
     for (const list of document.querySelectorAll(".agent-pairing-list")) {
-        list.replaceChildren(...requests.map(makeRequestRow));
+        showRequestRows(list);
     }
     showOutcome();
     const shown = requests.length > 0 || outcome !== null;

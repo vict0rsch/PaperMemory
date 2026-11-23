@@ -1908,6 +1908,9 @@ describe("Options page", function () {
                 expected,
             );
 
+        // pairing rows ignore clicks for 1 s after they appeared or moved
+        const settle = () => new Promise((resolve) => setTimeout(resolve, 1200));
+
         afterEach(async function () {
             await stubbed?.close();
             stubbed = null;
@@ -1925,6 +1928,7 @@ describe("Options page", function () {
             expect(await shown(p, "#agent-pairing-requests")).toBe(true);
             expect(await shown(p, "#agent-nav-dot")).toBe(true);
             // Allow, in Agent access
+            await settle();
             await p.click("#agent-pairing-requests .agent-pairing-list .pm-row button");
             await p.waitForFunction(() => window.__pairing.decisions.length === 1);
             expect(await p.evaluate(() => window.__pairing.decisions)).toEqual([
@@ -1934,6 +1938,7 @@ describe("Options page", function () {
             expect(await outcome(p)).toBe("Allowed Claude Code.");
             expect(await shown(p, "#agent-nav-dot")).toBe(true);
             // Deny, at the top: none waits, the dot goes, the cards keep the outcome
+            await settle(); // request-2 moved to the top
             const deny = await p.$$("#agent-pairing .agent-pairing-list button");
             await deny[1].click();
             await waitForNames(p, []);
@@ -1957,6 +1962,7 @@ describe("Options page", function () {
             expect(await shown(p, "#agent-nav-dot")).toBe(true);
             // answered elsewhere (another options tab) before this page heard of it
             await p.evaluate(() => (window.__pairing.requests = []));
+            await settle();
             await p.click("#agent-pairing .agent-pairing-list .pm-row button");
             await p.waitForFunction(
                 () =>
@@ -1967,6 +1973,52 @@ describe("Options page", function () {
             );
             await waitForNames(p, []);
             expect(await shown(p, "#agent-nav-dot")).toBe(false);
+        });
+
+        it("ignores clicks on a pairing row for 1 s after it appeared or moved", async function () {
+            const p = await openStubbed([]);
+            const decisions = () => p.evaluate(() => window.__pairing.decisions.length);
+            const first = "#agent-pairing .agent-pairing-list .pm-row button";
+            await p.evaluate(
+                (listed) => (window.__pairing.requests = listed),
+                [requests[0]],
+            );
+            await notifyPairingChanged(browser);
+            await waitForNames(p, ["Claude Code"]);
+            // just appeared: the click does nothing
+            expect(await p.$eval(first, (el) => el.disabled)).toBe(true);
+            await p.click(first);
+            expect(await decisions()).toBe(0);
+            await settle();
+            expect(await p.$eval(first, (el) => el.disabled)).toBe(false);
+            // a second request below it, settled too
+            await p.evaluate(
+                (listed) => (window.__pairing.requests = listed),
+                [requests[0], requests[1]],
+            );
+            await notifyPairingChanged(browser);
+            await waitForNames(p, ["Claude Code", hostile]);
+            await settle();
+            // the first one goes away: the second slides to its position, where the
+            // user's click was aimed at another agent
+            await p.evaluate(
+                (listed) => (window.__pairing.requests = listed),
+                [requests[1]],
+            );
+            await notifyPairingChanged(browser);
+            await waitForNames(p, [hostile]);
+            await p.click(first);
+            // even with the button enabled, the click handler ignores the click
+            await p.$eval(first, (el) => (el.disabled = false));
+            await p.click(first);
+            expect(await decisions()).toBe(0);
+            // after 1 s the click is taken
+            await settle();
+            await p.click(first);
+            await p.waitForFunction(() => window.__pairing.decisions.length === 1);
+            expect(await p.evaluate(() => window.__pairing.decisions)).toEqual([
+                { type: "agent-pair-decision", requestId: "request-2", allow: true },
+            ]);
         });
 
         it("shows no card and no dot when no request waits, until one does", async function () {
