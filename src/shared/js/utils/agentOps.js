@@ -53,6 +53,28 @@ const isHttpUrl = (url) => {
  */
 export const removeControlChars = (str) => str.replace(/\p{Cc}/gu, "");
 
+/**
+ * A client's name as PaperMemory compares, keeps and shows it, so that names that differ
+ * only by invisible characters, spacing or composition are the same: without control,
+ * format or other invisible characters (e.g. zero-width spaces, bidi overrides,
+ * variation selectors), each run of whitespace or blank fillers (e.g. a no-break space,
+ * the Hangul filler, the blank Braille pattern) as one space, trimmed, in NFC, and at
+ * most 64 characters (code points). Letters that only look alike stay different.
+ * @param {string} name The name the client gave itself
+ * @returns {string} The cleaned name, maybe empty or only marks (validateArgs refuses it)
+ */
+export const cleanClientName = (name) =>
+    [
+        ...name
+            .replace(/[\u115f\u1160\u2800\u3164\uffa0\u{1d159}]/gu, " ")
+            .replace(/[\p{C}\p{Default_Ignorable_Code_Point}]/gu, "")
+            .replace(/\s+/gu, " ")
+            .trim()
+            .normalize("NFC"),
+    ]
+        .slice(0, 64)
+        .join("");
+
 // sort comparator on a string key, e.g. an ISO date
 const compareBy = (key) => (a, b) => (a[key] < b[key] ? -1 : a[key] > b[key] ? 1 : 0);
 
@@ -103,11 +125,12 @@ const looksLikeProjectTag = (tag) => {
 // each argument's bound, and the rule reported when it is not met
 const ARG_BOUNDS = {
     clientName: {
+        // once cleaned, something other than spaces and combining marks
         check: (v) =>
             typeof v === "string" &&
             isString(removeControlChars(v), 1, 64) &&
-            v.replace(/[\p{C}\s]/gu, "") !== "",
-        rule: "a non-blank string of 1 to 64 characters, control characters excluded",
+            /[^\s\p{M}]/u.test(cleanClientName(v)),
+        rule: "a string of 1 to 64 characters, control characters excluded, with a visible character",
     },
     query: {
         check: (v) => isString(v, 0, 256),

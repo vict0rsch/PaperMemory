@@ -17,6 +17,7 @@ import {
     makeProvenance,
     isOwnAddition,
     checkRate,
+    cleanClientName,
 } from "@pmu/agentOps.js";
 
 const projectHash = "ab".repeat(32);
@@ -314,6 +315,24 @@ describe("agentOps.js", () => {
                 { clientName: "​ ⁣ ‮" },
                 "bad-args",
             ],
+            [
+                "a client name of blank fillers only",
+                "pair",
+                { clientName: "\u3164 \u2800\u115f\uffa0" },
+                "bad-args",
+            ],
+            [
+                "a client name of combining marks only",
+                "pair",
+                { clientName: " \u0301\u0302\u20dd" },
+                "bad-args",
+            ],
+            [
+                "a client name of one letter with marks",
+                "pair",
+                { clientName: "e\u0301\u0302" },
+                null,
+            ],
             // id
             ["a 256-character id", "get_paper", { id: "x".repeat(256) }, "not-found"],
             ["a 257-character id", "get_paper", { id: "x".repeat(257) }, "bad-args"],
@@ -445,6 +464,44 @@ describe("agentOps.js", () => {
                 expect(validateArgs(op, args, papers)?.code ?? null).toBe(code);
             });
         }
+    });
+
+    describe("#cleanClientName", () => {
+        it("gives names that look the same one name", () => {
+            for (const variant of [
+                "Claude Code",
+                " Claude Code ",
+                "Claude  Code",
+                "Claude\u00a0Code", // no-break space
+                "Claude\u3000Code", // ideographic space
+                "Claude\u3164Code", // Hangul filler
+                "Claude\u2800Code", // blank Braille pattern
+                "Claude Code\u200b", // zero-width space
+                "Claude\u200d Code\u2060", // zero-width joiner, word joiner
+                "\u202eClaude Code\u202c", // bidi override
+                "\u2066Claude Code\u2069", // bidi isolate
+                "Claude Code\ufe0f", // variation selector
+                "Claude\u00ad Code", // soft hyphen
+                "Claude Code\u0007\n", // control characters
+            ]) {
+                expect(cleanClientName(variant)).toBe("Claude Code");
+            }
+            // canonically equivalent: one composed form (NFC)
+            expect(cleanClientName("Cafe\u0301")).toBe("Caf\u00e9");
+            expect(cleanClientName("Cafe\u200b\u0301")).toBe("Caf\u00e9");
+        });
+
+        it("keeps visible names, their letters' marks and other scripts", () => {
+            expect(cleanClientName("Z\u0351\u0351algo")).toBe("Z\u0351\u0351algo");
+            expect(cleanClientName("クロード")).toBe("クロード");
+            expect(cleanClientName("oh-my-pi 🥧")).toBe("oh-my-pi 🥧");
+        });
+
+        it("cuts a name to 64 characters, not inside one", () => {
+            const cut = cleanClientName("🥧".repeat(70));
+            expect([...cut]).toHaveLength(64);
+            expect(cut).toBe("🥧".repeat(64));
+        });
     });
 
     describe("#normalizeTags, #mergeTags", () => {

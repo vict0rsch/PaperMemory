@@ -63,8 +63,14 @@
 #pm-shell.pm-mem-open #popup-pairing-slot:not(:empty) {
     padding-inline: var(--pm-s-4);
 }
+/* a client's name is its own: a long one wraps anywhere, and marks stacked on its
+   letters stay in the banner's title */
 #popup-pairing-slot bdi {
     overflow-wrap: anywhere;
+}
+#popup-pairing-slot .pm-banner,
+#popup-pairing-slot b {
+    overflow: hidden;
 }
 #pm-shell.pm-is-loading .pm-hint-nav {
     display: none;

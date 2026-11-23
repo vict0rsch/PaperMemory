@@ -1061,5 +1061,69 @@ describe("Test PaperMemory Popup UI - Known Paper Page", function () {
                 await page.close();
             }
         });
+
+        it("keeps a long name, and one with stacked marks, inside the banner, clear of its last line", async function () {
+            const long = "W".repeat(64);
+            const stacked = `Z${"\u0351\u0352\u0353\u0354\u0355\u0356".repeat(8)}algo`;
+            const page = await browser.newPage();
+            const layout = () =>
+                page.$eval("#pairing-banner", (banner) => {
+                    const box = (el) => el.getBoundingClientRect().toJSON();
+                    const title = banner.querySelector("b");
+                    const help = document.createRange();
+                    help.selectNode(title.parentElement.lastChild);
+                    return {
+                        banner: box(banner),
+                        slot: box(banner.parentElement),
+                        title: box(title),
+                        help: help.getBoundingClientRect().toJSON(),
+                        // what a mark draws beyond the title's box is not shown
+                        clipped: [banner, title].every(
+                            (el) => getComputedStyle(el).overflow === "hidden",
+                        ),
+                        fits:
+                            document.documentElement.scrollWidth <=
+                            document.documentElement.clientWidth,
+                    };
+                });
+            try {
+                await page.evaluateOnNewDocument(stubPairingRequests, [
+                    { requestId: "request-1", clientName: long, requestedAt: 1 },
+                ]);
+                await page.goto(pmURLs.popupURL, { waitUntil: "networkidle0" });
+                await page.waitForFunction(() => window.__pmPopupReady === true, {
+                    timeout: 10000,
+                });
+                await page.waitForSelector("#pairing-banner");
+                for (const name of [long, stacked]) {
+                    if (name === stacked) {
+                        await page.evaluate((clientName) => {
+                            window.__pairing.requests = [
+                                { requestId: "request-2", clientName, requestedAt: 2 },
+                            ];
+                        }, stacked);
+                        await notifyPairingChanged(browser);
+                        await page.waitForFunction(
+                            (title) =>
+                                document.querySelector("#pairing-banner b")
+                                    ?.textContent === title,
+                            { timeout: 5000 },
+                            `${stacked} is waiting for your OK`,
+                        );
+                    }
+                    const { banner, slot, title, help, clipped, fits } = await layout();
+                    expect(clipped).toBe(true);
+                    expect(fits).toBe(true);
+                    expect(banner.right).toBeLessThanOrEqual(slot.right);
+                    expect(title.left).toBeGreaterThanOrEqual(banner.left);
+                    expect(title.right).toBeLessThanOrEqual(banner.right);
+                    expect(title.top).toBeGreaterThanOrEqual(banner.top);
+                    expect(help.top).toBeGreaterThanOrEqual(title.bottom);
+                    expect(help.bottom).toBeLessThanOrEqual(banner.bottom);
+                }
+            } finally {
+                await page.close();
+            }
+        });
     });
 });

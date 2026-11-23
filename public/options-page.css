@@ -729,6 +729,21 @@ a.pm-btn:hover {
     margin: 0;
     padding: var(--pm-s-3) var(--pm-s-5) var(--pm-s-4);
 }
+/* a client's name is its own: a long one wraps anywhere, and marks stacked on its
+   letters (e.g. many combining characters) stay in its own lines, covering neither the
+   row's other lines (when it asked, how many sessions wait) nor the other rows */
+.agent-pairing-list .o-row,
+#agent-clients-list .o-row,
+.agent-pairing-outcome {
+    overflow: hidden;
+}
+.o-agent bdi {
+    min-width: 0;
+    overflow-wrap: anywhere;
+}
+.o-agent .pm-row-label bdi {
+    overflow: hidden;
+}
 /* the red dot of Agent access in the nav while a pairing request waits */
 .o-nav .pm-dot {
     flex: none;

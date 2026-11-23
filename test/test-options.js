@@ -1988,6 +1988,139 @@ describe("Options page", function () {
             expect(await shown(p, "#agent-pairing")).toBe(false);
             expect(await shown(p, "#agent-nav-dot")).toBe(false);
         });
+
+        it("says when each request was made, with the date unless today, and how many sessions wait when several do", async function () {
+            const earlier = Date.now() - 2 * 24 * 3600 * 1000;
+            const today = Date.now();
+            const p = await openStubbed([
+                { requestId: "request-1", clientName: "Codex", requestedAt: earlier },
+                {
+                    requestId: "request-2",
+                    clientName: "Claude Code",
+                    requestedAt: today,
+                    sessions: 3,
+                },
+            ]);
+            const help = await p.$$eval(
+                "#agent-pairing .agent-pairing-list .pm-row",
+                (rows) =>
+                    rows.map((row) =>
+                        [...row.querySelectorAll(".pm-row-help")].map(
+                            (el) => el.textContent,
+                        ),
+                    ),
+            );
+            const [date, earlierTime, todayTime] = await p.evaluate(
+                (earlier, today) => {
+                    const time = (t) =>
+                        new Date(t).toLocaleTimeString([], {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                        });
+                    return [
+                        new Date(earlier).toLocaleDateString(),
+                        time(earlier),
+                        time(today),
+                    ];
+                },
+                earlier,
+                today,
+            );
+            const asked = "to search your Memory and add papers to it";
+            expect(help).toEqual([
+                [`Asked on ${date} at ${earlierTime} ${asked}`],
+                [`Asked at ${todayTime} ${asked}`, "3 sessions waiting"],
+            ]);
+        });
+
+        it("keeps long names, and names with stacked marks, inside their rows, clear of the buttons and of the lines under them", async function () {
+            const long = "W".repeat(64);
+            const stacked = `Z${"\u0351\u0352\u0353\u0354\u0355\u0356".repeat(8)}algo`;
+            await storageSet({
+                agentClients: {
+                    "client-long": {
+                        clientName: long,
+                        secretHash: "0".repeat(64),
+                        pairedAt: new Date().toISOString(),
+                        lastSeenAt: new Date().toISOString(),
+                    },
+                },
+            });
+            try {
+                const p = await openStubbed([
+                    {
+                        requestId: "request-1",
+                        clientName: long,
+                        requestedAt: 1,
+                        sessions: 2,
+                    },
+                    {
+                        requestId: "request-2",
+                        clientName: stacked,
+                        requestedAt: 2,
+                        sessions: 2,
+                    },
+                    { requestId: "request-3", clientName: "Codex", requestedAt: 3 },
+                ]);
+                const rows = await p.$$eval(
+                    [
+                        "#agent-pairing .agent-pairing-list .pm-row",
+                        "#agent-pairing-requests .agent-pairing-list .pm-row",
+                        "#agent-clients-list .pm-row",
+                    ].join(", "),
+                    (rows) =>
+                        rows.map((row) => {
+                            const box = (el) => el.getBoundingClientRect().toJSON();
+                            const name = row.querySelector("bdi");
+                            return {
+                                row: box(row),
+                                name: box(name),
+                                // Allow and Deny, or Revoke
+                                buttons: box(
+                                    row.querySelector(".o-btns") ??
+                                        row.querySelector("button"),
+                                ),
+                                helps: [...row.querySelectorAll(".pm-row-help")].map(
+                                    box,
+                                ),
+                                // what a mark draws beyond the name's box is not shown
+                                clipped: [name, row].every(
+                                    (el) => getComputedStyle(el).overflow === "hidden",
+                                ),
+                                card: box(row.closest(".o-card")),
+                            };
+                        }),
+                );
+                expect(rows).toHaveLength(7);
+                for (const { row, name, buttons, helps, clipped, card } of rows) {
+                    expect(clipped).toBe(true);
+                    expect(name.right).toBeLessThanOrEqual(buttons.left);
+                    expect(name.left).toBeGreaterThanOrEqual(row.left);
+                    expect(name.top).toBeGreaterThanOrEqual(row.top);
+                    expect(row.right).toBeLessThanOrEqual(card.right);
+                    for (const help of helps) {
+                        expect(help.top).toBeGreaterThanOrEqual(name.bottom);
+                        expect(help.bottom).toBeLessThanOrEqual(row.bottom);
+                    }
+                }
+                // the long name wraps instead of widening the page
+                expect(rows[0].name.height).toBeGreaterThan(rows[2].name.height);
+                expect(
+                    await p.evaluate(
+                        () =>
+                            document.documentElement.scrollWidth <=
+                            document.documentElement.clientWidth,
+                    ),
+                ).toBe(true);
+            } finally {
+                await page.evaluate(
+                    () =>
+                        new Promise((r) =>
+                            chrome.storage.local.remove("agentClients", r),
+                        ),
+                );
+            }
+        });
     });
 });
 

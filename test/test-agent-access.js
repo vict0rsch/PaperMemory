@@ -252,6 +252,7 @@ describe("Agent access background", () => {
         // is open
         let optionsPageTab;
         const badges = []; // the numbers of pairing requests the toolbar badge showed
+        let atStart; // the badge and the notification click listeners right after start
         let ingest; // the offscreen document's outcome for an ingest job
         const ingested = []; // the jobs it was given
         let connected = false;
@@ -454,6 +455,10 @@ describe("Agent access background", () => {
                 handleBackgroundMessage: () => {},
                 setPairingBadge: (count) => badges.push(count),
             });
+            atStart = {
+                badges: [...badges],
+                clickListeners: notificationListeners.length,
+            };
             expect(await waitFor(() => connected)).toBe(true);
             fromHost({
                 type: "host-ready",
@@ -467,6 +472,12 @@ describe("Agent access background", () => {
             Date.now = now;
             global.chrome = previousChrome;
             if (previousChrome === undefined) delete global.chrome;
+        });
+
+        it("clears, on start, the count a previous worker left on the badge, and hears clicks on a notification it showed", () => {
+            // the pairing requests died with that worker; a click on its notification
+            // wakes this one, which listens from its first turn
+            expect(atStart).toEqual({ badges: [0], clickListeners: 1 });
         });
 
         it("answers a client's message with an id as a request, never as the host's", async () => {
@@ -509,6 +520,7 @@ describe("Agent access background", () => {
                 requestId: expect.any(String),
                 clientName: "Cursor",
                 requestedAt: expect.any(Number),
+                sessions: 1,
             });
             // the open options pages and popup ask for the list again
             expect(broadcasts).toEqual(["agent-pairing-changed"]);
@@ -590,13 +602,20 @@ describe("Agent access background", () => {
             expect(listed.map((r) => r.clientName)).toEqual(
                 Array.from({ length: 10 }, (_, i) => `Agent ${i}`),
             );
+            // the options page sees how many sessions wait: one per connection
+            expect(listed.map((r) => r.sessions)).toEqual([
+                2, 1, 1, 1, 1, 1, 1, 1, 1, 1,
+            ]);
             expect(badges).toEqual([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
             const busy = await request(40, "pair", { clientName: "Agent 10" });
             expect(busy.error.code).toBe("busy");
             // a client already waiting still joins its request
             const third = send(41, "pair", { clientName: "Agent 0" });
             expect(await answerTo(third, 50)).toBeNull();
-            expect(await listRequests()).toEqual(listed);
+            expect(await listRequests()).toEqual([
+                { ...listed[0], sessions: 3 },
+                ...listed.slice(1),
+            ]);
             // one decision answers every request that joined it, with one credential
             expect(await decide(first.pending.requestId, true)).toBe(true);
             const answers = await Promise.all(
@@ -739,6 +758,171 @@ describe("Agent access background", () => {
             expect((await answerTo(notified.id)).ok).toBe(true);
             expect(notifications.size).toBe(0);
             granted.delete("notifications");
+        });
+
+        it("shows at most one notification every 30 s: the badge and the open pages still show each new request", async () => {
+            granted.add("notifications");
+            clock += 30000; // the last notification is older than that
+            const title = () => notifications.get("pm-agent-pairing")?.title;
+            try {
+                await pair(130, "Aider");
+                expect(await waitFor(title)).toBe("Aider wants to use PaperMemory");
+                badges.length = 0;
+                broadcasts.length = 0;
+                clock += 25000;
+                await pair(131, "Bolt");
+                await new Promise((resolve) => setTimeout(resolve, 20));
+                expect(title()).toBe("Aider wants to use PaperMemory");
+                expect(badges).toEqual([2]);
+                expect(broadcasts).toEqual(["agent-pairing-changed"]);
+                clock += 5000; // 30 s after the last one
+                await pair(132, "Continue");
+                const notified = () => title() === "Continue wants to use PaperMemory";
+                expect(await waitFor(notified)).toBe(true);
+            } finally {
+                granted.delete("notifications");
+                for (const conn of [130, 131, 132]) {
+                    fromHost({ type: "client-closed", conn });
+                }
+            }
+            expect(await listRequests()).toEqual([]);
+            expect(notifications.size).toBe(0);
+        });
+
+        it("cleans a client's name once: names that differ only by invisible characters or spacing join one request, and it is shown, stored and written in Provenance as one; a name with nothing visible is refused", async () => {
+            const shown = "Claude Code";
+            const first = await pair(140, "  Claude\u00a0Code\u200b", shown);
+            // spaces, the Hangul filler, bidi embedding, the Braille blank, a variation
+            // selector: each joins the first request
+            const variants = [
+                "Claude Code",
+                "Claude\u3164Code",
+                "\u202aClaude  Code\u202c",
+                "Claude\u2800Code",
+                "Claude Code\ufe0f",
+            ];
+            const joined = variants.map((clientName, i) =>
+                send(141 + i, "pair", { clientName }),
+            );
+            expect(await listRequests()).toEqual([{ ...first.pending, sessions: 6 }]);
+            for (const clientName of [
+                "\u3164",
+                "\u2800 \u115f",
+                "\u0301\u0302", // combining marks only
+                "\u200b\u034f\u2060",
+            ]) {
+                const refused = await request(146, "pair", { clientName });
+                expect(refused.error.code).toBe("bad-args");
+            }
+            expect(await decide(first.pending.requestId, true)).toBe(true);
+            const answers = await Promise.all(
+                [first.id, ...joined].map((id) => answerTo(id)),
+            );
+            answers.forEach((a) => expect(a.result).toEqual(answers[0].result));
+            const { clientId, secret } = answers[0].result;
+            expect(storage.agentClients[clientId].clientName).toBe(shown);
+            // its add: the Provenance and the note's line name it the same
+            const newId = "Arxiv-2101.00011";
+            ingest = async ({ tags, provenance }) => {
+                const paper = { ...makePaper(newId), tags, provenance };
+                storage.papers = { ...storage.papers, [newId]: paper };
+                return { status: "stored", id: newId };
+            };
+            const clientAuth = { clientId, secret, sessionId: auth.sessionId };
+            const args = { url, tags: [], reason: "Why" };
+            const added = await request(147, "add_paper", args, clientAuth);
+            expect(added.result.paper.provenance.clientName).toBe(shown);
+            expect(storage.papers[newId].note).toBe(`Added by ${shown}: Why`);
+        });
+
+        it("lets at most 16 sessions wait for one pairing request, then answers busy", async () => {
+            const aider = await pair(150, "Aider");
+            const joined = [];
+            for (let conn = 151; conn < 166; conn++) {
+                joined.push(send(conn, "pair", { clientName: "Aider" }));
+            }
+            expect((await requestOf("Aider")).sessions).toBe(16);
+            // a new connection, one already waiting, the name with an invisible character
+            for (const [conn, clientName] of [
+                [166, "Aider"],
+                [151, "Aider"],
+                [167, "Aider\u200b"],
+            ]) {
+                expect((await request(conn, "pair", { clientName })).error).toEqual({
+                    code: "busy",
+                    message:
+                        "Too many sessions are waiting for this pairing request: try again later",
+                });
+            }
+            expect((await requestOf("Aider")).sessions).toBe(16);
+            // the decision answers the 16
+            expect(await decide(aider.pending.requestId, false)).toBe(true);
+            for (const id of [aider.id, ...joined]) {
+                expect((await answerTo(id)).error.code).toBe("denied");
+            }
+            clock += 60000; // the Deny's cooldown
+        });
+
+        // the next writes of agentClients, held until `release` (a slow storage write)
+        const holdClientsWrite = () => {
+            const { set } = chrome.storage.local;
+            const held = { writing: false };
+            let open;
+            const gate = new Promise((resolve) => (open = resolve));
+            chrome.storage.local.set = (items, cb) => {
+                if (!items.agentClients) return set(items, cb);
+                held.writing = true;
+                gate.then(() => set(items, cb));
+            };
+            held.release = () => {
+                chrome.storage.local.set = set;
+                open();
+            };
+            return held;
+        };
+        const pairedNames = () =>
+            Object.values(storage.agentClients).map((c) => c.clientName);
+
+        it("keeps an allowed request until its credential is stored: the same client asking meanwhile joins it", async () => {
+            const roo = await pair(170, "Roo");
+            const held = holdClientsWrite();
+            const deciding = decide(roo.pending.requestId, true);
+            let joined;
+            try {
+                expect(await waitFor(() => held.writing)).toBe(true);
+                // another session asks while the credential is being stored: no new
+                // request
+                joined = send(171, "pair", { clientName: "Roo" });
+                expect(await listRequests()).toEqual([{ ...roo.pending, sessions: 2 }]);
+            } finally {
+                held.release();
+            }
+            expect(await deciding).toBe(true);
+            const [first, second] = await Promise.all([
+                answerTo(roo.id),
+                answerTo(joined),
+            ]);
+            expect(second.result).toEqual(first.result);
+            expect(pairedNames().filter((name) => name === "Roo")).toHaveLength(1);
+            expect(await listRequests()).toEqual([]);
+        });
+
+        it("keeps no Paired client nobody received: the sessions waiting ended while it was stored", async () => {
+            const kilo = await pair(172, "Kilo");
+            const held = holdClientsWrite();
+            const deciding = decide(kilo.pending.requestId, true);
+            try {
+                expect(await waitFor(() => held.writing)).toBe(true);
+                fromHost({ type: "client-closed", conn: 172 });
+            } finally {
+                held.release();
+            }
+            // the options page says the request expired
+            expect(await deciding).toBe(false);
+            expect(pairedNames()).not.toContain("Kilo");
+            expect(await listRequests()).toEqual([]);
+            expect(badges.at(-1)).toBe(0);
+            expect(await answerTo(kilo.id, 50)).toBeNull();
         });
 
         it("removes the Project a failed first add created, keeps one a stored add created", async () => {

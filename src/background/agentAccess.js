@@ -26,6 +26,7 @@ import {
     isOwnAddition,
     checkRate,
     removeControlChars,
+    cleanClientName,
     sha256Hex,
 } from "@pmu/agentOps.js";
 import { ingest, filterStorageRequest } from "@pm/background/agentIngest.js";
@@ -43,8 +44,12 @@ const KEEPALIVE_ALARM = "pm-agent-keepalive";
 // the Native host exits on a larger message
 const MAX_MESSAGE_BYTES = 1024 * 1024;
 const MAX_PENDING_PAIRINGS = 10;
-// the OS notification of the latest pairing request (one at a time)
+// the requests waiting for one pairing request's decision (sessions of one client name)
+const MAX_PAIRING_WAITERS = 16;
+// the OS notification of the latest pairing request (one at a time), at most one every
+// 30 s
 const PAIRING_NOTIFICATION = "pm-agent-pairing";
+const NOTIFICATION_INTERVAL_MS = 30000;
 const DENY_COOLDOWN_MS = 60000;
 const MAX_QUEUED_JOBS = 50;
 const JOB_START_DEADLINE_MS = 30000;
@@ -87,10 +92,12 @@ let library = null; // {libraryId, label, browser}
 // the Native host's version and protocol range, for the options page
 let status = { connected: false };
 // the pairing requests waiting for the user, by request id, oldest first: {requestId,
-// clientName, requestedAt, waiters}, waiters being the requests ({port, id, conn})
-// answered with the user's decision
+// clientName, requestedAt, waiters, deciding}, waiters being the requests ({port, id,
+// conn}) answered with the user's decision, deciding true once the user decided (while
+// its credential is stored)
 const pairings = new Map();
 let notifiedPairing = null; // the pairing request the OS notification names
+let notifiedAt = -Infinity; // when the last OS notification was shown
 let deniedAt = -Infinity; // when the user last denied a pairing request
 const revokedClients = new Set(); // client ids revoked since the worker started
 let disables = 0; // times Agent access was turned off since the worker started
@@ -633,11 +640,6 @@ const runQueue = async () => {
 // -----  Pairing  -----
 // ---------------------
 
-// a client's name for the user: it chose it, so it is shown as plain text, without
-// control or format characters (e.g. bidi overrides), cut to 64 characters
-const displayName = (clientName) =>
-    [...removeControlChars(clientName).replace(/\p{Cf}/gu, "")].slice(0, 64).join("");
-
 // the pending pairing requests changed: the toolbar badge shows their count, and the
 // open options pages and popup ask for them again (agent-pairing-requests). No page may
 // be open: reading lastError keeps that quiet
@@ -706,11 +708,15 @@ const onNotificationClicked = (notificationId) => {
 };
 
 // an OS notification of a new pairing request, for a user in another application,
-// only if they granted the permission
+// only if they granted the permission, and none was shown in the last 30 s (the badge,
+// the popup and the options page still show the request)
 const notifyPairing = async (pending) => {
     // Chrome may lack the API in a worker that started before the permission was granted
     if (!chrome.notifications || !(await hasNotifications())) return;
     if (!pairings.has(pending.requestId)) return; // decided meanwhile
+    if (Date.now() - notifiedAt < NOTIFICATION_INTERVAL_MS) return;
+    notifiedAt = Date.now();
+    // granted after this worker started (Firefox): listened to from now on
     if (!chrome.notifications.onClicked.hasListener(onNotificationClicked)) {
         chrome.notifications.onClicked.addListener(onNotificationClicked);
     }
@@ -718,18 +724,26 @@ const notifyPairing = async (pending) => {
     chrome.notifications.create(PAIRING_NOTIFICATION, {
         type: "basic",
         iconUrl: chrome.runtime.getURL("icons/icon-128.png"),
-        title: `${displayName(pending.clientName)} wants to use PaperMemory`,
+        title: `${pending.clientName} wants to use PaperMemory`,
         message: "Click to allow or deny it in PaperMemory's options.",
     });
 };
 
-// ask the user to allow a client: the request waits, listed in the options page, until
-// the user decides (every waiter gets the decision) or no connection waits for it
-// anymore. The same client asking again, on any connection, joins its request
+// ask the user to allow a client, by its cleaned name (cleanClientName): the request
+// waits, listed in the options page, until the user decides (every waiter gets the
+// decision) or no connection waits for it anymore. The same client asking again, on
+// any connection, joins its request (at most 16 wait for one, then busy); the options
+// page shows how many sessions wait
 const pair = async (request, clientName) => {
     const waiter = { port: request.port, id: request.id, conn: request.conn };
     const asked = [...pairings.values()].find((p) => p.clientName === clientName);
     if (asked) {
+        if (asked.waiters.length >= MAX_PAIRING_WAITERS) {
+            return failure(
+                "busy",
+                "Too many sessions are waiting for this pairing request: try again later",
+            );
+        }
         asked.waiters.push(waiter);
         return;
     }
@@ -761,20 +775,26 @@ const pair = async (request, clientName) => {
     notifyPairing(pending).catch((e) => logError("[agentAccess] notification:", e));
 };
 
-// the pending pairing requests, for the options page and the popup, oldest first
+// the pending pairing requests, for the options page and the popup, oldest first, with
+// the number of connections (Agent sessions) waiting for each
 const listPairings = () =>
-    [...pairings.values()].map(({ requestId, clientName, requestedAt }) => ({
+    [...pairings.values()].map(({ requestId, clientName, requestedAt, waiters }) => ({
         requestId,
-        clientName: displayName(clientName),
+        clientName,
         requestedAt,
+        sessions: new Set(waiters.map((waiter) => waiter.conn)).size,
     }));
 
 // the user's decision on a pending pairing request, accepted once, only from the
-// options page (isValidPairSender); anything but `allow: true` denies it
+// options page (isValidPairSender); anything but `allow: true` denies it. The request
+// stays pending until its credential is stored, so that the same client asking
+// meanwhile joins it and gets the same answer. If it ended meanwhile (its last session
+// ended, or Agent access was turned off), nobody received the credential: it is
+// revoked at once, and the decision answered as expired
 const decidePairing = async (message, sender) => {
     const pending = pairings.get(message.requestId);
-    if (!pending || !isValidPairSender(sender)) return false;
-    endPairing(pending, null);
+    if (!pending || pending.deciding || !isValidPairSender(sender)) return false;
+    pending.deciding = true;
     let outcome;
     if (message.allow !== true) {
         deniedAt = Date.now();
@@ -787,7 +807,11 @@ const decidePairing = async (message, sender) => {
             outcome = INTERNAL;
         }
     }
-    pending.waiters.forEach((waiter) => post(waiter, outcome));
+    if (pairings.get(pending.requestId) !== pending) {
+        if (outcome.result) await revokeClient(outcome.result.clientId);
+        return false;
+    }
+    endPairing(pending, outcome);
     return true;
 };
 
@@ -827,7 +851,8 @@ const answer = async (request, protocol) => {
         const invalid = validateArgs(op, args, {});
         if (invalid) return { error: invalid };
         if (op === "hello") return { result: await hello() };
-        return pair(request, removeControlChars(args.clientName));
+        // the one name compared, shown, stored and written in Provenance
+        return pair(request, cleanClientName(args.clientName));
     }
     const isRead = READS.hasOwnProperty(op);
     if (!isRead && !MUTATIONS.hasOwnProperty(op)) {
@@ -1037,13 +1062,17 @@ export const initAgentAccess = ({
 }) => {
     pushSync = pushSyncPapers;
     pairingBadge = setPairingBadge;
+    // a new worker has no pairing request: clear the count a previous one left
+    pairingBadge(0);
     if (import.meta.env.FIREFOX) {
         // ingest runs in this background page, and Sources fetch through
         // sendMessageToBackground: a context never receives its own runtime messages
         setLocalBackgroundHandler(handleBackgroundMessage);
     }
-    // registered synchronously, so that these events wake the worker
+    // registered synchronously, so that these events wake the worker (a click on a
+    // notification a previous worker showed too)
     chrome.runtime.onMessage.addListener(onExtensionMessage);
+    chrome.notifications?.onClicked.addListener(onNotificationClicked);
     chrome.runtime.onStartup.addListener(ensureConnected);
     chrome.alarms.onAlarm.addListener((alarm) => {
         if (alarm.name === KEEPALIVE_ALARM) ensureConnected();

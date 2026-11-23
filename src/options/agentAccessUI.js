@@ -169,7 +169,17 @@ const decide = async ({ requestId, clientName }, allow) => {
     refreshPairingRequests();
 };
 
-// a pairing request: the client's name and when it asked, with Allow and Deny
+// when a client asked: the time, and the date unless it is today
+const askedWhen = (requestedAt) => {
+    const date = new Date(requestedAt);
+    const time = date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    if (date.toDateString() === new Date().toDateString()) return `at ${time}`;
+    return `on ${date.toLocaleDateString()} at ${time}`;
+};
+
+// a pairing request: the client's name and when it asked, with Allow and Deny, and how
+// many sessions wait for it when several do (sessions of the same name join one
+// request: the user sees when something else joined)
 const makeRequestRow = (request) => {
     const buttons = ["Allow", "Deny"].map((label) => {
         const button = element("button", "pm-btn", label);
@@ -178,10 +188,18 @@ const makeRequestRow = (request) => {
         button.addEventListener("click", () => decide(request, label === "Allow"));
         return button;
     });
-    const askedAt = new Date(request.requestedAt).toLocaleTimeString([], {
-        hour: "2-digit",
-        minute: "2-digit",
-    });
+    const help = [
+        element(
+            "div",
+            "pm-row-help",
+            `Asked ${askedWhen(request.requestedAt)} to search your Memory and add papers to it`,
+        ),
+    ];
+    if (request.sessions > 1) {
+        help.push(
+            element("div", "pm-row-help", `${request.sessions} sessions waiting`),
+        );
+    }
     return element(
         "div",
         "pm-row o-row",
@@ -190,11 +208,7 @@ const makeRequestRow = (request) => {
             "pm-row-text",
             // bdi: the name's text direction cannot change the text around it
             element("div", "pm-row-label", element("bdi", "", request.clientName)),
-            element(
-                "div",
-                "pm-row-help",
-                `Asked at ${askedAt} to search your Memory and add papers to it`,
-            ),
+            ...help,
         ),
         element("div", "o-btns", ...buttons),
     );
