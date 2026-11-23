@@ -50,8 +50,8 @@ function projectDirs(...names) {
 
 // Minimal MCP client on the server's stdio. `roots`: undefined (no capability), an array, or "silent".
 // `oneChunk`: write initialize, initialized and tools/list in a single write instead of waiting.
-async function startServe({ home, cwd, roots, oneChunk = false }) {
-    const child = spawn(process.execPath, [CLI, "serve"], { cwd, env: { ...process.env, HOME: home } });
+async function startServe({ home, cwd, roots, oneChunk = false, nodeArgs = [] }) {
+    const child = spawn(process.execPath, [...nodeArgs, CLI, "serve"], { cwd, env: { ...process.env, HOME: home } });
     children.push(child);
     const pending = new Map();
     const stray = [];
@@ -199,7 +199,8 @@ const credentialPath = (home) =>
         `${crypto.createHash("sha256").update(CLIENT).digest("hex").slice(0, 16)}.json`,
     );
 
-const PAIRING_REQUIRED = `pairing-required: Tell the user: "PaperMemory needs your OK to let ${CLIENT} use it: switch to Chrome and click **Allow** on the PaperMemory tab that just opened (the request stays open for 2 minutes)." Then, once they have clicked Allow, call this tool again.`;
+const PAIRING_REQUIRED = `pairing-required: Stop and ask the user before doing anything else with PaperMemory. Tell them: "${CLIENT} is asking to use your PaperMemory library. Open PaperMemory's settings in Chrome (click the PaperMemory toolbar icon, which shows a red badge, then the settings link, or the notification), go to Agent access and click **Allow** next to ${CLIENT}." When they say they have allowed it, call connect (or this tool) again.`;
+const WHERE = "in PaperMemory's settings in Chrome (click the PaperMemory toolbar icon, then the settings link), under Agent access";
 
 test("tools, cwd Project with no Library, no pairing, silent selfheal", async () => {
     const home = tempHome();
@@ -311,9 +312,9 @@ test("pairs on first use, saves the credential, sends auth; unauthorized deletes
     const [demo] = projectDirs("demo-project");
     const s = await startServe({ home, cwd: demo });
 
-    // No credential yet: get_project only probes (hello), never pairs.
-    assert.equal(json(await s.call("get_project")).tag, undefined);
-    assert.deepEqual(seen.map((r) => r.op), ["hello"]);
+    // No credential yet: get_project pairs (the fake Library allows at once), then reads the Project info.
+    assert.equal(json(await s.call("get_project")).tag, "tag created on first add");
+    assert.deepEqual(seen.map((r) => r.op), ["hello", "pair", "get_project_info"]);
 
     // First authenticated call pairs, then forwards args (minus `library`, unknown keys included).
     json(await s.call("search_papers", { query: "x", library: "auto", projectKey: "from-the-model" }));
@@ -364,7 +365,10 @@ test("pairs on first use, saves the credential, sends auth; unauthorized deletes
     secret = "test-secret-2";
     const denied = await s.call("search_papers", { query: "z" });
     assert.equal(denied.isError, true);
-    assert.match(denied.content[0].text, /^unauthorized: .*pair it again/);
+    assert.equal(
+        denied.content[0].text,
+        `unauthorized: PaperMemory no longer accepts ${CLIENT}: the user must pair it again. The next PaperMemory call asks them again (a notification, a red badge on the PaperMemory toolbar icon and a red dot on Agent access ${WHERE}).`,
+    );
     assert.ok(!fs.existsSync(credFile));
 
     // set_project({none: true}) drops the Project for this process.
@@ -468,7 +472,7 @@ test("after a Deny the next call pairs again; PaperMemory's cooldown is relayed 
     assert.equal(refused.isError, true);
     assert.equal(
         refused.content[0].text,
-        `rate-limited: The user denied a PaperMemory pairing request less than a minute ago, so PaperMemory refuses new ones for now. Ask the user whether ${CLIENT} may use PaperMemory. If they agree, call this tool again in a minute: PaperMemory then opens a tab in Chrome where they click **Allow**.`,
+        `rate-limited: The user denied a PaperMemory pairing request less than a minute ago, so PaperMemory refuses new ones for now. Ask the user whether ${CLIENT} may use PaperMemory. If they agree, call this tool again in a minute: PaperMemory then asks them again (a notification, a red badge on the PaperMemory toolbar icon and a red dot on Agent access ${WHERE}), and they click **Allow** next to ${CLIENT}.`,
     );
     assert.equal(pairs().length, 2);
 
@@ -500,7 +504,10 @@ test("connect: pairing-required, paired once the user allows, then already paire
     const connect = s.tools.find((t) => t.name === "connect");
     assert.deepEqual(Object.keys(connect.inputSchema.properties), ["library"]);
     assert.match(connect.description, /right after confirming the project with the user/);
-    assert.match(connect.description, /click \*\*Allow\*\* in their browser/);
+    assert.match(connect.description, /stop, tell the user what the answer says/);
+    assert.match(connect.description, /click \*\*Allow\*\* next to your name under Agent access in PaperMemory's settings/);
+    assert.match(connect.description, /once they say they have allowed it/);
+    assert.doesNotMatch(connect.description, /tab/);
 
     assert.equal((await s.call("connect")).content[0].text, PAIRING_REQUIRED);
 
@@ -518,7 +525,7 @@ test("connect: pairing-required, paired once the user allows, then already paire
     secret = "test-secret-2";
     const revoked = await s.call("connect");
     assert.equal(revoked.isError, true);
-    assert.match(revoked.content[0].text, /^unauthorized: .*pair it again \(the next PaperMemory call asks them again in Chrome\)/);
+    assert.match(revoked.content[0].text, /^unauthorized: .*must pair it again\. The next PaperMemory call asks them again \(.*settings in Chrome/);
     assert.ok(!fs.existsSync(credentialPath(home)));
     await s.close();
 });
@@ -550,7 +557,112 @@ test("Agent access turned off (`disabled`) keeps the credential; only `unauthori
     assert.equal(seen.at(-1).auth.secret, "test-secret-1");
 
     reply = { ok: false, error: { code: "unauthorized", message: "unknown client" } };
-    assert.match((await s.call("search_papers", { query: "w" })).content[0].text, /^unauthorized: .*pair it again/);
+    assert.match((await s.call("search_papers", { query: "w" })).content[0].text, /^unauthorized: .*must pair it again/);
     assert.ok(!fs.existsSync(credentialPath(home)));
+    await s.close();
+});
+
+test("get_project and list_libraries ask for pairing when unpaired, and still answer", async () => {
+    for (const first of ["get_project", "list_libraries"]) {
+        const home = installedHome();
+        const decision = held();
+        const seen = await fakeLibrary(home, {
+            pair: () => decision.promise,
+            get_project_info: () => ({ ok: true, result: { label: null } }),
+        });
+        const pairs = () => seen.filter((r) => r.op === "pair");
+        const [demo] = projectDirs("demo-project");
+        const s = await startServe({ home, cwd: demo });
+
+        // The answer carries the data, then the instruction, as an error.
+        const r = await s.call(first);
+        assert.equal(r.isError, true);
+        assert.equal(r.content.length, 2);
+        assert.equal(r.content[1].text, PAIRING_REQUIRED);
+        const data = JSON.parse(r.content[0].text);
+        if (first === "get_project") {
+            assert.equal(data.project, "demo-project");
+            assert.equal(data.tag, undefined);
+        } else {
+            assert.deepEqual(data.map((l) => l.libraryId), [LIB_ID]);
+        }
+        assert.equal(pairs().length, 1);
+
+        // Any other call, or the other tool, joins the same pending request.
+        const other = first === "get_project" ? "list_libraries" : "get_project";
+        assert.equal((await s.call(other)).content[1].text, PAIRING_REQUIRED);
+        assert.equal((await s.call("search_papers", { query: "x" })).content[0].text, PAIRING_REQUIRED);
+        assert.equal(pairs().length, 1);
+
+        // Allowed: the next calls succeed without a second `pair`.
+        decision.answer({ ok: true, result: { clientId: "client-1", secret: "test-secret-1" } });
+        await until(() => fs.existsSync(credentialPath(home)));
+        const again = await s.call(first);
+        assert.ok(!again.isError, again.content[0].text);
+        assert.equal(again.content.length, 1);
+        if (first === "get_project") assert.equal(JSON.parse(again.content[0].text).tag, "tag created on first add");
+        json(await s.call(other));
+        assert.equal(pairs().length, 1);
+        await s.close();
+    }
+});
+
+test("get_project without a Project still asks for pairing", async () => {
+    const home = installedHome();
+    const seen = await fakeLibrary(home, { pair: () => held().promise });
+    const s = await startServe({ home, cwd: home });
+    const r = await s.call("get_project");
+    assert.equal(r.isError, true);
+    assert.equal(JSON.parse(r.content[0].text).project, null);
+    assert.equal(r.content[1].text, PAIRING_REQUIRED);
+    assert.equal(seen.filter((x) => x.op === "pair").length, 1);
+    await s.close();
+});
+
+test("busy and denied are relayed with the settings wording", async () => {
+    const home = installedHome();
+    let reply = { ok: false, error: { code: "busy", message: "another request is pending" } };
+    await fakeLibrary(home, { pair: () => reply });
+    const [demo] = projectDirs("demo-project");
+    const s = await startServe({ home, cwd: demo });
+    assert.equal(
+        (await s.call("search_papers", { query: "x" })).content[0].text,
+        `busy: Another PaperMemory pairing request is waiting for the user in Chrome. Ask the user to answer it ${WHERE}, then call this tool again.`,
+    );
+    reply = { ok: false, error: { code: "denied", message: "The user denied this client access" } };
+    assert.equal(
+        (await s.call("search_papers", { query: "x" })).content[0].text,
+        `denied: The user denied ${CLIENT} access to PaperMemory. Do not ask again unless the user says otherwise. If they change their mind, call this tool again in a minute: they then click **Allow** next to ${CLIENT} ${WHERE}.`,
+    );
+    await s.close();
+});
+
+test("the pending pair outlives the old 130 s limit while the process lives", async () => {
+    const home = installedHome();
+    // Preload: timers of 120 s or more run 1000 times faster, so a 130 s limit would fire after 130 ms.
+    const preload = path.join(home, "fast-timers.mjs");
+    fs.writeFileSync(
+        preload,
+        "const t = globalThis.setTimeout;\nglobalThis.setTimeout = (fn, ms, ...a) => t(fn, ms >= 120000 ? ms / 1000 : ms, ...a);\n",
+    );
+    const decision = held();
+    const seen = await fakeLibrary(home, {
+        pair: () => decision.promise,
+        search_papers: () => ({ ok: true, result: { total: 0, papers: [] } }),
+    });
+    const pairs = () => seen.filter((r) => r.op === "pair");
+    const [demo] = projectDirs("demo-project");
+    const s = await startServe({ home, cwd: demo, nodeArgs: ["--import", pathToFileURL(preload).href] });
+
+    assert.equal((await s.call("search_papers", { query: "x" })).content[0].text, PAIRING_REQUIRED);
+    await new Promise((r) => setTimeout(r, 1500)); // 1.5 s here is 25 minutes there
+    assert.ok(!pairs()[0].closed, "the pair request is still open");
+    assert.equal((await s.call("search_papers", { query: "y" })).content[0].text, PAIRING_REQUIRED);
+    assert.equal(pairs().length, 1);
+
+    decision.answer({ ok: true, result: { clientId: "client-1", secret: "test-secret-1" } });
+    await until(() => fs.existsSync(credentialPath(home)));
+    json(await s.call("search_papers", { query: "z" }));
+    assert.equal(pairs().length, 1);
     await s.close();
 });
