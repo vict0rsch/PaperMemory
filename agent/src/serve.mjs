@@ -144,27 +144,29 @@ export async function serve() {
     // and later calls wait for it instead of sending another `pair`. Once it ends, the next call pairs again.
     const pairing = new Map();
     const browserOf = (lib) => lib.browser || "the browser";
-    const whereToAllow = (lib) =>
-        `in PaperMemory's settings in ${browserOf(lib)} (click the PaperMemory toolbar icon, then the settings link), under Agent access`;
+    // The way to the Allow button: the popup's banner opens Agent access in PaperMemory's settings.
+    const wayToAllow = (lib) =>
+        `click the PaperMemory toolbar icon in ${browserOf(lib)} (red badge) and then the banner '${clientName()} is waiting for your OK', or the notification, or open PaperMemory's settings → Agent access, then click **Allow** next to ${clientName()}`;
 
     // PaperMemory's refusals to start a pairing, told so that the agent can relay them
     function pairingRefusal(err, lib) {
         if (err.code === "rate-limited") {
             return opError(
                 err.code,
-                `The user denied a PaperMemory pairing request less than a minute ago, so PaperMemory refuses new ones for now. Ask the user whether ${clientName()} may use PaperMemory. If they agree, call this tool again in a minute: PaperMemory then asks them again (a notification, a red badge on the PaperMemory toolbar icon and a red dot on Agent access ${whereToAllow(lib)}), and they click **Allow** next to ${clientName()}.`,
+                `The user denied a PaperMemory pairing request less than a minute ago, so PaperMemory refuses new ones for now. Ask the user whether ${clientName()} may use PaperMemory. If they agree, call this tool again in a minute: PaperMemory then asks them again, and they ${wayToAllow(lib)}.`,
             );
         }
+        // too many requests wait, or too many sessions wait for this client's request
         if (err.code === "busy") {
             return opError(
                 err.code,
-                `Too many PaperMemory pairing requests are waiting for the user in ${browserOf(lib)} (at most 10). Ask the user to answer them ${whereToAllow(lib)}, then call this tool again.`,
+                `Too many PaperMemory pairing requests are waiting for the user. Ask the user to answer them: click the PaperMemory toolbar icon in ${browserOf(lib)} (red badge) and then its banner, or open PaperMemory's settings → Agent access. Then call this tool again.`,
             );
         }
         if (err.code === "denied") {
             return opError(
                 err.code,
-                `The user denied ${clientName()} access to PaperMemory. Do not ask again unless the user says otherwise. If they change their mind, call this tool again in a minute: they then click **Allow** next to ${clientName()} ${whereToAllow(lib)}.`,
+                `The user denied ${clientName()} access to PaperMemory. Do not ask again unless the user says otherwise. If they change their mind, call this tool again in a minute: they then ${wayToAllow(lib)}.`,
             );
         }
         return err;
@@ -205,7 +207,7 @@ export async function serve() {
         throw aboutPairing(
             opError(
                 "pairing-required",
-                `Stop and ask the user before doing anything else with PaperMemory. Tell them: "${clientName()} is asking to use your PaperMemory library. Open PaperMemory's settings in ${browserOf(lib)} (click the PaperMemory toolbar icon, which shows a red badge, then the settings link, or the notification), go to Agent access and click **Allow** next to ${clientName()}." When they say they have allowed it, call connect (or this tool) again.`,
+                `Stop and ask the user before doing anything else with PaperMemory. Tell them: "${clientName()} is asking to use your PaperMemory library. To allow it, ${wayToAllow(lib)}." When they say they have allowed it, call connect (or this tool) again.`,
             ),
         );
     }
@@ -225,7 +227,7 @@ export async function serve() {
             fs.rmSync(file, { force: true });
             throw opError(
                 "unauthorized",
-                `PaperMemory no longer accepts ${clientName()}: the user must pair it again. The next PaperMemory call asks them again (a notification, a red badge on the PaperMemory toolbar icon and a red dot on Agent access ${whereToAllow(lib)}).`,
+                `PaperMemory no longer accepts ${clientName()}: the user must pair it again. The next PaperMemory call asks them again, and they ${wayToAllow(lib)}.`,
             );
         }
     }
@@ -329,11 +331,12 @@ export async function serve() {
 
     register(
         "list_libraries",
-        "List the PaperMemory libraries connected now (one per browser profile with Agent access on), with their labels and paper counts. When several are listed, ask the user which one to use. It also asks to pair with each library you are not paired with; it then answers `pairing-required` after the list: follow it.",
+        "List the PaperMemory libraries connected now (one per browser profile with Agent access on), with their labels and paper counts. When several are listed, ask the user which one to use and pass it as `library`: you pair with that one on your first call that names it. When exactly one is listed and you are not paired with it, it also asks to pair; it then answers `pairing-required` after the list: follow it.",
         undefined,
         async () => {
             const libs = await listLibraries();
-            return withPairing(libs, await pairingErrors(libs));
+            // Several: no pairing request in a library the user may not want this agent in.
+            return withPairing(libs, libs.length === 1 ? await pairingErrors(libs) : []);
         },
     );
     register(

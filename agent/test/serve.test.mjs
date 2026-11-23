@@ -137,8 +137,8 @@ const json = (result) => {
 };
 
 // Fake Library socket: records each request; `replies[op](req)` gives `{ok, result|error}`, or a promise of it.
-// A request gets `closed: true` once its connection closes.
-async function fakeLibrary(home, replies) {
+// A request gets `closed: true` once its connection closes. `libraryId` and `label`: another Library.
+async function fakeLibrary(home, replies, { libraryId = LIB_ID, label = "Chrome · aaaaaa" } = {}) {
     const seen = [];
     const server = net.createServer((socket) => {
         let buf = "";
@@ -156,8 +156,8 @@ async function fakeLibrary(home, replies) {
                     ? {
                           ok: true,
                           result: {
-                              protocolMin: 1, protocolMax: 1, libraryId: LIB_ID,
-                              label: "Chrome · aaaaaa", browser: "Chrome", paperCount: 0,
+                              protocolMin: 1, protocolMax: 1, libraryId,
+                              label, browser: "Chrome", paperCount: 0,
                           },
                       }
                     : await replies[req.op](req);
@@ -166,7 +166,7 @@ async function fakeLibrary(home, replies) {
     });
     servers.push(server);
     fs.mkdirSync(path.join(home, ".papermemory", "sock"), { recursive: true });
-    await new Promise((resolve) => server.listen(socketPathFor(home, LIB_ID), resolve));
+    await new Promise((resolve) => server.listen(socketPathFor(home, libraryId), resolve));
     return seen;
 }
 
@@ -199,8 +199,9 @@ const credentialPath = (home) =>
         `${crypto.createHash("sha256").update(CLIENT).digest("hex").slice(0, 16)}.json`,
     );
 
-const PAIRING_REQUIRED = `pairing-required: Stop and ask the user before doing anything else with PaperMemory. Tell them: "${CLIENT} is asking to use your PaperMemory library. Open PaperMemory's settings in Chrome (click the PaperMemory toolbar icon, which shows a red badge, then the settings link, or the notification), go to Agent access and click **Allow** next to ${CLIENT}." When they say they have allowed it, call connect (or this tool) again.`;
-const WHERE = "in PaperMemory's settings in Chrome (click the PaperMemory toolbar icon, then the settings link), under Agent access";
+// The way to the Allow button, as the popup and the options page show it (the popup's banner opens Agent access).
+const WAY = `click the PaperMemory toolbar icon in Chrome (red badge) and then the banner '${CLIENT} is waiting for your OK', or the notification, or open PaperMemory's settings → Agent access, then click **Allow** next to ${CLIENT}`;
+const PAIRING_REQUIRED = `pairing-required: Stop and ask the user before doing anything else with PaperMemory. Tell them: "${CLIENT} is asking to use your PaperMemory library. To allow it, ${WAY}." When they say they have allowed it, call connect (or this tool) again.`;
 
 test("tools, cwd Project with no Library, no pairing, silent selfheal", async () => {
     const home = tempHome();
@@ -367,7 +368,7 @@ test("pairs on first use, saves the credential, sends auth; unauthorized deletes
     assert.equal(denied.isError, true);
     assert.equal(
         denied.content[0].text,
-        `unauthorized: PaperMemory no longer accepts ${CLIENT}: the user must pair it again. The next PaperMemory call asks them again (a notification, a red badge on the PaperMemory toolbar icon and a red dot on Agent access ${WHERE}).`,
+        `unauthorized: PaperMemory no longer accepts ${CLIENT}: the user must pair it again. The next PaperMemory call asks them again, and they ${WAY}.`,
     );
     assert.ok(!fs.existsSync(credFile));
 
@@ -472,7 +473,7 @@ test("after a Deny the next call pairs again; PaperMemory's cooldown is relayed 
     assert.equal(refused.isError, true);
     assert.equal(
         refused.content[0].text,
-        `rate-limited: The user denied a PaperMemory pairing request less than a minute ago, so PaperMemory refuses new ones for now. Ask the user whether ${CLIENT} may use PaperMemory. If they agree, call this tool again in a minute: PaperMemory then asks them again (a notification, a red badge on the PaperMemory toolbar icon and a red dot on Agent access ${WHERE}), and they click **Allow** next to ${CLIENT}.`,
+        `rate-limited: The user denied a PaperMemory pairing request less than a minute ago, so PaperMemory refuses new ones for now. Ask the user whether ${CLIENT} may use PaperMemory. If they agree, call this tool again in a minute: PaperMemory then asks them again, and they ${WAY}.`,
     );
     assert.equal(pairs().length, 2);
 
@@ -525,7 +526,7 @@ test("connect: pairing-required, paired once the user allows, then already paire
     secret = "test-secret-2";
     const revoked = await s.call("connect");
     assert.equal(revoked.isError, true);
-    assert.match(revoked.content[0].text, /^unauthorized: .*must pair it again\. The next PaperMemory call asks them again \(.*settings in Chrome/);
+    assert.match(revoked.content[0].text, /^unauthorized: .*must pair it again\. The next PaperMemory call asks them again, and they click the PaperMemory toolbar icon in Chrome/);
     assert.ok(!fs.existsSync(credentialPath(home)));
     await s.close();
 });
@@ -607,6 +608,35 @@ test("get_project and list_libraries ask for pairing when unpaired, and still an
     }
 });
 
+test("list_libraries asks for no pairing when several libraries are connected; a call naming one pairs with it only", async () => {
+    const home = installedHome();
+    const second = "bbbbbbbb-0000-4000-8000-000000000002";
+    const ok = (result) => ({ ok: true, result });
+    const replies = {
+        pair: () => ok({ clientId: "client-1", secret: "test-secret-1" }),
+        search_papers: () => ok({ total: 0, papers: [] }),
+    };
+    const seenFirst = await fakeLibrary(home, replies);
+    const seenSecond = await fakeLibrary(home, replies, { libraryId: second, label: "Chrome · bbbbbb" });
+    const pairs = (seen) => seen.filter((r) => r.op === "pair").length;
+    const [demo] = projectDirs("demo-project");
+    const s = await startServe({ home, cwd: demo });
+    const tool = s.tools.find((t) => t.name === "list_libraries");
+    assert.match(tool.description, /When several are listed, ask the user which one to use and pass it as `library`/);
+
+    // The list only: no pairing request in a library the user may not want this agent in.
+    const listed = json(await s.call("list_libraries"));
+    assert.deepEqual(listed.map((l) => l.libraryId).sort(), [LIB_ID, second]);
+    assert.equal(json(await s.call("get_project")).tag, undefined);
+    assert.equal(pairs(seenFirst) + pairs(seenSecond), 0);
+
+    // The user names one: only that one asks them.
+    json(await s.call("search_papers", { query: "x", library: second }));
+    assert.equal(pairs(seenSecond), 1);
+    assert.equal(pairs(seenFirst), 0);
+    await s.close();
+});
+
 test("get_project without a Project still asks for pairing", async () => {
     const home = installedHome();
     const seen = await fakeLibrary(home, { pair: () => held().promise });
@@ -619,7 +649,7 @@ test("get_project without a Project still asks for pairing", async () => {
     await s.close();
 });
 
-test("busy and denied are relayed with the settings wording", async () => {
+test("busy and denied are relayed with the way to the Allow button", async () => {
     const home = installedHome();
     let reply = { ok: false, error: { code: "busy", message: "another request is pending" } };
     await fakeLibrary(home, { pair: () => reply });
@@ -627,12 +657,12 @@ test("busy and denied are relayed with the settings wording", async () => {
     const s = await startServe({ home, cwd: demo });
     assert.equal(
         (await s.call("search_papers", { query: "x" })).content[0].text,
-        `busy: Too many PaperMemory pairing requests are waiting for the user in Chrome (at most 10). Ask the user to answer them ${WHERE}, then call this tool again.`,
+        `busy: Too many PaperMemory pairing requests are waiting for the user. Ask the user to answer them: click the PaperMemory toolbar icon in Chrome (red badge) and then its banner, or open PaperMemory's settings → Agent access. Then call this tool again.`,
     );
     reply = { ok: false, error: { code: "denied", message: "The user denied this client access" } };
     assert.equal(
         (await s.call("search_papers", { query: "x" })).content[0].text,
-        `denied: The user denied ${CLIENT} access to PaperMemory. Do not ask again unless the user says otherwise. If they change their mind, call this tool again in a minute: they then click **Allow** next to ${CLIENT} ${WHERE}.`,
+        `denied: The user denied ${CLIENT} access to PaperMemory. Do not ask again unless the user says otherwise. If they change their mind, call this tool again in a minute: they then ${WAY}.`,
     );
     await s.close();
 });

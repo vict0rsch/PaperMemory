@@ -56,6 +56,9 @@ test("papermemory-setup/SKILL.md links the guide, keeps the user in charge, and 
         "Agent access is off in PaperMemory's options",
         "access to PaperMemory. Do not ask again unless the user says otherwise",
         "Stop and ask the user before doing anything else with PaperMemory",
+        // the way to the Allow button the pairing messages give
+        "(red badge) and then the banner '",
+        " is waiting for your OK', or the notification, or open PaperMemory's settings → Agent access, then click ",
         "The user denied a PaperMemory pairing request less than a minute ago",
         "Too many PaperMemory pairing requests are waiting for the user",
         "Enable Agent access",
