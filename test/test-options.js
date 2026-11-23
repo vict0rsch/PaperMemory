@@ -2,15 +2,21 @@
 // prefs, sources filter / turn all on-off, auto-tag live counts, tag manager (rename, merge,
 // delete: papers' tags actually change), restore (a backup is downloaded before confirming),
 // token field type, no remote stylesheet or script, Agent access pairing requests (listed,
-// decided, kept current).
+// decided, kept current), Agent access status (update available).
 import { expect } from "expect";
 import fs from "fs";
 import os from "os";
 import path from "path";
 import {
+    PROTOCOL_MIN,
+    PROTOCOL_MAX,
+    RECOMMENDED_AGENT_TOOLS_VERSION,
+} from "@pm/background/agentAccess.js";
+import {
     findExtensionId,
     makeBrowser,
     notifyPairingChanged,
+    stubAgentStatus,
     stubPairingRequests,
 } from "./browser.js";
 import { loadConfig, root, readJSON, indent, sleep } from "./utilsForTests.js";
@@ -2172,6 +2178,66 @@ describe("Options page", function () {
                         ),
                 );
             }
+        });
+    });
+
+    describe("Agent access: status", function () {
+        // the background's status is stubbed in the page (stubAgentStatus), with Agent
+        // access on: a test browser has neither its permission nor a Native host
+        const UPDATE =
+            "Update available: run npx -y papermemory-mcp@latest install, then restart your agent sessions.";
+        const status = (hostVersion, protocolMax = PROTOCOL_MAX) => ({
+            connected: true,
+            hostVersion,
+            protocolMin: PROTOCOL_MIN,
+            protocolMax,
+        });
+        let stubbed;
+
+        /** Waits until the page shows this status line, with this update line or none */
+        const waitForStatus = (expected) =>
+            stubbed.waitForFunction(
+                (expected) => {
+                    const shown = (el) => el.getClientRects().length > 0;
+                    const line = [...document.querySelectorAll(".agent-status")].find(
+                        shown,
+                    );
+                    const update = document.getElementById("agent-update-available");
+                    const state = {
+                        status: line?.id ?? null,
+                        update: shown(update)
+                            ? update.textContent.replace(/\s+/g, " ").trim()
+                            : null,
+                    };
+                    return JSON.stringify(state) === JSON.stringify(expected);
+                },
+                { timeout: 5000 },
+                expected,
+            );
+
+        afterEach(async function () {
+            await stubbed?.close();
+            stubbed = null;
+        });
+
+        it("says an update is available only when connected tools are older than PaperMemory recommends", async function () {
+            stubbed = await browser.newPage();
+            await stubbed.evaluateOnNewDocument(stubAgentStatus, status("0.0.1"));
+            await stubbed.goto(optionsURL, { waitUntil: "networkidle0" });
+            const connected = "agent-status-connected";
+            await waitForStatus({ status: connected, update: UPDATE });
+            // the page asks the background again every 2 s
+            const answer = (s) =>
+                stubbed.evaluate((s) => (window.__agentStatus = s), s);
+            await answer(status(RECOMMENDED_AGENT_TOOLS_VERSION));
+            await waitForStatus({ status: connected, update: null });
+            await answer(status("999.0.0"));
+            await waitForStatus({ status: connected, update: null });
+            await answer(status("0.0.1"));
+            await waitForStatus({ status: connected, update: UPDATE });
+            // too old to share a protocol version: outdated, which says what to run
+            await answer(status("0.0.1", PROTOCOL_MIN - 1));
+            await waitForStatus({ status: "agent-status-outdated", update: null });
         });
     });
 });

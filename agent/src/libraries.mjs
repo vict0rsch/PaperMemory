@@ -112,6 +112,7 @@ export async function listLibraries(hooks = {}) {
                 paperCount: h.paperCount,
                 protocolMin: h.protocolMin,
                 protocolMax: h.protocolMax,
+                recommendedToolsVersion: h.recommendedToolsVersion, // absent from older extensions
             };
         } catch (err) {
             if (err.code === "ECONNREFUSED" || err.code === "ENOENT") {
@@ -166,6 +167,17 @@ export function negotiate(hello) {
         );
     }
     return Math.min(hello.protocolMax, PROTOCOL_MAX);
+}
+
+/** Whether `version` is older than `than`, by major.minor.patch only: a prerelease or build suffix is ignored
+ * (0.2.0-beta.1 counts as 0.2.0), and what is not a version is never older, so no update is announced unless sure. */
+export function isOlderVersion(version, than) {
+    const parse = (v) => typeof v === "string" && /^(\d+)\.(\d+)\.(\d+)(?:[-+].*)?$/.exec(v)?.slice(1).map(Number);
+    const a = parse(version);
+    const b = parse(than);
+    if (!a || !b) return false;
+    const i = a.findIndex((n, k) => n !== b[k]);
+    return i >= 0 && a[i] < b[i];
 }
 
 export async function libraries() {

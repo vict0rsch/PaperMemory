@@ -9,6 +9,7 @@ import { fileURLToPath } from "node:url";
 
 import {
     FrameDecoder,
+    HOST_VERSION,
     MAX_MESSAGE_BYTES,
     encodeFrame,
     remapId,
@@ -96,6 +97,11 @@ function cleanup(home, host) {
     host.child.kill("SIGTERM");
     fs.rmSync(home, { recursive: true, force: true }); // temp dir created by this test
 }
+
+test("HOST_VERSION is the package version: bump both at every release", () => {
+    const pkg = JSON.parse(fs.readFileSync(new URL("../package.json", import.meta.url), "utf8"));
+    assert.equal(HOST_VERSION, pkg.version);
+});
 
 test("frames decode across split chunks at every byte boundary", () => {
     const a = { type: "x", text: "héllo ✓" };

@@ -38,6 +38,10 @@ import { ingest, filterStorageRequest } from "@pm/background/agentIngest.js";
 // the operation protocol versions PaperMemory accepts
 export const PROTOCOL_MIN = 1;
 export const PROTOCOL_MAX = 1;
+// the agent tools (papermemory-mcp) version PaperMemory recommends: older tools that
+// share a protocol version keep working, and the user is told an update is available.
+// Raise it only once that version is published on npm
+export const RECOMMENDED_AGENT_TOOLS_VERSION = "0.1.0";
 
 const HOST_NAME = "org.papermemory.agent";
 const KEEPALIVE_ALARM = "pm-agent-keepalive";
@@ -121,6 +125,24 @@ export const isValidPairSender = (sender) =>
     Number.isInteger(sender.tab?.id) &&
     typeof sender.url === "string" &&
     sender.url.split(/[?#]/)[0] === chrome.runtime.getURL("options.html");
+
+/**
+ * Is a version older than another? Only major.minor.patch count: a prerelease or build
+ * suffix is ignored (0.2.0-beta.1 counts as 0.2.0), and what is not a version is never
+ * older, so that PaperMemory tells of an update only when it is sure of it.
+ * @param {string} version A version, e.g. the Native host's
+ * @param {string} than The version to compare it with
+ * @returns {boolean} Whether `version` is older than `than`
+ */
+export const isOlderVersion = (version, than) => {
+    const parse = (v) =>
+        typeof v === "string" &&
+        /^(\d+)\.(\d+)\.(\d+)(?:[-+].*)?$/.exec(v)?.slice(1).map(Number);
+    const [a, b] = [parse(version), parse(than)];
+    if (!a || !b) return false;
+    const i = a.findIndex((n, k) => n !== b[k]);
+    return i >= 0 && a[i] < b[i];
+};
 
 // answer a request on the Native host connection it came from: an answer never
 // reaches the connections of another (restarted) host
@@ -834,6 +856,8 @@ const hello = async () => ({
     label: library.label,
     browser: library.browser,
     paperCount: countPapers((await getStorage("papers")) ?? {}),
+    // an MCP server older than this tells its agent once; older ones ignore it
+    recommendedToolsVersion: RECOMMENDED_AGENT_TOOLS_VERSION,
 });
 
 // the outcome of a request ({result} or {error}), or nothing if it is answered later

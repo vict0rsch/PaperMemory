@@ -1,7 +1,12 @@
 // ES Module imports
 import { getStorage, setStorage } from "@pmu/data.js";
 import { sendMessageToBackground } from "@pmu/functions.js";
-import { PROTOCOL_MIN, PROTOCOL_MAX } from "@pm/background/agentAccess.js";
+import {
+    PROTOCOL_MIN,
+    PROTOCOL_MAX,
+    RECOMMENDED_AGENT_TOOLS_VERSION,
+    isOlderVersion,
+} from "@pm/background/agentAccess.js";
 
 // Agent access in the options page (see CONTEXT.md § Agent access and ADR 0002): the
 // toggle, the Native host status, the Paired clients and the pairing requests. The
@@ -56,6 +61,11 @@ const refreshStatus = async () => {
                 : status.protocolMin > PROTOCOL_MAX
                   ? "outdated-extension"
                   : "connected",
+        );
+        // tools older than PaperMemory recommends still work: an update is available
+        $("agent-update-available").hidden = !isOlderVersion(
+            status.hostVersion,
+            RECOMMENDED_AGENT_TOOLS_VERSION,
         );
     } else {
         // no message until the first connection attempt has failed

@@ -8,7 +8,7 @@ import { after, test } from "node:test";
 import { fileURLToPath } from "node:url";
 
 import { socketPathFor } from "../host/host.mjs";
-import { listLibraries, negotiate, request, resolveLibrary } from "../src/libraries.mjs";
+import { isOlderVersion, listLibraries, negotiate, request, resolveLibrary } from "../src/libraries.mjs";
 
 const REAL_HOME = process.env.HOME;
 const servers = [];
@@ -53,12 +53,13 @@ test("auto with 0 libraries errors", async () => {
 
 test("auto with 1 library resolves it; request round-trips auth and protocol", async () => {
     const home = tempHome();
-    await fakeLibrary(home, ID_A, "Chrome · aaaaaa");
+    await fakeLibrary(home, ID_A, "Chrome · aaaaaa", { recommendedToolsVersion: "0.2.0" });
     const lib = await resolveLibrary("auto");
     assert.equal(lib.libraryId, ID_A);
     assert.deepEqual(Object.keys(lib).sort(), [
-        "browser", "label", "libraryId", "paperCount", "protocolMax", "protocolMin",
+        "browser", "label", "libraryId", "paperCount", "protocolMax", "protocolMin", "recommendedToolsVersion",
     ]);
+    assert.equal(lib.recommendedToolsVersion, "0.2.0");
     const r = await request(ID_A, "search_papers", { query: "x" }, { clientId: "c" }, { protocol: 1 });
     assert.deepEqual(r, { echoedOp: "search_papers", auth: { clientId: "c" }, protocol: 1 });
 });
@@ -118,6 +119,35 @@ test("negotiation picks the common version or names the side to update", () => {
         e.code === "protocol-mismatch" && /papermemory-mcp@latest install/.test(e.message));
     assert.throws(() => negotiate({ protocolMin: 0, protocolMax: 0 }), (e) =>
         e.code === "protocol-mismatch" && /Update the PaperMemory extension/.test(e.message));
+});
+
+test("isOlderVersion compares major.minor.patch, ignores prereleases, and is false unless sure", () => {
+    for (const [version, than] of [
+        ["0.1.0", "0.1.1"],
+        ["0.1.9", "0.2.0"],
+        ["0.9.9", "1.0.0"],
+        ["1.2.3", "1.10.0"], // numbers, not strings
+        ["0.1.0-beta.1", "0.2.0"],
+        ["0.1.0", "0.2.0-beta.1"],
+    ]) {
+        assert.equal(isOlderVersion(version, than), true, `${version} < ${than}`);
+    }
+    for (const [version, than] of [
+        ["0.1.0", "0.1.0"],
+        ["0.2.0", "0.1.9"],
+        ["1.10.0", "1.2.3"],
+        ["0.2.0-beta.1", "0.2.0"], // a prerelease counts as its release
+        ["0.2.0", "0.2.0+build.5"],
+        [undefined, "0.2.0"],
+        ["0.1.0", undefined], // an extension too old to recommend a version
+        ["0.1", "0.2.0"],
+        ["v0.1.0", "0.2.0"],
+        ["0.1.0", "latest"],
+        [null, null],
+        [1, "0.2.0"],
+    ]) {
+        assert.equal(isOlderVersion(version, than), false, `not ${version} < ${than}`);
+    }
 });
 
 test("`libraries` command prints [] with no sockets", async () => {

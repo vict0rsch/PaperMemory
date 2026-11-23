@@ -8,7 +8,7 @@ import path from "node:path";
 import { after, test } from "node:test";
 import { fileURLToPath, pathToFileURL } from "node:url";
 
-import { safeName, socketPathFor } from "../host/host.mjs";
+import { HOST_VERSION, safeName, socketPathFor } from "../host/host.mjs";
 
 const PKG = path.join(path.dirname(fileURLToPath(import.meta.url)), "..");
 const CLI = path.join(PKG, "dist", "cli.mjs");
@@ -137,8 +137,9 @@ const json = (result) => {
 };
 
 // Fake Library socket: records each request; `replies[op](req)` gives `{ok, result|error}`, or a promise of it.
-// A request gets `closed: true` once its connection closes. `libraryId` and `label`: another Library.
-async function fakeLibrary(home, replies, { libraryId = LIB_ID, label = "Chrome · aaaaaa" } = {}) {
+// A request gets `closed: true` once its connection closes. `libraryId` and `label`: another Library; `hello`: more
+// fields of its `hello` answer.
+async function fakeLibrary(home, replies, { libraryId = LIB_ID, label = "Chrome · aaaaaa", hello = {} } = {}) {
     const seen = [];
     const server = net.createServer((socket) => {
         let buf = "";
@@ -157,7 +158,7 @@ async function fakeLibrary(home, replies, { libraryId = LIB_ID, label = "Chrome 
                           ok: true,
                           result: {
                               protocolMin: 1, protocolMax: 1, libraryId,
-                              label, browser: "Chrome", paperCount: 0,
+                              label, browser: "Chrome", paperCount: 0, ...hello,
                           },
                       }
                     : await replies[req.op](req);
@@ -199,9 +200,23 @@ const credentialPath = (home) =>
         `${crypto.createHash("sha256").update(CLIENT).digest("hex").slice(0, 16)}.json`,
     );
 
+// A fake Library that allows pairing at once and answers the reads; `hello`: more fields of its `hello` answer.
+function readyLibrary(home, hello) {
+    const ok = (result) => ({ ok: true, result });
+    const replies = {
+        pair: () => ok({ clientId: "client-1", secret: "test-secret-1" }),
+        get_project_info: () => ok({ label: null }),
+        list_tags: () => ok([]),
+        search_papers: () => ok({ total: 0, papers: [] }),
+    };
+    return fakeLibrary(home, replies, { hello });
+}
+
 // The way to the Allow button, as the popup and the options page show it (the popup's banner opens Agent access).
 const WAY = `click the PaperMemory toolbar icon in Chrome (red badge) and then the banner '${CLIENT} is waiting for your OK', or the notification, or open PaperMemory's settings → Agent access, then click **Allow** next to ${CLIENT}`;
 const PAIRING_REQUIRED = `pairing-required: Stop and ask the user before doing anything else with PaperMemory. Tell them: "${CLIENT} is asking to use your PaperMemory library. To allow it, ${WAY}." When they say they have allowed it, call connect (or this tool) again.`;
+const UPDATE_NOTE =
+    "A newer version of PaperMemory's agent tools is available. Tell the user once: run `npx -y papermemory-mcp@latest install`, then restart this agent session.";
 
 test("tools, cwd Project with no Library, no pairing, silent selfheal", async () => {
     const home = tempHome();
@@ -695,4 +710,73 @@ test("the pending pair outlives the old 130 s limit while the process lives", as
     json(await s.call("search_papers", { query: "z" }));
     assert.equal(pairs().length, 1);
     await s.close();
+});
+
+test("newer agent tools recommended: the first answer of get_project or connect tells the agent, once per session", async () => {
+    for (const first of ["get_project", "connect"]) {
+        const home = installedHome();
+        await readyLibrary(home, { recommendedToolsVersion: "999.0.0" });
+        const [demo] = projectDirs("demo-project");
+        const s = await startServe({ home, cwd: demo });
+
+        // other tools never tell it
+        assert.equal((await s.call("search_papers", { query: "x" })).content.length, 1);
+        const told = await s.call(first);
+        json(told); // the call answers as usual: the note never blocks it
+        assert.deepEqual(told.content.slice(1), [{ type: "text", text: UPDATE_NOTE }]);
+        for (const name of ["get_project", "connect", "search_papers"]) {
+            const again = await s.call(name, name === "search_papers" ? { query: "y" } : {});
+            json(again);
+            assert.equal(again.content.length, 1, `${name} tells it again`);
+        }
+        await s.close();
+    }
+});
+
+test("newer agent tools recommended: an answer asking for pairing leaves the note to the first clean one", async () => {
+    const home = installedHome();
+    const decision = held();
+    await fakeLibrary(
+        home,
+        {
+            pair: () => decision.promise,
+            get_project_info: () => ({ ok: true, result: { label: null } }),
+            list_tags: () => ({ ok: true, result: [] }),
+        },
+        { hello: { recommendedToolsVersion: "999.0.0" } },
+    );
+    const [demo] = projectDirs("demo-project");
+    const s = await startServe({ home, cwd: demo });
+
+    const asking = await s.call("get_project");
+    assert.equal(asking.isError, true);
+    assert.deepEqual(asking.content.slice(1), [{ type: "text", text: PAIRING_REQUIRED }]);
+    decision.answer({ ok: true, result: { clientId: "client-1", secret: "test-secret-1" } });
+    await until(() => fs.existsSync(credentialPath(home)));
+    const connected = await s.call("connect");
+    json(connected);
+    assert.deepEqual(connected.content.slice(1), [{ type: "text", text: UPDATE_NOTE }]);
+    assert.equal((await s.call("get_project")).content.length, 1);
+    await s.close();
+});
+
+test("no update note when the Library recommends these agent tools, older ones or none", async () => {
+    for (const hello of [
+        { recommendedToolsVersion: HOST_VERSION },
+        { recommendedToolsVersion: `${HOST_VERSION}-beta.1` }, // a prerelease counts as its release
+        { recommendedToolsVersion: "0.0.1" },
+        {}, // an extension from before the recommendation
+        { recommendedToolsVersion: "latest" }, // not a version
+    ]) {
+        const home = installedHome();
+        await readyLibrary(home, hello);
+        const [demo] = projectDirs("demo-project");
+        const s = await startServe({ home, cwd: demo });
+        for (const name of ["get_project", "connect", "get_project", "connect"]) {
+            const r = await s.call(name);
+            json(r);
+            assert.equal(r.content.length, 1, `${name} with ${JSON.stringify(hello)}`);
+        }
+        await s.close();
+    }
 });

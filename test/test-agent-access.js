@@ -1,6 +1,11 @@
 import { expect } from "expect";
 import { filterStorageRequest } from "@pm/background/agentIngest.js";
-import { isValidPairSender, initAgentAccess } from "@pm/background/agentAccess.js";
+import {
+    isValidPairSender,
+    initAgentAccess,
+    isOlderVersion,
+    RECOMMENDED_AGENT_TOOLS_VERSION,
+} from "@pm/background/agentAccess.js";
 import { createBadge } from "@pm/background/badge.js";
 import { sendMessageToBackground, setLocalBackgroundHandler } from "@pmu/functions.js";
 import { runMemoryOp, runMemoryOpFromMessage } from "@pmu/memoryQueue.js";
@@ -120,6 +125,43 @@ describe("Agent access background", () => {
             expect(isValidPairSender({ ...optionsTab, id: "other" })).toBe(false);
             const otherOptions = "chrome-extension://other/options.html";
             expect(isValidPairSender({ ...optionsTab, url: otherOptions })).toBe(false);
+        });
+    });
+
+    describe("#isOlderVersion", () => {
+        it("compares major.minor.patch as numbers", () => {
+            expect(isOlderVersion("0.1.0", "0.1.1")).toBe(true);
+            expect(isOlderVersion("0.1.9", "0.2.0")).toBe(true);
+            expect(isOlderVersion("0.9.9", "1.0.0")).toBe(true);
+            expect(isOlderVersion("1.2.3", "1.10.0")).toBe(true);
+            expect(isOlderVersion("0.1.0", "0.1.0")).toBe(false);
+            expect(isOlderVersion("0.2.0", "0.1.9")).toBe(false);
+            expect(isOlderVersion("1.10.0", "1.2.3")).toBe(false);
+        });
+
+        it("ignores a prerelease or build suffix: it counts as its release", () => {
+            expect(isOlderVersion("0.1.0-beta.1", "0.2.0")).toBe(true);
+            expect(isOlderVersion("0.1.0", "0.2.0-beta.1")).toBe(true);
+            expect(isOlderVersion("0.2.0-beta.1", "0.2.0")).toBe(false);
+            expect(isOlderVersion("0.2.0", "0.2.0+build.5")).toBe(false);
+        });
+
+        it("is never older when either is not a version: no update it is not sure of", () => {
+            for (const [version, than] of [
+                [undefined, "0.2.0"], // a status without the Native host's version
+                ["0.1.0", undefined],
+                ["0.1", "0.2.0"],
+                ["v0.1.0", "0.2.0"],
+                ["0.1.0", "latest"],
+                [null, null],
+                [1, "0.2.0"],
+            ]) {
+                expect(isOlderVersion(version, than)).toBe(false);
+            }
+        });
+
+        it("recommends a released version", () => {
+            expect(RECOMMENDED_AGENT_TOOLS_VERSION).toMatch(/^\d+\.\d+\.\d+$/);
         });
     });
 
@@ -507,6 +549,15 @@ describe("Agent access background", () => {
             expect((await answerTo(codex.id)).result).toEqual({
                 clientId: expect.any(String),
                 secret: expect.any(String),
+            });
+        });
+
+        it("answers hello with its protocol range and the agent tools version it recommends", async () => {
+            expect((await request(4, "hello", {})).result).toMatchObject({
+                protocolMin: 1,
+                protocolMax: 1,
+                paperCount: expect.any(Number),
+                recommendedToolsVersion: RECOMMENDED_AGENT_TOOLS_VERSION,
             });
         });
 

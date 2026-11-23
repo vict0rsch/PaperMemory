@@ -480,6 +480,33 @@ export const stubPairingRequests = (requests) => {
 };
 
 /**
+ * For page.evaluateOnNewDocument: Agent access on, its permission granted, and the
+ * background's status of its Native host connection, in this page. A test browser has
+ * neither the permission nor a Native host: the page's status is window.__agentStatus,
+ * which a test changes (the page asks for it every 2 s). Other messages, storage reads
+ * and permission checks go to the browser.
+ * @param {{connected: boolean, hostVersion: string, protocolMin: number, protocolMax: number}} status
+ */
+export const stubAgentStatus = (status) => {
+    window.__agentStatus = status;
+    const get = chrome.storage.local.get.bind(chrome.storage.local);
+    chrome.storage.local.get = (keys, callback) =>
+        keys === "agentAccess"
+            ? setTimeout(() => callback({ agentAccess: { enabled: true } }))
+            : get(keys, callback);
+    const contains = chrome.permissions.contains.bind(chrome.permissions);
+    chrome.permissions.contains = (permissions, callback) =>
+        permissions.permissions?.join() === "nativeMessaging"
+            ? setTimeout(() => callback(true))
+            : contains(permissions, callback);
+    const send = chrome.runtime.sendMessage.bind(chrome.runtime);
+    chrome.runtime.sendMessage = (message, callback) =>
+        message?.type === "agent-status"
+            ? setTimeout(() => callback(structuredClone(window.__agentStatus)))
+            : send(message, callback);
+};
+
+/**
  * Tell the extension's pages that the pairing requests changed, from the background's
  * service worker as agentAccess.js does: they ask for the list again.
  * @param {object} browser
