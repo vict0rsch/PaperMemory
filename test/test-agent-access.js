@@ -637,6 +637,28 @@ describe("Agent access background", () => {
             expect(badges.at(-1)).toBe(0);
         });
 
+        it("tells the open pages when sessions join a pairing request or some of them leave, not the badge", async () => {
+            const sessions = async () => (await listRequests()).map((r) => r.sessions);
+            const mistral = await pair(46, "Mistral");
+            badges.length = 0;
+            broadcasts.length = 0;
+            send(47, "pair", { clientName: "Mistral" });
+            expect(await waitFor(() => broadcasts.length)).toBe(1);
+            expect(broadcasts).toEqual(["agent-pairing-changed"]);
+            expect(await sessions()).toEqual([2]);
+            broadcasts.length = 0;
+            fromHost({ type: "client-closed", conn: 47 });
+            expect(broadcasts).toEqual(["agent-pairing-changed"]);
+            expect(await sessions()).toEqual([1]);
+            // a connection that waited for nothing: no change
+            broadcasts.length = 0;
+            fromHost({ type: "client-closed", conn: 999 });
+            expect(broadcasts).toEqual([]);
+            expect(badges).toEqual([]);
+            fromHost({ type: "client-closed", conn: mistral.conn });
+            expect(await listRequests()).toEqual([]);
+        });
+
         it("ends a joined pairing request only once no connection waits for it", async () => {
             const gemini = await pair(42, "Gemini");
             const joined = send(43, "pair", { clientName: "Gemini" });

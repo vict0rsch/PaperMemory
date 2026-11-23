@@ -645,11 +645,16 @@ const runQueue = async () => {
 // be open: reading lastError keeps that quiet
 const pairingsChanged = () => {
     pairingBadge(pairings.size);
+    pairingSessionsChanged();
+};
+
+// a request's sessions count changed: the open pages ask for the requests again, the
+// badge counts requests, not sessions
+const pairingSessionsChanged = () =>
     chrome.runtime.sendMessage(
         { type: "agent-pairing-changed" },
         () => void chrome.runtime.lastError,
     );
-};
 
 // end a pending pairing request; answer its waiters, unless nobody waits for an answer
 const endPairing = (pending, outcome) => {
@@ -666,8 +671,10 @@ const endPairing = (pending, outcome) => {
 // that nobody waits for anymore has expired
 const dropWaiters = (matches) => {
     for (const pending of [...pairings.values()]) {
+        const before = pending.waiters.length;
         pending.waiters = pending.waiters.filter((waiter) => !matches(waiter));
         if (!pending.waiters.length) endPairing(pending, null);
+        else if (pending.waiters.length !== before) pairingSessionsChanged();
     }
 };
 
@@ -745,6 +752,7 @@ const pair = async (request, clientName) => {
             );
         }
         asked.waiters.push(waiter);
+        pairingSessionsChanged();
         return;
     }
     if (pairings.size >= MAX_PENDING_PAIRINGS) {
