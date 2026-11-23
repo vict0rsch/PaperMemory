@@ -118,16 +118,18 @@ from Provenance. Errors `{code, message}`, `code` ∈ `unauthorized`, `disabled`
 `bad-args`, `not-found`, `not-own-addition`, `no-project`, `too-large`, `unsupported-url`,
 `rate-limited`, `busy`, `unknown-op`, `protocol-mismatch`, `internal`.
 
-**Pairing and `connect` (MCP server).** A call that needs pairing sends `pair` and waits ≤ 2 s,
-then answers `pairing-required` (MCP side only: an error result the agent relays verbatim:
-switch to the named browser, click **Allow** on the PaperMemory tab, call again). The `pair`
-request stays open until the user decides or PaperMemory ends it (120 s), so a later **Allow**
-still saves the credential; later calls wait for it instead of sending another. Tool
+**Pairing and `connect` (MCP server).** Any first PaperMemory call (`get_project` and
+`list_libraries` too) sends `pair` and waits ≤ 2 s, then answers `pairing-required` (MCP side
+only: an error result the agent relays verbatim: open PaperMemory's settings in the named
+browser, Agent access, click **Allow** next to the agent's name; then call `connect`). The `pair`
+request stays open, with no time limit (timeout 2^31-1 ms), until the user decides or the
+process exits with its stdin, so a later **Allow** still saves the credential; later calls wait
+for it instead of sending another. Tool
 `connect({library?})` pairs up front, or checks the credential with an authenticated
 `list_tags`, and answers `{paired: true, alreadyPaired, clientName, library}`; agents call it
-right after confirming the Project. PaperMemory brings the pairing tab's window to the front
-and, with the optional `notifications` permission (requested with `nativeMessaging`), shows
-an OS notification.
+right after confirming the Project. PaperMemory opens no tab: pending requests show as a toolbar badge count,
+a popup banner, cards in the options page and, with the optional `notifications` permission
+(requested with `nativeMessaging`), an OS notification.
 
 **Bounds (checked before any work → `bad-args`).** Unknown arg keys rejected. `url`
 http/https, or a DOI (`doi:…` or a bare `10.…`), ≤ 2,048. `query` ≤ 256. `reason` 1–500. `note`/`text` ≤ 2,000 per call,
@@ -136,8 +138,8 @@ note total ≤ 20,000. `clientName`, `projectLabel` 1–64 after removing contro
 (`cleanPapers`, then `hasOwnProperty`), else `not-found`. Tags trimmed, empty dropped, ≤ 20
 per call, ≤ 64 chars, without `< > " ' ` & ,` or control or format characters; `proj-`
 anywhere in a tag, in any case (reserved for Project tags) → `bad-args`. `export_bibtex` result > 900,000 bytes → `too-large`. Rates: ≤ 30
-mutating ops per client per minute (`rate-limited`); queue depth ≤ 50 (`busy`); one pending
-pairing per Library (`busy`); any pairing refused for 60 s after a **Deny** (`rate-limited`, global cooldown).
+mutating ops per client per minute (`rate-limited`); queue depth ≤ 50 (`busy`); at most 10 pending
+pairings per Library (`busy`; a client name already waiting joins its request); any pairing refused for 60 s after a **Deny** (`rate-limited`, global cooldown).
 
 **Projects.** The MCP server resolves the **Project folder** once per process, as one promise
 that every tool call awaits: after `notifications/initialized`, if the client declared the

@@ -11,8 +11,8 @@ PaperMemory is the user's research paper library (their **Library**). These tool
 
 1. At the start of research work, call `get_project` and confirm with the user which PaperMemory project this is, or none.
 2. If the folder's `CLAUDE.md` or `AGENTS.md` has no `PaperMemory project: <name>` line, propose adding one, then call `set_project`.
-3. Right after confirming the project, call `connect`, so that PaperMemory asks the user to allow you now rather than in the middle of a task.
-4. When a tool answers `pairing-required`, relay its message to the user verbatim and wait for them to click Allow before calling it again.
+3. Your very first PaperMemory call, with any tool, asks the user to allow you. If it answers `pairing-required`, stop: relay the quoted sentence of its message to the user verbatim, wait for them to say they allowed you, then call `connect`. Do nothing else with PaperMemory until `connect` answers `paired: true`.
+4. When the user asks you to set up or connect PaperMemory, call `connect`; if anything is missing, follow the `papermemory-setup` skill.
 5. If `get_project` reports no project, relay its `reason` and hint to the user.
 6. Search before adding (`search_papers`), so you do not add a paper the user already has.
 7. Always give a concrete `reason` when adding a paper.

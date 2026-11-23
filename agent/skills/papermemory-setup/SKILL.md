@@ -1,6 +1,6 @@
 ---
 name: papermemory-setup
-description: Set up, connect or troubleshoot PaperMemory's agent tools with the user, one step at a time. Use when the user wants to install or connect PaperMemory, when the PaperMemory tools are missing, or when a PaperMemory tool fails because no library is connected, the install is incomplete, the client must pair again, Agent access is off or the protocol is outdated.
+description: Set up, connect or troubleshoot PaperMemory's agent tools with the user, one step at a time. Use when the user wants to install or connect PaperMemory, asks you to set yourself up or connect to PaperMemory, when the PaperMemory tools are missing, or when a PaperMemory tool fails because no library is connected, the install is incomplete, the client must pair again, Agent access is off or the protocol is outdated.
 ---
 
 # PaperMemory setup
@@ -29,14 +29,12 @@ Run `~/.papermemory/bin/papermemory-mcp libraries`:
 | `PaperMemory's install is incomplete (~/.papermemory/salt is missing)` | Step 1 with `npx -y papermemory-mcp@latest install` |
 | ``protocol-mismatch: Run `npx -y papermemory-mcp@latest install` `` | The same, then a new agent session |
 | `protocol-mismatch: Update the PaperMemory extension` | The user updates the extension |
-| `pairing-required: Tell the user: "PaperMemory needs your OK to let ...` | Relay the quoted message verbatim and wait; once the user has clicked Allow, call the tool again (step 3) |
+| `pairing-required: Stop and ask the user before doing anything else with PaperMemory. Tell them: ...` | Stop. Relay the quoted sentence verbatim and wait; once the user says they allowed you, call `connect` (step 3) |
 | `unauthorized: ... the user must pair it again ...` | Step 3 |
 | `disabled: Agent access is off in PaperMemory's options` | The user turns Agent access back on (step 2); this client stays paired |
-| `denied: The user denied this client access` | Ask whether they meant it; if not, wait one minute, then step 3 |
-| `rate-limited: The user denied a PaperMemory pairing request less than a minute ago ...` | Ask whether they meant it; if not, wait one minute, then step 3 |
-| `timeout: The user did not answer the pairing request in time` | Step 3 |
-| `busy: Another PaperMemory pairing request is waiting for the user ...` | The user answers the pairing card already open |
-| `internal: PaperMemory could not open its pairing prompt` | The user opens a browser window, then step 3 |
+| `denied: ... access to PaperMemory. Do not ask again unless the user says otherwise` | Ask whether they meant it. If not, wait one minute, call `connect` again, and the user clicks Allow next to your name (step 3) |
+| `rate-limited: The user denied a PaperMemory pairing request less than a minute ago ...` | Ask whether they meant it; if not, wait one minute, call `connect` again (step 3) |
+| `busy: Too many PaperMemory pairing requests are waiting for the user ...` | The user answers the requests already waiting under Agent access in PaperMemory's settings, then you call `connect` again |
 
 No PaperMemory tools at all: check `claude mcp list` or `codex mcp list` (or the agent's MCP settings) for `papermemory`. Missing: step 1. Present: the user starts a new agent session.
 
@@ -48,6 +46,6 @@ No PaperMemory tools at all: check `claude mcp list` or `codex mcp list` (or the
     - "PaperMemory agent tools outdated": `npx -y papermemory-mcp@latest install`.
     - "PaperMemory is older than the agent tools": the user updates the extension.
     - "Permission refused": turn the switch on again and click Allow.
-3. **Pair.** Call `connect`. If it answers `pairing-required`, relay its message verbatim: PaperMemory has opened its options page in a new tab, brought to the front, on an "Agent pairing request" card. The user clicks Allow within 2 minutes and tells you; then call `connect` again. Check: `connect` answers `paired: true` and the agent is listed under Paired clients.
+3. **Pair.** Call `connect`. PaperMemory opens no tab. If it answers `pairing-required`, relay the quoted sentence of its message verbatim. The user sees a red badge on the PaperMemory toolbar icon, a banner in its popup and a notification (if they allowed notifications); they open PaperMemory's settings, go to Agent access and click Allow next to your name. There is no time limit: the request waits until the user answers or your session ends. When the user says they allowed you, call `connect` again. Check: `connect` answers `paired: true` and the agent is listed under Paired clients.
 
 Then follow the `papermemory` skill.

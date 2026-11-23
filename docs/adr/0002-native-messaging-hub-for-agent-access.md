@@ -78,13 +78,17 @@ and Firefox, all lifecycle checks passed, including 65 min and 8 h idles).
   pages when the requests change, so all of these are current without a reload. **Allow**
   creates a per-client random secret returned once to the MCP server, which stores it in a
   0600 file (written atomically, named by a hash of the client name, never by the raw name);
-  **Deny** rejects. The MCP server waits about 2 s for the decision, then answers the tool
-  call `pairing-required`, a message the agent relays to the user (which browser, click
-  **Allow**, call again): an agent cannot speak while its call is blocked. The request stays
-  open, with no time limit, until the user decides or no connection waits for it anymore (the
-  Agent session ended), so the credential is saved whenever the user allows, and later calls
-  wait for that request instead of sending another. Because requests can wait long, several
-  clients may wait at once (up to 10 per Library, then `busy`); a client name that already
+  **Deny** rejects. Any first PaperMemory call of an agent, `get_project` and
+  `list_libraries` included, starts the pairing. The MCP server waits about 2 s for the
+  decision, then answers the tool call `pairing-required`, a firm message the agent relays
+  to the user (open PaperMemory's settings in the named browser, Agent access, click
+  **Allow** next to the agent's name; the agent stops and calls `connect` once told): an
+  agent cannot speak while its call is blocked. The request stays open, with no time limit
+  (the MCP server's `pair` request has the longest timeout a timer allows, 2^31-1 ms), until
+  the user decides or no connection waits for it anymore (the Agent session ended: the MCP
+  server process exits when its stdin ends), so the credential is saved whenever the user
+  allows, and later calls wait for that request instead of sending another. Because requests can wait long, several
+  clients may wait at once (up to 10 per Library, then `busy`, which tells the agent that too many requests are waiting); a client name that already
   waits joins its request, from any connection, and the user's one decision answers every
   connection waiting for it, with the same credential. Agents call the `connect` tool at the
   start of their work, so that pairing happens then rather than in the middle of a task. A

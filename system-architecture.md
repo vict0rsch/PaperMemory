@@ -152,8 +152,9 @@ port → `agentAccess.js` in the background → operation handlers.
   extension zip): `cli.mjs` (`install`, `uninstall`, `selfheal`, `libraries`,
   `serve`), `host/host.mjs` (native host hub), `src/serve.mjs` (MCP server, resolves
   the Project folder and derives the Project key; pairs on the first authenticated call
-  or `connect`: the call answers `pairing-required` after ~2 s while the `pair` request
-  stays open until the user decides, and later calls wait for it), `src/libraries.mjs` (socket
+  or `connect`, `get_project` and `list_libraries` included: the call answers `pairing-required`
+  after ~2 s while the `pair` request stays open, with no time limit, until the user decides
+  or the process exits with its stdin, and later calls wait for it), `src/libraries.mjs` (socket
   discovery, version negotiation, requests), `src/install.mjs` + `browsers.mjs` +
   `agents.mjs` (the installer: local copy in `~/.papermemory/bin` with wrappers, native
   host manifests, agent registration, skill copy), `skills/<name>/SKILL.md` (the

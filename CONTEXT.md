@@ -76,6 +76,10 @@ _Avoid_: API, integration, agent mode
 The Memory of one PaperMemory installation in one browser profile, addressed by agents through its `libraryId` and a human-readable label.
 _Avoid_: profile, store, database
 
+**Pairing request**:
+An **MCP server**'s ask, on an agent's first PaperMemory call, to become a **Paired client** of a **Library**. It waits in PaperMemory, with no time limit, until the user clicks **Allow** or **Deny** under **Agent access**, or the **Agent session** ends; PaperMemory opens no tab for it.
+_Avoid_: pairing prompt, pairing tab, authorization
+
 **Native host**:
 The small local program the browser launches for PaperMemory while **Agent access** is on; the single hub every agent connects through to reach one **Library**.
 _Avoid_: daemon, relay, companion, server

@@ -158,7 +158,7 @@ export async function serve() {
         if (err.code === "busy") {
             return opError(
                 err.code,
-                `Another PaperMemory pairing request is waiting for the user in ${browserOf(lib)}. Ask the user to answer it ${whereToAllow(lib)}, then call this tool again.`,
+                `Too many PaperMemory pairing requests are waiting for the user in ${browserOf(lib)} (at most 10). Ask the user to answer them ${whereToAllow(lib)}, then call this tool again.`,
             );
         }
         if (err.code === "denied") {

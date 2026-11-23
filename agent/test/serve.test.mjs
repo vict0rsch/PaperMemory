@@ -627,7 +627,7 @@ test("busy and denied are relayed with the settings wording", async () => {
     const s = await startServe({ home, cwd: demo });
     assert.equal(
         (await s.call("search_papers", { query: "x" })).content[0].text,
-        `busy: Another PaperMemory pairing request is waiting for the user in Chrome. Ask the user to answer it ${WHERE}, then call this tool again.`,
+        `busy: Too many PaperMemory pairing requests are waiting for the user in Chrome (at most 10). Ask the user to answer them ${WHERE}, then call this tool again.`,
     );
     reply = { ok: false, error: { code: "denied", message: "The user denied this client access" } };
     assert.equal(
