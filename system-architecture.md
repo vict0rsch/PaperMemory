@@ -152,7 +152,8 @@ port → `agentAccess.js` in the background → operation handlers.
   extension zip): `cli.mjs` (`install`, `uninstall`, `selfheal`, `libraries`,
   `serve`), `host/host.mjs` (native host hub), `src/serve.mjs` (MCP server, resolves
   the Project folder and derives the Project key; pairs on the first authenticated call
-  or `connect`, `get_project` and `list_libraries` included: the call answers `pairing-required`
+  or `connect`, `get_project` and `list_libraries` included (`list_libraries` only when
+  exactly one Library is connected): the call answers `pairing-required`
   after ~2 s while the `pair` request stays open, with no time limit, until the user decides
   or the process exits with its stdin, and later calls wait for it), `src/libraries.mjs` (socket
   discovery, version negotiation, requests), `src/install.mjs` + `browsers.mjs` +
@@ -167,14 +168,17 @@ port → `agentAccess.js` in the background → operation handlers.
   runs one serialized mutation queue with per-job deadlines, handles pairing and the
   storage proxy, and re-connects from a 1-minute `alarms` alarm. Pairing requests wait in
   memory, with no time limit, until the user decides in the options page or no connection
-  waits for them (up to 10 at once; a client name already waiting joins its request); it
-  never opens a tab for them: their number goes on the toolbar badge, open pages are told
-  when they change, and an OS notification names a new one when `notifications` is
-  granted (its click shows Agent access in the options page). Its changes to papers are
+  waits for them (up to 10 at once; a client name already waiting, compared once cleaned
+  by `cleanClientName`, joins its request, up to 16 sessions, which the options page
+  counts; an allowed request stays pending until its credential is stored); it
+  never opens a tab for them: their number goes on the toolbar badge (cleared when a new
+  worker starts), open pages are told when they change, and an OS notification names a new
+  one, at most one every 30 s, when `notifications` is granted (its click, listened to
+  from the worker's start, shows Agent access in the options page). Its changes to papers are
   `agent` operations of the Memory's queue (`memoryQueue.js`, see _Concurrency_).
 - **`src/shared/js/utils/agentOps.js`**: pure operations (argument validation and
-  bounds, tag rules, search, Project papers, BibTeX export, Provenance, ownership,
-  rate check), no `chrome.*`, unit-tested in `test/test-agent-ops.js`.
+  bounds, client name cleaning, tag rules, search, Project papers, BibTeX export,
+  Provenance, ownership, rate check), no `chrome.*`, unit-tested in `test/test-agent-ops.js`.
 - **Ingest** (`src/background/agentIngest.js`): an agent-added paper runs the normal
   `addOrUpdatePaper` pipeline with its new `agent` parameter. Chrome's service worker
   has no `DOMParser`, so it runs in the **offscreen document**
@@ -195,7 +199,8 @@ port → `agentAccess.js` in the background → operation handlers.
   its "Agent access" section (between Sync and Keyboard shortcuts) holds the Agent
   access toggle (requests the optional `nativeMessaging` and `notifications` permissions
   in the click's gesture), connection status and the **Paired clients** list with Revoke.
-  The pairing requests waiting for the user are listed, with Allow / Deny, in a card above
+  The pairing requests waiting for the user are listed, with Allow / Deny, when each asked
+  and how many sessions wait for it when several do, in a card above
   the settings and in that section, whose side-nav item gets a red dot; the background
   accepts a decision only from the options page in a tab (any options tab), for a pending
   request, once. The popup shows a banner while one waits, which opens the options page on

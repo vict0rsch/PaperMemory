@@ -118,10 +118,11 @@ from Provenance. Errors `{code, message}`, `code` ∈ `unauthorized`, `disabled`
 `bad-args`, `not-found`, `not-own-addition`, `no-project`, `too-large`, `unsupported-url`,
 `rate-limited`, `busy`, `unknown-op`, `protocol-mismatch`, `internal`.
 
-**Pairing and `connect` (MCP server).** Any first PaperMemory call (`get_project` and
-`list_libraries` too) sends `pair` and waits ≤ 2 s, then answers `pairing-required` (MCP side
-only: an error result the agent relays verbatim: open PaperMemory's settings in the named
-browser, Agent access, click **Allow** next to the agent's name; then call `connect`). The `pair`
+**Pairing and `connect` (MCP server).** Any first PaperMemory call (`get_project` too, and
+`list_libraries` when exactly one Library is connected) sends `pair` and waits ≤ 2 s, then answers `pairing-required` (MCP side
+only: an error result the agent relays verbatim: the PaperMemory toolbar icon in the named
+browser, then its banner, or the notification, or the settings → Agent access, and **Allow**
+next to the agent's name; then call `connect`). The `pair`
 request stays open, with no time limit (timeout 2^31-1 ms), until the user decides or the
 process exits with its stdin, so a later **Allow** still saves the credential; later calls wait
 for it instead of sending another. Tool
@@ -133,13 +134,14 @@ a popup banner, cards in the options page and, with the optional `notifications`
 
 **Bounds (checked before any work → `bad-args`).** Unknown arg keys rejected. `url`
 http/https, or a DOI (`doi:…` or a bare `10.…`), ≤ 2,048. `query` ≤ 256. `reason` 1–500. `note`/`text` ≤ 2,000 per call,
-note total ≤ 20,000. `clientName`, `projectLabel` 1–64 after removing control characters.
+note total ≤ 20,000. `clientName`, `projectLabel` 1–64 after removing control characters;
+`clientName` must keep a visible character once cleaned (`cleanClientName`).
 `id` ≤ 256; it must not start with `__` and must be an own property of the cleaned papers
 (`cleanPapers`, then `hasOwnProperty`), else `not-found`. Tags trimmed, empty dropped, ≤ 20
 per call, ≤ 64 chars, without `< > " ' ` & ,` or control or format characters; `proj-`
 anywhere in a tag, in any case (reserved for Project tags) → `bad-args`. `export_bibtex` result > 900,000 bytes → `too-large`. Rates: ≤ 30
 mutating ops per client per minute (`rate-limited`); queue depth ≤ 50 (`busy`); at most 10 pending
-pairings per Library (`busy`; a client name already waiting joins its request); any pairing refused for 60 s after a **Deny** (`rate-limited`, global cooldown).
+pairings per Library (`busy`; a client name already waiting joins its request, at most 16 waiting for one, then `busy`); any pairing refused for 60 s after a **Deny** (`rate-limited`, global cooldown).
 
 **Projects.** The MCP server resolves the **Project folder** once per process, as one promise
 that every tool call awaits: after `notifications/initialized`, if the client declared the
@@ -427,8 +429,8 @@ the handler's response, and with it unset (`null`) falls back to `chrome.runtime
 Firefox parsing of arXiv and OpenReview through this path is asserted in Step 14.
 
 **Step 11 — Agent access background module.** `src/background/agentAccess.js` exporting
-`initAgentAccess({ pushSyncPapers, handleBackgroundMessage })`; call it at the end of
-`initBackground()` with both local functions.
+`initAgentAccess({ pushSyncPapers, handleBackgroundMessage, setPairingBadge })`; call it at
+the end of `initBackground()` with these local functions (`setPairingBadge` from `badge.js`).
 - Lifecycle (spike port): idempotent `ensureConnected`; triggers: top-level start,
   `onStartup`, `storage.onChanged` on `agentAccess`, `permissions.onAdded`, alarm
   `pm-agent-keepalive` every 1 min; backoff 1 s → 60 s; first message `hello` with
@@ -447,13 +449,19 @@ Firefox parsing of arXiv and OpenReview through this path is asserted in Step 14
   authorized mutating op whose entry exists and whose `auth.projectLabel` is present, update
   its `label` (Projects contract). Read ops never write.
 - Firefox: call `setLocalBackgroundHandler(handleBackgroundMessage)` once (Step 10).
-- Pairing: `requestId = crypto.randomUUID()`; open `options.html#agent-pairing=<requestId>`
-  via `chrome.tabs.create` and remember `tabId`. Accept `agent-pair-info` /
-  `agent-pair-decision` only for a pending `requestId` with `sender.tab.id === tabId` and
-  `sender.url` starting with `chrome.runtime.getURL("options.html")` (export this check as the
-  pure `isValidPairSender(sender, pending)`); delete the request on the first decision. **Allow** → `clientId = crypto.randomUUID()`, 32-byte hex secret, store
+- Pairing, with no tab: `pair` cleans `clientName` once (`cleanClientName`) and keeps a
+  pending request (`requestId = crypto.randomUUID()`) in memory until the user decides or no
+  connection waits for it; the same cleaned name joins it (at most 16 waiting, then `busy`).
+  The toolbar badge counts the requests (`setPairingBadge(0)` at start), open pages get
+  `agent-pairing-changed` and list `agent-pairing-requests` (`{requestId, clientName,
+  requestedAt, sessions}`), and with `notifications` an OS notification names a new one (at
+  most one per 30 s; `onClicked` registered at start). Accept `agent-pair-decision` only from
+  the pure `isValidPairSender(sender)` (PaperMemory's `options.html` in any tab), once, for a
+  pending `requestId`, which stays pending until the credential is stored (a same-name `pair`
+  meanwhile gets the same answer); if it ended meanwhile, revoke that client and answer
+  `false`. **Allow** → `clientId = crypto.randomUUID()`, 32-byte hex secret, store
   only its hash. Inside `if (import.meta.env.WXT_PM_AGENT_TEST === "1") { … }` approve
-  automatically without a tab and call `console.info("pm-agent-test-auto-allow")` (a string
+  automatically and call `console.info("pm-agent-test-auto-allow")` (a string
   literal the minifier keeps; the whole block is removed from production builds).
 - Queue: implement "Queue and deadlines"; `delete_paper` calls `deletePaperInStorage` only if
   `isOwnAddition`.
@@ -475,9 +483,11 @@ logic in new `src/options/agentAccessUI.js` imported by `options.js`:
   install`"; or "PaperMemory agent tools outdated — run `npx -y papermemory-mcp@latest
   install`" when the host's `protocolMax` < `PROTOCOL_MIN`.
 - Paired clients list with **Revoke**.
-- Pairing prompt on `#agent-pairing=<requestId>`: fetch the name via `agent-pair-info`, show
-  "**<clientName>** wants to read and add papers in this browser's PaperMemory library." with
-  **Allow** / **Deny**.
+- Pairing requests, kept current on `agent-pairing-changed`: each with **Allow** / **Deny**,
+  when it asked (the date unless today) and `N sessions waiting` when several wait, in a card
+  above the settings and in Agent access (red dot on its nav item); names are text in a
+  `bdi` that wraps and clips stacked marks. The popup shows a banner that opens
+  `options.html#agent-access`.
 Verify: `npm run build` succeeds; in `src/options/agentAccessUI.js` the click handler is not
 `async` and contains no `await` (`grep -n "await" src/options/agentAccessUI.js` shows none
 between the handler's opening line and its `permissions.request` call). The real prompts are

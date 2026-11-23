@@ -77,7 +77,7 @@ The Memory of one PaperMemory installation in one browser profile, addressed by 
 _Avoid_: profile, store, database
 
 **Pairing request**:
-An **MCP server**'s ask, on an agent's first PaperMemory call, to become a **Paired client** of a **Library**. It waits in PaperMemory, with no time limit, until the user clicks **Allow** or **Deny** under **Agent access**, or the **Agent session** ends; PaperMemory opens no tab for it.
+An **MCP server**'s ask, on an agent's first PaperMemory call, to become a **Paired client** of a **Library**. Other **Agent sessions** of a client with the same name join it, and the user's one answer goes to all of them. It waits in PaperMemory, with no time limit, until the user clicks **Allow** or **Deny** under **Agent access**, or no **Agent session** waits for it anymore; PaperMemory opens no tab for it.
 _Avoid_: pairing prompt, pairing tab, authorization
 
 **Native host**:

@@ -73,16 +73,22 @@ and Firefox, all lifecycle checks passed, including 65 min and 8 h idles).
   how many wait (Gist sync's short-lived badge states show over it until they clear), its
   popup shows a banner (`<client> is waiting for your OK`) that opens the options page on
   Agent access, and, with the `notifications` permission, an OS notification names the new
-  client and its click shows Agent access in an open options page, brought to the front, or
+  client (at most one every 30 s: a burst of requests shows on the badge, the banner and the
+  cards only) and its click shows Agent access in an open options page, brought to the front, or
   in a new tab (a new window when no window can take the tab). The background tells open
   pages when the requests change, so all of these are current without a reload. **Allow**
-  creates a per-client random secret returned once to the MCP server, which stores it in a
+  creates a per-client random secret returned once per waiting connection, to each MCP
+  server waiting for the request, which stores it in a
   0600 file (written atomically, named by a hash of the client name, never by the raw name);
   **Deny** rejects. Any first PaperMemory call of an agent, `get_project` and
-  `list_libraries` included, starts the pairing. The MCP server waits about 2 s for the
+  `list_libraries` included, starts the pairing (`list_libraries` only when exactly one
+  Library is connected: with several, the agent asks the user which one to use and pairs
+  with that one only, so that no other Library gets a request). The MCP server waits about 2 s for the
   decision, then answers the tool call `pairing-required`, a firm message the agent relays
-  to the user (open PaperMemory's settings in the named browser, Agent access, click
-  **Allow** next to the agent's name; the agent stops and calls `connect` once told): an
+  to the user (click the PaperMemory toolbar icon in the named browser, then the banner
+  `<client> is waiting for your OK`, or the notification, or open PaperMemory's settings →
+  Agent access, then click **Allow** next to the agent's name; the agent stops and calls
+  `connect` once told): an
   agent cannot speak while its call is blocked. The request stays open, with no time limit
   (the MCP server's `pair` request has the longest timeout a timer allows, 2^31-1 ms), until
   the user decides or no connection waits for it anymore (the Agent session ended: the MCP
@@ -90,7 +96,16 @@ and Firefox, all lifecycle checks passed, including 65 min and 8 h idles).
   allows, and later calls wait for that request instead of sending another. Because requests can wait long, several
   clients may wait at once (up to 10 per Library, then `busy`, which tells the agent that too many requests are waiting); a client name that already
   waits joins its request, from any connection, and the user's one decision answers every
-  connection waiting for it, with the same credential. Agents call the `connect` tool at the
+  connection waiting for it, with the same credential. This matches the MCP server's one
+  credential file per client name. The name is cleaned once, when the request arrives (see
+  *Hardening decisions*), so names that differ only by invisible characters, spacing or
+  Unicode composition join one request. Joining is visible
+  and bounded: the request's row in the options page says how many sessions wait for it
+  (`2 sessions waiting`) when several do, and at most 16 wait for one request (then
+  `busy`). An allowed request stays pending until its credential is stored, so that a
+  session of the same name asking meanwhile joins it instead of opening a new request; if
+  its last session ended meanwhile, the stored client, which nobody received, is revoked at
+  once and the options page says the request expired. Agents call the `connect` tool at the
   start of their work, so that pairing happens then rather than in the middle of a task. A
   pairing decision is accepted only for a pending request id, once, and only from
   PaperMemory's options page in a tab, any options tab (see *Decision binding* below);
@@ -98,7 +113,8 @@ and Firefox, all lifecycle checks passed, including 65 min and 8 h idles).
   PaperMemory stores only a SHA-256 hash and lists **Paired clients** with a **Revoke** button.
   Every operation is authorized at PaperMemory's operation boundary, not by the host, against
   fixed bounds (http/https URLs or DOIs only, unknown arguments rejected, length caps, tag limits,
-  per-client write rate limits, bounded queue, at most 10 pairing requests waiting). All writes go
+  per-client write rate limits, bounded queue, at most 10 pairing requests waiting, each for at
+  most 16 sessions). All writes go
   through one serialized queue with per-job deadlines; right before each job it re-checks
   that Agent access is on and the client is still authorized, and the Memory step that makes
   a change refuses it if the client was revoked or Agent access turned off since the job
@@ -138,8 +154,18 @@ and Firefox, all lifecycle checks passed, including 65 min and 8 h idles).
   compatibility forms read through NFKC (e.g. fullwidth letters) and with letters that pass
   for those of `proj` (Cyrillic `р` `о` `ј`, Greek `ρ` `ο` `ϳ`, a dotless `ȷ`, small capitals).
   Everything an agent supplies or a paper carries is escaped where the UI renders it (output
-  escaping in UI sinks); a client's name is shown as text, without control or format
-  characters (e.g. bidi overrides), cut to 64 characters. **Deny** starts a global 60 s
+  escaping in UI sinks). A client's name is cleaned once, when its pairing request arrives:
+  control, format and other invisible characters (e.g. zero-width spaces, bidi controls,
+  variation selectors) removed, each run of whitespace or blank fillers (e.g. a no-break
+  space, the Hangul filler, the blank Braille pattern) made one space, trimmed, in NFC, at
+  most 64 characters; a name with nothing visible left (only spaces or combining marks) is
+  refused (`bad-args`). That one name is the request's join key, what the pages and the
+  notification show, the Paired client's stored name, its Provenance's and its `Added by`
+  line's. It is shown as text, in its own isolated box (`bdi`): a long one wraps, and marks
+  stacked on its letters are clipped to its own lines, so they cover neither the request's
+  other lines (when it asked, how many sessions wait) nor other rows. Letters that only
+  look alike (e.g. a Cyrillic `С` for a Latin `C`) are not merged: such a name opens a
+  request of its own, a second row the user sees. **Deny** starts a global 60 s
   cooldown for new pairing requests, not one per client name (requests already waiting stay),
   and a pairing request expires once no connection waits for it. Whether a build is a
   test build is decided in `wxt.config.js` alone, for its manifest and its code (`define`),
@@ -190,8 +216,11 @@ and Firefox, all lifecycle checks passed, including 65 min and 8 h idles).
   connect to the socket, read the client secret file or the salt, or read PaperMemory's storage
   files on disk directly. Through the socket it can also join a waiting pairing request under
   the same client name, and so receive the credential the user allows (the file it could read
-  anyway), or keep opening pairing requests, each with a notification (at most 10 wait, and a
-  Deny stops new ones for a minute). Neither transport defends against that (see *The Native Menace*,
+  anyway); the join is visible (the request's row says how many sessions wait, e.g.
+  `2 sessions waiting`) and bounded (at most 16 per request). It can also keep opening pairing
+  requests: at most 10 wait, a Deny stops new ones for a minute, and PaperMemory shows at most
+  one OS notification every 30 s (the badge, the banner and the cards still show each
+  request). Neither transport defends against that (see *The Native Menace*,
   arXiv 2611.04291). The socket is not reachable from web pages, which is the exposure that
   matters.
 - **Accepted residual risk: a prompt-injected agent with a shell.** All five target clients

@@ -262,17 +262,17 @@ PaperMemory opens no tab and does not take over your screen. The request waits f
 - **The toolbar icon** shows a badge with the number of requests waiting.
 - **The popup** shows a banner: "_the agent's name_ is waiting for your OK". Click it to open the options page on **Agent access**.
 - **The options page** shows a card at the top, and the same requests in the **Agent access** section. In the left column, a red dot appears on **Agent access**.
-- **A system notification** says "_the agent's name_ wants to use PaperMemory" and "Click to allow or deny it in PaperMemory's options." It appears only if you allowed notifications in Step 2. Click it to open **Agent access**.
+- **A system notification** says "_the agent's name_ wants to use PaperMemory" and "Click to allow or deny it in PaperMemory's options." It appears only if you allowed notifications in Step 2. Click it to open **Agent access**. PaperMemory shows at most one notification every 30 seconds: a request that comes sooner shows only on the badge, the banner and the cards.
 
-Each request names the agent and shows when it asked, with two buttons: **Allow** and **Deny**.
+Each request names the agent and shows when it asked (with the date, if not today), with two buttons: **Allow** and **Deny**.
 
 The agent does not keep waiting for you: its call stops and the agent tells you something like this (the `pairing-required` answer):
 
-> Claude Code is asking to use your PaperMemory library. Open PaperMemory's settings in Chrome (click the PaperMemory toolbar icon, which shows a red badge, then the settings link, or the notification), go to Agent access and click **Allow** next to Claude Code.
+> Claude Code is asking to use your PaperMemory library. To allow it, click the PaperMemory toolbar icon in Chrome (red badge) and then the banner 'Claude Code is waiting for your OK', or the notification, or open PaperMemory's settings → Agent access, then click **Allow** next to Claude Code.
 
-The name is the one the agent gives itself. Only allow a name you expect.
+The name is the one the agent gives itself. PaperMemory removes invisible characters and extra spaces from it, so names that differ only by those are the same agent. Only allow a name you expect.
 
-There is no time limit. The request waits until you answer it or the agent's session ends. Up to 10 requests can wait at once. If an agent asks again while its request waits, it joins that request: you answer once.
+There is no time limit. The request waits until you answer it or the agent's session ends. Up to 10 requests can wait at once. If the agent asks again while its request waits, from the same session or another one, it joins that request: you answer once, for all of them. When several sessions wait, the request says how many, for example "2 sessions waiting". If that is more than the sessions of this agent you started, something else on your computer may be using its name: click **Deny**. At most 16 sessions can wait for one request.
 
 - **Allow**: the page says "Allowed _the agent's name_." The agent appears under **Paired clients**. Tell the agent you allowed it: it then calls `connect` and goes on. PaperMemory does not ask again for this agent in this browser profile, unless you revoke it.
 - **Deny**: the page says "Denied _the agent's name_." For one minute, PaperMemory refuses every new pairing request: if the agent tries again within that minute, it gets `rate-limited: The user denied a PaperMemory pairing request less than a minute ago, ...` and asks you whether to allow it.
@@ -401,7 +401,7 @@ Agents working in the same folder share the project and its tag. Each agent can 
 
 Each browser profile where you turn on Agent access is its own library, with its own Memory. You allow each agent once per profile.
 
-When more than one is connected, the agent asks you which one to use. Answer with the browser, or with the label that `~/.papermemory/bin/papermemory-mcp libraries` shows, such as `Chrome · 3f9a1c` or `Firefox · 7b2e44`. If you only use one, turn Agent access off in the others.
+When more than one is connected, the agent asks you which one to use, and asks you to allow it only in that one. Answer with the browser, or with the label that `~/.papermemory/bin/papermemory-mcp libraries` shows, such as `Chrome · 3f9a1c` or `Firefox · 7b2e44`. If you only use one, turn Agent access off in the others.
 
 - **Profiles of the same Chrome or Firefox**: nothing more to install. Turn on Agent access in each profile you want.
 - **A Chrome started with its own data folder** (the `--user-data-dir` option): Chrome looks for the Native host inside that folder. Install with:
@@ -527,7 +527,7 @@ Agents often repeat PaperMemory's messages in their own words. The word before t
 | `denied: The user denied <agent> access to PaperMemory. ...` | You clicked Deny. | If it was a mistake, wait one minute and ask the agent to try again. |
 | `rate-limited: The user denied a PaperMemory pairing request less than a minute ago, ...` | After a Deny, PaperMemory refuses pairing requests for one minute. | To allow the agent, wait one minute and ask it to try again. |
 | `rate-limited: At most 30 changes per minute` | Each agent can make 30 changes per minute. | Wait one minute. |
-| `busy: Too many PaperMemory pairing requests are waiting for the user in <browser> (at most 10). ...` | Ten pairing requests are waiting for you. | Allow or deny the requests under **Agent access**, then ask the agent to try again. |
+| `busy: Too many PaperMemory pairing requests are waiting for the user. ...` | Ten pairing requests are waiting for you, or 16 sessions wait for this agent's request. | Allow or deny the requests under **Agent access**, then ask the agent to try again. |
 | `busy: PaperMemory has too many changes waiting: try again later` or `busy: PaperMemory was busy with other changes: try again later` | Agents asked for many changes at once. | Wait a little, then try again. |
 | `timeout: PaperMemory did not answer ... in time` or `timeout: PaperMemory did not finish this change in time` | The browser took too long, for example because it was busy or the Mac was asleep. | Try again. If it keeps happening, check the status in the options page, or restart the browser. |
 | `timeout-may-complete`, with "PaperMemory did not finish adding this paper in time, but it may still store it later" | Adding the paper took more than 90 seconds. It may still appear. | Ask the agent to search for it before adding it again. |
