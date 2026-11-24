@@ -848,6 +848,16 @@ export const validatePaper = (paper, log = true) => {
             type: "string",
             desc: "the link to the paper's pdf",
         },
+        projectHashes: {
+            type: "array[string]",
+            desc: "hashes of the Projects the paper belongs to (Agent access)",
+            optional: true,
+        },
+        provenance: {
+            type: "object",
+            desc: "the Provenance of a paper an agent added: Paired client, date, reason (Agent access)",
+            optional: true,
+        },
         source: {
             type: "string",
             desc: "the paper's source i.e. where it was added to the memory from",

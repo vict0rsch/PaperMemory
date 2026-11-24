@@ -73,6 +73,10 @@ The full list of 31 Sources is on [papermemory.org](https://papermemory.org/feat
 - PDFs can be downloaded with a readable name into a `PaperMemoryStore` folder in your Downloads. On arXiv, the block then shows the file in its folder.
 - Open an arXiv paper on ar5iv, alphaXiv, Hugging Face or SciRate with one key.
 
+## Local AI agents (optional)
+
+- With Agent access on (it is off by default), AI agents running on your computer, such as Claude Code, Codex or Cursor, can search your Memory and add papers to a bibliography per project. You allow each agent once and can revoke it; the agents you allow can read your whole Memory. See [Agent access](https://papermemory.org/agents/).
+
 ## Your data stays yours
 
 - Your Memory lives in your browser's extension storage. There is no PaperMemory account and no PaperMemory server.

@@ -23,8 +23,8 @@ const makeChrome = () => {
                     faults.noAnswer--;
                     return setTimeout(() => cb(undefined), 1);
                 }
-                // the "background": the same queue, run here
-                PMUtils.memoryQueue.runMemoryOp(payload.op).then(cb);
+                // the "background": its message route to the same queue, run here
+                PMUtils.memoryQueue.runMemoryOpFromMessage(payload.op).then(cb);
             },
         },
         storage: {
@@ -230,6 +230,326 @@ describe("Memory queue (memoryQueue.js)", function () {
         expect(chrome.store.papers.gone).toBeUndefined(); // never re-created
         expect(answer.result.results[2]).toEqual({ missing: true });
         expect(chrome.store.papersRevision).toBe(4);
+    });
+
+    it("an agent change checks the Memory as stored now and is written only when it asks", async () => {
+        chrome.store.papers = { a: paper("a") };
+        chrome.store.papersRevision = 3;
+        // Agent access (in the background): a refused change writes nothing
+        const refused = await q.runMemoryOp({
+            op: "agent",
+            change: (papers) => {
+                papers.a.note = "not written";
+                return { error: { code: "bad-args" } };
+            },
+        });
+        expect(refused).toEqual({
+            ok: true,
+            result: { error: { code: "bad-args" } },
+            revision: 3,
+        });
+        expect(chrome.store.papers.a.note).toBe("");
+        // a page's write meanwhile is what the next change sees
+        await q.runMemoryOp({ op: "patch", id: "a", fields: { note: "typed" } });
+        const made = await q.runMemoryOp({
+            op: "agent",
+            change: async (papers) => {
+                papers.a.note += "\nappended";
+                return { write: true, result: papers.a.note };
+            },
+        });
+        expect(made).toEqual({
+            ok: true,
+            result: { result: "typed\nappended" },
+            revision: 5,
+        });
+        expect(chrome.store.papers.a.note).toBe("typed\nappended");
+    });
+
+    it("an agent's add: tags and membership on the paper as stored, Provenance only on one the merge creates", async () => {
+        const agent = {
+            tags: ["review", "proj-x"],
+            projectHash: "h",
+            provenance: { clientId: "c" },
+        };
+        chrome.store.papers = { a: paper("a", { tags: ["mine"] }) };
+        await q.runMemoryOp({ op: "visit", id: "a", agent });
+        expect(chrome.store.papers.a).toMatchObject({
+            tags: ["mine", "review", "proj-x"],
+            projectHashes: ["h"],
+            count: 2,
+        });
+        expect(chrome.store.papers.a.provenance).toBeUndefined();
+        const created = await q.runMemoryOp({
+            op: "merge",
+            paper: paper("b"),
+            visit: true,
+            agent,
+        });
+        expect(created.result.created).toBe(true);
+        expect(chrome.store.papers.b).toMatchObject({
+            tags: ["review", "proj-x"],
+            projectHashes: ["h"],
+            provenance: { clientId: "c" },
+        });
+        // merged into the stored paper: no Provenance, the membership once
+        const merged = await q.runMemoryOp({
+            op: "merge",
+            paper: paper("a"),
+            visit: true,
+            agent,
+        });
+        expect(merged.result.created).toBe(false);
+        expect(chrome.store.papers.a.projectHashes).toEqual(["h"]);
+        expect(chrome.store.papers.a.provenance).toBeUndefined();
+    });
+
+    it("an agent's merge onto a stored paper only attaches it: nothing of the parse is merged in", async () => {
+        const agent = { tags: ["review"], projectHash: "h", provenance: { clientId: "c" } };
+        // stored by another page meanwhile: anonymous, with the user's note
+        chrome.store.papers = {
+            a: paper("a", { author: "Anonymous", note: "mine", count: 4 }),
+        };
+        const answer = await q.runMemoryOp({
+            op: "merge",
+            paper: paper("a", { author: "Jane Doe", bibtex: "@article{parsed}" }),
+            overwrites: ["lastOpenDate"],
+            anonymousOverwrites: ["author", "year", "venue", "bibtex"],
+            visit: true,
+            agent,
+        });
+        expect(answer.result.created).toBe(false);
+        const a = chrome.store.papers.a;
+        expect(a).toMatchObject({
+            author: "Anonymous",
+            note: "mine",
+            count: 5,
+            tags: ["review"],
+            projectHashes: ["h"],
+        });
+        expect(a).not.toHaveProperty("bibtex");
+        expect(a).not.toHaveProperty("provenance");
+    });
+
+    it("a merge whose target was deleted meanwhile goes into the stored paper of the parsed id, never over it", async () => {
+        // the fuzzy match "gone" was anonymous: the overwrites chosen for it include the note
+        const overwrites = ["lastOpenDate", "author", "year", "venue", "bibtex", "note"];
+        const stored = { note: "my note", tags: ["mine"], favorite: true, count: 12 };
+        const parsed = paper("n", { note: "Published @ X", title: "Fresh parse" });
+        chrome.store.papers = { n: paper("n", stored) };
+        const userVisit = await q.runMemoryOp({
+            op: "merge",
+            id: "gone",
+            paper: parsed,
+            overwrites,
+            visit: true,
+            ifMissing: "skip",
+        });
+        expect(userVisit.result).toMatchObject({ created: false, paper: { id: "n" } });
+        expect(chrome.store.papers.n).toMatchObject({ ...stored, count: 13 });
+        expect(chrome.store.papers.n.title).toBe("Title n");
+        expect(chrome.store.papers).not.toHaveProperty("gone");
+        // an agent's: attached, no Provenance on the stored paper
+        const agent = { tags: ["review"], projectHash: "h", provenance: { clientId: "c" } };
+        const agentAdd = await q.runMemoryOp({
+            op: "merge",
+            id: "gone",
+            paper: parsed,
+            overwrites,
+            visit: true,
+            agent,
+        });
+        expect(agentAdd.result.created).toBe(false);
+        expect(chrome.store.papers.n).toMatchObject({
+            note: "my note",
+            tags: ["mine", "review"],
+            count: 14,
+        });
+        expect(chrome.store.papers.n).not.toHaveProperty("provenance");
+    });
+
+    it("a merge of a paper found stored, deleted meanwhile, is not re-created", async () => {
+        chrome.store.papers = {};
+        // the pipeline's merges of a fuzzy match, and of a stale copy of the stored paper
+        for (const op of [
+            { op: "merge", id: "gone", paper: paper("n"), ifMissing: "skip" },
+            { op: "merge", fromId: "gone", paper: paper("n"), ifMissing: "skip" },
+            {
+                op: "merge",
+                paper: paper("gone", { note: "old note" }),
+                visit: true,
+                ifMissing: "skip",
+            },
+        ]) {
+            const answer = await q.runMemoryOp(op);
+            expect(answer.result).toEqual({ missing: true });
+        }
+        expect(chrome.store.papers).toEqual({});
+    });
+
+    // an agent's Provenance (agentOps.js makeProvenance), and what a release keeps of it
+    const agentProvenance = {
+        clientId: "c",
+        clientName: "Claude Code",
+        sessionHash: "s".repeat(64),
+        projectHash: "h".repeat(64),
+        projectLabel: "Demo",
+        addedAt: "2024-01-01T00:00:00.000Z",
+        reason: "Cited in the intro",
+    };
+    const releasedProvenance = {
+        clientName: "Claude Code",
+        projectLabel: "Demo",
+        addedAt: "2024-01-01T00:00:00.000Z",
+        reason: "Cited in the intro",
+        releasedAt: expect.any(String),
+    };
+
+    it("a page's merge or promotion makes an agent's paper the user's: its Provenance released, Projects kept", async () => {
+        const provenance = agentProvenance;
+        const promotion = {
+            op: "merge",
+            fromId: "pre",
+            paper: paper("pub", { venue: "NeurIPS", source: "neurips" }),
+            overwrites: ["lastOpenDate", "venue", "id", "source"],
+            visit: true,
+        };
+        // the user's visit of the published version of an agent's preprint
+        chrome.store.papers = {
+            pre: paper("pre", { provenance, projectHashes: ["h1"], tags: ["review"] }),
+        };
+        await q.runMemoryOp(promotion);
+        expect(Object.keys(chrome.store.papers)).toEqual(["pub"]);
+        expect(chrome.store.papers.pub.projectHashes).toEqual(["h1"]);
+        expect(chrome.store.papers.pub.provenance).toEqual(releasedProvenance);
+        // both stored: one record with both Projects, the Provenance released
+        chrome.store.papers = {
+            pre: paper("pre", { provenance, projectHashes: ["h1"] }),
+            pub: paper("pub", { projectHashes: ["h2"], note: "user note" }),
+        };
+        await q.runMemoryOp(promotion);
+        expect(Object.keys(chrome.store.papers)).toEqual(["pub"]);
+        expect(chrome.store.papers.pub.projectHashes).toEqual(["h2", "h1"]);
+        expect(chrome.store.papers.pub.provenance).toEqual(releasedProvenance);
+        // a re-parse merge (e.g. of an anonymous paper an agent added)
+        chrome.store.papers = {
+            a: paper("a", { author: "Anonymous", provenance, projectHashes: ["h1"] }),
+        };
+        await q.runMemoryOp({
+            op: "merge",
+            paper: paper("a", { author: "Jane Doe" }),
+            anonymousOverwrites: ["author"],
+            visit: true,
+        });
+        expect(chrome.store.papers.a.author).toBe("Jane Doe");
+        expect(chrome.store.papers.a.provenance).toEqual(releasedProvenance);
+    });
+
+    it("the user's visit or edit releases an agent's paper's Provenance; its own writes, the enrichment patch and a tag rename do not", async () => {
+        const provenance = agentProvenance;
+        const ids = ["visit", "patch", "addTags", "enrichment", "attach", "agent", "retag"];
+        chrome.store.papers = Object.fromEntries(
+            ids.map((id) => [id, paper(id, { provenance, tags: ["review"] })]),
+        );
+        chrome.store.papers.user = paper("user");
+        // the user's: a visit, an edit, tags added in bulk (fullMemory)
+        await q.runMemoryOp({ op: "visit", id: "visit" });
+        await q.runMemoryOp({ op: "patch", id: "patch", fields: { note: "mine" } });
+        await q.runMemoryOp({ op: "addTags", id: "addTags", tags: ["read"] });
+        // not the user's: the pipeline's publication fields, an agent's attach or change,
+        // a Memory-wide tag rename
+        await q.runMemoryOp({
+            op: "patch",
+            id: "enrichment",
+            fields: { venue: "NeurIPS" },
+            ifEmpty: ["venue"],
+            enrichment: true,
+        });
+        const agent = { tags: ["mine"], projectHash: "h", provenance: { clientId: "o" } };
+        await q.runMemoryOp({ op: "visit", id: "attach", agent });
+        await q.runMemoryOp({
+            op: "agent",
+            change: (papers) => {
+                papers.agent.note = "appended";
+                return { write: true };
+            },
+        });
+        await q.runMemoryOp({ op: "retag", mapping: [["review", "to-review"]] });
+        const stored = (id) => chrome.store.papers[id].provenance;
+        for (const id of ["visit", "patch", "addTags"])
+            expect(stored(id)).toEqual(releasedProvenance);
+        for (const id of ["enrichment", "attach", "agent", "retag"])
+            expect(stored(id)).toEqual(provenance);
+        // released once: a later visit keeps the first release time
+        const { releasedAt } = stored("visit");
+        await new Promise((resolve) => setTimeout(resolve, 5));
+        await q.runMemoryOp({ op: "visit", id: "visit" });
+        expect(stored("visit").releasedAt).toBe(releasedAt);
+    });
+
+    it("a page can neither give a paper a Provenance nor undo a release", async () => {
+        const provenance = agentProvenance;
+        const released = {
+            clientName: "Claude Code",
+            addedAt: "2024-01-01T00:00:00.000Z",
+            reason: "Cited in the intro",
+            releasedAt: "2024-02-01T00:00:00.000Z",
+        };
+        chrome.store.papers = {
+            user: paper("user"),
+            fill: paper("fill"),
+            mine: paper("mine", { provenance: released }),
+        };
+        // a patch (also the pipeline's enrichment patch), a visit's or merge's fill, a
+        // merged or created paper: their provenance is never written
+        await q.runMemoryOp({ op: "patch", id: "user", fields: { provenance } });
+        await q.runMemoryOp({
+            op: "patch",
+            id: "mine",
+            fields: { provenance, venue: "NeurIPS" },
+            ifEmpty: ["venue"],
+            enrichment: true,
+        });
+        await q.runMemoryOp({ op: "visit", id: "fill", fill: { provenance } });
+        await q.runMemoryOp({
+            op: "merge",
+            paper: paper("mine", { provenance }),
+            fill: { provenance },
+            visit: true,
+        });
+        await q.runMemoryOp({ op: "merge", paper: paper("merged", { provenance }) });
+        await q.runMemoryOp({ op: "create", paper: paper("created", { provenance }) });
+        const stored = (id) => chrome.store.papers[id].provenance;
+        for (const id of ["user", "fill", "merged", "created"])
+            expect(stored(id)).toBeUndefined();
+        expect(stored("mine")).toEqual(released);
+        expect(chrome.store.papers.mine.venue).toBe("NeurIPS");
+    });
+
+    it("a message cannot carry an agent change or an inline Memory, even in a batch; a page's replace still can", async () => {
+        chrome.store.papers = { a: paper("a") };
+        chrome.store.papersRevision = 3;
+        const refused = [
+            { op: "agent", change: () => ({ write: true }) },
+            JSON.parse(JSON.stringify({ op: "agent", change: () => ({}) })),
+            { op: "replace", memory: {}, recovery: true },
+            { op: "batch", ops: [{ op: "agent", change: () => ({ write: true }) }] },
+            { op: "batch", ops: [{ op: "patch", id: "a", memory: {} }] },
+        ];
+        for (const op of refused) {
+            const answer = await q.runMemoryOpFromMessage(op);
+            expect(answer.ok).toBe(false);
+        }
+        // the same from a page (memoryOp sends {type: "memory"})
+        const fromPage = await q.memoryOp({ op: "agent", change: () => ({ write: true }) });
+        expect(fromPage.ok).toBe(false);
+        expect(Object.keys(chrome.store.papers)).toEqual(["a"]);
+        expect(chrome.store.papersRevision).toBe(3);
+        expect(chrome.store).not.toHaveProperty("memoryRecovery");
+        // a page's replace (e.g. a sync pull): its Memory staged, then a message
+        const replaced = await q.replaceMemory({ b: paper("b") });
+        expect(replaced.ok).toBe(true);
+        expect(Object.keys(chrome.store.papers)).toEqual(["b"]);
     });
 
     it("two interleaved replaces each commit their own staging copy, then remove it", async () => {

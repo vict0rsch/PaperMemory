@@ -913,6 +913,20 @@ export const cutAuthors = (text, maxLen, separator) => {
     return cutAuthors;
 };
 
+// the background's message handler, when the caller is the background itself
+let localBackgroundHandler = null;
+
+/**
+ * Make sendMessageToBackground call the background's message handler directly. A
+ * context never receives its own runtime messages: the Firefox background page sets
+ * it to parse papers for Agent access.
+ * @param {function|null} fn The handler (payload, sender, sendResponse), or null to
+ * send runtime messages again
+ */
+export const setLocalBackgroundHandler = (fn) => {
+    localBackgroundHandler = fn;
+};
+
 /**
  * Promise wrapper around content script => background script message passing
  * @param {object} payload Data to transfer to the background script
@@ -920,6 +934,10 @@ export const cutAuthors = (text, maxLen, separator) => {
  */
 export const sendMessageToBackground = (payload) =>
     new Promise((resolve) => {
+        if (localBackgroundHandler) {
+            localBackgroundHandler(payload, { id: chrome.runtime.id }, resolve);
+            return;
+        }
         chrome.runtime.sendMessage(payload, (response) => {
             resolve(response);
         });

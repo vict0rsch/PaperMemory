@@ -6,6 +6,16 @@ import { glob } from "glob";
 
 const pkg = createRequire(import.meta.url)("./package.json");
 const disableBrowserStartup = process.env.WXT_NO_BROWSER === "1";
+// Agent access test builds only: AGENT_PERMISSIONS are granted at install instead of
+// requested, as automated tests cannot click the optional-permission prompt, and every
+// pairing request is allowed (agentAccess.js). The one source for the manifest and the
+// bundle (define), read while building: after WXT has loaded the .env files
+const agentTestBuild = () => process.env.WXT_PM_AGENT_TEST === "1";
+// requested together when Agent access is turned on (agentAccessUI.js); never required,
+// as a new required permission with a warning disables PaperMemory on update in Chrome
+const AGENT_PERMISSIONS = ["nativeMessaging", "notifications"];
+// in a test build's code only (agentAccess.js): zipping refuses a build that has it
+const AGENT_TEST_MARKER = "pm-agent-test-auto-allow";
 
 function htmlIncludePlugin(basePath) {
     return {
@@ -42,7 +52,7 @@ export default defineConfig({
     webExt: {
         disabled: disableBrowserStartup,
     },
-    manifest: {
+    manifest: ({ browser }) => ({
         name: "PaperMemory",
         version: pkg.version,
         description:
@@ -94,7 +104,11 @@ export default defineConfig({
             "downloads",
             "downloads.open",
             "scripting",
+            "alarms",
+            ...(browser !== "firefox" ? ["offscreen"] : []),
+            ...(agentTestBuild() ? AGENT_PERMISSIONS : []),
         ],
+        ...(agentTestBuild() ? {} : { optional_permissions: AGENT_PERMISSIONS }),
         host_permissions: ["*://*/*"],
         web_accessible_resources: [
             {
@@ -110,7 +124,7 @@ export default defineConfig({
                 id: "{ff9cbac9-82ff-4e2b-96ae-ae0845aa85f5}",
             },
         },
-    },
+    }),
     hooks: {
         // Firefox MV2 only opens the popup with `_execute_browser_action`
         "build:manifestGenerated": (wxt, manifest) => {
@@ -125,6 +139,18 @@ export default defineConfig({
                 ]),
             );
         },
+        // never zip an Agent access test build, whatever turned it on: checked on the
+        // built files, before anything is zipped
+        "zip:start": (wxt) => {
+            const built = glob.sync("**/*.{js,html}", {
+                cwd: wxt.config.outDir,
+                absolute: true,
+            });
+            if (built.some((f) => fs.readFileSync(f, "utf-8").includes(AGENT_TEST_MARKER)))
+                throw new Error(
+                    "Refusing to zip an Agent access test build: unset WXT_PM_AGENT_TEST (environment and .env files) and run the command again.",
+                );
+        },
     },
     zip: {
         excludeSources: [
@@ -132,6 +158,7 @@ export default defineConfig({
             "docs/**",
             "test/**",
             "scripts/**",
+            "agent/**",
             "CNAME",
             "mkdocs.yml",
             // Defense in depth: never ship credentials/keys in the sources zip
@@ -156,6 +183,7 @@ export default defineConfig({
         },
         define: {
             __DEV__: JSON.stringify(command === "serve"),
+            "import.meta.env.WXT_PM_AGENT_TEST": JSON.stringify(agentTestBuild() ? "1" : ""),
         },
         plugins: [htmlIncludePlugin(path.resolve("src/popup/html"))],
     }),

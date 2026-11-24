@@ -8,7 +8,7 @@ import {
     updateGistFile,
 } from "@pmu/sync.js";
 import { getStorage, setStorage } from "@pmu/data.js";
-import { runMemoryOp, serveMemoryOps } from "@pmu/memoryQueue.js";
+import { runMemoryOpFromMessage, serveMemoryOps } from "@pmu/memoryQueue.js";
 import { openWelcomeOnInstall } from "@pm/background/welcome.js";
 import { applyIgnoreSources } from "@pmu/ignoreSources.js";
 import { isSourceURL, parseIdFromUrl } from "@pmu/urls.js";
@@ -33,6 +33,8 @@ import {
     miniHash,
     getStoredFiles,
 } from "@pmu/functions.js";
+import { initAgentAccess } from "@pm/background/agentAccess.js";
+import { createBadge } from "@pm/background/badge.js";
 
 export function initBackground() {
     serveMemoryOps(); // this context runs the Memory's write queue for every page
@@ -40,30 +42,12 @@ export function initBackground() {
     var tabStatuses = {};
     var paperTitles = {};
 
-    const badgeOk = () => {
-        chrome.action.setBadgeText({ text: "OK!" });
-        chrome.action.setBadgeBackgroundColor({ color: "rgb(68, 164, 68)" });
-    };
+    // Firefox MV2 exposes browserAction instead of action
+    const actionApi = chrome.action ?? chrome.browserAction;
 
-    const badgeWait = (text) => {
-        chrome.action.setBadgeText({ text });
-        chrome.action.setBadgeBackgroundColor({ color: "rgb(189, 127, 10)" });
-    };
-
-    const badgeError = () => {
-        chrome.action.setBadgeText({ text: "Error" });
-        chrome.action.setBadgeBackgroundColor({ color: "rgb(195, 40, 56)" });
-    };
-
-    const badgeClear = (preventTimeout = false) => {
-        if (preventTimeout) {
-            chrome.action.setBadgeText({ text: "" });
-        } else {
-            setTimeout(() => {
-                chrome.action.setBadgeText({ text: "" });
-            }, 2000);
-        }
-    };
+    // sync's states, and the pairing requests waiting for the user (Agent access)
+    const { badgeOk, badgeWait, badgeError, badgeClear, setPairingBadge } =
+        createBadge(actionApi);
 
     const initGist = async () => {
         if (!(await shouldSync())) {
@@ -238,15 +222,17 @@ export function initBackground() {
             const remoteSyncId = state.gistData["__syncId"];
             delete state.gistData["__syncId"];
 
-            let remotePapers;
             if (remoteSyncId === localSyncID) {
-                remotePapers = (await getStorage("papers")) ?? {};
-            } else {
-                remotePapers = state.gistData;
-            }
-            if (remoteSyncId === localSyncID) {
+                // this browser's own last upload: nothing to apply. A copy of the Memory
+                // written back by the page would undo what changed here since it was
+                // read (e.g. a paper an agent added meanwhile)
                 warn("Pulled sync data from same device, ignoring.");
+                console.groupEnd();
+                badgeOk();
+                badgeClear();
+                return report ? { ok: true, sameDevice: true } : { sameDevice: true };
             }
+            let remotePapers = state.gistData;
 
             if (typeof remotePapers === "string") {
                 try {
@@ -310,7 +296,7 @@ export function initBackground() {
             consoleHeader(`Pushing ${String.fromCodePoint("0x23EB")}`);
             log("Writing to Github...");
             badgeWait("Push...");
-            chrome.action.setBadgeBackgroundColor({
+            actionApi.setBadgeBackgroundColor({
                 color: "rgb(189, 127, 10)",
             });
             await ensureGist();
@@ -444,7 +430,7 @@ export function initBackground() {
         return { id, ok: true };
     };
 
-    chrome.runtime.onMessage.addListener((payload, sender, sendResponse) => {
+    const handleBackgroundMessage = (payload, sender, sendResponse) => {
         if (sender.id !== chrome.runtime.id) {
             return;
         }
@@ -478,7 +464,7 @@ export function initBackground() {
                 });
         } else if (payload.type === "memory") {
             // the one queue that writes the Memory (memoryQueue.js)
-            runMemoryOp(payload.op).then(sendResponse);
+            runMemoryOpFromMessage(payload.op).then(sendResponse);
         } else if (payload.type === "ignoreSources") {
             // the one queue that writes ignoreSources (ignoreSources.js)
             applyIgnoreSources(payload.change).then(
@@ -525,7 +511,9 @@ export function initBackground() {
                 });
         }
         return true;
-    });
+    };
+
+    chrome.runtime.onMessage.addListener(handleBackgroundMessage);
 
     chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
         if (changeInfo.status) {
@@ -617,4 +605,6 @@ export function initBackground() {
             });
         }
     });
+
+    initAgentAccess({ pushSyncPapers, handleBackgroundMessage, setPairingBadge });
 } // end initBackground

@@ -126,6 +126,44 @@ const setFields = (paper, fields = {}, ifEmpty = []) => {
     return paper;
 };
 
+/**
+ * An agent's add (Agent access, agentIngest.js): its tags and Project membership, and its
+ * Provenance only on a paper this operation creates, never on one already stored
+ */
+const addAgentFields = (paper, { tags, projectHash, provenance }, created) => {
+    paper.tags = [...new Set([...(paper.tags ?? []), ...tags])];
+    if (projectHash && !paper.projectHashes?.includes(projectHash))
+        paper.projectHashes = [...(paper.projectHashes ?? []), projectHash];
+    if (created && !paper.provenance) paper.provenance = provenance;
+    return paper;
+};
+
+/**
+ * The user opened or edited the paper (a page's visit, merge, patch or added tags): it is
+ * theirs now, no agent's Own addition, which its agent could delete (it can still flag it).
+ * Its Provenance stays as a record of who added it, when and why, released: without the
+ * hashes that made it an Own addition, with the time it was first released. Not for an
+ * agent's own writes, nor for the pipeline's publication fields (`enrichment`).
+ */
+const releaseProvenance = (paper) => {
+    if (paper.provenance && !paper.provenance.releasedAt) {
+        const { clientName, addedAt, reason, projectLabel } = paper.provenance;
+        paper.provenance = { clientName, addedAt, reason };
+        if (projectLabel) paper.provenance.projectLabel = projectLabel;
+        paper.provenance.releasedAt = new Date().toJSON();
+    }
+    return paper;
+};
+
+/**
+ * A page's fields or paper, without `provenance`: only an agent's add writes one
+ * (addAgentFields), so no page can make a paper an agent's or undo a release
+ */
+const withoutProvenance = (fields) => {
+    const { provenance, ...rest } = fields ?? {};
+    return rest;
+};
+
 const isPaperId = (id) => typeof id === "string" && id && !id.startsWith("__");
 const earliest = (a, b) => (!a ? b : !b ? a : a < b ? a : b);
 const latest = (a, b) => (!a ? b : !b ? a : a > b ? a : b);
@@ -135,7 +173,9 @@ const latest = (a, b) => (!a ? b : !b ? a : a > b ? a : b);
  * record's metadata, and the user's data of both: tags (union); notes combined (the
  * published one's, a blank line, the other's; once if identical); the published code
  * link, the other's added to the note as "Code (preprint): <url>" when different;
- * favourite if either; visits summed; first added; last opened.
+ * favourite if either; visits summed; first added; last opened; Project memberships
+ * (union). Its Provenance released: a page's merge makes the record the user's, no
+ * agent's Own addition (an agent can still flag it).
  * @param {object} published The record that stays (its metadata wins)
  * @param {object} other The record merged into it
  * @returns {object}
@@ -165,7 +205,11 @@ export const reconcileRecords = (published, other) => {
     out.count = (Number(published.count) || 0) + (Number(other.count) || 0);
     out.addDate = earliest(published.addDate, other.addDate);
     out.lastOpenDate = latest(published.lastOpenDate, other.lastOpenDate);
-    return out;
+    const projectHashes = [
+        ...new Set([...(published.projectHashes ?? []), ...(other.projectHashes ?? [])]),
+    ];
+    if (projectHashes.length) out.projectHashes = projectHashes;
+    return releaseProvenance(out);
 };
 
 /**
@@ -194,16 +238,21 @@ const apply = async (memory, op, ctx) => {
                 );
                 return keep({ missing: true });
             }
-            setFields(papers[op.id], op.fields, op.ifEmpty);
+            setFields(papers[op.id], withoutProvenance(op.fields), op.ifEmpty);
+            // the user's edit, unless the pipeline's own publication fields (paper.js)
+            if (!op.enrichment) releaseProvenance(papers[op.id]);
             return done({ paper: papers[op.id] });
         }
         case "visit": {
             if (!isPaperId(op.id) || !papers[op.id]) return keep({ missing: true });
-            setFields(visit(papers[op.id]), op.fill, Object.keys(op.fill ?? {}));
+            const fill = withoutProvenance(op.fill);
+            setFields(visit(papers[op.id]), fill, Object.keys(fill));
+            if (op.agent) addAgentFields(papers[op.id], op.agent, false);
+            else releaseProvenance(papers[op.id]); // the user's visit
             return done({ paper: papers[op.id] });
         }
         case "create": {
-            const paper = op.paper;
+            const paper = withoutProvenance(op.paper);
             if (!isPaperId(paper?.id)) return keep({ invalid: true });
             if (papers[paper.id])
                 return keep({ exists: true, paper: papers[paper.id] });
@@ -214,8 +263,11 @@ const apply = async (memory, op, ctx) => {
             // a parsed paper, merged into the stored one (stored user fields win, see
             // mergePapers) or created; fromId: a stored duplicate (a preprint) it replaces
             const target = op.id ?? op.paper.id;
+            // the target (a fuzzy match) deleted meanwhile: merged into the stored paper of
+            // the parsed id instead, never over it (op.overwrites were for the target)
+            const fallback = !papers[target] && !!papers[op.paper?.id];
             const source = op.fromId && op.fromId !== target ? papers[op.fromId] : null;
-            const destination = papers[target];
+            const destination = papers[fallback ? op.paper.id : target];
             // both stored: one record with the user's data of both (then merged below)
             const base =
                 source && destination
@@ -224,21 +276,31 @@ const apply = async (memory, op, ctx) => {
             let paper;
             if (!base) {
                 if (op.ifMissing === "skip") return keep({ missing: true });
-                paper = op.paper;
+                paper = withoutProvenance(op.paper);
+            } else if (op.agent) {
+                // an agent's add of a stored paper only attaches it (its tags and Project,
+                // below) and counts the visit: nothing of the parse is merged in
+                paper = op.visit ? visit(base) : base;
             } else {
-                const overwrites = [...(op.overwrites ?? ["lastOpenDate"])];
+                const overwrites = fallback
+                    ? ["lastOpenDate"]
+                    : [...(op.overwrites ?? ["lastOpenDate"])];
                 if (String(base.author).toLowerCase() === "anonymous")
                     overwrites.push(...(op.anonymousOverwrites ?? []));
                 paper = mergePapers({
-                    newPaper: op.paper,
+                    newPaper: withoutProvenance(op.paper),
                     oldPaper: base,
                     overwrites,
                     incrementCount: !!op.incrementCount,
                 });
                 if (op.visit) visit(paper);
+                // a page's merge or promotion (e.g. the user's visit)
+                releaseProvenance(paper);
             }
             // e.g. a code repository found while parsing: only where there is none
-            setFields(paper, op.fill, Object.keys(op.fill ?? {}));
+            const fill = withoutProvenance(op.fill);
+            setFields(paper, fill, Object.keys(fill));
+            if (op.agent) addAgentFields(paper, op.agent, !base);
             if (source && op.fromId !== paper.id) delete papers[op.fromId];
             papers[paper.id] = paper;
             return done({ paper, created: !base });
@@ -269,7 +331,15 @@ const apply = async (memory, op, ctx) => {
             if (tags.join("\n") === (paper.tags ?? []).join("\n"))
                 return keep({ paper });
             paper.tags = tags;
+            releaseProvenance(paper); // the user's edit
             return done({ paper });
+        }
+        case "agent": {
+            // Agent access's changes (agentAccess.js), from the background only: no message
+            // carries a function. `change` checks the Memory as stored now and may change it
+            // in place; it is written only when `change` answers `write: true`
+            const { write, ...result } = await op.change(papers);
+            return write ? done(result) : keep(result);
         }
         case "replace": {
             // the new Memory: written by the page under memoryStaging (fromStaging: its
@@ -395,6 +465,20 @@ export const runMemoryOp = (op) => {
     });
     queue = run.catch(() => {});
     return run;
+};
+
+/**
+ * Runs an operation a page, content script or document sent ({type: "memory"} message).
+ * Never an Agent access change (`agent`: the background's own, it carries a function) nor
+ * an inline Memory (a page's replace goes through memoryStaging), even inside a batch.
+ * @param {object} op
+ * @returns {Promise<{ok: boolean, result?: object, revision?: number, error?: string}>}
+ */
+export const runMemoryOpFromMessage = async (op) => {
+    const ops = op?.op === "batch" && Array.isArray(op.ops) ? [op, ...op.ops] : [op];
+    if (ops.some((o) => o?.op === "agent" || o?.memory !== undefined))
+        return { ok: false, error: "This Memory operation cannot come from a message" };
+    return runMemoryOp(op);
 };
 
 /** In the background: answer the pages' operations (one queue for the whole extension) */

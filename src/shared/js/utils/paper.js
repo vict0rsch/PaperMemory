@@ -306,9 +306,21 @@ export const updatePaperVisits = (paper) => {
  * @param {string} url The url from which to parse a paper
  * @param {object} is The paper's source info
  * @param {object} checks The user's preferences
- * @returns {Promise<{paper: object, id: string, saving: Promise}|undefined>} The paper and
- * its id (`paper.id`, not the id resolved from `url`), or undefined if parsing failed;
- * `saving`: the background's answer to the write ({ok}), which lands after this returns
+ * @param {object} agent Agent access fields `{tags, provenance, projectHash}`, carried by
+ * the first write's operation: the queue adds the tags and Project membership to the paper
+ * as stored, and the Provenance only to a paper this operation creates (memoryQueue.js).
+ * A paper already stored (its id, a url resolving to it, or a fuzzy match) is only
+ * attached: a visit carrying these fields, without merge, promotion, url remapping or
+ * publication lookup
+ * @param {string} doi The DOI `url` was resolved from (an add without a tab), the parsed
+ * paper's DOI when its page gives none
+ * @returns {Promise<{paper: object, id: string, saving: Promise, isNew: boolean, done:
+ * Promise}|undefined>} The paper and its id (`paper.id`, not the id resolved from `url`;
+ * once `saving` has answered, the id written), or undefined if parsing failed; `saving`:
+ * the background's answer to the write ({ok}),
+ * which lands after this returns; `isNew`: whether this call created the paper (final once
+ * `saving` has answered); `done`: resolved once processing has finished, after the last
+ * write
  */
 export const addOrUpdatePaper = async ({
     url,
@@ -322,6 +334,8 @@ export const addOrUpdatePaper = async ({
         done: () => {},
         feedback: null,
     },
+    agent = null,
+    doi = null,
 }) => {
     // start time
     const aouStart = Date.now();
@@ -345,7 +359,13 @@ export const addOrUpdatePaper = async ({
         contentScriptCallbacks.feedback &&
         contentScriptCallbacks.feedback({ loading: true });
 
-    if (id && paperExists && state.papers[id].author.toLowerCase() !== "anonymous") {
+    if (
+        id &&
+        paperExists &&
+        // an agent's add of a stored paper only attaches it (Agent access), even if
+        // anonymous: no re-parse
+        (agent || state.papers[id].author.toLowerCase() !== "anonymous")
+    ) {
         // Update paper if it exists
         paper = updatePaperVisits(state.papers[id]);
         isNew = false;
@@ -356,9 +376,19 @@ export const addOrUpdatePaper = async ({
         if (!newPaper) {
             return;
         }
+        if (doi && !newPaper.doi) newPaper.doi = doi;
         state.titleHashToIds = makeTitleHashToIdList(state.papers);
         const existingId = findFuzzyPaperMatch(state.titleHashToIds, newPaper);
-        if (existingId && store) {
+        // an agent's add of a stored paper (the parsed id, else a fuzzy match) only
+        // attaches it: no merge, promotion or url remapping
+        const storedId = state.papers.hasOwnProperty(newPaper.id)
+            ? newPaper.id
+            : existingId;
+        if (agent && storedId && store) {
+            newPaper = updatePaperVisits(state.papers[storedId]);
+            isNew = false;
+            saveOp = { op: "visit", id: storedId };
+        } else if (existingId && store) {
             // Update paper as already it exists
             let existingPaper = state.papers[existingId];
             const parsed = { ...newPaper };
@@ -451,14 +481,19 @@ export const addOrUpdatePaper = async ({
             anonymousOverwrites: ["author", "year", "venue", "bibtex"],
             visit: true,
         };
+        // a paper found stored (a fuzzy match), deleted meanwhile: not re-created
+        if (!isNew && saveOp.op === "merge") saveOp.ifMissing = "skip";
     }
 
     // Map the visited url to the paper if it does not resolve to it yet (e.g. its
     // source reads no id from this url), ahead of the papers write so it is stored
-    // by the time the paper is.
-    if (store && !state.deleted[paper.id] && paper.id !== id) {
+    // by the time the paper is. Not for an agent's add of a stored paper (attach only)
+    if (store && !state.deleted[paper.id] && paper.id !== id && (isNew || !agent)) {
         await updateDuplicatedUrls(url, paper.id);
     }
+
+    // Agent access: the agent's fields go with the first write, the queue applies them
+    if (agent) saveOp.agent = agent;
 
     // Store may be false if the user has disabled:
     //   * paper storage from Abstract URLs
@@ -468,7 +503,10 @@ export const addOrUpdatePaper = async ({
         store && !state.deleted[paper.id]
             ? memoryOp(saveOp)
             : Promise.resolve({ ok: true, result: { paper } });
-    saving.then(async (answer) => {
+    let resolveDone;
+    const done = new Promise((resolve) => (resolveDone = resolve));
+    const result = { paper, id: paper.id, saving, isNew, done };
+    const processing = saving.then(async (answer) => {
         if (!answer.ok) {
             // not saved: say so (never "Saved ✓"), and stop here
             logError("Could not save the paper:", answer.error);
@@ -477,11 +515,15 @@ export const addOrUpdatePaper = async ({
                 contentScriptCallbacks.feedback({ error: "write" });
             console.groupEnd();
             contentScriptCallbacks["done"](paper);
+            resolveDone();
             return;
         }
         if (answer.result?.paper) {
             paper = answer.result.paper;
             if (saveOp.op === "merge") isNew = !!answer.result.created;
+            result.isNew = isNew;
+            // the id written: e.g. a fuzzy match deleted meanwhile, the parsed id's paper
+            result.id = paper.id;
         }
         // tell the content script the paper has been parsed/updated
         contentScriptCallbacks["update"](paper);
@@ -511,8 +553,12 @@ export const addOrUpdatePaper = async ({
             store && logOk("Updated '" + paper.title + "' in your Memory");
         }
 
-        // anyway: try and update note with actual publication
-        if (!paper.note || !paper.venue || paper.author.toLowerCase() === "anonymous") {
+        // anyway: try and update note with actual publication (not for an agent's add of a
+        // stored paper: it only attaches it)
+        if (
+            (isNew || !agent) &&
+            (!paper.note || !paper.venue || paper.author.toLowerCase() === "anonymous")
+        ) {
             const preprintMatch = await tryPreprintMatch(paper);
             for (const key of ["note", "venue", "bibtex", "doi"]) {
                 if (!paper[key] || key === "bibtex") {
@@ -544,6 +590,8 @@ export const addOrUpdatePaper = async ({
                     id: paper.id,
                     fields,
                     ifEmpty: ["note", "venue", "venueFull", "doi"],
+                    // not the user's edit: an agent's paper keeps its Provenance
+                    enrichment: true,
                 });
                 if (answer.ok && answer.result?.paper) paper = answer.result.paper;
             }
@@ -555,9 +603,14 @@ export const addOrUpdatePaper = async ({
         info(`Done processing paper (${(Date.now() - aouStart) / 1e3}s).`);
         console.groupEnd();
         contentScriptCallbacks["done"](paper);
+        resolveDone();
     });
+    // whatever fails while processing, the caller (e.g. an agent's add) stops waiting
+    processing
+        .catch((e) => logError("Could not finish processing the paper:", e))
+        .finally(resolveDone);
 
-    return { paper, id: paper.id, saving };
+    return result;
 };
 
 /**

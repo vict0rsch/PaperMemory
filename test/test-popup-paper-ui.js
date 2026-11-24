@@ -18,6 +18,8 @@ import {
     verifyElementClickable,
     setPreferencesAndReload,
     verifyPageNavigation,
+    stubPairingRequests,
+    notifyPairingChanged,
 } from "./browser.js";
 
 import {
@@ -964,6 +966,164 @@ describe("Test PaperMemory Popup UI - Known Paper Page", function () {
             await verifySelectorExists("#manual-trigger-btn", PMPage);
 
             await setStorage(PMPage, "papers", testData);
+        });
+    });
+
+    describe("Agent pairing banner", function () {
+        // the background's pairing requests are stubbed in the page (stubPairingRequests):
+        // it keeps them only while an agent's connection is open
+        it("shows the agents waiting for the user's OK in both views, kept current, and opens Agent access", async function () {
+            // a client's name is its own: markup and a right-to-left override stay text
+            const hostile = "<img src=x onerror=alert(1)>‮evil";
+            const page = await browser.newPage();
+            const banner = () =>
+                page.$eval("#pairing-banner", (el) => ({
+                    title: el.querySelector("b").textContent,
+                    help: el.querySelector("div").lastChild.textContent,
+                    images: el.querySelectorAll("img").length,
+                    shown: el.getClientRects().length > 0,
+                }));
+            const waitForTitle = (title) =>
+                page.waitForFunction(
+                    (title) =>
+                        document.querySelector("#pairing-banner b")?.textContent ===
+                        title,
+                    { timeout: 5000 },
+                    title,
+                );
+            try {
+                await page.evaluateOnNewDocument(stubPairingRequests, [
+                    { requestId: "request-1", clientName: hostile, requestedAt: 1 },
+                    { requestId: "request-2", clientName: "Codex", requestedAt: 2 },
+                ]);
+                await page.goto(pmURLs.popupURL, { waitUntil: "networkidle0" });
+                await page.waitForFunction(() => window.__pmPopupReady === true, {
+                    timeout: 10000,
+                });
+                await page.waitForSelector("#pairing-banner");
+                expect(await banner()).toEqual({
+                    title: `${hostile} and 1 other agent are waiting for your OK`,
+                    help: "Allow or deny them in PaperMemory's options",
+                    images: 0,
+                    shown: true,
+                });
+                // above the paper view and above the Memory tab
+                for (const [tab, memoryOpen] of [
+                    ["#tab-paper", false],
+                    ["#tab-memory", true],
+                ]) {
+                    await page.click(tab);
+                    await page.waitForFunction(
+                        (memoryOpen) =>
+                            document
+                                .getElementById("pm-shell")
+                                .classList.contains("pm-mem-open") === memoryOpen,
+                        { timeout: 5000 },
+                        memoryOpen,
+                    );
+                    expect((await banner()).shown).toBe(true);
+                }
+                // the first request ended: the background says the list changed
+                await page.evaluate(() => window.__pairing.requests.shift());
+                await notifyPairingChanged(browser);
+                await waitForTitle("Codex is waiting for your OK");
+                expect((await banner()).help).toBe(
+                    "Allow or deny it in PaperMemory's options",
+                );
+                // none left
+                await page.evaluate(() => (window.__pairing.requests = []));
+                await notifyPairingChanged(browser);
+                await page.waitForFunction(
+                    () => !document.getElementById("pairing-banner"),
+                    { timeout: 5000 },
+                );
+                // a new one: a click opens the options page on Agent access
+                await page.evaluate(() => {
+                    window.__pairing.requests = [
+                        {
+                            requestId: "request-3",
+                            clientName: "Gemini",
+                            requestedAt: 3,
+                        },
+                    ];
+                });
+                await notifyPairingChanged(browser);
+                await waitForTitle("Gemini is waiting for your OK");
+                const opened = browser.waitForTarget(
+                    (t) =>
+                        t.type() === "page" &&
+                        t.url().endsWith("/options.html#agent-access"),
+                    { timeout: 10000 },
+                );
+                await page.click("#pairing-banner");
+                await (await (await opened).page())?.close();
+            } finally {
+                await page.close();
+            }
+        });
+
+        it("keeps a long name, and one with stacked marks, inside the banner, clear of its last line", async function () {
+            const long = "W".repeat(64);
+            const stacked = `Z${"\u0351\u0352\u0353\u0354\u0355\u0356".repeat(8)}algo`;
+            const page = await browser.newPage();
+            const layout = () =>
+                page.$eval("#pairing-banner", (banner) => {
+                    const box = (el) => el.getBoundingClientRect().toJSON();
+                    const title = banner.querySelector("b");
+                    const help = document.createRange();
+                    help.selectNode(title.parentElement.lastChild);
+                    return {
+                        banner: box(banner),
+                        slot: box(banner.parentElement),
+                        title: box(title),
+                        help: help.getBoundingClientRect().toJSON(),
+                        // what a mark draws beyond the title's box is not shown
+                        clipped: [banner, title].every(
+                            (el) => getComputedStyle(el).overflow === "hidden",
+                        ),
+                        fits:
+                            document.documentElement.scrollWidth <=
+                            document.documentElement.clientWidth,
+                    };
+                });
+            try {
+                await page.evaluateOnNewDocument(stubPairingRequests, [
+                    { requestId: "request-1", clientName: long, requestedAt: 1 },
+                ]);
+                await page.goto(pmURLs.popupURL, { waitUntil: "networkidle0" });
+                await page.waitForFunction(() => window.__pmPopupReady === true, {
+                    timeout: 10000,
+                });
+                await page.waitForSelector("#pairing-banner");
+                for (const name of [long, stacked]) {
+                    if (name === stacked) {
+                        await page.evaluate((clientName) => {
+                            window.__pairing.requests = [
+                                { requestId: "request-2", clientName, requestedAt: 2 },
+                            ];
+                        }, stacked);
+                        await notifyPairingChanged(browser);
+                        await page.waitForFunction(
+                            (title) =>
+                                document.querySelector("#pairing-banner b")
+                                    ?.textContent === title,
+                            { timeout: 5000 },
+                            `${stacked} is waiting for your OK`,
+                        );
+                    }
+                    const { banner, slot, title, help, clipped, fits } = await layout();
+                    expect(clipped).toBe(true);
+                    expect(fits).toBe(true);
+                    expect(banner.right).toBeLessThanOrEqual(slot.right);
+                    expect(title.left).toBeGreaterThanOrEqual(banner.left);
+                    expect(title.right).toBeLessThanOrEqual(banner.right);
+                    expect(title.top).toBeGreaterThanOrEqual(banner.top);
+                    expect(help.top).toBeGreaterThanOrEqual(title.bottom);
+                    expect(help.bottom).toBeLessThanOrEqual(banner.bottom);
+                }
+            } finally {
+                await page.close();
+            }
         });
     });
 });

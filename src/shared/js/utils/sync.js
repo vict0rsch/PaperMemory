@@ -226,10 +226,14 @@ export const syncBothWays = async () => {
     const pulled =
         (await sendMessageToBackground({ type: "pullSync", report: true })) ?? noAnswer;
     if (!pulled.ok) return { ok: false, error: `Download failed: ${pulled.error}` };
-    await initState({ papers: pulled.papers, print: false });
-    // the upload only happens once the gist's Memory is saved here
-    const saved = await replacePapers(state.papers);
-    if (!saved.ok) return { ok: false, error: `Saving here failed: ${saved.error}` };
+    // the gist holding this browser's own last upload, there is nothing to save here
+    if (!pulled.sameDevice) {
+        await initState({ papers: pulled.papers, print: false });
+        // the upload only happens once the gist's Memory is saved here
+        const saved = await replacePapers(state.papers);
+        if (!saved.ok)
+            return { ok: false, error: `Saving here failed: ${saved.error}` };
+    }
     const pushed =
         (await sendMessageToBackground({ type: "writeSync", report: true })) ??
         noAnswer;
@@ -242,14 +246,18 @@ export const syncBothWays = async () => {
  * If remote papers are found, the local `papers` will be updated. and set to storage.
  * @param {object} papers - The current `papers` in the user memory
  * @param {boolean} isContentScript - Whether the function is called from a content script
- * @returns {Promise<object>} - The remote `papers` from the Gist file
+ * @returns {Promise<object>} - The remote `papers` from the Gist file, or `{sameDevice:
+ * true}` when it holds this browser's own last upload (nothing is applied)
  */
 export const pullFromRemote = async (papers, isContentScript) => {
     const start = Date.now();
     const remotePapers = await sendMessageToBackground({ type: "pullSync" });
     consoleHeader(`PaperMemory Pull ${String.fromCodePoint("0x1F504")}`);
     log("Remote Papers pulled: ", remotePapers);
-    if (remotePapers) {
+    if (remotePapers?.sameDevice) {
+        // writing the Memory back would undo what changed here since it was read
+        info("The gist holds this browser's last upload: nothing to apply.");
+    } else if (remotePapers) {
         await initState({
             isContentScript,
             papers: remotePapers ?? papers,

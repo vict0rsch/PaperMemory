@@ -449,3 +449,80 @@ export const verifyPageNavigation = async (expectedUrlPattern, browser) => {
     );
     return await target.page();
 };
+
+/**
+ * For page.evaluateOnNewDocument: the background's answers about Agent access pairing
+ * requests, in this page. The background keeps them only while an agent's connection
+ * is open, which a test browser never has: the page's list is window.__pairing.requests,
+ * which a test changes, and its decisions are recorded in window.__pairing.decisions
+ * (answered true for a listed request, which leaves the list). Other messages go to the
+ * background.
+ * @param {{requestId: string, clientName: string, requestedAt: number}[]} requests
+ */
+export const stubPairingRequests = (requests) => {
+    window.__pairing = { requests, decisions: [] };
+    const send = chrome.runtime.sendMessage.bind(chrome.runtime);
+    chrome.runtime.sendMessage = (message, callback) => {
+        const stub = window.__pairing;
+        if (message?.type === "agent-pairing-requests") {
+            setTimeout(() => callback(structuredClone(stub.requests)));
+        } else if (message?.type === "agent-pair-decision") {
+            stub.decisions.push(message);
+            const listed = stub.requests.some((r) => r.requestId === message.requestId);
+            stub.requests = stub.requests.filter(
+                (r) => r.requestId !== message.requestId,
+            );
+            setTimeout(() => callback(listed));
+        } else {
+            return send(message, callback);
+        }
+    };
+};
+
+/**
+ * For page.evaluateOnNewDocument: Agent access on, its permission granted, and the
+ * background's status of its Native host connection, in this page. A test browser has
+ * neither the permission nor a Native host: the page's status is window.__agentStatus,
+ * which a test changes (the page asks for it every 2 s). Other messages, storage reads
+ * and permission checks go to the browser.
+ * @param {{connected: boolean, hostVersion: string, protocolMin: number, protocolMax: number}} status
+ */
+export const stubAgentStatus = (status) => {
+    window.__agentStatus = status;
+    const get = chrome.storage.local.get.bind(chrome.storage.local);
+    chrome.storage.local.get = (keys, callback) =>
+        keys === "agentAccess"
+            ? setTimeout(() => callback({ agentAccess: { enabled: true } }))
+            : get(keys, callback);
+    const contains = chrome.permissions.contains.bind(chrome.permissions);
+    chrome.permissions.contains = (permissions, callback) =>
+        permissions.permissions?.join() === "nativeMessaging"
+            ? setTimeout(() => callback(true))
+            : contains(permissions, callback);
+    const send = chrome.runtime.sendMessage.bind(chrome.runtime);
+    chrome.runtime.sendMessage = (message, callback) =>
+        message?.type === "agent-status"
+            ? setTimeout(() => callback(structuredClone(window.__agentStatus)))
+            : send(message, callback);
+};
+
+/**
+ * Tell the extension's pages that the pairing requests changed, from the background's
+ * service worker as agentAccess.js does: they ask for the list again.
+ * @param {object} browser
+ */
+export const notifyPairingChanged = async (browser) => {
+    const target = await browser.waitForTarget(
+        (t) => t.type() === "service_worker" && t.url().endsWith("/background.js"),
+        { timeout: 10000 },
+    );
+    const worker = await target.createCDPSession();
+    try {
+        await worker.send("Runtime.evaluate", {
+            expression: `chrome.runtime.sendMessage({ type: "agent-pairing-changed" }).catch(() => {})`,
+            awaitPromise: true,
+        });
+    } finally {
+        await worker.detach();
+    }
+};

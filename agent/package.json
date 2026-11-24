@@ -1,0 +1,28 @@
+{
+    "name": "papermemory-mcp",
+    "version": "0.1.0",
+    "description": "MCP server and native host giving local AI agents access to a PaperMemory library",
+    "type": "module",
+    "bin": {
+        "papermemory-mcp": "dist/cli.mjs"
+    },
+    "files": [
+        "dist",
+        "skills",
+        "README.md"
+    ],
+    "engines": {
+        "node": ">=18"
+    },
+    "scripts": {
+        "build": "esbuild src/cli.mjs host/host.mjs --bundle --platform=node --main-fields=module,main --format=esm --entry-names=[name] --outdir=dist --out-extension:.js=.mjs",
+        "prepublishOnly": "npm run build",
+        "test": "npm run build && node --test test/*.test.mjs"
+    },
+    "devDependencies": {
+        "@modelcontextprotocol/sdk": "^1.32.2",
+        "esbuild": "^0.28.2",
+        "jsonc-parser": "^3.3.1",
+        "zod": "^4.6.7"
+    }
+}

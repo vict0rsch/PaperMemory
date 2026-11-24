@@ -1,12 +1,24 @@
 // The options page (src/entrypoints/options, src/options/*): settings search, old anchors,
 // prefs, sources filter / turn all on-off, auto-tag live counts, tag manager (rename, merge,
 // delete: papers' tags actually change), restore (a backup is downloaded before confirming),
-// token field type, no remote stylesheet or script.
+// token field type, no remote stylesheet or script, Agent access pairing requests (listed,
+// decided, kept current), Agent access status (update available).
 import { expect } from "expect";
 import fs from "fs";
 import os from "os";
 import path from "path";
-import { findExtensionId, makeBrowser } from "./browser.js";
+import {
+    PROTOCOL_MIN,
+    PROTOCOL_MAX,
+    RECOMMENDED_AGENT_TOOLS_VERSION,
+} from "@pm/background/agentAccess.js";
+import {
+    findExtensionId,
+    makeBrowser,
+    notifyPairingChanged,
+    stubAgentStatus,
+    stubPairingRequests,
+} from "./browser.js";
 import { loadConfig, root, readJSON, indent, sleep } from "./utilsForTests.js";
 
 const { headless } = loadConfig();
@@ -105,7 +117,7 @@ describe("Options page", function () {
     });
 
     describe("Page", function () {
-        it("has the six groups, a password token field and no remote stylesheet or script", async function () {
+        it("has the seven groups, a password token field and no remote stylesheet or script", async function () {
             const groups = await page.$$eval(".o-nav a", (as) =>
                 as.map((a) => a.querySelector("span").textContent),
             );
@@ -115,6 +127,7 @@ describe("Options page", function () {
                 "Tags & matching",
                 "Import & export",
                 "Sync",
+                "Agent access",
                 "Keyboard shortcuts",
             ]);
             expect(await page.$eval("#pat-input", (el) => el.type)).toBe("password");
@@ -755,6 +768,53 @@ describe("Options page", function () {
             expect(after.note).toBe("Accepted @ Cell (2019) -- [openalex.org]");
             expect(after.bibtex).toMatch(/journal\s*=\s*\{Cell\}/);
             await noInContextRuns(page);
+        });
+    });
+
+    describe("Import papers from URLs", function () {
+        let onRequest;
+
+        beforeEach(async function () {
+            // every site answers 404: a Source cannot read its paper's page
+            await page.setRequestInterception(true);
+            onRequest = (r) =>
+                /^https?:/.test(r.url())
+                    ? r.respond({ status: 404, contentType: "text/plain", body: "" })
+                    : r.continue();
+            page.on("request", onRequest);
+        });
+        afterEach(async function () {
+            page.off("request", onRequest);
+            await page.setRequestInterception(false);
+        });
+
+        it("reports an entry whose page could not be read, and adds nothing", async function () {
+            const url = "https://pubs.acs.org/doi/10.1021/acs.jpca.9b00311";
+            const before = await storageGet("papers");
+            const dir = fs.mkdtempSync(path.join(os.tmpdir(), "pm-import-"));
+            const file = path.join(dir, "papers.json");
+            fs.writeFileSync(file, JSON.stringify([url]));
+            try {
+                const [chooser] = await Promise.all([
+                    page.waitForFileChooser(),
+                    page.click("#import-json-choose"),
+                ]);
+                await chooser.accept([file]);
+                await page.waitForFunction(
+                    () =>
+                        document
+                            .getElementById("import-json-status")
+                            .textContent.startsWith("Done"),
+                    { timeout: 20000 },
+                );
+            } finally {
+                fs.rmSync(dir, { recursive: true, force: true });
+            }
+            const lines = await page.$$eval("#json-import-feedback li", (items) =>
+                items.map((li) => [li.className, li.textContent]),
+            );
+            expect(lines).toEqual([["is-error", `${url} could not be read.`]]);
+            expect(await storageGet("papers")).toEqual(before);
         });
     });
 
@@ -1803,6 +1863,383 @@ describe("Options page", function () {
             ).toContain("Download the replaced Memory");
         });
     });
+
+    describe("Agent access: pairing requests", function () {
+        // the background's pairing requests are stubbed in the page (stubPairingRequests):
+        // it keeps them only while an agent's connection is open
+        const now = Date.now();
+        // a client's name is its own: markup and a right-to-left override stay text
+        const hostile = "<img src=x onerror=alert(1)>‮evil";
+        const requests = [
+            { requestId: "request-1", clientName: "Claude Code", requestedAt: now },
+            { requestId: "request-2", clientName: hostile, requestedAt: now + 1000 },
+        ];
+        let stubbed;
+
+        /** The options page, its pairing requests stubbed, set up */
+        const openStubbed = async (listed) => {
+            stubbed = await browser.newPage();
+            await stubbed.evaluateOnNewDocument(stubPairingRequests, listed);
+            await stubbed.goto(optionsURL, { waitUntil: "networkidle0" });
+            await stubbed.waitForFunction(
+                () => document.documentElement.dataset.optionsReady === "true",
+                { timeout: 15000 },
+            );
+            return stubbed;
+        };
+        /** The client names listed in a card, as text */
+        const names = (p, card) =>
+            p.$$eval(`${card} .agent-pairing-list bdi`, (els) =>
+                els.map((el) => el.textContent),
+            );
+        const shown = (p, selector) =>
+            p.$eval(selector, (el) => !el.hidden && el.getClientRects().length > 0);
+        const outcome = (p) =>
+            p.$eval("#agent-pairing .agent-pairing-outcome", (el) => el.textContent);
+        /** Waits until both cards list exactly these client names */
+        const waitForNames = (p, expected) =>
+            p.waitForFunction(
+                (expected) =>
+                    ["#agent-pairing", "#agent-pairing-requests"].every(
+                        (card) =>
+                            JSON.stringify(
+                                [
+                                    ...document.querySelectorAll(
+                                        `${card} .agent-pairing-list bdi`,
+                                    ),
+                                ].map((el) => el.textContent),
+                            ) === JSON.stringify(expected),
+                    ),
+                { timeout: 5000 },
+                expected,
+            );
+
+        // pairing rows ignore clicks for 1 s after they appeared or moved
+        const settle = () => new Promise((resolve) => setTimeout(resolve, 1200));
+
+        afterEach(async function () {
+            await stubbed?.close();
+            stubbed = null;
+        });
+
+        it("lists every request at the top and in Agent access, with a red dot on Agent access, kept current", async function () {
+            const p = await openStubbed(requests);
+            const listed = ["Claude Code", hostile];
+            expect(await names(p, "#agent-pairing")).toEqual(listed);
+            expect(await names(p, "#agent-pairing-requests")).toEqual(listed);
+            expect(await p.$$eval(".agent-pairing-list img", (els) => els.length)).toBe(
+                0,
+            );
+            expect(await shown(p, "#agent-pairing")).toBe(true);
+            expect(await shown(p, "#agent-pairing-requests")).toBe(true);
+            expect(await shown(p, "#agent-nav-dot")).toBe(true);
+            // Allow, in Agent access
+            await settle();
+            await p.click("#agent-pairing-requests .agent-pairing-list .pm-row button");
+            await p.waitForFunction(() => window.__pairing.decisions.length === 1);
+            expect(await p.evaluate(() => window.__pairing.decisions)).toEqual([
+                { type: "agent-pair-decision", requestId: "request-1", allow: true },
+            ]);
+            await waitForNames(p, [hostile]);
+            expect(await outcome(p)).toBe("Allowed Claude Code.");
+            expect(await shown(p, "#agent-nav-dot")).toBe(true);
+            // Deny, at the top: none waits, the dot goes, the cards keep the outcome
+            await settle(); // request-2 moved to the top
+            const deny = await p.$$("#agent-pairing .agent-pairing-list button");
+            await deny[1].click();
+            await waitForNames(p, []);
+            expect(await p.evaluate(() => window.__pairing.decisions.at(-1))).toEqual({
+                type: "agent-pair-decision",
+                requestId: "request-2",
+                allow: false,
+            });
+            expect(await outcome(p)).toBe(`Denied ${hostile}.`);
+            expect(await shown(p, "#agent-nav-dot")).toBe(false);
+            expect(await shown(p, "#agent-pairing")).toBe(true);
+            // a new request, while the page is open: the background says the list
+            // changed
+            await p.evaluate(() => {
+                window.__pairing.requests = [
+                    { requestId: "request-3", clientName: "Codex", requestedAt: 0 },
+                ];
+            });
+            await notifyPairingChanged(browser);
+            await waitForNames(p, ["Codex"]);
+            expect(await shown(p, "#agent-nav-dot")).toBe(true);
+            // answered elsewhere (another options tab) before this page heard of it
+            await p.evaluate(() => (window.__pairing.requests = []));
+            await settle();
+            await p.click("#agent-pairing .agent-pairing-list .pm-row button");
+            await p.waitForFunction(
+                () =>
+                    document.querySelector("#agent-pairing .agent-pairing-outcome")
+                        .textContent ===
+                    "This pairing request has expired or was already answered.",
+                { timeout: 5000 },
+            );
+            await waitForNames(p, []);
+            expect(await shown(p, "#agent-nav-dot")).toBe(false);
+        });
+
+        it("ignores clicks on a pairing row for 1 s after it appeared or moved", async function () {
+            const p = await openStubbed([]);
+            const decisions = () => p.evaluate(() => window.__pairing.decisions.length);
+            const first = "#agent-pairing .agent-pairing-list .pm-row button";
+            await p.evaluate(
+                (listed) => (window.__pairing.requests = listed),
+                [requests[0]],
+            );
+            await notifyPairingChanged(browser);
+            await waitForNames(p, ["Claude Code"]);
+            // just appeared: the click does nothing
+            expect(await p.$eval(first, (el) => el.disabled)).toBe(true);
+            await p.click(first);
+            expect(await decisions()).toBe(0);
+            await settle();
+            expect(await p.$eval(first, (el) => el.disabled)).toBe(false);
+            // a second request below it, settled too
+            await p.evaluate(
+                (listed) => (window.__pairing.requests = listed),
+                [requests[0], requests[1]],
+            );
+            await notifyPairingChanged(browser);
+            await waitForNames(p, ["Claude Code", hostile]);
+            await settle();
+            // the first one goes away: the second slides to its position, where the
+            // user's click was aimed at another agent
+            await p.evaluate(
+                (listed) => (window.__pairing.requests = listed),
+                [requests[1]],
+            );
+            await notifyPairingChanged(browser);
+            await waitForNames(p, [hostile]);
+            await p.click(first);
+            // even with the button enabled, the click handler ignores the click
+            await p.$eval(first, (el) => (el.disabled = false));
+            await p.click(first);
+            expect(await decisions()).toBe(0);
+            // after 1 s the click is taken
+            await settle();
+            await p.click(first);
+            await p.waitForFunction(() => window.__pairing.decisions.length === 1);
+            expect(await p.evaluate(() => window.__pairing.decisions)).toEqual([
+                { type: "agent-pair-decision", requestId: "request-2", allow: true },
+            ]);
+        });
+
+        it("shows no card and no dot when no request waits, until one does", async function () {
+            const p = await openStubbed([]);
+            expect(await shown(p, "#agent-pairing")).toBe(false);
+            expect(await shown(p, "#agent-pairing-requests")).toBe(false);
+            expect(await shown(p, "#agent-nav-dot")).toBe(false);
+            await p.evaluate(
+                (listed) => (window.__pairing.requests = listed),
+                requests,
+            );
+            await notifyPairingChanged(browser);
+            await waitForNames(p, ["Claude Code", hostile]);
+            expect(await shown(p, "#agent-nav-dot")).toBe(true);
+            // the request ended (its agent session closed): gone without a reload
+            await p.evaluate(() => (window.__pairing.requests = []));
+            await notifyPairingChanged(browser);
+            await waitForNames(p, []);
+            expect(await shown(p, "#agent-pairing")).toBe(false);
+            expect(await shown(p, "#agent-nav-dot")).toBe(false);
+        });
+
+        it("says when each request was made, with the date unless today, and how many sessions wait when several do", async function () {
+            const earlier = Date.now() - 2 * 24 * 3600 * 1000;
+            const today = Date.now();
+            const p = await openStubbed([
+                { requestId: "request-1", clientName: "Codex", requestedAt: earlier },
+                {
+                    requestId: "request-2",
+                    clientName: "Claude Code",
+                    requestedAt: today,
+                    sessions: 3,
+                },
+            ]);
+            const help = await p.$$eval(
+                "#agent-pairing .agent-pairing-list .pm-row",
+                (rows) =>
+                    rows.map((row) =>
+                        [...row.querySelectorAll(".pm-row-help")].map(
+                            (el) => el.textContent,
+                        ),
+                    ),
+            );
+            const [date, earlierTime, todayTime] = await p.evaluate(
+                (earlier, today) => {
+                    const time = (t) =>
+                        new Date(t).toLocaleTimeString([], {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                        });
+                    return [
+                        new Date(earlier).toLocaleDateString(),
+                        time(earlier),
+                        time(today),
+                    ];
+                },
+                earlier,
+                today,
+            );
+            const asked = "to search your Memory and add papers to it";
+            expect(help).toEqual([
+                [`Asked on ${date} at ${earlierTime} ${asked}`],
+                [`Asked at ${todayTime} ${asked}`, "3 sessions waiting"],
+            ]);
+        });
+
+        it("keeps long names, and names with stacked marks, inside their rows, clear of the buttons and of the lines under them", async function () {
+            const long = "W".repeat(64);
+            const stacked = `Z${"\u0351\u0352\u0353\u0354\u0355\u0356".repeat(8)}algo`;
+            await storageSet({
+                agentClients: {
+                    "client-long": {
+                        clientName: long,
+                        secretHash: "0".repeat(64),
+                        pairedAt: new Date().toISOString(),
+                        lastSeenAt: new Date().toISOString(),
+                    },
+                },
+            });
+            try {
+                const p = await openStubbed([
+                    {
+                        requestId: "request-1",
+                        clientName: long,
+                        requestedAt: 1,
+                        sessions: 2,
+                    },
+                    {
+                        requestId: "request-2",
+                        clientName: stacked,
+                        requestedAt: 2,
+                        sessions: 2,
+                    },
+                    { requestId: "request-3", clientName: "Codex", requestedAt: 3 },
+                ]);
+                const rows = await p.$$eval(
+                    [
+                        "#agent-pairing .agent-pairing-list .pm-row",
+                        "#agent-pairing-requests .agent-pairing-list .pm-row",
+                        "#agent-clients-list .pm-row",
+                    ].join(", "),
+                    (rows) =>
+                        rows.map((row) => {
+                            const box = (el) => el.getBoundingClientRect().toJSON();
+                            const name = row.querySelector("bdi");
+                            return {
+                                row: box(row),
+                                name: box(name),
+                                // Allow and Deny, or Revoke
+                                buttons: box(
+                                    row.querySelector(".o-btns") ??
+                                        row.querySelector("button"),
+                                ),
+                                helps: [...row.querySelectorAll(".pm-row-help")].map(
+                                    box,
+                                ),
+                                // what a mark draws beyond the name's box is not shown
+                                clipped: [name, row].every(
+                                    (el) => getComputedStyle(el).overflow === "hidden",
+                                ),
+                                card: box(row.closest(".o-card")),
+                            };
+                        }),
+                );
+                expect(rows).toHaveLength(7);
+                for (const { row, name, buttons, helps, clipped, card } of rows) {
+                    expect(clipped).toBe(true);
+                    expect(name.right).toBeLessThanOrEqual(buttons.left);
+                    expect(name.left).toBeGreaterThanOrEqual(row.left);
+                    expect(name.top).toBeGreaterThanOrEqual(row.top);
+                    expect(row.right).toBeLessThanOrEqual(card.right);
+                    for (const help of helps) {
+                        expect(help.top).toBeGreaterThanOrEqual(name.bottom);
+                        expect(help.bottom).toBeLessThanOrEqual(row.bottom);
+                    }
+                }
+                // the long name wraps instead of widening the page
+                expect(rows[0].name.height).toBeGreaterThan(rows[2].name.height);
+                expect(
+                    await p.evaluate(
+                        () =>
+                            document.documentElement.scrollWidth <=
+                            document.documentElement.clientWidth,
+                    ),
+                ).toBe(true);
+            } finally {
+                await page.evaluate(
+                    () =>
+                        new Promise((r) =>
+                            chrome.storage.local.remove("agentClients", r),
+                        ),
+                );
+            }
+        });
+    });
+
+    describe("Agent access: status", function () {
+        // the background's status is stubbed in the page (stubAgentStatus), with Agent
+        // access on: a test browser has neither its permission nor a Native host
+        const UPDATE =
+            "Update available: run npx -y papermemory-mcp@latest install, then restart your agent sessions.";
+        const status = (hostVersion, protocolMax = PROTOCOL_MAX) => ({
+            connected: true,
+            hostVersion,
+            protocolMin: PROTOCOL_MIN,
+            protocolMax,
+        });
+        let stubbed;
+
+        /** Waits until the page shows this status line, with this update line or none */
+        const waitForStatus = (expected) =>
+            stubbed.waitForFunction(
+                (expected) => {
+                    const shown = (el) => el.getClientRects().length > 0;
+                    const line = [...document.querySelectorAll(".agent-status")].find(
+                        shown,
+                    );
+                    const update = document.getElementById("agent-update-available");
+                    const state = {
+                        status: line?.id ?? null,
+                        update: shown(update)
+                            ? update.textContent.replace(/\s+/g, " ").trim()
+                            : null,
+                    };
+                    return JSON.stringify(state) === JSON.stringify(expected);
+                },
+                { timeout: 5000 },
+                expected,
+            );
+
+        afterEach(async function () {
+            await stubbed?.close();
+            stubbed = null;
+        });
+
+        it("says an update is available only when connected tools are older than PaperMemory recommends", async function () {
+            stubbed = await browser.newPage();
+            await stubbed.evaluateOnNewDocument(stubAgentStatus, status("0.0.1"));
+            await stubbed.goto(optionsURL, { waitUntil: "networkidle0" });
+            const connected = "agent-status-connected";
+            await waitForStatus({ status: connected, update: UPDATE });
+            // the page asks the background again every 2 s
+            const answer = (s) =>
+                stubbed.evaluate((s) => (window.__agentStatus = s), s);
+            await answer(status(RECOMMENDED_AGENT_TOOLS_VERSION));
+            await waitForStatus({ status: connected, update: null });
+            await answer(status("999.0.0"));
+            await waitForStatus({ status: connected, update: null });
+            await answer(status("0.0.1"));
+            await waitForStatus({ status: connected, update: UPDATE });
+            // too old to share a protocol version: outdated, which says what to run
+            await answer(status("0.0.1", PROTOCOL_MIN - 1));
+            await waitForStatus({ status: "agent-status-outdated", update: null });
+        });
+    });
 });
 
 // The owner's "tag merge / accepted preprint doesn't work": with sync on, a change made
@@ -2034,5 +2471,28 @@ describe("Options page: changes made after the background restarted are synced",
         await sleep(500); // nothing else arrives
         expect(JSON.parse(gistContent)["Arxiv-1703.10593"].tags).toEqual([]);
         expect((await storageGet("papers"))["Arxiv-1703.10593"].tags).toEqual([]);
+    });
+
+    it("a pull of this browser's own upload writes nothing back; Sync now only uploads", async function () {
+        // the gist holds this browser's last upload, older than its Memory now (a copy
+        // written back would undo what changed since, e.g. a paper an agent added)
+        const local = await storageGet("papers");
+        const older = structuredClone(local);
+        delete older["JMLR-2012_bergstra12a"];
+        gistContent = JSON.stringify({ ...older, __syncId: "Chrome-this" });
+        const revision = await storageGet("papersRevision");
+        await openOptions("#sync"); // pulls the gist
+        expect(await storageGet("papersRevision")).toBe(revision);
+        expect(await storageGet("papers")).toEqual(local);
+        const answer = await page.evaluate(
+            () =>
+                new Promise((r) =>
+                    chrome.runtime.sendMessage({ type: "pullSync", report: true }, r),
+                ),
+        );
+        expect(answer).toEqual({ ok: true, sameDevice: true });
+        await page.click("#sync-now");
+        await waitForUpload((gistPapers) => !!gistPapers["JMLR-2012_bergstra12a"]);
+        expect(await storageGet("papersRevision")).toBe(revision);
     });
 });
