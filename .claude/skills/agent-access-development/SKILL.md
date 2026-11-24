@@ -40,6 +40,8 @@ How the versions are used:
 4. Additive change (new op, new optional field in a request or an answer): keep the protocol version. Older peers answer `unknown-op` or ignore the field. Make each new field optional and handle its absence.
 5. Incompatible change (an op or field removed or renamed, a meaning changed, a new required field): raise `PROTOCOL_MAX` on both sides, keep the previous version accepted for at least one release, ship the extension that accepts the new version first (stores update it by themselves), then the agent tools that speak it. Raise `PROTOCOL_MIN` only in a later release.
 
+- `isOlderVersion` exists twice, in `agent/src/libraries.mjs` and `src/background/agentAccess.js` (the two packages cannot share code). Change both together; both are unit-tested with the same cases.
+
 ## Release checklist
 
 Agent tools (npm package `papermemory-mcp`):
